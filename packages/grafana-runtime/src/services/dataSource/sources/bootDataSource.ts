@@ -38,17 +38,33 @@ export function createBootDataSnapshot({
   return { items, uidById, defaultUid, settings };
 }
 
-export function createBootDataSource(boot: BootDataSourceSettings): DataSourceCacheSource {
-  return {
-    kind: 'bootData',
-    getInitialSnapshot: () => createBootDataSnapshot(boot),
-    loadList: async () => createBootDataSnapshot(boot),
-    refreshList: async (payload) => {
-      const settings = payload ?? (await getBackendSrv().get<BootDataSourceSettings>('/api/frontend/settings'));
-      return createBootDataSnapshot(settings);
-    },
-    // Unreachable in practice: the snapshot preloads settings for every list item, and the cache
-    // only asks the source on a miss. If it is reached, the uid is not in boot data.
-    loadSettings: async () => undefined,
-  };
+/**
+ * Fills the cache from boot data. Keeps the latest snapshot, so a per-uid load answers from the
+ * same data the cache was filled with.
+ */
+export class BootDataSource implements DataSourceCacheSource {
+  readonly kind = 'bootData';
+  private snapshot: DataSourceListSnapshot;
+
+  constructor(boot: BootDataSourceSettings) {
+    this.snapshot = createBootDataSnapshot(boot);
+  }
+
+  getInitialSnapshot(): DataSourceListSnapshot {
+    return this.snapshot;
+  }
+
+  async loadList(): Promise<DataSourceListSnapshot> {
+    return this.snapshot;
+  }
+
+  async refreshList(payload?: BootDataSourceSettings): Promise<DataSourceListSnapshot> {
+    const settings = payload ?? (await getBackendSrv().get<BootDataSourceSettings>('/api/frontend/settings'));
+    this.snapshot = createBootDataSnapshot(settings);
+    return this.snapshot;
+  }
+
+  async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
+    return this.snapshot.settings?.[uid];
+  }
 }

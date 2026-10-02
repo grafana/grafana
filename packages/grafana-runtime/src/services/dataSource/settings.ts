@@ -26,7 +26,7 @@ import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilte
 import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
 import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
-import { createBootDataSnapshot, createBootDataSource } from './sources/bootDataSource';
+import { BootDataSource, createBootDataSnapshot } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
 import { type BootDataSourceSettings } from './sources/types';
 
@@ -66,7 +66,7 @@ export function setDataSourceInstanceSettings(
 
   _resetForTests();
   setDataSourceCacheSource(
-    createBootDataSource({
+    new BootDataSource({
       datasources: structuredClone(settings),
       defaultDatasource: defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '',
     })
@@ -82,7 +82,7 @@ export function setDataSourceInstanceSettings(
 const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
 
 async function fetchAndPopulate(): Promise<void> {
-  const source = getDataSourceCacheSource() ?? createBootDataSource({ datasources: {}, defaultDatasource: '' });
+  const source = getDataSourceCacheSource() ?? new BootDataSource({ datasources: {}, defaultDatasource: '' });
   applySnapshot(await source.refreshList());
 }
 
