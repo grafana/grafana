@@ -47,6 +47,10 @@ export type GraphiteQueryEditorState = {
 const reducer = async (action: Action, state: GraphiteQueryEditorState): Promise<GraphiteQueryEditorState> => {
   state = { ...state };
 
+  if (!actions.init.match(action) && !state.target) {
+    return state;
+  }
+
   if (actions.init.match(action)) {
     const deps = action.payload;
     deps.target.target = deps.target.target || '';

@@ -9,7 +9,7 @@ import {
   getTagsSelectables,
   getTagValuesSelectables,
 } from '../state/providers';
-import { createStore } from '../state/store';
+import { createStore, type GraphiteQueryEditorState } from '../state/store';
 import { type GraphiteSegment } from '../types';
 
 const mockPublish = jest.fn();
@@ -69,6 +69,41 @@ describe('Graphite actions', () => {
         templateSrv: getTemplateSrv(),
       })
     );
+  });
+
+  describe('when actions are dispatched before init has finished', () => {
+    const initDeps = () => ({
+      datasource: ctx.datasource,
+      target: { target: 'test.prod.*' },
+      refresh: jest.fn(),
+      queries: [],
+      //@ts-ignore
+      templateSrv: getTemplateSrv(),
+    });
+
+    it('should not throw when queryChanged or updateQuery are dispatched before init', async () => {
+      const dispatch = createStore(jest.fn());
+
+      await expect(dispatch(actions.queryChanged({ refId: 'A', target: 'test.dev.*' }))).resolves.toBeUndefined();
+      await expect(dispatch(actions.updateQuery({ query: 'test.dev.*' }))).resolves.toBeUndefined();
+    });
+
+    it('should end with target set when queryChanged is dispatched while init is pending', async () => {
+      let resolveFuncDefs: (value: unknown) => void = () => {};
+      ctx.datasource.waitForFuncDefsLoaded = jest.fn(() => new Promise((resolve) => (resolveFuncDefs = resolve)));
+      let state: GraphiteQueryEditorState | undefined;
+      const dispatch = createStore((newState) => {
+        state = newState;
+      });
+
+      const init = dispatch(actions.init(initDeps()));
+      await expect(dispatch(actions.queryChanged({ refId: 'A', target: 'test.dev.*' }))).resolves.toBeUndefined();
+      resolveFuncDefs(null);
+      await init;
+
+      expect(state?.target.target).toBe('test.prod.*');
+      expect(state?.queryModel).toBeDefined();
+    });
   });
 
   describe('init', () => {

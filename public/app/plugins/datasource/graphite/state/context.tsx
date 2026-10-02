@@ -44,11 +44,16 @@ export const GraphiteQueryEditorContext = ({
 
   // synchronise changes provided in props with editor's state
   const previousRange = usePrevious(range);
-  useEffect(() => {
-    if (JSON.stringify(previousRange?.raw) !== JSON.stringify(range?.raw)) {
-      dispatch(actions.timeRangeChanged(range));
-    }
-  }, [dispatch, range, previousRange]);
+  useEffect(
+    () => {
+      if (state && JSON.stringify(previousRange?.raw) !== JSON.stringify(range?.raw)) {
+        dispatch(actions.timeRangeChanged(range));
+      }
+    },
+    // adding state to dependencies causes infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [dispatch, range, previousRange]
+  );
 
   useEffect(
     () => {
