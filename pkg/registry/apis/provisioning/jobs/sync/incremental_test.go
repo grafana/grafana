@@ -636,6 +636,67 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 	})
 }
 
+func TestIncrementalSync_RenameQuotaGate(t *testing.T) {
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{
+		{
+			name:         "rename passes the real quota check through to RenameResourceFile",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "dashboards/recovered.json",
+						PreviousPath: "dashboards/old&path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/second.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/recovered.json").Return(false)
+				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
+
+				// The decision of whether this rename actually needs quota lives
+				// inside RenameResourceFile (real code, tested in the resources
+				// package); here just consume the one free slot via the passed
+				// check, as that code would, to prove incremental sync wired the
+				// real tracker through and not a stub -- the later plain create
+				// then has nothing left and gets blocked.
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
+					Run(func(args mock.Arguments) {
+						if quota, ok := args.Get(5).(resources.QuotaGate); ok {
+							quota.TryAcquire()
+						}
+					}).
+					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, true, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var qe *quotas.QuotaExceededError
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "dashboards/second.json" &&
+						result.Warning() != nil &&
+						errors.As(result.Warning(), &qe)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+	})
+}
+
 func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{
 		{
@@ -821,62 +882,6 @@ func TestIncrementalSync_QuotaEnforcement(t *testing.T) {
 				})).Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
 					return result.Action() == repository.FileActionCreated && result.Path() == "dashboards/new.json" && result.Error() == nil
-				})).Return()
-
-				progress.On("TooManyErrors").Return(nil)
-			},
-			previousRef: "old-ref",
-			currentRef:  "new-ref",
-		},
-		{
-			name:         "rename passes the real quota check through to RenameResourceFile",
-			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
-				changes := []repository.VersionedFileChange{
-					{
-						Action:       repository.FileActionRenamed,
-						Path:         "dashboards/recovered.json",
-						PreviousPath: "dashboards/old&path.json",
-						Ref:          "new-ref",
-						PreviousRef:  "old-ref",
-					},
-					{
-						Action: repository.FileActionCreated,
-						Path:   "dashboards/second.json",
-						Ref:    "new-ref",
-					},
-				}
-				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-				progress.On("SetTotal", mock.Anything, 2).Return()
-				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-
-				progress.On("HasDirPathFailedCreation", "dashboards/recovered.json").Return(false)
-				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
-
-				// The decision of whether this rename actually needs quota lives
-				// inside RenameResourceFile (real code, tested in the resources
-				// package); here just consume the one free slot via the passed
-				// check, as that code would, to prove incremental sync wired the
-				// real tracker through and not a stub -- the later plain create
-				// then has nothing left and gets blocked.
-				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
-					Run(func(args mock.Arguments) {
-						if quota, ok := args.Get(5).(resources.QuotaGate); ok {
-							quota.TryAcquire()
-						}
-					}).
-					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, true, nil)
-
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
-				})).Return()
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					var qe *quotas.QuotaExceededError
-					return result.Action() == repository.FileActionIgnored &&
-						result.Path() == "dashboards/second.json" &&
-						result.Warning() != nil &&
-						errors.As(result.Warning(), &qe)
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)

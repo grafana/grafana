@@ -499,32 +499,8 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	if f.ForceCreate {
-		createFieldValidation := "Strict"
-		if skipsStrictValidation(f.GVR) {
-			createFieldValidation = "Ignore"
-		}
-		f.Action = provisioning.ResourceActionCreate
-		createCtx, createSpan := tracing.Start(actionsCtx, "provisioning.resources.run_resource.force_create")
-		createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
-		f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
-			FieldValidation: createFieldValidation,
-		})
-		if err != nil {
-			createSpan.RecordError(err)
-		}
-		createSpan.End()
-
-		if err == nil {
-			return nil
-		}
-		// The existence check that set ForceCreate can be wrong (e.g. an
-		// identity/RBAC mismatch reads as NotFound) -- fall through to the
-		// same update path a normal create does on conflict, rather than
-		// failing a resource that turns out to already exist.
-		if !apierrors.IsAlreadyExists(err) {
-			return err
-		}
+	if done, err := f.forceCreate(actionsCtx); done {
+		return err
 	}
 
 	// If we don't have existing resource from DryRun or a prior check, fetch it now
@@ -614,6 +590,40 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		fallbackCreateSpan.End()
 	}
 	return err
+}
+
+// forceCreate creates the resource without Run()'s own existence check when
+// ForceCreate is set. done is true when Run should return err as is (created, or
+// failed for a reason other than the resource already existing).
+func (f *ParsedResource) forceCreate(ctx context.Context) (done bool, err error) {
+	if !f.ForceCreate {
+		return false, nil
+	}
+	createFieldValidation := "Strict"
+	if skipsStrictValidation(f.GVR) {
+		createFieldValidation = "Ignore"
+	}
+	f.Action = provisioning.ResourceActionCreate
+	createCtx, createSpan := tracing.Start(ctx, "provisioning.resources.run_resource.force_create")
+	defer createSpan.End()
+	createSpan.SetAttributes(attribute.String("resource.name", f.Obj.GetName()))
+	f.Upsert, err = f.Client.Create(createCtx, f.Obj, metav1.CreateOptions{
+		FieldValidation: createFieldValidation,
+	})
+	if err != nil {
+		createSpan.RecordError(err)
+	}
+	if err == nil {
+		return true, nil
+	}
+	// The existence check that set ForceCreate can be wrong (e.g. an
+	// identity/RBAC mismatch reads as NotFound) -- fall through to the
+	// same update path a normal create does on conflict, rather than
+	// failing a resource that turns out to already exist.
+	if !apierrors.IsAlreadyExists(err) {
+		return true, err
+	}
+	return false, nil
 }
 
 func (f *ParsedResource) ToSaveBytes() ([]byte, error) {
