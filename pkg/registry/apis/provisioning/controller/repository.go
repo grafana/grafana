@@ -1109,7 +1109,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	case hasSpecChanged:
 		reason = "spec_changed"
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	case shouldResync && !isOverQuota:
+	case shouldResync:
 		reason = "resync_interval"
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
