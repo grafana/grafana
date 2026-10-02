@@ -7,6 +7,8 @@ import { config, setBackendSrv } from '@grafana/runtime';
 import { customLoginHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { RedirectToUrlKey } from 'app/core/services/context_srv';
+import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
 import LoginPage from './LoginPage';
@@ -152,5 +154,36 @@ describe('Login Page', () => {
     expect(alert).toHaveTextContent(
       'You have exceeded the number of login attempts for this user. Please try again later.'
     );
+  });
+});
+
+describe('section login title', () => {
+  const originalToggle = config.featureToggles.useSessionStorageForRedirection;
+
+  beforeEach(() => {
+    sessionStorage.clear();
+    config.featureToggles.useSessionStorageForRedirection = true;
+  });
+
+  afterEach(() => {
+    sessionStorage.clear();
+    config.featureToggles.useSessionStorageForRedirection = originalToggle;
+  });
+
+  it('keeps the section name through login-page rerenders', async () => {
+    rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/api-latency');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/api-latency?orgId=2'));
+    const { rerender } = render(<LoginPage />);
+    expect(document.title).toBe('Dashboards - Sign in - Grafana');
+    await userEvent.type(screen.getByLabelText('Password'), 'test');
+    rerender(<LoginPage />);
+    expect(document.title).toBe('Dashboards - Sign in - Grafana');
+  });
+
+  it('uses the normal title without a matching destination', () => {
+    rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/test');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/other/test'));
+    render(<LoginPage />);
+    expect(document.title).toBe('Grafana');
   });
 });
