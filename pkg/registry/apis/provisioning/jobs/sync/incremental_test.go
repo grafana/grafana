@@ -1115,6 +1115,77 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 	}
 }
 
+func TestIncrementalSync_SameUIDDirectoryRenameDoesNotDeleteLiveFolder(t *testing.T) {
+	repo := newCompositeRepoWithConfig(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	const folderUID = "bfpam5r26j8k2b"
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionRenamed, Path: "Computations/_folder.json", PreviousPath: "audiences/_folder.json", Ref: "new-ref", PreviousRef: "old-ref"},
+		{Action: repository.FileActionRenamed, Path: "Computations/a.json", PreviousPath: "audiences/a.json", Ref: "new-ref", PreviousRef: "old-ref"},
+		{Action: repository.FileActionDeleted, Path: "audiences/b.json", PreviousRef: "old-ref"},
+	}
+	repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+	repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Path: "audiences/", Group: resources.FolderResource.Group, Name: folderUID},
+			{Path: "audiences/a.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", Folder: folderUID},
+			{Path: "audiences/b.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b", Folder: folderUID},
+		},
+	}, nil).Once()
+	repoResources.On("SetTree", mock.Anything).Return().Once()
+
+	repo.MockReader.On("Read", mock.Anything, "Computations/_folder.json", "new-ref").Return(&repository.FileInfo{
+		Data: folderJSON(t, folderUID, "Computations"),
+		Hash: "h",
+	}, nil)
+	repo.MockReader.On("Read", mock.Anything, "audiences/", "new-ref").
+		Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+
+	progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false).Maybe()
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false).Maybe()
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false).Maybe()
+
+	repoResources.On("RemoveResourceFromFile", mock.Anything, "audiences/b.json", "old-ref").
+		Return("dash-b", folderUID, schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
+	repoResources.On("RenameResourceFile", mock.Anything, "audiences/a.json", "old-ref", "Computations/a.json", "new-ref", mock.Anything, mock.Anything).
+		Return("dash-a", folderUID, schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
+	repoResources.On("EnsureFolderPathExist", mock.Anything, "Computations/", "new-ref", mock.Anything, mock.Anything).Return(folderUID, nil)
+
+	var recorded []jobs.JobResourceResult
+	progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		recorded = append(recorded, args.Get(1).(jobs.JobResourceResult))
+	}).Return()
+
+	repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+		{Path: "Computations", Blob: false},
+		{Path: "Computations/_folder.json", Blob: true},
+		{Path: "Computations/a.json", Blob: true},
+	}, nil)
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+	require.NoError(t, err)
+
+	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, folderUID)
+
+	var skipped bool
+	for _, r := range recorded {
+		require.NoError(t, r.Error(), "unexpected error for %s", r.Path())
+		if r.Path() == "audiences/" && r.Name() == folderUID {
+			require.Equal(t, repository.FileActionIgnored, r.Action())
+			require.Error(t, r.Warning())
+			skipped = true
+		}
+	}
+	require.True(t, skipped, "expected an ignored result for the live folder at its old path")
+}
+
 func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 	t.Run("flag enabled detects missing folder metadata", func(t *testing.T) {
 		mockVersioned := repository.NewMockVersioned(t)

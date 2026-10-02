@@ -114,7 +114,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
+	affectedFolders, liveFolderUIDs, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -138,6 +138,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	}
 
 	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
+	foldersToDelete = skipLiveFolders(ctx, foldersToDelete, liveFolderUIDs, progress)
 	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 
@@ -165,21 +166,24 @@ func applyIncrementalChanges(
 	folderMetadataEnabled bool,
 	relocations map[string][]string,
 	existingHashes map[string]string,
-) (affectedFolders map[string]string, err error) {
+) (affectedFolders map[string]string, liveFolderUIDs map[string]struct{}, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
 	// now empty, and if so, delete them.
 	affectedFolders = make(map[string]string)
+	// UIDs of folders written during this job; they are live in Grafana and
+	// must not be cleaned up even if their previous path is gone.
+	liveFolderUIDs = make(map[string]struct{})
 
 	sortChangesByActionPriority(diff)
 
 	for _, change := range diff {
 		if ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, nil, ctx.Err()
 		}
 		if err := progress.TooManyErrors(); err != nil {
-			return nil, tracing.Error(span, err)
+			return nil, nil, tracing.Error(span, err)
 		}
 
 		// Check if this resource is nested under a failed folder creation
@@ -207,7 +211,7 @@ func applyIncrementalChanges(
 				// Build the result before the operation so its recorded duration
 				// reflects the folder write rather than just the record call.
 				folderResultBuilder := jobs.NewFolderResult(change.Path)
-				_, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
+				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
@@ -219,6 +223,9 @@ func applyIncrementalChanges(
 					continue
 				}
 
+				if folder != "" {
+					liveFolderUIDs[folder] = struct{}{}
+				}
 				progress.Record(ensureFolderCtx, folderResultBuilder.
 					WithPath(safeSegment).
 					WithAction(repository.FileActionCreated).
@@ -252,6 +259,8 @@ func applyIncrementalChanges(
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
 					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
+				} else if folder != "" {
+					liveFolderUIDs[folder] = struct{}{}
 				}
 				folderResultBuilder.WithName(folder)
 				folderSpan.End()
@@ -280,6 +289,8 @@ func applyIncrementalChanges(
 				}
 				writeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+			} else if gvk.GroupKind() == resources.FolderKind.GroupKind() && name != "" {
+				liveFolderUIDs[name] = struct{}{}
 			}
 			resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 			writeSpan.End()
@@ -308,6 +319,8 @@ func applyIncrementalChanges(
 				if err != nil {
 					writeSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
+				} else if gvk.GroupKind() == resources.FolderKind.GroupKind() && name != "" {
+					liveFolderUIDs[name] = struct{}{}
 				}
 				resultBuilder.WithName(name).WithGVK(gvk).WithBytes(size)
 				writeSpan.End()
@@ -374,7 +387,31 @@ func applyIncrementalChanges(
 		progress.Record(ctx, resultBuilder.Build())
 	}
 
-	return affectedFolders, nil
+	return affectedFolders, liveFolderUIDs, nil
+}
+
+// skipLiveFolders drops deletions for folders whose UID was written during this
+// job (e.g. a directory renamed while keeping its _folder.json UID), recording
+// them as ignored with a warning instead.
+func skipLiveFolders(
+	ctx context.Context,
+	foldersToDelete []folderDeletion,
+	liveFolderUIDs map[string]struct{},
+	progress jobs.JobProgressRecorder,
+) []folderDeletion {
+	result := make([]folderDeletion, 0, len(foldersToDelete))
+	for _, entry := range foldersToDelete {
+		if _, ok := liveFolderUIDs[entry.UID]; ok {
+			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+				WithAction(repository.FileActionIgnored).
+				WithName(entry.UID).
+				WithWarning(fmt.Errorf("folder %s was not deleted because it is still in use at another path", entry.UID)).
+				Build())
+			continue
+		}
+		result = append(result, entry)
+	}
+	return result
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource
