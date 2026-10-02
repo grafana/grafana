@@ -72,11 +72,9 @@ func TestKvStorageBackend_ResourceVersionFailureDoesNotPersist(t *testing.T) {
 			require.Zero(t, rv)
 			require.True(t, apierrors.IsServiceUnavailable(err), "error: %v", err)
 			failures := promtest.ToFloat64(backend.metrics.ResourceVersionGenerationFailures.WithLabelValues(reason))
+			require.Equal(t, float64(1), failures)
 			if reason == resourceVersionClockRegression {
-				require.GreaterOrEqual(t, failures, float64(2))
 				require.EqualValues(t, 1, resourceVersionWaitObservation(t, backend.metrics, reason, "exhausted").GetSampleCount())
-			} else {
-				require.Equal(t, float64(1), failures)
 			}
 			_, err = backend.eventStore.LastEventKey(t.Context())
 			require.ErrorIs(t, err, ErrNotFound)
