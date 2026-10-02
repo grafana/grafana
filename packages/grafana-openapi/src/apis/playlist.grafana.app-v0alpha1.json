@@ -4,7 +4,7 @@
     "title": "playlist.grafana.app/v0alpha1"
   },
   "paths": {
-    "/": {
+    "/apis/playlist.grafana.app/v0alpha1/": {
       "get": {
         "tags": ["API Discovery"],
         "description": "Describe the available kubernetes resources",

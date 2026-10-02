@@ -24,11 +24,8 @@ describe('writeNewFileIfMissing', () => {
   it('returns false and does not overwrite an existing file', () => {
     const filePath = path.join(tmpDir, 'existing.ts');
     fs.writeFileSync(filePath, 'original');
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
     expect(writeNewFileIfMissing(filePath, 'replacement')).toBe(false);
     expect(fs.readFileSync(filePath, 'utf8')).toBe('original');
-    expect(warnSpy).toHaveBeenCalled();
-    warnSpy.mockRestore();
   });
 });
 

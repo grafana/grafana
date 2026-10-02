@@ -25,6 +25,9 @@
     "./apis/*": {
       "import": "./dist/apis/*.json",
       "require": "./dist/apis/*.json"
+    },
+    "./internal/process-spec": {
+      "@grafana-app/source": "./src/scripts/process-spec.ts"
     }
   },
   "publishConfig": {

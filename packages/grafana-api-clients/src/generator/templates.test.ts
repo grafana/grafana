@@ -48,17 +48,17 @@ describe('renderBaseAPI', () => {
   };
 
   it('includes the group, version and reducerPath in the output', () => {
-    const result = renderBaseAPI(input, variantFor(false));
+    const result = renderBaseAPI(input, variantFor(false).baseAPIImports);
     expect(result).toContain(`export const API_GROUP = 'dashboard.grafana.app' as const;`);
     expect(result).toContain(`export const API_VERSION = 'v0alpha1' as const;`);
     expect(result).toContain(`reducerPath: 'dashboardAPI'`);
   });
 
   it('uses the variant-specific imports', () => {
-    const oss = renderBaseAPI(input, variantFor(false));
+    const oss = renderBaseAPI(input, variantFor(false).baseAPIImports);
     expect(oss).toContain('../../../../utils/utils');
 
-    const ent = renderBaseAPI(input, variantFor(true));
+    const ent = renderBaseAPI(input, variantFor(true).baseAPIImports);
     expect(ent).toContain('@grafana/api-clients');
   });
 });

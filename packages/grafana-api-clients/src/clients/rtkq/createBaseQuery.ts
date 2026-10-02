@@ -38,7 +38,7 @@ export function createBaseQuery(options: CreateBaseQueryOptions): BaseQueryFn<Re
       const { data: responseData, ...meta } = await lastValueFrom(
         getBackendSrv().fetch({
           ...requestOptions,
-          url: baseURL + requestOptions.url,
+          url: requestOptions.url.startsWith('/apis/') ? requestOptions.url : baseURL + requestOptions.url,
           // Default to GET so backend_srv correctly skips success alerts for queries
           method: requestOptions.method ?? 'GET',
           showErrorAlert: requestOptions.showErrorAlert ?? false,
