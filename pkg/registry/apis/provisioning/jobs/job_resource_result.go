@@ -123,11 +123,10 @@ func isNonFailingWarning(err error) bool {
 	if err == nil {
 		return false
 	}
-	var unsupportedPathErr *resources.UnsupportedPathError
 	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
 		errors.Is(err, resources.ErrInvalidFolderMetadata) ||
 		errors.Is(err, resources.ErrResourceManagedByOtherFile) ||
-		errors.As(err, &unsupportedPathErr)
+		errors.Is(err, resources.ErrUnsupportedPath)
 }
 
 // JobResourceResult represents the result of a resource operation in a job.

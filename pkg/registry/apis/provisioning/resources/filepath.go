@@ -15,6 +15,9 @@ var (
 	ErrNotRelative              = errors.New("path must be relative to the root")
 )
 
+// ErrUnsupportedPath is a sentinel for a repository path that fails path validation.
+var ErrUnsupportedPath = errors.New("unsupported path")
+
 // UnsupportedPathError reports a repository path that fails path validation.
 type UnsupportedPathError struct {
 	Path string
@@ -25,8 +28,9 @@ func (e *UnsupportedPathError) Error() string {
 	return fmt.Sprintf("path %q is not supported: %v", e.Path, e.Err)
 }
 
-func (e *UnsupportedPathError) Unwrap() error {
-	return e.Err
+// Unwrap supports errors.Is for ErrUnsupportedPath and for the cause.
+func (e *UnsupportedPathError) Unwrap() []error {
+	return []error{ErrUnsupportedPath, e.Err}
 }
 
 const maxPathDepth = 8

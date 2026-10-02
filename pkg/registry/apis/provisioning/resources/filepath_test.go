@@ -209,8 +209,8 @@ func TestUnsupportedPathError(t *testing.T) {
 		require.EqualError(t, err, `path "folder/Backend & UI.json" is not supported: `+cause.Error())
 	})
 
-	t.Run("unwraps to the cause", func(t *testing.T) {
-		require.Equal(t, cause, err.Unwrap())
+	t.Run("matches the sentinel and the cause", func(t *testing.T) {
+		require.ErrorIs(t, err, ErrUnsupportedPath)
 		require.ErrorIs(t, err, safepath.ErrInvalidCharacters)
 		require.NotErrorIs(t, err, safepath.ErrHiddenPath)
 	})
@@ -221,6 +221,7 @@ func TestUnsupportedPathError(t *testing.T) {
 		var got *UnsupportedPathError
 		require.True(t, errors.As(wrapped, &got))
 		require.Equal(t, "folder/Backend & UI.json", got.Path)
+		require.ErrorIs(t, wrapped, ErrUnsupportedPath)
 		require.ErrorIs(t, wrapped, safepath.ErrInvalidCharacters)
 	})
 
