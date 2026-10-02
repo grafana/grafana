@@ -258,7 +258,10 @@ export function useLabelOptions(): {
   const labelOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
       // Fetch grafana groups and prefer cache when available
-      const response = await fetchGrafanaGroups({ limitAlerts: 0, groupLimit: 1000, metadataOnly: true }, true).unwrap();
+      const response = await fetchGrafanaGroups(
+        { limitAlerts: 0, groupLimit: 1000, metadataOnly: true },
+        true
+      ).unwrap();
       const labelsMap = groupsToLabels(response.data.groups);
 
       const selectable = toOptions(labelsMap);
