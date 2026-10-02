@@ -1,4 +1,4 @@
-import { createBootDataSource } from './bootDataSource';
+import { BootDataSource } from './bootDataSource';
 import { type BootDataSourceSettings, type DataSourceCacheSource } from './types';
 
 /**
@@ -6,5 +6,5 @@ import { type BootDataSourceSettings, type DataSourceCacheSource } from './types
  * source later means deleting its module and its branch here.
  */
 export function createDataSourceCacheSource(boot: BootDataSourceSettings): DataSourceCacheSource {
-  return createBootDataSource(boot);
+  return new BootDataSource(boot);
 }

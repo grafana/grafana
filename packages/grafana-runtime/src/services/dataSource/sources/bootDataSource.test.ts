@@ -2,7 +2,7 @@ import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@gra
 
 import { type BackendSrv, setBackendSrv } from '../../backendSrv';
 
-import { createBootDataSnapshot, createBootDataSource } from './bootDataSource';
+import { BootDataSource, createBootDataSnapshot } from './bootDataSource';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -82,7 +82,7 @@ describe('createBootDataSnapshot', () => {
   });
 });
 
-describe('createBootDataSource', () => {
+describe('BootDataSource', () => {
   const get = jest.fn();
 
   beforeEach(() => {
@@ -91,7 +91,7 @@ describe('createBootDataSource', () => {
   });
 
   it('builds the refreshed snapshot from a passed payload without fetching', async () => {
-    const source = createBootDataSource({ datasources: {}, defaultDatasource: '' });
+    const source = new BootDataSource({ datasources: {}, defaultDatasource: '' });
     const alpha = ds({ uid: 'uid-alpha', name: 'Alpha' });
 
     const snapshot = await source.refreshList({ datasources: { Alpha: alpha }, defaultDatasource: 'Alpha' });
@@ -101,12 +101,38 @@ describe('createBootDataSource', () => {
   });
 
   it('fetches /api/frontend/settings when refreshed without a payload', async () => {
-    const source = createBootDataSource({ datasources: {}, defaultDatasource: '' });
+    const source = new BootDataSource({ datasources: {}, defaultDatasource: '' });
     get.mockResolvedValue({ datasources: { Bravo: ds({ uid: 'uid-bravo', name: 'Bravo' }) }, defaultDatasource: '' });
 
     const snapshot = await source.refreshList();
 
     expect(get).toHaveBeenCalledWith('/api/frontend/settings');
     expect(snapshot.items.map((item) => item.uid)).toEqual(['uid-bravo']);
+  });
+
+  describe('loadSettings', () => {
+    const alpha = ds({ uid: 'uid-alpha', name: 'Alpha' });
+    const bravo = ds({ uid: 'uid-bravo', name: 'Bravo' });
+
+    it('returns the settings for a uid from the boot data it was created with', async () => {
+      const source = new BootDataSource({ datasources: { Alpha: alpha }, defaultDatasource: '' });
+
+      expect(await source.loadSettings('uid-alpha')).toBe(alpha);
+    });
+
+    it('returns undefined for a uid that is not in boot data', async () => {
+      const source = new BootDataSource({ datasources: { Alpha: alpha }, defaultDatasource: '' });
+
+      expect(await source.loadSettings('uid-unknown')).toBeUndefined();
+    });
+
+    it('answers from the latest refreshed payload', async () => {
+      const source = new BootDataSource({ datasources: { Alpha: alpha }, defaultDatasource: '' });
+
+      await source.refreshList({ datasources: { Bravo: bravo }, defaultDatasource: '' });
+
+      expect(await source.loadSettings('uid-bravo')).toBe(bravo);
+      expect(await source.loadSettings('uid-alpha')).toBeUndefined();
+    });
   });
 });
