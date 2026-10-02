@@ -8,12 +8,10 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
@@ -27,7 +25,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -383,37 +380,13 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
-		attribute.String("namespace", request.NamespaceValue(ctx)),
-		attribute.String("plugin_id", b.pluginJSON.ID),
-		attribute.String("datasource_uid", uid),
-	)
-	defer span.End()
-
-	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
-	var err error
-	var instance *backend.DataSourceInstanceSettings
+	var load func(context.Context, string) (*backend.DataSourceInstanceSettings, error)
 	if b.store != nil && b.decrypter != nil {
-		// Load from storage + decrypter (respecting dual write settings)
-		instance, err = b.getInstanceSettings(getInstanceCtx, uid)
+		load = b.getInstanceSettings
 	} else {
-		// This is backed by the datasources abstraction, NOT storage
-		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+		load = b.datasources.GetInstanceSettings
 	}
-	getInstanceSpan.End()
-	if err != nil {
-		err = tracing.Error(span, err)
-		return backend.PluginContext{}, err
-	}
-
-	buildContextCtx, buildContextSpan := tracing.Start(ctx, "datasource.getPluginContext.buildPluginContext")
-	pluginCtx, err := b.contextProvider.PluginContextForDataSource(buildContextCtx, instance)
-	buildContextSpan.End()
-	if err != nil {
-		err = tracing.Error(span, err)
-		return backend.PluginContext{}, err
-	}
-	return pluginCtx, nil
+	return ResolvePluginContext(ctx, b.pluginJSON.ID, uid, load, b.contextProvider)
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
