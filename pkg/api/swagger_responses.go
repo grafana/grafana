@@ -40,62 +40,110 @@ type OKResponse struct {
 // ForbiddenError is returned if the user/token has insufficient permissions to access the requested resource.
 //
 // swagger:response forbiddenError
-type ForbiddenError GenericError
+type ForbiddenError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // NotFoundError is returned when the requested resource was not found.
 //
 // swagger:response notFoundError
-type NotFoundError GenericError
+type NotFoundError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // BadRequestError is returned when the request is invalid and it cannot be processed.
 //
 // swagger:response badRequestError
-type BadRequestError GenericError
+type BadRequestError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.
 //
 // swagger:response notAcceptableError
-type NotAcceptableError GenericError
+type NotAcceptableError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // ConflictError
 //
 // swagger:response conflictError
-type ConflictError GenericError
+type ConflictError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // PreconditionFailedError
 //
 // swagger:response preconditionFailedError
-type PreconditionFailedError GenericError
+type PreconditionFailedError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // UnprocessableEntityError
 //
 // swagger:response unprocessableEntityError
-type UnprocessableEntityError GenericError
+type UnprocessableEntityError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // InternalServerError is a general error indicating something went wrong internally.
 //
 // swagger:response internalServerError
-type InternalServerError GenericError
+type InternalServerError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // UnauthorizedError is returned when the request is not authenticated.
 //
 // swagger:response unauthorisedError
-type UnauthorizedError GenericError
+type UnauthorizedError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // GoneError is returned when the requested endpoint was removed.
 //
 // swagger:response goneError
-type GoneError GenericError
+type GoneError struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // AcceptedResponse
 //
 // swagger:response acceptedResponse
-type AcceptedResponse GenericError
+type AcceptedResponse struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // StatusMovedPermanently
 //
 // swagger:response statusMovedPermanently
-type StatusMovedPermanentlyRedirect GenericError
+type StatusMovedPermanentlyRedirect struct {
+	// The response message
+	// in: body
+	Body ErrorResponseBody `json:"body"`
+}
 
 // documentation for PublicError defined in errutil.Error
 
@@ -128,24 +176,44 @@ type PublicError struct {
 // NotFoundPublicError is returned when the requested resource was not found.
 //
 // swagger:response notFoundPublicError
-type NotFoundPublicError PublicErrorResponse
+type NotFoundPublicError struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
 
 // BadRequestPublicError is returned when the request is invalid and it cannot be processed.
 //
 // swagger:response badRequestPublicError
-type BadRequestPublicError PublicErrorResponse
+type BadRequestPublicError struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
 
 // UnauthorisedPublicError is returned when the request is not authenticated.
 //
 // swagger:response unauthorisedPublicError
-type UnauthorisedPublicError PublicErrorResponse
+type UnauthorisedPublicError struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
 
 // ForbiddenPublicError is returned if the user/token has insufficient permissions to access the requested resource.
 //
 // swagger:response forbiddenPublicError
-type ForbiddenPublicError PublicErrorResponse
+type ForbiddenPublicError struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}
 
 // InternalServerPublicError is a general error indicating something went wrong internally.
 //
 // swagger:response internalServerPublicError
-type InternalServerPublicError PublicErrorResponse
+type InternalServerPublicError struct {
+	// The response message
+	// in: body
+	Body PublicError `json:"body"`
+}

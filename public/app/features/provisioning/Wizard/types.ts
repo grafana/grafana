@@ -9,7 +9,7 @@ export type RepoType = RepositorySpec['type'];
 
 export type GitHubBasedConnectionType = 'github' | 'githubEnterprise';
 
-export type GitHubAuthType = 'pat' | 'github-app';
+export type GitHubAuthType = 'pat' | 'github-app' | 'oauth-app';
 
 export type GitHubAppMode = 'existing' | 'new';
 

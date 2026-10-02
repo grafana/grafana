@@ -17,15 +17,15 @@ func ProvideDocumentBuilders(sql db.DB, sprinkles builders.DashboardStats) resou
 	return &StandardDocumentBuilders{sql, sprinkles}
 }
 
-func (s *StandardDocumentBuilders) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
-	all, err := builders.All(s.sql, s.sprinkles)
+func (s *StandardDocumentBuilders) GetDocumentBuilders(registry *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
+	all, err := builders.All(registry, s.sql, s.sprinkles)
 	if err != nil {
 		return nil, err
 	}
 
 	result := []resource.DocumentBuilderInfo{ //nolint:prealloc
 		{
-			Builder: resource.StandardDocumentBuilder(resource.AppManifests()),
+			Builder: resource.StandardDocumentBuilder(registry),
 		},
 	}
 	return append(result, all...), nil

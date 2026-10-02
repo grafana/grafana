@@ -23,8 +23,8 @@ var (
 )
 
 var (
-	_ authn.ContextAwareClient     = new(Anonymous)
-	_ authn.IdentityResolverClient = new(Anonymous)
+	_ authn.ContextAwareClient     = (*Anonymous)(nil)
+	_ authn.IdentityResolverClient = (*Anonymous)(nil)
 )
 
 type Anonymous struct {
@@ -63,7 +63,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	return a.newAnonymousIdentity(o), nil
 }
 
-func (a *Anonymous) IsEnabled() bool {
+func (a *Anonymous) IsEnabled(context.Context) bool {
 	return a.cfg.Anonymous.Enabled
 }
 

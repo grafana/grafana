@@ -68,14 +68,35 @@ func V21(_ context.Context, dashboard map[string]interface{}) error {
 			continue
 		}
 
-		// Update data links in panel options
-		if options, ok := panel["options"].(map[string]interface{}); ok {
-			updateDataLinks(options)
-			updateFieldOptionsLinks(options)
+		migratePanelV21(panel)
+
+		// Handle nested panels in collapsed rows
+		if !IsArray(panel["panels"]) {
+			continue
+		}
+		nestedPanels := panel["panels"].([]interface{})
+
+		for _, nestedPanel := range nestedPanels {
+			np, ok := nestedPanel.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			migratePanelV21(np)
 		}
 	}
 
 	return nil
+}
+
+// migratePanelV21 updates the data links within a single panel's options.
+func migratePanelV21(panel map[string]interface{}) {
+	options, ok := panel["options"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	updateDataLinks(options)
+	updateFieldOptionsLinks(options)
 }
 
 func updateDataLinks(options map[string]interface{}) {

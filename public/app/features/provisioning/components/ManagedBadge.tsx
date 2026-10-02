@@ -13,6 +13,8 @@ import { RepoViewStatus, useGetResourceRepositoryView } from '../hooks/useGetRes
 import { getRepoFileUrl } from '../utils/git';
 import { getManagedByRepositoryTooltip, getOrphanedRepositoryTooltip } from '../utils/tooltip';
 
+import { splitSourcePath } from './utils/path';
+
 interface ManagedBadgeProps {
   /** Which system manages the resource. When omitted, a generic "Provisioned" badge is shown. */
   managerKind?: ManagerKind;
@@ -48,7 +50,7 @@ interface ManagedBadgeProps {
 export function ManagedBadge({ managerKind, name, isOrphaned = false, repositoryName, sourcePath }: ManagedBadgeProps) {
   // The interactive variant is a separate component so the RTK Query hook only runs (and only
   // requires a store context) when a repository lookup can actually yield actions.
-  if (config.featureToggles.provisioning && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
+  if (config.provisioningEnabled && managerKind === ManagerKind.Repo && repositoryName && !isOrphaned) {
     return <RepoManagedBadge name={name} repositoryName={repositoryName} sourcePath={sourcePath} />;
   }
 
@@ -65,22 +67,6 @@ interface RepoManagedBadgeProps {
   name?: string;
   repositoryName: string;
   sourcePath?: string;
-}
-
-/**
- * The `grafana.app/sourcePath` annotation can carry a `#ref` fragment on provisioning previews
- * (see `loadProvisioningDashboard`, which appends the previewed ref). Split it off so the file
- * path stays valid and the ref can target the right branch/commit in the source link.
- */
-function splitSourcePath(sourcePath?: string): { filePath?: string; fragmentRef?: string } {
-  if (!sourcePath) {
-    return {};
-  }
-  const hashIndex = sourcePath.indexOf('#');
-  if (hashIndex <= 0) {
-    return { filePath: sourcePath };
-  }
-  return { filePath: sourcePath.substring(0, hashIndex), fragmentRef: sourcePath.substring(hashIndex + 1) };
 }
 
 /**

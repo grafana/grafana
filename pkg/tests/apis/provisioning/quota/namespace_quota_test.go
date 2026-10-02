@@ -199,7 +199,6 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 
 	// Wait for both repos to receive an initial token from the connection.
 	for _, name := range []string{repoName1, repoName2} {
-		name := name
 		require.EventuallyWithT(t, func(c *assert.CollectT) {
 			obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
 			if !assert.NoError(c, err) {

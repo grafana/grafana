@@ -18,12 +18,12 @@ const repo = { name: 'r1', title: 'R1', target: 'instance', type: 'git', workflo
 
 describe('useResourceRepositorySelection', () => {
   beforeEach(() => {
-    config.featureToggles.provisioning = true;
+    config.provisioningEnabled = true;
     mockQuery.mockReturnValue({ data: undefined });
   });
 
   it('is unavailable when provisioning is disabled', () => {
-    config.featureToggles.provisioning = false;
+    config.provisioningEnabled = false;
     const { result } = renderHook(() => useResourceRepositorySelection(resourceKindInfos.playlist));
     expect(result.current.isAvailable).toBe(false);
   });

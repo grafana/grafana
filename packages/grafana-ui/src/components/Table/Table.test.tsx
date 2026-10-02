@@ -216,6 +216,23 @@ describe('Table', () => {
         { time: '2021-01-01 02:00:00', temperature: '12', link: '${__value.text} interpolation' },
       ]);
     });
+
+    it('then the total row count and row indexes should be announced to screen readers', () => {
+      getTestContext();
+      // 4 data rows + 1 header row
+      expect(getTable()).toHaveAttribute('aria-rowcount', '5');
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows.map((row) => row.getAttribute('aria-rowindex'))).toEqual(['1', '2', '3', '4', '5']);
+    });
+
+    it('and noHeader is set, then the header row should be excluded from the row count', () => {
+      getTestContext({ noHeader: true });
+      expect(getTable()).toHaveAttribute('aria-rowcount', '4');
+
+      const rows = within(getTable()).getAllByRole('row');
+      expect(rows.map((row) => row.getAttribute('aria-rowindex'))).toEqual(['1', '2', '3', '4']);
+    });
   });
 
   describe('when mounted with footer', () => {

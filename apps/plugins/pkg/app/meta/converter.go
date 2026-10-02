@@ -1,6 +1,8 @@
 package meta
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -766,6 +768,10 @@ type grafanaComPluginManifest struct {
 // grafanaComChildPluginVersionToMetaSpec converts a child plugin version to a MetaSpec.
 // It inherits most information from the parent plugin.
 func grafanaComChildPluginVersionToMetaSpec(logger logging.Logger, child grafanaComChildPluginVersion, parent grafanaComPluginVersionMeta) (pluginsv0alpha1.MetaSpec, error) {
+	if parent.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for parent of plugin %s is missing cdnUrl", child.Slug)
+	}
+
 	cdnURL, err := url.JoinPath(parent.CDNURL, child.Path)
 	if err != nil {
 		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build CDN URL for child plugin %s: %w", child.Slug, err)
@@ -802,6 +808,17 @@ func blankPluginPlaceholder(v, placeholder string) string {
 		return ""
 	}
 	return v
+}
+
+// convertHashForSRI takes a hex-encoded SHA-256 hash (as stored in the plugin
+// manifest) and returns it in the Subresource Integrity format expected by the
+// browser: "sha256-<base64>".
+func convertHashForSRI(h string) (string, error) {
+	hb, err := hex.DecodeString(h)
+	if err != nil {
+		return "", fmt.Errorf("hex decode string: %w", err)
+	}
+	return "sha256-" + base64.StdEncoding.EncodeToString(hb), nil
 }
 
 // grafanaComPluginVersionMetaToMetaSpec converts a grafanaComPluginVersionMeta to a pluginsv0alpha1.MetaSpec.
@@ -859,6 +876,10 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		metaSpec.Signature = signature
 	}
 
+	if gcomMeta.CDNURL == "" {
+		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("grafana.com response for plugin %s is missing cdnUrl", gcomMeta.PluginSlug)
+	}
+
 	moduleURL, err := url.JoinPath(gcomMeta.CDNURL, "module.js")
 	if err != nil {
 		return pluginsv0alpha1.MetaSpec{}, fmt.Errorf("failed to build module.js URL for plugin %s: %w", gcomMeta.PluginSlug, err)
@@ -879,7 +900,14 @@ func grafanaComPluginVersionMetaToMetaSpec(logger logging.Logger, gcomMeta grafa
 		LoadingStrategy: loadingStrategy,
 	}
 	if ok {
-		module.Hash = &moduleHash
+		// The manifest stores the module hash as a raw hex SHA-256, but the frontend
+		// uses it as a Subresource Integrity value, which must be "sha256-<base64>".
+		sri, err := convertHashForSRI(moduleHash)
+		if err != nil {
+			logger.Warn("Failed to convert module hash to SRI format", "pluginId", gcomMeta.PluginSlug, "version", gcomMeta.Version, "error", err)
+		} else {
+			module.Hash = &sri
+		}
 	}
 	metaSpec.Module = module
 	metaSpec.BaseURL = gcomMeta.CDNURL

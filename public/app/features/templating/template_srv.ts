@@ -132,6 +132,9 @@ export class TemplateSrv implements BaseTemplateSrv {
    * @deprecated
    * Use filters property on the request (DataQueryRequest) or if this is called from
    * interpolateVariablesInQueries or applyTemplateVariables it is passed as a new argument
+   *
+   * Must stay sync: plugins and @grafana/scenes still call this as AdHocVariableFilter[].
+   * Making it async crashes query editors (Promise is not an array).
    **/
   getAdhocFilters(datasourceName: string, skipDeprecationWarning?: boolean): AdHocVariableFilter[] {
     let filters: AdHocVariableFilter[] = [];

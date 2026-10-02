@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -365,6 +366,12 @@ func (s *Manager) registerStream(ctx context.Context, sr submitRequest) {
 
 // Run Manager till context canceled.
 func (s *Manager) Run(ctx context.Context) error {
+	// The provided context is the long-lived background-service context, which
+	// carries the process-lifetime server startup span. Streams started from it
+	// would all join that single trace, so every streaming query in the process
+	// would share one trace ID. Detach the span context so that each stream run
+	// starts a trace of its own.
+	ctx = trace.ContextWithSpanContext(ctx, trace.SpanContext{})
 	s.baseCtx = ctx
 	for {
 		select {

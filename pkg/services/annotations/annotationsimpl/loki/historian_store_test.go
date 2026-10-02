@@ -30,7 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	mockDashSvc := testutil.NewMockDashboardService(t)
 
@@ -378,7 +378,7 @@ func TestIntegrationAlertStateHistoryStore(t *testing.T) {
 			})
 			require.Len(t, items, numTransitions)
 
-			for i := 0; i < numTransitions; i++ {
+			for i := range numTransitions {
 				item := items[i]
 				transition := transitions[i]
 
@@ -640,7 +640,7 @@ func TestBuildTransition(t *testing.T) {
 
 func createTestLokiStore(t *testing.T, sql *sqlstore.SQLStore, client lokiQueryClient) *LokiHistorianStore {
 	t.Helper()
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 
 	return &LokiHistorianStore{
 		client:    client,
@@ -669,7 +669,7 @@ func createAlertRule(t *testing.T, sql *sqlstore.SQLStore, title string, generat
 	rule.DashboardUID = nil
 	rule.PanelID = nil
 
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
@@ -701,7 +701,7 @@ func createAlertRuleFromDashboard(t *testing.T, sql *sqlstore.SQLStore, title st
 	if rule.PanelID == nil || (rule.PanelID != nil && *rule.PanelID != *panelID) {
 		rule.PanelID = panelID
 	}
-	ruleStore := store.SetupStoreForTesting(t, sql)
+	ruleStore := rulestore.SetupStoreForTesting(t, sql)
 	ids, err := ruleStore.InsertAlertRules(context.Background(), nil, []ngmodels.InsertRule{{AlertRule: rule}})
 	require.NoError(t, err)
 	result, err := ruleStore.GetAlertRuleByUID(context.Background(), &ngmodels.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: ids[0].UID})
@@ -747,7 +747,7 @@ func genStateTransitions(t *testing.T, num int, start time.Time) []state.StateTr
 		},
 	}
 
-	for i := 0; i < num; i++ {
+	for i := range num {
 		stateVal := rand.Intn(4)
 		if stateVal == int(lastState.State) {
 			stateVal = (stateVal + 1) % 4

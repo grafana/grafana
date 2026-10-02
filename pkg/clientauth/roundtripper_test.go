@@ -197,6 +197,33 @@ func TestNewTokenExchangeTransportWrapper(t *testing.T) {
 	require.Equal(t, "test-namespace", exchanger.gotReq.Namespace)
 }
 
+func TestNewStaticTokenExchangeAuthorizationTransportWrapper(t *testing.T) {
+	exchanger := &fakeExchanger{resp: &authn.TokenExchangeResponse{Token: "wrapped-token"}}
+
+	var authorization, accessToken string
+	baseTransport := roundTripperFunc(func(r *http.Request) (*http.Response, error) {
+		authorization = r.Header.Get("Authorization")
+		accessToken = r.Header.Get("X-Access-Token")
+		rr := httptest.NewRecorder()
+		rr.WriteHeader(http.StatusOK)
+		return rr.Result(), nil
+	})
+
+	wrapper := NewStaticTokenExchangeAuthorizationTransportWrapper(exchanger, "test-audience", "test-namespace")
+	req, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
+	resp, err := wrapper(baseTransport).RoundTrip(req)
+	require.NoError(t, err)
+	_ = resp.Body.Close()
+
+	// The exchanged token must go in Authorization, not X-Access-Token, for
+	// apiservers that authenticate a standard bearer token.
+	require.Equal(t, "Bearer wrapped-token", authorization)
+	require.Empty(t, accessToken)
+	require.NotNil(t, exchanger.gotReq)
+	require.Equal(t, []string{"test-audience"}, exchanger.gotReq.Audiences)
+	require.Equal(t, "test-namespace", exchanger.gotReq.Namespace)
+}
+
 func TestTokenExchangeRoundTripperWithStrategies(t *testing.T) {
 	tests := []struct {
 		name              string

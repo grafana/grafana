@@ -1,7 +1,9 @@
 package setting
 
 import (
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,6 +43,81 @@ func TestLoadAnnotationAppPlatformSettings(t *testing.T) {
 
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedMaxScopeCount, settings.MaxScopeCount)
+			})
+		}
+	})
+
+	t.Run("RetentionTTL", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			iniValue    *string
+			expectedTTL time.Duration
+			expectErr   bool
+		}{
+			{name: "default when key absent is disabled", expectedTTL: 0},
+			{name: "empty value is disabled", iniValue: new(""), expectedTTL: 0},
+			{name: "zero is disabled", iniValue: new("0"), expectedTTL: 0},
+			{name: "explicit positive", iniValue: new("2160h"), expectedTTL: 2160 * time.Hour},
+			{name: "negative is rejected", iniValue: new("-1h"), expectErr: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				iniFile := ini.Empty()
+				if tc.iniValue != nil {
+					section, err := iniFile.NewSection("annotations.app_platform")
+					require.NoError(t, err)
+
+					_, err = section.NewKey("retention_ttl", *tc.iniValue)
+					require.NoError(t, err)
+				}
+
+				settings, err := loadAnnotationAppPlatformSettings(&Cfg{Raw: iniFile})
+				if tc.expectErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTTL, settings.RetentionTTL)
+			})
+		}
+	})
+
+	t.Run("FolderCacheTTL", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			enabled     bool
+			iniValue    *string
+			expectedTTL time.Duration
+			expectErr   bool
+		}{
+			{name: "default when key absent", enabled: true, expectedTTL: 30 * time.Second},
+			{name: "explicit positive", enabled: true, iniValue: new("1m"), expectedTTL: time.Minute},
+			{name: "zero is rejected when enabled", enabled: true, iniValue: new("0"), expectErr: true},
+			{name: "negative is rejected when enabled", enabled: true, iniValue: new("-1s"), expectErr: true},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				iniFile := ini.Empty()
+				section, err := iniFile.NewSection("annotations.app_platform")
+				require.NoError(t, err)
+				_, err = section.NewKey("folder_cache_enabled", strconv.FormatBool(tc.enabled))
+				require.NoError(t, err)
+				if tc.iniValue != nil {
+					_, err = section.NewKey("folder_cache_ttl", *tc.iniValue)
+					require.NoError(t, err)
+				}
+
+				settings, err := loadAnnotationAppPlatformSettings(&Cfg{Raw: iniFile})
+				if tc.expectErr {
+					assert.Error(t, err)
+					return
+				}
+
+				require.NoError(t, err)
+				assert.Equal(t, tc.expectedTTL, settings.FolderCacheTTL)
 			})
 		}
 	})

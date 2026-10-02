@@ -1,5 +1,6 @@
 import { type Page } from '@playwright/test';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { test, expect } from '@grafana/plugin-e2e';
 
 // Enable required feature toggles for Saved Searches (part of RuleList.v2)
@@ -22,7 +23,7 @@ const ui = {
   // Despite being styled/labelled "dropdown" in SavedSearches.tsx, it renders with role="dialog" —
   // not a native dropdown/listbox/combobox — hence the role-matching name here.
   savedSearchesDialog: (page: Page) => page.getByRole('dialog', { name: /saved searches/i }),
-  searchInput: (page: Page) => page.getByTestId('search-query-input'),
+  searchInput: (page: Page) => page.getByTestId(selectors.pages.Alerting.searchInput),
 
   // Save functionality
   saveButton: (page: Page) => page.getByRole('button', { name: /save current search/i }),

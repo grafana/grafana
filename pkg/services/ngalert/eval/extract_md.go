@@ -10,6 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/classic"
 )
 
+// extractEvalString renders the captures, or the classic evaluation matches, attached to
+// a frame. The sort below is stable, so captures that share a Var keep the order
+// attachCaptureValues gave them. See compareCaptures for why that order matters.
 func extractEvalString(frame *data.Frame) (s string) {
 	if frame == nil {
 		return "empty frame"
@@ -46,7 +49,7 @@ func extractEvalString(frame *data.Frame) (s string) {
 
 	if captures, ok := frame.Meta.Custom.([]NumberValueCapture); ok {
 		// Sort captures in ascending order of "Var" so we can assert in tests
-		sort.Slice(captures, func(i, j int) bool {
+		sort.SliceStable(captures, func(i, j int) bool {
 			return captures[i].Var < captures[j].Var
 		})
 		sb := strings.Builder{}

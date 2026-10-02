@@ -33,7 +33,6 @@ function layerState(name: string): MapLayerState {
     layer: { name } as unknown as MapLayerState['layer'],
     handler: {} as MapLayerState['handler'],
     onChange: jest.fn(),
-    mouseEvents: {} as MapLayerState['mouseEvents'],
     getName: () => name,
   };
 }

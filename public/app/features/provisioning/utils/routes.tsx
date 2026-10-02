@@ -20,17 +20,14 @@ import {
 // `provisioning.repositories:read` is granted to the Viewer basic role (git-sync flows need it).
 const adminRoles = () => contextSrv.evaluatePermission([AccessControlAction.ProvisioningRepositoriesWrite]);
 
-// Connection pages have their own RBAC actions; custom roles may grant connection management
-// without repository write access.
-const connectionRoles = () =>
-  contextSrv.evaluatePermission([
-    AccessControlAction.ProvisioningConnectionsCreate,
-    AccessControlAction.ProvisioningConnectionsWrite,
-  ]);
+// Connection pages have their own RBAC actions; guards mirror the verb each page
+// performs against the connections API (create for the new-connection page; write
+// for edit and for the OAuth callback, whose /authorize exchange mutates secrets).
+const connectionCreateRole = () => contextSrv.evaluatePermission([AccessControlAction.ProvisioningConnectionsCreate]);
+const connectionWriteRole = () => contextSrv.evaluatePermission([AccessControlAction.ProvisioningConnectionsWrite]);
 
 export function getProvisioningRoutes(): RouteDescriptor[] {
-  const featureToggles = config.featureToggles || {};
-  if (!featureToggles.provisioning) {
+  if (!config.provisioningEnabled) {
     return [];
   }
 
@@ -68,8 +65,18 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: `${CONNECTIONS_URL}/oauth-callback`,
+      roles: connectionWriteRole,
+      component: SafeDynamicImport(
+        () =>
+          import(
+            /* webpackChunkName: "ConnectionOAuthCallbackPage"*/ 'app/features/provisioning/Connection/ConnectionOAuthCallbackPage'
+          )
+      ),
+    },
+    {
       path: `${CONNECTIONS_URL}/:name/edit`,
-      roles: connectionRoles,
+      roles: connectionWriteRole,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')
@@ -77,7 +84,7 @@ export function getProvisioningRoutes(): RouteDescriptor[] {
     },
     {
       path: `${CONNECTIONS_URL}/new`,
-      roles: connectionRoles,
+      roles: connectionCreateRole,
       component: SafeDynamicImport(
         () =>
           import(/* webpackChunkName: "ConnectionFormPage"*/ 'app/features/provisioning/Connection/ConnectionFormPage')

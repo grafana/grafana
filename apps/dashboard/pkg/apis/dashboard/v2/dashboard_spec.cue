@@ -153,6 +153,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 // Using transformations you can: rename fields, join time series data, perform mathematical operations across queries,
 // use the output of one transformation as the input to another transformation, etc.
 TransformationSpec: {
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -289,7 +291,9 @@ MatcherConfig: {
 Threshold: {
 	// Value null means -Infinity
 	value: number | null
-	color: string
+	// Optional dashboard-variable expression (e.g. `$myVar`) resolved at render time; `value` is the numeric fallback when the expression cannot be resolved to a single finite number.
+	valueExpr?: string
+	color:      string
 }
 
 ThresholdsMode: "absolute" | "percentage"
@@ -505,6 +509,7 @@ AnnotationQueryKind: {
 
 QueryOptionsSpec: {
 	timeFrom?:         string
+	timeTo?:           string
 	maxDataPoints?:    int
 	timeShift?:        string
 	queryCachingTTL?:  int
@@ -667,12 +672,18 @@ AutoGridLayoutKind: {
 }
 
 AutoGridLayoutSpec: {
-	maxColumnCount?: number | *3
-	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
-	columnWidth?:    number
-	rowHeightMode:   "short" | *"standard" | "tall" | "custom"
-	rowHeight?:      number
-	fillScreen?:     bool | *false
+	maxColumnCount?:  number | *3
+	columnWidthMode:  "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?:     number
+	rowHeightMode:    "short" | *"standard" | "tall" | "custom"
+	rowHeight?:       number
+	fillScreen?:      bool | *false
+	fitContent?:      bool | *false
+	minHeightMode?:   "none" | "short" | "standard" | "tall" | "custom"
+	minHeight?:       number
+	maxHeightMode?:   "unlimited" | "short" | "standard" | "tall" | "custom"
+	maxHeight?:       number
+	matchRowHeights?: bool | *true
 	items: [...AutoGridLayoutItemKind]
 }
 
@@ -685,6 +696,7 @@ AutoGridLayoutItemSpec: {
 	element:               ElementReference
 	repeat?:               AutoGridRepeatOptions
 	conditionalRendering?: ConditionalRenderingGroupKind
+	fitContent?:           bool
 }
 
 TabsLayoutKind: {
@@ -710,9 +722,12 @@ TabsLayoutTabSpec: {
 }
 
 PanelSpec: {
-	id:          number
-	title:       string
-	description: string
+	id:    number
+	title: string
+	// Shown in a info icon tooltip next to panel title
+	description?: string
+	// Shown in a sub header below the title.
+	subtitle?: string
 	links: [...DataLink]
 	data:         QueryGroupKind
 	vizConfig:    VizConfigKind

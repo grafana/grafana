@@ -25,6 +25,33 @@ const (
 	defaultTagCacheSize    = 1000
 )
 
+// annotationColumns is the column order for the bound columns of an
+// annotation row. It is the single source of truth for every INSERT (single-row
+// Create and bulk backfill), so the column list and its count cannot drift
+// apart.
+var annotationColumns = []string{
+	"namespace", "name", "time", "time_end", "dashboard_uid", "panel_id",
+	"text", "tags", "scopes", "created_by", "created_at", "legacy_id", "legacy_data",
+}
+
+var (
+	annotationColumnsSQL  = strings.Join(annotationColumns, ", ")
+	annotationColumnCount = len(annotationColumns)
+
+	// insertAnnotationSQL is the single-row INSERT used by Create, built from
+	// the shared column list so it stays in sync with the bulk backfill path.
+	insertAnnotationSQL = buildSingleRowInsertSQL()
+)
+
+func buildSingleRowInsertSQL() string {
+	placeholders := make([]string, annotationColumnCount)
+	for i := range placeholders {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	}
+	return fmt.Sprintf("INSERT INTO annotations (%s) VALUES (%s)",
+		annotationColumnsSQL, strings.Join(placeholders, ", "))
+}
+
 type PostgreSQLStoreConfig struct {
 	ConnectionString string
 	MaxConnections   int
@@ -129,6 +156,7 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
 		FROM annotations
 		WHERE namespace = $1 AND name = $2
+		ORDER BY time_end DESC
 		LIMIT 1
 	`
 
@@ -162,15 +190,13 @@ func (s *PostgreSQLStore) Get(ctx context.Context, namespace, name string) (*ann
 
 // Create creates a new annotation
 func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotation) (*annotationV0.Annotation, error) {
-	// Ensure partition exists for this timestamp
-	if err := ensurePartition(ctx, s.pool, s.logger, anno.Spec.Time); err != nil {
-		return nil, fmt.Errorf("failed to ensure partition: %w", err)
-	}
-
 	namespace := anno.Namespace
 	name := anno.Name
 	timeMs := anno.Spec.Time
-	timeEnd := anno.Spec.TimeEnd
+	timeEnd := timeMs
+	if anno.Spec.TimeEnd != nil {
+		timeEnd = *anno.Spec.TimeEnd
+	}
 	dashboardUID := anno.Spec.DashboardUID
 	panelID := anno.Spec.PanelID
 	text := anno.Spec.Text
@@ -189,13 +215,11 @@ func (s *PostgreSQLStore) Create(ctx context.Context, anno *annotationV0.Annotat
 		legacyData = &d
 	}
 
-	query := `
-		INSERT INTO annotations
-		(namespace, name, time, time_end, dashboard_uid, panel_id, text, tags, scopes, created_by, created_at, legacy_id, legacy_data)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-	`
+	if err := ensurePartition(ctx, s.pool, timeEnd); err != nil {
+		return nil, fmt.Errorf("failed to ensure partition: %w", err)
+	}
 
-	_, err := s.pool.Exec(ctx, query,
+	_, err := s.pool.Exec(ctx, insertAnnotationSQL,
 		namespace, name, timeMs, timeEnd, dashboardUID, panelID,
 		text, pq.Array(tags), pq.Array(scopes), createdBy, createdAt, legacyID, legacyData,
 	)
@@ -365,8 +389,7 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 	}
 
 	if opts.From > 0 {
-		// Check against time for point annotations and time_end for range annotations
-		conditions = append(conditions, fmt.Sprintf("((time_end IS NULL AND time >= $%d) OR (time_end IS NOT NULL AND time_end >= $%d))", argNum, argNum))
+		conditions = append(conditions, fmt.Sprintf("time_end >= $%d", argNum))
 		args = append(args, opts.From)
 		argNum++
 	}
@@ -423,18 +446,18 @@ func buildListQuery(namespace string, opts ListOptions, offset, limit int64) (st
 		argNum++
 	}
 
-	// Construct query
-	query := `
-		SELECT namespace, name, time, time_end, dashboard_uid, panel_id,
-		       text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at
-		FROM annotations
-		WHERE ` + strings.Join(conditions, " AND ") + `
-		ORDER BY time DESC, name
-	`
+	cols := `namespace, name, time, time_end, dashboard_uid, panel_id,
+	         text, tags, scopes, created_by, created_at, legacy_id, legacy_data, deleted_at`
+	where := strings.Join(conditions, " AND ")
 
-	// Add pagination
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argNum, argNum+1)
-	args = append(args, limit+1, offset) // Request one extra to detect more results for pagination
+	query := fmt.Sprintf(`
+		SELECT %[1]s FROM annotations
+		WHERE %[2]s
+		ORDER BY time_end DESC, time DESC, name
+		LIMIT $%[3]d OFFSET $%[4]d
+	`, cols, where, argNum, argNum+1)
+
+	args = append(args, limit+1, offset)
 
 	return query, args
 }

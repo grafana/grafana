@@ -20,7 +20,7 @@ func TestIntegrationFetchOrgIds(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("returns empty result when no orgs exist", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		store := &DBstore{SQLStore: sqlStore}
 		orgIDs, err := store.FetchOrgIds(ctx)
 		require.NoError(t, err)
@@ -28,7 +28,7 @@ func TestIntegrationFetchOrgIds(t *testing.T) {
 	})
 
 	t.Run("returns all org IDs", func(t *testing.T) {
-		sqlStore := db.InitTestDB(t)
+		sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 		store := &DBstore{SQLStore: sqlStore}
 		orgService, err := testutil.SetupOrgService(t, sqlStore, setting.NewCfg())
 		require.NoError(t, err)

@@ -3,6 +3,7 @@ package provisioning
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -47,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	informer "github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -85,6 +87,7 @@ var (
 	_ builder.APIGroupMutation              = (*APIBuilder)(nil)
 	_ builder.APIGroupValidation            = (*APIBuilder)(nil)
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
+	_ builder.APIGroupResourceProvider      = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
 )
@@ -124,6 +127,7 @@ type APIBuilder struct {
 	repoStore           grafanarest.Storage
 	repoLister          repository.RepositoryByConnectionLister
 	repoValidator       repository.Validator
+	repoValidatorOpts   []repository.ValidatorOption
 	connectionStore     grafanarest.Storage
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
@@ -159,10 +163,11 @@ type APIBuilder struct {
 	incrementalPolicy             repository.IncrementalSyncPolicy
 	webhookSecretRotationInterval time.Duration
 	// controllerResyncInterval is the informer re-list interval for the
-	// repository, connection, and job controllers; historyExpiration is both the
+	// repository and connection controllers; historyExpiration is both the
 	// HistoricJob retention and the historic-job informer's resync;
-	// jobPollInterval is the job driver's fallback poll for new jobs. All fall
-	// back to their defaults when <=0 (see the controller post-start hook).
+	// jobPollInterval is the jobs informer's resync — the job driver's recovery
+	// cadence for unclaimed jobs missed by live events. All fall back to their
+	// defaults when <=0 (see the controller post-start hook).
 	controllerResyncInterval time.Duration
 	historyExpiration        time.Duration
 	jobPollInterval          time.Duration
@@ -173,6 +178,12 @@ type APIBuilder struct {
 	// handler on each notification; the controllers re-fetch from the API in their
 	// reconcile. Otherwise the controllers use the apiserver informer.
 	natsSubscriber nats.Subscriber
+
+	// keysOnlyReList makes the connection informer's periodic re-list ask storage
+	// for keys instead of whole objects. Off by default: it changes what the
+	// informer feeds its Store, so it is validated per deployment before the
+	// default flips.
+	keysOnlyReList bool
 }
 
 // NewAPIBuilder creates an API builder for the provisioning API.
@@ -338,12 +349,11 @@ func RegisterAPIService(
 	quotaGetter quotas.QuotaGetter,
 	natsSubscriber nats.Subscriber,
 ) (*APIBuilder, error) {
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+	if !cfg.ProvisioningEnabled {
 		return nil, nil
 	}
 
-	allowedTargets := []provisioning.SyncTargetType{}
+	allowedTargets := make([]provisioning.SyncTargetType, 0, len(cfg.ProvisioningAllowedTargets))
 	for _, target := range cfg.ProvisioningAllowedTargets {
 		allowedTargets = append(allowedTargets, provisioning.SyncTargetType(target))
 	}
@@ -357,6 +367,18 @@ func RegisterAPIService(
 	folderMetadataEnabled := features.IsEnabledGlobally(featuremgmt.FlagProvisioningFolderMetadata) //nolint:staticcheck
 	maxFileSize := cfg.ProvisioningMaxFileSize
 	incrementalPolicy := repository.NewIncrementalSyncPolicy(folderMetadataEnabled, cfg.ProvisioningMaxIncrementalChanges)
+	provisioningSec := cfg.SectionWithEnvOverrides("provisioning")
+
+	// allowed_git_urls contain an allowlist of Git URLs that are allowed to be used for Git repositories.
+	// It should contain enpoints that otherwise would be blocked by the URL validator.
+	allowListConfig := provisioningSec.Key("allowed_git_urls").Strings(",")
+	allowlist, err := repository.NewAllowlist(allowListConfig)
+	if err != nil {
+		return nil, fmt.Errorf("invalid allowed_git_urls configuration: %w", err)
+	}
+	urlValidator := repository.NewURLValidator(allowlist, net.DefaultResolver.LookupIPAddr)
+	keysOnlyReList := provisioningSec.Key("keys_only_relist").MustBool(false)
+	repoValidatorOpts := []repository.ValidatorOption{repository.WithURLValidator(urlValidator)}
 
 	// Register v0alpha1 (preferred version)
 	builder, err := NewAPIBuilder(
@@ -394,6 +416,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	builder.repoValidatorOpts = repoValidatorOpts
 	builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -401,6 +424,7 @@ func RegisterAPIService(
 	builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	builder.natsSubscriber = natsSubscriber
+	builder.keysOnlyReList = keysOnlyReList
 	apiregistration.RegisterAPI(builder)
 
 	// Register v1beta1
@@ -439,6 +463,7 @@ func RegisterAPIService(
 	if err != nil {
 		return nil, err
 	}
+	v1beta1Builder.repoValidatorOpts = repoValidatorOpts
 	v1beta1Builder.webhookSecretRotationInterval = cfg.ProvisioningWebhookSecretRotationInterval
 	v1beta1Builder.syncResourceTimeout = cfg.ProvisioningSyncResourceTimeout
 	v1beta1Builder.controllerResyncInterval = cfg.ProvisioningControllerResyncInterval
@@ -446,6 +471,7 @@ func RegisterAPIService(
 	v1beta1Builder.jobPollInterval = cfg.ProvisioningJobPollInterval
 	v1beta1Builder.usageNamespaceLister = usage.UsageNamespaceLister(cfg, orgSvc)
 	v1beta1Builder.natsSubscriber = natsSubscriber
+	v1beta1Builder.keysOnlyReList = keysOnlyReList
 	apiregistration.RegisterAPI(v1beta1Builder)
 
 	// Return the preferred (v0alpha1) builder since it runs controllers/workers
@@ -684,6 +710,16 @@ func (b *APIBuilder) authorizeConnectionSubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
+	// Authorize mutates the connection secrets, so it requires write access
+	case "authorize":
+		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
+			Verb:      apiutils.VerbUpdate,
+			Group:     provisioning.GROUP,
+			Resource:  provisioning.ConnectionResourceInfo.GetName(),
+			Name:      a.GetName(),
+			Namespace: a.GetNamespace(),
+		}, ""))
+
 	default:
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
@@ -723,6 +759,18 @@ func (b *APIBuilder) authorizeDefault(ctx context.Context) (authorizer.Decision,
 
 func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 	return b.gv
+}
+
+func (b *APIBuilder) GetResourceInfos(schema.GroupVersion) []apiutils.ResourceInfo {
+	infos := []apiutils.ResourceInfo{
+		provisioning.RepositoryResourceInfo,
+		provisioning.ConnectionResourceInfo,
+		provisioning.JobResourceInfo,
+	}
+	if b.jobHistoryConfig == nil || b.jobHistoryConfig.Loki == nil {
+		infos = append(infos, provisioning.HistoricJobResourceInfo)
+	}
+	return infos
 }
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
@@ -806,7 +854,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	b.admissionHandler = appadmission.NewHandler()
 
 	// Repository mutator and validator
-	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory)
+	b.repoValidator = repository.NewValidator(b.allowImageRendering, b.repoFactory, b.repoValidatorOpts...)
 
 	existingReposValidator := repository.NewVerifyAgainstExistingRepositoriesValidator(b.repoLister, b.quotaGetter)
 	connWebhookValidator := repogithub.NewConnectionWebhookValidator(b)
@@ -885,6 +933,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	storage[provisioning.ConnectionResourceInfo.StoragePath("status")] = connectionStatusStorage
 	storage[provisioning.ConnectionResourceInfo.StoragePath("repositories")] = WithTimeout(NewConnectionRepositoriesConnector(b), 30*time.Second)
+	storage[provisioning.ConnectionResourceInfo.StoragePath("authorize")] = WithTimeout(NewConnectionAuthorizeConnector(b), 30*time.Second)
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	testTester := repository.NewTester(b.repoValidator, existingReposValidator)
@@ -989,8 +1038,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			}
 
 			// Informer resync interval used for health check and reconciliation of
-			// the repository, connection, and job controllers. Configurable via
-			// [provisioning] resync_interval; <=0 falls back to the default.
+			// the repository and connection controllers (the jobs informer uses
+			// job_poll_interval, below). Configurable via [provisioning]
+			// resync_interval; <=0 falls back to the default.
 			informerFactoryResyncInterval := b.controllerResyncInterval
 			if informerFactoryResyncInterval <= 0 {
 				informerFactoryResyncInterval = setting.ProvisioningControllerResyncIntervalDefault
@@ -998,14 +1048,12 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			if nats.Enabled(b.natsSubscriber) {
 				logging.DefaultLogger.Info("provisioning controllers using NATS-backed informer")
 			}
-			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, b.unified)
+			usageMetricCollector := usage.MetricCollector(b.tracer, b.usageNamespaceLister, b.repoLister.List, connection.NewStorageLister(b.connectionStore).List, b.unified)
 			b.usageStats.RegisterMetricsFunc(usageMetricCollector)
 
 			metrics := jobs.RegisterJobMetrics(b.registry)
 
 			stageIfPossible := repository.WrapWithStageAndPushIfPossible
-
-			exportEnabled := b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport) //nolint:staticcheck
 
 			// Standalone export generates new UIDs so exported files don't
 			// reference existing resource identifiers.
@@ -1016,7 +1064,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAllWithNewUIDs,
 				stageIfPossible,
 				metrics,
-				exportEnabled,
 			)
 
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync, b.tracer, 10, metrics, b.folderMetadataEnabled, b.syncResourceTimeout) //nolint:staticcheck
@@ -1040,7 +1087,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				export.ExportAll,
 				stageIfPossible,
 				metrics,
-				exportEnabled,
 			)
 			cleaner := migrate.NewNamespaceCleaner(b.clients)
 			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
@@ -1050,7 +1096,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 			migrationWorker := migrate.NewMigrationWorker(
 				unifiedStorageMigrator,
-				b.features.IsEnabled(postStartHookCtx.Context, featuremgmt.FlagProvisioningExport), //nolint:staticcheck
 			)
 
 			deleteWorker := deletepkg.NewWorker(syncWorker, stageIfPossible, b.repositoryResources, metrics)
@@ -1075,14 +1120,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				releaseResourcesWorker,
 				syncWorker,
 			)
-
-			// Create JobController to handle job create notifications
-			jobController := appcontroller.NewJobController()
-			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
-			if _, err := jobSource.AddEventHandler(jobController.EventHandler()); err != nil {
-				return fmt.Errorf("add job controller event handler: %w", err)
-			}
-			go jobSource.Run(postStartHookCtx.Done())
 
 			// Add any extra workers
 			workers = append(workers, b.extraWorkers...)
@@ -1112,9 +1149,11 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// considered abandoned.
 			leaseRenewalInterval := jobClaimExpiry / 3
 
-			// Fallback poll for new jobs; the driver is also woken immediately by
-			// the job-create notification. Configurable via [provisioning]
-			// job_poll_interval; <=0 falls back to the default.
+			// The jobs informer resyncs on job_poll_interval (default 30s) rather
+			// than the controllers' resync_interval, preserving the job pickup
+			// cadence (and config key) of the polling design this replaced. The
+			// driver gets the same value so its post-claim cooldown tracks the
+			// configured recovery cadence.
 			jobPollInterval := b.jobPollInterval
 			if jobPollInterval <= 0 {
 				jobPollInterval = setting.ProvisioningJobPollIntervalDefault
@@ -1124,17 +1163,28 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			driver, err := jobs.NewConcurrentJobDriver(
 				3,                    // 3 drivers for now
 				20*time.Minute,       // Max time for each job
-				jobPollInterval,      // Periodically look for new jobs
+				jobPollInterval,      // Jobs informer resync = post-claim cooldown
 				leaseRenewalInterval, // Lease renewal interval
 				b.jobs, repoGetter, jobHistoryWriter,
-				jobController.InsertNotifications(),
 				b.registry,
 				&metrics,
+				nats.Enabled(b.natsSubscriber),
 				workers...,
 			)
 			if err != nil {
 				return err
 			}
+
+			// Feed the driver's work queue from the jobs informer: live create
+			// events plus the periodic resync/re-list, which re-delivers unclaimed
+			// jobs and is the driver's only recovery path. The handler must be
+			// registered before the informer runs: the NATS-backed source has no
+			// cache to replay for late handlers.
+			jobSource := informer.NewJobDeltaSource(b.natsSubscriber, c, jobPollInterval, b.registry)
+			if _, err := jobSource.AddEventHandler(driver.EventHandler()); err != nil {
+				return fmt.Errorf("add job event handler: %w", err)
+			}
+			go jobSource.Run(postStartHookCtx.Done())
 
 			go func() {
 				if err := driver.Run(postStartHookCtx.Context); err != nil {
@@ -1176,6 +1226,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				controller.NewRepositoryQuotaChecker(reconcileRepoGetter),
 				b.incrementalPolicy,
 				webhookSecretRotationInterval,
+				nats.Enabled(b.natsSubscriber),
 			)
 			repoReg, err := repoSource.AddEventHandler(repoController.EventHandler())
 			if err != nil {
@@ -1197,7 +1248,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			connStatusPatcher := appcontroller.NewConnectionStatusPatcher(b.GetClient())
 			connTester := connection.NewSimpleConnectionTester(b.connectionFactory)
 			connHealthChecker := controller.NewConnectionHealthChecker(connTester, healthMetricsRecorder)
-			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, informerFactoryResyncInterval)
+			// nil keeps the full-object re-list; see NewConnectionDeltaSource.
+			var connKeys keysapi.Lister
+			if b.keysOnlyReList {
+				connKeys = keysapi.NewGRPCLister(b.unified, provisioning.ConnectionResourceInfo.GroupVersionResource())
+				logging.FromContext(postStartHookCtx.Context).Info("provisioning re-list will ask for keys only", "transport", "storage")
+			}
+			connSource, connGetter := informer.NewConnectionDeltaSource(b.natsSubscriber, c, connKeys, informerFactoryResyncInterval, b.registry)
 			connController := controller.NewConnectionController(
 				connGetter,
 				connStatusPatcher,
@@ -1206,6 +1263,8 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				informerFactoryResyncInterval,
 				30*time.Second,
 				b.registry,
+				b.tracer,
+				nats.Enabled(b.natsSubscriber),
 			)
 			connReg, err := connSource.AddEventHandler(connController.EventHandler())
 			if err != nil {
@@ -1267,13 +1326,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 
 	root := "/apis/" + b.GetGroupVersion().String() + "/"
 
-	// Hide the internal historic jobs endpoint from the OpenAPI spec.
-	historicjobs := root + "namespaces/{namespace}/historicjobs"
-	for path := range oas.Paths.Paths {
-		if strings.HasPrefix(path, historicjobs) {
-			delete(oas.Paths.Paths, path)
-		}
-	}
+	hideHistoricJobPaths(oas.Paths.Paths, root)
 
 	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
@@ -1559,8 +1612,28 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	// Document connection repositories endpoint
+	// Document connection authorize endpoint
 	connectionprefix := root + "namespaces/{namespace}/connections/{name}"
+	sub = oas.Paths.Paths[connectionprefix+"/authorize"]
+	if sub != nil {
+		authorizeSchema := defs[compBase+"ConnectionAuthorizeRequest"].Schema
+		sub.Post.Description = "Complete the OAuth authorization of this connection by exchanging an authorization code"
+		sub.Post.RequestBody = &spec3.RequestBody{
+			RequestBodyProps: spec3.RequestBodyProps{
+				Required: true,
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: &authorizeSchema,
+						},
+					},
+				},
+			},
+		}
+		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "ConnectionAuthorizeRequest")
+	}
+
+	// Document connection repositories endpoint
 	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
 	if sub != nil {
 		sub.Get.Description = "List repositories available from the external git provider through this connection"
@@ -1715,6 +1788,23 @@ spec:
 	}
 
 	return oas, nil
+}
+
+// Historic jobs are internal. Keep both resource routes and any cross-namespace
+// subresource routes out of the public API description.
+func hideHistoricJobPaths(paths map[string]*spec3.Path, root string) {
+	prefixes := []string{
+		root + "historicjobs",
+		root + "namespaces/{namespace}/historicjobs",
+	}
+	for path := range paths {
+		for _, prefix := range prefixes {
+			if strings.HasPrefix(path, prefix) {
+				delete(paths, path)
+				break
+			}
+		}
+	}
 }
 
 // Helpers for fetching valid Repository objects

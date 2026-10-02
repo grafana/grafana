@@ -1,9 +1,10 @@
 import { get, set } from 'lodash';
 
-import { type ScopedVars } from '@grafana/data';
+import { dateTime, type ScopedVars } from '@grafana/data';
 import { type VariableInterpolation } from '@grafana/runtime';
 
 import AzureMonitorDatasource from '../datasource';
+import { isBatchAPIFlagEnabled } from '../featureFlags';
 import createMockQuery from '../mocks/query';
 import { createTemplateVariables } from '../mocks/utils';
 import { multiVariable } from '../mocks/variables';
@@ -33,6 +34,12 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
+jest.mock('../featureFlags', () => ({
+  initFeatureFlags: jest.fn(),
+  isBatchAPIFlagEnabled: jest.fn().mockReturnValue(false),
+  useBatchAPIFlag: jest.fn().mockReturnValue(false),
+}));
+
 interface TestContext {
   instanceSettings: AzureMonitorDataSourceInstanceSettings;
   ds: AzureMonitorDatasource;
@@ -43,12 +50,41 @@ describe('AzureMonitorDatasource', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // clearAllMocks does not restore return values; reset so a per-test mockReturnValue(true) cannot leak
+    jest.mocked(isBatchAPIFlagEnabled).mockReturnValue(false);
     ctx.instanceSettings = {
       name: 'test',
       url: 'http://azuremonitor.com',
       jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor' },
     } as unknown as AzureMonitorDataSourceInstanceSettings;
     ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+  });
+
+  describe('batch API constructor gating', () => {
+    const settingsWithBatch = () =>
+      ({
+        name: 'test',
+        url: 'http://azuremonitor.com',
+        jsonData: { subscriptionId: 'mock-subscription-id', cloudName: 'azuremonitor', batchAPIEnabled: true },
+      }) as unknown as AzureMonitorDataSourceInstanceSettings;
+
+    it('enables batchAPIEnabled when the feature flag and datasource setting are both on', () => {
+      jest.mocked(isBatchAPIFlagEnabled).mockReturnValue(true);
+      const ds = new AzureMonitorDatasource(settingsWithBatch());
+      expect(ds.azureMonitorDatasource.batchAPIEnabled).toBe(true);
+    });
+
+    it('stays disabled when the feature flag is off', () => {
+      jest.mocked(isBatchAPIFlagEnabled).mockReturnValue(false);
+      const ds = new AzureMonitorDatasource(settingsWithBatch());
+      expect(ds.azureMonitorDatasource.batchAPIEnabled).toBeFalsy();
+    });
+
+    it('stays disabled when the datasource setting is off', () => {
+      jest.mocked(isBatchAPIFlagEnabled).mockReturnValue(true);
+      const ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      expect(ds.azureMonitorDatasource.batchAPIEnabled).toBeFalsy();
+    });
   });
 
   describe('filterQuery', () => {
@@ -140,6 +176,163 @@ describe('AzureMonitorDatasource', () => {
         azureMonitor: {
           metricNamespace,
           resources: [{ resourceGroup, resourceName }],
+        },
+      });
+    });
+
+    it('should expand a multi-value template variable in dimension filter values', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entities')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a,topic-b', match: '$entities', variableName: 'entities' });
+          }
+          return 'topic-a,topic-b';
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$entities'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['topic-a', 'topic-b'] }],
+        },
+      });
+    });
+
+    it('should preserve literal text around a multi-value variable in dimension filter values', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entities')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a,topic-b', match: '$entities', variableName: 'entities' });
+          }
+          return (target ?? '').replace('$entities', 'topic-a,topic-b');
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['prefix-$entities'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [
+            { dimension: 'EntityName', operator: 'eq', filters: ['prefix-topic-a', 'prefix-topic-b'] },
+          ],
+        },
+      });
+    });
+
+    it('should not duplicate filter values when the same variable appears twice in one expression', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        const result = target ?? '';
+        // The real templateSrv records one interpolation entry per match,
+        // so a repeated variable produces duplicate entries.
+        const occurrences = (result.match(/\$env/g) ?? []).length;
+        for (let i = 0; i < occurrences; i++) {
+          interpolated?.push({ value: 'dev,prod', match: '$env', variableName: 'env' });
+        }
+        return result.replaceAll('$env', 'dev,prod');
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$env-$env'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['dev-dev', 'prod-prod'] }],
+        },
+      });
+    });
+
+    it('should expand multiple multi-value variables in one dimension filter value', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        let result = target ?? '';
+        if (result.includes('$regions')) {
+          if (interpolated) {
+            interpolated.push({ value: 'eu,us', match: '$regions', variableName: 'regions' });
+          }
+          result = result.replace('$regions', 'eu,us');
+        }
+        if (result.includes('$envs')) {
+          if (interpolated) {
+            interpolated.push({ value: 'dev,prod', match: '$envs', variableName: 'envs' });
+          }
+          result = result.replace('$envs', 'dev,prod');
+        }
+        return result;
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'eq', filters: ['$regions-$envs'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [
+            { dimension: 'EntityName', operator: 'eq', filters: ['eu-dev', 'eu-prod', 'us-dev', 'us-prod'] },
+          ],
+        },
+      });
+    });
+
+    it('should leave single-value dimension filter values unchanged', () => {
+      replace = (
+        target?: string,
+        _scopedVars?: ScopedVars,
+        _format?: string | Function,
+        interpolated?: VariableInterpolation[]
+      ) => {
+        if (target?.includes('$entity')) {
+          if (interpolated) {
+            interpolated.push({ value: 'topic-a', match: '$entity', variableName: 'entity' });
+          }
+          return 'topic-a';
+        }
+        return target || '';
+      };
+      ctx.ds = new AzureMonitorDatasource(ctx.instanceSettings);
+      const query = createMockQuery({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'sw', filters: ['$entity', 'literal-value'] }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          dimensionFilters: [{ dimension: 'EntityName', operator: 'sw', filters: ['topic-a', 'literal-value'] }],
         },
       });
     });
@@ -378,6 +571,69 @@ describe('AzureMonitorDatasource', () => {
           expect(results[0].value).toEqual('Azure.ApplicationInsights');
         });
     });
+
+    it('does not add storage platform namespaces when custom is specified', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({
+        value: [
+          {
+            classification: 'Platform',
+            properties: { metricNamespaceName: 'microsoft.storage/storageaccounts' },
+          },
+        ],
+      });
+
+      const results = await ctx.ds.azureMonitorDatasource.getMetricNamespaces(
+        {
+          resourceUri:
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.storage/storageaccounts/resource1',
+        },
+        false,
+        undefined,
+        true
+      );
+
+      expect(results).toEqual([]);
+    });
+
+    it('when excludeCustom is specified will omit custom namespaces', () => {
+      // Use a fresh response so this test doesn't depend on mutations made by earlier tests.
+      const freshResponse = {
+        value: [
+          {
+            id: 'custom-id',
+            name: 'Azure.ApplicationInsights',
+            type: 'Microsoft.Insights/metricNamespaces',
+            classification: 'Custom',
+            properties: { metricNamespaceName: 'Azure.ApplicationInsights' },
+          },
+          {
+            id: 'platform-id',
+            name: 'microsoft.insights-components',
+            type: 'Microsoft.Insights/metricNamespaces',
+            classification: 'Platform',
+            properties: { metricNamespaceName: 'microsoft.insights/components' },
+          },
+        ],
+      };
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue(freshResponse);
+
+      return ctx.ds.azureMonitorDatasource
+        .getMetricNamespaces(
+          {
+            resourceUri:
+              '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          },
+          true,
+          undefined,
+          false,
+          true
+        )
+        .then((results: Array<{ text: string; value: string }>) => {
+          expect(results.length).toEqual(1);
+          expect(results[0].text).toEqual('microsoft.insights/components');
+          expect(results[0].value).toEqual('microsoft.insights/components');
+        });
+    });
   });
 
   describe('When performing getMetricNames', () => {
@@ -466,6 +722,78 @@ describe('AzureMonitorDatasource', () => {
           expect(results[1].text).toEqual('Free capacity');
           expect(results[1].value).toEqual('FreeCapacity');
         });
+    });
+  });
+
+  describe('When performing getDimensionValues', () => {
+    it('matches dimension names case-insensitively and returns trimmed sorted unique values', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({
+        value: [
+          {
+            timeseries: [
+              {
+                metadatavalues: [
+                  { name: { value: ' CloudRole ', localizedValue: 'Cloud role' }, value: ' worker ' },
+                  { name: { value: 'cloudrole', localizedValue: 'Cloud role' }, value: 'api' },
+                  { name: { value: 'CloudRole', localizedValue: 'Cloud role' }, value: '   ' },
+                ],
+              },
+              { metadatavalues: [{ name: { value: 'CloudRole' }, value: 'api' }] },
+            ],
+          },
+        ],
+      });
+
+      const results = await ctx.ds.azureMonitorDatasource.getDimensionValues(
+        {
+          subscription: 'mock-subscription-id',
+          resourceGroup: 'nodeapp',
+          metricNamespace: 'microsoft.insights/components',
+          resourceName: 'resource1',
+          customNamespace: 'custom/namespace',
+          metricName: 'Requests',
+          dimension: ' CLOUDROLE ',
+        },
+        {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        }
+      );
+
+      expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
+        'azuremonitor/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1/providers/microsoft.insights/metrics?api-version=2021-05-01&timespan=2026-08-27T12%3A00%3A00.000Z%2F2026-08-27T13%3A00%3A00.000Z&metricnames=Requests&metricnamespace=custom%2Fnamespace&resultType=metadata&%24filter=CLOUDROLE+eq+%27*%27&top=1000'
+      );
+      expect(results).toEqual([
+        { text: 'api', value: 'api' },
+        { text: 'worker', value: 'worker' },
+      ]);
+    });
+
+    it('uses the resource metric namespace when no custom namespace is set', async () => {
+      ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockResolvedValue({ value: [] });
+
+      await ctx.ds.azureMonitorDatasource.getDimensionValues(
+        {
+          subscription: 'mock-subscription-id',
+          resourceGroup: 'nodeapp',
+          metricNamespace: 'microsoft.insights/components',
+          resourceName: 'resource1',
+          metricName: 'Requests',
+          dimension: 'CloudRole',
+        },
+        {
+          from: dateTime('2026-08-27T12:00:00.000Z'),
+          to: dateTime('2026-08-27T13:00:00.000Z'),
+          raw: { from: 'now-1h', to: 'now' },
+        }
+      );
+
+      expect(ctx.ds.azureMonitorDatasource.getResource).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'metricnamespace=microsoft.insights%2Fcomponents&resultType=metadata&%24filter=CloudRole+eq+%27*%27&top=1000'
+        )
+      );
     });
   });
 

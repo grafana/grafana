@@ -10,13 +10,14 @@ import {
   type SceneVariable,
   SceneVariableSet,
   ScopesVariable,
+  SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
 import { DashboardScene } from './DashboardScene';
-import { SectionVariableControls, VariableControls } from './VariableControls';
+import { SectionVariableControls, VariableControls, VariableValueSelectWrapper } from './VariableControls';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
@@ -229,6 +230,56 @@ describe('VariableControls', () => {
     render(<SectionVariableControls variableSet={row.state.$variables!} />);
 
     expect(screen.queryAllByText('custom0')).toHaveLength(1);
+  });
+
+  describe('element data attributes', () => {
+    it('should expose element key and type on the default variable control', async () => {
+      const dashboard = buildScene([new TextBoxVariable({ name: 'TextVar', key: 'text-var-key' })]);
+      dashboard.activate();
+
+      render(<VariableControls dashboard={dashboard} />);
+
+      const wrapper = await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem);
+      expect(wrapper).toHaveAttribute('data-dashboard-element-key', 'text-var-key');
+      expect(wrapper).toHaveAttribute('data-dashboard-element-type', 'variable');
+    });
+
+    it('should expose element key and type on in-menu variable controls', async () => {
+      const variable = new TextBoxVariable({ name: 'MenuVar', key: 'menu-var-key' });
+
+      render(<VariableValueSelectWrapper variable={variable} inMenu />);
+
+      const wrapper = await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem);
+      expect(wrapper).toHaveAttribute('data-dashboard-element-key', 'menu-var-key');
+      expect(wrapper).toHaveAttribute('data-dashboard-element-type', 'variable');
+    });
+
+    it('should expose element key and type on in-menu switch variable controls', async () => {
+      const variable = new SwitchVariable({ name: 'SwitchVar', key: 'switch-var-key' });
+
+      render(<VariableValueSelectWrapper variable={variable} inMenu />);
+
+      const wrapper = await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem);
+      expect(wrapper).toHaveAttribute('data-dashboard-element-key', 'switch-var-key');
+      expect(wrapper).toHaveAttribute('data-dashboard-element-type', 'variable');
+    });
+
+    it('should expose element key and type on section-level variable controls', async () => {
+      const variableSet = new SceneVariableSet({
+        variables: [new CustomVariable({ name: 'sectionVar', key: 'section-var-key', query: 'a,b' })],
+      });
+
+      const row = new RowItem({
+        $variables: variableSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+
+      render(<SectionVariableControls variableSet={row.state.$variables!} />);
+
+      const wrapper = await screen.findByTestId(selectors.pages.Dashboard.SubMenu.submenuItem);
+      expect(wrapper).toHaveAttribute('data-dashboard-element-key', 'section-var-key');
+      expect(wrapper).toHaveAttribute('data-dashboard-element-type', 'variable');
+    });
   });
 });
 

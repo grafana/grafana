@@ -48,4 +48,10 @@ describe('Tag', () => {
     const tag = screen.queryByRole('button', { name: 'test-tag' });
     expect(tag).not.toBeInTheDocument();
   });
+
+  it('should render with a colorIndex larger than the number of tag colors', () => {
+    render(<Tag name="test-tag" colorIndex={999999} />);
+
+    expect(screen.getByText('test-tag')).toBeInTheDocument();
+  });
 });

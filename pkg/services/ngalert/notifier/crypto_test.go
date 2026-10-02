@@ -108,10 +108,8 @@ func TestEncryptReceiverConfigSettings_MovesSecretsFromSettings(t *testing.T) {
 			}
 			receivers := []*v1.PostableApiReceiver{
 				{
-					Receiver: definitions.Receiver{Name: "pd"},
-					PostableGrafanaReceivers: v1.PostableGrafanaReceivers{
-						GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{gr},
-					},
+					Name:                    "pd",
+					GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{gr},
 				},
 			}
 

@@ -114,7 +114,7 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 			Host:   req.URL.Host,
 			Path:   "/v1/query",
 		}
-		return e.GetBasicLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
+		return e.GetLogsUsage(req.Context(), newUrl.String(), cli, rw, req.Body)
 	} else if strings.Contains(req.URL.Path, "/metadata") {
 		isAppInsights := strings.Contains(strings.ToLower(req.URL.Path), "microsoft.insights/components")
 		// Add necessary headers
@@ -184,17 +184,17 @@ func (e *AzureLogAnalyticsDatasource) ResourceRequest(rw http.ResponseWriter, re
 	return e.Proxy.Do(rw, req, cli)
 }
 
-// builds and executes a new query request that will get the data ingeted for the given table in the basic logs query
-func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
+// builds and executes a new query request that will get the data ingested for the given table in the logs query
+func (e *AzureLogAnalyticsDatasource) GetLogsUsage(ctx context.Context, url string, client *http.Client, rw http.ResponseWriter, reqBody io.ReadCloser) (http.ResponseWriter, error) {
 	// read the full body
 	originalPayload, readErr := io.ReadAll(reqBody)
 	if readErr != nil {
 		return rw, fmt.Errorf("failed to read request body %w", readErr)
 	}
-	var payload BasicLogsUsagePayload
+	var payload LogsUsagePayload
 	jsonErr := json.Unmarshal(originalPayload, &payload)
 	if jsonErr != nil {
-		return rw, fmt.Errorf("error decoding basic logs table usage payload: %w", jsonErr)
+		return rw, fmt.Errorf("error decoding logs table usage payload: %w", jsonErr)
 	}
 	table := payload.Table
 
@@ -208,12 +208,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		return rw, fmt.Errorf("failed to convert to time: %w", toErr)
 	}
 
-	// basic logs queries only show data for last 8 days or less
-	// data volume query should also only calculate volume for last 8 days if time range exceeds that.
-	diff := to.Sub(from).Hours()
-	if diff > float64(MaxHoursBasicLogs) {
-		from = to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
-	}
+	from = getUsageQueryStart(from, to, payload.LogTier)
 
 	dataVolumeQueryRaw := GetDataVolumeRawQuery(table)
 	dataVolumeQuery := &AzureLogAnalyticsQuery{
@@ -234,7 +229,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 		return rw, err
 	}
 
-	_, span := tracing.DefaultTracer().Start(ctx, "azure basic logs usage query", trace.WithAttributes(
+	_, span := tracing.DefaultTracer().Start(ctx, "azure logs usage query", trace.WithAttributes(
 		attribute.String("target", dataVolumeQuery.Query),
 		attribute.String("table", table),
 		attribute.Int64("from", dataVolumeQuery.TimeRange.From.UnixNano()/int64(time.Millisecond)),
@@ -274,6 +269,18 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	}
 
 	return rw, err
+}
+
+func getUsageQueryStart(from, to time.Time, logTier *dataquery.AzureLogsQueryLogTier) time.Time {
+	if logTier != nil && *logTier == dataquery.AzureLogsQueryLogTierAuxiliary {
+		return from
+	}
+
+	if to.Sub(from).Hours() > float64(MaxHoursBasicLogs) {
+		return to.Add(-time.Duration(MaxHoursBasicLogs) * time.Hour)
+	}
+
+	return from
 }
 
 // executeTimeSeriesQuery does the following:
@@ -329,12 +336,25 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		basicLogsEnabled = value
 	}
 
+	auxiliaryLogsEnabled := false
+	if value, ok := dsInfo.JSONData["auxiliaryLogsEnabled"].(bool); ok {
+		auxiliaryLogsEnabled = value
+	}
+
 	if basicLogsQueryFlag {
-		if meetsBasicLogsCriteria, meetsBasicLogsCriteriaErr := meetsBasicLogsCriteria(resources, fromAlert, basicLogsEnabled); meetsBasicLogsCriteriaErr != nil {
-			return nil, meetsBasicLogsCriteriaErr
-		} else {
-			basicLogsQuery = meetsBasicLogsCriteria
+		logTier := dataquery.AzureLogsQueryLogTierBasic
+		if azureLogAnalyticsTarget.LogTier != nil {
+			logTier = *azureLogAnalyticsTarget.LogTier
 		}
+		logTierEnabled, logTierErr := isLogTierEnabled(azureLogAnalyticsTarget.LogTier, basicLogsEnabled, auxiliaryLogsEnabled)
+		if logTierErr != nil {
+			return nil, logTierErr
+		}
+		eligibleForSearch, eligibilityErr := meetsSearchLogsCriteria(resources, fromAlert, logTierEnabled, logTier)
+		if eligibilityErr != nil {
+			return nil, eligibilityErr
+		}
+		basicLogsQuery = eligibleForSearch
 	}
 
 	if azureLogAnalyticsTarget.Query != nil {
@@ -374,6 +394,18 @@ func buildLogAnalyticsQuery(query backend.DataQuery, dsInfo types.DatasourceInfo
 		TimeColumn:       timeColumn,
 		BasicLogs:        basicLogsQuery,
 	}, nil
+}
+
+func isLogTierEnabled(logTier *dataquery.AzureLogsQueryLogTier, basicLogsEnabled, auxiliaryLogsEnabled bool) (bool, error) {
+	if logTier == nil || *logTier == dataquery.AzureLogsQueryLogTierBasic {
+		return basicLogsEnabled, nil
+	}
+
+	if *logTier == dataquery.AzureLogsQueryLogTierAuxiliary {
+		return auxiliaryLogsEnabled, nil
+	}
+
+	return false, backend.DownstreamError(fmt.Errorf("unsupported Logs query tier %q", *logTier))
 }
 
 func (e *AzureLogAnalyticsDatasource) buildQuery(ctx context.Context, query backend.DataQuery, dsInfo types.DatasourceInfo, fromAlert bool) (*AzureLogAnalyticsQuery, error) {
@@ -549,7 +581,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 }
 
 func addDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl string, frame *data.Frame, dsInfo types.DatasourceInfo, queryUrl string) error {
-	if query.QueryType == dataquery.AzureQueryTypeAzureTraces {
+	if query.QueryType == dataquery.AzureQueryTypeAzureTraces || query.QueryType == dataquery.AzureQueryTypeTraceExemplar {
 		err := addTraceDataLinksToFields(query, azurePortalBaseUrl, frame, dsInfo)
 		if err != nil {
 			return err
@@ -579,9 +611,19 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		return err
 	}
 
-	if len(queryJSONModel.AzureTraces.Resources) == 0 {
+	if queryJSONModel.AzureTraces == nil {
+		queryJSONModel.AzureTraces = &dataquery.AzureTracesQuery{}
+	}
+
+	// Prefer resolved query resources (e.g. TraceExemplar correlation results) over the raw JSON payload.
+	resources := query.Resources
+	if len(resources) == 0 {
+		resources = queryJSONModel.AzureTraces.Resources
+	}
+	if len(resources) == 0 {
 		return fmt.Errorf("no resources specified for Azure traces data link")
 	}
+	queryJSONModel.AzureTraces.Resources = resources
 
 	traceIdVariable := "${__data.fields.traceID}"
 	resultFormat := dataquery.ResultFormatTrace
@@ -591,34 +633,45 @@ func addTraceDataLinksToFields(query *AzureLogAnalyticsQuery, azurePortalBaseUrl
 		queryJSONModel.AzureTraces.OperationId = &traceIdVariable
 	}
 
+	// Explore links from TraceExemplar should open as Azure Traces queries.
+	azureTracesQueryType := string(dataquery.AzureQueryTypeAzureTraces)
+	queryJSONModel.QueryType = &azureTracesQueryType
+
 	logsQueryType := string(dataquery.AzureQueryTypeLogAnalytics)
 	logsJSONModel := dataquery.AzureMonitorQuery{
 		QueryType: &logsQueryType,
 		AzureLogAnalytics: &dataquery.AzureLogsQuery{
 			Query:     &query.TraceLogsExploreQuery,
-			Resources: []string{queryJSONModel.AzureTraces.Resources[0]},
+			Resources: []string{resources[0]},
 		},
 	}
 
 	if query.ResultFormat == dataquery.ResultFormatTable {
+		exploreTraceModel := queryJSONModel
+		exploreTrace := *queryJSONModel.AzureTraces
+		exploreTrace.Query = &query.TraceExploreQuery
+		exploreTraceModel.AzureTraces = &exploreTrace
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Trace: ${__data.fields.traceID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          exploreTraceModel,
 			},
 		}, MultiField)
 
-		queryJSONModel.AzureTraces.Query = &query.TraceParentExploreQuery
+		exploreParentModel := queryJSONModel
+		exploreParent := *queryJSONModel.AzureTraces
+		exploreParent.Query = &query.TraceParentExploreQuery
+		exploreParentModel.AzureTraces = &exploreParent
 		AddCustomDataLink(*frame, data.DataLink{
 			Title: "Explore Parent Span: ${__data.fields.parentSpanID}",
 			URL:   "",
 			Internal: &data.InternalDataLink{
 				DatasourceUID:  dsInfo.DatasourceUID,
 				DatasourceName: dsInfo.DatasourceName,
-				Query:          queryJSONModel,
+				Query:          exploreParentModel,
 			},
 		}, MultiField)
 

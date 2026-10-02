@@ -1,10 +1,15 @@
-import { type CompletionContext } from '@codemirror/autocomplete';
+import { CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
 import { EditorState, type Extension } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 
 import { createTheme, DataLinkBuiltInVars, VariableOrigin, type VariableSuggestion } from '@grafana/data';
 
-import { createDataLinkHighlighter, createDataLinkTheme, dataLinkAutocompletion } from './codemirrorUtils';
+import {
+  createDataLinkHighlighter,
+  createDataLinkTheme,
+  dataLinkAutocompletion,
+  type DataLinkInterpolationMode,
+} from './codemirrorUtils';
 
 const mockSuggestions: VariableSuggestion[] = [
   {
@@ -51,23 +56,7 @@ describe('codemirrorUtils', () => {
   }
 
   function createMockContext(text: string, pos: number, explicit = false): CompletionContext {
-    const state = EditorState.create({ doc: text });
-    return {
-      state,
-      pos,
-      explicit,
-      matchBefore: (regex: RegExp) => {
-        const before = text.slice(0, pos);
-        const match = before.match(regex);
-        if (!match) {
-          return null;
-        }
-        const from = pos - match[0].length;
-        return { from, to: pos, text: match[0] };
-      },
-      aborted: false,
-      addEventListener: jest.fn(),
-    } as unknown as CompletionContext;
+    return new CompletionContext(EditorState.create({ doc: text }), pos, explicit);
   }
 
   // The text content of every `.cm-variable` decoration the highlighter rendered.
@@ -115,151 +104,83 @@ describe('codemirrorUtils', () => {
     });
   });
 
+  // Triggering, filtering and option metadata are `createVariableCompletionSource`'s
+  // behaviour and are covered by its own tests. What is data-link-specific, and
+  // tested here, is which separator and which encoding each mode wires up.
   describe('dataLinkAutocompletion', () => {
-    describe('explicit completion', () => {
-      it('shows all suggestions on explicit trigger', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('', 0, true));
-        expect(result).not.toBeNull();
-        expect(result?.options).toHaveLength(4);
-        expect(result?.from).toBe(0);
+    function applyOption(doc: string, pos: number, result: CompletionResult, label: string): string {
+      const view = createEditor(doc, []);
+      const option = result.options.find((o) => o.label === label);
+      if (!option || typeof option.apply !== 'function') {
+        throw new Error(`no applicable option labelled ${label}`);
+      }
+
+      option.apply(view, option, result.from, result.to ?? pos);
+      return view.state.doc.toString();
+    }
+
+    function complete(doc: string, mode?: DataLinkInterpolationMode, explicit = false) {
+      const source = dataLinkAutocompletion(mockSuggestions, mode ? { mode } : {});
+      const result = source(createMockContext(doc, doc.length, explicit));
+      if (!result) {
+        throw new Error(`no completion offered for ${doc}`);
+      }
+      return result;
+    }
+
+    function completeAndApply(doc: string, label: string, mode?: DataLinkInterpolationMode): string {
+      return applyOption(doc, doc.length, complete(doc, mode), label);
+    }
+
+    describe("mode: 'url'", () => {
+      it('encodes a template variable for a query string', () => {
+        expect(completeAndApply('url?p=$myV', 'myVar')).toBe('url?p=${myVar:queryparam}');
       });
 
-      it('formats series variable correctly (no queryparam)', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('', 0, true));
-        const opt = result?.options.find((o) => o.label === '__series.name');
-        expect(opt?.apply).toBe('${__series.name}');
+      it('leaves built-in variables unencoded', () => {
+        expect(completeAndApply('url?p=$ser', '__series.name')).toBe('url?p=${__series.name}');
+        expect(completeAndApply('url?p=$all', '__all_variables')).toBe('url?p=${__all_variables}');
       });
 
-      it('formats template variable with queryparam', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('', 0, true));
-        const opt = result?.options.find((o) => o.label === 'myVar');
-        expect(opt?.apply).toBe('${myVar:queryparam}');
+      it('opens after the query-param separator and preserves it', () => {
+        expect(completeAndApply('url?param=', 'myVar')).toBe('url?param=${myVar:queryparam}');
       });
 
-      it('formats includeVars without queryparam', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('', 0, true));
-        const opt = result?.options.find((o) => o.label === '__all_variables');
-        expect(opt?.apply).toBe('${__all_variables}');
+      it('preserves the separator once a filter prefix has been typed', () => {
+        // Regression: `=fo` once had `from` at the `=`, swallowing it on apply.
+        expect(completeAndApply('url?param=myV', 'myVar')).toBe('url?param=${myVar:queryparam}');
       });
 
-      it('returns null when no suggestions', () => {
-        expect(dataLinkAutocompletion([])(createMockContext('', 0, true))).toBeNull();
-      });
+      it('replaces a reference the cursor sits inside rather than doubling its brace', () => {
+        const doc = 'url?p=${myVar:queryparam}';
+        const pos = 'url?p=${myV'.length;
+        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext(doc, pos));
 
-      it('anchors at a typed $ so an explicit request does not produce `$${...}`', () => {
-        // Ctrl+Space with a `$` already typed must replace the `$`, not insert
-        // after it. `from` at the `$` means applying `${var}` yields `${var}`.
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?p=$', 7, true));
-        expect(result?.from).toBe(6); // index of `$`
-      });
-
-      it('preserves a typed = on an explicit request (from points after =)', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?param=', 10, true));
-        expect(result?.from).toBe(10); // after `=`, so the separator is not replaced
-      });
-
-      it('still shows every suggestion on an explicit request after a trigger', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$ser', 4, true));
-        expect(result?.options).toHaveLength(4); // explicit ignores the typed filter
-      });
-    });
-
-    describe('trigger on $ character', () => {
-      it('shows completions after $', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$', 1, false));
-        expect(result).not.toBeNull();
-        expect(result?.options).toHaveLength(4);
-      });
-
-      it('replaces the $ when applying (does not duplicate it)', () => {
-        // from must point at the `$` so applying `${var}` replaces it rather than
-        // producing `$${var}`.
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?p=$', 7, false));
-        expect(result?.from).toBe(6); // index of `$`
-      });
-
-      it('shows completions after ${', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('${', 2, false));
-        expect(result).not.toBeNull();
-      });
-
-      it('filters by the variable name typed after ${', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('${ser', 5, false));
-        expect(result).not.toBeNull();
-        expect(result?.options.map((o) => o.label)).toEqual(['__series.name']);
-      });
-
-      it('does not show completions without trigger', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('test', 4, false));
-        expect(result).toBeNull();
-      });
-    });
-
-    describe('trigger on = character', () => {
-      it('shows completions after =', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?param=', 10, false));
-        expect(result).not.toBeNull();
-        expect(result?.options).toHaveLength(4);
-      });
-
-      it('preserves the = when applying (from points after =)', () => {
-        // The `=` is a separator, not part of the variable. Applying must keep it:
-        // `?param=` + `${var}`, never swallowing the `=`.
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?param=', 10, false));
-        expect(result?.from).toBe(10); // position after `=`, so `=` is not replaced
-      });
-
-      it('preserves the = when a filter prefix has been typed (=fo)', () => {
-        // Regression: previously `=fo` had from at the `=`, swallowing it on apply.
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('url?param=fo', 12, false));
-        expect(result?.from).toBe(10); // after `=`; only the `fo` prefix is replaced
+        expect(applyOption(doc, pos, result!, 'myVar')).toBe('url?p=${myVar:queryparam}');
       });
     });
 
     describe("mode: 'text'", () => {
-      it('does not trigger on = (= is not a separator in plain text)', () => {
-        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('param=', 6, false));
-        expect(result).toBeNull();
+      it('does not treat = as a separator', () => {
+        expect(dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('param=', 6))).toBeNull();
       });
 
-      it('triggers on $', () => {
-        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('$', 1, false));
-        expect(result).not.toBeNull();
-        expect(result?.options).toHaveLength(4);
-        expect(result?.from).toBe(0);
+      it('inserts a plain ${var} with no query encoding', () => {
+        expect(completeAndApply('$myV', 'myVar', 'text')).toBe('${myVar}');
+        expect(completeAndApply('$ser', '__series.name', 'text')).toBe('${__series.name}');
       });
 
-      it('formats a template variable as plain ${var} (no queryparam)', () => {
-        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('', 0, true));
-        const opt = result?.options.find((o) => o.label === 'myVar');
-        expect(opt?.apply).toBe('${myVar}');
-      });
+      it('replaces a reference the cursor sits inside rather than doubling its brace', () => {
+        const doc = 'title ${myVar} tail';
+        const pos = 'title ${myV'.length;
+        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext(doc, pos));
 
-      it('formats a series variable as plain ${var}', () => {
-        const result = dataLinkAutocompletion(mockSuggestions, { mode: 'text' })(createMockContext('', 0, true));
-        const opt = result?.options.find((o) => o.label === '__series.name');
-        expect(opt?.apply).toBe('${__series.name}');
+        expect(applyOption(doc, pos, result!, 'myVar')).toBe('title ${myVar} tail');
       });
     });
 
-    describe('option metadata', () => {
-      it('includes detail (origin) for all options', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$', 1, false));
-        result?.options.forEach((opt) => expect(opt.detail).toBeDefined());
-      });
-
-      it('includes documentation info for all options', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$', 1, false));
-        result?.options.forEach((opt) => {
-          expect(opt.info).toBeDefined();
-          expect(typeof opt.info).toBe('string');
-        });
-      });
-
-      it('sets type to variable for all options', () => {
-        const result = dataLinkAutocompletion(mockSuggestions)(createMockContext('$', 1, false));
-        result?.options.forEach((opt) => expect(opt.type).toBe('variable'));
-      });
+    it('offers nothing when there are no suggestions', () => {
+      expect(dataLinkAutocompletion([])(createMockContext('$', 1, true))).toBeNull();
     });
   });
 });

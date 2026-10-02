@@ -19,7 +19,7 @@
  * forward-compatible with newer schema fields.
  */
 
-import { z } from 'zod';
+import * as z from 'zod';
 
 import type {
   Spec as DashboardV2Spec,
@@ -68,7 +68,7 @@ import type {
  * validated, `satisfies z.ZodType<...>` holds, and `z.toJSONSchema` still emits
  * a proper `array` type (a trailing transform would collapse it to `any`).
  */
-function nullableArray<T extends z.ZodTypeAny>(element: T) {
+export function nullableArray<T extends z.ZodTypeAny>(element: T) {
   return z.preprocess((value) => (value == null ? [] : value), z.array(element));
 }
 
@@ -81,7 +81,7 @@ const controlSourceRefSchema = z.object({
   group: z.string(),
 }) satisfies z.ZodType<ControlSourceRef>;
 
-const elementReferenceSchema = z.object({
+export const elementReferenceSchema = z.object({
   kind: z.literal('ElementReference'),
   name: z.string(),
 }) satisfies z.ZodType<ElementReference>;
@@ -111,18 +111,24 @@ const variableOptionSchema = z.object({
 }) satisfies z.ZodType<VariableOption>;
 
 const variableHideSchema = z.enum(['dontHide', 'hideLabel', 'hideVariable', 'inControlsMenu']);
-const variableRefreshSchema = z.enum(['never', 'onDashboardLoad', 'onTimeRangeChanged']);
-const variableSortSchema = z.enum([
-  'disabled',
-  'alphabeticalAsc',
-  'alphabeticalDesc',
-  'numericalAsc',
-  'numericalDesc',
-  'alphabeticalCaseInsensitiveAsc',
-  'alphabeticalCaseInsensitiveDesc',
-  'naturalAsc',
-  'naturalDesc',
-]);
+// `.catch(...)` absorbs an unknown/invalid enum value (not just a missing one,
+// which `.default(...)` at the usage already handles) by falling back to the
+// canonical default. These enums have unambiguous CUE-generated defaults, so a
+// bad value from an authoring caller should not fail the whole mutation.
+const variableRefreshSchema = z.enum(['never', 'onDashboardLoad', 'onTimeRangeChanged']).catch('never');
+const variableSortSchema = z
+  .enum([
+    'disabled',
+    'alphabeticalAsc',
+    'alphabeticalDesc',
+    'numericalAsc',
+    'numericalDesc',
+    'alphabeticalCaseInsensitiveAsc',
+    'alphabeticalCaseInsensitiveDesc',
+    'naturalAsc',
+    'naturalDesc',
+  ])
+  .catch('disabled');
 const variableRegexApplyToSchema = z.enum(['value', 'text']);
 
 const defaultVariableOptionValue = { text: '', value: '' };
@@ -386,7 +392,8 @@ const conditionalRenderingTimeRangeSizeKindSchema = z.object({
 const conditionalRenderingGroupKindSchema = z.object({
   kind: z.literal('ConditionalRenderingGroup'),
   spec: z.object({
-    visibility: z.enum(['show', 'hide']),
+    // Tolerate a missing/invalid value by defaulting to the canonical 'show'.
+    visibility: z.enum(['show', 'hide']).catch('show'),
     condition: z.enum(['and', 'or']),
     items: nullableArray(
       z.discriminatedUnion('kind', [
@@ -427,6 +434,7 @@ const transformationKindSchema = z.object({
   kind: z.literal('Transformation'),
   group: z.string(),
   spec: z.object({
+    refId: z.string().optional(),
     disabled: z.boolean().optional(),
     filter: matcherConfigSchema.optional(),
     topic: z.enum(['series', 'annotations', 'alertStates']).optional(),
@@ -470,7 +478,11 @@ const fieldConfigSourceSchema = z.object({
 const vizConfigKindSchema = z.object({
   kind: z.literal('VizConfig'),
   group: z.string(),
-  version: z.string(),
+  // The panel plugin version is runtime metadata (used only for panel
+  // migrations) and is stamped from the running plugin when absent, so an
+  // authoring caller need not supply it. Optional here; the scene transform
+  // treats an empty value as "current version".
+  version: z.string().optional().default(''),
   spec: z.object({
     // `transformSceneToSaveModelSchemaV2` passes `vizPanel.state.options` through
     // verbatim, which is `undefined` for a panel that never set options. Normalize
@@ -480,12 +492,13 @@ const vizConfigKindSchema = z.object({
   }),
 }) satisfies z.ZodType<VizConfigKind>;
 
-const panelKindSchema = z.object({
+export const panelKindSchema = z.object({
   kind: z.literal('Panel'),
   spec: z.object({
     id: z.number(),
     title: z.string(),
-    description: z.string(),
+    description: z.string().optional(),
+    subtitle: z.string().optional(),
     links: nullableArray(dataLinkSchema),
     data: queryGroupKindSchema,
     vizConfig: vizConfigKindSchema,
@@ -493,7 +506,7 @@ const panelKindSchema = z.object({
   }),
 }) satisfies z.ZodType<PanelKind>;
 
-const libraryPanelKindSchema = z.object({
+export const libraryPanelKindSchema = z.object({
   kind: z.literal('LibraryPanel'),
   spec: z.object({
     id: z.number(),
@@ -630,7 +643,7 @@ const timeRangeOptionSchema = z.object({
   to: z.string().optional().default('now'),
 }) satisfies z.ZodType<TimeRangeOption>;
 
-const timeSettingsSpecSchema = z.object({
+export const timeSettingsSpecSchema = z.object({
   timezone: z.string().optional().default('browser'),
   from: z.string().optional().default('now-6h'),
   to: z.string().optional().default('now'),

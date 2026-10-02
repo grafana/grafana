@@ -10,12 +10,12 @@ import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { ShowModalReactEvent } from '../../../../types/events';
 import { appEvents } from '../../../app_events';
 import { getFooterLinks } from '../../Footer/Footer';
-import { HelpModal } from '../../help/HelpModal';
 
 import { DOCK_MENU_BUTTON_ID, MEGA_MENU_HEADER_TOGGLE_ID } from './MegaMenuHeader';
 import { getNavExperimentPayload } from './navExperiment';
 
-const emitOpenShortcutsModal = () => {
+const emitOpenShortcutsModal = async () => {
+  const { HelpModal } = await import(/* webpackChunkName: "help-modal" */ '../../help/HelpModal');
   appEvents.publish(new ShowModalReactEvent({ component: HelpModal }));
 };
 

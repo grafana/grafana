@@ -67,11 +67,8 @@ export {
 } from './components/DateTimePickers/DatePickerWithInput/DatePickerWithInput';
 export { DateTimePicker } from './components/DateTimePickers/DateTimePicker/DateTimePicker';
 export { List } from './components/List/List';
-export {
-  InteractiveTable,
-  type FetchDataArgs,
-  type FetchDataFunc,
-} from './components/InteractiveTable/InteractiveTable';
+export { InteractiveTable } from './components/InteractiveTable/InteractiveTableLazy';
+export type { FetchDataArgs, FetchDataFunc } from './components/InteractiveTable/InteractiveTable';
 export { TagsInput } from './components/TagsInput/TagsInput';
 export { AutoSaveField } from './components/AutoSaveField/AutoSaveField';
 export { Pagination } from './components/Pagination/Pagination';
@@ -80,16 +77,19 @@ export { TagList } from './components/Tags/TagList';
 export { FilterPill } from './components/FilterPill/FilterPill';
 
 export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/ConfirmModal';
-/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to CodeMirror; this export may be removed in a future release. */
+/** @deprecated Slate is being removed from `@grafana/ui`. Migrate to `QueryInput`; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
+export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
+export { ReactMonacoDiffEditorLazy as ReactMonacoDiffEditor } from './components/Monaco/ReactMonacoDiffEditorLazy';
 export {
   type Monaco,
   type monacoTypes,
   type MonacoEditor,
   type MonacoOptions as CodeEditorMonacoOptions,
   type CodeEditorSuggestionItem,
+  type ReactMonacoDiffEditorProps,
   CodeEditorSuggestionItemKind,
 } from './components/Monaco/types';
 export { variableSuggestionToCodeEditorSuggestion } from './components/Monaco/utils';
@@ -454,6 +454,7 @@ export { attachDebugger } from './utils/debug';
 export { NodeGraphDataFrameFieldNames } from './utils/nodeGraph';
 export { fuzzyMatch } from './utils/fuzzy';
 export { logOptions } from './utils/logOptions';
+export { copyTextToClipboard } from './utils/copyToClipboard';
 
 export { DOMUtil, ReactUtils, floatingUtils };
 

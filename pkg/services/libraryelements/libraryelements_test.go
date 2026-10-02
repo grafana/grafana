@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -28,7 +27,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -278,6 +279,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		OrgID:      orgID,
 		OrgRole:    role,
 		LastSeenAt: time.Now(),
+		IDToken:    "test-id-token",
 		// Allow user to create folders and library elements
 		Permissions: map[int64]map[string][]string{
 			1: {
@@ -302,7 +304,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
-	sqlStore, cfg := db.InitTestDBWithCfg(t)
+	sqlStore, cfg := db.InitTestDBWithCfg(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	quotaService := quotatest.New(false, nil)
 	ac := acimpl.ProvideAccessControl(features)
@@ -313,7 +315,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	folderSvc := foldertest.NewFakeService()
 	f := &folder.Folder{
-		ID:    1,
+		ID:    1, //nolint:staticcheck // Exercise legacy field compatibility.
 		OrgID: 1,
 		UID:   "uid_for_ScenarioFolder",
 		Title: "ScenarioFolder",
@@ -323,7 +325,8 @@ func setupTestScenario(t *testing.T) scenarioContext {
 
 	dashService := dashboards.NewFakeDashboardService(t)
 
-	alertStore, err := ngstore.ProvideDBStore(cfg, features, sqlStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
+	provenanceStore := ngprovenance.ProvideProvenanceStore(features, sqlStore)
+	alertStore, err := ngrules.ProvideRuleStore(cfg, features, sqlStore, &foldertest.FakeService{}, ac, provenanceStore)
 	require.NoError(t, err)
 	err = folderSvc.RegisterService(alertStore)
 	require.NoError(t, err)
@@ -335,7 +338,7 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		dashboardsService: dashService,
 		AccessControl:     ac,
 		log:               log.NewNopLogger(),
-		treeCache:         newFolderTreeCache(folderSvc),
+		treeCache:         newFolderTreeCache(folderSvc, false),
 	}
 
 	service.AccessControl.RegisterScopeAttributeResolver(LibraryPanelUIDScopeResolver(&service, folderSvc))
@@ -348,10 +351,10 @@ func setupTestScenario(t *testing.T) scenarioContext {
 		Name:  "User In DB",
 		Login: userInDbName,
 	}
-	orgSvc, err := orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
-		sqlStore, orgSvc, cfg, nil, nil, tracer,
+		legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracer,
 		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)

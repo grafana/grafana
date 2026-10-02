@@ -1,28 +1,8 @@
 import { HttpResponse, http } from 'msw';
 
-import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1alpha1';
+import { type PreferencesSpec } from '@grafana/api-clients/rtkq/preferences/v1';
 
 import { mockUserPreferences, setMockUserPreferences } from '../../../fixtures/preferences';
-import { mockStarredDashboardsMap } from '../../../fixtures/starred';
-
-const getStarsHandler = () =>
-  http.get('/api/user/stars', async () => {
-    return HttpResponse.json(Array.from(mockStarredDashboardsMap.keys()));
-  });
-
-const deleteDashboardStarHandler = () =>
-  http.delete<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
-    const { uid } = params;
-    mockStarredDashboardsMap.delete(uid);
-    return HttpResponse.json({ message: 'Dashboard unstarred' });
-  });
-
-const addDashboardStarHandler = () =>
-  http.post<{ uid: string }>('/api/user/stars/dashboard/uid/:uid', async ({ params }) => {
-    const { uid } = params;
-    mockStarredDashboardsMap.set(uid, true);
-    return HttpResponse.json({ message: 'Dashboard starred!' });
-  });
 
 const getPreferencesHandler = () =>
   http.get('/api/user/preferences', async () => {
@@ -43,18 +23,15 @@ const patchPreferencesHandler = () =>
     return HttpResponse.json({ message: 'Preferences updated' });
   });
 
-const getSignedInUserTeamListHandler = () =>
+export const getSignedInUserTeamListHandler = (teams: Array<{ uid: string; name: string }> = []) =>
   http.get('/api/user/teams', async () => {
-    return HttpResponse.json([]);
+    return HttpResponse.json(teams);
   });
 
 const handlers = [
   getPreferencesHandler(),
   updatePreferencesHandler(),
   patchPreferencesHandler(),
-  getStarsHandler(),
-  deleteDashboardStarHandler(),
-  addDashboardStarHandler(),
   getSignedInUserTeamListHandler(),
 ];
 

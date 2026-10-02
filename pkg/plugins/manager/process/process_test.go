@@ -146,14 +146,12 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 		require.Equal(t, 1, bp.StartCount)
 
 		var wgKill sync.WaitGroup
-		wgKill.Add(1)
-		go func() {
+		wgKill.Go(func() {
 			bp.Kill() // manually kill process
 			for bp.Exited() {
 
 			}
-			wgKill.Done()
-		}()
+		})
 		wgKill.Wait()
 		require.True(t, !p.Exited())
 		require.Equal(t, 2, bp.StartCount)

@@ -3,18 +3,25 @@ package vertex
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/genproto/googleapis/rpc/errdetails"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 )
 
 // fakeClient records calls and returns synthetic vectors.
 type fakeClient struct {
+	wantErr   error
 	mu        sync.Mutex
 	calls     [][]string // texts per call, in arrival order
 	dim       int
@@ -25,6 +32,9 @@ type fakeClient struct {
 }
 
 func (f *fakeClient) PredictEmbeddings(_ context.Context, _ string, texts []string, _ int, taskType string) (EmbeddingResult, error) {
+	if f.wantErr != nil {
+		return EmbeddingResult{}, f.wantErr
+	}
 	n := atomic.AddInt32(&f.callNum, 1)
 	f.mu.Lock()
 	f.calls = append(f.calls, texts)
@@ -147,4 +157,75 @@ func TestDenseEmbedder_EmbedText_PropagatesError(t *testing.T) {
 	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
 	_, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b"}})
 	require.Error(t, err)
+}
+
+// A failed batch still reports tokens billed by its successful chunks.
+func TestDenseEmbedder_EmbedText_PartialFailureReportsTokens(t *testing.T) {
+	c := &fakeClient{dim: 4, tokens: 7, failAfter: 2}
+	e := NewDenseEmbedder(c, "m", 4, 1) // batch size 1: 3 texts = 3 chunks, 2nd fails
+	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: []string{"a", "b", "c"}})
+	require.Error(t, err)
+	assert.Empty(t, out.Embeddings)
+	// two chunks succeeded before/around the failure; their 14 tokens were billed
+	assert.Equal(t, 14, out.InputTokens)
+}
+
+func TestDenseEmbedder_EmbedText_SumsTokensAcrossChunks(t *testing.T) {
+	fc := &fakeClient{dim: 3, failAfter: -1, tokens: 7}
+	e := NewDenseEmbedder(fc, "text-embedding-005", 0, 50)
+
+	// 130 inputs at batchSize=50 → 3 concurrent chunks, each reporting 7
+	// tokens; the sum must land on the output despite concurrent dispatch.
+	texts := make([]string, 130)
+	for i := range texts {
+		texts[i] = "x"
+	}
+	out, err := e.EmbedText(context.Background(), embedder.EmbedTextInput{Texts: texts})
+	require.NoError(t, err)
+	assert.Equal(t, 21, out.InputTokens)
+}
+
+func TestDenseEmbedder_EmbedText_RetryableCallTimeout(t *testing.T) {
+	ctx, cancel := context.WithCancelCause(t.Context())
+	cancel(ErrCallTimeout)
+	fc := &fakeClient{wantErr: context.Canceled}
+	e := NewDenseEmbedder(fc, "model", 4, 1)
+	_, err := e.EmbedText(ctx, embedder.EmbedTextInput{Texts: []string{"CPU usage"}})
+	var retryErr *embedder.RetryableError
+	require.ErrorAs(t, err, &retryErr)
+	assert.ErrorIs(t, err, ErrCallTimeout)
+	assert.Zero(t, retryErr.RetryAfter)
+}
+
+func TestRetryableError(t *testing.T) {
+	for _, code := range []codes.Code{codes.ResourceExhausted, codes.Unavailable, codes.DeadlineExceeded, codes.InvalidArgument, codes.Canceled} {
+		t.Run(code.String(), func(t *testing.T) {
+			original := status.Error(code, "provider failure")
+			err := retryableError(fmt.Errorf("client: %w", original))
+			var retryErr *embedder.RetryableError
+			require.Equal(t, code == codes.ResourceExhausted || code == codes.Unavailable || code == codes.DeadlineExceeded, errors.As(err, &retryErr))
+			assert.ErrorIs(t, err, original)
+			if retryErr != nil {
+				assert.Zero(t, retryErr.RetryAfter)
+			}
+		})
+	}
+	for _, tt := range []struct {
+		name string
+		hint *durationpb.Duration
+		want time.Duration
+	}{
+		{"hint", durationpb.New(2 * time.Minute), 2 * time.Minute},
+		{"negative", durationpb.New(-time.Second), 0},
+		{"missing", nil, 0},
+		{"invalid", &durationpb.Duration{Nanos: 2000000000}, 0},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := status.New(codes.ResourceExhausted, "quota").WithDetails(&errdetails.RetryInfo{RetryDelay: tt.hint})
+			require.NoError(t, err)
+			var retryErr *embedder.RetryableError
+			require.ErrorAs(t, retryableError(fmt.Errorf("predict: %w", s.Err())), &retryErr)
+			assert.Equal(t, tt.want, retryErr.RetryAfter)
+		})
+	}
 }

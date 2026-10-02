@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/events';
+import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
@@ -72,6 +72,10 @@ export function TabItemRepeater({ tab, variable }: Props) {
 }
 
 export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
+  if (tab.state.repeatByVariable !== variable.state.name) {
+    return;
+  }
+
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
     dashboardLog.logger('TabItemRepeater', false, 'Skipped dependency in loading state');
     return;

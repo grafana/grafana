@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -28,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	resourcepb "github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -56,7 +58,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *das
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg,
 		sqlStore,
-		features,
+		iamapi.Features{},
 		folderPermissions,
 		ac,
 		&actest.FakeService{},
@@ -66,7 +68,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *das
 		nil,
 		nil,
 		dualwrite.ProvideTestService(),
-		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
+		serverlock.ProvideService(legacysql.NewDatabaseProvider(sqlStore), tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
 		dashclient.NewK8sClientWithFallback(
 			cfg,
@@ -93,5 +95,5 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) *das
 func SetupOrgService(tb testing.TB, sqlStore db.DB, cfg *setting.Cfg) (org.Service, error) {
 	tb.Helper()
 	quotaService := quotatest.New(false, nil)
-	return orgimpl.ProvideService(sqlStore, cfg, quotaService)
+	return orgimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, quotaService)
 }

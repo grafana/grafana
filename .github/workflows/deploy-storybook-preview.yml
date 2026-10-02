@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'packages/grafana-ui/**'
+      - 'packages/grafana-data/src/themes/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

@@ -9,6 +9,7 @@ import {
   toDataFrame,
   VizOrientation,
 } from '@grafana/data';
+import { BigValueGraphMode, BigValueTextMode } from '@grafana/schema';
 
 import { getPanelProps } from '../test-utils';
 
@@ -28,10 +29,20 @@ function createNumericFrame(values = [10, 20, 30], fieldOverrides = {}): DataFra
   });
 }
 
+function createTimeSeriesFrame(values = [10, 20, 30]): DataFrame {
+  return toDataFrame({
+    fields: [
+      { name: 'time', type: FieldType.time, values: values.map((_, i) => i + 1), config: {} },
+      { name: 'value', type: FieldType.number, values, config: {} },
+    ],
+  });
+}
+
 function renderStatPanel(
   optionsOverrides?: Partial<Options>,
   dataOverrides?: Partial<{ series: DataFrame[] }>,
-  fieldConfig?: Partial<FieldConfigSource>
+  fieldConfig?: Partial<FieldConfigSource>,
+  propOverrides?: Partial<{ title: string }>
 ) {
   const props = getPanelProps<Options>(
     { ...defaultPanelOptions, ...optionsOverrides },
@@ -44,6 +55,7 @@ function renderStatPanel(
       },
       fieldConfig: { defaults: {}, overrides: [], ...fieldConfig } as FieldConfigSource,
       replaceVariables: (v: string) => v,
+      ...propOverrides,
     }
   );
   return render(<StatPanel {...props} />);
@@ -83,5 +95,59 @@ describe('StatPanel', () => {
     renderStatPanel(undefined, { series: [frameWithLinks] });
 
     expect(screen.getByText('42')).toBeInTheDocument();
+  });
+
+  it('shows the field name when textMode Auto resolves to ValueAndName because the panel has no title', () => {
+    // Auto + empty title (and no displayName) is the second getTextMode branch → ValueAndName.
+    const frame = createNumericFrame([10, 20, 30], { name: 'requests' });
+
+    renderStatPanel({ textMode: BigValueTextMode.Auto }, { series: [frame] }, undefined, { title: '' });
+
+    expect(screen.getByText('requests')).toBeInTheDocument();
+    expect(screen.getByText('30')).toBeInTheDocument();
+  });
+
+  it('renders no value text when textMode is None', () => {
+    renderStatPanel({ textMode: BigValueTextMode.None });
+
+    expect(screen.queryByText('30')).not.toBeInTheDocument();
+  });
+
+  it('renders a sparkline chart alongside the value when graphMode is Area', () => {
+    // A time + number frame produces a sparkline, exercising the sparkline.timeRange branch.
+    const frame = createTimeSeriesFrame();
+
+    const { container } = renderStatPanel({ graphMode: BigValueGraphMode.Area }, { series: [frame] });
+
+    expect(screen.getByText('30')).toBeInTheDocument();
+    // The Area graph mode draws the sparkline into a uPlot chart.
+    expect(container.querySelector('.uplot')).toBeInTheDocument();
+  });
+
+  it('renders no sparkline chart when graphMode is None', () => {
+    const frame = createTimeSeriesFrame();
+
+    const { container } = renderStatPanel({ graphMode: BigValueGraphMode.None }, { series: [frame] });
+
+    expect(screen.getByText('30')).toBeInTheDocument();
+    expect(container.querySelector('.uplot')).not.toBeInTheDocument();
+  });
+
+  it('renders the value with percent change enabled', () => {
+    const frame = createTimeSeriesFrame();
+
+    renderStatPanel({ showPercentChange: true }, { series: [frame] });
+
+    expect(screen.getByText('30')).toBeInTheDocument();
+    // diffperc of [10, 20, 30] is (30 - 10) / 10 = 200%
+    expect(screen.getByText('200%')).toBeInTheDocument();
+  });
+
+  it('renders each row when reduceOptions.values is true', () => {
+    renderStatPanel({ reduceOptions: { calcs: [], values: true } });
+
+    expect(screen.getByText('10')).toBeInTheDocument();
+    expect(screen.getByText('20')).toBeInTheDocument();
+    expect(screen.getByText('30')).toBeInTheDocument();
   });
 });

@@ -22,20 +22,20 @@ func NewFakeService(config legacy_storage.ConfigRevision) *FakeService {
 	}
 }
 
-func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _ identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _ identity.Requester) (v1.ManagedRoute, error) {
 	r := f.Config.GetManagedRoute(name)
 	if r == nil {
-		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
+		return v1.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 	if p, ok := f.Provenances[name]; ok {
 		r.Provenance = p
 	}
 	return *r, nil
 }
-func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (legacy_storage.ManagedRoutes, error) {
+func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (v1.ManagedRoutes, error) {
 	routes := f.Config.GetManagedRoutes()
 	for _, r := range routes {
-		if p, ok := f.Provenances[r.Name]; ok {
+		if p, ok := f.Provenances[r.GetUID()]; ok {
 			r.Provenance = p
 		}
 	}

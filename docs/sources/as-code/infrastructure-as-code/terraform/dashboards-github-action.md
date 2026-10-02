@@ -136,7 +136,7 @@ This GitHub workflow consists of the following steps:
 - `terraform fmt -check` is run as a bash command in the GitHub runner to check if the Terraform configuration files are properly formatted. If the Terraform configuration files are not properly formatted, the workflow will fail at this step.
 - `terraform plan` is run as a bash command in the GitHub runner to preview the changes that Terraform will make.
 - Using [mshick/add-pr-comment@v1](https://github.com/mshick/add-pr-comment) action, the preview from Terraform plan is posted as a comment on the pull request. This helps in reviewing the changes that Terraform will make before the pull request is merged.
-- `terraform appy -auto-approve` is run as a bash command in the GitHub runner to apply the Terraform configuration files. `-auto-approve` flag is added to the command to skip interactive approval of plan before applying and make the workflow automated.
+- `terraform apply -auto-approve` is run as a bash command in the GitHub runner to apply the Terraform configuration files. `-auto-approve` flag is added to the command to skip interactive approval of plan before applying and make the workflow automated.
   This step is run only when changes are committed to `main` branch. When a pull request is merged, the merge action creates a commit to the `main` branch which triggers the `terraform apply -auto-approve` step to execute.
 
 1. In your GitHub repository, create a folder named `.github` in the root directory .

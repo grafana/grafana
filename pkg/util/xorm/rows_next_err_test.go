@@ -42,22 +42,21 @@ func TestRowsErrPropagatesRealError(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, eng.Sync(new(TestStruct)))
 
-	// Query a table column that doesn't exist so the driver errors at Next().
 	sess := eng.NewSession()
 	defer sess.Close()
 
-	rows, err := sess.SQL("SELECT nonexistent_column FROM test_struct").Rows(new(TestStruct))
-	if err != nil {
-		// If Rows() itself surfaces the error, that's fine — the point is it's not masked.
-		return
-	}
+	// The first row succeeds; evaluating the second row overflows SQLite's
+	// integer abs(). This must fail during iteration, not query preparation.
+	rows, err := sess.SQL("SELECT 1 AS id UNION ALL SELECT abs(-9223372036854775808)").Rows(new(TestStruct))
+	require.NoError(t, err)
 	defer rows.Close()
 
-	for rows.Next() {
-	}
-
-	err = rows.Err()
-	// A real column-resolution error must not be reported as sql.ErrNoRows.
-	require.NotNil(t, err, "expected a real error to be surfaced")
-	require.NotErrorIs(t, err, sql.ErrNoRows, "real error must not be masked as ErrNoRows")
+	require.True(t, rows.Next())
+	first := &TestStruct{}
+	require.NoError(t, rows.Scan(first))
+	require.False(t, rows.Next())
+	require.ErrorContains(t, rows.Err(), "integer overflow")
+	require.NotErrorIs(t, rows.Err(), sql.ErrNoRows)
+	require.False(t, rows.Next())
+	require.ErrorContains(t, rows.Err(), "integer overflow")
 }

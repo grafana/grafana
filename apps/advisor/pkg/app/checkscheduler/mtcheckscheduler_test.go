@@ -304,7 +304,7 @@ func TestRunTickParallelMT_TicksAllStaleNamespaces(t *testing.T) {
 
 	namespaces := make([]string, 0, namespaceCount)
 	lastCreated := make(map[string]time.Time, namespaceCount)
-	for i := 0; i < namespaceCount; i++ {
+	for i := range namespaceCount {
 		ns := fmt.Sprintf("stacks-%d", i)
 		namespaces = append(namespaces, ns)
 		lastCreated[ns] = stale

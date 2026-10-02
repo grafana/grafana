@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 )
 
@@ -73,4 +74,42 @@ func TestOpenAPI_GetPathOperations(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A caller-supplied route is served over HTTP, so it has to be discoverable in
+// the spec too, not only the routes that come from builders.
+func TestAddBuilderRoutes_PublishesCallerSuppliedRoutes(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	var reached string
+
+	spec := &spec3.OpenAPI{Paths: &spec3.Paths{Paths: map[string]*spec3.Path{}}}
+	got, err := addBuilderRoutes(gv, spec, nil, enabledConfig(gv), []GroupVersionRoutes{
+		{
+			GroupVersion: gv,
+			Routes:       &APIRoutes{Namespace: []APIRouteHandler{postRoute("widgets/search", &reached, "Search")}},
+		},
+	})
+	require.NoError(t, err)
+
+	path := got.Paths.Paths["/apis/example.grafana.app/v1/namespaces/{namespace}/widgets/search"]
+	require.NotNil(t, path, "the served path is missing from the spec")
+	require.NotNil(t, path.Post)
+	require.Equal(t, "listSearch", path.Post.OperationId)
+}
+
+// Routes for another group version must not leak into this one's spec.
+func TestAddBuilderRoutes_IgnoresOtherGroupVersions(t *testing.T) {
+	target := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	other := schema.GroupVersion{Group: "other.grafana.app", Version: "v1"}
+	var reached string
+
+	spec := &spec3.OpenAPI{Paths: &spec3.Paths{Paths: map[string]*spec3.Path{}}}
+	got, err := addBuilderRoutes(target, spec, nil, enabledConfig(target), []GroupVersionRoutes{
+		{
+			GroupVersion: other,
+			Routes:       &APIRoutes{Namespace: []APIRouteHandler{postRoute("widgets/search", &reached, "Search")}},
+		},
+	})
+	require.NoError(t, err)
+	require.Empty(t, got.Paths.Paths)
 }

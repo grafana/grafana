@@ -652,12 +652,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              ]
+              "$ref": "#/components/schemas/Preferences"
             }
           },
           "kind": {
@@ -693,8 +688,7 @@
           "bookmarkUrls": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }

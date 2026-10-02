@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BASE_URL } from '@grafana/api-clients/rtkq/dashboard/v2beta1';
 import { t } from '@grafana/i18n';
@@ -9,29 +9,12 @@ import { folderAPIv1beta1 } from 'app/api/clients/folder/v1beta1';
 import { extractErrorMessage } from 'app/api/utils';
 import { createWarningNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { getDashboardScenePageStateManager } from 'app/features/dashboard-scene/pages/DashboardScenePageStateManager';
-import { clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/predefinedVariables';
 import { dispatch } from 'app/store/store';
 
+import { invalidateAfterVariableMutation, variableListTag } from './cache';
 import { buildVariableResource, getVariableFolderUid, getVariableKind, getVariableSpecName } from './utils';
 
 const LIST_PAGE_SIZE = 500;
-
-const variableListTag = { type: 'Variable' as const, id: 'LIST' };
-
-/**
- * Clears caches so dashboards pick up Variable CRUD without a hard refresh.
- * Owned by variables-management (mutation sites), not the API client veneer.
- */
-export function invalidatePredefinedVariableCaches() {
-  clearPredefinedVariablesCache();
-  getDashboardScenePageStateManager().clearSceneCache();
-}
-
-function invalidateAfterVariableMutation() {
-  dispatch(dashboardAPIv2beta1.util.invalidateTags([variableListTag]));
-  invalidatePredefinedVariableCaches();
-}
 
 /**
  * Lists every Variable resource by paging through the k8s-style list endpoint with
@@ -39,7 +22,7 @@ function invalidateAfterVariableMutation() {
  * hook is the data-fetching seam for the variables tree: if fetch-all proves not to
  * scale, swap this for a per-folder labelSelector strategy without touching the UI.
  */
-const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
+export const variablesManagementAPI = dashboardAPIv2beta1.injectEndpoints({
   endpoints: (build) => ({
     listAllVariables: build.query<Variable[], void>({
       queryFn: async (_arg, _api, _extraOptions, baseQuery) => {
@@ -114,6 +97,51 @@ export function useFolderTitles(folderUids: string[]): Record<string, string> {
   }, [key]);
 
   return titles;
+}
+
+/**
+ * Resolves folder CanEdit for the given UIDs (via the folder access subresource).
+ * Missing entries mean the lookup has not completed yet — treat as not editable.
+ */
+export function useFolderCanEdit(folderUids: string[]): Record<string, boolean> {
+  const [canEditByUid, setCanEditByUid] = useState<Record<string, boolean>>({});
+  // Read latest map inside the effect without listing it as a dep (avoids re-init
+  // loops while still skipping UIDs already resolved).
+  const canEditByUidRef = useRef(canEditByUid);
+  canEditByUidRef.current = canEditByUid;
+  // Sort so [a,b] and [b,a] share one effect key.
+  const key = [...folderUids].sort().join(',');
+
+  useEffect(() => {
+    let cancelled = false;
+    const uids = key ? key.split(',') : [];
+    const missing = uids.filter((uid) => !(uid in canEditByUidRef.current));
+    if (missing.length === 0) {
+      return;
+    }
+
+    Promise.all(
+      missing.map(async (uid) => {
+        const subscription = dispatch(folderAPIv1beta1.endpoints.getFolderAccess.initiate({ name: uid }));
+        try {
+          const result = await subscription;
+          return [uid, Boolean(result.data?.canEdit)] as const;
+        } finally {
+          subscription.unsubscribe();
+        }
+      })
+    ).then((entries) => {
+      if (!cancelled) {
+        setCanEditByUid((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [key]);
+
+  return canEditByUid;
 }
 
 export interface BulkOperationResult {

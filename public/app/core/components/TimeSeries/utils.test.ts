@@ -1,14 +1,44 @@
 import {
   createDataFrame,
+  createTheme,
+  type DataFrame,
   dateTime,
   type DateTimeInput,
   type EventBus,
   FieldColorModeId,
   FieldType,
+  getDisplayProcessor,
+  type TimeRange,
 } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { getXAxisConfig, preparePlotConfigBuilder, UPLOT_DEFAULT_AXIS_GAP } from './utils';
+
+/** Minimal time + value frame; enough to exercise the shared x-axis and cursor config. */
+function makeTimeFrame(): DataFrame {
+  return createDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000] },
+      { name: 'Value', type: FieldType.number, config: {}, values: [10, 20, 30] },
+    ],
+  });
+}
+
+function makeTimeRange(from: number, to: number): TimeRange {
+  return { from: dateTime(from), to: dateTime(to), raw: { from: dateTime(from), to: dateTime(to) } };
+}
+
+function buildBuilder(frame: DataFrame, overrides: Partial<Parameters<typeof preparePlotConfigBuilder>[0]> = {}) {
+  return preparePlotConfigBuilder({
+    frame,
+    theme: createTheme(),
+    timeZones: ['browser'],
+    getTimeRange: () => makeTimeRange(1000, 3000),
+    allFrames: [frame],
+    renderers: [],
+    ...overrides,
+  });
+}
 
 describe('when fill below to option is used', () => {
   let eventBus: EventBus;
@@ -532,5 +562,149 @@ describe('colorblind line style patterns', () => {
 
     expect(series).toHaveLength(1);
     expect(series[0].props.lineStyle).toEqual({ fill: 'solid' });
+  });
+});
+
+describe('cursor proximity', () => {
+  // The hover.prox callback only reads `self.data`, so a minimal stand-in is enough to drive it.
+  type MockUPlot = { data: Array<Array<number | null>> };
+
+  function getHoverProx(builder: ReturnType<typeof preparePlotConfigBuilder>) {
+    const prox = builder.getConfig().cursor?.hover?.prox;
+
+    return prox as (self: MockUPlot, seriesIdx: number, hoveredIdx: number) => number | null;
+  }
+
+  it('uses no proximity limit when hovering a non-null value', () => {
+    const prox = getHoverProx(buildBuilder(makeTimeFrame()));
+    const u: MockUPlot = {
+      data: [
+        [1000, 2000, 3000],
+        [10, null, 30],
+      ],
+    };
+
+    expect(prox(u, 1, 0)).toBeNull();
+  });
+
+  it('limits proximity to 15px when hovering a null value', () => {
+    const prox = getHoverProx(buildBuilder(makeTimeFrame()));
+    const u: MockUPlot = {
+      data: [
+        [1000, 2000, 3000],
+        [10, null, 30],
+      ],
+    };
+
+    expect(prox(u, 1, 1)).toBe(15);
+  });
+
+  it('uses the configured hoverProximity for both hover and focus when provided', () => {
+    const builder = buildBuilder(makeTimeFrame(), { hoverProximity: 42 });
+    const prox = getHoverProx(builder);
+    const u: MockUPlot = { data: [[1000], [null]] };
+
+    // an explicit proximity overrides the null-value default
+    expect(prox(u, 1, 0)).toBe(42);
+    expect(builder.getConfig().cursor?.focus?.prox).toBe(42);
+  });
+
+  it('defaults focus proximity to 30px', () => {
+    const builder = buildBuilder(makeTimeFrame());
+
+    expect(builder.getConfig().cursor?.focus?.prox).toBe(30);
+  });
+});
+
+describe('x-axis time range', () => {
+  // The range callback ignores its uPlot arguments, so it can be called with none.
+  function getXTimeRange(builder: ReturnType<typeof preparePlotConfigBuilder>) {
+    const range = builder.getConfig().scales?.x?.range;
+    return range as () => [number, number];
+  }
+
+  it('returns the current time range when not panning', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+
+    expect(getXTimeRange(builder)()).toEqual([1000, 5000]);
+  });
+
+  it('returns the panned min/max while panning', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000 });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+  });
+
+  it('keeps panning while the props time range has not caught up', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(1000, 5000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000, isTimeRangePending: true });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+    expect(builder.getState().isPanning).toBe(true);
+  });
+
+  it('commits the props time range and stops panning once it catches up', () => {
+    const builder = buildBuilder(makeTimeFrame(), { getTimeRange: () => makeTimeRange(2000, 4000) });
+    builder.setState({ isPanning: true, min: 2000, max: 4000, isTimeRangePending: true });
+
+    expect(getXTimeRange(builder)()).toEqual([2000, 4000]);
+    expect(builder.getState().isPanning).toBe(false);
+  });
+});
+
+describe('show values', () => {
+  // The draw hook only reads data, series state, the plot box and the canvas context.
+  type MockUPlot = {
+    data: number[][];
+    series: Array<{ show: boolean; points: { show: () => boolean }; scale: string }>;
+    bbox: { width: number };
+    ctx: Partial<CanvasRenderingContext2D>;
+    valToPos: () => number;
+  };
+
+  function makeValuesFrame(): DataFrame {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'Time', type: FieldType.time, config: {}, values: [1000, 2000, 3000, 4000] },
+        { name: 'A', type: FieldType.number, config: { custom: { showValues: true } }, values: [1, 2, 3, 2] },
+        // B lands on or next to A at the second and fourth points, so its labels collide with A's
+        { name: 'B', type: FieldType.number, config: { custom: { showValues: true } }, values: [3, 2.01, 1, 2] },
+      ],
+    });
+
+    frame.fields.forEach((field) => {
+      field.display = getDisplayProcessor({ field, theme: createTheme() });
+    });
+
+    return frame;
+  }
+
+  function drawValues(visible: boolean[]) {
+    const fillText = jest.fn();
+    const frame = makeValuesFrame();
+    const builder = buildBuilder(frame);
+    const draw = builder.getConfig().hooks!.draw![0] as unknown as (u: MockUPlot) => void;
+
+    draw({
+      data: frame.fields.map((field) => field.values),
+      series: [
+        { show: true, points: { show: () => false }, scale: 'x' },
+        ...visible.map((show) => ({ show, points: { show: () => true }, scale: 'y' })),
+      ],
+      bbox: { width: 200 },
+      ctx: { save: jest.fn(), restore: jest.fn(), fillText },
+      valToPos: () => 0,
+    });
+
+    return fillText.mock.calls.map((call) => call[0]);
+  }
+
+  it('draws a value for every point of both series', () => {
+    expect(drawValues([true, true])).toEqual(['1', '2', '3', '2', '3', '2.01', '1', '2']);
+  });
+
+  it('draws no values for a series hidden through the legend', () => {
+    expect(drawValues([true, false])).toEqual(['1', '2', '3', '2']);
   });
 });

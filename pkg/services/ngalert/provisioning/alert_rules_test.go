@@ -17,18 +17,17 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -51,7 +50,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 	t.Run("group creation should set the right provenance", func(t *testing.T) {
 		group := createDummyGroup("group-test-1", orgID)
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "group-test-1")
@@ -60,14 +59,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		for _, rule := range readGroup.Rules {
 			_, provenance, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
 			require.NoError(t, err)
-			require.Equal(t, models.ProvenanceAPI, provenance)
+			require.Equal(t, models.ProvenanceAPI, models.ManagerPropertiesToProvenance(provenance))
 		}
 	})
 
 	t.Run("alert rule group should be updated correctly", func(t *testing.T) {
 		rule := dummyRule("test#3", orgID)
 		rule.RuleGroup = "a"
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -85,11 +84,11 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule := dummyRule("test#1", orgID)
 		rule.NamespaceUID = "123abc"
 		u := &user.SignedInUser{OrgID: orgID}
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 
 		rule.NamespaceUID = "abc123"
-		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 	})
 
@@ -98,7 +97,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		group := createDummyGroup("namespace-test", orgID)
 		group.Rules[0].NamespaceUID = ""
 
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "namespace-test")
@@ -111,7 +110,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		group := createDummyGroup("group-test-3", orgID)
 		group.Rules[0].RuleGroup = "something different"
 
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "group-test-3")
@@ -125,7 +124,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 	t.Run("alert rule should get interval from existing rule group", func(t *testing.T) {
 		rule := dummyRule("test#4", orgID)
 		rule.RuleGroup = "b"
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 
 		var interval int64 = 120
@@ -134,7 +133,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 		rule = dummyRule("test#4-1", orgID)
 		rule.RuleGroup = "b"
-		rule, err = ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err = ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, interval, rule.IntervalSeconds)
 	})
@@ -152,7 +151,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule.UID = ruleUID
 		rule.RuleGroup = ruleGroup
 		rule.NamespaceUID = namespaceUID
-		_, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 
 		rule, _, err = ruleService.GetAlertRule(context.Background(), u, ruleUID)
@@ -171,13 +170,13 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 
 	t.Run("updating a group by updating a rule should bump that rule's data and version number", func(t *testing.T) {
 		group := createDummyGroup("group-test-5", orgID)
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "group-test-5")
 		require.NoError(t, err)
 
 		updatedGroup.Rules[0].Title = "some-other-title-asdf"
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "group-test-5")
@@ -217,7 +216,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 			Rules:     []models.AlertRule{rule},
 		}
 
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
@@ -265,7 +264,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 			Rules:     []models.AlertRule{rule},
 		}
 
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
@@ -308,7 +307,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 			Rules:     []models.AlertRule{rule},
 		}
 
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, namespaceUID, groupTitle)
@@ -338,7 +337,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule.Metadata = models.AlertRuleMetadata{}
 
 		// Update the rule
-		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceAPI)
+		_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 
 		// Read the rule and check that the editor settings are preserved
@@ -358,14 +357,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("overlap-test-rule-2", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "overlap-test")
 		require.NoError(t, err)
 
 		updatedGroup.Rules[0].Title = "overlap-test-rule-2"
 		updatedGroup.Rules[1].Title = "overlap-test-rule-3"
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "overlap-test")
@@ -389,14 +388,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("swap-test-rule-2", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "swap-test")
 		require.NoError(t, err)
 
 		updatedGroup.Rules[0].Title = "swap-test-rule-2"
 		updatedGroup.Rules[1].Title = "swap-test-rule-1"
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "swap-test")
@@ -421,7 +420,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("cycle-test-rule-3", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "cycle-test")
 		require.NoError(t, err)
@@ -429,7 +428,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		updatedGroup.Rules[0].Title = "cycle-test-rule-2"
 		updatedGroup.Rules[1].Title = "cycle-test-rule-3"
 		updatedGroup.Rules[2].Title = "cycle-test-rule-1"
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "cycle-test")
@@ -459,7 +458,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("multi-cycle-test-rule-5", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "multi-cycle-test")
 		require.NoError(t, err)
@@ -471,7 +470,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		updatedGroup.Rules[3].Title = "multi-cycle-test-rule-5"
 		updatedGroup.Rules[4].Title = "multi-cycle-test-rule-3"
 
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "multi-cycle-test")
@@ -500,7 +499,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("recreate-test-rule-1", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup := models.AlertRuleGroup{
 			Title:     "recreate-test",
@@ -510,7 +509,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("recreate-test-rule-1", orgID),
 			},
 		}
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "recreate-test")
@@ -531,14 +530,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 				dummyRule("create-overlap-test-rule-1", orgID),
 			},
 		}
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "create-overlap-test")
 		require.NoError(t, err)
 		updatedGroup.Rules[0].Title = "create-overlap-test-rule-2"
 		updatedGroup.Rules = append(updatedGroup.Rules, dummyRule("create-overlap-test-rule-1", orgID))
 
-		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceAPI, "")
+		err = ruleService.ReplaceRuleGroup(context.Background(), u, updatedGroup, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		readGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "create-overlap-test")
@@ -560,7 +559,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 			models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
 		}
 
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), u, "my-namespace", "group-test-5")
 		require.NoError(t, err)
@@ -618,10 +617,10 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				rule := dummyRule(t.Name(), orgID)
-				rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, test.from)
+				rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(test.from))
 				require.NoError(t, err)
 
-				_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, test.to)
+				_, err = ruleService.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(test.to))
 				if test.errNil {
 					require.NoError(t, err)
 				} else {
@@ -716,11 +715,11 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				var orgID int64 = 1
 				group := createDummyGroup(t.Name(), orgID)
-				err := ruleService.ReplaceRuleGroup(context.Background(), u, group, test.from, "")
+				err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(test.from), "")
 				require.NoError(t, err)
 
 				group.Rules[0].Title = t.Name()
-				err = ruleService.ReplaceRuleGroup(context.Background(), u, group, test.to, "")
+				err = ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(test.to), "")
 				if test.errNil {
 					require.NoError(t, err)
 				} else {
@@ -736,7 +735,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		checker.EXPECT().LimitExceeded()
 		ruleService.quotas = checker
 
-		_, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#1", orgID), models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#1", orgID), models.ProvenanceToManagerProperties(models.ProvenanceNone))
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
@@ -748,7 +747,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		ruleService.quotas = checker
 
 		group := createDummyGroup("quota-reached", orgID)
-		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := ruleService.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 
 		require.ErrorIs(t, err, models.ErrQuotaReached)
 	})
@@ -757,7 +756,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule := createNoGroupRule("test-no-group-rule", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule.RuleGroup = ""
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -776,14 +775,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule := createNoGroupRule("test-no-group-rule-1", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule.RuleGroup = ""
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
 		rule2 := createNoGroupRule("test-no-group-rule-2", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule2.RuleGroup = ""
-		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceNone)
+		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -816,14 +815,14 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule := createNoGroupRule("test-no-group-rule-1", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule.RuleGroup = ""
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
 		rule2 := createNoGroupRule("test-no-group-rule-2", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule2.RuleGroup = ""
-		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceNone)
+		rule2, err = ruleService.CreateAlertRule(context.Background(), u, rule2, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -854,7 +853,7 @@ func TestIntegrationAlertRuleService(t *testing.T) {
 		rule := createNoGroupRule("test-no-group-rule", orgID, "my-namespace")
 		// This is the way legacy storage creates rules without a group
 		rule.RuleGroup = ""
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, int64(60), rule.IntervalSeconds)
 
@@ -924,7 +923,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				return true, nil
 			}
 
-			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -958,7 +957,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				return true, nil
 			}
 
-			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -995,9 +994,17 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		fs.ExpectedError = dashboards.ErrFolderNotFound
 		service.folderService = fs
 
-		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "folder does not exist")
+	})
+	t.Run("returns error when folder is the root folder", func(t *testing.T) {
+		rule := gen.With(gen.WithOrgID(orgID), gen.WithNamespaceUID(folder.GeneralFolderUID)).Generate()
+		service, _, _, _ := initServiceWithData(t)
+
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
+		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
+		require.ErrorContains(t, err, "folderUID cannot be the root folder")
 	})
 	t.Run("when user cannot write all rules", func(t *testing.T) {
 		t.Run("and it creates a new group", func(t *testing.T) {
@@ -1008,7 +1015,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
 					assert.Len(t, change.New, 1)
@@ -1018,7 +1025,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 					return nil
 				}
 
-				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -1054,7 +1061,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, rule.GetGroupKey(), change.GroupKey)
 					assert.Contains(t, change.AffectedGroups, change.GroupKey)
@@ -1065,7 +1072,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 					return nil
 				}
 
-				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+				actualRule, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -1101,11 +1108,11 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return expectedErr
 			}
 
-			_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceFile)
+			_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceFile))
 			require.ErrorIs(t, expectedErr, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -1122,32 +1129,32 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 
 	ruleService := createAlertRuleService(t, nil)
 	t.Run("should return the created id", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#1", orgID), models.ProvenanceNone)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#1", orgID), models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.NotEqual(t, 0, rule.ID, "expected to get the created id and not the zero value")
 	})
 
 	t.Run("should set the right provenance", func(t *testing.T) {
-		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#2", orgID), models.ProvenanceAPI)
+		rule, err := ruleService.CreateAlertRule(context.Background(), u, dummyRule("test#2", orgID), models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 
 		_, provenance, err := ruleService.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceAPI, provenance)
+		require.Equal(t, models.ProvenanceAPI, models.ManagerPropertiesToProvenance(provenance))
 	})
 
 	t.Run("when UID is specified", func(t *testing.T) {
 		t.Run("return error if it is not valid UID", func(t *testing.T) {
 			rule := dummyRule("test#3", orgID)
 			rule.UID = strings.Repeat("1", util.MaxUIDLength+1)
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 		t.Run("should create a new rule with this UID", func(t *testing.T) {
 			rule := dummyRule("test#3", orgID)
 			uid := util.GenerateShortUID()
 			rule.UID = uid
-			created, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			created, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.NoError(t, err)
 			require.Equal(t, uid, created.UID)
 			_, _, err = ruleService.GetAlertRule(context.Background(), u, uid)
@@ -1163,7 +1170,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 				models.DashboardUIDAnnotation: dashboardUid,
 				models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.NoError(t, err)
 		})
 		t.Run("return 4xx error when missing dashboard uid", func(t *testing.T) {
@@ -1172,7 +1179,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			rule.Annotations = map[string]string{
 				models.PanelIDAnnotation: strconv.FormatInt(panelId, 10),
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 		t.Run("return 4xx error when missing panel id", func(t *testing.T) {
@@ -1181,7 +1188,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 			rule.Annotations = map[string]string{
 				models.DashboardUIDAnnotation: dashboardUid,
 			}
-			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+			rule, err := ruleService.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 			require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		})
 	})
@@ -1189,7 +1196,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 	t.Run("should not allow creating with a NoGroup Rule", func(t *testing.T) {
 		// NoGroup rules are not allowed to be created directly via provisioning, they must be created via new k8s apis
 		ruleWNoGroup := createNoGroupRule("test_No_group_create_disallowed", orgID, "test-no-group-ns")
-		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "rules must have a valid group")
 	})
@@ -1197,7 +1204,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 	t.Run("should allow creating Rule without a group", func(t *testing.T) {
 		ruleWNoGroup := createNoGroupRule("test_No_group_create_allowed", orgID, "test-no-group-ns")
 		ruleWNoGroup.RuleGroup = "" // This is the way legacy storage creates rules without a group
-		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceNone)
+		_, err := ruleService.CreateAlertRule(context.Background(), u, ruleWNoGroup, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		// We should be able to retrieve the rule and see that it is a NoGroup rule
 		retrievedRule, _, err := ruleService.GetAlertRule(context.Background(), u, ruleWNoGroup.UID)
@@ -1224,7 +1231,7 @@ func TestIntegrationCreateAlertRule(t *testing.T) {
 		rule := dummyRule("test-managed-folder", orgID)
 		rule.NamespaceUID = managedFolderUID
 
-		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		_, err := service.CreateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
@@ -1260,7 +1267,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			return true, nil
 		}
 
-		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceAPI)
+		_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(models.ProvenanceAPI))
 		require.NoError(t, err)
 
 		require.Len(t, ac.Calls, 1)
@@ -1282,7 +1289,7 @@ func TestUpdateAlertRule(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -1293,7 +1300,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				return nil
 			}
 
-			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(groupProvenance))
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -1313,11 +1320,11 @@ func TestUpdateAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return expectedErr
 			}
 
-			_, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			_, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(groupProvenance))
 			require.ErrorIs(t, expectedErr, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -1345,7 +1352,7 @@ func TestUpdateAlertRule(t *testing.T) {
 				return false, nil
 			}
 
-			_, err = service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+			_, err = service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(groupProvenance))
 			require.NoError(t, err)
 
 			updates := ruleStore.GetRecordedCommands(func(cmd any) (any, bool) {
@@ -1373,7 +1380,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		newInterval := originalInterval + 60
 		rule.IntervalSeconds = newInterval
 
-		updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceNone)
+		updated, err := service.UpdateAlertRule(context.Background(), u, rule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.True(t, models.IsNoGroupRuleGroup(updated.RuleGroup))
 		require.Equal(t, "nogroup-update-new", updated.Title)
@@ -1394,7 +1401,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		newInterval := r1.IntervalSeconds + 60
 		r1.IntervalSeconds = newInterval
 
-		updated, err := service.UpdateAlertRule(context.Background(), u, r1, models.ProvenanceNone)
+		updated, err := service.UpdateAlertRule(context.Background(), u, r1, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 		require.Equal(t, newInterval, updated.IntervalSeconds)
 
@@ -1418,7 +1425,7 @@ func TestUpdateAlertRule(t *testing.T) {
 		rule.Title = rule.Title + "_new"
 		rule.IntervalSeconds = groupIntervalSeconds + 60
 
-		updated, err := service.UpdateAlertRule(context.Background(), u, *rule, groupProvenance)
+		updated, err := service.UpdateAlertRule(context.Background(), u, *rule, models.ProvenanceToManagerProperties(groupProvenance))
 		require.NoError(t, err)
 		require.Equal(t, groupIntervalSeconds, updated.IntervalSeconds)
 	})
@@ -1448,7 +1455,7 @@ func TestUpdateAlertRule(t *testing.T) {
 
 		// Try to update the rule
 		existingRule.Title = "Updated Title"
-		_, err = service.UpdateAlertRule(context.Background(), u, existingRule, models.ProvenanceNone)
+		_, err = service.UpdateAlertRule(context.Background(), u, existingRule, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
@@ -1482,7 +1489,7 @@ func TestDeleteAlertRule(t *testing.T) {
 			return true, nil
 		}
 
-		err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+		err := service.DeleteAlertRule(context.Background(), u, rule.UID, models.ProvenanceToManagerProperties(groupProvenance))
 		require.NoError(t, err)
 
 		require.Len(t, ac.Calls, 1)
@@ -1502,7 +1509,7 @@ func TestDeleteAlertRule(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -1513,7 +1520,7 @@ func TestDeleteAlertRule(t *testing.T) {
 				return nil
 			}
 
-			err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+			err := service.DeleteAlertRule(context.Background(), u, rule.UID, models.ProvenanceToManagerProperties(groupProvenance))
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -1530,11 +1537,11 @@ func TestDeleteAlertRule(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return expectedErr
 			}
 
-			err := service.DeleteAlertRule(context.Background(), u, rule.UID, groupProvenance)
+			err := service.DeleteAlertRule(context.Background(), u, rule.UID, models.ProvenanceToManagerProperties(groupProvenance))
 			require.ErrorIs(t, err, expectedErr)
 
 			require.Len(t, ac.Calls, 2)
@@ -1551,7 +1558,7 @@ func TestDeleteAlertRule(t *testing.T) {
 				return false, nil
 			}
 
-			err := service.DeleteAlertRule(context.Background(), u, "nonexistent-uid", groupProvenance)
+			err := service.DeleteAlertRule(context.Background(), u, "nonexistent-uid", models.ProvenanceToManagerProperties(groupProvenance))
 			require.NoError(t, err, "non-admin delete of non-existent rule should be idempotent")
 
 			require.Len(t, ac.Calls, 1)
@@ -1575,7 +1582,7 @@ func TestDeleteAlertRule(t *testing.T) {
 		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r1, orgID, models.ProvenanceNone))
 		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r2, orgID, models.ProvenanceNone))
 
-		err = service.DeleteAlertRule(context.Background(), u, r1.UID, models.ProvenanceNone)
+		err = service.DeleteAlertRule(context.Background(), u, r1.UID, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 
 		deletes := getDeleteQueries(ruleStore)
@@ -1600,7 +1607,7 @@ func TestDeleteAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, provenanceStore.SetProvenance(context.Background(), &r, orgID, models.ProvenanceNone))
 
-		ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+		ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 			// expect single delete and affected group contains exactly the rule
 			require.Len(t, change.Delete, 1)
 			require.Contains(t, change.AffectedGroups, change.GroupKey)
@@ -1609,7 +1616,7 @@ func TestDeleteAlertRule(t *testing.T) {
 			return nil
 		}
 
-		err = service.DeleteAlertRule(context.Background(), u, r.UID, models.ProvenanceNone)
+		err = service.DeleteAlertRule(context.Background(), u, r.UID, models.ProvenanceToManagerProperties(models.ProvenanceNone))
 		require.NoError(t, err)
 
 		deletes := getDeleteQueries(ruleStore)
@@ -1675,7 +1682,7 @@ func TestDeleteAlertRule(t *testing.T) {
 				require.NoError(t, err)
 				require.NoError(t, provenanceStore.SetProvenance(context.Background(), rule, orgID, tc.storedProvenance))
 
-				err = service.DeleteAlertRule(context.Background(), u, rule.UID, tc.requestProvenance)
+				err = service.DeleteAlertRule(context.Background(), u, rule.UID, models.ProvenanceToManagerProperties(tc.requestProvenance))
 
 				if tc.expectError {
 					require.Error(t, err)
@@ -1732,7 +1739,7 @@ func TestGetAlertRule(t *testing.T) {
 		actual, provenance, err := service.GetAlertRule(context.Background(), u, rule.UID)
 		require.NoError(t, err)
 		assert.Equal(t, *rule, actual)
-		assert.Equal(t, expectedProvenance, provenance)
+		assert.Equal(t, expectedProvenance, models.ManagerPropertiesToProvenance(provenance))
 	})
 
 	t.Run("should return ErrAlertRuleNotFound if rule does not exist", func(t *testing.T) {
@@ -2755,7 +2762,7 @@ func TestReplaceGroup(t *testing.T) {
 			return true, nil
 		}
 
-		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 		require.NoError(t, err)
 
 		require.Len(t, ac.Calls, 1)
@@ -2787,11 +2794,11 @@ func TestReplaceGroup(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return expectedErr
 			}
 
-			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 			require.ErrorIs(t, err, expectedErr)
 
 			require.Len(t, ac.Calls, 2)
@@ -2810,11 +2817,11 @@ func TestReplaceGroup(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return nil
 			}
 
-			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceAPI, "")
+			err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceAPI), "")
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -2851,11 +2858,11 @@ func TestReplaceGroup(t *testing.T) {
 			Rules:     []models.AlertRule{rule},
 		}
 
-		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 		require.NoError(t, err)
 
 		rule.Metadata.PrometheusStyleRule.OriginalRuleDefinition = "new"
-		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
+		err = service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 		require.NoError(t, err)
 
 		rule, _, err = service.GetAlertRule(context.Background(), u, rule.UID)
@@ -2874,7 +2881,7 @@ func TestReplaceGroup(t *testing.T) {
 		second.RuleGroup = group.Title
 		group.Rules = append(group.Rules, second)
 
-		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "cannot be used for rule groups with multiple rules")
 	})
@@ -2888,7 +2895,7 @@ func TestReplaceGroup(t *testing.T) {
 		// change the group name away from the sentinel value
 		groupSeed.Title = "some-other-group" // not the sentinel group name
 
-		err := service.ReplaceRuleGroup(context.Background(), u, groupSeed, models.ProvenanceNone, "")
+		err := service.ReplaceRuleGroup(context.Background(), u, groupSeed, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 		require.Error(t, err)
 		require.ErrorContains(t, err, "cannot move rule out of this group")
 	})
@@ -2915,7 +2922,7 @@ func TestReplaceGroup(t *testing.T) {
 			Interval:  60,
 		}
 
-		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceNone, "")
+		err := service.ReplaceRuleGroup(context.Background(), u, group, models.ProvenanceToManagerProperties(models.ProvenanceNone), "")
 		require.ErrorIs(t, err, models.ErrAlertRuleFailedValidation)
 		require.ErrorContains(t, err, "cannot store rules in folder managed by Git Sync")
 	})
@@ -2948,7 +2955,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 			return true, nil
 		}
 
-		err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+		err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, models.ProvenanceToManagerProperties(groupProvenance))
 		require.NoError(t, err)
 
 		require.Len(t, ac.Calls, 1)
@@ -2965,11 +2972,11 @@ func TestDeleteRuleGroup(t *testing.T) {
 				return false, nil
 			}
 			expectedErr := errors.New("test error")
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				return expectedErr
 			}
 
-			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, models.ProvenanceToManagerProperties(groupProvenance))
 			require.ErrorIs(t, err, expectedErr)
 
 			require.Len(t, ac.Calls, 2)
@@ -2985,7 +2992,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 			ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 				return false, nil
 			}
-			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+			ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 				assert.Equal(t, u, user)
 				assert.Equal(t, groupKey, change.GroupKey)
 				assert.Contains(t, change.AffectedGroups, groupKey)
@@ -2996,7 +3003,7 @@ func TestDeleteRuleGroup(t *testing.T) {
 				return nil
 			}
 
-			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, groupProvenance)
+			err := service.DeleteRuleGroup(context.Background(), u, groupKey.NamespaceUID, groupKey.RuleGroup, models.ProvenanceToManagerProperties(groupProvenance))
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 2)
@@ -3082,7 +3089,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				return true, nil
 			}
 
-			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 			require.NoError(t, err)
 
 			require.Len(t, ac.Calls, 1)
@@ -3102,11 +3109,11 @@ func TestDeleteRuleGroups(t *testing.T) {
 					return false, nil
 				}
 				expectedErr := errors.New("test error")
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 					return expectedErr
 				}
 
-				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 				require.ErrorIs(t, err, expectedErr)
 
 				require.Len(t, ac.Calls, 2)
@@ -3122,7 +3129,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				ac.CanWriteAllRulesFunc = func(ctx context.Context, user identity.Requester) (bool, error) {
 					return false, nil
 				}
-				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+				ac.AuthorizeRuleChangesFunc = func(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 					assert.Equal(t, u, user)
 					assert.Equal(t, groupKey1, change.GroupKey)
 					assert.ElementsMatch(t, rules1, change.AffectedGroups[groupKey1])
@@ -3132,7 +3139,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 					return nil
 				}
 
-				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+				err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 				require.NoError(t, err)
 
 				require.Len(t, ac.Calls, 2)
@@ -3158,7 +3165,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				return true, nil
 			}
 
-			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 			require.NoError(t, err)
 
 			deletes := getDeletedRules(t, ruleStore)
@@ -3184,7 +3191,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				return true, nil
 			}
 
-			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 			require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
 		})
 
@@ -3205,7 +3212,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 				return true, nil
 			}
 
-			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+			err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 			require.NoError(t, err)
 			deletes := getDeletedRules(t, ruleStore)
 			require.Len(t, deletes, 1)
@@ -3224,7 +3231,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 			return true, nil
 		}
 
-		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 		require.ErrorIs(t, err, models.ErrAlertRuleGroupNotFound)
 
 		deletes := getDeletedRules(t, ruleStore)
@@ -3245,7 +3252,7 @@ func TestDeleteRuleGroups(t *testing.T) {
 		checker.EXPECT().LimitExceeded()
 		service.quotas = checker
 
-		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceAPI, filterOpts)
+		err := service.DeleteRuleGroups(context.Background(), u, models.ProvenanceToManagerProperties(models.ProvenanceAPI), filterOpts)
 		require.NoError(t, err)
 	})
 }
@@ -3301,16 +3308,17 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 
 func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRuleService {
 	t.Helper()
-	sqlStore := db.InitTestDB(t)
-	store := store.DBstore{
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	provenanceStore := provenance.ProvideProvenanceStore(featuremgmt.WithFeatures(), sqlStore)
+	store := rulestore.RuleStore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Second * 10,
 		},
 		Logger:         log.NewNopLogger(),
 		FolderService:  folderService,
-		Bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
 		FeatureToggles: featuremgmt.WithFeatures(),
+		Provenance:     provenanceStore,
 	}
 	// store := fakes.NewRuleStore(t)
 	quotas := MockQuotaChecker{}
@@ -3324,7 +3332,7 @@ func createAlertRuleService(t *testing.T, folderService folder.Service) AlertRul
 
 	return AlertRuleService{
 		ruleStore:              store,
-		provenanceStore:        store,
+		provenanceStore:        provenanceStore,
 		quotas:                 &quotas,
 		xact:                   sqlStore,
 		log:                    log.New("testing"),

@@ -336,6 +336,30 @@ func TestValidate(t *testing.T) {
 				},
 			},
 		},
+		{
+			// A connection has no inline Secure.Token at admission time (the
+			// controller mints one later), so this must not be mistaken for
+			// "no credential configured" and slip past the http:// rejection.
+			name: "http url with connection is rejected",
+			obj: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git: &provisioning.GitRepositoryConfig{
+						URL:    "http://localhost:3000/grafana/grafana.git",
+						Branch: "main",
+						Path:   "grafana",
+					},
+					Connection: &provisioning.ConnectionInfo{
+						Name: "test-connection",
+					},
+				},
+			},
+			expectedError: true,
+			errorContains: []string{"http:// is not allowed when a token is configured"},
+		},
 	}
 
 	for _, tt := range tests {

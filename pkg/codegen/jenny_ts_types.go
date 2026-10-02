@@ -14,7 +14,7 @@ type TSTypesJenny struct {
 	ApplyFuncs []ApplyFunc
 }
 
-var _ codejen.OneToOne[SchemaForGen] = &TSTypesJenny{}
+var _ codejen.OneToOne[SchemaForGen] = (*TSTypesJenny)(nil)
 
 func (j TSTypesJenny) JennyName() string {
 	return "TSTypesJenny"

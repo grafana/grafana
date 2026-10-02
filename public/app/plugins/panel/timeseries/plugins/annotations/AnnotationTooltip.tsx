@@ -39,7 +39,6 @@ export const AnnotationTooltip = ({
     timeZone,
     canEditAnnotations,
     canDeleteAnnotations,
-    // @ts-expect-error @todo https://github.com/grafana/grafana/issues/120097 - id is typed incorrectly as string but breaks annotation API
     onAnnotationDelete
   );
 
@@ -75,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     borderRadius: theme.shape.radius.default,
     background: theme.colors.background.elevated,
     border: `1px solid ${theme.colors.border.weak}`,
-    boxShadow: theme.shadows.z3,
+    boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     userSelect: 'text',
   }),
 });

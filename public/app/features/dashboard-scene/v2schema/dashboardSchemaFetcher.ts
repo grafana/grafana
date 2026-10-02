@@ -29,8 +29,8 @@ function getOpenAPIEndpoint(group: string, version: string): string {
   return `/openapi/v3/apis/${group}/${version}`;
 }
 
-function getDashboardSpecSchemaKey(version: string): string {
-  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.DashboardSpec`;
+function getDashboardSchemaKey(version: string): string {
+  return `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}.Dashboard`;
 }
 
 let cachedSchema: JSONSchema | null = null;
@@ -56,7 +56,7 @@ async function doFetchSchema(): Promise<JSONSchema> {
   await dashboardAPIVersionResolver.resolve();
   const { group, version } = getK8sV2DashboardApiConfig();
   const endpoint = getOpenAPIEndpoint(group, version);
-  const schemaKey = getDashboardSpecSchemaKey(version);
+  const schemaKey = getDashboardSchemaKey(version);
 
   const openApiSchema = await getBackendSrv().get<OpenAPISchema>(endpoint);
 
@@ -65,9 +65,12 @@ async function doFetchSchema(): Promise<JSONSchema> {
   }
 
   const schemas = openApiSchema.components.schemas;
-  const specSchema = schemas[schemaKey];
-  if (!specSchema) {
-    throw new Error(`Dashboard spec schema not found: ${schemaKey}`);
+  const theSchema = schemas[schemaKey];
+  if (!theSchema) {
+    throw new Error(`Dashboard schema not found: ${schemaKey}`);
+  }
+  if (theSchema.required) {
+    theSchema.required = theSchema.required.filter((prop) => prop !== 'status'); // ignore status
   }
 
   const definitions: Record<string, JSONSchema> = {};
@@ -77,7 +80,7 @@ async function doFetchSchema(): Promise<JSONSchema> {
 
   const jsonSchema: JSONSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
-    ...flattenSingleRefAllOf(specSchema),
+    ...flattenSingleRefAllOf(theSchema),
     definitions,
   };
 

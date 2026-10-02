@@ -211,7 +211,7 @@ function FormContent({ initialValues, parentFolder, repository, canPushToConfigu
                 )}
                 nonEmptyMessage={t(
                   'browse-dashboards.delete-provisioned-folder-form.folder-not-empty',
-                  'Selected folder contains other resources that will be deleted'
+                  'Selected folder contains resources that will be deleted'
                 )}
               />
 

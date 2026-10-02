@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import * as React from 'react';
 import { useDebounce } from 'react-use';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FilterInput } from '@grafana/ui';
 
@@ -38,6 +39,7 @@ export const SearchField = ({ id, value, onSearch }: Props) => {
   return (
     <FilterInput
       id={id}
+      data-testid={selectors.components.SearchField.searchInput}
       value={query}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.keyCode === 13) {

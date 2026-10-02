@@ -97,7 +97,7 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
       <Divider />
       <MonitorConfig options={options} updateOptions={updateOptions} getSubscriptions={getSubscriptions} />
       {error && (
-        <Alert severity="error" title={error.title}>
+        <Alert severity="error" title={error.title} topSpacing={2}>
           <p>{error.description}</p>
           {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
         </Alert>

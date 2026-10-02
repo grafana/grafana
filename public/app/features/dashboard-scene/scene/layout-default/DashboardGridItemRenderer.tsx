@@ -8,7 +8,8 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 
 import { renderMatchingSoloPanels, useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { useDashboardState } from '../../utils/utils';
-import { SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
+import { PanelSearchResult, SoloPanelContextValueWithSearchStringFilter } from '../PanelSearchLayout';
+import { PanelEditActionsWrapper } from '../edit-actions-popover/PanelEditActions';
 import { getIsLazy } from '../layouts-shared/utils';
 
 import { type DashboardGridItem, type RepeatDirection } from './DashboardGridItem';
@@ -16,27 +17,32 @@ import { type DashboardGridItem, type RepeatDirection } from './DashboardGridIte
 interface PanelWrapperProps {
   panel: VizPanel;
   isLazy: boolean;
-  containerRef?: RefObject<HTMLDivElement>;
+  containerRef?: RefObject<HTMLDivElement | null>;
   isSelected?: boolean;
 }
 
 function PanelWrapper({ panel, isLazy, containerRef, isSelected }: PanelWrapperProps) {
   if (isLazy) {
     return (
-      <LazyLoader
-        key={panel.state.key!}
-        ref={containerRef}
-        mode="query"
-        className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
-      >
-        <panel.Component model={panel} />
-      </LazyLoader>
+      <PanelEditActionsWrapper panel={panel}>
+        <LazyLoader
+          key={panel.state.key!}
+          ref={containerRef}
+          mode="query"
+          className={cx(panelWrapper, isSelected && 'dashboard-selected-element')}
+        >
+          <panel.Component model={panel} />
+        </LazyLoader>
+      </PanelEditActionsWrapper>
     );
   }
+
   return (
-    <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
-      <panel.Component model={panel} />
-    </div>
+    <PanelEditActionsWrapper panel={panel}>
+      <div className={cx(panelWrapper, isSelected && 'dashboard-selected-element')} ref={containerRef}>
+        <panel.Component model={panel} />
+      </div>
+    </PanelEditActionsWrapper>
   );
 }
 
@@ -53,12 +59,14 @@ export function DashboardGridItemRenderer({ model }: SceneComponentProps<Dashboa
     itemHeight ?? 10
   );
 
+  if (soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter) {
+    return [body, ...repeatedPanels].map((panel) => (
+      <PanelSearchResult key={panel.state.key} panel={panel} filter={soloPanelContext} isLazy={isLazy} />
+    ));
+  }
+
   if (soloPanelContext) {
-    // Use lazy loading only for panel search layout (SoloPanelContextValueWithSearchStringFilter)
-    // as it renders multiple panels in a grid. Skip lazy loading for viewPanel URL param
-    // (SoloPanelContextWithPathIdFilter) since single panels should render immediately.
-    const useLazyForSoloPanel = isLazy && soloPanelContext instanceof SoloPanelContextValueWithSearchStringFilter;
-    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels], useLazyForSoloPanel);
+    return renderMatchingSoloPanels(soloPanelContext, [body, ...repeatedPanels]);
   }
 
   if (!variableName) {

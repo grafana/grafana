@@ -49,6 +49,7 @@ jest.mock('re-resizable', () => {
 jest.mock('@openfeature/react-sdk', () => ({
   ...jest.requireActual('@openfeature/react-sdk'),
   useBooleanFlagValue: (_flag: string, defaultValue: boolean) => defaultValue,
+  useFlag: (_flag: string, defaultValue: boolean) => ({ value: defaultValue }),
 }));
 
 const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePanel>>) => {

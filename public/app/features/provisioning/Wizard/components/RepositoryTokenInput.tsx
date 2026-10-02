@@ -51,6 +51,7 @@ export function RepositoryTokenInput() {
               id="token"
               placeholder={gitFields.tokenConfig.placeholder}
               isConfigured={tokenConfigured}
+              revealable
               invalid={!!errors?.repository?.token?.message}
               onReset={() => {
                 setValue('repository.token', '');
