@@ -409,7 +409,7 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 			bo.Wait()
 			continue
 		}
-		return nil, resource.GetError(resErr)
+		return nil, resource.StatusError(resErr)
 	}
 	return nil, retriesExhausted(ctx, bo, lastErr)
 }
