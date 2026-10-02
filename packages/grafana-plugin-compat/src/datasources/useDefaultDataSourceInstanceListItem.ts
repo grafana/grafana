@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { useDefaultDataSourceInstanceListItem as rtUseDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 
-import { getDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
+import { backwardsCompatibleGetDefaultDataSourceInstanceListItem } from './getDefaultDataSourceInstanceListItem';
 
 /** Declared here because `@grafana/runtime/unstable` lacks it on older supported hosts. */
 export interface UseDefaultDataSourceInstanceListItemResult {
@@ -12,38 +11,18 @@ export interface UseDefaultDataSourceInstanceListItemResult {
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uids of the
- * items change, so passing an inline array is safe.
+ * Uses the host hook when available, which also re-resolves on data source cache changes; otherwise
+ * resolves synchronously on every render. Picked once at load so the hook order stays stable.
  */
-export function useDefaultDataSourceInstanceListItem(
+export const useDefaultDataSourceInstanceListItem: (
+  items: DataSourceInstanceListItem[]
+) => UseDefaultDataSourceInstanceListItemResult =
+  typeof rtUseDefaultDataSourceInstanceListItem === 'function'
+    ? rtUseDefaultDataSourceInstanceListItem
+    : useBackwardsCompatibleDefaultDataSourceInstanceListItem;
+
+function useBackwardsCompatibleDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): UseDefaultDataSourceInstanceListItemResult {
-  const [result, setResult] = useState<UseDefaultDataSourceInstanceListItemResult>({ isLoading: true });
-  const itemsKey = JSON.stringify(items.map((item) => item?.uid));
-
-  useEffect(() => {
-    let active = true;
-    setResult({ isLoading: true });
-
-    getDefaultDataSourceInstanceListItem(items).then(
-      (item) => {
-        if (active) {
-          setResult({ isLoading: false, item });
-        }
-      },
-      (err: unknown) => {
-        if (active) {
-          setResult({ isLoading: false, error: err instanceof Error ? err : new Error(String(err)) });
-        }
-      }
-    );
-
-    return () => {
-      active = false;
-    };
-    // Keyed by uid, the only field the resolver reads.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsKey]);
-
-  return result;
+  return { isLoading: false, item: backwardsCompatibleGetDefaultDataSourceInstanceListItem(items) };
 }
