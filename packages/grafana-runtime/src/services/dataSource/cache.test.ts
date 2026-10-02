@@ -46,7 +46,6 @@ function fetchingSource(overrides: Partial<DataSourceCacheSource> = {}): DataSou
     getInitialSnapshot: () => undefined,
     loadList: jest.fn().mockResolvedValue({ items: [] }),
     refreshList: jest.fn(),
-    refreshMetas: jest.fn(),
     loadSettings: jest.fn(),
     ...overrides,
   };

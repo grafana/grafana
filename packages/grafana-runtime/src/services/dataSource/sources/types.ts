@@ -29,8 +29,6 @@ export interface DataSourceCacheSource {
   loadList(): Promise<DataSourceListSnapshot>;
   /** After a data source add, update or delete. `payload` is an already-fetched `/api/frontend/settings`. */
   refreshList(payload?: BootDataSourceSettings): Promise<DataSourceListSnapshot>;
-  /** After a plugin install or uninstall. `undefined` means the list does not change. */
-  refreshMetas(): Promise<DataSourceListSnapshot | undefined>;
   /** Settings for one uid. `undefined` means not found; every other failure throws. */
   loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined>;
 }
