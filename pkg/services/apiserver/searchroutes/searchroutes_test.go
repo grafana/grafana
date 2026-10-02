@@ -603,13 +603,19 @@ func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
 	assert.ElementsMatch(t, []string{"dashboards"}, names)
 }
 
-// Folders get search but are not in trashAllowlist.
+// Folders get lexical and hybrid search but are not in trashAllowlist.
 func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
-	b := &fakeBuilder{gvs: []schema.GroupVersion{{Group: "folder.grafana.app", Version: "v1"}}}
+	versions := []schema.GroupVersion{
+		{Group: "folder.grafana.app", Version: "v1"},
+		{Group: "folder.grafana.app", Version: "v1beta1"},
+	}
+	b := &fakeBuilder{gvs: versions}
 
-	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{}))
+	got := paths(Build(true, true, nil, fakeClient{}, []builder.APIGroupBuilder{b}, nil, Options{HybridEnabled: true}))
 
-	assert.Equal(t, []string{"folders/search"}, got["folder.grafana.app/v1"])
+	for _, gv := range versions {
+		assert.ElementsMatch(t, []string{"folders/search", "folders/search/hybrid"}, got[gv.String()])
+	}
 }
 
 // Declining one endpoint must leave the other alone.
