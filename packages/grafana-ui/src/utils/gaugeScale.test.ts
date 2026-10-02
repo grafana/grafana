@@ -1,6 +1,6 @@
 import { ScaleDistribution } from '@grafana/schema';
 
-import { getGaugeScaleDistribution, getScaledPercent, getValueForScaledPercent } from './gaugeScale';
+import { getDecadeTicks, getGaugeScaleDistribution, getScaledPercent, getValueForScaledPercent } from './gaugeScale';
 
 const log = { type: ScaleDistribution.Log };
 
@@ -61,5 +61,22 @@ describe('getValueForScaledPercent', () => {
 
   it('falls back to linear on a log scale when min is 0', () => {
     expect(getValueForScaledPercent(0.5, 0, 100, log)).toBe(50);
+  });
+});
+
+describe('getDecadeTicks', () => {
+  it('returns every power of ten from min to max on a log scale', () => {
+    expect(getDecadeTicks(1e-9, 1e-3, log)).toEqual([1e-9, 1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3]);
+  });
+
+  it('only returns powers of ten inside the range when min and max are not powers of ten', () => {
+    expect(getDecadeTicks(2, 5000, log)).toEqual([10, 100, 1000]);
+  });
+
+  it.each([
+    { desc: 'a linear scale', min: 1, max: 1000, scale: undefined },
+    { desc: 'a log scale with min 0', min: 0, max: 1000, scale: log },
+  ])('returns no ticks on $desc', ({ min, max, scale }) => {
+    expect(getDecadeTicks(min, max, scale)).toEqual([]);
   });
 });

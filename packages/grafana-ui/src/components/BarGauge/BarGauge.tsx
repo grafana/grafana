@@ -35,6 +35,14 @@ import { calculateFontSize, measureText } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
+import {
+  type BarGaugeScaleLabel,
+  BarGaugeScaleLabels,
+  getBarGaugeScaleLabels,
+  getScaleLabelsWidth,
+  SCALE_LABELS_HEIGHT,
+} from './BarGaugeScaleLabels';
+
 const MIN_VALUE_HEIGHT = 18;
 const MAX_VALUE_HEIGHT = 50;
 const MAX_VALUE_WIDTH = 150;
@@ -61,6 +69,8 @@ export interface Props extends Themeable2 {
   valueDisplayMode?: BarGaugeValueMode;
   namePlacement?: BarGaugeNamePlacement;
   isOverflow?: boolean;
+  /** Label min, max and thresholds along the bar, plus each power of ten on a log scale */
+  showScaleLabels?: boolean;
 }
 
 /**
@@ -92,10 +102,40 @@ export const BarGauge = memo(function BarGauge(props: Props) {
     valueDisplayMode,
   } = props;
 
-  const renderBasicAndGradientBars = () => {
-    const styles = getBasicAndGradientStyles(props);
+  const renderWithScaleLabels = (bar: JSX.Element, barLength: number) => {
+    const { scaleLabels, scaleLabelsSize, wrapperHeight } = calculateBarAndValueDimensions(props);
+    if (scaleLabelsSize === 0) {
+      return bar;
+    }
+
+    const isVert = isVertical(orientation);
+    const labels = (
+      <BarGaugeScaleLabels
+        labels={scaleLabels}
+        length={barLength}
+        width={scaleLabelsSize}
+        orientation={orientation}
+        theme={theme}
+      />
+    );
 
     return (
+      // an explicit height keeps the label column aligned with the bar even when the parent doesn't stretch us
+      <div
+        style={{ display: 'flex', flexGrow: 1, ...(isVert ? { height: wrapperHeight } : { flexDirection: 'column' }) }}
+      >
+        {isVert && labels}
+        {bar}
+        {!isVert && labels}
+      </div>
+    );
+  };
+
+  const renderBasicAndGradientBars = () => {
+    const styles = getBasicAndGradientStyles(props);
+    const { maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
+
+    return renderWithScaleLabels(
       <div style={styles.wrapper}>
         {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
@@ -106,7 +146,8 @@ export const BarGauge = memo(function BarGauge(props: Props) {
         )}
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
-      </div>
+      </div>,
+      isVertical(orientation) ? maxBarHeight : maxBarWidth
     );
   };
 
@@ -182,7 +223,7 @@ export const BarGauge = memo(function BarGauge(props: Props) {
       cells.push(<div key={i.toString()} style={cellStyles} />);
     }
 
-    return (
+    return renderWithScaleLabels(
       <div style={containerStyles}>
         <div style={cellsContainerStyles}>{cells}</div>
         {valueDisplayMode !== BarGaugeValueMode.Hidden && (
@@ -192,7 +233,9 @@ export const BarGauge = memo(function BarGauge(props: Props) {
             style={valueStyles}
           />
         )}
-      </div>
+      </div>,
+      // the cells don't fill the whole bar, so labels follow where the cells actually are
+      cellCount * (cellSize + cellSpacing)
     );
   };
 
@@ -387,6 +430,10 @@ interface BarAndValueDimensions {
   maxBarHeight: number;
   wrapperHeight: number;
   wrapperWidth: number;
+  /** Empty when the labels are off or the bar is too small to fit them */
+  scaleLabels: BarGaugeScaleLabel[];
+  /** Height of the label row (horizontal) or width of the label column (vertical), 0 when hidden */
+  scaleLabelsSize: number;
 }
 
 /**
@@ -394,7 +441,7 @@ interface BarAndValueDimensions {
  * Only exported for unit tests
  **/
 export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation, text, alignmentFactors, valueDisplayMode } = props;
+  const { height, width, orientation, text, alignmentFactors, valueDisplayMode, showScaleLabels } = props;
   const titleDim = calculateTitleDimensions(props);
   const value = alignmentFactors ?? props.value;
   const valueString = formattedValueToString(value);
@@ -405,6 +452,8 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
   let valueWidth = 0;
   let wrapperWidth = 0;
   let wrapperHeight = 0;
+  let scaleLabels: BarGaugeScaleLabel[] = [];
+  let scaleLabelsSize = 0;
 
   // measure text with title font size or min 14px
   const fontSizeToMeasureWith = text?.valueSize ?? Math.max(titleDim.fontSize, 12);
@@ -429,6 +478,22 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     maxBarWidth = width;
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
+
+    if (showScaleLabels) {
+      const labels = getBarGaugeScaleLabels(props.field, props.display);
+      const labelsWidth = getScaleLabelsWidth(labels);
+
+      // the labels go beside the bar, so only show them if the bar stays at least as wide
+      if (labels.length > 0 && maxBarWidth >= labelsWidth * 2) {
+        scaleLabels = labels;
+        scaleLabelsSize = labelsWidth;
+        maxBarWidth -= labelsWidth;
+        wrapperWidth -= labelsWidth;
+        if (valueWidth > 0) {
+          valueWidth -= labelsWidth;
+        }
+      }
+    }
   } else {
     // Calculate the width and the height of the given values
     if (valueDisplayMode === BarGaugeValueMode.Hidden) {
@@ -449,6 +514,19 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
       wrapperWidth = width - titleDim.width;
       wrapperHeight = height;
     }
+
+    const labels = showScaleLabels ? getBarGaugeScaleLabels(props.field, props.display) : [];
+
+    // the labels go under the bar, so only show them if the bar stays at least as tall
+    if (labels.length > 0 && maxBarHeight >= SCALE_LABELS_HEIGHT * 2) {
+      scaleLabels = labels;
+      scaleLabelsSize = SCALE_LABELS_HEIGHT;
+      maxBarHeight -= SCALE_LABELS_HEIGHT;
+      wrapperHeight -= SCALE_LABELS_HEIGHT;
+      if (valueHeight > 0) {
+        valueHeight -= SCALE_LABELS_HEIGHT;
+      }
+    }
   }
 
   return {
@@ -458,6 +536,8 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     maxBarHeight,
     wrapperHeight,
     wrapperWidth,
+    scaleLabels,
+    scaleLabelsSize,
   };
 }
 

@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 
 import {
   type DisplayValue,
@@ -472,6 +472,87 @@ describe('BarGauge', () => {
       });
       render(<BarGauge {...props} />);
       expect(display.mock.calls.map(([value]) => value)).toEqual([1, 10, 100, 1000]);
+    });
+  });
+
+  describe('scale labels', () => {
+    // the canvas mock used in tests measures text as 1px per character
+
+    it('reserves a label row under a horizontal bar', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({ height: 100, width: 500, value: getValue(1), showScaleLabels: true })
+      );
+
+      expect(dims.scaleLabels.map((label) => label.text)).toEqual(['0', '100', '70', '90']);
+      expect(dims.scaleLabelsSize).toBe(18);
+      expect(dims.maxBarHeight).toBe(82);
+      expect(dims.valueHeight).toBe(82);
+    });
+
+    it('hides the labels when a horizontal bar is too short to fit them', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({ height: 30, width: 500, value: getValue(1), showScaleLabels: true })
+      );
+
+      expect(dims.scaleLabels).toEqual([]);
+      expect(dims.maxBarHeight).toBe(30);
+    });
+
+    it('reserves a label column beside a vertical bar and keeps the value above the bar', () => {
+      // widest label is '100': 3px of text plus a 4px gap on each side
+      const dims = calculateBarAndValueDimensions(
+        getProps({
+          height: 300,
+          width: 100,
+          orientation: VizOrientation.Vertical,
+          value: getValue(1),
+          showScaleLabels: true,
+        })
+      );
+
+      expect(dims.scaleLabelsSize).toBe(11);
+      expect(dims.maxBarWidth).toBe(89);
+      expect(dims.valueWidth).toBe(89);
+    });
+
+    it('hides the labels when a vertical bar is too narrow to fit them', () => {
+      const dims = calculateBarAndValueDimensions(
+        getProps({
+          height: 300,
+          width: 20,
+          orientation: VizOrientation.Vertical,
+          value: getValue(1),
+          showScaleLabels: true,
+        })
+      );
+
+      expect(dims.scaleLabels).toEqual([]);
+      expect(dims.maxBarWidth).toBe(20);
+    });
+
+    it('aligns retro LCD labels with the cells rather than the full bar width', () => {
+      // 400px bar: 33 cells of 4px plus 8px spacing cover 396px, so the max label ends there
+      render(
+        <BarGauge
+          {...getProps({
+            height: 100,
+            width: 500,
+            value: getValue(1),
+            displayMode: BarGaugeDisplayMode.Lcd,
+            showScaleLabels: true,
+          })}
+        />
+      );
+
+      expect(screen.getByText('100')).toHaveStyle({ left: '393px' });
+      expect(screen.getByText('70')).toBeInTheDocument();
+    });
+
+    it('does not render labels when the option is off', () => {
+      render(<BarGauge {...getProps({ height: 100, width: 500, value: getValue(1) })} />);
+
+      expect(screen.getByText('1')).toBeInTheDocument();
+      expect(screen.queryByText('70')).not.toBeInTheDocument();
     });
   });
 });

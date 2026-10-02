@@ -39,3 +39,22 @@ export function getValueForScaledPercent(
 
   return min * Math.pow(max / min, percent);
 }
+
+/**
+ * Returns each power of ten between min and max on a log scale, and nothing on any other scale.
+ */
+export function getDecadeTicks(min: number, max: number, scale?: ScaleDistributionConfig): number[] {
+  if (!isLogScale(min, max, scale)) {
+    return [];
+  }
+
+  // Parsing "1eN" is correctly rounded by the spec; Math.pow's precision is implementation-defined.
+  const ticks: number[] = [];
+  let exponent = Math.floor(Math.log10(min));
+  for (let tick = Number(`1e${exponent}`); tick <= max; tick = Number(`1e${++exponent}`)) {
+    if (tick >= min) {
+      ticks.push(tick);
+    }
+  }
+  return ticks;
+}

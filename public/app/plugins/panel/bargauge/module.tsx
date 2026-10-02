@@ -118,6 +118,16 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(BarGaugePanel)
         defaultValue: defaultOptions.showUnfilled,
         showIf: (options) => options.displayMode !== 'lcd',
       })
+      .addBooleanSwitch({
+        path: 'showThresholdLabels',
+        name: t('bargauge.name-show-labels', 'Show labels'),
+        category,
+        description: t(
+          'bargauge.description-show-labels',
+          'Display min, max and threshold values, plus each power of ten on a logarithmic scale'
+        ),
+        defaultValue: defaultOptions.showThresholdLabels,
+      })
       .addRadio({
         path: 'sizing',
         name: t('bargauge.name-bar-size', 'Bar size'),

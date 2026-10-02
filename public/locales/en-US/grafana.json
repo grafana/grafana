@@ -4394,6 +4394,7 @@
     "description-max-height": "Maximum row height (horizontal orientation)",
     "description-min-height": "Minimum row height (horizontal orientation)",
     "description-min-width": "Minimum column width (vertical orientation)",
+    "description-show-labels": "Display min, max and threshold values, plus each power of ten on a logarithmic scale",
     "description-show-unfilled-area": "When enabled renders the unfilled region as gray",
     "display-mode-options": {
       "label-basic": "Basic",
@@ -4412,6 +4413,7 @@
       "label-left": "Left",
       "label-top": "Top"
     },
+    "name-show-labels": "Show labels",
     "name-show-unfilled-area": "Show unfilled area",
     "name-text-mode": "Text mode",
     "name-value-display": "Value display",

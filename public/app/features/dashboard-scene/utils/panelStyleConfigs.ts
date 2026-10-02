@@ -195,6 +195,7 @@ const gaugePanelStyleConfig: PanelStyleConfig = {
  *   valueMode    – value color, text color, or hidden
  *   namePlacement – auto, top, left, or hidden
  *   showUnfilled – render the unfilled region as gray
+ *   showThresholdLabels – labels for min, max, thresholds and log decades
  *   sizing       – auto vs manual bar size
  *   minVizWidth  – minimum bar width for manual sizing
  *   minVizHeight – minimum bar height for manual sizing
@@ -214,6 +215,7 @@ const barGaugePanelStyleConfig: PanelStyleConfig = {
       'valueMode',
       'namePlacement',
       'showUnfilled',
+      'showThresholdLabels',
       'sizing',
       'minVizWidth',
       'minVizHeight',
