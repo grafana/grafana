@@ -18,8 +18,8 @@ export async function getDefaultDataSourceInstanceListItem(
   return backwardsCompatibleGetDefaultDataSourceInstanceListItem(items);
 }
 
-async function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
+export function backwardsCompatibleGetDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
-): Promise<DataSourceInstanceListItem | undefined> {
+): DataSourceInstanceListItem | undefined {
   return items.find((item) => item && getDataSourceSrv().getInstanceSettings(item.uid)?.isDefault);
 }
