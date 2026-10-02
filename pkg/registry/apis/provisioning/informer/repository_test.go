@@ -138,10 +138,10 @@ func TestCachedRepositoryGetter_CountExcludesTerminating(t *testing.T) {
 // A successful reconcile Get returns the fresh object and writes it back into the
 // store, so a later List (the quota count) reflects it without waiting for a
 // re-list.
-func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
+func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	client := fake.NewClientset(repo("ns", "fresh"))
 	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -154,13 +154,13 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThrough(t *testing.T) {
 
 // The write-through is trimmed like the re-list, so a warm snapshot costs the
 // same as a re-listed one and the store holds one shape either way.
-func TestClientGetCachedListRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
+func TestClientRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title nobody reading the snapshot needs"
 	full.Finalizers = []string{"provisioning.grafana.app/cleanup"}
 	client := fake.NewClientset(full)
 	store := newFakeStore()
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -175,10 +175,10 @@ func TestClientGetCachedListRepositoryGetter_GetWritesThroughTrimmed(t *testing.
 
 // A reconcile Get for a vanished object returns NotFound and removes it from the
 // store, so the count drops it without waiting for a re-list.
-func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
+func TestClientRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
 
 	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
@@ -191,9 +191,9 @@ func TestClientGetCachedListRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 
 // The count reads only the requested namespace out of the cluster-wide snapshot,
 // and skips repositories awaiting their finalizers.
-func TestClientGetCachedListRepositoryGetter_CountFiltersNamespaceAndTerminating(t *testing.T) {
+func TestClientRepositoryGetter_CountFiltersNamespaceAndTerminating(t *testing.T) {
 	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
-	g := NewClientGetCachedListRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
 
 	count, err := g.CountActiveRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
@@ -289,22 +289,53 @@ func TestRepositoryList_EmptyStoreListsFullObjects(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, repoGVR))
 }
 
-// Past the cap, reading each one back costs more than listing everything.
-func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
-	drifted := make([]keysapi.Key, 0, maxHydrations+1)
-	for i := range maxHydrations + 1 {
-		drifted = append(drifted, keysapi.Key{Namespace: "ns", Name: "r" + strconv.Itoa(i), ResourceVersion: "11"})
+// Past the limit, reading each one back costs more than listing everything. The
+// limit tracks the snapshot, so the same drift can be worth reading back in a
+// large one and not in a small one; BenchmarkRepositoryRelist is where those
+// numbers come from.
+func TestMaxHydrations(t *testing.T) {
+	for _, tc := range []struct {
+		snapshot int
+		want     int
+	}{
+		{snapshot: 0, want: minHydrations},
+		{snapshot: 10, want: minHydrations},  // the floor: one read-back still beats listing ten
+		{snapshot: 100, want: minHydrations}, // 100/32 rounds below the floor
+		{snapshot: 1000, want: 31},           // measured crossover is ~35
+		{snapshot: 100000, want: 3125},       // a flat cap would force a 100k-object list here
+	} {
+		assert.Equal(t, tc.want, maxHydrations(tc.snapshot), "snapshot of %d", tc.snapshot)
 	}
-	keys := &stubKeysLister{listRV: 100, keys: drifted}
+}
+
+func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
+	// Big enough that the share rather than the floor decides, so the test
+	// breaks if the limit stops tracking the snapshot.
+	const total = 1000
+	limit := maxHydrations(total)
+	require.Greater(t, limit, minHydrations, "the share must be what bounds this case")
+
+	seed := make([]*provisioningapis.Repository, 0, total)
+	keyList := make([]keysapi.Key, 0, total)
+	for i := range total {
+		name := "r" + strconv.Itoa(i)
+		seed = append(seed, repoAt("ns", name, "10"))
+		rv := "10"
+		if i <= limit { // one past the limit
+			rv = "11"
+		}
+		keyList = append(keyList, keysapi.Key{Namespace: "ns", Name: name, ResourceVersion: rv})
+	}
+	keys := &stubKeysLister{listRV: 100, keys: keyList}
 	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
 
 	recorder, reg := newTestRecorder(repoGVR)
-	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, newFakeStore(repoAt("ns", "seed", "10")), recorder)(t.Context())
+	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, newFakeStore(seed...), recorder)(t.Context())
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{"from-full-list"}, repoNames(t, objs))
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
-	assert.Zero(t, hydrationCount(t, reg, repoGVR), "the cap is checked before any read-back")
+	assert.Zero(t, hydrationCount(t, reg, repoGVR), "the limit is checked before any read-back")
 }
 
 // Hard-deleted between the keys list and the read-back. Leaving it out is right:

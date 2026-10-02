@@ -22,17 +22,6 @@ import (
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
 )
 
-// maxHydrations caps the objects one keys-only re-list will read back before it
-// takes a single full list instead. Steady state drifts by a handful of
-// repositories per tick, because the reconcile writes status only on change; a
-// burst past the cap is cheaper as one list than as hundreds of round trips.
-const maxHydrations = 200
-
-// errRelistFullObjects means the keys-only re-list gave up and the caller should
-// list full objects instead. Not a failure: the full list is authoritative, just
-// more expensive.
-var errRelistFullObjects = errors.New("keys-only re-list needs the full objects")
-
 // RepositoryGetter is the read seam the repository controller reconciles
 // against. It exposes exactly what the controller needs — the single repository
 // under reconciliation, and the active count for the quota check — so the source
@@ -67,7 +56,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 		// reconciled under round-robin delivery. In degraded mode only the
 		// live-event latency is lost until the subscription opens.
 		source.AllowDegradedStart()
-		return source, NewClientGetCachedListRepositoryGetter(client.ProvisioningV0alpha1(), store)
+		return source, NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
 	}
 	inf := informers.NewSharedInformerFactory(client, resync).Provisioning().V0alpha1().Repositories()
 	return inf.Informer(), NewCachedRepositoryGetter(inf.Lister())
@@ -133,6 +122,33 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 	}
 }
 
+// Read-backs are bounded as a share of the snapshot rather than by a flat count,
+// because the full list they are competing against also grows with it.
+// BenchmarkRepositoryRelist measures one read-back at roughly twenty times what
+// one object costs inside a list, so listing everything wins once a few percent
+// of the snapshot has drifted: at a thousand repositories and a 1ms server hop,
+// one list takes ~99ms while fifty read-backs take ~137ms. A flat cap is wrong
+// in both directions -- too slow for a small snapshot, too eager for a large one.
+//
+// The floor keeps a small snapshot on the projection, where the share alone
+// would round to nothing: at ten repositories a single read-back still beats
+// listing all ten.
+const (
+	hydrationShare = 32 // read back at most one key in this many
+	minHydrations  = 4
+)
+
+// maxHydrations is how many keys this re-list will read back before it takes a
+// single full list instead.
+func maxHydrations(snapshot int) int {
+	return max(minHydrations, snapshot/hydrationShare)
+}
+
+// errRelistFullObjects means the keys-only re-list gave up and the caller should
+// list full objects instead. Not a failure: the full list is authoritative, just
+// more expensive.
+var errRelistFullObjects = errors.New("keys-only re-list needs the full objects")
+
 // listRepositoryKeys collects a keys-only re-list into the minimal objects the
 // informer's Store keys on, reading back only what prev cannot answer for.
 func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1Interface, keys keysapi.Lister, prev map[string]*provisioningapis.Repository, recorder RelistRecorder) ([]runtime.Object, int64, error) {
@@ -156,8 +172,9 @@ func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1I
 		drifted = append(drifted, k)
 	}
 
-	if len(drifted) > maxHydrations {
-		return nil, 0, fmt.Errorf("%w: %d repositories drifted, past the %d read-back cap", errRelistFullObjects, len(drifted), maxHydrations)
+	snapshot := len(objs) + len(drifted)
+	if limit := maxHydrations(snapshot); len(drifted) > limit {
+		return nil, 0, fmt.Errorf("%w: %d of %d repositories drifted, past the %d read-back limit", errRelistFullObjects, len(drifted), snapshot, limit)
 	}
 
 	for _, k := range drifted {
@@ -176,6 +193,76 @@ func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1I
 		objs = append(objs, trimRepository(repo))
 	}
 	return objs, listRV, nil
+}
+
+// NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
+// generated lister, i.e. the informer's local cache.
+func NewCachedRepositoryGetter(lister listers.RepositoryLister) RepositoryGetter {
+	return cachedRepositoryGetter{lister: lister}
+}
+
+type cachedRepositoryGetter struct {
+	lister listers.RepositoryLister
+}
+
+func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+	return g.lister.Repositories(namespace).Get(name)
+}
+
+func (g cachedRepositoryGetter) CountActiveRepositories(_ context.Context, namespace string) (int, error) {
+	repos, err := g.lister.Repositories(namespace).List(labels.Everything())
+	if err != nil {
+		return 0, err
+	}
+	count := 0
+	for _, repo := range repos {
+		if repo.DeletionTimestamp == nil {
+			count++
+		}
+	}
+	return count, nil
+}
+
+// NewClientRepositoryGetter backs Get with the API client — fresh, for the
+// reconcile — and the count with the NATS informer's snapshot (a
+// unified-storage informer Cache). The quota count is the only reader and
+// tolerates the snapshot's staleness (as stale as the resync interval), so
+// reading it avoids an API LIST on every quota check. Each reconcile Get is
+// written back into the store (or removed on NotFound), keeping the count warm
+// between re-lists rather than only as fresh as the last resync.
+func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
+	return clientRepositoryGetter{client: c, store: store}
+}
+
+type clientRepositoryGetter struct {
+	client typedclient.ProvisioningV0alpha1Interface
+	store  usinformer.Cache
+}
+
+func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
+	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		g.store.Delete(ctx, namespace, name)
+		return nil, err
+	}
+	if err != nil {
+		return nil, err
+	}
+	// Trimmed, so a warm snapshot costs the same as a re-listed one.
+	g.store.Update(ctx, trimRepository(repo))
+	return repo, nil
+}
+
+func (g clientRepositoryGetter) CountActiveRepositories(ctx context.Context, namespace string) (int, error) {
+	count := 0
+	for _, obj := range g.store.List(ctx) {
+		repo, ok := obj.(*provisioningapis.Repository)
+		if !ok || repo.Namespace != namespace || repo.DeletionTimestamp != nil {
+			continue
+		}
+		count++
+	}
+	return count, nil
 }
 
 // trimRepository keeps what the snapshot's readers need and drops the body: the
@@ -219,74 +306,4 @@ func indexRepositories(objs []runtime.Object) map[string]*provisioningapis.Repos
 
 func repositoryKey(namespace, name string) string {
 	return namespace + "/" + name
-}
-
-// NewCachedRepositoryGetter backs a RepositoryGetter with the informer's
-// generated lister, i.e. the informer's local cache.
-func NewCachedRepositoryGetter(lister listers.RepositoryLister) RepositoryGetter {
-	return cachedRepositoryGetter{lister: lister}
-}
-
-type cachedRepositoryGetter struct {
-	lister listers.RepositoryLister
-}
-
-func (g cachedRepositoryGetter) Get(_ context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	return g.lister.Repositories(namespace).Get(name)
-}
-
-func (g cachedRepositoryGetter) CountActiveRepositories(_ context.Context, namespace string) (int, error) {
-	repos, err := g.lister.Repositories(namespace).List(labels.Everything())
-	if err != nil {
-		return 0, err
-	}
-	count := 0
-	for _, repo := range repos {
-		if repo.DeletionTimestamp == nil {
-			count++
-		}
-	}
-	return count, nil
-}
-
-// NewClientGetCachedListRepositoryGetter backs Get with the API client — fresh,
-// for the reconcile — and the count with the NATS informer's snapshot (a
-// unified-storage informer Cache). The quota count is the only reader and
-// tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each reconcile Get is
-// written back into the store (or removed on NotFound), keeping the count warm
-// between re-lists rather than only as fresh as the last resync.
-func NewClientGetCachedListRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
-	return clientGetCachedListRepositoryGetter{client: c, store: store}
-}
-
-type clientGetCachedListRepositoryGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-	store  usinformer.Cache
-}
-
-func (g clientGetCachedListRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
-	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
-	if apierrors.IsNotFound(err) {
-		g.store.Delete(ctx, namespace, name)
-		return nil, err
-	}
-	if err != nil {
-		return nil, err
-	}
-	// Trimmed, so a warm snapshot costs the same as a re-listed one.
-	g.store.Update(ctx, trimRepository(repo))
-	return repo, nil
-}
-
-func (g clientGetCachedListRepositoryGetter) CountActiveRepositories(ctx context.Context, namespace string) (int, error) {
-	count := 0
-	for _, obj := range g.store.List(ctx) {
-		repo, ok := obj.(*provisioningapis.Repository)
-		if !ok || repo.Namespace != namespace || repo.DeletionTimestamp != nil {
-			continue
-		}
-		count++
-	}
-	return count, nil
 }

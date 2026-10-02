@@ -240,35 +240,44 @@ func NewRelistProjectionMetrics(reg prometheus.Registerer) *RelistProjectionMetr
 	}
 }
 
-// Recorder binds the metrics to one kind, so a re-list records outcomes without
-// repeating the labels.
+// Recorder binds the metrics to one kind. A delta source reports one group and
+// resource for its whole life, so the label values are resolved once here and
+// the re-list is left incrementing plain counters. Resolving them also brings
+// the series into existence at zero, so a dashboard sees the fallback counter
+// before anything has fallen back.
 func (m *RelistProjectionMetrics) Recorder(gvr schema.GroupVersionResource) RelistRecorder {
-	return RelistRecorder{metrics: m, gvr: gvr}
+	if m == nil {
+		return RelistRecorder{}
+	}
+	return RelistRecorder{
+		keys:       m.projections.WithLabelValues(gvr.Group, gvr.Resource, "keys"),
+		objects:    m.projections.WithLabelValues(gvr.Group, gvr.Resource, "objects"),
+		hydrations: m.hydrations.WithLabelValues(gvr.Group, gvr.Resource),
+	}
 }
 
 // RelistRecorder records one kind's re-list outcomes. Its zero value discards,
 // so a caller running without metrics needs no nil checks.
 type RelistRecorder struct {
-	metrics *RelistProjectionMetrics
-	gvr     schema.GroupVersionResource
+	keys       prometheus.Counter
+	objects    prometheus.Counter
+	hydrations prometheus.Counter
 }
 
 // Projection records which projection served one re-list.
 func (r RelistRecorder) Projection(keysOnly bool) {
-	if r.metrics == nil {
-		return
-	}
-	projection := "objects"
+	counter := r.objects
 	if keysOnly {
-		projection = "keys"
+		counter = r.keys
 	}
-	r.metrics.projections.WithLabelValues(r.gvr.Group, r.gvr.Resource, projection).Inc()
+	if counter != nil {
+		counter.Inc()
+	}
 }
 
 // Hydration records one object read a keys-only re-list issued.
 func (r RelistRecorder) Hydration() {
-	if r.metrics == nil {
-		return
+	if r.hydrations != nil {
+		r.hydrations.Inc()
 	}
-	r.metrics.hydrations.WithLabelValues(r.gvr.Group, r.gvr.Resource).Inc()
 }

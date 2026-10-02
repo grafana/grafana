@@ -143,15 +143,21 @@ func TestRelistProjectionMetrics_ReportsTheProjection(t *testing.T) {
 // The group is part of the series identity: the keys projection is a
 // unified-storage feature that any group can report here, so a query that reads
 // only the resource name would silently sum two of them together.
+//
+// Binding the recorder also brings both projections into existence, so the
+// fallback series can be graphed before anything has fallen back -- an absent
+// series and a zero one read very differently on a dashboard.
 func TestRelistProjectionMetrics_LabelsTheGroup(t *testing.T) {
 	reg := prometheus.NewRegistry()
 	NewRelistProjectionMetrics(reg).Recorder(connGVR).Projection(true)
 
-	assert.Equal(t, map[string]string{
-		"group":      connGVR.Group,
-		"resource":   connGVR.Resource,
-		"projection": "keys",
-	}, projectionLabels(t, reg))
+	assert.ElementsMatch(t, []map[string]string{
+		{"group": connGVR.Group, "resource": connGVR.Resource, "projection": "keys"},
+		{"group": connGVR.Group, "resource": connGVR.Resource, "projection": "objects"},
+	}, projectionLabelSets(t, reg))
+
+	assert.Equal(t, float64(1), projectionCount(t, reg, connGVR, "keys"))
+	assert.Zero(t, projectionCount(t, reg, connGVR, "objects"), "present, and zero until it fires")
 }
 
 // The collectors are shared by every delta source and told apart by labels, so
@@ -180,22 +186,24 @@ func TestRelistRecorder_ZeroValueDiscards(t *testing.T) {
 	recorder.Hydration()
 }
 
-// projectionLabels returns the labels of the single projection series in reg.
-func projectionLabels(t *testing.T, reg *prometheus.Registry) map[string]string {
+// projectionLabelSets returns the label sets of every projection series in reg.
+func projectionLabelSets(t *testing.T, reg *prometheus.Registry) []map[string]string {
 	t.Helper()
 	families, err := reg.Gather()
 	require.NoError(t, err)
 
+	var out []map[string]string
 	for _, mf := range families {
 		if mf.GetName() != "grafana_provisioning_informer_relist_projection_total" {
 			continue
 		}
-		require.Len(t, mf.GetMetric(), 1, "the test records one series")
-		labels := map[string]string{}
-		for _, l := range mf.GetMetric()[0].GetLabel() {
-			labels[l.GetName()] = l.GetValue()
+		for _, m := range mf.GetMetric() {
+			labels := map[string]string{}
+			for _, l := range m.GetLabel() {
+				labels[l.GetName()] = l.GetValue()
+			}
+			out = append(out, labels)
 		}
-		return labels
 	}
-	return nil
+	return out
 }
