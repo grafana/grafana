@@ -4,7 +4,7 @@ import { type CloneOptions, type DashboardModel } from 'app/features/dashboard/s
 import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
 
-export interface SaveDashboardData {
+interface SaveDashboardData {
   clone: Dashboard; // cloned copy
   diff: Diffs;
   diffCount: number; // cumulative count
@@ -39,7 +39,7 @@ export interface SaveDashboardCommand<T> {
   k8s?: Partial<ObjectMeta>;
 }
 
-export interface SaveDashboardFormProps {
+interface SaveDashboardFormProps {
   dashboard: DashboardModel;
   isLoading: boolean;
   onCancel: () => void;
@@ -51,7 +51,7 @@ export interface SaveDashboardFormProps {
   ) => Promise<SaveDashboardResponseDTO>;
 }
 
-export interface SaveDashboardModalProps {
+interface SaveDashboardModalProps {
   dashboard: DashboardModel;
   onDismiss: () => void;
   onSaveSuccess?: () => void;

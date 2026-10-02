@@ -3,14 +3,14 @@ import { type FieldConfigSource, type PanelData, type PanelPlugin } from '@grafa
 import { type DashboardModel } from '../../state/DashboardModel';
 import { type PanelModel } from '../../state/PanelModel';
 
-export interface PanelEditorTab {
+interface PanelEditorTab {
   id: string;
   text: string;
   active: boolean;
   icon: string;
 }
 
-export enum PanelEditorTabId {
+enum PanelEditorTabId {
   Query = 'query',
   Transform = 'transform',
   Visualize = 'visualize',

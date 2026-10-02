@@ -35,7 +35,7 @@ export function trackDashboardLoaded(dashboard: DashboardModel, duration?: numbe
   });
 }
 
-export function trackDashboardCreatedOrSaved(
+function trackDashboardCreatedOrSaved(
   isNew: boolean | undefined,
   trackingProps: { name: string; url: string; uid: string; numPanels: number; numRows: number }
 ) {

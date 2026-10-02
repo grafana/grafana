@@ -38,7 +38,7 @@ export function getPanelDataFrames(data?: PanelData): DataFrameJSON[] {
   return frames;
 }
 
-export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
+function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
   const saveModel = panel.getSaveModel();
   const info = {
     panelType: saveModel.type,
@@ -58,7 +58,7 @@ export function getGithubMarkdown(panel: PanelModel, snapshot: string): string {
   return md;
 }
 
-export async function getDebugDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
+async function getDebugDashboard(panel: PanelModel, rand: Randomize, timeRange: TimeRange) {
   const saveModel = panel.getSaveModel();
   const dashboard = cloneDeep(embeddedDataTemplate);
   const info = {

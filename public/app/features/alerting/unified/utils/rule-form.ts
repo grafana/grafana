@@ -822,7 +822,7 @@ export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?
   return { uid, title: displayTitle };
 }
 
-export const panelToRuleFormValues = async (
+const panelToRuleFormValues = async (
   panel: PanelModel,
   dashboard: DashboardModel
 ): Promise<Partial<RuleFormValues> | undefined> => {

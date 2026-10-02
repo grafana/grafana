@@ -1115,14 +1115,6 @@
       "count": 13
     }
   },
-  "public/app/features/alerting/unified/components/panel-alerts-tab/NewRuleFromPanelButton.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/receivers/TemplateForm.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -2078,11 +2070,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard/components/HelpWizard/HelpWizard.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 3
-    }
-  },
   "public/app/features/dashboard/components/PanelEditor/DynamicConfigValueEditor.tsx": {
     "@grafana/require-no-margin": {
       "count": 1
@@ -2107,16 +2094,6 @@
     },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
-    }
-  },
-  "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardAsForm.tsx": {
-    "@grafana/require-no-margin": {
-      "count": 4
-    }
-  },
-  "public/app/features/dashboard/components/SaveDashboard/useDashboardSave.tsx": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/ShareModal/ShareEmbed.tsx": {
@@ -2389,14 +2366,6 @@
   "public/app/features/explore/TraceView/components/demo/trace-generators.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
-    }
-  },
-  "public/app/features/explore/TraceView/components/model/link-patterns.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 10
     }
   },
   "public/app/features/explore/TraceView/components/model/transform-trace-data.tsx": {

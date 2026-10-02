@@ -23,7 +23,7 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
-export function onCreateNewRow(dashboard: DashboardModel) {
+function onCreateNewRow(dashboard: DashboardModel) {
   const newRow = {
     type: 'row',
     title: t('dashboard.on-create-new-row.new-row.title.row-title', 'Row title'),
@@ -48,7 +48,7 @@ export function onAddLibraryPanel(dashboard: DashboardModel) {
 
 type PanelPluginInfo = { defaults: { gridPos: { w: number; h: number }; title: string } };
 
-export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) {
+function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) {
   if (!panelPluginInfo) {
     return;
   }
@@ -76,7 +76,7 @@ export function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: 
   dashboard.addPanel(newPanel);
 }
 
-export function getCopiedPanelPlugin(panels: PanelPluginMeta[]): (PanelPluginMeta & PanelPluginInfo) | undefined {
+function getCopiedPanelPlugin(panels: PanelPluginMeta[]): (PanelPluginMeta & PanelPluginInfo) | undefined {
   const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
   if (copiedPanelJson) {
     const copiedPanel = JSON.parse(copiedPanelJson);
