@@ -1103,7 +1103,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	var reason string
 	switch {
 	// First, we check if the repository is blocked
-	case isCurrentlyBlocked && isOverQuota:
+	case isCurrentlyBlocked && isOverQuota && (hasSpecChanged || shouldCheckHealth):
 		reason = "blocked_over_quota"
 		logger.Info("repository blocked and over quota, reconciling but skipping sync")
 	case !isCurrentlyBlocked && isOverQuota:
