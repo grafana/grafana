@@ -90,13 +90,6 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
-    // Fix link name
-    if (plugin.info.links) {
-      for (const link of plugin.info.links) {
-        link.name = 'Learn more';
-      }
-    }
-
     const category = categories.find((item) => item.id === plugin.category) || categoryIndex['other'];
     category.plugins.push(plugin);
     // add to plugin index
