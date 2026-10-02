@@ -325,6 +325,36 @@ describe('DashboardDatasource', () => {
 
     // Test AdHoc filtering via the Public API first, to ensure Integration
     describe('Integration (Public API)', () => {
+      it('should not share value arrays with the source panel when filters are enabled', async () => {
+        // Scenes empties a panel's previous value arrays in place (_UNSAFE_clearPreviousFieldValues). If unfiltered
+        // output shared the source's arrays, the first filter would empty the source panel's data.
+        const sourceValues = ['John', 'Jane', 'Bob'];
+        const testFrame = createTestFrame([{ name: 'name', type: FieldType.string, values: sourceValues }]);
+        const scene = new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              body: new VizPanel({
+                key: getVizPanelKeyForPanelId(1),
+                $data: new SceneDataNode({
+                  data: { series: [testFrame], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+                }),
+              }),
+            }),
+          ],
+        });
+        const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+        let result: DataQueryResponse | undefined;
+        ds.query(createQueryRequest([], scene, true)).subscribe({ next: (data) => (result = data) });
+
+        const output = result?.data[0].fields[0].values;
+        expect(output).toEqual(sourceValues);
+        expect(output).not.toBe(sourceValues);
+
+        output.length = 0;
+        expect(sourceValues).toEqual(['John', 'Jane', 'Bob']);
+      });
+
       it('should apply basic filtering end-to-end through public query method', async () => {
         const testFrame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },

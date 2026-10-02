@@ -181,6 +181,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         ...s,
         fields: s.fields.map((field: Field) => ({
           ...field,
+          // With filters enabled this panel's frames switch between unfiltered and filtered rows. Scenes empties a
+          // panel's previous value arrays when new data arrives (_UNSAFE_clearPreviousFieldValues), so unfiltered
+          // output must not share arrays with the source panel, or the first filter would empty the source for
+          // every panel that reads it.
+          values: query.adHocFiltersEnabled ? field.values.slice() : field.values,
           config: {
             ...field.config,
             // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
