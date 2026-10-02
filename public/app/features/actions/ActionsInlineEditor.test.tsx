@@ -131,7 +131,7 @@ describe('ActionsInlineEditor', () => {
 
     render(<ActionsInlineEditor {...defaultProps} actions={actions} />);
 
-    await user.click(await screen.findByRole('button', { name: /edit/i }));
+    await user.click(await screen.findByRole('button', { name: 'Edit' }));
     // Toggle method to GET inside the editor and save.
     await user.click(await screen.findByRole('radio', { name: 'GET' }));
     await user.click(screen.getByRole('button', { name: /^Save$/i }));
