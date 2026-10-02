@@ -209,23 +209,13 @@ func applyChange(
 		return false
 	}
 
-	if change.Unsupported != nil {
-		if change.Existing == nil {
-			progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
-				WithAction(repository.FileActionIgnored).
-				WithError(change.Unsupported).
-				Build())
-			return false
-		}
-
-		// Renamed onto a path that cannot sync: the file is gone from its old path,
-		// so the resource goes too, with a warning about the new path.
-		change = ResourceFileChange{
-			Action:      repository.FileActionDeleted,
-			Path:        change.Existing.Path,
-			Existing:    change.Existing,
-			Unsupported: change.Unsupported,
-		}
+	// A file that cannot be synced: nothing to write, only the warning to report.
+	if change.Action == repository.FileActionIgnored && change.Warning != nil {
+		progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+			WithAction(change.Action).
+			WithWarning(change.Warning).
+			Build())
+		return false
 	}
 
 	if change.Action == repository.FileActionDeleted {
@@ -264,8 +254,8 @@ func applyChange(
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
-			if change.Unsupported != nil {
-				resultBuilder.WithWarning(change.Unsupported)
+			if change.Warning != nil {
+				resultBuilder.WithWarning(change.Warning)
 			}
 			// Keep this tree mutation scoped to folder metadata for now.
 			// It clears the deleted folder's stale in-memory entry so the same
@@ -815,20 +805,11 @@ func checkQuotaBeforeSync(ctx context.Context, repo repository.Repository, chang
 	var netChange int64
 	allDeletions := true
 	for _, change := range changes {
-		action := change.Action
-		if change.Unsupported != nil {
-			// applyChange removes the old resource, if any, and writes nothing.
-			action = repository.FileActionIgnored
-			if change.Existing != nil {
-				action = repository.FileActionDeleted
-			}
-		}
-
-		if action != repository.FileActionDeleted {
+		if change.Action != repository.FileActionDeleted {
 			allDeletions = false
 		}
 
-		switch action {
+		switch change.Action {
 		case repository.FileActionCreated:
 			netChange++
 		case repository.FileActionDeleted:

@@ -37,9 +37,9 @@ type ResourceFileChange struct {
 	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
 	Reason string
 
-	// Unsupported is set when the file at Path cannot be synced because its path
-	// fails validation; applyChange reports it as a warning instead of writing it.
-	Unsupported *resources.UnsupportedPathError
+	// Warning is attached to the change by Compare and reported with its result by
+	// applyChange; it does not change what is applied.
+	Warning error
 
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
@@ -88,6 +88,7 @@ func Compare(
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
+	changes = attachUnsupportedPaths(changes)
 
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
@@ -289,10 +290,10 @@ func Changes(
 		// Other files (README.md, .keep, hidden files) are not resources.
 		if !safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
 			changes = append(changes, ResourceFileChange{
-				Action:      repository.FileActionCreated,
-				Path:        file.Path,
-				Hash:        file.Hash,
-				Unsupported: &resources.UnsupportedPathError{Path: file.Path, Err: pathErr},
+				Action:  repository.FileActionIgnored,
+				Path:    file.Path,
+				Hash:    file.Hash,
+				Warning: &resources.UnsupportedPathError{Path: file.Path, Err: pathErr},
 			})
 		}
 
@@ -603,6 +604,53 @@ func detectFolderUIDChanges(
 	return affectedFolders, nil
 }
 
+// attachUnsupportedPaths handles a file whose path cannot be synced. When the same
+// content was deleted from another path, the file was renamed onto the unsupported
+// path: the resource goes with its old file, so the deletion carries the warning and
+// the change for the unsupported file is dropped. Any other such file stays an
+// ignored change that carries its warning.
+func attachUnsupportedPaths(changes []ResourceFileChange) []ResourceFileChange {
+	deletionsByHash := make(map[string]int)
+	ambiguous := make(map[string]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionDeleted || change.Existing == nil || change.OrphanCleanup {
+			continue
+		}
+		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
+			continue
+		}
+		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
+			ambiguous[change.Existing.Hash] = true
+		}
+		deletionsByHash[change.Existing.Hash] = i
+	}
+	for h := range ambiguous {
+		delete(deletionsByHash, h)
+	}
+
+	dropped := make(map[int]bool)
+	for i, change := range changes {
+		if change.Action == repository.FileActionIgnored && change.Warning != nil && change.Hash != "" {
+			if j, ok := deletionsByHash[change.Hash]; ok {
+				changes[j].Warning = change.Warning
+				delete(deletionsByHash, change.Hash)
+				dropped[i] = true
+			}
+		}
+	}
+	if len(dropped) == 0 {
+		return changes
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes)-len(dropped))
+	for i, change := range changes {
+		if !dropped[i] {
+			result = append(result, change)
+		}
+	}
+	return result
+}
+
 // DetectRenames finds delete+create pairs whose content hash matches and
 // collapses them into a single FileActionRenamed change. This preserves the
 // K8s UID, creationTimestamp, and generation when a file is moved/renamed in
@@ -663,11 +711,10 @@ func DetectRenames(changes []ResourceFileChange) []ResourceFileChange {
 		}
 
 		changes[i] = ResourceFileChange{
-			Action:      repository.FileActionRenamed,
-			Path:        change.Path,
-			Hash:        change.Hash,
-			Existing:    changes[deletionIdx].Existing,
-			Unsupported: change.Unsupported,
+			Action:   repository.FileActionRenamed,
+			Path:     change.Path,
+			Hash:     change.Hash,
+			Existing: changes[deletionIdx].Existing,
 		}
 		removedDeletions[deletionIdx] = true
 		delete(deletionsByHash, change.Hash)

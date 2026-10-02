@@ -520,9 +520,9 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			description: "Should record a warning for a file that cannot be synced and write nothing",
 			changes: []ResourceFileChange{
 				{
-					Action: repository.FileActionCreated,
+					Action: repository.FileActionIgnored,
 					Path:   "dashboards/Bad & Name.json",
-					Unsupported: &resources.UnsupportedPathError{
+					Warning: &resources.UnsupportedPathError{
 						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
 					},
 				},
@@ -543,26 +543,25 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			},
 		},
 		{
-			name:        "renamed onto an unsupported path removes the resource with a warning",
+			name:        "a deletion that carries the unsupported-path warning reports it with the removal",
 			description: "Should delete the resource whose file moved to a path that cannot sync, in one result",
 			changes: []ResourceFileChange{
 				{
-					Action: repository.FileActionRenamed,
-					Path:   "dashboards/Bad & Name.json",
+					Action: repository.FileActionDeleted,
+					Path:   "dashboards/test.json",
 					Existing: &provisioning.ResourceListItem{
 						Name:     "test-dashboard",
 						Resource: "dashboards",
 						Group:    "dashboards",
 						Path:     "dashboards/test.json",
 					},
-					Unsupported: &resources.UnsupportedPathError{
+					Warning: &resources.UnsupportedPathError{
 						Path: "dashboards/Bad & Name.json", Err: errors.New("path contains invalid characters"),
 					},
 				},
 			},
 			setupMocks: func(repo *repository.MockRepository, repoResources *resources.MockRepositoryResources, clients *resources.MockResourceClients, progress *jobs.MockJobProgressRecorder, compareFn *MockCompareFn) {
 				progress.On("TooManyErrors").Return(nil)
-				progress.On("HasDirPathFailedCreation", "dashboards/Bad & Name.json").Return(false)
 
 				scheme := runtime.NewScheme()
 				require.NoError(t, metav1.AddMetaToScheme(scheme))
@@ -994,10 +993,12 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 	}
 }
 
-func unsupportedCreated(n int) []ResourceFileChange {
+// unsupportedFiles are files whose path cannot be synced, as Compare returns them.
+func unsupportedFiles(n int) []ResourceFileChange {
 	changes := createdChanges(n)
 	for i := range changes {
-		changes[i].Unsupported = &resources.UnsupportedPathError{Path: changes[i].Path, Err: resources.ErrUnsupportedFileExtension}
+		changes[i].Action = repository.FileActionIgnored
+		changes[i].Warning = &resources.UnsupportedPathError{Path: changes[i].Path, Err: resources.ErrUnsupportedFileExtension}
 	}
 	return changes
 }
@@ -1248,8 +1249,8 @@ func TestCheckQuotaBeforeSync(t *testing.T) {
 			expectErr: true,
 		},
 		{
-			name:    "created files that cannot be synced are not counted against the quota",
-			changes: unsupportedCreated(5),
+			name:    "files that cannot be synced are not counted against the quota",
+			changes: unsupportedFiles(5),
 			config:  atQuota(),
 		},
 		{
