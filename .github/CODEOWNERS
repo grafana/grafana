@@ -473,6 +473,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/dashboard-templating.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-time-zone.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/dashboard-timepicker.spec.ts @grafana/grafana-frontend-platform
+/e2e-playwright/dashboards-suite/section-login-title.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/dashboards-suite/embedded-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
@@ -954,6 +955,8 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/echo/ @grafana/grafana-frontend-platform
 /public/app/core/services/FetchQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/impression_srv.ts @grafana/grafana-frontend-platform
+/public/app/core/services/loginSectionTitle.ts @grafana/grafana-frontend-navigation
+/public/app/core/services/loginSectionTitle.test.ts @grafana/grafana-frontend-navigation
 /public/app/core/services/KeybindingSet* @grafana/grafana-frontend-platform
 /public/app/core/services/keybindingSrv.ts @grafana/grafana-frontend-platform
 /public/app/core/services/meticulous.ts @grafana/dataviz-squad
