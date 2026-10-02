@@ -8,15 +8,17 @@
  * @param stripBOMs - If true, strips Byte Order Mark (BOM) characters from all strings.
  * BOMs (U+FEFF) can cause CUE validation errors ("illegal byte order mark").
  */
-export function sortedDeepCloneWithoutNulls<T>(value: T, convertInfinity?: boolean, stripBOMs?: boolean): T {
+export function sortedDeepCloneWithoutNulls<T>(value: T, convertInfinity?: boolean, stripBOMs?: boolean): T;
+export function sortedDeepCloneWithoutNulls(value: unknown, convertInfinity?: boolean, stripBOMs?: boolean): unknown {
   if (isArray(value)) {
-    return value.map((item) => sortedDeepCloneWithoutNulls(item, convertInfinity, stripBOMs)) as unknown as T;
+    return value.map((item) => sortedDeepCloneWithoutNulls(item, convertInfinity, stripBOMs));
   }
   if (isPlainObject(value)) {
-    return Object.keys(value as object)
+    const valueAsObject = value as Record<string, unknown>;
+    return Object.keys(valueAsObject)
       .sort()
-      .reduce((acc: any, key) => {
-        let v = (value as Record<string, unknown>)[key];
+      .reduce<Record<string, unknown>>((acc, key) => {
+        let v = valueAsObject[key];
         // Remove null values
         if (v != null) {
           // Strip BOMs from strings

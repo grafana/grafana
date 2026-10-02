@@ -631,11 +631,6 @@
       "count": 1
     }
   },
-  "packages/grafana-ui/src/components/uPlot/config/UPlotAxisBuilder.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
   "packages/grafana-ui/src/components/uPlot/config/UPlotConfigBuilder.ts": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 2
@@ -878,9 +873,6 @@
   },
   "public/app/core/utils/object.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 4
-    },
-    "@typescript-eslint/no-explicit-any": {
       "count": 1
     }
   },
@@ -2108,7 +2100,6 @@
       "count": 1
     }
   },
-
   "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
