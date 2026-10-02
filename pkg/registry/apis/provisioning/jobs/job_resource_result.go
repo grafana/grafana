@@ -117,14 +117,17 @@ func isWarningError(err error) bool {
 // isNonFailingWarning reports whether the warning represents an informational
 // issue where the underlying resource operation still succeeded (e.g. missing
 // or invalid folder metadata, or a skipped delete of an old resource now owned
-// by another file — the new resource was written successfully).
+// by another file — the new resource was written successfully, or a removal
+// whose file moved onto an unsupported path — the resource is gone).
 func isNonFailingWarning(err error) bool {
 	if err == nil {
 		return false
 	}
+	var unsupportedPathErr *resources.UnsupportedPathError
 	return errors.Is(err, resources.ErrMissingFolderMetadata) ||
 		errors.Is(err, resources.ErrInvalidFolderMetadata) ||
-		errors.Is(err, resources.ErrResourceManagedByOtherFile)
+		errors.Is(err, resources.ErrResourceManagedByOtherFile) ||
+		errors.As(err, &unsupportedPathErr)
 }
 
 // JobResourceResult represents the result of a resource operation in a job.
