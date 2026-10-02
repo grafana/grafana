@@ -3,6 +3,7 @@ package acimpl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"sync"
 	"testing"
@@ -27,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
 type fakeZanzanaClient struct {
@@ -539,37 +541,26 @@ func TestService_GetUserPermissions_MergesLegacyAndZanzana(t *testing.T) {
 	require.True(t, hasZanzana)
 }
 
-func TestService_GetUserPermissions_UsesLegacyWhenZanzanaFails(t *testing.T) {
-	store := &actest.FakeStore{
-		ExpectedUserPermissions: []accesscontrol.Permission{
-			{Action: "dashboards:read", Scope: "dashboards:uid:legacy"},
-		},
-	}
-	zClient := &fakeZanzanaClient{
-		listErr: errors.New("zanzana unavailable"),
-	}
-
-	svc := setupServiceWithFakeStore(t, store, zClient, &usertest.FakeUserService{})
-
-	siu := &user.SignedInUser{
-		OrgID:       1,
-		UserID:      1,
-		UserUID:     "user_test_uid",
-		Permissions: map[int64]map[string][]string{},
-	}
-
-	perms, err := svc.GetUserPermissions(context.Background(), siu, accesscontrol.Options{ReloadCache: true})
-	require.NoError(t, err)
-
-	var hasLegacy, hasZanzana bool
-	for _, p := range perms {
-		if p.Action == "dashboards:read" && p.Scope == "dashboards:uid:legacy" {
-			hasLegacy = true
-		}
-		if p.Action == "dashboards:read" && p.Scope == "dashboards:uid:zanzana-dash" {
-			hasZanzana = true
+func TestIntegrationGetUserPermissions_UsesLegacyWhenZanzanaFails(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, cache := range []bool{false, true} {
+		for _, failure := range []error{errors.New("zanzana unavailable"), context.Canceled, context.DeadlineExceeded} {
+			t.Run(fmt.Sprintf("cache=%t/%s", cache, failure), func(t *testing.T) {
+				svc := setupTestEnv(t, false)
+				svc.cfg.RBAC.PermissionCache = cache
+				addContractUserGrant(t, svc.sql, "managed:legacy", 1, 1,
+					accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:legacy"})
+				svc.zanzanaResolver = NewZanzanaPermissionResolver(&fakeZanzanaClient{listErr: failure}, &usertest.FakeUserService{}, nil, false)
+				siu := &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "user_test_uid"}
+				for _, options := range []accesscontrol.Options{{}, {ReloadCache: true}, {SkipZanzanaCache: true}, {ReloadCache: true, SkipZanzanaCache: true}} {
+					perms, err := svc.GetUserPermissions(context.Background(), siu, options)
+					require.NoError(t, err, "external Zanzana failures are best-effort, unlike legacy DB failures")
+					require.ElementsMatch(t, []accesscontrol.Permission{
+						{Action: "dashboards:read", Scope: "dashboards:uid:legacy"},
+						{Action: "folders:read", Scope: "folders:uid:sharedwithme"},
+					}, perms)
+				}
+			})
 		}
 	}
-	require.True(t, hasLegacy)
-	require.False(t, hasZanzana)
 }
