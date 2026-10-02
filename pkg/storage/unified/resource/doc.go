@@ -5,11 +5,14 @@
 // Unified storage calls can report failure through a response-embedded ErrorResult
 // or a transport error. Choose the helper based on what the caller does next:
 //
-//   - About to write a response with errhttp.Write or responder.Error: use
-//     [StatusErrorFromResponse] and pass or return its error unwrapped so the
-//     writer can recognize APIStatus and use the intended HTTP status.
-//   - Returning to another Go caller: use [ErrorFromResponse] to resolve the two
-//     failure signals into one error. It gives the transport error precedence and
+//   - Writing an HTTP response (e.g. with errhttp.Write or responder.Error)
+//     or returning an error to the apiserver (including REST storage methods and
+//     validation hooks): use [StatusErrorFromResponse] so the final response has
+//     the intended HTTP status. Return it unwrapped on the apiserver path so it
+//     can recognize APIStatus. errhttp.Write supports wrapped errors via errors.As.
+//   - Returning to another Go caller outside that response boundary: use
+//     [ErrorFromResponse] to resolve the two failure signals into one error.
+//     It gives the transport error precedence and
 //     leaves it intact, preserving the gRPC status, errors.Is/As chain, and
 //     cancellation semantics; otherwise it converts the response-embedded error.
 //   - Only classifying an error (for example, conflict, not-found, or status code):
