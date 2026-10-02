@@ -598,7 +598,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				// Anything else is a storage failure, returned so the caller does
 				// not think the type is repaired.
 				if response.Error.Code != http.StatusNotFound {
-					return result, GetError(response.Error)
+					return result, StatusError(response.Error)
 				}
 				logger.Debug("object deleted since the listing, skipping it", "error", response.Error.Message)
 				continue
