@@ -639,6 +639,47 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 			},
 		},
 		{
+			desc: "built in datasource plugin with multi-value filter operators",
+			pluginStore: func() pluginstore.Store {
+				return &pluginstore.FakePluginStore{
+					PluginList: []pluginstore.Plugin{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:                        "test-app",
+								Info:                      plugins.Info{Version: "0.5.0"},
+								Type:                      plugins.TypeDataSource,
+								BuiltIn:                   true,
+								MultiValueFilterOperators: true,
+							},
+						},
+					},
+				}
+			},
+			expected: settings{
+				Datasources: map[string]plugins.DataSourceDTO{
+					"": {
+						Type:     string(plugins.TypeDataSource),
+						JSONData: make(map[string]any),
+						PluginMeta: &plugins.PluginMetaDTO{
+							// The DTO's own multiValueFilterOperators key shadows the embedded one, so after the JSON
+							// round trip only the outer field is set. It is the one the frontend reads.
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.TypeDataSource,
+								BuiltIn: true,
+							},
+							Module:                    "/test-app/module.js",
+							MultiValueFilterOperators: true,
+						},
+					},
+				},
+				Panels: map[string]*plugins.PanelDTO{},
+				Apps:   map[string]*plugins.AppDTO{},
+			},
+		},
+		{
 			desc: "non-builtin datasource plugin with translations",
 			pluginStore: func() pluginstore.Store {
 				return &pluginstore.FakePluginStore{

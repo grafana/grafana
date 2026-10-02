@@ -17,6 +17,7 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
@@ -30,15 +31,17 @@ import { getCurrentValueForOldIntervalModel, getIntervalsFromQueryString } from 
 const DEFAULT_DATASOURCE = 'default';
 
 // Keep dashboard-load construction synchronous while the instance-settings lookup is async.
-function applySupportsMultiValueOperators(variable: AdHocFiltersVariable, datasourceType?: string) {
-  void getDataSourceInstanceSettings({ type: datasourceType })
+// Resolve by the full reference: built-in data sources such as -- Dashboard -- and -- Grafana -- share the
+// type 'datasource', so a type-only lookup can return the wrong one.
+function applySupportsMultiValueOperators(variable: AdHocFiltersVariable, datasource?: DataSourceRef | null) {
+  void getDataSourceInstanceSettings(datasource?.uid ? datasource : { type: datasource?.type })
     .then((settings) => {
       const supports = Boolean(settings?.meta.multiValueFilterOperators);
       if (variable.state.supportsMultiValueOperators !== supports) {
         variable.setState({ supportsMultiValueOperators: supports });
       }
     })
-    .catch((e) => console.warn('Failed to resolve multi-value operator support', datasourceType, e));
+    .catch((e) => console.warn('Failed to resolve multi-value operator support', datasource, e));
 }
 
 export const keepOnlyUserDefinedVariables = (v: SceneVariable) => !v.UNSAFE_renderAsHidden;
@@ -146,7 +149,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
-          applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
+          applySupportsMultiValueOperators(adhocVariable, v.datasource);
           return adhocVariable;
         }
         // for other variable types we are using the SnapshotVariable
@@ -250,7 +253,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
         : false,
       $behaviors: [new ReportInteractionBehavior({})],
     });
-    applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
+    applySupportsMultiValueOperators(adhocVariable, variable.datasource);
     return adhocVariable;
   }
   // Custom variable

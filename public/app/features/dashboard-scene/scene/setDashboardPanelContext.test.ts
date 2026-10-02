@@ -10,8 +10,9 @@ import {
   type Scope,
   type VariableModel,
 } from '@grafana/data';
-import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type BackendSrv, config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys, getDatasourcePluginMeta, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
@@ -19,6 +20,7 @@ import {
   sceneGraph,
   SceneQueryRunner,
   SceneVariableSet,
+  SceneVariableValueChangedEvent,
   VizPanel,
 } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
@@ -44,6 +46,10 @@ jest.mock('../inspect/panelInspectorOpener', () => ({
 }));
 
 jest.mock('../../annotations/isAnnotationApiAvailable');
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: jest.fn(),
+}));
 jest.mock('@grafana/runtime/internal', () => ({
   ...jest.requireActual('@grafana/runtime/internal'),
   getFeatureFlagClient: jest.fn(),
@@ -82,6 +88,12 @@ const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
 const mockGetFeatureFlagClient = jest.mocked(getFeatureFlagClient);
 const getBooleanValueFn = jest.fn();
 
+function stubBiModeEnabled() {
+  getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+    key === FlagKeys.DashboardBiMode ? true : defaultValue
+  );
+}
+
 function stubFFEnabled(enabled: boolean) {
   getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
     key === FlagKeys.GrafanaKubernetesAnnotationsClient ? enabled : defaultValue
@@ -118,6 +130,7 @@ beforeEach(() => {
   mockOpenAssistant.mockReset();
   mockCreateAssistantContextItem.mockReset().mockReturnValue(PANEL_CONTEXT_ITEM);
   mockGetAssistantChatIdToContinue.mockReset();
+  jest.mocked(reportInteraction).mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
@@ -702,6 +715,426 @@ describe('setDashboardPanelContext', () => {
 
       await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('BI selection', () => {
+    const stampFor = (sourcePanel: string, values: string[], key = 'country') => ({
+      biSelection: { sourcePanel, key, values },
+    });
+
+    async function buildBiScene(options: SceneOptions = { existingFilterVariable: true }) {
+      stubBiModeEnabled();
+      const built = buildTestScene(options);
+      const variable = options.existingFilterVariable
+        ? await getAdHocFilterVariableFor(built.scene, { uid: 'my-ds-uid' })
+        : undefined;
+      return { ...built, variable };
+    }
+
+    it('is not available while BI mode is off', () => {
+      const { context } = buildTestScene({ existingFilterVariable: true });
+
+      expect(context.onSetAdHocFilterSelection).toBeUndefined();
+      expect(context.getAdHocFilterSelection).toBeUndefined();
+      expect(context.subscribeToAdHocFilterSelection).toBeUndefined();
+      expect(context.onAddAdHocFilter).toBeDefined();
+      expect(context.onAddAdHocFilters).toBeDefined();
+    });
+
+    it('writes a single value as a stamped = filter and reads it back', async () => {
+      const { context, variable } = await buildBiScene();
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+
+      expect(variable!.state.filters).toEqual([
+        { key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-4', ['UK']) },
+      ]);
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+      expect(context.getAdHocFilterSelection!('region')).toBeUndefined();
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_bi_cross_filter_select', {
+        mode: 'replace',
+        valuesCount: 1,
+      });
+    });
+
+    it('writes several values as =| when the datasource supports multi-value operators', async () => {
+      const { context, variable } = await buildBiScene();
+      variable!.setState({ supportsMultiValueOperators: true });
+
+      await context.onSetAdHocFilterSelection!({
+        key: 'country',
+        values: ['UK', 'FR'],
+        clickedValue: 'FR',
+        mode: 'toggle',
+      });
+
+      expect(variable!.state.filters).toEqual([
+        {
+          key: 'country',
+          operator: '=|',
+          value: 'UK',
+          values: ['UK', 'FR'],
+          valueLabels: ['UK', 'FR'],
+          meta: stampFor('panel-4', ['UK', 'FR']),
+        },
+      ]);
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK', 'FR']);
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_bi_cross_filter_select', {
+        mode: 'toggle',
+        valuesCount: 2,
+      });
+    });
+
+    it('falls back to the clicked value without multi-value operator support', async () => {
+      const { context, variable } = await buildBiScene();
+      variable!.setState({ supportsMultiValueOperators: false });
+
+      await context.onSetAdHocFilterSelection!({
+        key: 'country',
+        values: ['UK', 'FR', 'DE'],
+        clickedValue: 'FR',
+        mode: 'range',
+      });
+
+      expect(variable!.state.filters).toEqual([
+        { key: 'country', operator: '=', value: 'FR', meta: stampFor('panel-4', ['FR']) },
+      ]);
+    });
+
+    it('replaces the previous selection and clears it with no values', async () => {
+      const { context, variable } = await buildBiScene();
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['FR'], clickedValue: 'FR', mode: 'replace' });
+
+      expect(variable!.state.filters).toEqual([
+        { key: 'country', operator: '=', value: 'FR', meta: stampFor('panel-4', ['FR']) },
+      ]);
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: [], clickedValue: 'FR', mode: 'replace' });
+
+      expect(variable!.state.filters).toEqual([]);
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+      expect(reportInteraction).toHaveBeenLastCalledWith('grafana_bi_cross_filter_select', {
+        mode: 'replace',
+        valuesCount: 0,
+      });
+    });
+
+    it('keeps !=, group-by, injected and read-only filters and replaces ordinary = filters in place', async () => {
+      const { context, variable } = await buildBiScene();
+      const notEqual = { key: 'country', operator: '!=', value: 'US' };
+      const groupBy = { key: 'country', operator: 'groupBy', value: '' };
+      const injected = { key: 'country', operator: '=', value: 'NL', origin: 'dashboard' };
+      const readOnly = { key: 'country', operator: '=', value: 'BE', readOnly: true };
+      const otherKey = { key: 'region', operator: '=', value: 'EU' };
+      variable!.setState({
+        filters: [
+          notEqual,
+          { key: 'country', operator: '=', value: 'ES' },
+          groupBy,
+          { key: 'country', operator: '=|', value: 'IT', values: ['IT', 'PT'] },
+          injected,
+          readOnly,
+          otherKey,
+        ],
+      });
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+
+      expect(variable!.state.filters).toEqual([
+        notEqual,
+        { key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-4', ['UK']) },
+        groupBy,
+        injected,
+        readOnly,
+        otherKey,
+      ]);
+    });
+
+    it('publishes a value change when only the owning panel changes', async () => {
+      const { context, variable } = await buildBiScene();
+      variable!.setState({
+        filters: [{ key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-9', ['UK']) }],
+      });
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+
+      const onValueChanged = jest.fn();
+      variable!.subscribeToEvent(SceneVariableValueChangedEvent, onValueChanged);
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+
+      expect(onValueChanged).toHaveBeenCalledTimes(1);
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+    });
+
+    it('ignores selections written for a previous datasource', async () => {
+      const { vizPanel, context } = await buildBiScene();
+      const queryRunner = getQueryRunnerFor(vizPanel);
+      if (!(queryRunner instanceof SceneQueryRunner)) {
+        throw new Error('expected a SceneQueryRunner');
+      }
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+
+      queryRunner.setState({ datasource: { uid: 'other-uid', type: 'prometheus' } });
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+
+      queryRunner.setState({ datasource: { uid: 'my-ds-uid', type: 'prometheus' } });
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+    });
+
+    it('ignores a stale stamp after the filter value was edited', async () => {
+      const { context, variable } = await buildBiScene();
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+      const [written] = variable!.state.filters;
+      variable!.updateFilters([{ ...written, value: 'DE' }]);
+
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+    });
+
+    describe('with type-only panel datasources', () => {
+      beforeEach(() => {
+        jest
+          .mocked(getDataSourceInstanceSettings)
+          .mockImplementation(async (ref) =>
+            typeof ref === 'object' && ref?.type === 'prometheus' && !ref.uid
+              ? ({ uid: 'my-ds-uid', type: 'prometheus' } as unknown as Awaited<
+                  ReturnType<typeof getDataSourceInstanceSettings>
+                >)
+              : undefined
+          );
+      });
+
+      afterEach(() => {
+        jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
+      });
+
+      function useTypeOnlyDatasource(vizPanel: VizPanel) {
+        const queryRunner = getQueryRunnerFor(vizPanel);
+        if (!(queryRunner instanceof SceneQueryRunner)) {
+          throw new Error('expected a SceneQueryRunner');
+        }
+        queryRunner.setState({ datasource: { type: 'prometheus' }, queries: [{ refId: 'A' }] });
+        return queryRunner;
+      }
+
+      it('reads and writes the same variable when another instance of the plugin has an earlier variable', async () => {
+        const { scene, vizPanel, context, variable } = await buildBiScene();
+        useTypeOnlyDatasource(vizPanel);
+        const otherInstance = new AdHocFiltersVariable({
+          name: 'Other',
+          datasource: { uid: 'other-uid', type: 'prometheus' },
+          filters: [],
+        });
+        const variables = sceneGraph.getVariables(scene);
+        variables.setState({ variables: [otherInstance, ...variables.state.variables] });
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+
+        expect(otherInstance.state.filters).toEqual([]);
+        expect(variable!.state.filters).toHaveLength(1);
+        expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+      });
+
+      it('re-runs type-only query runners when the first selection creates the Filters variable', async () => {
+        const { context, vizPanel } = await buildBiScene({});
+        const queryRunner = useTypeOnlyDatasource(vizPanel);
+        jest.spyOn(queryRunner, 'isActive', 'get').mockReturnValue(true);
+        const runQueries = jest.spyOn(queryRunner, 'runQueries').mockImplementation(() => {});
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+        expect(runQueries).toHaveBeenCalledTimes(1);
+
+        // Once the variable exists the runner is subscribed to it, so Scenes re-runs it.
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['FR'],
+          clickedValue: 'FR',
+          mode: 'replace',
+        });
+        expect(runQueries).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not re-run a type-only query runner in manual mode', async () => {
+        const { context, vizPanel } = await buildBiScene({});
+        const queryRunner = useTypeOnlyDatasource(vizPanel);
+        queryRunner.setState({ runQueriesMode: 'manual' });
+        jest.spyOn(queryRunner, 'isActive', 'get').mockReturnValue(true);
+        const runQueries = jest.spyOn(queryRunner, 'runQueries').mockImplementation(() => {});
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+
+        expect(runQueries).not.toHaveBeenCalled();
+      });
+
+      it('accepts only variables of the reference type before the first write', async () => {
+        const { scene, vizPanel, context } = await buildBiScene();
+        useTypeOnlyDatasource(vizPanel);
+        const lokiFilters = new AdHocFiltersVariable({
+          name: 'Logs',
+          datasource: { uid: 'loki-uid', type: 'loki' },
+          filters: [{ key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-4', ['UK']) }],
+        });
+        const variables = sceneGraph.getVariables(scene);
+        variables.setState({ variables: [lokiFilters, ...variables.state.variables] });
+
+        expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+      });
+
+      it('stops using the last written variable once the type-only reference changes', async () => {
+        const { vizPanel, context } = await buildBiScene();
+        const queryRunner = useTypeOnlyDatasource(vizPanel);
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+        expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+
+        queryRunner.setState({ datasource: { type: 'loki' } });
+        expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+      });
+    });
+
+    describe('multi-value operator detection for a new Filters variable', () => {
+      afterEach(() => {
+        jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
+        jest.mocked(getDatasourcePluginMeta).mockReset().mockResolvedValue(null);
+      });
+
+      it('resolves the Dashboard datasource by uid, not by its shared type', async () => {
+        jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+          const dashboard = typeof ref === 'object' && ref?.uid === '-- Dashboard --';
+          return {
+            uid: dashboard ? '-- Dashboard --' : 'grafana',
+            type: 'datasource',
+            meta: { id: dashboard ? 'dashboard' : 'grafana' },
+          } as unknown as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
+        });
+        jest
+          .mocked(getDatasourcePluginMeta)
+          .mockImplementation(async (id) =>
+            id === 'dashboard'
+              ? ({ multiValueFilterOperators: true } as unknown as Awaited<ReturnType<typeof getDatasourcePluginMeta>>)
+              : null
+          );
+        const { scene } = buildTestScene({});
+
+        const variable = await getAdHocFilterVariableFor(scene, { type: 'datasource', uid: '-- Dashboard --' });
+
+        expect(variable.state.supportsMultiValueOperators).toBe(true);
+      });
+
+      it('falls back to the instance settings meta when the plugin meta is missing', async () => {
+        jest.mocked(getDataSourceInstanceSettings).mockResolvedValue({
+          uid: '-- Dashboard --',
+          type: 'datasource',
+          meta: { id: 'dashboard', multiValueFilterOperators: true },
+        } as unknown as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>);
+        const { scene } = buildTestScene({});
+
+        const variable = await getAdHocFilterVariableFor(scene, { type: 'datasource', uid: '-- Dashboard --' });
+
+        expect(variable.state.supportsMultiValueOperators).toBe(true);
+      });
+    });
+
+    it('does not write a selection that a kept read-only filter already applies', async () => {
+      const { context, variable } = await buildBiScene();
+      const readOnly = { key: 'country', operator: '=', value: 'UK', readOnly: true };
+      variable!.setState({ filters: [readOnly] });
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+
+      expect(variable!.state.filters).toEqual([readOnly]);
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+    });
+
+    describe('manual filters identical to a selection', () => {
+      const stampedUK = () => ({ key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-9', ['UK']) });
+
+      it('onAddAdHocFilter turns the selection into an ordinary filter and publishes', async () => {
+        const { context, variable } = await buildBiScene();
+        variable!.setState({ filters: [stampedUK()] });
+        const onValueChanged = jest.fn();
+        variable!.subscribeToEvent(SceneVariableValueChangedEvent, onValueChanged);
+
+        await context.onAddAdHocFilter!({ key: 'country', value: 'UK', operator: '=' });
+
+        expect(variable!.state.filters).toEqual([{ key: 'country', operator: '=', value: 'UK' }]);
+        expect(onValueChanged).toHaveBeenCalledTimes(1);
+      });
+
+      it('onAddAdHocFilters turns the selection into an ordinary filter and publishes', async () => {
+        const { context, variable } = await buildBiScene();
+        variable!.setState({ filters: [stampedUK()] });
+        const onValueChanged = jest.fn();
+        variable!.subscribeToEvent(SceneVariableValueChangedEvent, onValueChanged);
+
+        await context.onAddAdHocFilters!([
+          { key: 'country', value: 'UK', operator: '=' },
+          { key: 'region', value: 'EU', operator: '=' },
+        ]);
+
+        expect(variable!.state.filters).toEqual([
+          { key: 'country', operator: '=', value: 'UK' },
+          { key: 'region', value: 'EU', operator: '=' },
+        ]);
+        expect(onValueChanged).toHaveBeenCalledTimes(1);
+      });
+
+      it('keeps the existing behaviour while BI mode is off', async () => {
+        const { context, scene } = buildTestScene({ existingFilterVariable: true });
+        const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+        variable.setState({ filters: [stampedUK()] });
+
+        await context.onAddAdHocFilter!({ key: 'country', value: 'UK', operator: '=' });
+
+        expect(variable.state.filters).toEqual([stampedUK(), { key: 'country', value: 'UK', operator: '=' }]);
+      });
+    });
+
+    it('notifies subscribers about filter changes, including a newly created variable, until unsubscribed', async () => {
+      const { scene, context } = await buildBiScene({});
+      const onChange = jest.fn();
+
+      const unsubscribe = context.subscribeToAdHocFilterSelection!(onChange);
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+
+      expect(onChange).toHaveBeenCalled();
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+
+      const variable = await getAdHocFilterVariableFor(scene, { uid: 'my-ds-uid' });
+      onChange.mockClear();
+      variable.updateFilters([]);
+      expect(onChange).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      onChange.mockClear();
+      variable.updateFilters([{ key: 'country', operator: '=', value: 'FR' }]);
+      expect(onChange).not.toHaveBeenCalled();
     });
   });
 

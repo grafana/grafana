@@ -83,10 +83,12 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   apiVersion: 'v2',
 };
 
+const mockGetInstanceSettings = jest.fn();
+
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
+    getInstanceSettings: mockGetInstanceSettings,
   }),
 }));
 
@@ -553,6 +555,40 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
       expect(adhocVariable).toBeInstanceOf(AdHocFiltersVariable);
       expect(adhocVariable.state.enableGroupBy).toBe(false);
+    });
+  });
+
+  describe('multi-value operator support for the Dashboard datasource', () => {
+    beforeEach(() => {
+      // -- Dashboard -- and -- Grafana -- share the type 'datasource'; only the uid tells them apart
+      mockGetInstanceSettings.mockImplementation((ref?: { uid?: string }) => ({
+        uid: ref?.uid ?? 'grafana',
+        type: 'datasource',
+        meta: { multiValueFilterOperators: ref?.uid === '-- Dashboard --' },
+      }));
+    });
+
+    afterEach(() => {
+      mockGetInstanceSettings.mockReset();
+    });
+
+    function dashboardWithDashboardDatasourceFilters(isSnapshot: boolean) {
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+      adhocVar.group = 'datasource';
+      adhocVar.datasource = { name: '-- Dashboard --' };
+      if (isSnapshot) {
+        dashboard.metadata.annotations = { ...dashboard.metadata.annotations, [AnnoKeyDashboardIsSnapshot]: 'true' };
+      }
+      return dashboard;
+    }
+
+    it.each([false, true])('is detected by uid (snapshot: %s)', (isSnapshot) => {
+      const scene = transformSaveModelSchemaV2ToScene(dashboardWithDashboardDatasourceFilters(isSnapshot));
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(adhocVariable.state.supportsMultiValueOperators).toBe(true);
+      expect(mockGetInstanceSettings).toHaveBeenCalledWith({ uid: '-- Dashboard --', type: 'datasource' });
     });
   });
 
