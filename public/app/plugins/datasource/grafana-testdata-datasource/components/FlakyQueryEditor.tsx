@@ -1,11 +1,12 @@
 import { type FormEvent } from 'react';
 
+import { type SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select, Icon } from '@grafana/ui';
 
 import { type EditorProps } from '../QueryEditor';
-import { type TestDataDataQuery } from '../dataquery';
+import { type TestDataErrorSource } from '../dataquery';
 
-const ERROR_SOURCE_OPTIONS: Array<{ label: string; value: NonNullable<TestDataDataQuery['errorSource']> }> = [
+const ERROR_SOURCE_OPTIONS: Array<SelectableValue<TestDataErrorSource>> = [
   {
     label: 'Plugin',
     value: 'plugin',

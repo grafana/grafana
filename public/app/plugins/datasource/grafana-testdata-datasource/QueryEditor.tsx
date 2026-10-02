@@ -183,7 +183,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onUpdate({ ...query, [field]: { ...(query as any)[field], [name]: newValue } });
   };
 
-  const onEndPointChange = ({ value }: SelectableValue) => {
+  const onEndPointChange = ({ value }: SelectableValue<string>) => {
     onUpdate({ ...query, stringInput: value });
   };
 
