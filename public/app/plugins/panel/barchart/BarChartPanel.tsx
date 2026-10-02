@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type uPlot from 'uplot';
 
 import { type PanelProps, VizOrientation } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { useFlagDashboardBiMode } from '@grafana/runtime/internal';
 import {
   type AdHocFilterItem,
   type AdHocFilterModel,
@@ -21,6 +24,7 @@ import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { type Options } from './panelcfg.gen';
+import { applySelectionClick, getSelectedIndices } from './selection';
 import { prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
@@ -33,7 +37,14 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   // const { dataLinkPostProcessor } = usePanelContext();
 
   const theme = useTheme2();
-  const { onAddAdHocFilter, canExecuteActions } = usePanelContext();
+  const {
+    onAddAdHocFilter,
+    canExecuteActions,
+    onSetAdHocFilterSelection,
+    getAdHocFilterSelection,
+    subscribeToAdHocFilterSelection,
+  } = usePanelContext();
+  const isBiMode = useFlagDashboardBiMode();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
@@ -87,6 +98,100 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     [info.series]
   );
 
+  // the prepared category field; selection filters on its values
+  const categoryField = vizSeries[0]?.fields[0];
+  const selectable =
+    isBiMode &&
+    categoryField?.config.filterable === true &&
+    onSetAdHocFilterSelection != null &&
+    getAdHocFilterSelection != null &&
+    subscribeToAdHocFilterSelection != null;
+  const selectionKey = selectable ? categoryField.name : undefined;
+
+  const categories = useMemo(() => categoryField?.values.map((v) => String(v)) ?? [], [categoryField]);
+
+  // re-read the selection whenever ad hoc filters change
+  const [selectionVersion, onSelectionChanged] = useReducer((v: number) => v + 1, 0);
+  // the selection a pending click wrote, shown until the filter variable reports back
+  const [pendingSelection, setPendingSelection] = useState<{ values: string[] } | null>(null);
+
+  useEffect(() => {
+    if (!selectable) {
+      return;
+    }
+
+    return subscribeToAdHocFilterSelection(() => {
+      setPendingSelection(null);
+      onSelectionChanged();
+    });
+  }, [selectable, subscribeToAdHocFilterSelection]);
+
+  const ownedSelection = useMemo(
+    () => (selectionKey == null ? undefined : getAdHocFilterSelection?.(selectionKey)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectionKey, getAdHocFilterSelection, selectionVersion]
+  );
+  const currentSelection = selectionKey == null ? undefined : (pendingSelection?.values ?? ownedSelection);
+
+  const selectedIndices = useMemo(
+    () => getSelectedIndices(categories, currentSelection),
+    [categories, currentSelection]
+  );
+
+  // read by the bars draw hook, so a selection change needs only a redraw, not a new config
+  const selectedIndicesRef = useRef<Set<number> | null>(null);
+  selectedIndicesRef.current = selectedIndices;
+  const getSelection = useCallback(() => selectedIndicesRef.current, []);
+
+  const plotRef = useRef<uPlot | null>(null);
+  const setPlot = useCallback((u: uPlot) => {
+    plotRef.current = u;
+  }, []);
+
+  useEffect(() => {
+    plotRef.current?.redraw(false);
+  }, [selectedIndices]);
+
+  // Shift-click anchor; a category value, dropped when it leaves the data
+  const anchorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (anchorRef.current != null && !categories.includes(anchorRef.current)) {
+      anchorRef.current = null;
+    }
+  }, [categories]);
+
+  const onSelect = (dataIdx: number, meta: boolean, shift: boolean) => {
+    if (selectionKey == null || onSetAdHocFilterSelection == null) {
+      return;
+    }
+
+    const clicked = categories[dataIdx];
+
+    if (clicked == null) {
+      return;
+    }
+
+    const next = applySelectionClick({
+      categories,
+      current: currentSelection,
+      anchor: anchorRef.current,
+      clicked,
+      meta,
+      shift,
+    });
+
+    anchorRef.current = next.anchor;
+    setPendingSelection({ values: next.values });
+
+    onSetAdHocFilterSelection({ key: selectionKey, values: next.values, clickedValue: clicked, mode: next.mode })
+      .catch(() => {})
+      .finally(() => {
+        setPendingSelection(null);
+        onSelectionChanged();
+      });
+  };
+
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
@@ -95,7 +200,16 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({
+            series: vizSeries,
+            totalSeries,
+            color: info.color,
+            orientation,
+            options,
+            timeZone,
+            theme,
+            getSelection,
+          });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -155,10 +269,23 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       legend={legendComp}
     >
       {(vizWidth, vizHeight) => (
-        <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
+        <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight} plotRef={setPlot}>
+          {selectable && props.options.tooltip.mode === TooltipDisplayMode.None && (
+            // no visible tooltip, but clicks still select
+            <TooltipPlugin2
+              config={builder}
+              hoverMode={TooltipHoverMode.xOne}
+              clickMode="select"
+              onSelect={(_seriesIdx, dataIdx, { meta, shift }) => onSelect(dataIdx, meta, shift)}
+              render={() => null}
+            />
+          )}
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}
+              clickMode={selectable ? 'select' : 'pin'}
+              onSelect={(_seriesIdx, dataIdx, { meta, shift }) => onSelect(dataIdx, meta, shift)}
+              selectHint={selectable ? t('bar-chart.tooltip.select-hint', 'Alt-click to pin') : undefined}
               maxWidth={options.tooltip.maxWidth}
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll

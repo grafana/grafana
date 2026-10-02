@@ -1,6 +1,13 @@
 import uPlot from 'uplot';
 
-import { createDataFrame, createTheme, type DataFrame, FieldType, type GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  createDataFrame,
+  createTheme,
+  type DataFrame,
+  FieldType,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { ScaleDirection, ScaleOrientation, StackingMode, VisibilityMode } from '@grafana/schema';
 
 import { type BarsOptions, getConfig } from './bars';
@@ -1006,6 +1013,73 @@ describe('bars.getConfig', () => {
       // only the two non-null values (indices 0 and 2) are colored
       expect(getColor).toHaveBeenCalledTimes(2);
       expect(getColor.mock.calls.map((call) => call[1])).toEqual([0, 2]);
+    });
+  });
+
+  describe('selection veil', () => {
+    function drawWithSelection(getSelection: BarsOptions['getSelection'], overrides?: Partial<BarsOptions>) {
+      const config = getConfig(createMinimalBarsOptions({ getSelection, ...overrides }), theme);
+      const base = createMockU();
+      const ctx = { ...base.ctx, fillRect: jest.fn(), beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn() };
+      const u = { ...base, ctx };
+
+      config.drawClear(asUPlot(u));
+      config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
+      config.draw(asUPlot(u));
+
+      return ctx;
+    }
+
+    it('paints nothing when there is no selection', () => {
+      const ctx = drawWithSelection(() => null);
+
+      expect(ctx.fillRect).not.toHaveBeenCalled();
+    });
+
+    it('veils every unselected bar in the translucent panel background colour', () => {
+      // labels off, so fillStyle is left as the veil colour
+      const ctx = drawWithSelection(() => new Set([1]), { showValue: VisibilityMode.Never });
+
+      // mock bars: canvas lft = bbox.left + 10 + i * 30, wid 25; pad of 1 device px on each side
+      expect(ctx.fillRect).toHaveBeenCalledTimes(2);
+      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 10 - 1, 20 + 60 - 1, 27, 22);
+      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 70 - 1, 20 + 60 - 1, 27, 62);
+      expect(ctx.fillStyle).toBe(colorManipulator.alpha(theme.colors.background.primary, 0.7));
+      expect(ctx.clip).toHaveBeenCalled();
+    });
+
+    it('veils the drawn bar, not the expanded fullHighlight hover rect', () => {
+      const ctx = drawWithSelection(() => new Set([0, 2]), { fullHighlight: true });
+
+      expect(ctx.fillRect).toHaveBeenCalledTimes(1);
+      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 40 - 1, 20 + 60 - 1, 27, 42);
+    });
+
+    it('veils bars before drawing value labels', () => {
+      const ctx = drawWithSelection(() => new Set([0]));
+
+      expect(ctx.fillRect).toHaveBeenCalledTimes(2);
+      expect(ctx.fillText).toHaveBeenCalled();
+      expect(ctx.fillRect.mock.invocationCallOrder[0]).toBeLessThan(ctx.fillText.mock.invocationCallOrder[0]);
+    });
+
+    it('reads the selection on every draw', () => {
+      let selection: Set<number> | null = null;
+      const config = getConfig(createMinimalBarsOptions({ getSelection: () => selection }), theme);
+      const base = createMockU();
+      const ctx = { ...base.ctx, fillRect: jest.fn(), beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn() };
+      const u = asUPlot({ ...base, ctx });
+
+      config.drawClear(u);
+      config.barsBuilder(u, 1, 0, 2);
+      config.draw(u);
+      expect(ctx.fillRect).not.toHaveBeenCalled();
+
+      selection = new Set([0, 1]);
+      config.drawClear(u);
+      config.barsBuilder(u, 1, 0, 2);
+      config.draw(u);
+      expect(ctx.fillRect).toHaveBeenCalledTimes(1);
     });
   });
 

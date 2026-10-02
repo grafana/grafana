@@ -30,6 +30,23 @@ export const enum TooltipHoverMode {
 type GetDataLinksCallback = (seriesIdx: number, dataIdx: number) => LinkModel[];
 type GetAdHocFiltersCallback = (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
 
+/** Modifier keys held during a select-mode click */
+export interface TooltipSelectModifiers {
+  /** Ctrl or Meta (Cmd) was held */
+  meta: boolean;
+  /** Shift was held */
+  shift: boolean;
+}
+
+type OnSelectCallback = (seriesIdx: number, dataIdx: number, modifiers: TooltipSelectModifiers) => void;
+
+/**
+ * What a click on a hovered point does.
+ * - `pin` (default): pins the tooltip, or follows a one-click link.
+ * - `select`: calls `onSelect`. Alt-click pins the tooltip; a plain click still follows a one-click link.
+ */
+export type TooltipClickMode = 'pin' | 'select';
+
 interface TooltipPlugin2Props {
   config: UPlotConfigBuilder;
   hoverMode: TooltipHoverMode;
@@ -45,6 +62,12 @@ interface TooltipPlugin2Props {
   onSelectRange?: OnSelectRangeCallback;
   getDataLinks?: GetDataLinksCallback;
   getAdHocFilters?: GetAdHocFiltersCallback;
+
+  clickMode?: TooltipClickMode;
+  /** Called on a select-mode click on a hovered point */
+  onSelect?: OnSelectCallback;
+  /** Shown above the tooltip contents while unpinned in select mode */
+  selectHint?: React.ReactNode;
 
   render: (
     u: uPlot,
@@ -124,6 +147,9 @@ export const TooltipPlugin2 = ({
   syncScope = 'global', // eventsScope
   getDataLinks = getDataLinksFallback,
   getAdHocFilters = getAdHocFiltersFallback,
+  clickMode = 'pin',
+  onSelect,
+  selectHint,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -146,6 +172,12 @@ export const TooltipPlugin2 = ({
 
   const getAdHocFiltersRef = useRef(getAdHocFilters);
   getAdHocFiltersRef.current = getAdHocFilters;
+
+  const clickModeRef = useRef(clickMode);
+  clickModeRef.current = clickMode;
+
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -302,6 +334,49 @@ export const TooltipPlugin2 = ({
       selectedRange = null;
     };
 
+    const pin = (seriesIdx: number, dataIdx: number) => {
+      dataLinks = getLinksRef.current(seriesIdx, dataIdx);
+      adHocFilters = getAdHocFiltersRef.current(seriesIdx, dataIdx);
+
+      setTimeout(() => {
+        _isPinned = true;
+        scheduleRender(true);
+      }, 0);
+    };
+
+    // select mode: Alt-click pins, a plain click follows a one-click link, any other click selects
+    const handleSelectClick = (e: MouseEvent) => {
+      if (!_isHovering || _isPinned || closestSeriesIdx == null) {
+        return;
+      }
+
+      const dataIdx = seriesIdxs[closestSeriesIdx];
+
+      if (dataIdx == null) {
+        return;
+      }
+
+      if (e.altKey) {
+        pin(closestSeriesIdx, dataIdx);
+        return;
+      }
+
+      const meta = e.ctrlKey || e.metaKey;
+
+      if (!meta && !e.shiftKey) {
+        const oneClickLink = getLinksRef
+          .current(closestSeriesIdx, dataIdx)
+          .find((dataLink) => dataLink.oneClick === true);
+
+        if (oneClickLink != null) {
+          window.open(oneClickLink.href, oneClickLink.target ?? '_self');
+          return;
+        }
+      }
+
+      onSelectRef.current?.(closestSeriesIdx, dataIdx, { meta, shift: e.shiftKey });
+    };
+
     const dismiss = () => {
       let prevIsPinned = _isPinned;
       _isPinned = false;
@@ -371,7 +446,9 @@ export const TooltipPlugin2 = ({
       // this handles pinning, 0-width range selection, and one-click
       u.over.addEventListener('click', (e) => {
         if (e.target === u.over) {
-          if (e.ctrlKey || e.metaKey) {
+          if (clickModeRef.current === 'select') {
+            handleSelectClick(e);
+          } else if (e.ctrlKey || e.metaKey) {
             let xVal;
 
             const isXAxisHorizontal = u.scales.x.ori === 0;
@@ -755,7 +832,10 @@ export const TooltipPlugin2 = ({
     }
   }, [isHovering]);
 
-  if (plotRef.current && isHovering) {
+  const isSelectMode = clickMode === 'select';
+
+  // in select mode a panel without a visible tooltip renders no contents; skip the empty wrapper
+  if (plotRef.current && isHovering && !(isSelectMode && contents == null)) {
     return createPortal(
       <div
         className={cx(styles.tooltipWrapper, isPinned && styles.pinned)}
@@ -765,6 +845,7 @@ export const TooltipPlugin2 = ({
         ref={domRef}
       >
         {isPinned && <CloseButton onClick={dismiss} />}
+        {isSelectMode && !isPinned && selectHint != null && <div className={styles.selectHint}>{selectHint}</div>}
         {contents}
       </div>,
       portalRoot.current
@@ -787,6 +868,12 @@ const getStyles = (theme: GrafanaTheme2, maxWidth?: number) => ({
     boxShadow: theme.shadows.z2,
     userSelect: 'text',
     maxWidth: maxWidth ?? 'none',
+  }),
+  selectHint: css({
+    padding: theme.spacing(0.5, 1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
   }),
   pinned: css({
     boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
