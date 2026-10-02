@@ -78,6 +78,9 @@ func TestValidation(t *testing.T) {
 			name:  "empty is OK",
 			input: []string{""},
 		}, {
+			name:  "wildcard is OK",
+			input: []string{"*"},
+		}, {
 			name:   "too long",
 			input:  []string{strings.Repeat("0", 41)},
 			expect: []string{"namespace is too long"},

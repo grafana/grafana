@@ -87,6 +87,8 @@ func IsValidNamespace(namespace string) []string {
 	switch {
 	case s == 0:
 		return nil // empty is OK
+	case namespace == "*":
+		return nil // the cross-namespace wildcard is OK
 	case s > maxNamespaceLength:
 		return []string{"namespace is too long"}
 	case s < minNamespaceLength:
