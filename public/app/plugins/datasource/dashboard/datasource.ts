@@ -222,7 +222,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     // Check for impossible filters (missing field with '=' operator)
     const hasImpossibleFilter = applicableFilters.some(
-      ({ fieldIndex, filter }) => fieldIndex === -1 && filter.operator === '='
+      ({ fieldIndex, filter }) => fieldIndex === -1 && (filter.operator === '=' || filter.operator === '=|')
     );
     if (hasImpossibleFilter) {
       return this.reconstructDataFrame(frame);
@@ -266,10 +266,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       })
       .filter(({ filter, fieldIndex, matcher }) => {
         // If field is not present:
-        // - Keep filters with '=' operator (will always be false - reject rows)
-        // - Remove filters with '!=' operator (will always be true - no effect)
+        // - Keep filters with '=' or '=|' operator (will always be false - reject rows)
+        // - Remove filters with '!=' or '!=|' operator (will always be true - no effect)
         if (fieldIndex === -1) {
-          return filter.operator === '=';
+          return filter.operator === '=' || filter.operator === '=|';
         }
         // Only keep filters with valid matchers
         return matcher !== null;
@@ -292,6 +292,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return null;
     }
 
+    if (filter.operator === '=|' || filter.operator === '!=|') {
+      return this.createMembershipMatcher(filter);
+    }
+
     // Map operator to matcher ID
     let matcherId: ValueMatcherID;
     switch (filter.operator) {
@@ -310,6 +314,25 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         id: matcherId,
         options: { value: filter.value },
       });
+    } catch (error) {
+      console.warn('Failed to create value matcher for filter:', filter, error);
+      return null;
+    }
+  }
+
+  /**
+   * Membership matcher for '=|' and '!=|', composed from the equal matcher so that
+   * loose equality semantics are shared with '=' (numeric fields match string values).
+   */
+  private createMembershipMatcher(filter: AdHocVariableFilter) {
+    try {
+      const candidates = filter.values ?? [filter.value];
+      const matchers = candidates.map((value) => getValueMatcher({ id: ValueMatcherID.equal, options: { value } }));
+      const negate = filter.operator === '!=|';
+      return (...args: Parameters<ReturnType<typeof getValueMatcher>>) => {
+        const isMember = matchers.some((matcher) => matcher(...args));
+        return negate ? !isMember : isMember;
+      };
     } catch (error) {
       console.warn('Failed to create value matcher for filter:', filter, error);
       return null;
@@ -406,11 +429,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
 
     return filters.map((filter): DrilldownsApplicability => {
       // Check operator support
-      if (filter.operator !== '=' && filter.operator !== '!=') {
+      if (!['=', '!=', '=|', '!=|'].includes(filter.operator)) {
         return {
           key: filter.key,
           applicable: false,
-          reason: `Operator '${filter.operator}' is not supported. Only '=' and '!=' operators are supported.`,
+          reason: `Operator '${filter.operator}' is not supported. Only '=', '!=', '=|' and '!=|' operators are supported.`,
         };
       }
 

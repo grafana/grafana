@@ -794,6 +794,55 @@ describe('DashboardDatasource', () => {
         expect(result.length).toBe(3);
       });
 
+      describe('multi-value operators', () => {
+        const apply = (frame: ReturnType<typeof createTestFrame>, filters: AdHocVariableFilter[]) =>
+          (ds as unknown as DashboardDatasourceWithPrivateMethods).applyAdHocFilters(frame, filters);
+
+        const frame = () =>
+          createTestFrame([
+            { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Bob'] },
+            { name: 'age', type: FieldType.number, values: [25, 30, 35] },
+          ]);
+
+        it('should keep rows matching any value with =| on string fields', () => {
+          const result = apply(frame(), [{ key: 'name', operator: '=|', value: 'John', values: ['John', 'Bob'] }]);
+          expect(result.fields[0].values).toEqual(['John', 'Bob']);
+          expect(result.length).toBe(2);
+        });
+
+        it('should match numeric fields against string values with =|', () => {
+          const result = apply(frame(), [{ key: 'age', operator: '=|', value: '25', values: ['25', '35'] }]);
+          expect(result.fields[0].values).toEqual(['John', 'Bob']);
+          expect(result.fields[1].values).toEqual([25, 35]);
+        });
+
+        it('should fall back to value when values is not set', () => {
+          const result = apply(frame(), [{ key: 'name', operator: '=|', value: 'Jane' }]);
+          expect(result.fields[0].values).toEqual(['Jane']);
+        });
+
+        it('should drop rows matching any value with !=|', () => {
+          const result = apply(frame(), [{ key: 'name', operator: '!=|', value: 'John', values: ['John', 'Bob'] }]);
+          expect(result.fields[0].values).toEqual(['Jane']);
+          expect(result.length).toBe(1);
+        });
+
+        it('should drop numeric rows matching string values with !=|', () => {
+          const result = apply(frame(), [{ key: 'age', operator: '!=|', value: '30', values: ['30', '35'] }]);
+          expect(result.fields[1].values).toEqual([25]);
+        });
+
+        it('should reject all rows for =| on a missing field', () => {
+          const result = apply(frame(), [{ key: 'missing', operator: '=|', value: 'a', values: ['a', 'b'] }]);
+          expect(result.length).toBe(0);
+        });
+
+        it('should ignore !=| on a missing field', () => {
+          const result = apply(frame(), [{ key: 'missing', operator: '!=|', value: 'a', values: ['a', 'b'] }]);
+          expect(result.length).toBe(3);
+        });
+      });
+
       it('should handle complex filtering scenario', () => {
         const frame = createTestFrame([
           { name: 'name', type: FieldType.string, values: ['John', 'Jane', 'Admin', 'Bob'] },
@@ -860,6 +909,20 @@ describe('DashboardDatasource', () => {
         expect(result).toEqual([]);
       });
 
+      it('should mark multi-value operators as applicable', async () => {
+        const result = await ds.getDrilldownsApplicability({
+          filters: [
+            { key: 'name', operator: '=|', value: 'John', values: ['John', 'Jane'] },
+            { key: 'age', operator: '!=|', value: '25', values: ['25'] },
+          ],
+          queries: [{ refId: 'A', adHocFiltersEnabled: true }],
+        });
+        expect(result).toEqual([
+          { key: 'name', applicable: true },
+          { key: 'age', applicable: true },
+        ]);
+      });
+
       it('should mark unsupported operators as not applicable with reason', async () => {
         const result = await ds.getDrilldownsApplicability({
           filters: [
@@ -874,17 +937,17 @@ describe('DashboardDatasource', () => {
           {
             key: 'name',
             applicable: false,
-            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+            reason: "Operator '>' is not supported. Only '=', '!=', '=|' and '!=|' operators are supported.",
           },
           {
             key: 'age',
             applicable: false,
-            reason: "Operator '<' is not supported. Only '=' and '!=' operators are supported.",
+            reason: "Operator '<' is not supported. Only '=', '!=', '=|' and '!=|' operators are supported.",
           },
           {
             key: 'score',
             applicable: false,
-            reason: "Operator '=~' is not supported. Only '=' and '!=' operators are supported.",
+            reason: "Operator '=~' is not supported. Only '=', '!=', '=|' and '!=|' operators are supported.",
           },
         ]);
       });
@@ -904,7 +967,7 @@ describe('DashboardDatasource', () => {
           {
             key: 'age',
             applicable: false,
-            reason: "Operator '>' is not supported. Only '=' and '!=' operators are supported.",
+            reason: "Operator '>' is not supported. Only '=', '!=', '=|' and '!=|' operators are supported.",
           },
           { key: 'status', applicable: true },
         ]);
