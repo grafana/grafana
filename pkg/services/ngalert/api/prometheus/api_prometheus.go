@@ -557,7 +557,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 		Limit:              remainingGroups,
 		RuleLimit:          remainingRules,
 		ContinueToken:      token,
-		Compact:            ctx.compact,
+		Compact:            ctx.compact || ctx.metadataOnly,
 		SortByFullpath:     ctx.opts.SortByFullpath,
 	}
 
