@@ -12,9 +12,9 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { type UserDTO } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
+import { UserAccountActions } from '../UserAccountActions';
 import { UserLdapSyncInfo } from '../UserLdapSyncInfo';
 import { UserOrgs } from '../UserOrgs';
-import { UserProfile } from '../UserProfile';
 import { UserSessions } from '../UserSessions';
 
 import { useGetOverviewOrgsQuery, useGetOverviewSessionsQuery, useGetOverviewLdapStatusQuery } from './api';
@@ -55,13 +55,8 @@ export function AccountManagement({ user, onUpdated }: Props) {
   return (
     <Stack direction="column" gap={3}>
       {failed && <ActionError />}
-      <UserProfile
+      <UserAccountActions
         user={user}
-        showInformation={false}
-        onUserUpdate={(updated) => run(() => getBackendSrv().put(`/api/users/${user.uid}`, updated))}
-        onPasswordChange={(password) =>
-          run(() => getBackendSrv().put(`/api/admin/users/${user.uid}/password`, { password }))
-        }
         onUserDelete={() =>
           run(async () => {
             await getBackendSrv().delete(`/api/admin/users/${user.uid}`);

@@ -95,6 +95,52 @@ it('shows read-only details and preserves never-logged-in semantics', async () =
   expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Change' })).not.toBeInTheDocument();
   expect(screen.queryByRole('tab', { name: 'Sessions' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Delete user' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Disable user' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Enable user' })).not.toBeInTheDocument();
+});
+
+it('confirms account disabling and refreshes the available actions', async () => {
+  let saved = {
+    ...profile,
+    accessControl: { [AccessControlAction.UsersDisable]: true, [AccessControlAction.UsersEnable]: true },
+  };
+  const disable = jest.fn();
+  server.use(
+    http.get('/api/users/alice', () => HttpResponse.json(saved)),
+    http.post('/api/admin/users/alice/disable', () => {
+      disable();
+      saved = { ...saved, isDisabled: true };
+      return HttpResponse.json({ message: 'User disabled' });
+    })
+  );
+  const { user } = setup();
+  await user.click(await screen.findByRole('button', { name: 'Disable user' }));
+  expect(disable).not.toHaveBeenCalled();
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Disable user' }));
+  expect(await screen.findByRole('button', { name: 'Enable user' })).toBeInTheDocument();
+  expect(disable).toHaveBeenCalledTimes(1);
+  expect(screen.getByText('Disabled')).toBeInTheDocument();
+});
+
+it('cancels account deletion without sending a request and restores focus', async () => {
+  const remove = jest.fn();
+  server.use(
+    http.get('/api/users/alice', () =>
+      HttpResponse.json({ ...profile, accessControl: { [AccessControlAction.UsersDelete]: true } })
+    ),
+    http.delete('/api/admin/users/alice', () => {
+      remove();
+      return HttpResponse.json({ message: 'User deleted' });
+    })
+  );
+  const { user } = setup();
+  const trigger = await screen.findByRole('button', { name: 'Delete user' });
+  await user.click(trigger);
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(remove).not.toHaveBeenCalled();
 });
 
 it('navigates between tabs and links to the team edit page', async () => {
