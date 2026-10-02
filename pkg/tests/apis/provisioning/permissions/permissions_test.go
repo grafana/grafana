@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -49,11 +50,14 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	repo := "none-repository"
 	repoPath := "repositories/" + repo
 	filesPath := repoPath + "/files/"
-	request(t, h.Org1.Admin, "POST", "repositories", repository(repo, h.ProvisioningPath), 201)
-	request(t, h.Org1.Admin, "PATCH", repoPath+"/status", map[string]any{"status": map[string]any{
-		"health": map[string]any{"healthy": true}, "sync": map[string]any{"state": "success", "started": 0},
-	}}, 200)
-	_, err := common.GetConnectionClientV1Beta1(h.K8sTestHelper).Resource.Create(t.Context(),
+	repoClient := common.GetRepositoryClientV1Beta1(h.K8sTestHelper)
+	_, err := repoClient.Resource.Create(t.Context(),
+		&unstructured.Unstructured{Object: repository(repo, h.ProvisioningPath)}, metav1.CreateOptions{})
+	require.NoError(t, err)
+	_, err = repoClient.Resource.Patch(t.Context(), repo, types.MergePatchType,
+		[]byte(`{"status":{"health":{"healthy":true},"sync":{"state":"success","started":0}}}`), metav1.PatchOptions{}, "status")
+	require.NoError(t, err)
+	_, err = common.GetConnectionClientV1Beta1(h.K8sTestHelper).Resource.Create(t.Context(),
 		&unstructured.Unstructured{Object: connection("none-connection")}, metav1.CreateOptions{})
 	require.NoError(t, err)
 	request(t, h.Org1.Admin, "POST", filesPath+"existing.json", dashboard("none-existing-dashboard"), 200)
