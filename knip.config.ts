@@ -14,7 +14,7 @@ const defaultEntries = ['i18next.config.ts'];
 const nonProductionFiles = [
   '!**/{__fixtures__,__mocks__,__smoke__,__test-utils__,demo,fixtures,mocks,scripts,spec,storybook,test,test-fixtures,test-utils,testCases,testData,testdata,testfiles,testing,tests,testSetup,ThemeDemos}/**!',
   '!**/*.{fixture,fixtures,scenario,smoke,story,test.resources}.{ts,tsx}!',
-  '!**/*{mock,Mock,StoryHelper,storyUtils,testHelpers,TestUtils,testUtils,testsUtils,test-utils}*.{js,ts,tsx}!',
+  '!**/*{mock,Mock,StoryHelper,storyUtils,testData,testHelpers,TestUtils,testUtils,testsUtils,test-utils}*.{js,ts,tsx}!',
   '!**/jest-setup.js!',
   '!**/*.mdx!',
   '!**/*Fixture.ts!',
