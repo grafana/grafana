@@ -485,6 +485,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,
 		s.appInstallers,
+		builders,
 	)
 	if err != nil {
 		return err

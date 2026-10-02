@@ -100,10 +100,14 @@ func AddToScheme(
 	return additionalGroupVersions, nil
 }
 
-// RegisterAdmission combines the existing admission control from builders.
+// RegisterAdmission combines the existing admission control from builders with every
+// AppInstaller's own admission plugin, then wraps the result so a sentinel-triggered Create
+// (see apistore.OverwriteOnCreateResourceVersion) runs real Update-flavored validation for
+// any GV whose builder has opted in via builder.APIGroupGetter.
 func RegisterAdmission(
 	existingAdmission admission.Interface,
 	appInstallers []appsdkapiserver.AppInstaller,
+	builders []builder.APIGroupBuilder,
 ) (admission.Interface, error) {
 	controllers := []admission.Interface{}
 
@@ -124,7 +128,8 @@ func RegisterAdmission(
 		controllers = append(controllers, existingAdmission)
 	}
 
-	return admission.NewChainHandler(controllers...), nil
+	chain := admission.NewChainHandler(controllers...)
+	return newOverwriteAdmission(chain, builder.ExtractGetters(builders)), nil
 }
 
 type AuthorizerRegistrar interface {
