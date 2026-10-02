@@ -1258,8 +1258,8 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		if apierrors.IsConflict(err) {
-			// Retryable concurrent-create conflict. Return as gRPC Aborted
-			// so client retry interceptors can handle it.
+			// Return concurrent-create conflicts as gRPC Aborted so callers can decide
+			// whether to retry; the gRPC layer must not replay conflicts automatically.
 			return nil, status.Error(codes.Aborted, err.Error())
 		}
 		rsp.Error = AsErrorResult(err)

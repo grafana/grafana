@@ -11,11 +11,11 @@ import (
 	"uuid"
 
 	badger "github.com/dgraph-io/badger/v4"
-	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -164,31 +164,36 @@ func runConcurrentCreateNoAlreadyExists(t *testing.T, backend resource.StorageBa
 	}
 }
 
-func TestIntegrationSQLKVConcurrentCreateClientRetry(t *testing.T) {
+// Concurrent creates contend for the same resource lease. Lease acquisition does not wait,
+// so a losing caller can receive a conflict before the winner finishes creating the resource.
+// Both local and remote clients must expose that conflict to the caller, rather than relying
+// on gRPC retries to turn every losing request into AlreadyExists. Exercise both RV-manager
+// configurations because lease contention can occur with either backend configuration.
+func TestIntegrationSQLKVConcurrentCreateClientConflicts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	t.Run("Without RvManager/Local", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
 		client := newLocalClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-retry-local")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-local")
 	})
 
 	t.Run("Without RvManager/Remote", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context(), false)
 		client := newRemoteClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-retry-remote")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-conflicts-remote")
 	})
 
 	t.Run("With RvManager/Local", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
 		client := newLocalClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-local")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-rvmanager-conflicts-local")
 	})
 
 	t.Run("With RvManager/Remote", func(t *testing.T) {
 		backend, _ := NewTestSqlKvBackend(t, t.Context(), true)
 		client := newRemoteClient(t, backend)
-		runConcurrentCreateRetry(t, client, "sqlkv-rvmanager-retry-remote")
+		runConcurrentCreateClientConflicts(t, client, "sqlkv-rvmanager-conflicts-remote")
 	})
 }
 
@@ -234,9 +239,9 @@ func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.Resource
 	return resource.NewLegacyResourceClient(conn, conn)
 }
 
-func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns string) {
+func runConcurrentCreateClientConflicts(t *testing.T, client resource.ResourceClient, ns string) {
 	const concurrency = 10
-	name := "concurrent-create-retry-item"
+	name := "concurrent-create-conflicts-item"
 
 	u := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "group/v1",
@@ -264,58 +269,37 @@ func runConcurrentCreateRetry(t *testing.T, client resource.ResourceClient, ns s
 		IsGrafanaAdmin: true,
 	})
 
-	type result struct {
-		err           error
-		alreadyExists bool
-		success       bool
-	}
-	results := make([]result, concurrency)
+	results := make([]error, concurrency)
 
-	// The local client (pkg/storage/unified/resource/client.go) and the remote
-	// gRPC connection (pkg/storage/unified/client.go) both wire a retry
-	// interceptor with WithMax(3) and a 1s exponential backoff. With
-	// concurrency=10 that budget is too small: lease.Acquire returns
-	// ErrLeaseAlreadyHeld without waiting, so callers contend in waves and only
-	// ~1 caller can drain per wave. Override the retry budget per call so all 9
-	// losers can observe AlreadyExists. This does not change production behavior.
-	retryOpts := []grpc.CallOption{
-		grpc_retry.WithMax(uint(concurrency * 2)),
-		grpc_retry.WithBackoff(grpc_retry.BackoffLinearWithJitter(500*time.Millisecond, 0.5)),
-	}
-
+	// Use the production retry policy without per-call overrides or application-level retries.
+	// Replaying conflicts until the lease is released would hide the outcome we want to check.
+	// The client retry unit tests separately verify that Aborted invokes the handler only once.
 	var wg sync.WaitGroup
 	for i := range concurrency {
 		wg.Go(func() {
-			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value}, retryOpts...)
-			if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-				results[i] = result{
-					err:           err,
-					alreadyExists: resource.AsErrorResult(err).Reason == string(metav1.StatusReasonAlreadyExists),
-				}
-				return
-			}
-			results[i] = result{success: true}
+			rsp, err := client.Create(clientCtx, &resourcepb.CreateRequest{Key: key, Value: value})
+			results[i] = resource.ErrorFromResponse(rsp.GetError(), err)
 		})
 	}
 	wg.Wait()
 
 	var successes int
-	var alreadyExistsCount int
-	var unexpectedErrors []error
-	for _, r := range results {
-		switch {
-		case r.success:
+	for _, err := range results {
+		if err == nil {
 			successes++
-		case r.alreadyExists:
-			alreadyExistsCount++
-		default:
-			unexpectedErrors = append(unexpectedErrors, r.err)
+			continue
 		}
+		// Scheduling determines which error a losing create sees: contention while the lease
+		// is held produces Conflict, whereas observing the completed create produces AlreadyExists.
+		// Do not require a fixed count of either error. Some lease conflicts arrive as a bare
+		// Aborted status without ErrorResult details, so check the gRPC code as well as the reason.
+		reason := resource.AsErrorResult(err).Reason
+		validError := status.Code(err) == codes.Aborted ||
+			reason == string(metav1.StatusReasonConflict) || reason == string(metav1.StatusReasonAlreadyExists)
+		require.True(t, validError, "losing creates should get Conflict or AlreadyExists: %v", err)
 	}
 
-	require.Empty(t, unexpectedErrors, "unexpected errors from concurrent creates")
 	require.Equal(t, 1, successes, "exactly one create should succeed")
-	require.Equal(t, concurrency-1, alreadyExistsCount, "all other creates should get AlreadyExists")
 }
 
 func TestConcurrentWritesWithLeasesBadger(t *testing.T) {
