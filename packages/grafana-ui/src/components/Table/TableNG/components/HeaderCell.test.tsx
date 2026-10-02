@@ -211,6 +211,24 @@ describe('HeaderCell', () => {
     expect(screen.getByRole('button', { name: 'Only sorts the results on display' })).toBeInTheDocument();
   });
 
+  it('renders the field description as an info tooltip when headerTooltip is not set', () => {
+    render(<HeaderCell {...baseProps} field={makeField({ config: { description: 'Explains this column' } })} />);
+    expect(screen.getByRole('button', { name: 'Explains this column' })).toBeInTheDocument();
+  });
+
+  it('prefers headerTooltip over the field description', () => {
+    render(
+      <HeaderCell
+        {...baseProps}
+        field={makeField({
+          config: { description: 'Field description', custom: { headerTooltip: 'Custom header tooltip' } },
+        })}
+      />
+    );
+    expect(screen.getByRole('button', { name: 'Custom header tooltip' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Field description' })).not.toBeInTheDocument();
+  });
+
   it('does not render an info tooltip when headerTooltip is not set', () => {
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
