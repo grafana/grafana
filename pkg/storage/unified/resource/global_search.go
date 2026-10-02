@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"slices"
 	"strings"
@@ -296,6 +297,110 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 		}
 	}
 	return nil
+}
+
+// queueDueReconciles queues a reconcile of each global index among keys that
+// this instance owns and that has not been compared with storage since its last
+// slot. The rebuild workers run them, so they are bounded and never overlap a
+// rebuild of the same index.
+func (s *searchServer) queueDueReconciles(keys []NamespacedResource, now time.Time) {
+	for _, key := range keys {
+		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
+			continue
+		}
+		idx := s.search.GetIndex(key)
+		if idx == nil {
+			continue
+		}
+		reconciledAt, err := idx.ReconciledAt()
+		if err != nil {
+			s.log.Warn("failed to read when the global search index was last reconciled", "namespace", key.Namespace, "error", err)
+			continue
+		}
+		if !reconciledAt.Before(lastReconcileSlot(key, now)) {
+			continue
+		}
+		s.rebuildQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
+		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+	}
+}
+
+// lastReconcileSlot returns the latest time, at or before now, at which the index
+// for key is due to be compared with storage. Each index has its own minute in
+// the interval, taken from its key, so the comparisons are spread over the
+// whole interval instead of coming due together.
+func lastReconcileSlot(key NamespacedResource, now time.Time) time.Time {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(key.String()))
+	offset := time.Duration(h.Sum64() % uint64(globalIndexReconcileInterval))
+	slot := now.Truncate(globalIndexReconcileInterval).Add(offset)
+	if slot.After(now) {
+		slot = slot.Add(-globalIndexReconcileInterval)
+	}
+	return slot
+}
+
+// reconcileGlobalIndex compares every covered type of a global index with
+// storage, and repairs what differs.
+//
+// Notifications and the background update replay the event log from the index's
+// checkpoint, which reaches every change only while the log still holds them.
+// Three cases escape it:
+//
+//   - The log was trimmed. The KV backend keeps events for an hour by default,
+//     and an update does not learn that events are missing, so an index
+//     reopened after a longer gap, or whose updates kept failing, never sees
+//     what it missed.
+//   - A document that failed to build during an update is not retried once the
+//     checkpoint has moved past it.
+//   - A write committed late, below the checkpoint minus the lookback window,
+//     because resource versions only increase per object, not across storage.
+//
+// Comparing with storage instead of replaying events repairs all three.
+//
+// The time is recorded only when every type was compared, so one that failed
+// is compared again at the next scan rather than an hour later.
+func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedResource) error {
+	idx := s.search.GetIndex(key)
+	if idx == nil {
+		return nil
+	}
+	startedAt := time.Now()
+	var reindexed, removed, failed int
+	var errs []error
+	defer func() {
+		result := "success"
+		if len(errs) > 0 {
+			result = "failure"
+		}
+		elapsed := time.Since(startedAt)
+		s.indexMetrics.GlobalReconcileDuration.WithLabelValues(result).Observe(elapsed.Seconds())
+		s.log.Info("Reconciled global search index", "namespace", key.Namespace, "result", result, "duration", elapsed,
+			"reindexed", reindexed, "removed", removed, "failed", failed)
+	}()
+	for _, src := range indexSources(key) {
+		if ctx.Err() != nil {
+			errs = append(errs, ctx.Err())
+			return ctx.Err()
+		}
+		res, err := s.reconcileResourceType(ctx, idx, key, src)
+		if err != nil {
+			// The other types are still worth repairing.
+			errs = append(errs, fmt.Errorf("reconciling %s: %w", src.GroupResource(), err))
+			continue
+		}
+		reindexed += res.Reindexed
+		removed += res.Removed
+		failed += res.Failed
+		if res.Reindexed > 0 || res.Removed > 0 || res.Failed > 0 {
+			s.log.Info("reconciled a resource type of the global search index", "namespace", key.Namespace, "resource", src.GroupResource(),
+				"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
+		}
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
+	}
+	return idx.RecordReconciledAt(startedAt)
 }
 
 // reconcileReadChunkSize bounds how many drifted objects are read at once.

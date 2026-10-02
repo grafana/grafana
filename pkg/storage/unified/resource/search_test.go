@@ -55,6 +55,9 @@ type MockResourceIndex struct {
 	// and forgets them in ForgetType.
 	documentTypes map[schema.GroupResource]struct{}
 
+	// When the index was last compared with storage, through RecordReconciledAt.
+	reconciledAt time.Time
+
 	// Items passed to BulkIndex, and how many writes carried them, guarded by
 	// updateIndexMu.
 	bulkItems []*BulkIndexItem
@@ -154,6 +157,19 @@ func (m *MockResourceIndex) DocumentTypes() ([]schema.GroupResource, error) {
 		}
 	}
 	return slices.Collect(maps.Keys(types)), nil
+}
+
+func (m *MockResourceIndex) ReconciledAt() (time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	return m.reconciledAt, nil
+}
+
+func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	m.reconciledAt = t
+	return nil
 }
 
 // ForgetType forgets both records, and the documents a test set up, which the

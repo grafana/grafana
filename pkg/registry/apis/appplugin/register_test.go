@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -21,6 +22,21 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// TestNewAppPluginAPIBuilderStartsNoGoroutines prevents goroutine leaks in the
+// router, which builds a builder for every plugin on each poll.
+func TestNewAppPluginAPIBuilderStartsNoGoroutines(t *testing.T) {
+	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "test-app"}}
+	baseline := runtime.NumGoroutine()
+
+	for range 100 {
+		_, err := NewAppPluginAPIBuilder(plugin, nil, nil, nil, nil, nil, nil, nil, AppPluginRunnerOptions{}, nil, nil)
+		require.NoError(t, err)
+	}
+
+	leaked := runtime.NumGoroutine() - baseline
+	require.Zero(t, leaked, "constructing builders must not start goroutines")
+}
 
 func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 	for _, tc := range []struct {
