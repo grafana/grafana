@@ -31,14 +31,14 @@ export enum Annotation {
   panelID = '__panelId__',
 }
 
-export const annotationLabels: Record<Annotation, string> & Partial<Record<string, string>> = {
+export const annotationLabels: Record<string, string | undefined> = {
   [Annotation.description]: 'Description',
   [Annotation.summary]: 'Summary',
   [Annotation.runbookURL]: 'Runbook URL',
   [Annotation.dashboardUID]: 'Dashboard UID',
   [Annotation.panelID]: 'Panel ID',
   [Annotation.alertId]: 'Alert ID',
-};
+} satisfies Record<Annotation, string>;
 
 export const annotationDescriptions: Record<Annotation, string> = {
   [Annotation.description]: 'Description of what the alert rule does.',
