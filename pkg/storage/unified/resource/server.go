@@ -2748,28 +2748,36 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 		}}, nil
 	}
 
-	// Load the parent both to enforce existence (see proto) and to get its
-	// folder for access.Check.
+	// Load the parent to pick create vs update and to get its folder for
+	// access.Check.
 	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	verb := utils.VerbUpdate
+	name := req.Resource.Name
+	folder := ""
 	switch {
 	case parent == nil:
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "parent resource not found",
 			Code:    http.StatusNotFound,
 		}}, nil
+	case parent.Error != nil && parent.Error.Code == http.StatusNotFound:
+		verb = utils.VerbCreate
+		name = ""
 	case parent.Error != nil:
 		// Surface backend status as-is; collapsing to 404 would hide
 		// transient 5xx as "not found".
 		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	default:
+		folder = parent.Folder
 	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbUpdate,
+		Verb:      verb,
 		Group:     req.Resource.Group,
 		Resource:  req.Resource.Resource,
 		Namespace: req.Resource.Namespace,
-		Name:      req.Resource.Name,
-	}, parent.Folder)
+		Name:      name,
+	}, folder)
 	if err != nil {
 		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -2859,6 +2867,12 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
 		return &resourcepb.GetBlobResponse{Error: errRes}, nil
 	}
+	if req.Resource.Name == "" {
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+			Message: "missing resource name",
+			Code:    http.StatusBadRequest,
+		}}, nil
+	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 			Message: "blob store not configured",
@@ -2882,6 +2896,16 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 			}}, nil
 		}
 	} else {
+		refs, status := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
+		if status != nil {
+			return &resourcepb.GetBlobResponse{Error: status}, nil
+		}
+		if len(refs) > 0 && !refs[req.Uid] {
+			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+				Message: "blob is not referenced by the resource",
+				Code:    http.StatusNotFound,
+			}}, nil
+		}
 		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
@@ -2890,6 +2914,43 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		rsp.Error = AsErrorResult(err)
 	}
 	return rsp, nil
+}
+
+const BlobsField = "blobs"
+
+type BlobReference struct {
+	UID         string `json:"uid"`
+	Size        int64  `json:"size,omitempty"`
+	Hash        string `json:"hash,omitempty"`
+	ContentType string `json:"contentType,omitempty"`
+}
+
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, *resourcepb.ErrorResult) {
+	if r := verifyRequestKey(key); r != nil {
+		return nil, r
+	}
+
+	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key:             key,
+		ResourceVersion: rv,
+	})
+	if rsp.Error != nil {
+		return nil, rsp.Error
+	}
+
+	var obj struct {
+		Blobs map[string]BlobReference `json:"blobs"`
+	}
+	if err := json.Unmarshal(rsp.Value, &obj); err != nil {
+		return nil, AsErrorResult(err)
+	}
+	refs := make(map[string]bool, len(obj.Blobs))
+	for _, ref := range obj.Blobs {
+		if ref.UID != "" {
+			refs[ref.UID] = true
+		}
+	}
+	return refs, nil
 }
 
 func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {
