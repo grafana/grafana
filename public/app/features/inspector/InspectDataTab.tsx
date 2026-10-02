@@ -46,10 +46,10 @@ interface Props {
 
 interface State {
   /** The string is joinByField transformation. Otherwise it is a dataframe index */
-  selectedDataFrame: number | DataTransformerID;
+  selectedDataFrame: number | DataTransformerID.joinByField;
   transformId: DataTransformerID;
   dataFrameIndex: number;
-  transformationOptions: Array<SelectableValue<DataTransformerID>>;
+  transformationOptions: Array<SelectableValue<DataTransformerID.joinByField>>;
   transformedData: DataFrame[];
   excelCompatibilityMode: boolean;
 }
@@ -161,7 +161,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     downloadAsJson(data, dataName);
   };
 
-  onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
+  onDataFrameChange = (item: SelectableValue<DataTransformerID.joinByField | number>) => {
     this.setState({
       transformId:
         item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop,
@@ -342,7 +342,7 @@ function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
 }
 
 function buildTransformationOptions() {
-  const transformations: Array<SelectableValue<DataTransformerID>> = [
+  const transformations: Array<SelectableValue<DataTransformerID.joinByField>> = [
     {
       value: DataTransformerID.joinByField,
       label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
