@@ -56,7 +56,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaDataSourcesPlugins,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -665,7 +665,7 @@ var (
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default: scripted dashboards are disabled
 		},
@@ -856,7 +856,7 @@ var (
 			Name:        "sqlExpressions",
 			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "true",
 		},
@@ -944,7 +944,7 @@ var (
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
 			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",
@@ -1092,7 +1092,7 @@ var (
 			Description: "Enables the new alert list view design",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "true",
 		},
 		{
@@ -1293,7 +1293,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "rolePickerDrawer",
@@ -1309,7 +1309,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "timeRangeProvider",
@@ -1364,7 +1364,7 @@ var (
 			Name:        "alertingUIOptimizeReducer",
 			Description: "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true", // enabled by default
 		},
@@ -1374,7 +1374,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // Enabled by default for now
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "alertingAIGenAlertRules",
@@ -1471,7 +1471,7 @@ var (
 			Description: "Enables simplified step mode in the notifications section",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "true",
 		},
 		{
@@ -1615,7 +1615,7 @@ var (
 		{
 			Name:         "alertingRuleVersionHistoryRestore",
 			Description:  "Enables the alert rule version history restore feature",
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1649,7 +1649,7 @@ var (
 		{
 			Name:        "alertingMigrationUI",
 			Description: "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
@@ -1681,7 +1681,7 @@ var (
 		{
 			Name:         "alertingRulePermanentlyDelete",
 			Description:  "Enables UI functionality to permanently delete alert rules",
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1710,7 +1710,7 @@ var (
 			Description: "Enables unified navbars",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaCatalogSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false", // enabled by default
 		},
 		{
@@ -1756,7 +1756,7 @@ var (
 		{
 			Name:         "alertingBulkActionsInUI",
 			Description:  "Enables the alerting bulk actions in the UI",
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaAlertingSquad,
 			HideFromDocs: true,
@@ -1996,7 +1996,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaCatalogSquad,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true},
+			Generate:     Generate{LegacyFrontend: true, React: true},
 			Expression:   "true",
 		},
 		{
@@ -2069,7 +2069,7 @@ var (
 			Name:        "azureResourcePickerUpdates",
 			Description: "Enables the updated Azure Monitor resource picker",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true",
 		},
@@ -2239,7 +2239,7 @@ var (
 			Owner:           grafanaAlertingSquad,
 			RequiresRestart: true,
 			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "plugins.useMTPlugins",
@@ -2517,7 +2517,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingNotificationHistoryGlobal",
@@ -2525,7 +2525,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingNotificationHistoryTriage",
@@ -2533,7 +2533,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingNotificationHistoryDetail",
@@ -2541,7 +2541,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",

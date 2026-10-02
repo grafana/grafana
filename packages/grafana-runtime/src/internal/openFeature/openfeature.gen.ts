@@ -24,12 +24,34 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables the alerting bulk actions in the UI */
+  AlertingBulkActionsInUI: "alertingBulkActionsInUI",
+  /** Enables the new alert list view design */
+  AlertingListViewV2: "alertingListViewV2",
+  /** Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules */
+  AlertingMigrationUI: "alertingMigrationUI",
   /** Enables the new Alerting navigation structure with improved menu grouping */
   AlertingNavigationV2: "alertingNavigationV2",
+  /** Enables the notification history detail page */
+  AlertingNotificationHistoryDetail: "alertingNotificationHistoryDetail",
+  /** Enables the notification history global menu item viewer */
+  AlertingNotificationHistoryGlobal: "alertingNotificationHistoryGlobal",
+  /** Enables the notification history tab in the rule viewer */
+  AlertingNotificationHistoryRuleViewer: "alertingNotificationHistoryRuleViewer",
+  /** Enables the notification history timeline in the triage instance details drawer */
+  AlertingNotificationHistoryTriage: "alertingNotificationHistoryTriage",
+  /** Enables simplified step mode in the notifications section */
+  AlertingNotificationsStepMode: "alertingNotificationsStepMode",
+  /** Enables UI functionality to permanently delete alert rules */
+  AlertingRulePermanentlyDelete: "alertingRulePermanentlyDelete",
   /** Enables the UI functionality to recover and view deleted alert rules */
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
+  /** Enables the alert rule version history restore feature */
+  AlertingRuleVersionHistoryRestore: "alertingRuleVersionHistoryRestore",
   /** Enables the alerting triage feature */
   AlertingTriage: "alertingTriage",
+  /** Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query */
+  AlertingUIOptimizeReducer: "alertingUIOptimizeReducer",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -40,10 +62,16 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables user auth for Azure Monitor datasource only */
+  AzureMonitorEnableUserAuth: "azureMonitorEnableUserAuth",
+  /** Enables the updated Azure Monitor resource picker */
+  AzureResourcePickerUpdates: "azureResourcePickerUpdates",
   /** Allow elements nesting */
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Enables cross-account querying in CloudWatch datasources */
+  CloudWatchCrossAccountQuerying: "cloudWatchCrossAccountQuerying",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -56,6 +84,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Renders ad hoc filters and group by in a single unified control */
+  DashboardUnifiedDrilldownControls: "dashboardUnifiedDrilldownControls",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -72,6 +102,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
+  DisableScriptedDashboards: "disableScriptedDashboards",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -162,6 +194,8 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Adds support for Kubernetes alerting historian APIs */
+  KubernetesAlertingHistorian: "kubernetesAlertingHistorian",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
@@ -190,6 +224,8 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Enables SRI checks for plugin assets */
+  PluginsSriChecks: "pluginsSriChecks",
   /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
@@ -220,6 +256,8 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enables sharing a list of APIs with a list of plugins */
+  RestrictedPluginApis: "restrictedPluginApis",
   /** Enables Saved queries (query library) RBAC permissions */
   SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enable the secrets management app platform UI */
@@ -228,6 +266,8 @@ export const FlagKeys = {
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
+  /** Enables SQL Expressions, which can execute SQL queries against data source results. */
+  SqlExpressions: "sqlExpressions",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
   /** Enables column autocomplete for SQL Expressions */
@@ -250,8 +290,12 @@ export const FlagKeys = {
   TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables unified navbars */
+  UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
+  /** Use session storage for handling the redirection after login */
+  UseSessionStorageForRedirection: "useSessionStorageForRedirection",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
@@ -312,6 +356,39 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
 };
 
 /**
+ * Enables the alerting bulk actions in the UI
+ *
+ * **Details:**
+ * - flag key: `alertingBulkActionsInUI`
+ * - default value: `true`
+ */
+export const useFlagAlertingBulkActionsInUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingBulkActionsInUI", true, options).value;
+};
+
+/**
+ * Enables the new alert list view design
+ *
+ * **Details:**
+ * - flag key: `alertingListViewV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingListViewV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingListViewV2", true, options).value;
+};
+
+/**
+ * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
+ *
+ * **Details:**
+ * - flag key: `alertingMigrationUI`
+ * - default value: `true`
+ */
+export const useFlagAlertingMigrationUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingMigrationUI", true, options).value;
+};
+
+/**
  * Enables the new Alerting navigation structure with improved menu grouping
  *
  * **Details:**
@@ -320,6 +397,72 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
  */
 export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingNavigationV2", true, options).value;
+};
+
+/**
+ * Enables the notification history detail page
+ *
+ * **Details:**
+ * - flag key: `alertingNotificationHistoryDetail`
+ * - default value: `true`
+ */
+export const useFlagAlertingNotificationHistoryDetail = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNotificationHistoryDetail", true, options).value;
+};
+
+/**
+ * Enables the notification history global menu item viewer
+ *
+ * **Details:**
+ * - flag key: `alertingNotificationHistoryGlobal`
+ * - default value: `true`
+ */
+export const useFlagAlertingNotificationHistoryGlobal = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNotificationHistoryGlobal", true, options).value;
+};
+
+/**
+ * Enables the notification history tab in the rule viewer
+ *
+ * **Details:**
+ * - flag key: `alertingNotificationHistoryRuleViewer`
+ * - default value: `true`
+ */
+export const useFlagAlertingNotificationHistoryRuleViewer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNotificationHistoryRuleViewer", true, options).value;
+};
+
+/**
+ * Enables the notification history timeline in the triage instance details drawer
+ *
+ * **Details:**
+ * - flag key: `alertingNotificationHistoryTriage`
+ * - default value: `true`
+ */
+export const useFlagAlertingNotificationHistoryTriage = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNotificationHistoryTriage", true, options).value;
+};
+
+/**
+ * Enables simplified step mode in the notifications section
+ *
+ * **Details:**
+ * - flag key: `alertingNotificationsStepMode`
+ * - default value: `true`
+ */
+export const useFlagAlertingNotificationsStepMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingNotificationsStepMode", true, options).value;
+};
+
+/**
+ * Enables UI functionality to permanently delete alert rules
+ *
+ * **Details:**
+ * - flag key: `alertingRulePermanentlyDelete`
+ * - default value: `true`
+ */
+export const useFlagAlertingRulePermanentlyDelete = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingRulePermanentlyDelete", true, options).value;
 };
 
 /**
@@ -334,6 +477,17 @@ export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Enables the alert rule version history restore feature
+ *
+ * **Details:**
+ * - flag key: `alertingRuleVersionHistoryRestore`
+ * - default value: `true`
+ */
+export const useFlagAlertingRuleVersionHistoryRestore = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingRuleVersionHistoryRestore", true, options).value;
+};
+
+/**
  * Enables the alerting triage feature
  *
  * **Details:**
@@ -342,6 +496,17 @@ export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationO
  */
 export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingTriage", false, options).value;
+};
+
+/**
+ * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
+ *
+ * **Details:**
+ * - flag key: `alertingUIOptimizeReducer`
+ * - default value: `true`
+ */
+export const useFlagAlertingUIOptimizeReducer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingUIOptimizeReducer", true, options).value;
 };
 
 /**
@@ -400,6 +565,28 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Enables user auth for Azure Monitor datasource only
+ *
+ * **Details:**
+ * - flag key: `azureMonitorEnableUserAuth`
+ * - default value: `true`
+ */
+export const useFlagAzureMonitorEnableUserAuth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorEnableUserAuth", true, options).value;
+};
+
+/**
+ * Enables the updated Azure Monitor resource picker
+ *
+ * **Details:**
+ * - flag key: `azureResourcePickerUpdates`
+ * - default value: `true`
+ */
+export const useFlagAzureResourcePickerUpdates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureResourcePickerUpdates", true, options).value;
+};
+
+/**
  * Allow elements nesting
  *
  * **Details:**
@@ -419,6 +606,17 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Enables cross-account querying in CloudWatch datasources
+ *
+ * **Details:**
+ * - flag key: `cloudWatchCrossAccountQuerying`
+ * - default value: `true`
+ */
+export const useFlagCloudWatchCrossAccountQuerying = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("cloudWatchCrossAccountQuerying", true, options).value;
 };
 
 /**
@@ -485,6 +683,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Renders ad hoc filters and group by in a single unified control
+ *
+ * **Details:**
+ * - flag key: `dashboardUnifiedDrilldownControls`
+ * - default value: `true`
+ */
+export const useFlagDashboardUnifiedDrilldownControls = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardUnifiedDrilldownControls", true, options).value;
 };
 
 /**
@@ -573,6 +782,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+ *
+ * **Details:**
+ * - flag key: `disableScriptedDashboards`
+ * - default value: `true`
+ */
+export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("disableScriptedDashboards", true, options).value;
 };
 
 /**
@@ -1071,6 +1291,17 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
+ * Adds support for Kubernetes alerting historian APIs
+ *
+ * **Details:**
+ * - flag key: `kubernetesAlertingHistorian`
+ * - default value: `true`
+ */
+export const useFlagKubernetesAlertingHistorian = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesAlertingHistorian", true, options).value;
+};
+
+/**
  * Enables team APIs in the app platform
  *
  * **Details:**
@@ -1222,6 +1453,17 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Enables SRI checks for plugin assets
+ *
+ * **Details:**
+ * - flag key: `pluginsSriChecks`
+ * - default value: `false`
+ */
+export const useFlagPluginsSriChecks = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("pluginsSriChecks", false, options).value;
 };
 
 /**
@@ -1390,6 +1632,17 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables sharing a list of APIs with a list of plugins
+ *
+ * **Details:**
+ * - flag key: `restrictedPluginApis`
+ * - default value: `true`
+ */
+export const useFlagRestrictedPluginApis = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("restrictedPluginApis", true, options).value;
+};
+
+/**
  * Enables Saved queries (query library) RBAC permissions
  *
  * **Details:**
@@ -1431,6 +1684,17 @@ export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluatio
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("splashScreen", false, options).value;
+};
+
+/**
+ * Enables SQL Expressions, which can execute SQL queries against data source results.
+ *
+ * **Details:**
+ * - flag key: `sqlExpressions`
+ * - default value: `true`
+ */
+export const useFlagSqlExpressions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("sqlExpressions", true, options).value;
 };
 
 /**
@@ -1555,6 +1819,17 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
+ * Enables unified navbars
+ *
+ * **Details:**
+ * - flag key: `unifiedNavbars`
+ * - default value: `false`
+ */
+export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("unifiedNavbars", false, options).value;
+};
+
+/**
  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
  *
  * **Details:**
@@ -1563,6 +1838,17 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
+};
+
+/**
+ * Use session storage for handling the redirection after login
+ *
+ * **Details:**
+ * - flag key: `useSessionStorageForRedirection`
+ * - default value: `true`
+ */
+export const useFlagUseSessionStorageForRedirection = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useSessionStorageForRedirection", true, options).value;
 };
 
 /**
