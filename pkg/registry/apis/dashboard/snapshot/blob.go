@@ -1,0 +1,93 @@
+package snapshot
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+const dashboardBlobAnnotation = resource.BlobAnnotationPrefix + "dashboard"
+
+func snapshotBlobKey(snap *dashv0.Snapshot) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{
+		Namespace: snap.Namespace,
+		Group:     dashv0.GROUP,
+		Resource:  dashv0.SnapshotResourceInfo.GroupResource().Resource,
+		Name:      snap.Name,
+	}
+}
+
+func moveDashboardToBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, snap *dashv0.Snapshot) error {
+	if snap.Spec.Dashboard == nil {
+		return nil
+	}
+	value, err := json.Marshal(snap.Spec.Dashboard)
+	if err != nil {
+		return err
+	}
+	rsp, err := blobs.PutBlob(ctx, &resourcepb.PutBlobRequest{
+		Resource:    snapshotBlobKey(snap),
+		Method:      resourcepb.PutBlobRequest_GRPC,
+		ContentType: "application/json",
+		Value:       value,
+	})
+	if err != nil {
+		return err
+	}
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotImplemented {
+			return nil
+		}
+		return resource.GetError(rsp.Error)
+	}
+
+	info := &utils.BlobInfo{
+		UID:      rsp.Uid,
+		Size:     rsp.Size,
+		Hash:     rsp.Hash,
+		MimeType: rsp.MimeType,
+		Charset:  rsp.Charset,
+	}
+	annotations := snap.GetAnnotations()
+	if annotations == nil {
+		annotations = map[string]string{}
+	}
+	annotations[dashboardBlobAnnotation] = info.String()
+	snap.SetAnnotations(annotations)
+	snap.Spec.Dashboard = nil
+	return nil
+}
+
+func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, snap *dashv0.Snapshot) (map[string]any, bool, error) {
+	info := utils.ParseBlobInfo(snap.GetAnnotations()[dashboardBlobAnnotation])
+	if info == nil || info.UID == "" {
+		return nil, false, nil
+	}
+	if blobs == nil {
+		return nil, true, fmt.Errorf("snapshot %q references a blob but no blob store is configured", snap.Name)
+	}
+	rsp, err := blobs.GetBlob(ctx, &resourcepb.GetBlobRequest{
+		Resource: snapshotBlobKey(snap),
+		Uid:      info.UID,
+	})
+	if err != nil {
+		return nil, true, err
+	}
+	if rsp.Error != nil {
+		return nil, true, resource.GetError(rsp.Error)
+	}
+	if rsp.Url != "" {
+		return nil, true, fmt.Errorf("signed blob URLs are not supported yet")
+	}
+	dash := map[string]any{}
+	if err := json.Unmarshal(rsp.Value, &dash); err != nil {
+		return nil, true, err
+	}
+	return dash, true, nil
+}

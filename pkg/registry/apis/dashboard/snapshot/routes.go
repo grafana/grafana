@@ -34,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -150,7 +151,7 @@ func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapsho
 }
 
 // nolint:gocyclo
-func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
+func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -386,6 +387,13 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 
 					// Set namespace in context for k8s storage layer
 					ctx = k8srequest.WithNamespace(ctx, namespace)
+
+					if blobs != nil && !cmd.External {
+						if err := moveDashboardToBlob(ctx, blobs, snapshot); err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
+					}
 
 					// Create via storage (dual-write mode decides legacy, unified, or both)
 					// TODO: split creation from Snapshot and the blob
