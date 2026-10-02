@@ -311,6 +311,21 @@ func TestShouldUseSearchForList(t *testing.T) {
 	}
 }
 
+func TestSearchBackedListConfigAllowed(t *testing.T) {
+	config := SearchBackedListConfig{AllowedResources: map[string]bool{
+		"dashboard.grafana.app/dashboards": true,
+		"*.ext.grafana.app":                true,
+		"disabled.ext.grafana.app":         false,
+		"[invalid":                         true,
+	}}
+
+	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
+	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
+	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
+}
+
 func TestFilterSelectors(t *testing.T) {
 	tests := map[string]struct {
 		req           *resourcepb.ListRequest
