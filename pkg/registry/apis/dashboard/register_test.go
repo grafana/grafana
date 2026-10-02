@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -592,6 +593,24 @@ func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.Resou
 }
 func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
 	return nil, nil
+}
+
+func TestDashboardsAPIBuilderGet(t *testing.T) {
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.On("Read", mock.Anything, mock.Anything).Return(&resourcepb.ReadResponse{
+		Value: []byte(`{"spec":{"title":"existing"}}`),
+	}, nil)
+
+	b := &DashboardsAPIBuilder{unified: mockClient}
+
+	obj, err := b.Get(context.Background(), "ns", "existing-uid")
+	require.NoError(t, err)
+
+	u, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok)
+	spec, ok := u.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "existing", spec["title"])
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
