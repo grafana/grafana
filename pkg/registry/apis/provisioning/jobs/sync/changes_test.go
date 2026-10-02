@@ -327,6 +327,27 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, "Backend & UI.json", unsupported[0].Path)
 	})
 
+	t.Run("the folder of a resource renamed to an unsafe path in another folder is kept", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "b/", Blob: false},
+			{Path: "b/Backend & UI.json", Hash: "h1", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "a/", Resource: "folders", Name: "folder-a"},
+				{Path: "b/", Resource: "folders", Name: "folder-b"},
+				{Path: "a/dashboard.json", Hash: "h1", Resource: "dashboards", Name: "d1"},
+			},
+		}
+		// the lookup is a map, so run it enough times to see both iteration orders
+		for i := 0; i < 20; i++ {
+			changes, unsupported, err := Changes(context.Background(), source, target, true)
+			require.NoError(t, err)
+			require.Len(t, unsupported, 1)
+			require.Empty(t, changes, "neither the dashboard nor the folder that still holds it may be deleted")
+		}
+	})
+
 	t.Run("a resource renamed to a safe path is still replaced", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "Backend UI.json", Hash: "h1", Blob: true},

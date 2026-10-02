@@ -263,6 +263,8 @@ func TestIsHidden(t *testing.T) {
 		{name: "parent directory alone", path: "..", want: false},
 		{name: "traversal segment", path: "folder/../evil.json", want: false},
 		{name: "traversal segment at start", path: "../evil.json", want: false},
+		{name: "traversal before a hidden file", path: "../.secret.json", want: false},
+		{name: "traversal between hidden and plain", path: "folder/.hidden/../evil.json", want: false},
 	}
 
 	for _, tt := range tests {

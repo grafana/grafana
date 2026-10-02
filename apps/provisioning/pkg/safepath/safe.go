@@ -83,10 +83,13 @@ func IsSafe(path string) error {
 // ".." are traversal, not hidden -- same precedence as IsSafe, so a
 // traversal attempt is never waved through as merely hidden.
 func IsHidden(path string) bool {
-	for _, part := range Split(path) {
+	parts := Split(path)
+	for _, part := range parts {
 		if part == "." || part == ".." {
-			continue
+			return false
 		}
+	}
+	for _, part := range parts {
 		if strings.HasPrefix(part, ".") {
 			return true
 		}

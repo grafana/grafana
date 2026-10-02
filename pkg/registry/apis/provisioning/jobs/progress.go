@@ -51,6 +51,7 @@ type jobProgressRecorder struct {
 	message             string
 	finalMessage        string
 	resultCount         int
+	resultCountAtTotal  int // results already recorded when SetTotal was called; they are not part of the total
 	errorCount          int
 	errors              []string
 	refURLs             *provisioning.RepositoryURLs
@@ -226,6 +227,7 @@ func (r *jobProgressRecorder) ResetResults(keepWarnings bool) {
 	defer r.mu.Unlock()
 
 	r.resultCount = 0
+	r.resultCountAtTotal = 0
 	r.errorCount = 0
 	r.errors = nil
 	r.failedCreations = nil
@@ -277,6 +279,7 @@ func (r *jobProgressRecorder) SetRefURLs(ctx context.Context, refURLs *provision
 func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.mu.Lock()
 	r.total = total
+	r.resultCountAtTotal = r.resultCount
 	r.mu.Unlock()
 
 	r.notifyImmediately(ctx)
@@ -381,9 +384,9 @@ func (r *jobProgressRecorder) progress() float64 {
 	}
 
 	// Results recorded before SetTotal (warnings found while comparing, such as
-	// unsupported paths) count towards resultCount but not towards the total, so
-	// the ratio can pass 1 once the real changes are applied.
-	return min(float64(r.resultCount)/float64(r.total)*100, 100)
+	// unsupported paths) are not part of the total, so only the ones recorded
+	// since then count towards it.
+	return float64(r.resultCount-r.resultCountAtTotal) / float64(r.total) * 100
 }
 
 func (r *jobProgressRecorder) currentStatus() provisioning.JobStatus {

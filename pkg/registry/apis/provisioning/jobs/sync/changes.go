@@ -334,6 +334,22 @@ func Changes(
 		}
 	}
 
+	// A resource kept because its file was renamed to an unsupported path still
+	// lives at its old path, so that path (and the folders above it) must be kept
+	// before any folder deletion is decided below.
+	keptByRename := make(map[*provisioning.ResourceListItem]struct{})
+	for _, items := range lookup {
+		for _, v := range items {
+			if _, renamedToUnsupported := unsupportedHashes[v.Hash]; renamedToUnsupported && v.Hash != "" &&
+				v.Resource != resources.FolderResource.Resource {
+				keptByRename[v] = struct{}{}
+				if err := keep.Add(v.Path); err != nil {
+					return nil, nil, fmt.Errorf("failed to add path to keep trie: %w", err)
+				}
+			}
+		}
+	}
+
 	// Paths found in grafana, without a matching path in the repository
 	for _, items := range lookup {
 		for _, v := range items {
@@ -341,8 +357,7 @@ func Changes(
 				continue
 			}
 
-			if _, renamedToUnsupported := unsupportedHashes[v.Hash]; renamedToUnsupported && v.Hash != "" &&
-				v.Resource != resources.FolderResource.Resource {
+			if _, kept := keptByRename[v]; kept {
 				continue
 			}
 
