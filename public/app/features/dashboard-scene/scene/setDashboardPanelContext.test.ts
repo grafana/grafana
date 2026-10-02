@@ -869,6 +869,23 @@ describe('setDashboardPanelContext', () => {
       expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
     });
 
+    it('ignores selections written for a previous datasource', async () => {
+      const { vizPanel, context } = await buildBiScene();
+      const queryRunner = getQueryRunnerFor(vizPanel);
+      if (!(queryRunner instanceof SceneQueryRunner)) {
+        throw new Error('expected a SceneQueryRunner');
+      }
+
+      await context.onSetAdHocFilterSelection!({ key: 'country', values: ['UK'], clickedValue: 'UK', mode: 'replace' });
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+
+      queryRunner.setState({ datasource: { uid: 'other-uid', type: 'prometheus' } });
+      expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+
+      queryRunner.setState({ datasource: { uid: 'my-ds-uid', type: 'prometheus' } });
+      expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+    });
+
     it('ignores a stale stamp after the filter value was edited', async () => {
       const { context, variable } = await buildBiScene();
 
@@ -950,6 +967,53 @@ describe('setDashboardPanelContext', () => {
           mode: 'replace',
         });
         expect(runQueries).toHaveBeenCalledTimes(1);
+      });
+
+      it('does not re-run a type-only query runner in manual mode', async () => {
+        const { context, vizPanel } = await buildBiScene({});
+        const queryRunner = useTypeOnlyDatasource(vizPanel);
+        queryRunner.setState({ runQueriesMode: 'manual' });
+        jest.spyOn(queryRunner, 'isActive', 'get').mockReturnValue(true);
+        const runQueries = jest.spyOn(queryRunner, 'runQueries').mockImplementation(() => {});
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+
+        expect(runQueries).not.toHaveBeenCalled();
+      });
+
+      it('accepts only variables of the reference type before the first write', async () => {
+        const { scene, vizPanel, context } = await buildBiScene();
+        useTypeOnlyDatasource(vizPanel);
+        const lokiFilters = new AdHocFiltersVariable({
+          name: 'Logs',
+          datasource: { uid: 'loki-uid', type: 'loki' },
+          filters: [{ key: 'country', operator: '=', value: 'UK', meta: stampFor('panel-4', ['UK']) }],
+        });
+        const variables = sceneGraph.getVariables(scene);
+        variables.setState({ variables: [lokiFilters, ...variables.state.variables] });
+
+        expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
+      });
+
+      it('stops using the last written variable once the type-only reference changes', async () => {
+        const { vizPanel, context } = await buildBiScene();
+        const queryRunner = useTypeOnlyDatasource(vizPanel);
+
+        await context.onSetAdHocFilterSelection!({
+          key: 'country',
+          values: ['UK'],
+          clickedValue: 'UK',
+          mode: 'replace',
+        });
+        expect(context.getAdHocFilterSelection!('country')).toEqual(['UK']);
+
+        queryRunner.setState({ datasource: { type: 'loki' } });
+        expect(context.getAdHocFilterSelection!('country')).toBeUndefined();
       });
     });
 

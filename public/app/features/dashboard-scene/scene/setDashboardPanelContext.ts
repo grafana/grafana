@@ -300,13 +300,21 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
  * panel's identity, so DashboardScene.enrichDataRequestFilters can keep it from filtering that panel.
  */
 function setBiSelectionContext(vizPanel: VizPanel, context: PanelContext) {
+  // The uid a type-only datasource reference resolved to on the last write, so the synchronous read can find the
+  // same variable. Only used while the runner's reference is still that type-only reference.
+  let lastTypeOnlyWrite: { type: string; uid: string } | undefined;
+
   context.onSetAdHocFilterSelection = async (update: AdHocFilterSelectionUpdate) => {
     const queryRunner = getQueryRunnerFor(vizPanel);
     if (!queryRunner) {
       return;
     }
 
-    const datasource = await resolveTypeOnlyDatasource(getDatasourceFromQueryRunner(queryRunner));
+    const rawDatasource = getDatasourceFromQueryRunner(queryRunner);
+    const datasource = await resolveTypeOnlyDatasource(rawDatasource);
+    if (rawDatasource && !rawDatasource.uid && rawDatasource.type && datasource?.uid) {
+      lastTypeOnlyWrite = { type: rawDatasource.type, uid: datasource.uid };
+    }
     const isNewVariable = !findAdHocFilterVariableFor(vizPanel, datasource);
     const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
     const { filters, valuesCount } = applyBiSelection(filterVar, update, getPanelSourceIdentity(vizPanel));
@@ -322,14 +330,35 @@ function setBiSelectionContext(vizPanel: VizPanel, context: PanelContext) {
     }
   };
 
-  // Reads by ownership rather than by datasource, so it finds exactly the filter onSetAdHocFilterSelection wrote,
-  // whichever variable that resolved to. Datasource resolution is async and cannot run in this synchronous read.
+  // Reads this panel's stamp from the variables of the panel's current datasource. Datasource resolution is async
+  // and cannot run in this synchronous read, so a type-only reference uses the uid of the last write when the
+  // reference is unchanged, and otherwise accepts any variable of that type.
   context.getAdHocFilterSelection = (key: string) => {
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return undefined;
+    }
+
+    const ds = getDatasourceFromQueryRunner(queryRunner);
+    const cachedUid = ds && !ds.uid && lastTypeOnlyWrite?.type === ds.type ? lastTypeOnlyWrite?.uid : undefined;
+    const matchesDatasource = (filtersDs: DataSourceRef | null | undefined) => {
+      if (ds?.uid) {
+        return filtersDs?.uid === ds.uid;
+      }
+      if (cachedUid) {
+        return filtersDs?.uid === cachedUid;
+      }
+      if (ds?.type) {
+        return filtersDs?.type === ds.type;
+      }
+      return filtersDs === ds || filtersDs?.uid === ds?.uid;
+    };
+
     const identity = getPanelSourceIdentity(vizPanel);
 
     for (const variables of getVariableSetsInHierarchy(vizPanel)) {
       for (const variable of variables.state.variables) {
-        if (!sceneUtils.isAdHocVariable(variable)) {
+        if (!sceneUtils.isAdHocVariable(variable) || !matchesDatasource(variable.state.datasource)) {
           continue;
         }
 
@@ -446,7 +475,10 @@ async function rerunTypeOnlyQueryRunners(filterVar: AdHocFiltersVariable) {
 
   const runners = sceneGraph
     .findAllObjects(getDashboardSceneFor(filterVar), (obj) => obj instanceof SceneQueryRunner)
-    .filter((obj): obj is SceneQueryRunner => obj instanceof SceneQueryRunner && obj.isActive);
+    .filter(
+      (obj): obj is SceneQueryRunner =>
+        obj instanceof SceneQueryRunner && obj.isActive && obj.state.runQueriesMode !== 'manual'
+    );
 
   await Promise.all(
     runners.map(async (runner) => {
