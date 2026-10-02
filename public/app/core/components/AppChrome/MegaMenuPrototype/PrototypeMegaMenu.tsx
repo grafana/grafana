@@ -108,8 +108,17 @@ function AutoSwitchSolution() {
 const CYCLE: Array<PrototypeVariant | 'off'> = ['off', ...VARIANTS];
 
 export function PrototypeVariantBar() {
-  const styles = useStyles2(getStyles);
   const variant = usePrototypeVariant() ?? 'off';
+  return (
+    <>
+      {variant !== 'off' && <AutoSwitchSolution />}
+      <VariantBar variant={variant} />
+    </>
+  );
+}
+
+function VariantBar({ variant }: { variant: PrototypeVariant | 'off' }) {
+  const styles = useStyles2(getStyles);
   const index = CYCLE.indexOf(variant);
   const go = (delta: number) => setPrototypeVariant(CYCLE[(index + delta + CYCLE.length) % CYCLE.length]);
 
@@ -132,21 +141,14 @@ export function PrototypeVariantBar() {
     return () => window.removeEventListener('keydown', onKeyDown);
   });
 
-  if (process.env.NODE_ENV === 'production') {
-    return null;
-  }
-
   return (
-    <>
-      {variant !== 'off' && <AutoSwitchSolution />}
-      <div className={styles.bar} title="Prototype switcher (Alt + ← / →)">
-        <IconButton name="angle-left" aria-label="Previous variant" onClick={() => go(-1)} />
-        <span className={styles.barLabel}>
-          {variant === 'off' ? 'Current menu' : `${variant} (${VARIANT_NAMES[variant]})`}
-        </span>
-        <IconButton name="angle-right" aria-label="Next variant" onClick={() => go(1)} />
-      </div>
-    </>
+    <div className={styles.bar} title="Prototype switcher (Alt + ← / →)">
+      <IconButton name="angle-left" aria-label="Previous variant" onClick={() => go(-1)} />
+      <span className={styles.barLabel}>
+        {variant === 'off' ? 'Current menu' : `${variant} (${VARIANT_NAMES[variant]})`}
+      </span>
+      <IconButton name="angle-right" aria-label="Next variant" onClick={() => go(1)} />
+    </div>
   );
 }
 
