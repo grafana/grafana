@@ -706,6 +706,13 @@ func generateOpenFeatureReactTypingsForFlags(t *testing.T, featureFlags []Featur
 		}
 	}
 
+	// Sort by name -- the registry is in declaration order, so without this every new
+	// flag lands at an arbitrary point in the unions and concurrent branches conflict.
+	sort.Strings(flagSet.Boolean)
+	sort.Strings(flagSet.Number)
+	sort.Strings(flagSet.String)
+	sort.Strings(flagSet.Object)
+
 	return fmt.Sprintf(`/**
  * NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
  * To change feature flags, edit:
@@ -755,8 +762,8 @@ func TestGenerateOpenFeatureReactForFlags(t *testing.T) {
 	require.Contains(t, typings, `export type NumberFlagKey =
     | "test.limit";`)
 	require.Contains(t, typings, `export type StringFlagKey =
-    | "test.mode"
-    | "test.escapedString";`)
+    | "test.escapedString"
+    | "test.mode";`)
 	require.Contains(t, typings, `export type ObjectFlagKey =
     | "test.settings";`)
 }
