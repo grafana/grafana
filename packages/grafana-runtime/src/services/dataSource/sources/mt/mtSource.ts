@@ -22,9 +22,7 @@ const MAX_LOGGED_TYPES = 20;
  * the settings on demand, one request per uid.
  */
 export function createMTDataSource(): DataSourceCacheSource {
-  // The last list response, kept to rebuild the list when the metas change and to find the API
-  // group and version of a uid.
-  let connections: DataSourceConnection[] | undefined;
+  // The last list response, kept to find the API group and version of a uid.
   let connectionsByUid = new Map<string, DataSourceConnection>();
   let itemsByUid = new Map<string, DataSourceInstanceListItem>();
   const loggedDirectAccess = new Set<string>();
@@ -40,7 +38,6 @@ export function createMTDataSource(): DataSourceCacheSource {
       });
     }
 
-    connections = latest;
     connectionsByUid = new Map(latest.map((connection) => [connection.name, connection]));
     itemsByUid = new Map(snapshot.items.map((item) => [item.uid, item]));
     return snapshot;
@@ -56,7 +53,6 @@ export function createMTDataSource(): DataSourceCacheSource {
     getInitialSnapshot: () => undefined,
     loadList: fetchAndBuild,
     refreshList: fetchAndBuild,
-    refreshMetas: async () => (connections ? buildSnapshot(connections) : undefined),
     loadSettings: async (uid) => {
       const connection = connectionsByUid.get(uid);
       const item = itemsByUid.get(uid);
