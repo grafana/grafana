@@ -12,8 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const dashboardBlobAnnotation = resource.BlobAnnotationPrefix + "dashboard"
-
 func snapshotBlobKey(snap *dashv0.Snapshot) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{
 		Namespace: snap.Namespace,
@@ -47,26 +45,20 @@ func moveDashboardToBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, 
 		return resource.GetError(rsp.Error)
 	}
 
-	info := &utils.BlobInfo{
-		UID:      rsp.Uid,
-		Size:     rsp.Size,
-		Hash:     rsp.Hash,
-		MimeType: rsp.MimeType,
-		Charset:  rsp.Charset,
+	info := &utils.BlobInfo{MimeType: rsp.MimeType, Charset: rsp.Charset}
+	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{
+		Uid:         rsp.Uid,
+		Size:        new(rsp.Size),
+		Hash:        new(rsp.Hash),
+		ContentType: new(info.ContentType()),
 	}
-	annotations := snap.GetAnnotations()
-	if annotations == nil {
-		annotations = map[string]string{}
-	}
-	annotations[dashboardBlobAnnotation] = info.String()
-	snap.SetAnnotations(annotations)
 	snap.Spec.Dashboard = nil
 	return nil
 }
 
 func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, snap *dashv0.Snapshot) (map[string]any, bool, error) {
-	info := utils.ParseBlobInfo(snap.GetAnnotations()[dashboardBlobAnnotation])
-	if info == nil || info.UID == "" {
+	ref := snap.Blobs.Dashboard
+	if ref == nil || ref.Uid == "" {
 		return nil, false, nil
 	}
 	if blobs == nil {
@@ -74,7 +66,7 @@ func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, sn
 	}
 	rsp, err := blobs.GetBlob(ctx, &resourcepb.GetBlobRequest{
 		Resource: snapshotBlobKey(snap),
-		Uid:      info.UID,
+		Uid:      ref.Uid,
 	})
 	if err != nil {
 		return nil, true, err
