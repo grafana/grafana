@@ -491,42 +491,9 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 	})
 }
 
-func TestIncrementalSync_ErrorHandling(t *testing.T) {
+func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{
-		{
-			name:         "error creating folder",
-			quotaTracker: permissiveQt,
-			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
-				changes := []repository.VersionedFileChange{
-					{
-						Action: repository.FileActionCreated,
-						Path:   "unsupported/path/file.txt",
-						Ref:    "new-ref",
-					},
-				}
-				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
-				progress.On("SetTotal", mock.Anything, 1).Return()
-				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
-				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
-
-				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
-
-				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
-					Return("", fmt.Errorf("failed to create folder"))
-
-				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Action() == repository.FileActionIgnored &&
-						result.Path() == "unsupported/path/file.txt" &&
-						result.Error() != nil &&
-						result.Error().Error() == "failed to create folder"
-				})).Return()
-
-				progress.On("TooManyErrors").Return(nil)
-			},
-			previousRef: "old-ref",
-			currentRef:  "new-ref",
-		},
 		{
 			name:         "unsafe path is reported instead of silently ignored",
 			quotaTracker: permissiveQt,
@@ -814,6 +781,45 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					return result.Action() == repository.FileActionCreated &&
 						result.Path() == "folder/../evil.json" &&
 						errors.As(result.Warning(), &unsupportedErr)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+	})
+}
+
+func TestIncrementalSync_ErrorHandling(t *testing.T) {
+	permissiveQt := newPermissiveMockQuotaTracker(t)
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{
+		{
+			name:         "error creating folder",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "unsupported/path/file.txt",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "unsupported/path/file.txt").Return(false)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "unsupported/path/", "new-ref").
+					Return("", fmt.Errorf("failed to create folder"))
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "unsupported/path/file.txt" &&
+						result.Error() != nil &&
+						result.Error().Error() == "failed to create folder"
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
