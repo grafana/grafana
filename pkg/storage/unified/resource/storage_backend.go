@@ -1479,6 +1479,10 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 	}, nil
 }
 
+func (*kvStorageBackend) SupportsDeletedBatchReads() bool {
+	return true
+}
+
 func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error) {
 	if len(items) > dataBatchSize {
 		return nil, fmt.Errorf("value fetch batch has %d items, maximum is %d", len(items), dataBatchSize)

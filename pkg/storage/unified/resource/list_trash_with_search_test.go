@@ -346,7 +346,7 @@ func TestListTrashWithSearchFallsBackWhenBatchReadsAreUnsupported(t *testing.T) 
 		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 	backend := &trashBatchFakeBackend{unsupported: true, listRV: 77}
-	s, _ := newSearchBackedTrashTestServer(searchResp, backend)
+	s, searchClient := newSearchBackedTrashTestServer(searchResp, backend)
 
 	resp, err := s.List(ctx, trashListRequest())
 
@@ -354,7 +354,8 @@ func TestListTrashWithSearchFallsBackWhenBatchReadsAreUnsupported(t *testing.T) 
 	require.Nil(t, resp.Error)
 	require.Equal(t, int64(77), resp.ResourceVersion)
 	require.Equal(t, 1, backend.listHistoryCalls)
-	require.Equal(t, 1, backend.batchCalls)
+	require.Zero(t, backend.batchCalls)
+	require.Nil(t, searchClient.last)
 }
 
 func TestListTrashWithSearchKeepsStoreTokenOnStorePath(t *testing.T) {
@@ -408,6 +409,10 @@ type trashBatchFakeBackend struct {
 	unsupported      bool
 	listHistoryCalls int
 	listRV           int64
+}
+
+func (b *trashBatchFakeBackend) SupportsDeletedBatchReads() bool {
+	return !b.unsupported
 }
 
 func (b *trashBatchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
