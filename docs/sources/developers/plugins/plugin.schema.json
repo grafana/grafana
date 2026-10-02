@@ -159,6 +159,11 @@
         }
       }
     },
+    "appPlatformRoleGroup": {
+      "type": "string",
+      "minLength": 1,
+      "description": "App plugins only. Opts into displaying fixed roles from this App Platform API group alongside the app's plugin roles in the role picker, using the plugin name as the group label. For example, assistant.ext.grafana.app. Omit to keep the default separate groups. This only changes presentation; role IDs, permissions, and assignments are unchanged."
+    },
     "name": {
       "type": "string",
       "description": "Human-readable name of the plugin that is shown to the user in the UI."

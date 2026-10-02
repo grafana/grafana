@@ -896,3 +896,26 @@ func TestCalculateLoadingStrategyFromGcomMeta(t *testing.T) {
 		assert.Equal(t, pluginsv0alpha1.MetaV0alpha1SpecModuleLoadingStrategyFetch, strategy)
 	})
 }
+
+func TestAppPlatformRoleGroup(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		pluginType plugins.Type
+		group      string
+		want       bool
+	}{
+		{name: "omitted", pluginType: plugins.TypeApp},
+		{name: "app opt-in", pluginType: plugins.TypeApp, group: "plugin.ext.grafana.app", want: true},
+		{name: "non-app", pluginType: plugins.TypePanel, group: "plugin.ext.grafana.app"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			meta := jsonDataToMetaJSONData(plugins.JSONData{Type: tc.pluginType, AppPlatformRoleGroup: tc.group})
+			if tc.want {
+				require.NotNil(t, meta.AppPlatformRoleGroup)
+				assert.Equal(t, "plugin.ext.grafana.app", *meta.AppPlatformRoleGroup)
+			} else {
+				assert.Nil(t, meta.AppPlatformRoleGroup)
+			}
+		})
+	}
+}

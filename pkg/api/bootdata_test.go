@@ -909,3 +909,21 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 
 	require.ElementsMatch(t, []string{"Prom", "Loki"}, names)
 }
+
+func TestNewAppDTORoleGrouping(t *testing.T) {
+	for _, group := range []string{"", "plugin.ext.grafana.app"} {
+		t.Run("group="+group, func(t *testing.T) {
+			pluginJSON := fmt.Sprintf(`{"id":"example-plugin-app","type":"app","name":"Example Plugin","appPlatformRoleGroup":%q}`, group)
+			metadata, err := plugins.ReadPluginJSON(strings.NewReader(pluginJSON))
+			require.NoError(t, err)
+			hs := &HTTPServer{pluginAssets: newPluginAssets()()}
+			app := hs.newAppDTO(context.Background(), pluginstore.Plugin{JSONData: metadata, FS: &pluginfakes.FakePluginFS{}}, pluginsettings.InfoDTO{})
+			assert.Equal(t, group, app.AppPlatformRoleGroup)
+			if group == "" {
+				assert.Empty(t, app.Name)
+			} else {
+				assert.Equal(t, "Example Plugin", app.Name)
+			}
+		})
+	}
+}

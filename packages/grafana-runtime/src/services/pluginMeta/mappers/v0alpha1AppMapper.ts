@@ -57,6 +57,7 @@ function specMapper(spec: v0alpha1Spec): AppPluginConfig {
     buildMode,
     moduleHash,
     name,
+    ...(spec.pluginJson.appPlatformRoleGroup && { appPlatformRoleGroup: spec.pluginJson.appPlatformRoleGroup }),
     includes,
     info: {
       description: info.description,

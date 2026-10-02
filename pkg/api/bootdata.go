@@ -426,6 +426,11 @@ func (hs *HTTPServer) newAppDTO(ctx context.Context, plugin pluginstore.Plugin, 
 		BuildMode:       plugin.BuildMode,
 	}
 
+	if plugin.AppPlatformRoleGroup != "" {
+		app.AppPlatformRoleGroup = plugin.AppPlatformRoleGroup
+		app.Name = plugin.Name
+	}
+
 	if settings.Enabled {
 		app.Preload = plugin.Preload
 	}
