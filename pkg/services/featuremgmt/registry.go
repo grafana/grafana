@@ -3054,7 +3054,7 @@ var (
 		{
 			Name:        "dataviz.tabularNums",
 			Description: "Enables tabular numerals for visualization legend values",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDatavizSquad,
 			Expression:  "false",
 			Generate:    Generate{React: true},

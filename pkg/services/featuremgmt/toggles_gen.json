@@ -1912,12 +1912,15 @@
     {
       "metadata": {
         "name": "dataviz.tabularNums",
-        "resourceVersion": "1790933617445",
-        "creationTimestamp": "2026-10-02T09:33:37Z"
+        "resourceVersion": "1790951488017",
+        "creationTimestamp": "2026-10-02T09:33:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-02 14:31:28.017202 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables tabular numerals for visualization legend values",
-        "stage": "experimental",
+        "stage": "preview",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "expression": "false"
