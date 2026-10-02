@@ -24,6 +24,7 @@ import { isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
+import { _resetForTests as resetNotifications } from './notifications';
 import { clearPluginCache } from './pluginCache';
 import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
 import { BootDataSource } from './sources/bootDataSource';
@@ -288,6 +289,7 @@ export function _resetForTests(): void {
     throw new Error('_resetForTests must only be called from tests');
   }
   resetCache();
+  resetNotifications();
   resetResolveRef();
   resetExpressionDs();
 }
