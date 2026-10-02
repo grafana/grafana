@@ -58,7 +58,7 @@ export const UsersTable = ({
             <TextLink
               color="primary"
               inline={false}
-              href={`/admin/users/${original.uid}`}
+              href={`/admin/users/edit/${original.uid}`}
               title={t('admin.users-table.columns.title-view-user', 'View user')}
             >
               {original.login}

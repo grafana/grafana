@@ -98,7 +98,7 @@ export const OrgUsersTable = ({
         id: 'login',
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => (
-          <TextLink color="primary" inline={false} href={`/admin/users/${original.uid}`}>
+          <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.uid}`}>
             {original.login}
           </TextLink>
         ),

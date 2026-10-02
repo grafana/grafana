@@ -28,7 +28,7 @@ import {
 
 export default function UserOverviewPage() {
   const styles = useStyles2(getStyles);
-  const { uid = '' } = useParams();
+  const { id: uid = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') ?? 'details';
   const iam = useGetUserQuery({ name: uid });

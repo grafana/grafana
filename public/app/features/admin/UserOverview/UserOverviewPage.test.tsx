@@ -10,7 +10,6 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type UserDTO } from 'app/types/user';
 
-import UserEditRedirect from './UserEditRedirect';
 import UserOverviewPage from './UserOverviewPage';
 
 setBackendSrv(backendSrv);
@@ -73,10 +72,10 @@ afterEach(() => jest.restoreAllMocks());
 function setup(tab = 'details') {
   return render(
     <Routes>
-      <Route path="/admin/users/:uid" element={<UserOverviewPage />} />
+      <Route path="/admin/users/edit/:id" element={<UserOverviewPage />} />
     </Routes>,
     {
-      historyOptions: { initialEntries: [`/admin/users/alice?tab=${tab}`] },
+      historyOptions: { initialEntries: [`/admin/users/edit/alice?tab=${tab}`] },
     }
   );
 }
@@ -230,19 +229,6 @@ it('loads sessions only on their tab and allows individual revocation without lo
   expect(await screen.findByText('127.0.0.1')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Force logout' })).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Force logout from all devices' })).not.toBeInTheDocument();
-});
-
-it('redirects the old edit URL while preserving the selected tab', async () => {
-  render(
-    <Routes>
-      <Route path="/admin/users/edit/:id" element={<UserEditRedirect />} />
-      <Route path="/admin/users/:uid" element={<UserOverviewPage />} />
-    </Routes>,
-    { historyOptions: { initialEntries: ['/admin/users/edit/alice?tab=teams'] } }
-  );
-  expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
-  expect(locationService.getLocation().pathname).toBe('/admin/users/alice');
-  expect(locationService.getLocation().search).toBe('?tab=teams');
 });
 
 it('keeps the existing profile accessible when the IAM API is unavailable', async () => {

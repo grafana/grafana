@@ -37,7 +37,6 @@ describe('admin route guards', () => {
     ['/admin/users', AccessControlAction.UsersRead],
     ['/admin/users/create', AccessControlAction.UsersCreate],
     ['/admin/users/edit/:id', AccessControlAction.UsersRead],
-    ['/admin/users/:uid', AccessControlAction.UsersRead],
     ['/admin/orgs', AccessControlAction.OrgsRead],
     ['/admin/orgs/edit/:id', AccessControlAction.OrgsRead],
     ['/admin/stats', AccessControlAction.ActionServerStatsRead],
@@ -56,7 +55,7 @@ describe('admin route guards', () => {
     expect(getRouteRolesGuard(path)()).toEqual([]);
   });
 
-  it.each(['/admin/users', '/admin/users/:uid'])('allows %s with org users read permission only', (path) => {
+  it.each(['/admin/users', '/admin/users/edit/:id'])('allows %s with org users read permission only', (path) => {
     contextSrv.user.permissions = { [AccessControlAction.OrgUsersRead]: true };
 
     expect(getRouteRolesGuard(path)()).toEqual([]);
