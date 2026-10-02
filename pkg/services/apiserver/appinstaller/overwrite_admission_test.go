@@ -55,6 +55,27 @@ type handlesOnlyChain struct{}
 
 func (handlesOnlyChain) Handles(admission.Operation) bool { return true }
 
+// handlesFalseChain reports Handles(operation) == false for every operation, unlike
+// recordingChain (always true) or handlesOnlyChain (always true). It exercises the case where
+// the wrapped chain declines an operation entirely - overwriteAdmission.Handles must still
+// report true so the apiserver always calls Admit/Validate on the wrapper and the
+// unconditional marker strip always runs, regardless of what the inner chain declares.
+type handlesFalseChain struct {
+	admitCalls, validateCalls []admission.Attributes
+}
+
+func (c *handlesFalseChain) Handles(admission.Operation) bool { return false }
+
+func (c *handlesFalseChain) Admit(_ context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	c.admitCalls = append(c.admitCalls, a)
+	return nil
+}
+
+func (c *handlesFalseChain) Validate(_ context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+	c.validateCalls = append(c.validateCalls, a)
+	return nil
+}
+
 // recordingChain records every Attributes it's called with, so tests can assert exactly
 // what the wrapper dispatched downstream - the operation, and whether OldObject was set.
 type recordingChain struct {
@@ -231,4 +252,50 @@ func TestOverwriteAdmission_GVRMismatchIsNoOpPassthrough(t *testing.T) {
 	require.Equal(t, admission.Create, chain.validateCalls[0].GetOperation(),
 		"a GVR the registered Getter doesn't actually serve must fall back to unchanged Create passthrough")
 	require.Same(t, a, chain.validateCalls[0], "must be the original Attributes, not a synthetic rewrite")
+}
+
+// TestOverwriteAdmission_HandlesIsAlwaysTrue guards against a fail-open bypass: the real
+// apiserver only calls Admit/Validate on an admission.Interface when Handles(operation)
+// returns true for that operation. overwriteAdmission.Admit/Validate start with an
+// unconditional strip of any client-supplied marker annotation - but if Handles merely
+// delegated to the wrapped chain, and that chain happened to report Handles(Create) == false
+// for some GV, the apiserver would skip calling Admit/Validate on this wrapper entirely,
+// so the strip would never run and a client-forged marker could flow straight through to
+// storage. Handles must therefore report true unconditionally, regardless of what the
+// wrapped chain declares.
+func TestOverwriteAdmission_HandlesIsAlwaysTrue(t *testing.T) {
+	chain := &handlesFalseChain{}
+	wrapper := newOverwriteAdmission(chain, map[schema.GroupVersion]builder.APIGroupGetter{})
+
+	require.False(t, chain.Handles(admission.Create), "the fake must actually decline Create, or this test proves nothing")
+	require.True(t, wrapper.Handles(admission.Create),
+		"overwriteAdmission.Handles must not delegate to the wrapped chain - the apiserver would skip Admit/Validate entirely otherwise")
+}
+
+// TestOverwriteAdmission_MarkerStrippedEvenWhenChainDeclinesHandles proves the practical
+// consequence of the fix above: a client-forged marker is stripped by Admit/Validate even
+// when routed through a chain that reports Handles(Create) == false. Handles reporting true
+// is what makes the apiserver call Admit/Validate at all in that situation - this test
+// exercises Admit/Validate directly (as the apiserver would, now that Handles permits it) to
+// confirm the strip itself is unconditional too.
+func TestOverwriteAdmission_MarkerStrippedEvenWhenChainDeclinesHandles(t *testing.T) {
+	chain := &handlesFalseChain{}
+	wrapper := newOverwriteAdmission(chain, map[schema.GroupVersion]builder.APIGroupGetter{})
+	require.True(t, wrapper.Handles(admission.Create), "precondition: the apiserver must be willing to call Admit/Validate")
+
+	obj := newUnstructuredWithRV("") // non-sentinel: forging the marker is the only thing under test
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true") // a client trying to forge the marker
+
+	a := newAttrs(obj, admission.Create)
+	require.NoError(t, wrapper.Admit(context.Background(), a, nil))
+
+	require.Len(t, chain.admitCalls, 1)
+	dispatchedObj, ok := chain.admitCalls[0].GetObject().(*unstructured.Unstructured)
+	require.True(t, ok)
+	dispatchedMeta, err := utils.MetaAccessor(dispatchedObj)
+	require.NoError(t, err)
+	require.Equal(t, "", dispatchedMeta.GetAnnotation(utils.AnnoKeyOverwriteValidated),
+		"a client-supplied marker must never reach the chain, even when the chain itself reports Handles == false")
 }

@@ -31,8 +31,17 @@ var (
 	_ admission.ValidationInterface = (*overwriteAdmission)(nil)
 )
 
-func (o *overwriteAdmission) Handles(operation admission.Operation) bool {
-	return o.chain.Handles(operation)
+// Handles always reports true, regardless of what the wrapped chain declares. The real
+// apiserver only calls Admit/Validate on an admission.Interface when Handles(operation)
+// returns true for that operation - so if this delegated to o.chain.Handles and the chain
+// ever declined an operation, the apiserver would skip Admit/Validate on this wrapper
+// entirely, and the unconditional marker strip at the top of both would never run, letting a
+// client-forged marker flow straight through to storage. Always returning true costs nothing:
+// Admit/Validate themselves cheaply no-op via the inner type assertion when the wrapped chain
+// doesn't actually implement MutationInterface/ValidationInterface, and the strip itself is a
+// no-op when there's no marker to strip.
+func (o *overwriteAdmission) Handles(_ admission.Operation) bool {
+	return true
 }
 
 func (o *overwriteAdmission) Admit(ctx context.Context, a admission.Attributes, i admission.ObjectInterfaces) error {
