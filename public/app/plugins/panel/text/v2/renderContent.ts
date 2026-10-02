@@ -113,10 +113,20 @@ function buildOnceContext(series: DataFrame[]): ScopedVars {
     return {};
   }
 
-  const value = reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
-  // lastNotNull identifies a source row, so data and value macros can share it.
-  const sourceRowIndex = value == null ? -1 : field.values.lastIndexOf(value);
-  const rowIndex = sourceRowIndex >= 0 ? sourceRowIndex : undefined;
+  // Cached null-as-zero calculations can point at an earlier cell with the same value.
+  let rowIndex: number | undefined;
+  for (let index = field.values.length - 1; index >= 0; index--) {
+    const value = field.values[index];
+    if (value != null && !Number.isNaN(value)) {
+      rowIndex = index;
+      break;
+    }
+  }
+
+  const value =
+    rowIndex === undefined
+      ? reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull]
+      : field.values[rowIndex];
   // `display` is only attached once field overrides have run.
   const calculatedValue = (field.display ?? getDisplayProcessor())(value);
 

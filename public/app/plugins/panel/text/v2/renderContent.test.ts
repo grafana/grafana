@@ -416,6 +416,32 @@ describe('interpolateTemplate', () => {
         ).toBe('[0]/[${__data.fields.value}]/[]');
       });
 
+      it('reads the last non-null row when cached null-as-zero calculations match an earlier zero', () => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [0, 10, null],
+              config: { nullValueMode: NullValueMode.AsZero },
+            },
+            { name: 'host', type: FieldType.string, values: ['old', 'last-value', 'null-row'] },
+          ],
+        });
+        const cached = reduceField({ field: frame.fields[1], reducers: [ReducerID.lastNotNull, ReducerID.count] });
+        expect(cached.lastNotNull).toBe(0);
+
+        expect(
+          interpolate(
+            '${__value.text}/${__data.fields.value}/${__data.fields.host}/${__value.time}',
+            [frame],
+            RenderMode.Once
+          )
+        ).toBe('10/10/last-value/2000');
+        expect(frame.fields[1].state?.calcs?.lastNotNull).toBe(0);
+      });
+
       it('formats the reduced value with the display processor that field overrides attach', () => {
         const formatted = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [0.4213] }] });
         formatted.fields[0].display = (value) => ({ text: `${Number(value).toFixed(1)}%`, numeric: Number(value) });
