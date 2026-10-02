@@ -132,6 +132,7 @@ type DashboardsAPIBuilder struct {
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
+	snapshotBlobs            resourcepb.BlobStoreClient
 	snapshotStorage          rest.Storage             // for dual-write support in routes
 	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
@@ -1379,10 +1380,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
+		if snapshotDualWrite == unifiedSnapshotStore && b.unified != nil {
+			b.snapshotBlobs = b.unified
+		}
 		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
 		storage[snapshots.StoragePath()] = snapshotWrapper
 		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
-		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
+		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite, b.snapshotBlobs)
 		if err != nil {
 			return err
 		}
@@ -1709,7 +1713,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
 			func() rest.Storage {
 				return b.snapshotStorage
-			}, b.dashboardService)
+			}, b.dashboardService, b.snapshotBlobs)
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
 	}
