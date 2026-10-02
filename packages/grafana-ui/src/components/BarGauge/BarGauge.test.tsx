@@ -10,7 +10,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
-import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, BarGaugeNamePlacement, BarGaugeValueMode, ScaleDistribution } from '@grafana/schema';
 
 import {
   BarGauge,
@@ -412,6 +412,66 @@ describe('BarGauge', () => {
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.background).toBe('rgb(from #FF0000 r g b / 0.35)');
       expect(styles.value.color).toBe('#FF0000');
+    });
+  });
+
+  describe('log scale', () => {
+    function getLogProps(propOverrides?: Partial<Props>): Props {
+      const props = getProps(propOverrides);
+      props.field = {
+        ...props.field,
+        min: 1,
+        max: 10000,
+        custom: { scaleDistribution: { type: ScaleDistribution.Log } },
+      };
+      return props;
+    }
+
+    it('fills half the bar for the geometric midpoint of the range', () => {
+      const props = getLogProps({ value: getValue(100), orientation: VizOrientation.Vertical });
+      // 270px = 300px height minus the 30px value row
+      expect(getBasicAndGradientStyles(props).bar.height).toBe('135px');
+    });
+
+    it('positions absolute threshold colors at their log position', () => {
+      const props = getLogProps({ value: getValue(10000), orientation: VizOrientation.Vertical });
+      props.field.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 100, color: 'orange' },
+          { value: 1000, color: 'red' },
+        ],
+      };
+      expect(getBarGradient(props, 400)).toBe('linear-gradient(0deg, #73BF69, #73BF69 100px, #FF9830 250px, #F2495C)');
+    });
+
+    it('positions percentage threshold colors at the log position of the value they resolve to', () => {
+      const props = getLogProps({ value: getValue(10000), orientation: VizOrientation.Vertical });
+      // 50% and 90% of 1..10000 resolve to 5000.5 and 9000.1
+      props.field.thresholds = {
+        mode: ThresholdsMode.Percentage,
+        steps: [
+          { value: -Infinity, color: 'green' },
+          { value: 50, color: 'orange' },
+          { value: 90, color: 'red' },
+        ],
+      };
+      expect(getBarGradient(props, 400)).toBe('linear-gradient(0deg, #73BF69, #73BF69 185px, #FF9830 383px, #F2495C)');
+    });
+
+    it('samples retro LCD cell colors at log-spaced values', () => {
+      const display = jest.fn((value: unknown) => ({ numeric: Number(value), text: String(value), color: green }));
+      // 70px height leaves room for 4 cells of 12px
+      const props = getLogProps({
+        displayMode: BarGaugeDisplayMode.Lcd,
+        orientation: VizOrientation.Vertical,
+        height: 70,
+        value: getValue(150),
+        display,
+      });
+      render(<BarGauge {...props} />);
+      expect(display.mock.calls.map(([value]) => value)).toEqual([1, 10, 100, 1000]);
     });
   });
 });

@@ -35,3 +35,7 @@ export const defaultOptions: Partial<Options> = {
   textMode: common.BigValueTextMode.Auto,
   valueMode: common.BarGaugeValueMode.Color,
 };
+
+export interface FieldConfig {
+  scaleDistribution?: common.ScaleDistributionConfig;
+}

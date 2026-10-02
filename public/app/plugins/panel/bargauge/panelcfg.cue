@@ -45,6 +45,9 @@ composableKinds: PanelCfg: {
 					minVizHeight:  uint32 | *16
 					maxVizHeight:  uint32 | *300
 				} @cuetsy(kind="interface")
+				FieldConfig: {
+					scaleDistribution?: common.ScaleDistributionConfig
+				} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []

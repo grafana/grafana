@@ -25,10 +25,12 @@ import {
   BarGaugeDisplayMode,
   BarGaugeNamePlacement,
   BarGaugeValueMode,
+  type ScaleDistributionConfig,
   type VizTextDisplayOptions,
 } from '@grafana/schema';
 
 import { type Themeable2 } from '../../types/theme';
+import { getGaugeScaleDistribution, getScaledPercent, getValueForScaledPercent } from '../../utils/gaugeScale';
 import { calculateFontSize, measureText } from '../../utils/measureText';
 import { clearButtonStyles } from '../Button/Button';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
@@ -113,8 +115,8 @@ export const BarGauge = memo(function BarGauge(props: Props) {
     const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
     const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
 
+    const scale = getGaugeScaleDistribution(field);
     const isVert = isVertical(orientation);
-    const valueRange = maxValue - minValue;
     const maxSize = isVert ? maxBarHeight : maxBarWidth;
     const cellSpacing = itemSpacing!;
     const cellCount = Math.floor(maxSize / lcdCellWidth!);
@@ -155,7 +157,7 @@ export const BarGauge = memo(function BarGauge(props: Props) {
     const cells: JSX.Element[] = [];
 
     for (let i = 0; i < cellCount; i++) {
-      const currentValue = minValue + (valueRange / cellCount) * i;
+      const currentValue = getValueForScaledPercent(i / cellCount, minValue, maxValue, scale);
       const cellColor = getCellColor(currentValue, value, display);
       const cellStyles: CSSProperties = {
         borderRadius: '2px',
@@ -497,9 +499,14 @@ export function getCellColor(
   };
 }
 
-export function getValuePercent(value: number, minValue: number, maxValue: number): number {
+export function getValuePercent(
+  value: number,
+  minValue: number,
+  maxValue: number,
+  scale?: ScaleDistributionConfig
+): number {
   // Need special logic for when minValue === maxValue === value to prevent returning NaN
-  const valueRatio = Math.min((value - minValue) / (maxValue - minValue), 1);
+  const valueRatio = Math.min(getScaledPercent(value, minValue, maxValue, scale), 1);
   return isNaN(valueRatio) ? 0 : valueRatio;
 }
 
@@ -512,7 +519,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
 
   const minValue = field.min ?? GAUGE_DEFAULT_MINIMUM;
   const maxValue = field.max ?? GAUGE_DEFAULT_MAXIMUM;
-  const valuePercent = getValuePercent(value.numeric, minValue, maxValue);
+  const valuePercent = getValuePercent(value.numeric, minValue, maxValue, getGaugeScaleDistribution(field));
   const textColor = getTextValueColor(props);
   const barColor = value.color ?? FALLBACK_COLOR;
 
@@ -615,6 +622,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
   const minValue = field.min!;
   const maxValue = field.max!;
+  const scale = getGaugeScaleDistribution(field);
 
   let gradient = '';
   let lastpos = 0;
@@ -626,16 +634,15 @@ export function getBarGradient(props: Props, maxSize: number): string {
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
       const color = props.theme.visualization.getColorByName(threshold.color);
-      const valuePercent =
-        thresholds.mode === ThresholdsMode.Percentage
-          ? threshold.value / 100
-          : getValuePercent(threshold.value, minValue, maxValue);
-      const pos = valuePercent * maxSize;
-      const offset = Math.round(pos - (pos - lastpos) / 2);
+      // The display processor resolves percentage thresholds against the linear range, so on a log
+      // scale they must be placed at that resolved value or the bar color would not match the value color.
       const thresholdValue =
         thresholds.mode === ThresholdsMode.Percentage
-          ? minValue + (maxValue - minValue) * valuePercent
+          ? minValue + (maxValue - minValue) * (threshold.value / 100)
           : threshold.value;
+      const valuePercent = getValuePercent(thresholdValue, minValue, maxValue, scale);
+      const pos = valuePercent * maxSize;
+      const offset = Math.round(pos - (pos - lastpos) / 2);
       if (gradient === '') {
         gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
       } else if (value.numeric < thresholdValue) {

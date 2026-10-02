@@ -9,16 +9,18 @@ import {
 } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatPanelChangedHandler } from '@grafana/ui';
 
-import { addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
+import { addGaugeScaleOption, addOrientationOption, addStandardDataReduceOptions } from '../stat/common';
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
-import { type Options, defaultOptions } from './panelcfg.gen';
+import { type FieldConfig, type Options, defaultOptions } from './panelcfg.gen';
 import { barGaugePresetsSupplier } from './presets';
 import { barGaugeSugggestionsSupplier } from './suggestions';
 
-export const plugin = new PanelPlugin<Options>(BarGaugePanel)
-  .useFieldConfig()
+export const plugin = new PanelPlugin<Options, FieldConfig>(BarGaugePanel)
+  .useFieldConfig({
+    useCustomConfig: (builder) => addGaugeScaleOption(builder, [t('bargauge.category-bar-gauge', 'Bar gauge')]),
+  })
   .setPanelOptions((builder) => {
     const category = [t('bargauge.category-bar-gauge', 'Bar gauge')];
     addStandardDataReduceOptions(builder);
