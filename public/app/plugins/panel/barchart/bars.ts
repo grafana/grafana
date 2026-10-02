@@ -582,7 +582,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
 
   const veilColor = colorManipulator.alpha(theme.colors.background.primary, UNSELECTED_VEIL_ALPHA);
 
-  // paints a veil in the panel background colour over every unselected bar
+  // paints a veil in the panel background colour over every unselected category: its bars and value labels
   const drawSelectionVeil = (u: uPlot) => {
     const selection = getSelection?.();
 
@@ -590,28 +590,92 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       return;
     }
 
-    // cover anti-aliased edges and strokes centred on the bar outline
+    // one box per category (stack, group of bars and their labels), in plotting-area canvas pixels
+    const boxes = new Map<number, { x0: number; y0: number; x1: number; y1: number }>();
+
+    for (const r of barRects) {
+      const box = boxes.get(r.didx);
+
+      if (box == null) {
+        boxes.set(r.didx, { x0: r.x, y0: r.y, x1: r.x + r.w, y1: r.y + r.h });
+      } else {
+        box.x0 = Math.min(box.x0, r.x);
+        box.y0 = Math.min(box.y0, r.y);
+        box.x1 = Math.max(box.x1, r.x + r.w);
+        box.y1 = Math.max(box.y1, r.y + r.h);
+      }
+    }
+
+    // stretch along the value axis only to cover value labels; a wide label must not reach a neighbour's bars
+    for (const didx in labels) {
+      const box = boxes.get(Number(didx));
+
+      if (box == null) {
+        continue;
+      }
+
+      for (const sidx in labels[didx]) {
+        const { bbox, hidden } = labels[didx][sidx];
+
+        if (bbox == null || hidden) {
+          continue;
+        }
+
+        if (isXHorizontal) {
+          box.y0 = Math.min(box.y0, bbox.y - u.bbox.top);
+          box.y1 = Math.max(box.y1, bbox.y - u.bbox.top + bbox.h);
+        } else {
+          box.x0 = Math.min(box.x0, bbox.x - u.bbox.left);
+          box.x1 = Math.max(box.x1, bbox.x - u.bbox.left + bbox.w);
+        }
+      }
+    }
+
+    // pad to cover anti-aliased edges and strokes, but along the category axis never past halfway to a neighbour
     const pad = uPlot.pxRatio;
+    const catStart = isXHorizontal ? 'x0' : 'y0';
+    const catEnd = isXHorizontal ? 'x1' : 'y1';
+    const sorted = [...boxes.entries()].sort((a, b) => a[1][catStart] - b[1][catStart]);
 
     u.ctx.save();
     u.ctx.beginPath();
     u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
     u.ctx.clip();
-    u.ctx.fillStyle = veilColor;
 
-    for (const r of barRects) {
-      if (!selection.has(r.didx)) {
-        u.ctx.fillRect(u.bbox.left + r.x - pad, u.bbox.top + r.y - pad, r.w + pad * 2, r.h + pad * 2);
+    // a single path filled once, so overlapping boxes do not darken where they meet
+    u.ctx.beginPath();
+
+    sorted.forEach(([didx, box], i) => {
+      if (selection.has(didx)) {
+        return;
       }
-    }
 
+      const prev = sorted[i - 1]?.[1];
+      const next = sorted[i + 1]?.[1];
+      const padStart = prev == null ? pad : Math.max(0, Math.min(pad, (box[catStart] - prev[catEnd]) / 2));
+      const padEnd = next == null ? pad : Math.max(0, Math.min(pad, (next[catStart] - box[catEnd]) / 2));
+
+      const x0 = box.x0 - (isXHorizontal ? padStart : pad);
+      const x1 = box.x1 + (isXHorizontal ? padEnd : pad);
+      const y0 = box.y0 - (isXHorizontal ? pad : padStart);
+      const y1 = box.y1 + (isXHorizontal ? pad : padEnd);
+
+      u.ctx.rect(u.bbox.left + x0, u.bbox.top + y0, x1 - x0, y1 - y0);
+    });
+
+    u.ctx.fillStyle = veilColor;
+    u.ctx.fill();
     u.ctx.restore();
   };
 
-  // uPlot hook to draw the labels on the bar chart.
+  // uPlot hook to draw the labels and selection veil on the bar chart.
   const draw = (u: uPlot) => {
+    drawLabels(u);
+    // after the labels, so labels of de-emphasised bars are de-emphasised too
     drawSelectionVeil(u);
+  };
 
+  const drawLabels = (u: uPlot) => {
     if (showValue === VisibilityMode.Never || fontSize < VALUE_MIN_FONT_SIZE) {
       return;
     }

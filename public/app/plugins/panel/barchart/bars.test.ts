@@ -1017,69 +1017,116 @@ describe('bars.getConfig', () => {
   });
 
   describe('selection veil', () => {
-    function drawWithSelection(getSelection: BarsOptions['getSelection'], overrides?: Partial<BarsOptions>) {
-      const config = getConfig(createMinimalBarsOptions({ getSelection, ...overrides }), theme);
-      const base = createMockU();
-      const ctx = { ...base.ctx, fillRect: jest.fn(), beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn() };
-      const u = { ...base, ctx };
+    function createVeilU(data?: [unknown[], ...Array<Array<number | null>>]) {
+      const base = createMockU(data);
+      const ctx = { ...base.ctx, beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn(), fill: jest.fn() };
+      return { u: asUPlot({ ...base, ctx }), ctx, seriesCount: base.data.length - 1 };
+    }
 
-      config.drawClear(asUPlot(u));
-      config.barsBuilder(asUPlot(u), 1, 0, u.data[0].length - 1);
-      config.draw(asUPlot(u));
+    function drawWithSelection(
+      getSelection: BarsOptions['getSelection'],
+      overrides?: Partial<BarsOptions>,
+      data?: [unknown[], ...Array<Array<number | null>>]
+    ) {
+      const config = getConfig(createMinimalBarsOptions({ getSelection, ...overrides }), theme);
+      const { u, ctx, seriesCount } = createVeilU(data);
+
+      config.drawClear(u);
+      for (let sidx = 1; sidx <= seriesCount; sidx++) {
+        config.barsBuilder(u, sidx, 0, 2);
+      }
+      config.draw(u);
 
       return ctx;
     }
 
+    /** Veil rects, skipping the plot-area clip rect */
+    const veilRects = (ctx: { rect: jest.Mock }) => ctx.rect.mock.calls.slice(1);
+
     it('paints nothing when there is no selection', () => {
       const ctx = drawWithSelection(() => null);
 
-      expect(ctx.fillRect).not.toHaveBeenCalled();
+      expect(ctx.fill).not.toHaveBeenCalled();
     });
 
-    it('veils every unselected bar in the translucent panel background colour', () => {
-      // labels off, so fillStyle is left as the veil colour
+    it('veils every unselected bar with one fill in the translucent panel background colour', () => {
       const ctx = drawWithSelection(() => new Set([1]), { showValue: VisibilityMode.Never });
 
       // mock bars: canvas lft = bbox.left + 10 + i * 30, wid 25; pad of 1 device px on each side
-      expect(ctx.fillRect).toHaveBeenCalledTimes(2);
-      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 10 - 1, 20 + 60 - 1, 27, 22);
-      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 70 - 1, 20 + 60 - 1, 27, 62);
+      expect(veilRects(ctx)).toEqual([
+        [50 + 10 - 1, 20 + 60 - 1, 27, 22],
+        [50 + 70 - 1, 20 + 60 - 1, 27, 62],
+      ]);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
       expect(ctx.fillStyle).toBe(colorManipulator.alpha(theme.colors.background.primary, 0.7));
       expect(ctx.clip).toHaveBeenCalled();
     });
 
-    it('veils the drawn bar, not the expanded fullHighlight hover rect', () => {
-      const ctx = drawWithSelection(() => new Set([0, 2]), { fullHighlight: true });
+    it('limits the pad along the category axis to half the gap to a neighbour', () => {
+      const uPlotMock = uPlot as unknown as { pxRatio: number };
+      uPlotMock.pxRatio = 10;
 
-      expect(ctx.fillRect).toHaveBeenCalledTimes(1);
-      expect(ctx.fillRect).toHaveBeenCalledWith(50 + 40 - 1, 20 + 60 - 1, 27, 42);
+      try {
+        const ctx = drawWithSelection(() => new Set([1]), { showValue: VisibilityMode.Never });
+
+        // gaps between mock bars are 5px, so the pad towards a neighbour is 2.5 instead of 10
+        expect(veilRects(ctx)).toEqual([
+          [50 + 10 - 10, 20 + 60 - 10, 25 + 10 + 2.5, 20 + 20],
+          [50 + 70 - 2.5, 20 + 60 - 10, 25 + 2.5 + 10, 60 + 20],
+        ]);
+      } finally {
+        uPlotMock.pxRatio = 1;
+      }
     });
 
-    it('veils bars before drawing value labels', () => {
-      const ctx = drawWithSelection(() => new Set([0]));
+    it('merges stacked segments into one box per category', () => {
+      const ctx = drawWithSelection(
+        () => new Set([1]),
+        { showValue: VisibilityMode.Never, stacking: StackingMode.Normal },
+        [
+          ['a', 'b', 'c'],
+          [10, 20, 30],
+          [1, 2, 3],
+        ]
+      );
 
-      expect(ctx.fillRect).toHaveBeenCalledTimes(2);
+      expect(veilRects(ctx)).toHaveLength(2);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
+    });
+
+    it('veils the drawn bar, not the expanded fullHighlight hover rect', () => {
+      const ctx = drawWithSelection(() => new Set([0, 2]), { fullHighlight: true, showValue: VisibilityMode.Never });
+
+      expect(veilRects(ctx)).toEqual([[50 + 40 - 1, 20 + 60 - 1, 27, 42]]);
+    });
+
+    it('covers value labels and paints after them', () => {
+      const ctx = drawWithSelection(() => new Set([1]), { text: { valueSize: 14 } });
+
+      const [x, y, w, h] = veilRects(ctx)[0];
+      // the label sits above the bar (canvas top 80), so the veil starts higher and keeps the bar's width
+      expect(y).toBeLessThan(20 + 60 - 1);
+      expect(y + h).toBe(20 + 60 + 20 + 1);
+      expect([x, w]).toEqual([50 + 10 - 1, 27]);
       expect(ctx.fillText).toHaveBeenCalled();
-      expect(ctx.fillRect.mock.invocationCallOrder[0]).toBeLessThan(ctx.fillText.mock.invocationCallOrder[0]);
+      expect(ctx.fill.mock.invocationCallOrder[0]).toBeGreaterThan(ctx.fillText.mock.invocationCallOrder.at(-1)!);
     });
 
     it('reads the selection on every draw', () => {
       let selection: Set<number> | null = null;
       const config = getConfig(createMinimalBarsOptions({ getSelection: () => selection }), theme);
-      const base = createMockU();
-      const ctx = { ...base.ctx, fillRect: jest.fn(), beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn() };
-      const u = asUPlot({ ...base, ctx });
+      const { u, ctx } = createVeilU();
 
       config.drawClear(u);
       config.barsBuilder(u, 1, 0, 2);
       config.draw(u);
-      expect(ctx.fillRect).not.toHaveBeenCalled();
+      expect(ctx.fill).not.toHaveBeenCalled();
 
       selection = new Set([0, 1]);
       config.drawClear(u);
       config.barsBuilder(u, 1, 0, 2);
       config.draw(u);
-      expect(ctx.fillRect).toHaveBeenCalledTimes(1);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
     });
   });
 

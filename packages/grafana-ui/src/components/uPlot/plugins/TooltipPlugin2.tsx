@@ -68,6 +68,8 @@ interface TooltipPlugin2Props {
   onSelect?: OnSelectCallback;
   /** Shown above the tooltip contents while unpinned in select mode */
   selectHint?: React.ReactNode;
+  /** Whether Alt-click pins in select mode; false when there is no visible tooltip to pin. Default true */
+  selectPinnable?: boolean;
 
   render: (
     u: uPlot,
@@ -150,6 +152,7 @@ export const TooltipPlugin2 = ({
   clickMode = 'pin',
   onSelect,
   selectHint,
+  selectPinnable = true,
 }: TooltipPlugin2Props) => {
   const domRef = useRef<HTMLDivElement>(null);
   const portalRoot = useRef<HTMLElement | null>(null);
@@ -178,6 +181,9 @@ export const TooltipPlugin2 = ({
 
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
+
+  const selectPinnableRef = useRef(selectPinnable);
+  selectPinnableRef.current = selectPinnable;
 
   useLayoutEffect(() => {
     sizeRef.current?.observer.disconnect();
@@ -357,10 +363,14 @@ export const TooltipPlugin2 = ({
       }
 
       if (e.altKey) {
-        pin(closestSeriesIdx, dataIdx);
+        // with nothing to show, pinning would only lock the cursor invisibly
+        if (selectPinnableRef.current) {
+          pin(closestSeriesIdx, dataIdx);
+        }
         return;
       }
 
+      // on macOS Ctrl-click opens the context menu, so Cmd is the effective toggle modifier there
       const meta = e.ctrlKey || e.metaKey;
 
       if (!meta && !e.shiftKey) {
@@ -390,6 +400,19 @@ export const TooltipPlugin2 = ({
 
     config.addHook('init', (u) => {
       plotRef.current = _plot = u;
+
+      // uPlot caches the plot's page position and only refreshes it on scroll, resize and mouseenter. A layout
+      // shift without any of those (for example the filter bar growing a row after a click adds a filter) leaves
+      // it stale, and uPlot then reads the next click as a drag and swallows it. Refresh it before uPlot's own
+      // mousedown handler runs.
+      u.root.addEventListener('mousedown', () => u.syncRect(true), true);
+
+      // in select mode Shift-click extends the selection; stop it extending the page's text selection too
+      u.over.addEventListener('mousedown', (e) => {
+        if (clickModeRef.current === 'select' && e.shiftKey) {
+          e.preventDefault();
+        }
+      });
 
       // detect shiftKey and mutate drag mode from x-only to y-only
       if (clientZoom) {

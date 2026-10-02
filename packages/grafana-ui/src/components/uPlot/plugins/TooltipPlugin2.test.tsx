@@ -68,6 +68,7 @@ describe('TooltipPlugin2', () => {
     const setCursor = jest.fn();
     const setSelect = jest.fn();
     const setScale = jest.fn();
+    const syncRect = jest.fn();
 
     const mockUPlot = {
       root,
@@ -78,6 +79,7 @@ describe('TooltipPlugin2', () => {
       setCursor,
       setScale,
       setSelect,
+      syncRect,
       select: { left: 0, top: 0, width: 0, height: 0 },
       ...overrides,
     } as uPlot;
@@ -494,6 +496,36 @@ describe('TooltipPlugin2', () => {
       expect(onSelect).toHaveBeenCalled();
     });
 
+    it('does not pin on Alt-click when not pinnable', async () => {
+      const { onSelect, click } = await hover({ selectPinnable: false });
+
+      await click({ altKey: true });
+
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('prevents text selection on a Shift mousedown, only in select mode', async () => {
+      const { mockUPlot } = await hover();
+      const shiftDown = new MouseEvent('mousedown', { shiftKey: true, cancelable: true });
+      const plainDown = new MouseEvent('mousedown', { cancelable: true });
+
+      mockUPlot.over.dispatchEvent(shiftDown);
+      mockUPlot.over.dispatchEvent(plainDown);
+
+      expect(shiftDown.defaultPrevented).toBe(true);
+      expect(plainDown.defaultPrevented).toBe(false);
+    });
+
+    it('does not prevent Shift mousedown in pin mode', async () => {
+      const { mockUPlot } = await hover({ clickMode: 'pin' });
+      const shiftDown = new MouseEvent('mousedown', { shiftKey: true, cancelable: true });
+
+      mockUPlot.over.dispatchEvent(shiftDown);
+
+      expect(shiftDown.defaultPrevented).toBe(false);
+    });
+
     it('does not show the hint in pin mode', async () => {
       await hover({ clickMode: 'pin', selectHint: 'Alt-click to pin' });
 
@@ -575,6 +607,23 @@ describe('TooltipPlugin2', () => {
       expect(removeSpy).toHaveBeenCalledWith('keydown', expect.any(Function), true);
 
       removeSpy.mockRestore();
+    });
+
+    it('refreshes the cached plot rect before uPlot handles a mousedown', () => {
+      const { view, initCallback, mockUPlot } = setUp();
+      const uPlotMousedown = jest.fn(() => expect(mockUPlot.syncRect).toHaveBeenCalledWith(true));
+
+      mockUPlot.root.appendChild(mockUPlot.over);
+      // registered after init, like uPlot's own handler, but must still see a fresh rect
+      initCallback(mockUPlot);
+      mockUPlot.over.addEventListener('mousedown', uPlotMousedown);
+
+      mockUPlot.over.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+
+      expect(uPlotMousedown).toHaveBeenCalled();
+      expect(mockUPlot.syncRect).toHaveBeenCalledTimes(1);
+
+      view.unmount();
     });
 
     it('registers u.over event listeners on init', () => {

@@ -39,6 +39,8 @@ interface MockTooltipProps {
   clickMode?: 'pin' | 'select';
   onSelect?: (seriesIdx: number, dataIdx: number, modifiers: { meta: boolean; shift: boolean }) => void;
   selectHint?: React.ReactNode;
+  selectPinnable?: boolean;
+  getDataLinks?: (seriesIdx: number, dataIdx: number) => unknown[];
   // method syntax so the mock's typed render is assignable
   render?(...args: never[]): React.ReactNode;
 }
@@ -457,6 +459,48 @@ describe('BarChartPanel', () => {
       expect(tooltipPropsForTest).not.toHaveLength(0);
       expect(lastTooltip().clickMode).toBe('select');
       expect(lastTooltip().render!()).toBeNull();
+      // nothing to pin, but one-click links still win
+      expect(lastTooltip().selectPinnable).toBe(false);
+      expect(lastTooltip().getDataLinks).toBeDefined();
+    });
+
+    it('drops the Shift anchor when another panel takes over the selection', async () => {
+      const { onSetAdHocFilterSelection, setOwned } = setUpSelectionContext();
+      renderSelectable();
+
+      await clickBar(0);
+      act(() => setOwned(undefined));
+      await clickBar(2, { meta: false, shift: true });
+
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['c'], mode: 'range' })
+      );
+    });
+
+    it('keeps the newest pending selection when an earlier write finishes later', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+      const resolvers: Array<() => void> = [];
+      onSetAdHocFilterSelection.mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
+      renderSelectable();
+
+      await clickBar(0);
+      await clickBar(1, { meta: true, shift: false });
+      expect(getSelection()).toEqual(new Set([0, 1]));
+
+      // the first write lands; the store still has nothing, but the newer pending selection must stay
+      await act(async () => resolvers[0]());
+      expect(getSelection()).toEqual(new Set([0, 1]));
+
+      await act(async () => resolvers[1]());
+      expect(getSelection()).toBeNull();
+    });
+
+    it('gives the bars no selection getter when not selectable', () => {
+      act(() => setTestFlags({ 'dashboard.biMode': false }));
+      setUpSelectionContext();
+      renderSelectable();
+
+      expect(jest.mocked(prepConfig).mock.calls.at(-1)![0].getSelection).toBeUndefined();
     });
 
     it('keeps pin mode when the category field is not filterable', () => {

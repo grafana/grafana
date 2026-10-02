@@ -112,18 +112,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
   // re-read the selection whenever ad hoc filters change
   const [selectionVersion, onSelectionChanged] = useReducer((v: number) => v + 1, 0);
-  // the selection a pending click wrote, shown until the filter variable reports back
+  // the selection the latest click wrote, shown until that write completes
   const [pendingSelection, setPendingSelection] = useState<{ values: string[] } | null>(null);
+  // identifies the latest write, so an earlier, slower write cannot clear a newer pending selection
+  const writeSeqRef = useRef(0);
 
   useEffect(() => {
     if (!selectable) {
       return;
     }
 
-    return subscribeToAdHocFilterSelection(() => {
-      setPendingSelection(null);
-      onSelectionChanged();
-    });
+    return subscribeToAdHocFilterSelection(onSelectionChanged);
   }, [selectable, subscribeToAdHocFilterSelection]);
 
   const ownedSelection = useMemo(
@@ -152,14 +151,19 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     plotRef.current?.redraw(false);
   }, [selectedIndices]);
 
-  // Shift-click anchor; a category value, dropped when it leaves the data
+  // Shift-click anchor; a category value, dropped when it leaves the data or this panel loses its selection
+  // (another panel takes over, the pill is removed, or a plain click clears it)
   const anchorRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (anchorRef.current != null && !categories.includes(anchorRef.current)) {
+    if (anchorRef.current == null) {
+      return;
+    }
+
+    if (!categories.includes(anchorRef.current) || (ownedSelection === undefined && pendingSelection == null)) {
       anchorRef.current = null;
     }
-  }, [categories]);
+  }, [categories, ownedSelection, pendingSelection]);
 
   const onSelect = (dataIdx: number, meta: boolean, shift: boolean) => {
     if (selectionKey == null || onSetAdHocFilterSelection == null) {
@@ -183,11 +187,14 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
 
     anchorRef.current = next.anchor;
     setPendingSelection({ values: next.values });
+    const seq = ++writeSeqRef.current;
 
     onSetAdHocFilterSelection({ key: selectionKey, values: next.values, clickedValue: clicked, mode: next.mode })
       .catch(() => {})
       .finally(() => {
-        setPendingSelection(null);
+        if (seq === writeSeqRef.current) {
+          setPendingSelection(null);
+        }
         onSelectionChanged();
       });
   };
@@ -208,7 +215,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
             options,
             timeZone,
             theme,
-            getSelection,
+            // only selectable panels pay for the veil
+            getSelection: selectable ? getSelection : undefined,
           });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -235,6 +243,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       xField,
       colorByField,
       xTickLabelMaxLength, // maybe not?
+      selectable,
       // props.fieldConfig, // usePrevious hideFrom on all fields?
     ]
   );
@@ -256,6 +265,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
+  const getDataLinks = (seriesIdx: number, dataIdx: number) =>
+    vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? [];
+
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
@@ -276,6 +288,8 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               config={builder}
               hoverMode={TooltipHoverMode.xOne}
               clickMode="select"
+              selectPinnable={false}
+              getDataLinks={getDataLinks}
               onSelect={(_seriesIdx, dataIdx, { meta, shift }) => onSelect(dataIdx, meta, shift)}
               render={() => null}
             />
@@ -290,9 +304,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
-              getDataLinks={(seriesIdx, dataIdx) =>
-                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
-              }
+              getDataLinks={getDataLinks}
               getAdHocFilters={(_seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];
 
