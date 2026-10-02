@@ -168,6 +168,13 @@ const config: KnipConfig = {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
       project: [...defaultProject, '!src/generator/**!'],
     },
+    'packages/grafana-sql': {
+      // resolved via the `moment$` webpack alias in grafana-plugin-configs, which knip can't follow
+      entry: [...defaultEntries, 'src/utils/raqbMomentCompat.ts!'],
+      project: defaultProject,
+      ignoreDependencies: packageIgnoreDeps,
+      jest: true,
+    },
     'packages/grafana-plugin-configs': {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
