@@ -1,0 +1,511 @@
+{
+  "uid": "demo-datasource-health",
+  "title": "Demo: Grafana Data Source Health",
+  "tags": ["demo", "dummy", "datasource"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "fiscalYearStartMonth": 0,
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "templating": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Proxy RPS",
+      "description": "Dummy datasource proxy request rate",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": 0 }]
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "proxy_rps",
+          "min": 80,
+          "max": 260,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Proxy 5xx Rate",
+      "description": "Dummy proxy 5xx share of all proxy responses",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 0.01 },
+              { "color": "red", "value": 0.05 }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "proxy_5xx",
+          "min": 0.002,
+          "max": 0.08,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Proxy Latency p99",
+      "description": "Dummy datasource proxy p99 latency",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "orange", "value": 400 },
+              { "color": "red", "value": 1000 }
+            ]
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "proxy_p99",
+          "min": 180,
+          "max": 1400,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Datasources",
+      "description": "Dummy total defined datasources",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": 0 }]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "datasources",
+          "min": 186,
+          "max": 214,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Proxy Status Codes",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "min": 0,
+          "unit": "reqps"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "2xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "4xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "5xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "2xx",
+          "labels": "status=2xx",
+          "min": 140,
+          "max": 280,
+          "seriesCount": 1
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "4xx",
+          "labels": "status=4xx",
+          "min": 4,
+          "max": 22,
+          "seriesCount": 1
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "5xx",
+          "labels": "status=5xx",
+          "min": 0,
+          "max": 12,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Proxy Latency",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "min": 0,
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "p50",
+          "min": 40,
+          "max": 140,
+          "seriesCount": 1
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "p99",
+          "min": 180,
+          "max": 1400,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Query by ID Rate",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 13 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "drawStyle": "line",
+            "fillOpacity": 12,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "insertNulls": false,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "min": 0,
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "prometheus",
+          "labels": "plugin_id=prometheus",
+          "min": 40,
+          "max": 120,
+          "seriesCount": 1
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "loki",
+          "labels": "plugin_id=loki",
+          "min": 18,
+          "max": 70,
+          "seriesCount": 1
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "tempo",
+          "labels": "plugin_id=tempo",
+          "min": 6,
+          "max": 28,
+          "seriesCount": 1
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "elasticsearch",
+          "labels": "plugin_id=elasticsearch",
+          "min": 4,
+          "max": 22,
+          "seriesCount": 1
+        },
+        {
+          "refId": "E",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "cloudwatch",
+          "labels": "plugin_id=cloudwatch",
+          "min": 2,
+          "max": 14,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "barchart",
+      "title": "Datasources by Plugin",
+      "description": "Dummy datasource count by plugin_id",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 21 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "decimals": 0,
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "csv_content",
+          "csvContent": "Plugin,Count\nprometheus,48\nloki,31\ntempo,18\nelasticsearch,22\ncloudwatch,14\nmysql,9\npostgres,11\n"
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Public Dashboard Query Success by Type",
+      "description": "Dummy public-dashboard query success vs fail by datasource type",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 21 },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Fail rate" },
+            "properties": [
+              { "id": "unit", "value": "percentunit" },
+              { "id": "decimals", "value": 2 },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": 0 },
+                    { "color": "orange", "value": 0.01 },
+                    { "color": "red", "value": 0.05 }
+                  ]
+                }
+              },
+              { "id": "custom.cellOptions", "value": { "mode": "gradient", "type": "color-background" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Fail rate" }]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "csv_content",
+          "csvContent": "Datasource,Success,Failed,Fail rate\nprometheus,18420,92,0.005\nloki,6320,410,0.061\ntempo,2110,18,0.008\nelasticsearch,1540,126,0.076\ncloudwatch,880,41,0.045\n"
+        }
+      ]
+    }
+  ]
+}
