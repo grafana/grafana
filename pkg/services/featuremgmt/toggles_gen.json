@@ -1794,6 +1794,19 @@
     },
     {
       "metadata": {
+        "name": "datasources.teamHttpHeadersWriteGuard",
+        "resourceVersion": "1790977358513",
+        "creationTimestamp": "2026-10-02T21:42:38Z"
+      },
+      "spec": {
+        "description": "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.useNewStackInfoToSettingsCache",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
