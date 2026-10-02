@@ -1911,6 +1911,20 @@
     },
     {
       "metadata": {
+        "name": "dataviz.tabularNums",
+        "resourceVersion": "1790933617445",
+        "creationTimestamp": "2026-10-02T09:33:37Z"
+      },
+      "spec": {
+        "description": "Enables tabular numerals for visualization legend values",
+        "stage": "experimental",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datetime.useLuxon",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
