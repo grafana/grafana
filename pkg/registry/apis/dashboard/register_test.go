@@ -603,7 +603,8 @@ func TestDashboardsAPIBuilderGet(t *testing.T) {
 
 	b := &DashboardsAPIBuilder{unified: mockClient}
 
-	obj, err := b.Get(context.Background(), "ns", "existing-uid")
+	gvr := schema.GroupVersionResource{Group: dashv0.GROUP, Version: "v0alpha1", Resource: dashv0.DASHBOARD_RESOURCE}
+	obj, err := b.Get(context.Background(), gvr, "ns", "existing-uid")
 	require.NoError(t, err)
 
 	u, ok := obj.(*unstructured.Unstructured)
@@ -611,6 +612,22 @@ func TestDashboardsAPIBuilderGet(t *testing.T) {
 	spec, ok := u.Object["spec"].(map[string]any)
 	require.True(t, ok)
 	require.Equal(t, "existing", spec["title"])
+}
+
+// TestDashboardsAPIBuilderGet_UnsupportedResourceIsNotFound guards Finding 2: this builder's
+// GroupVersion also serves library panels, variables and notebooks, so Get must reject any
+// resource other than dashboards with NotFound instead of fetching an unrelated dashboard
+// that happens to share the requested name.
+func TestDashboardsAPIBuilderGet_UnsupportedResourceIsNotFound(t *testing.T) {
+	// No mock expectations are set on unified - if Get tried to call Read for a
+	// non-dashboard resource, the mock would fail the test for an unexpected call.
+	mockClient := resource.NewMockResourceClient(t)
+	b := &DashboardsAPIBuilder{unified: mockClient}
+
+	gvr := schema.GroupVersionResource{Group: dashv0.GROUP, Version: "v0alpha1", Resource: dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource}
+	_, err := b.Get(context.Background(), gvr, "ns", "some-variable")
+	require.Error(t, err)
+	require.True(t, apierrors.IsNotFound(err), "expected a NotFound error for a resource this builder's Get doesn't serve")
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order

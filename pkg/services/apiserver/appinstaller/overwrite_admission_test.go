@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,9 +27,33 @@ type fakeGetter struct {
 	err error
 }
 
-func (f fakeGetter) Get(_ context.Context, _, _ string) (runtime.Object, error) {
+func (f fakeGetter) Get(_ context.Context, _ schema.GroupVersionResource, _, _ string) (runtime.Object, error) {
 	return f.obj, f.err
 }
+
+// gvrCheckingGetter mirrors the real DashboardsAPIBuilder.Get: it serves only the resource
+// it was built to expect, and returns NotFound for anything else - the shape a Getter must
+// take to avoid the dashboards-vs-variables confusion when a GroupVersion serves multiple
+// distinct top-level resources.
+type gvrCheckingGetter struct {
+	expected schema.GroupVersionResource
+	obj      runtime.Object
+}
+
+func (g gvrCheckingGetter) Get(_ context.Context, gvr schema.GroupVersionResource, _, name string) (runtime.Object, error) {
+	if gvr.Resource != g.expected.Resource {
+		return nil, apierrors.NewNotFound(gvr.GroupResource(), name)
+	}
+	return g.obj, nil
+}
+
+// handlesOnlyChain implements only admission.Interface (Handles), not MutationInterface or
+// ValidationInterface - exercising the case where the wrapped chain can't be dispatched at
+// all, so Admit/Validate must still strip a client-supplied marker on their own, before ever
+// attempting the type assertion that will fail.
+type handlesOnlyChain struct{}
+
+func (handlesOnlyChain) Handles(admission.Operation) bool { return true }
 
 // recordingChain records every Attributes it's called with, so tests can assert exactly
 // what the wrapper dispatched downstream - the operation, and whether OldObject was set.
@@ -147,3 +172,63 @@ func TestOverwriteAdmission_GetterErrorPropagatesUnchanged(t *testing.T) {
 }
 
 var errTestGetterFailure = errors.New("boom: fake getter failure")
+
+// TestOverwriteAdmission_ChainWithoutInterfacesStillStripsMarker guards Finding 1: the
+// marker strip must happen before the type assertion to MutationInterface/ValidationInterface,
+// not inside rewrite() which is only reached if that assertion succeeds. A client-forged
+// marker must never survive even when the wrapped chain can't be dispatched at all.
+func TestOverwriteAdmission_ChainWithoutInterfacesStillStripsMarker(t *testing.T) {
+	wrapper := newOverwriteAdmission(handlesOnlyChain{}, map[schema.GroupVersion]builder.APIGroupGetter{})
+
+	obj := newUnstructuredWithRV("") // non-sentinel: forging the marker is the only thing under test
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true") // a client trying to forge the marker
+
+	admitAttrs := newAttrs(obj, admission.Create)
+	require.NoError(t, wrapper.Admit(context.Background(), admitAttrs, nil))
+	admitMeta, err := utils.MetaAccessor(admitAttrs.GetObject())
+	require.NoError(t, err)
+	require.Equal(t, "", admitMeta.GetAnnotation(utils.AnnoKeyOverwriteValidated),
+		"Admit must strip the marker even though the chain doesn't implement MutationInterface")
+
+	obj2 := newUnstructuredWithRV("")
+	meta2, err := utils.MetaAccessor(obj2)
+	require.NoError(t, err)
+	meta2.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	validateAttrs := newAttrs(obj2, admission.Create)
+	require.NoError(t, wrapper.Validate(context.Background(), validateAttrs, nil))
+	validateMeta, err := utils.MetaAccessor(validateAttrs.GetObject())
+	require.NoError(t, err)
+	require.Equal(t, "", validateMeta.GetAnnotation(utils.AnnoKeyOverwriteValidated),
+		"Validate must strip the marker even though the chain doesn't implement ValidationInterface")
+}
+
+// TestOverwriteAdmission_GVRMismatchIsNoOpPassthrough guards Finding 2: getters are keyed by
+// GroupVersion only, but a GroupVersion can serve multiple distinct top-level resources
+// (e.g. dashboards and variables under the same GV). A sentinel-triggered Create for a
+// resource the registered Getter doesn't actually serve must fall back to an unchanged
+// Create passthrough, not incorrectly fetch/validate against an unrelated resource.
+func TestOverwriteAdmission_GVRMismatchIsNoOpPassthrough(t *testing.T) {
+	dashboardGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1", Resource: "dashboards"}
+	variableGVR := schema.GroupVersionResource{Group: "dashboard.grafana.app", Version: "v1", Resource: "variables"}
+	require.Equal(t, dashboardGVR.GroupVersion(), variableGVR.GroupVersion(), "the two resources must share one GV to reproduce the keyed-by-GV confusion")
+
+	chain := &recordingChain{}
+	wrapper := newOverwriteAdmission(chain, map[schema.GroupVersion]builder.APIGroupGetter{
+		dashboardGVR.GroupVersion(): gvrCheckingGetter{expected: dashboardGVR, obj: newUnstructuredWithRV("")},
+	})
+
+	obj := newUnstructuredWithRV(apistore.OverwriteOnCreateResourceVersion)
+	a := admission.NewAttributesRecord(
+		obj, nil, testKind, "ns", "existing-name", variableGVR, "",
+		admission.Create, &metav1.CreateOptions{}, false, &user.DefaultInfo{Name: "tester"},
+	)
+	require.NoError(t, wrapper.Validate(context.Background(), a, nil))
+
+	require.Len(t, chain.validateCalls, 1)
+	require.Equal(t, admission.Create, chain.validateCalls[0].GetOperation(),
+		"a GVR the registered Getter doesn't actually serve must fall back to unchanged Create passthrough")
+	require.Same(t, a, chain.validateCalls[0], "must be the original Attributes, not a synthetic rewrite")
+}

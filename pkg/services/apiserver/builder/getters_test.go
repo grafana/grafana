@@ -36,7 +36,7 @@ type getterBuilder struct {
 	fakeBuilder
 }
 
-func (g *getterBuilder) Get(_ context.Context, _, _ string) (runtime.Object, error) {
+func (g *getterBuilder) Get(_ context.Context, _ schema.GroupVersionResource, _, _ string) (runtime.Object, error) {
 	return g.obj, nil
 }
 
