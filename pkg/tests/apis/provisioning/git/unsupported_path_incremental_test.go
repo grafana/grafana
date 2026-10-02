@@ -190,7 +190,7 @@ func TestIntegrationProvisioning_IncrementalSync_NewTreeUnderUnsupportedFolder(t
 		})
 		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
 
-		require.NoError(t, local.CreateFile("newparent/bad & dir/dashboard.json", string(common.DashboardJSON("incr-folder-new-bad", "Unsafe Dashboard", 1))))
+		require.NoError(t, local.CreateFile("newparent/deeper/bad & dir/dashboard.json", string(common.DashboardJSON("incr-folder-new-bad", "Unsafe Dashboard", 1))))
 		_, err := local.Git("add", ".")
 		require.NoError(t, err)
 		_, err = local.Git("commit", "-m", "add a dashboard under a folder that cannot sync")
@@ -198,11 +198,12 @@ func TestIntegrationProvisioning_IncrementalSync_NewTreeUnderUnsupportedFolder(t
 		_, err = local.Git("push")
 		require.NoError(t, err)
 
-		incrementalPullAndRequireWarning(t, helper, repoName, "newparent/bad & dir/dashboard.json")
+		incrementalPullAndRequireWarning(t, helper, repoName, "newparent/deeper/bad & dir/dashboard.json")
 
 		helper.RequireRepoDashboardCount(t, repoName, 1) // only the root one
 		titles := repoFolderTitles(t, helper, repoName)
 		require.Contains(t, titles, "newparent", "the safe part of the path is created")
+		require.Contains(t, titles, "deeper", "every safe level of the path is created")
 		require.NotContains(t, titles, "bad & dir")
 	}
 }

@@ -608,7 +608,8 @@ func detectFolderUIDChanges(
 // content was deleted from another path, the file was renamed onto the unsupported
 // path: the resource goes with its old file, so the deletion carries the warning and
 // the change for the unsupported file is dropped. Any other such file stays an
-// ignored change that carries its warning.
+// ignored change that carries its warning, including when a valid file has the same
+// content: that one is the rename target, and DetectRenames pairs it with the deletion.
 func attachUnsupportedPaths(changes []ResourceFileChange) []ResourceFileChange {
 	deletionsByHash := make(map[string]int)
 	ambiguous := make(map[string]bool)
@@ -626,6 +627,11 @@ func attachUnsupportedPaths(changes []ResourceFileChange) []ResourceFileChange {
 	}
 	for h := range ambiguous {
 		delete(deletionsByHash, h)
+	}
+	for _, change := range changes {
+		if change.Action == repository.FileActionCreated && !safepath.IsDir(change.Path) {
+			delete(deletionsByHash, change.Hash)
+		}
 	}
 
 	dropped := make(map[int]bool)

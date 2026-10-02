@@ -2207,6 +2207,24 @@ func TestAttachUnsupportedPaths(t *testing.T) {
 		require.Nil(t, got[1].Warning)
 	})
 
+	t.Run("a valid file with the same content is the rename target: the unsupported one only warns", func(t *testing.T) {
+		valid := ResourceFileChange{Action: repository.FileActionCreated, Path: "Backend UI.json", Hash: "h1"}
+
+		got := DetectRenames(attachUnsupportedPaths([]ResourceFileChange{deleted("dashboard.json", "h1"), valid, ignored("Backend & UI.json", "h1")}))
+
+		var renamed, warned []string
+		for _, c := range got {
+			switch {
+			case c.Action == repository.FileActionRenamed:
+				renamed = append(renamed, c.Path)
+			case c.Warning != nil:
+				warned = append(warned, c.Path)
+			}
+		}
+		require.Equal(t, []string{"Backend UI.json"}, renamed, "the resource moves to the valid copy")
+		require.Equal(t, []string{"Backend & UI.json"}, warned, "the unsupported copy is still reported")
+	})
+
 	t.Run("orphan cleanups and folders are never taken for the old file", func(t *testing.T) {
 		orphan := deleted("a.json", "h1")
 		orphan.OrphanCleanup = true
