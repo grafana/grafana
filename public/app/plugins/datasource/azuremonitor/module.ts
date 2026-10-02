@@ -88,6 +88,8 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
       [AzureQueryType.NamespacesQuery]: { ...common },
       [AzureQueryType.ResourceNamesQuery]: { ...common },
       [AzureQueryType.MetricNamesQuery]: { ...common },
+      [AzureQueryType.DimensionsQuery]: { ...common },
+      [AzureQueryType.DimensionValuesQuery]: { ...common },
       [AzureQueryType.WorkspacesQuery]: { ...common },
       [AzureQueryType.GrafanaTemplateVariableFn]: { ...common },
       [AzureQueryType.LocationsQuery]: { ...common },
@@ -153,6 +155,8 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         case AzureQueryType.NamespacesQuery:
         case AzureQueryType.ResourceNamesQuery:
         case AzureQueryType.MetricNamesQuery:
+        case AzureQueryType.DimensionsQuery:
+        case AzureQueryType.DimensionValuesQuery:
         case AzureQueryType.WorkspacesQuery:
         case AzureQueryType.GrafanaTemplateVariableFn:
         case AzureQueryType.LocationsQuery:
@@ -206,6 +210,8 @@ getAppEvents().subscribe<DashboardLoadedEvent<AzureMonitorQuery>>(
         azure_namespaces_query: stats[AzureQueryType.NamespacesQuery].count,
         azure_resource_names_query: stats[AzureQueryType.ResourceNamesQuery].count,
         azure_metric_names_query: stats[AzureQueryType.MetricNamesQuery].count,
+        azure_dimensions_query: stats[AzureQueryType.DimensionsQuery].count,
+        azure_dimension_values_query: stats[AzureQueryType.DimensionValuesQuery].count,
         azure_workspaces_query: stats[AzureQueryType.WorkspacesQuery].count,
         azure_grafana_template_variable_query: stats[AzureQueryType.GrafanaTemplateVariableFn].count,
         azure_locations_query: stats[AzureQueryType.LocationsQuery].count,

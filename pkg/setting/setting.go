@@ -376,11 +376,12 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                       bool
-	OAuthLoginErrorMessage               string
-	OAuthCookieMaxAge                    int
-	OAuthAllowInsecureEmailLookup        bool
-	OAuthRefreshTokenServerLockMinWaitMs int64
+	OAuthAutoLogin                          bool
+	OAuthLoginErrorMessage                  string
+	OAuthCookieMaxAge                       int
+	OAuthAllowInsecureEmailLookup           bool
+	OAuthRefreshTokenServerLockMinWaitMs    int64
+	OAuthRefreshTokenServerLockWaitBudgetMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -703,9 +704,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                      map[string]UnifiedStorageConfig
-	UnifiedStorageAuthzExemptionEnabled bool
-	UnifiedStorageAuthzExemptResources  []string
+	UnifiedStorage                        map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug             string
+	UnifiedStorageAuthzExemptionEnabled   bool
+	UnifiedStorageAuthzExemptResources    []string
+	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -723,8 +726,9 @@ type Cfg struct {
 	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
-	RenameWaitDeadline time.Duration
-	MaxPageSizeBytes   int
+	RenameWaitDeadline          time.Duration
+	MaxPageSizeBytes            int
+	AuthorizeBeforeFetchEnabled bool
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
@@ -736,13 +740,13 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
+	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
-	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
-	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url.
-	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
-	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
+	IndexSnapshotStorageKV                     bool          // Deprecated: always true, snapshots are always stored in the storage KV. Kept until grafana-enterprise stops reading it.
+	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial.
+	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
@@ -2024,6 +2028,15 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, RedactedValue(envKey, envValue)))
 
 	return key
+}
+
+// HasKey reports whether k is set either in the ini file or via its environment variable override.
+func (s *DynamicSection) HasKey(k string) bool {
+	envKey := EnvKey(s.section.Name(), k)
+	if len(s.env.Getenv(envKey)) > 0 {
+		return true
+	}
+	return s.section.HasKey(k)
 }
 
 func (s *DynamicSection) KeysHash() map[string]string {

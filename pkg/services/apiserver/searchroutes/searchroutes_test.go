@@ -40,6 +40,13 @@ func (b *resourceBuilder) GetResourceInfos(schema.GroupVersion) []utils.Resource
 	return b.infos
 }
 
+type manifestBuilder struct {
+	*resourceBuilder
+	manifest *app.ManifestData
+}
+
+func (b *manifestBuilder) ManifestData() *app.ManifestData { return b.manifest }
+
 func (b *fakeBuilder) InstallSchema(*runtime.Scheme) error { return nil }
 func (b *fakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder.APIGroupOptions) error {
 	return nil
@@ -153,6 +160,34 @@ func TestBuild_MountsBuilderAdvertisedKinds(t *testing.T) {
 	got := paths(BuildFromManifests(nil, true, true, nil, fakeClient{}, builders, nil))
 
 	assert.Equal(t, []string{"widgets/search"}, got[gv.String()])
+}
+
+func TestBuild_UsesFullBuilderManifest(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	info := utils.NewResourceInfo(gv.Group, gv.Version, "widgets", "widget", "Widget", nil, nil, utils.TableColumns{})
+	searchDisabled := false
+	manifest := &app.ManifestData{
+		Group: gv.Group,
+		Versions: []app.ManifestVersion{{
+			Name:   gv.Version,
+			Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Widget", Plural: "widgets", Scope: namespacedScope,
+				Search: &app.ManifestVersionKindSearch{Endpoint: &searchDisabled},
+			}},
+		}},
+	}
+	builders := []builder.APIGroupBuilder{&manifestBuilder{
+		resourceBuilder: &resourceBuilder{
+			fakeBuilder: &fakeBuilder{gvs: []schema.GroupVersion{gv}},
+			infos:       []utils.ResourceInfo{info},
+		},
+		manifest: manifest,
+	}}
+
+	got := paths(Build(true, false, nil, fakeClient{}, builders, nil))
+
+	assert.Empty(t, got, "the full manifest opt-out must win over synthesized resource declarations")
 }
 
 func TestBuild_SkipsBuilderAdvertisedClusterScopedKinds(t *testing.T) {
@@ -573,4 +608,26 @@ func TestBuildForServedGroupVersions_RejectsAMalformedDeclaration(t *testing.T) 
 	routes, err := BuildForServedGroupVersions(todoManifest(gv, "int64", "text"), served, true, true, nil, fakeClient{})
 	require.Error(t, err)
 	assert.Nil(t, routes)
+}
+
+func TestBuildGlobalSearch(t *testing.T) {
+	builders := []builder.APIGroupBuilder{&fakeBuilder{gvs: []schema.GroupVersion{
+		{Group: "dashboard.grafana.app", Version: "v1"},
+	}}}
+	const searchGV = searchv0.GROUP + "/" + searchv0.VERSION
+
+	got := paths(BuildGlobalSearch(nil, fakeClient{}, builders))
+	assert.Equal(t, map[string][]string{searchGV: {resource.GlobalSearchResource + "/" + searchv0.SearchPathSegment}}, got,
+		"only the one route, under the search group")
+
+	assert.Nil(t, BuildGlobalSearch(nil, nil, builders), "nothing to serve it with without a client")
+}
+
+// Every covered type is named, whichever API versions this process serves, and
+// nothing else is.
+func TestGlobalSearchKinds(t *testing.T) {
+	assert.Equal(t, map[schema.GroupResource]string{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"}: "Dashboard",
+		{Group: "folder.grafana.app", Resource: "folders"}:       "Folder",
+	}, globalSearchKinds(resource.AppManifests()))
 }

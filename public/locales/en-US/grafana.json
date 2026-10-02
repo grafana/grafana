@@ -2980,6 +2980,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
+      "checking-data-sources_one": "Checking {{count}} more data source",
+      "checking-data-sources_other": "Checking {{count}} more data sources",
       "configure-datasource": "Configure",
       "datasource-managed-notice": {
         "action": "View rules in Prometheus Alerting",
@@ -3013,6 +3015,9 @@
         "results-with-cancellation": "Search cancelled – found {{numberOfRules}} rules",
         "search-in-plugin": "Search data source managed rules in Prometheus Alerting"
       },
+      "hidden-empty-data-sources_one": "{{count}} data source with no rules is hidden",
+      "hidden-empty-data-sources_other": "{{count}} data sources with no rules are hidden",
+      "hidden-empty-data-sources-show-all": "Show all",
       "import-disabled-tooltip": {
         "auto-sync": "Imports are unavailable while Mimir Alertmanager auto-sync is active"
       },
@@ -3193,7 +3198,10 @@
       "view-as": "View as"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Clear filters"
+      "clear-filters": "Clear filters",
+      "empty-data-sources": "Empty data sources",
+      "empty-data-sources-tooltip": "Shows or hides data sources that have no alert rules configured.",
+      "empty-data-sources-tooltip-title": "Empty data sources filter help"
     },
     "rules-group": {
       "deleting": "Deleting",
@@ -4405,6 +4413,7 @@
       "label-top": "Top"
     },
     "name-show-unfilled-area": "Show unfilled area",
+    "name-text-mode": "Text mode",
     "name-value-display": "Value display",
     "presets": {
       "basic": "Basic",
@@ -4423,6 +4432,13 @@
     "suggestions": {
       "basic": "Bar gauge",
       "lcd": "Bar gauge - LCD"
+    },
+    "text-mode-options": {
+      "label-auto": "Auto",
+      "label-name": "Name",
+      "label-none": "None",
+      "label-value": "Value",
+      "label-value-and-name": "Value and name"
     },
     "value-display-options": {
       "label-hidden": "Hidden",
@@ -5666,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Proceed"
-        },
-        "title": {
-          "proceed-to-external-site": "Proceed to external site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} dashboard",
       "label-no-dashboards-found": "No dashboards found"
@@ -5801,10 +5807,16 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "row-fill-screen-disable": "Disable row fill screen",
+      "row-fill-screen-enable": "Enable row fill screen",
+      "row-hide-header": "Hide row header",
+      "row-repeat-variable": "Row repeat by",
+      "row-show-header": "Show row header",
       "row-title": "Change row title",
       "switch-layout": "Switch layout",
       "switch-layout-row": "Switch layout",
       "switch-layout-tab": "Switch layout",
+      "tab-repeat-variable": "Tab repeat by",
       "tab-title": "Change tab title",
       "variable-description": "Change variable description",
       "variable-hide": "Change variable hide option",
@@ -6053,6 +6065,12 @@
       "ungroup-groups-title": "Ungroup nested groups?",
       "ungroup-repeat-loss": "Repeat options configured on the ungrouped groups will be lost.",
       "ungroup-repeat-loss-title": "Ungroup?"
+    },
+    "loading": {
+      "drawer": "Loading drawer",
+      "drawer-title": "Loading…",
+      "sidebar": "Loading sidebar",
+      "sidebar-title": "Loading…"
     },
     "minimalistic-pagination": {
       "page-count": "{{currentPage}} of {{numberOfPages}}",
@@ -6727,7 +6745,6 @@
       "playlist-previous": "Go to previous dashboard",
       "playlist-stop": "Stop playlist",
       "refresh": "Refresh dashboard",
-      "save": "Save dashboard",
       "save-as-template": {
         "label": "Save as template"
       },
@@ -6742,8 +6759,6 @@
       "save-dashboard-short": "Save",
       "save-library-panel": "Save library panel",
       "save-library-panel-short": "Save",
-      "settings": "Dashboard settings",
-      "share-button": "Share",
       "star-add-error": "Failed to add to starred",
       "star-added": "Added to starred",
       "star-remove-error": "Failed to remove from starred",
@@ -6772,7 +6787,14 @@
         "title-remove": "Remove",
         "title-show-transform-help": "Show transform help"
       },
-      "title-delete": "Delete {{name}}?"
+      "title-delete": "Delete {{name}}?",
+      "transformation-editor-row-header": {
+        "edit-refId": "Edit transformation name",
+        "edit-refId-placeholder": "(Auto)",
+        "refId-exists-error": "Transformation name already exists",
+        "refId-reserved-error": "Transformation name is already used by a query or an earlier transformation",
+        "refId-variable-error": "Transformation name cannot contain a variable"
+      }
     },
     "transformation-operation-rows": {
       "remove-transformation": "Remove",
@@ -6821,9 +6843,6 @@
     },
     "variable": {
       "description-tooltip": "Variable description"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Back to dashboard",
@@ -7437,7 +7456,6 @@
       },
       "render-save-button-and-error": {
         "body-plugin-dashboard": "Your changes will be lost when you update the plugin. Use <strong>Save as</strong> to create custom version.",
-        "title-failed-to-save-dashboard": "Failed to save dashboard",
         "title-plugin-dashboard": "Plugin dashboard",
         "title-someone-else-has-updated-this-dashboard": "Someone else has updated this dashboard",
         "would-still-dashboard": "Would you still like to save this dashboard?"
@@ -7705,9 +7723,6 @@
       },
       "label-copy-tags": "Copy tags",
       "label-folder": "Folder",
-      "render-footer": {
-        "title-failed-to-save-dashboard": "Failed to save dashboard"
-      },
       "required": "Required"
     },
     "save-dashboard-drawer": {
@@ -7754,6 +7769,9 @@
       "save-variables-label-update-default-variable-values": "Update default variable values",
       "show-variables-warning-alert-body": "Some variables failed to load. If you keep “Update default variable values” checked, the current (failed) values will become the dashboard defaults. You can save anyway or uncheck the option to avoid storing those (failed) values.",
       "show-variables-warning-alert-title": "Variable queries failed"
+    },
+    "save-errors": {
+      "unexpected": "An unexpected error occurred while saving."
     },
     "save-library-viz-panel-modal": {
       "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
@@ -9443,6 +9461,8 @@
     "menu": "Open menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "OFREP evaluation",
+    "ofrep-reason": "Reason: <2>{{reason}}</2>",
+    "ofrep-variant": "Variant: <2>{{variant}}</2>",
     "save-flag": "Save",
     "title": "Feature control"
   },
@@ -10853,6 +10873,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
       "cell-inspect": "Inspect value",
@@ -11498,6 +11519,15 @@
         "open-explore": "Open in Explore",
         "set-up": "Set up"
       },
+      "filter": {
+        "badge-ignored": "Filters not applied",
+        "cancel": "Cancel",
+        "clear": "Clear filters",
+        "edit": "Edit filters ({{summary}})",
+        "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "save": "Save",
+        "save-failed": "Could not save to browser storage. Try again."
+      },
       "kubernetes": {
         "alerts-firing_one": "{{value}} alert firing",
         "alerts-firing_other": "{{value}} alerts firing",
@@ -11509,19 +11539,12 @@
           "all-clusters": "All clusters",
           "all-namespaces": "All namespaces",
           "all-nodes": "All nodes",
-          "badge-ignored": "Filters not applied",
-          "cancel": "Cancel",
-          "clear": "Clear filters",
           "cluster": "Cluster",
-          "edit": "Edit filters ({{summary}})",
-          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
           "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
-          "save": "Save",
-          "save-failed": "Could not save to browser storage. Try again.",
           "summary-cluster": "Cluster: {{cluster}}",
           "summary-namespaces": "Namespaces: {{namespaces}}",
           "summary-nodes": "Nodes: {{nodes}}",
@@ -11554,6 +11577,22 @@
         "disk-hosts_one": "{{count}} host above 90% disk",
         "disk-hosts_other": "{{count}} hosts above 90% disk",
         "disk-worst": "{{host}} at {{percent}}%",
+        "filter": {
+          "exclude-add": "Add exclusion",
+          "exclude-label": "Label",
+          "exclude-pattern": "Pattern",
+          "exclude-pattern-placeholder": "cache-.*",
+          "exclude-remove": "Remove exclusion",
+          "excludes": "Exclude",
+          "excludes-description": "Matching filesystems are left out of the alert and the host count",
+          "invalid-label": "Label names may only contain letters, digits and underscores",
+          "invalid-pattern": "Pattern is not a valid regular expression",
+          "label-required": "Choose a label",
+          "open": "Exclude hosts or filesystems from the disk alert",
+          "pattern-required": "Enter a pattern",
+          "summary-excludes": "Excluding {{matchers}}",
+          "title": "Customize the disk alert"
+        },
         "investigate-disk": "Investigate disk usage in Explore",
         "names_one": "{{value}} metric",
         "names_other": "{{value}} metrics",
@@ -13160,7 +13199,7 @@
     "add-block": {
       "code": "Code",
       "heading": "Heading",
-      "label": "Click to add below",
+      "label": "Click to add above",
       "paragraph": "Paragraph",
       "prompt": "Type to start writing — press / for blocks",
       "visualization": "Visualization"
@@ -13199,6 +13238,12 @@
       "query": {
         "add": "Add query",
         "run": "Run query"
+      },
+      "time-range": {
+        "button": "Update time range",
+        "locked": "Locked: {{range}}",
+        "sync-back": "Sync back to notebook time range",
+        "tooltip-default": "Lock panel time range"
       }
     },
     "errors": {
@@ -13266,7 +13311,9 @@
       "copy-markdown": "Copy as Markdown",
       "download-markdown": "Download as .md",
       "error": "Failed to export notebook",
-      "label": "Export"
+      "label": "Export",
+      "pdf": "Export as PDF",
+      "pdf-popup-blocked": "Your browser blocked the PDF export tab"
     },
     "history": {
       "add-block": "Add block",
@@ -13282,7 +13329,9 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
+      "set-cell-time-range": "Set panel time range",
       "split-block": "Split block",
       "switch-datasource": "Switch datasource",
       "undo": "Undo",
@@ -13332,7 +13381,7 @@
       "unknown-author": "Anonymous"
     },
     "new": {
-      "default-title": "Notebook #{{token}}"
+      "default-title-with-date": "Notebook {{date}}"
     },
     "save-status": {
       "failed": "Save failed",
@@ -14871,12 +14920,16 @@
       "force-delete-cancel": "Cancel",
       "force-delete-confirm": "Delete anyway",
       "force-delete-title": "Delete repository anyway",
-      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked."
+      "force-delete-warning": "This removes the repository without completing the blocking step, so anything it manages on the provider side (for example a webhook) is left in place. Only do this if the repository can no longer be reached — for example its credentials have expired or been revoked.",
+      "release-button": "Release all resources",
+      "release-confirm": "Release all resources",
+      "release-in-progress": "Releasing resources. The repository is removed on the next cleanup attempt, which can take a minute.",
+      "release-title": "Release all resources",
+      "release-warning": "Instead of deleting them, the remaining folders and resources managed by this repository are kept in Grafana and become editable again. Unmanaged resources are not affected. The repository is removed once they are released."
     },
     "repository-status-page": {
       "back-to-repositories": "Back to repositories",
       "cleaning-up-resources": "Cleaning up repository resources",
-      "not-found": "not found",
       "not-found-message": "Repository not found",
       "repository-config-exists-configuration": "Make sure the repository config exists in the configuration file.",
       "tab-overview": "Overview",
@@ -15172,26 +15225,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Before you make the dashboard public, acknowledge the following:",
-      "data-src-ack-desc": "Publishing currently only works with a subset of data sources*",
-      "data-src-ack-tooltip": "Learn more about public datasources",
-      "public-ack-desc": "Your entire dashboard will be public*",
-      "public-ack-tooltip": "Learn more about public dashboards",
-      "usage-ack-desc": "Making a dashboard public will cause queries to run each time it is viewed, which may increase costs*",
-      "usage-ack-desc-tooltip": "Learn more about query caching"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Can view dashboard",
-      "copy-button": "Copy",
-      "dashboard-url-field-label": "Dashboard URL",
-      "email-share-type-option-label": "Only specified people",
-      "pause-sharing-dashboard-label": "Pause sharing dashboard",
-      "public-share-type-option-label": "Anyone with a link",
-      "revoke-public-URL-button": "Revoke public URL",
-      "revoke-public-URL-button-title": "Revoke public URL",
-      "settings-title": "Settings"
-    },
     "configuration": {
       "display-annotations-description": "Present annotations on this dashboard",
       "display-annotations-label": "Display annotations",
@@ -15204,21 +15237,11 @@
       "time-range-label": "Time range",
       "time-range-tooltip": "The shared dashboard uses the default time range settings of the dashboard"
     },
-    "create-page": {
-      "generate-public-url-button": "Generate public URL",
-      "unsupported-features-desc": "Currently, we don’t support template variables or frontend data sources",
-      "welcome-title": "Welcome to public dashboards!"
-    },
     "email-sharing": {
       "accept-button": "Accept",
       "alert-text": "Sharing dashboards by email is billed per user for the duration of the 30-day token, regardless of how many dashboards are shared. Billing stops after 30 days unless you renew the token.",
       "bill-ack": "I understand that adding users requires payment.*",
       "cancel-button": "Cancel",
-      "input-invalid-email-text": "Invalid email",
-      "input-required-email-text": "Email is required",
-      "invite-button": "Invite",
-      "invite-field-desc": "Invite people by email",
-      "invite-field-label": "Invite",
       "learn-more-button": "Learn more",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Invalid email",
@@ -15228,17 +15251,12 @@
       "recipient-list-description": "Only people you've directly invited can access this dashboard",
       "recipient-list-title": "People with access",
       "recipient-required-email-text": "Email is required",
-      "resend-button": "Resend",
-      "resend-button-title": "Resend",
       "resend-invite-label": "Resend invite",
       "revoke-access-label": "Revoke access",
-      "revoke-button": "Revoke",
-      "revoke-button-title": "Revoke",
       "success-creation": "Your dashboard is ready for external sharing",
       "success-share-type-change": "Dashboard access updated: Only specific people can now access with the link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Please save your dashboard changes before updating the public configuration",
       "unsupport-data-source-alert-readmore-link": "Read more about supported data sources",
       "unsupported-data-source-alert-title": "Unsupported data sources",
       "unsupported-template-variable-alert-desc": "This public dashboard may not work since it uses template variables",
@@ -15252,25 +15270,6 @@
       "public-ack": "I understand that this entire dashboard will be public.*",
       "success-creation": "Your dashboard is now publicly accessible",
       "success-share-type-change": "Dashboard access updated: Anyone with the link can now access"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Collapse settings",
-      "expand-settings-tooltip": "Expand settings"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Default time range",
-      "default-time-range-label-desc": "The public dashboard uses the default time range settings of the dashboard",
-      "show-annotations-label": "Show annotations",
-      "show-annotations-label-desc": "Show annotations on public dashboard",
-      "time-range-picker-label": "Time range picker enabled",
-      "time-range-picker-label-desc": "Allow viewers to change time range"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotations = hide",
-      "annotations-show-text": "Annotations = show",
-      "time-range-picker-disabled-text": "Time range picker = disabled",
-      "time-range-picker-enabled-text": "Time range picker = enabled",
-      "time-range-text": "Time range = "
     },
     "share": {
       "success-delete": "Your dashboard is no longer shareable"
@@ -15619,6 +15618,10 @@
       "label": "Apply transformation to",
       "series": "Query and Transformation results"
     },
+    "transformation-name": {
+      "auto-placeholder": "(Auto)",
+      "edit": "Edit transformation name"
+    },
     "validation": {
       "duplicate-name": "Query name already exists",
       "empty-name": "An empty query name is not allowed"
@@ -15798,6 +15801,12 @@
     "title": "Unable to find application file"
   },
   "save-dashboards": {
+    "forbidden": {
+      "title": "You do not have permission to save this dashboard"
+    },
+    "invalid": {
+      "title": "This dashboard is not valid"
+    },
     "message-length": {
       "info": "The message is {{messageLength}} characters, which exceeds the maximum length of 500 characters. Please shorten it before saving.",
       "title": "Message too long"
@@ -15878,8 +15887,7 @@
       "deleted-by-removed": "Deleted account",
       "deleted-by-unknown-short": "<0></0> Unknown",
       "deleted-by-unknown-tooltip": "Failed to look up the account that deleted this dashboard",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Time remaining",
+      "deleted-header": "Deleted on",
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
@@ -16045,9 +16053,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Share"
-    },
     "embed": {
       "copy": "Copy to clipboard",
       "html": "Embed HTML",
@@ -16094,9 +16099,6 @@
       "time-range-description": "Transforms the current relative time range to an absolute time range",
       "time-range-label": "Lock time range"
     },
-    "panel": {
-      "title": "Share Panel"
-    },
     "snapshot": {
       "cancel-button": "Cancel",
       "copy-link-button": "Copy",
@@ -16112,16 +16114,11 @@
       "local-button": "Publish Snapshot",
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
-      "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
       "url-label": "Snapshot URL"
     },
     "tab-title": {
-      "embed": "Embed",
       "export": "Export",
-      "library-panel": "Library panel",
       "link": "Link",
-      "public-dashboard-title": "Public dashboard",
       "snapshot": "Snapshot"
     },
     "theme-picker": {
@@ -18204,10 +18201,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Check it out",
-      "description": "We've had a redesign!",
-      "revert": "Take me back",
-      "title": "New styles"
+      "apply": "Try new style",
+      "description": "The new UI is currently in Public Preview. <2>Learn more.</2>",
+      "revert": "Use old style",
+      "title": "Grafana has a new look. Ready to try it?",
+      "title-visual-refresh": "Grafana has a new look"
     }
   },
   "visualization": {

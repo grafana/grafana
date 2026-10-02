@@ -15,10 +15,10 @@ import (
 	"k8s.io/kube-openapi/pkg/handler3"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
@@ -65,7 +65,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 				},
 			})
 			require.NoError(t, err)
-			router := NewGrafanaRouter(loader)
+			router := NewGrafanaRouter(loader, nil)
 			require.NoError(t, router.reconcile(t.Context()))
 			for _, entry := range router.served {
 				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)
@@ -143,7 +143,7 @@ func TestPluginBackendLoad(t *testing.T) {
 	}
 	t.Run("loads an API handler using the plugin's clients", func(t *testing.T) {
 		calls := 0
-		backend, err := NewPluginBackend(plugin, func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+		backend, err := NewPluginBackend(plugin, func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 			calls++
 			require.Equal(t, plugin.JSONData.ID, id)
 			return nil, nil, nil
@@ -182,7 +182,7 @@ func TestPluginBackendLoad(t *testing.T) {
 	})
 	t.Run("propagates client errors", func(t *testing.T) {
 		failure := errors.New("plugin unavailable")
-		backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, v3.ClientV3, error) {
+		backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 			return nil, nil, failure
 		}, PluginDependencies{})
 		require.NoError(t, err)
@@ -196,7 +196,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	access := &actest.FakeAccessControl{ExpectedEvaluate: true}
 	backend, err := NewPluginBackend(definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "test-app", Type: plugins.TypeApp},
-	}, func(context.Context, string) (plugins.Client, v3.ClientV3, error) {
+	}, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 		return nil, nil, nil
 	}, PluginDependencies{Unified: &resource.MockResourceClient{}, AccessControl: access})
 	require.NoError(t, err)
@@ -220,4 +220,40 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 		router.HandleFunc(denied, req, http.NotFoundHandler())
 		require.Equal(t, http.StatusForbidden, denied.Code, denied.Body.String())
 	}
+}
+
+func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
+	valid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
+		FS:       plugins.NewFakeFS(),
+	}}
+	// Claims a core group; building its API would panic, and serving it
+	// would shadow the embedded server's dashboards.
+	invalid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
+		JSONData: plugins.JSONData{ID: "invalid-app", Type: plugins.TypeApp},
+		FS: plugins.NewInMemoryFS(map[string][]byte{
+			"app-sdk-manifest.json": []byte(`{
+				"apiVersion": "apps.grafana.app/v1alpha2",
+				"spec": {"appName": "invalid", "group": "dashboard.grafana.app",
+					"versions": [{"name": "v1", "served": true, "kinds": [{"kind": "Thing", "plural": "things", "scope": "Namespaced"}]}]}
+			}`),
+		}),
+	}}
+	sources := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{invalid, valid}, nil
+		}}}
+	}}
+	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
+		PluginSources: sources,
+		PluginDependencies: PluginDependencies{
+			PluginClient:    struct{ plugins.Client }{},
+			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+		},
+	})
+	require.NoError(t, err)
+	backends, err := loader.Load(t.Context())
+	require.NoError(t, err)
+	require.Len(t, backends, 1)
+	require.Equal(t, "valid-app", backends[0].Group().Name)
 }

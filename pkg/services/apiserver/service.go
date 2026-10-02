@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -361,9 +362,22 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
+	// Read here rather than next to the routes: whether the search that spans
+	// resource types is on decides what the api resource config below enables.
+	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
+	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
 	// add the builder group versions to the api resource config
 	apiResourceConfig.EnableVersions(groupVersions...)
+	if globalSearchAPIEnabled {
+		// No builder serves this group version, so nothing else enables it, and a
+		// group version that is not enabled has its custom routes skipped.
+		apiResourceConfig.EnableVersions(globalSearchGV)
+	}
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
@@ -428,15 +442,22 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
-	searchAndStorageRoutes := searchroutes.BuildWithOptions(
+	searchAndStorageRoutes := searchroutes.Build(
 		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
-		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
-			return s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
-		}},
 	)
+	if globalSearchAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
+		// The search that spans resource types has no resource of its own to hold a
+		// permission on, so the request itself carries no check. Every result is
+		// authorized against its own group, resource and folder before it is
+		// returned, and a search reveals nothing that listing the same objects would
+		// not. That relies on get and list being one permission for every covered
+		// type, as they are for dashboards and folders; a type where they differ
+		// needs a list check here. Only this one route is served under this group
+		// version.
+		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
+	}
 
 	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 	searchAndStorageRoutes = append(searchAndStorageRoutes,
@@ -487,6 +508,7 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
+			SearchAPIEnabled:      searchAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),

@@ -30,7 +30,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -483,7 +483,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 			return ErrResp(http.StatusBadRequest, err, "failed to update rule group")
 		} else if errors.Is(err, ngmodels.ErrQuotaReached) {
 			return ErrResp(http.StatusForbidden, err, "")
-		} else if errors.Is(err, store.ErrOptimisticLock) {
+		} else if errors.Is(err, rulestore.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
@@ -500,8 +500,8 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 	return changesToResponse(finalChanges)
 }
 
-func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*store.GroupDelta, *ngmodels.AlertConfiguration, error) {
-	var finalChanges *store.GroupDelta
+func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals, deletePermanently bool) (*rulestore.GroupDelta, *ngmodels.AlertConfiguration, error) {
+	var finalChanges *rulestore.GroupDelta
 	var dbConfig *ngmodels.AlertConfiguration
 	err := srv.xactManager.InTransaction(ctx, func(tranCtx context.Context) error {
 		id, _ := c.GetInternalID()
@@ -509,7 +509,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group",
 			groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", id, "userNamespace", userNamespace)
-		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
+		groupChanges, err := rulestore.CalculateChanges(tranCtx, srv.store, groupKey, rules)
 		if err != nil {
 			return err
 		}
@@ -559,7 +559,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 			return err
 		}
 
-		finalChanges = store.UpdateCalculatedRuleFields(groupChanges)
+		finalChanges = rulestore.UpdateCalculatedRuleFields(groupChanges)
 		logger.Debug("Updating database with the authorized changes", "add", len(finalChanges.New), "update", len(finalChanges.New), "delete", len(finalChanges.Delete))
 
 		// Delete first as this could prevent future unique constraint violations.
@@ -634,7 +634,7 @@ func (srv RulerSrv) performUpdateAlertRules(ctx context.Context, c *contextmodel
 	return finalChanges, dbConfig, nil
 }
 
-func changesToResponse(finalChanges *store.GroupDelta) response.Response {
+func changesToResponse(finalChanges *rulestore.GroupDelta) response.Response {
 	body := apimodels.UpdateRuleGroupResponse{
 		Message: "rule group updated successfully",
 		Created: make([]string, 0, len(finalChanges.New)),
@@ -726,7 +726,7 @@ func toNamespaceErrorResponse(err error) response.Response {
 
 // verifyProvisionedRulesNotAffected check that neither of provisioned alerts are affected by changes.
 // Returns errProvisionedResource if there is at least one rule in groups affected by changes that was provisioned.
-func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *store.GroupDelta) error {
+func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore provisioning.ProvisioningStore, orgID int64, ch *rulestore.GroupDelta) error {
 	provenances, err := provenanceStore.GetProvenances(ctx, orgID, (&ngmodels.AlertRule{}).ResourceType())
 	if err != nil {
 		return err
@@ -747,7 +747,7 @@ func verifyProvisionedRulesNotAffected(ctx context.Context, provenanceStore prov
 	return fmt.Errorf("%w: alert rule group [%s]", errProvisionedResource, errorMsg.String())
 }
 
-func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, validator ConditionValidator, user identity.Requester) error {
+func validateQueries(ctx context.Context, groupChanges *rulestore.GroupDelta, validator ConditionValidator, user identity.Requester) error {
 	if len(groupChanges.New) > 0 {
 		for _, rule := range groupChanges.New {
 			err := validator.Validate(eval.NewContext(ctx, user), rule.GetEvalCondition())
@@ -771,7 +771,7 @@ func validateQueries(ctx context.Context, groupChanges *store.GroupDelta, valida
 }
 
 // shouldValidate returns true if the rule is not paused and there are changes in the rule that are not ignored
-func shouldValidate(delta store.RuleDelta) bool {
+func shouldValidate(delta rulestore.RuleDelta) bool {
 	for _, diff := range delta.Diff {
 		if !slices.Contains(ignoreFieldsForValidate[:], diff.Path) {
 			return true
