@@ -4,10 +4,11 @@ import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
+  MT_FILL_FAILED,
   SETTINGS_FETCH_FAILED,
   SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
-import { DataSourceSettingsFetchError } from '../../errors';
+import { DataSourceCacheFillError, DataSourceSettingsFetchError } from '../../errors';
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from '../types';
 
@@ -36,8 +37,13 @@ export class MTDataSource implements DataSourceCacheSource {
     return this.fetchAndBuild();
   }
 
-  refreshList(): Promise<DataSourceListSnapshot> {
-    return this.fetchAndBuild();
+  async refreshList(): Promise<DataSourceListSnapshot> {
+    try {
+      return await this.fetchAndBuild();
+    } catch (error) {
+      logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'reload', source: this.kind });
+      throw new DataSourceCacheFillError(error);
+    }
   }
 
   async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {

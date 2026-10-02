@@ -283,3 +283,19 @@ describe('failed fill', () => {
     expect(callsTo(CONNECTIONS_URL)).toBe(2);
   });
 });
+
+describe('refresh after a data source change', () => {
+  it('keeps the current list and resolves when the connections refetch fails', async () => {
+    initDataSourceInstanceSettings({}, '');
+    await getDataSourceInstanceList();
+    routes[CONNECTIONS_URL] = { status: 500 };
+
+    await expect(syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' })).resolves.toBeUndefined();
+
+    expect((await getDataSourceInstanceList()).map((item) => item.uid)).toEqual(['uid-prom', 'grafana']);
+    expect(logError).toHaveBeenCalledWith(expect.objectContaining({ message: MT_FILL_FAILED }), {
+      reason: 'reload',
+      source: 'mt',
+    });
+  });
+});
