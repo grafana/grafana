@@ -132,6 +132,61 @@ describe('applySavedViewState', () => {
       expect(env.state.value).toBe('dev');
     }
   });
+
+  it('resets a variable the spec does not mention back to the baseline, not whatever it currently is', () => {
+    // Regression test: selecting a view is a full, deterministic switch, not a partial overlay --
+    // a variable the view is silent on (e.g. one added to the dashboard after the view was saved)
+    // must not keep whatever ad-hoc value a prior view or manual edit left it in.
+    const scene = buildScene({ env: 'dev' }); // 'dev' is left over from something else entirely
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [
+        { name: 'adhocFilter', type: 'adhoc', filters: [] },
+        { name: 'env', type: 'query', value: 'prod' }, // the dashboard's own authored default
+      ],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-24h', to: 'now-1h' },
+      // Doesn't mention env at all.
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'b' }] }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
+
+  it('prefers the spec over the baseline when both mention the same variable', () => {
+    const scene = buildScene({ env: 'dev' });
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'staging' }],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'prod' }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
 });
 
 describe('applySavedViewStateAsDefault', () => {

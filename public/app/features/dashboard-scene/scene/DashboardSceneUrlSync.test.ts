@@ -133,6 +133,31 @@ describe('DashboardSceneUrlSync', () => {
 
       expect(scene.state.$timeRange?.state.from).toBe('now-6h'); // unchanged: branch never fired
     });
+
+    it('captures savedViewBaseline from the dashboard exactly as authored, on the first url-sync pass', () => {
+      const { scene } = buildSceneWithSavedViews();
+      expect(scene.state.savedViewBaseline).toBeUndefined();
+
+      scene.urlSync?.updateFromUrl({});
+
+      expect(scene.state.savedViewBaseline?.timeRange).toEqual({ from: 'now-6h', to: 'now' });
+    });
+
+    it('never overwrites savedViewBaseline on a later pass, even after a view or manual edit changed the scene', () => {
+      // Regression test: the baseline is the one thing a saved view falls back to for anything it
+      // doesn't mention -- if a later pass re-captured it, it would just be whatever the LAST view
+      // left behind, defeating the point (see SavedViewsPane.handleSelect / applySavedViewState).
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+      const baselineAfterFirstPass = scene.state.savedViewBaseline;
+
+      // A second, unrelated pass (e.g. a manual time-range edit synced to the url) must not touch it.
+      scene.urlSync?.updateFromUrl({});
+
+      expect(scene.state.savedViewBaseline).toBe(baselineAfterFirstPass);
+      expect(scene.state.savedViewBaseline?.timeRange).toEqual({ from: 'now-6h', to: 'now' });
+    });
   });
 
   describe('Scroll to row', () => {

@@ -57,10 +57,36 @@ function captureVariable(variable: SceneVariable): SavedViewVariable | undefined
   return undefined;
 }
 
-/** The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene. */
-export function applySavedViewState(dashboard: DashboardScene, spec: SavedDashboardViewSpec): void {
+/**
+ * The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene.
+ *
+ * `baseline` (dashboard.state.savedViewBaseline — see DashboardSceneUrlSync) fills in any variable
+ * the view doesn't itself capture: selecting a view is a full, deterministic switch, not a partial
+ * overlay, so a variable the view is silent on resets to the dashboard's own authored default
+ * rather than staying at whatever ad-hoc value a prior view or manual edit left it in. Without a
+ * baseline (e.g. a test harness that never went through a url-sync pass), falls back to spec as-is.
+ */
+export function applySavedViewState(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): void {
   applyTimeRange(dashboard, spec.timeRange);
-  applyVariables(dashboard, spec.variables);
+  applyVariables(dashboard, mergeVariablesWithBaseline(spec.variables, baseline?.variables));
+}
+
+function mergeVariablesWithBaseline(
+  spec: SavedViewVariable[],
+  baseline: SavedViewVariable[] | undefined
+): SavedViewVariable[] {
+  if (!baseline) {
+    return spec;
+  }
+  const byName = new Map(baseline.map((v) => [v.name, v]));
+  for (const variable of spec) {
+    byName.set(variable.name, variable);
+  }
+  return Array.from(byName.values());
 }
 
 /**
