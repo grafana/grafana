@@ -47,7 +47,6 @@ export function createBootDataSource(boot: BootDataSourceSettings): DataSourceCa
       const settings = payload ?? (await getBackendSrv().get<BootDataSourceSettings>('/api/frontend/settings'));
       return createBootDataSnapshot(settings);
     },
-    refreshMetas: async () => undefined,
     // Unreachable in practice: the snapshot preloads settings for every list item, and the cache
     // only asks the source on a miss. If it is reached, the uid is not in boot data.
     loadSettings: async () => undefined,
