@@ -73,9 +73,18 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, editview, shareView, viewFilter, savedViews } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, editview, shareView, viewFilter, savedViews, savedViewBaseline } =
+      this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
+
+    // Captured once, on this scene's very first url-sync pass -- before this pass's own
+    // $timeRange/variable updateFromUrl calls run (see the ordering note below), so this reflects
+    // the dashboard exactly as authored, untouched by any URL param or saved view. Every later
+    // apply of a saved view falls back to this for anything the view itself doesn't capture.
+    if (!savedViewBaseline) {
+      update.savedViewBaseline = captureSavedViewState(this._scene);
+    }
 
     // update.viewFilter is applied synchronously below (a plain scalar on this scene, not a
     // cross-object mutation, so it doesn't participate in the problem this comment describes).

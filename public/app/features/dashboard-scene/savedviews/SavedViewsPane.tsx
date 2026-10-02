@@ -246,7 +246,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
     // path never fires at all, and this component needs to work with no live UrlSyncManager too
     // (e.g. its own tests).
     dashboard.setState({ viewFilter: view.metadata.name });
-    applySavedViewState(dashboard, view.spec);
+    applySavedViewState(dashboard, view.spec, dashboard.state.savedViewBaseline);
     locationService.partial({ viewFilter: view.metadata.name });
   }
 

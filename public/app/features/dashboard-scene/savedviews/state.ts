@@ -127,13 +127,59 @@ function captureSectionFilters(dashboard: DashboardScene): SavedViewSectionFilte
   return sectionFilters.length > 0 ? sectionFilters : undefined;
 }
 
-/** The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene. */
-export function applySavedViewState(dashboard: DashboardScene, spec: SavedDashboardViewSpec): void {
+/**
+ * The inverse of captureSavedViewState — pushes a stored view's spec onto a live scene.
+ *
+ * `baseline` (dashboard.state.savedViewBaseline — see DashboardSceneUrlSync) fills in any variable
+ * or section-scoped filter the view doesn't itself capture: selecting a view is a full,
+ * deterministic switch, not a partial overlay, so anything the view is silent on resets to the
+ * dashboard's own authored default rather than staying at whatever ad-hoc value a prior view or
+ * manual edit left it in. Without a baseline (e.g. a test harness that never went through a
+ * url-sync pass), falls back to spec as-is.
+ */
+export function applySavedViewState(
+  dashboard: DashboardScene,
+  spec: SavedDashboardViewSpec,
+  baseline?: SavedDashboardViewSpec
+): void {
   applyTimeRange(dashboard, spec.timeRange);
   if (dashboard.state.$variables) {
-    applyVariablesToSet(dashboard.state.$variables, spec.variables);
+    applyVariablesToSet(dashboard.state.$variables, mergeVariablesWithBaseline(spec.variables, baseline?.variables));
   }
-  applySectionFilters(dashboard, spec.sectionFilters);
+  applySectionFilters(dashboard, mergeSectionFiltersWithBaseline(spec.sectionFilters, baseline?.sectionFilters));
+}
+
+function mergeVariablesWithBaseline(
+  spec: SavedViewVariable[],
+  baseline: SavedViewVariable[] | undefined
+): SavedViewVariable[] {
+  if (!baseline) {
+    return spec;
+  }
+  const byName = new Map(baseline.map((v) => [v.name, v]));
+  for (const variable of spec) {
+    byName.set(variable.name, variable);
+  }
+  return Array.from(byName.values());
+}
+
+function mergeSectionFiltersWithBaseline(
+  spec: SavedViewSectionFilter[] | undefined,
+  baseline: SavedViewSectionFilter[] | undefined
+): SavedViewSectionFilter[] | undefined {
+  if (!baseline) {
+    return spec;
+  }
+  const bySectionKey = new Map(baseline.map((s) => [s.sectionKey, s]));
+  for (const section of spec ?? []) {
+    const existing = bySectionKey.get(section.sectionKey);
+    bySectionKey.set(section.sectionKey, {
+      ...section,
+      variables: mergeVariablesWithBaseline(section.variables, existing?.variables),
+    });
+  }
+  const merged = Array.from(bySectionKey.values());
+  return merged.length > 0 ? merged : undefined;
 }
 
 /**
