@@ -19,13 +19,6 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
-	if !supportsDeletedBatchReads(s.backend) {
-		err := ErrBatchReadUnsupported
-		if req.NextPageToken == "" {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
-		}
-		return &resourcepb.ListResponse{Error: NewServiceUnavailableError("batch reading trash is not supported by this storage backend")}, nil
-	}
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
@@ -148,6 +141,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
 		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
+		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||
 		req.KeysOnly || req.Options.Key.Namespace == "" || req.Options.Key.Name != "" ||
 		req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact ||

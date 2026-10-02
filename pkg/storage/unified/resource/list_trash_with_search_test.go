@@ -188,6 +188,7 @@ func TestShouldUseSearchForTrash(t *testing.T) {
 				tc.mutate(req)
 			}
 			s := &server{}
+			s.backend = &trashBatchFakeBackend{}
 			if !tc.disable {
 				s.searchClient = &stubSearchClient{}
 			}
@@ -337,8 +338,8 @@ func TestListTrashWithSearchSkipsGarbageCollectedDeletionMarkers(t *testing.T) {
 	require.Equal(t, []string{"41"}, token.SearchAfter)
 }
 
-func TestListTrashWithSearchFallsBackWhenBatchReadsAreUnsupported(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+func TestListTrashWithSearchUsesStoreWhenBatchReadsAreUnsupported(t *testing.T) {
+	ctx, metricsState := withRequestMetricsState(identity.WithServiceIdentityContext(context.Background(), 1))
 	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors", Name: "a"}
 	searchResp := &resourcepb.ResourceSearchResponse{
 		ResourceVersion: 100,
@@ -356,6 +357,7 @@ func TestListTrashWithSearchFallsBackWhenBatchReadsAreUnsupported(t *testing.T) 
 	require.Equal(t, 1, backend.listHistoryCalls)
 	require.Zero(t, backend.batchCalls)
 	require.Nil(t, searchClient.last)
+	require.Equal(t, listPathTrash, metricsState.listPath)
 }
 
 func TestListTrashWithSearchKeepsStoreTokenOnStorePath(t *testing.T) {
