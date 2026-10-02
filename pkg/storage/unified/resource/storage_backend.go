@@ -583,16 +583,19 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 			return err
 		}
 
-		// Pruner needs to exclude deleted events
-		if counter < prunerMaxLimit && datakey.Action != DataActionDeleted {
+		if datakey.Action == DataActionDeleted {
+			// Each deletion starts an older incarnation in this descending scan.
+			// Give it its own retention budget so newer incarnations cannot prune
+			// the predecessor
+			counter = 0
+			continue
+		}
+		if counter < prunerMaxLimit {
 			counter++
 			continue
 		}
 
-		// If we already have the configured number of versions, delete any more create or update events
-		if datakey.Action != DataActionDeleted {
-			toDelete = append(toDelete, datakey)
-		}
+		toDelete = append(toDelete, datakey)
 	}
 	if err := k.dataStore.BatchDelete(ctx, toDelete); err != nil {
 		return err
@@ -1477,6 +1480,10 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		}
 		stop()
 	}, nil
+}
+
+func (*kvStorageBackend) SupportsDeletedBatchReads() bool {
+	return true
 }
 
 func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error) {

@@ -55,6 +55,7 @@ const (
 	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
 	internalImportTimesKey           = "import_times"            // Encoded as JSON of "group/resource" to unix nanoseconds, 0 for no import
 	internalDocumentTypesKey         = "document_types"          // Encoded as JSON list of "group/resource"
+	internalReconciledAtKey          = "reconciled_at"           // Encoded as big-endian int64 unix nanoseconds
 	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
@@ -2678,6 +2679,22 @@ func (b *bleveIndex) writeDocumentTypesLocked(types map[schema.GroupResource]str
 	}
 	b.documentTypes = types
 	return nil
+}
+
+// ReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) ReconciledAt() (time.Time, error) {
+	raw, err := b.index.GetInternal([]byte(internalReconciledAtKey))
+	if err != nil || len(raw) < 8 {
+		return time.Time{}, err
+	}
+	return time.Unix(0, int64(binary.BigEndian.Uint64(raw))).UTC(), nil
+}
+
+// RecordReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) RecordReconciledAt(t time.Time) error {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(t.UnixNano()))
+	return b.index.SetInternal([]byte(internalReconciledAtKey), buf)
 }
 
 // ImportTimes implements resource.ResourceIndex.
