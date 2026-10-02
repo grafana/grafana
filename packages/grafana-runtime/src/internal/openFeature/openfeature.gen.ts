@@ -14,6 +14,8 @@ import {
 
 // Flag key constants for programmatic access
 export const FlagKeys = {
+  /** Enable configuration of alert enrichments in Grafana Cloud. */
+  AlertEnrichment: "alertEnrichment",
   /** Enables the alert rule restore feature */
   AlertRuleRestore: "alertRuleRestore",
   /** Hand data source managed alerting URLs over to the grafana-prometheusalerting-app plugin */
@@ -24,12 +26,36 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking */
+  AlertingAlertListPanelEnhancements: "alertingAlertListPanelEnhancements",
+  /** Rule backtesting API for alerting */
+  AlertingBacktesting: "alertingBacktesting",
+  /** Disables the ability to send alerts to an external Alertmanager datasource. */
+  AlertingDisableSendAlertsExternal: "alertingDisableSendAlertsExternal",
+  /** Enable Assistant Investigations enrichment type. */
+  AlertingEnrichmentAssistantInvestigations: "alertingEnrichmentAssistantInvestigations",
+  /** Enable enrichment per rule in the alerting UI. */
+  AlertingEnrichmentPerRule: "alertingEnrichmentPerRule",
+  /** Enables the new Jira integration for contact points in cloud alert managers. */
+  AlertingJiraIntegration: "alertingJiraIntegration",
+  /** Enables the alerting list view v2 preview toggle */
+  AlertingListViewV2PreviewToggle: "alertingListViewV2PreviewToggle",
+  /** Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting */
+  AlertingMigrationWizardUI: "alertingMigrationWizardUI",
   /** Enables the new Alerting navigation structure with improved menu grouping */
   AlertingNavigationV2: "alertingNavigationV2",
+  /** Uses Prometheus rules as the primary source of truth for ruler-enabled data sources */
+  AlertingPrometheusRulesPrimary: "alertingPrometheusRulesPrimary",
   /** Enables the UI functionality to recover and view deleted alert rules */
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
+  /** Use the new k8s API for fetching integration type schemas */
+  AlertingSyncNotifiersApiMigration: "alertingSyncNotifiersApiMigration",
   /** Enables the alerting triage feature */
   AlertingTriage: "alertingTriage",
+  /** Enables the UI to use certain backend-side filters */
+  AlertingUIUseBackendFilters: "alertingUIUseBackendFilters",
+  /** Enables the UI to use rules backend-side filters 100% compatible with the frontend filters */
+  AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -40,22 +66,42 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables the logs builder mode for the Azure Monitor data source */
+  AzureMonitorLogsBuilderEditor: "azureMonitorLogsBuilderEditor",
   /** Allow elements nesting */
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Enables the new sidebar filter panel in the Add new connection page */
+  ConnectionsFilterSidebar: "connectionsFilterSidebar",
+  /** Enables browser crash detection reporting to Faro. */
+  CrashDetection: "crashDetection",
+  /** Enables creating alert rules from a panel using a drawer UI */
+  CreateAlertRuleFromPanel: "createAlertRuleFromPanel",
+  /** Enables Critical User Journey (CUJ) tracking */
+  CujTracking: "cujTracking",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
   DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
+  /** Supports __from and __to macros that always use the dashboard level time range */
+  DashboardLevelTimeMacros: "dashboardLevelTimeMacros",
+  /** Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page */
+  DashboardLibrary: "dashboardLibrary",
   /** Enables new dashboard layouts */
   DashboardNewLayouts: "dashboardNewLayouts",
+  /** Enables a flow to get started with a new dashboard from a template */
+  DashboardTemplates: "dashboardTemplates",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
+  DashboardValidatorApp: "dashboardValidatorApp",
+  /** Shows defined connections for a data source in the plugins detail page */
+  DatasourceConnectionsTab: "datasourceConnectionsTab",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -72,14 +118,22 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Set this to true to enable all app chrome extensions registered by plugins. */
+  EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
+  /** Set this to true to enable all dashboard empty state extensions registered by plugins. */
+  EnableDashboardEmptyExtensions: "enableDashboardEmptyExtensions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
   /** A/A test for recently viewed dashboards feature */
   ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
+  /** Automatic service account and token setup for plugins */
+  ExternalServiceAccounts: "externalServiceAccounts",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
+  /** Enable favorite datasources */
+  FavoriteDatasources: "favoriteDatasources",
   /** Enables the feedback button in the dashboard edit sidebar */
   FeedbackButton: "feedbackButton",
   /** Renders the flame graph's top table using TableNG instead of the legacy Table */
@@ -160,22 +214,38 @@ export const FlagKeys = {
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
+  /** Register experimental APIs with the k8s API server, including all datasources */
+  GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
+  /** Enables the Graphite data source full backend mode */
+  GraphiteBackendMode: "graphiteBackendMode",
+  /** Enable groupBy variable support in scenes dashboards */
+  GroupByVariable: "groupByVariable",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
+  /** Adds support for Kubernetes correlations */
+  KubernetesCorrelations: "kubernetesCorrelations",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
   LibraryelementsKubernetesLibraryPanels: "libraryelements.kubernetesLibraryPanels",
   /** Enables the logs tableNG panel to replace existing tableRT */
   LogsTablePanelNG: "logsTablePanelNG",
+  /** Changes logs responses from Loki to be compliant with the dataplane specification. */
+  LokiLogsDataplane: "lokiLogsDataplane",
   /** Use stream shards to split queries into smaller subqueries */
   LokiShardSplitting: "lokiShardSplitting",
   /** Enables managed plugins v2 (expanded rollout, community plugin coverage) */
   ManagedPluginsV2: "managedPluginsV2",
+  /** Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering. */
+  NewDashboardWithFiltersAndGroupBy: "newDashboardWithFiltersAndGroupBy",
   /** Enables the new Saved queries (query library) modal experience */
   NewSavedQueriesExperience: "newSavedQueriesExperience",
   /** Applies OTel formatting templates to displayed logs */
   OtelLogsFormatting: "otelLogsFormatting",
+  /** Enables a new panel time settings drawer */
+  PanelTimeSettings: "panelTimeSettings",
+  /** Search for dashboards using panel title */
+  PanelTitleSearch: "panelTitleSearch",
   /** Shows text labels on the add and stacked view buttons in PanelEditNext */
   PaneleditButtonLabels: "paneledit.buttonLabels",
   /** Enables viewing non-applicable drilldowns on a panel level */
@@ -184,12 +254,18 @@ export const FlagKeys = {
   PieChartGradientColorScheme: "pieChartGradientColorScheme",
   /** Enables RBAC for playlists */
   PlaylistsRBAC: "playlistsRBAC",
+  /** Show insights for plugins in the plugin details page */
+  PluginInsights: "pluginInsights",
   /** Initializes data source instance settings asynchronously from the API instead of synchronously from boot data */
   PluginsInitDataSourcesAsync: "plugins.initDataSourcesAsync",
   /** Enables plugins setting from new apis */
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
+  /** Prefer library panel title over viz panel title. */
+  PreferLibraryPanelTitle: "preferLibraryPanelTitle",
+  /** Enables possibility to preserve dashboard variables and time range when navigating between dashboards */
+  PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
   /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
@@ -200,6 +276,8 @@ export const FlagKeys = {
   ProvisioningExport: "provisioningExport",
   /** Allow setting folder metadata for provisioned folders */
   ProvisioningFolderMetadata: "provisioningFolderMetadata",
+  /** Enables public dashboard sharing to be restricted to only allowed emails */
+  PublicDashboardsEmailSharing: "publicDashboardsEmailSharing",
   /** Enables next generation query editor experience */
   QueryEditorNext: "queryEditorNext",
   /** Store query history in browser IndexedDB instead of server-side */
@@ -208,22 +286,38 @@ export const FlagKeys = {
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables Saved queries (query library) feature */
   QueryLibrary: "queryLibrary",
+  /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
+  QueryService: "queryService",
+  /** Routes requests to the new query service */
+  QueryServiceFromUI: "queryServiceFromUI",
+  /** Enables the Query with Assistant button in the query editor */
+  QueryWithAssistant: "queryWithAssistant",
   /** Enables AI-assisted coauthoring in code query editors */
   QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
   RawPrometheusTableNg: "rawPrometheus.tableNg",
   /** Enables recently viewed dashboards section in the browsing dashboard page */
   RecentlyViewedDashboards: "recentlyViewedDashboards",
+  /** Enables reload of dashboards on scopes, time range and variables changes */
+  ReloadDashboardsOnParamsChange: "reloadDashboardsOnParamsChange",
   /** Enables reporting for any page in Grafana */
   ReportingAnyPageReporting: "reporting.anyPageReporting",
   /** Enables the configurable footer settings for PDF reports */
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
+  /** Enables the new role picker drawer design */
+  RolePickerDrawer: "rolePickerDrawer",
   /** Enables Saved queries (query library) RBAC permissions */
   SavedQueriesRBAC: "savedQueriesRBAC",
+  /** Enables the use of scope filters in Grafana */
+  ScopeFilters: "scopeFilters",
+  /** Enable scope search to include all levels of the scope node tree */
+  ScopeSearchAllLevels: "scopeSearchAllLevels",
   /** Enable the secrets management app platform UI */
   SecretsManagementAppPlatformUI: "secretsManagementAppPlatformUI",
+  /** Enables the ASAP smoothing transformation for time series data */
+  SmoothingTransformation: "smoothingTransformation",
   /** Routes snapshot requests from /api to the /apis endpoint */
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
@@ -234,6 +328,8 @@ export const FlagKeys = {
   SqlExpressionsColumnAutoComplete: "sqlExpressionsColumnAutoComplete",
   /** Enables option to position series names above bars in the state timeline panel */
   StateTimelineNameAboveBars: "stateTimeline.nameAboveBars",
+  /** Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page */
+  SuggestedDashboards: "suggestedDashboards",
   /** Enables the 'Customize with Assistant' button on suggested dashboard cards */
   SuggestedDashboardsAssistantButton: "suggestedDashboardsAssistantButton",
   /** Sizes TableNG auto-width columns to fit their content instead of distributing evenly */
@@ -250,11 +346,30 @@ export const FlagKeys = {
   TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables time comparison option in supported panels */
+  TimeComparison: "timeComparison",
+  /** Enables time pickers sync */
+  TimeRangeProvider: "timeRangeProvider",
+  /** Show transformation quick-start cards in empty transformations state */
+  TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
+  /** Use the scopes navigation endpoint instead of the dashboardbindings endpoint */
+  UseScopesNavigationEndpoint: "useScopesNavigationEndpoint",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
+
+/**
+ * Enable configuration of alert enrichments in Grafana Cloud.
+ *
+ * **Details:**
+ * - flag key: `alertEnrichment`
+ * - default value: `false`
+ */
+export const useFlagAlertEnrichment = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertEnrichment", false, options).value;
+};
 
 /**
  * Enables the alert rule restore feature
@@ -312,6 +427,94 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
 };
 
 /**
+ * Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking
+ *
+ * **Details:**
+ * - flag key: `alertingAlertListPanelEnhancements`
+ * - default value: `false`
+ */
+export const useFlagAlertingAlertListPanelEnhancements = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingAlertListPanelEnhancements", false, options).value;
+};
+
+/**
+ * Rule backtesting API for alerting
+ *
+ * **Details:**
+ * - flag key: `alertingBacktesting`
+ * - default value: `false`
+ */
+export const useFlagAlertingBacktesting = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingBacktesting", false, options).value;
+};
+
+/**
+ * Disables the ability to send alerts to an external Alertmanager datasource.
+ *
+ * **Details:**
+ * - flag key: `alertingDisableSendAlertsExternal`
+ * - default value: `false`
+ */
+export const useFlagAlertingDisableSendAlertsExternal = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingDisableSendAlertsExternal", false, options).value;
+};
+
+/**
+ * Enable Assistant Investigations enrichment type.
+ *
+ * **Details:**
+ * - flag key: `alertingEnrichmentAssistantInvestigations`
+ * - default value: `false`
+ */
+export const useFlagAlertingEnrichmentAssistantInvestigations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingEnrichmentAssistantInvestigations", false, options).value;
+};
+
+/**
+ * Enable enrichment per rule in the alerting UI.
+ *
+ * **Details:**
+ * - flag key: `alertingEnrichmentPerRule`
+ * - default value: `false`
+ */
+export const useFlagAlertingEnrichmentPerRule = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingEnrichmentPerRule", false, options).value;
+};
+
+/**
+ * Enables the new Jira integration for contact points in cloud alert managers.
+ *
+ * **Details:**
+ * - flag key: `alertingJiraIntegration`
+ * - default value: `false`
+ */
+export const useFlagAlertingJiraIntegration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingJiraIntegration", false, options).value;
+};
+
+/**
+ * Enables the alerting list view v2 preview toggle
+ *
+ * **Details:**
+ * - flag key: `alertingListViewV2PreviewToggle`
+ * - default value: `false`
+ */
+export const useFlagAlertingListViewV2PreviewToggle = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingListViewV2PreviewToggle", false, options).value;
+};
+
+/**
+ * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
+ *
+ * **Details:**
+ * - flag key: `alertingMigrationWizardUI`
+ * - default value: `false`
+ */
+export const useFlagAlertingMigrationWizardUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingMigrationWizardUI", false, options).value;
+};
+
+/**
  * Enables the new Alerting navigation structure with improved menu grouping
  *
  * **Details:**
@@ -320,6 +523,17 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
  */
 export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingNavigationV2", true, options).value;
+};
+
+/**
+ * Uses Prometheus rules as the primary source of truth for ruler-enabled data sources
+ *
+ * **Details:**
+ * - flag key: `alertingPrometheusRulesPrimary`
+ * - default value: `false`
+ */
+export const useFlagAlertingPrometheusRulesPrimary = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingPrometheusRulesPrimary", false, options).value;
 };
 
 /**
@@ -334,6 +548,17 @@ export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Use the new k8s API for fetching integration type schemas
+ *
+ * **Details:**
+ * - flag key: `alertingSyncNotifiersApiMigration`
+ * - default value: `false`
+ */
+export const useFlagAlertingSyncNotifiersApiMigration = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingSyncNotifiersApiMigration", false, options).value;
+};
+
+/**
  * Enables the alerting triage feature
  *
  * **Details:**
@@ -342,6 +567,28 @@ export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationO
  */
 export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingTriage", false, options).value;
+};
+
+/**
+ * Enables the UI to use certain backend-side filters
+ *
+ * **Details:**
+ * - flag key: `alertingUIUseBackendFilters`
+ * - default value: `true`
+ */
+export const useFlagAlertingUIUseBackendFilters = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingUIUseBackendFilters", true, options).value;
+};
+
+/**
+ * Enables the UI to use rules backend-side filters 100% compatible with the frontend filters
+ *
+ * **Details:**
+ * - flag key: `alertingUIUseFullyCompatBackendFilters`
+ * - default value: `true`
+ */
+export const useFlagAlertingUIUseFullyCompatBackendFilters = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingUIUseFullyCompatBackendFilters", true, options).value;
 };
 
 /**
@@ -400,6 +647,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Enables the logs builder mode for the Azure Monitor data source
+ *
+ * **Details:**
+ * - flag key: `azureMonitorLogsBuilderEditor`
+ * - default value: `false`
+ */
+export const useFlagAzureMonitorLogsBuilderEditor = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorLogsBuilderEditor", false, options).value;
+};
+
+/**
  * Allow elements nesting
  *
  * **Details:**
@@ -419,6 +677,50 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Enables the new sidebar filter panel in the Add new connection page
+ *
+ * **Details:**
+ * - flag key: `connectionsFilterSidebar`
+ * - default value: `false`
+ */
+export const useFlagConnectionsFilterSidebar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("connectionsFilterSidebar", false, options).value;
+};
+
+/**
+ * Enables browser crash detection reporting to Faro.
+ *
+ * **Details:**
+ * - flag key: `crashDetection`
+ * - default value: `false`
+ */
+export const useFlagCrashDetection = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("crashDetection", false, options).value;
+};
+
+/**
+ * Enables creating alert rules from a panel using a drawer UI
+ *
+ * **Details:**
+ * - flag key: `createAlertRuleFromPanel`
+ * - default value: `false`
+ */
+export const useFlagCreateAlertRuleFromPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("createAlertRuleFromPanel", false, options).value;
+};
+
+/**
+ * Enables Critical User Journey (CUJ) tracking
+ *
+ * **Details:**
+ * - flag key: `cujTracking`
+ * - default value: `false`
+ */
+export const useFlagCujTracking = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("cujTracking", false, options).value;
 };
 
 /**
@@ -455,6 +757,28 @@ export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Supports __from and __to macros that always use the dashboard level time range
+ *
+ * **Details:**
+ * - flag key: `dashboardLevelTimeMacros`
+ * - default value: `false`
+ */
+export const useFlagDashboardLevelTimeMacros = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardLevelTimeMacros", false, options).value;
+};
+
+/**
+ * Displays datasource provisioned dashboards in dashboard empty page, only when coming from datasource configuration page
+ *
+ * **Details:**
+ * - flag key: `dashboardLibrary`
+ * - default value: `false`
+ */
+export const useFlagDashboardLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardLibrary", false, options).value;
+};
+
+/**
  * Enables new dashboard layouts
  *
  * **Details:**
@@ -463,6 +787,17 @@ export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOption
  */
 export const useFlagDashboardNewLayouts = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardNewLayouts", true, options).value;
+};
+
+/**
+ * Enables a flow to get started with a new dashboard from a template
+ *
+ * **Details:**
+ * - flag key: `dashboardTemplates`
+ * - default value: `false`
+ */
+export const useFlagDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardTemplates", false, options).value;
 };
 
 /**
@@ -485,6 +820,28 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Enables dashboard validator app to run compatibility checks between a dashboard and data source
+ *
+ * **Details:**
+ * - flag key: `dashboardValidatorApp`
+ * - default value: `false`
+ */
+export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Shows defined connections for a data source in the plugins detail page
+ *
+ * **Details:**
+ * - flag key: `datasourceConnectionsTab`
+ * - default value: `false`
+ */
+export const useFlagDatasourceConnectionsTab = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("datasourceConnectionsTab", false, options).value;
 };
 
 /**
@@ -576,6 +933,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
 };
 
 /**
+ * Set this to true to enable all app chrome extensions registered by plugins.
+ *
+ * **Details:**
+ * - flag key: `enableAppChromeExtensions`
+ * - default value: `false`
+ */
+export const useFlagEnableAppChromeExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableAppChromeExtensions", false, options).value;
+};
+
+/**
  * Enables new colorblind safe palette and line fill patterns for panels
  *
  * **Details:**
@@ -584,6 +952,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
  */
 export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableColorblindSafePanelOptions", false, options).value;
+};
+
+/**
+ * Set this to true to enable all dashboard empty state extensions registered by plugins.
+ *
+ * **Details:**
+ * - flag key: `enableDashboardEmptyExtensions`
+ * - default value: `false`
+ */
+export const useFlagEnableDashboardEmptyExtensions = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("enableDashboardEmptyExtensions", false, options).value;
 };
 
 /**
@@ -609,6 +988,17 @@ export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEva
 };
 
 /**
+ * Automatic service account and token setup for plugins
+ *
+ * **Details:**
+ * - flag key: `externalServiceAccounts`
+ * - default value: `false`
+ */
+export const useFlagExternalServiceAccounts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("externalServiceAccounts", false, options).value;
+};
+
+/**
  * Enable Faro session replay for Grafana
  *
  * **Details:**
@@ -617,6 +1007,17 @@ export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEva
  */
 export const useFlagFaroSessionReplay = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("faroSessionReplay", false, options).value;
+};
+
+/**
+ * Enable favorite datasources
+ *
+ * **Details:**
+ * - flag key: `favoriteDatasources`
+ * - default value: `false`
+ */
+export const useFlagFavoriteDatasources = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("favoriteDatasources", false, options).value;
 };
 
 /**
@@ -1060,6 +1461,39 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Register experimental APIs with the k8s API server, including all datasources
+ *
+ * **Details:**
+ * - flag key: `grafanaAPIServerWithExperimentalAPIs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafanaAPIServerWithExperimentalAPIs", false, options).value;
+};
+
+/**
+ * Enables the Graphite data source full backend mode
+ *
+ * **Details:**
+ * - flag key: `graphiteBackendMode`
+ * - default value: `false`
+ */
+export const useFlagGraphiteBackendMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("graphiteBackendMode", false, options).value;
+};
+
+/**
+ * Enable groupBy variable support in scenes dashboards
+ *
+ * **Details:**
+ * - flag key: `groupByVariable`
+ * - default value: `false`
+ */
+export const useFlagGroupByVariable = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("groupByVariable", false, options).value;
+};
+
+/**
  * Enables an inline version of Log Details that creates no new scrolls
  *
  * **Details:**
@@ -1068,6 +1502,17 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
  */
 export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("inlineLogDetailsNoScrolls", false, options).value;
+};
+
+/**
+ * Adds support for Kubernetes correlations
+ *
+ * **Details:**
+ * - flag key: `kubernetesCorrelations`
+ * - default value: `false`
+ */
+export const useFlagKubernetesCorrelations = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("kubernetesCorrelations", false, options).value;
 };
 
 /**
@@ -1104,6 +1549,17 @@ export const useFlagLogsTablePanelNG = (options?: ReactFlagEvaluationOptions): b
 };
 
 /**
+ * Changes logs responses from Loki to be compliant with the dataplane specification.
+ *
+ * **Details:**
+ * - flag key: `lokiLogsDataplane`
+ * - default value: `false`
+ */
+export const useFlagLokiLogsDataplane = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("lokiLogsDataplane", false, options).value;
+};
+
+/**
  * Use stream shards to split queries into smaller subqueries
  *
  * **Details:**
@@ -1126,6 +1582,17 @@ export const useFlagManagedPluginsV2 = (options?: ReactFlagEvaluationOptions): b
 };
 
 /**
+ * Enables filters and group by variables on all new dashboards. Variables are added only if default data source supports filtering.
+ *
+ * **Details:**
+ * - flag key: `newDashboardWithFiltersAndGroupBy`
+ * - default value: `false`
+ */
+export const useFlagNewDashboardWithFiltersAndGroupBy = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("newDashboardWithFiltersAndGroupBy", false, options).value;
+};
+
+/**
  * Enables the new Saved queries (query library) modal experience
  *
  * **Details:**
@@ -1145,6 +1612,28 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("otelLogsFormatting", false, options).value;
+};
+
+/**
+ * Enables a new panel time settings drawer
+ *
+ * **Details:**
+ * - flag key: `panelTimeSettings`
+ * - default value: `false`
+ */
+export const useFlagPanelTimeSettings = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("panelTimeSettings", false, options).value;
+};
+
+/**
+ * Search for dashboards using panel title
+ *
+ * **Details:**
+ * - flag key: `panelTitleSearch`
+ * - default value: `false`
+ */
+export const useFlagPanelTitleSearch = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("panelTitleSearch", false, options).value;
 };
 
 /**
@@ -1192,6 +1681,17 @@ export const useFlagPlaylistsRBAC = (options?: ReactFlagEvaluationOptions): bool
 };
 
 /**
+ * Show insights for plugins in the plugin details page
+ *
+ * **Details:**
+ * - flag key: `pluginInsights`
+ * - default value: `false`
+ */
+export const useFlagPluginInsights = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("pluginInsights", false, options).value;
+};
+
+/**
  * Initializes data source instance settings asynchronously from the API instead of synchronously from boot data
  *
  * **Details:**
@@ -1222,6 +1722,28 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
+};
+
+/**
+ * Prefer library panel title over viz panel title.
+ *
+ * **Details:**
+ * - flag key: `preferLibraryPanelTitle`
+ * - default value: `false`
+ */
+export const useFlagPreferLibraryPanelTitle = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("preferLibraryPanelTitle", false, options).value;
+};
+
+/**
+ * Enables possibility to preserve dashboard variables and time range when navigating between dashboards
+ *
+ * **Details:**
+ * - flag key: `preserveDashboardStateWhenNavigating`
+ * - default value: `false`
+ */
+export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("preserveDashboardStateWhenNavigating", false, options).value;
 };
 
 /**
@@ -1280,6 +1802,17 @@ export const useFlagProvisioningFolderMetadata = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Enables public dashboard sharing to be restricted to only allowed emails
+ *
+ * **Details:**
+ * - flag key: `publicDashboardsEmailSharing`
+ * - default value: `false`
+ */
+export const useFlagPublicDashboardsEmailSharing = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("publicDashboardsEmailSharing", false, options).value;
+};
+
+/**
  * Enables next generation query editor experience
  *
  * **Details:**
@@ -1324,6 +1857,39 @@ export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boole
 };
 
 /**
+ * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+ *
+ * **Details:**
+ * - flag key: `queryService`
+ * - default value: `false`
+ */
+export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryService", false, options).value;
+};
+
+/**
+ * Routes requests to the new query service
+ *
+ * **Details:**
+ * - flag key: `queryServiceFromUI`
+ * - default value: `false`
+ */
+export const useFlagQueryServiceFromUI = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryServiceFromUI", false, options).value;
+};
+
+/**
+ * Enables the Query with Assistant button in the query editor
+ *
+ * **Details:**
+ * - flag key: `queryWithAssistant`
+ * - default value: `false`
+ */
+export const useFlagQueryWithAssistant = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryWithAssistant", false, options).value;
+};
+
+/**
  * Enables AI-assisted coauthoring in code query editors
  *
  * **Details:**
@@ -1354,6 +1920,17 @@ export const useFlagRawPrometheusTableNg = (options?: ReactFlagEvaluationOptions
  */
 export const useFlagRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("recentlyViewedDashboards", false, options).value;
+};
+
+/**
+ * Enables reload of dashboards on scopes, time range and variables changes
+ *
+ * **Details:**
+ * - flag key: `reloadDashboardsOnParamsChange`
+ * - default value: `false`
+ */
+export const useFlagReloadDashboardsOnParamsChange = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("reloadDashboardsOnParamsChange", false, options).value;
 };
 
 /**
@@ -1390,6 +1967,17 @@ export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Enables the new role picker drawer design
+ *
+ * **Details:**
+ * - flag key: `rolePickerDrawer`
+ * - default value: `false`
+ */
+export const useFlagRolePickerDrawer = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("rolePickerDrawer", false, options).value;
+};
+
+/**
  * Enables Saved queries (query library) RBAC permissions
  *
  * **Details:**
@@ -1401,6 +1989,28 @@ export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): b
 };
 
 /**
+ * Enables the use of scope filters in Grafana
+ *
+ * **Details:**
+ * - flag key: `scopeFilters`
+ * - default value: `false`
+ */
+export const useFlagScopeFilters = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("scopeFilters", false, options).value;
+};
+
+/**
+ * Enable scope search to include all levels of the scope node tree
+ *
+ * **Details:**
+ * - flag key: `scopeSearchAllLevels`
+ * - default value: `false`
+ */
+export const useFlagScopeSearchAllLevels = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("scopeSearchAllLevels", false, options).value;
+};
+
+/**
  * Enable the secrets management app platform UI
  *
  * **Details:**
@@ -1409,6 +2019,17 @@ export const useFlagSavedQueriesRBAC = (options?: ReactFlagEvaluationOptions): b
  */
 export const useFlagSecretsManagementAppPlatformUI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("secretsManagementAppPlatformUI", false, options).value;
+};
+
+/**
+ * Enables the ASAP smoothing transformation for time series data
+ *
+ * **Details:**
+ * - flag key: `smoothingTransformation`
+ * - default value: `false`
+ */
+export const useFlagSmoothingTransformation = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("smoothingTransformation", false, options).value;
 };
 
 /**
@@ -1464,6 +2085,17 @@ export const useFlagSqlExpressionsColumnAutoComplete = (options?: ReactFlagEvalu
  */
 export const useFlagStateTimelineNameAboveBars = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("stateTimeline.nameAboveBars", false, options).value;
+};
+
+/**
+ * Displays datasource provisioned and community dashboards in dashboard empty page, only when coming from datasource configuration page
+ *
+ * **Details:**
+ * - flag key: `suggestedDashboards`
+ * - default value: `false`
+ */
+export const useFlagSuggestedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("suggestedDashboards", false, options).value;
 };
 
 /**
@@ -1555,6 +2187,39 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
 };
 
 /**
+ * Enables time comparison option in supported panels
+ *
+ * **Details:**
+ * - flag key: `timeComparison`
+ * - default value: `false`
+ */
+export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("timeComparison", false, options).value;
+};
+
+/**
+ * Enables time pickers sync
+ *
+ * **Details:**
+ * - flag key: `timeRangeProvider`
+ * - default value: `false`
+ */
+export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("timeRangeProvider", false, options).value;
+};
+
+/**
+ * Show transformation quick-start cards in empty transformations state
+ *
+ * **Details:**
+ * - flag key: `transformationsEmptyPlaceholder`
+ * - default value: `false`
+ */
+export const useFlagTransformationsEmptyPlaceholder = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("transformationsEmptyPlaceholder", false, options).value;
+};
+
+/**
  * Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs
  *
  * **Details:**
@@ -1563,6 +2228,17 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
+};
+
+/**
+ * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
+ *
+ * **Details:**
+ * - flag key: `useScopesNavigationEndpoint`
+ * - default value: `false`
+ */
+export const useFlagUseScopesNavigationEndpoint = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("useScopesNavigationEndpoint", false, options).value;
 };
 
 /**
