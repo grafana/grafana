@@ -606,6 +606,32 @@ describe('NotebookAutosave', () => {
     expect(scene.autosave.state.savedResourceVersion).toBe('1757');
   });
 
+  it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
+    let finishSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'Hello world');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+    expect(updateNotebook).toHaveBeenCalledTimes(1);
+
+    // Simulates navigating away while the write above is still in flight.
+    deactivate?.();
+    deactivate = undefined;
+
+    finishSave();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(scene.autosave.state.isConflict).toBe(true);
+    expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+  });
+
   it('does not save a time range change made outside edit mode', async () => {
     const scene = buildScene();
     deactivate = scene.activate();

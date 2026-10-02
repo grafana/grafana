@@ -111,6 +111,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private hasSavedOnce = false;
   /** Latched by `abandon`, for a notebook that is being deleted. Nothing writes again after it. */
   private abandoned = false;
+  /**
+   * Latched by `stop`, for a scene that has deactivated (navigated away from, tab closed). The
+   * teardown flush still writes — the notebook's last edit deserves the attempt — but nothing here
+   * may publish UI afterwards: the conflict prompt below is a global singleton modal, and one shown
+   * after the user has already left would appear on whatever page they navigated to instead.
+   */
+  private stopped = false;
   /** Failures in a row since the last save that landed. `autosave_failed` sends this as `attempt`. */
   private failedAttempts = 0;
 
@@ -399,6 +406,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   private stop(): void {
+    // Set before `flush`, not after: `flush` can itself resolve asynchronously (see `saveNow`), and
+    // `stopped` has to already be true by the time that resolution runs.
+    this.stopped = true;
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.changeSub?.unsubscribe();
     this.changeSub = undefined;
@@ -688,7 +698,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           isConflict,
         });
 
-        if (isConflict) {
+        // Not once stopped: the scene has deactivated (navigated away, tab closed), and this is the
+        // teardown's own flush resolving after the fact. Publishing now would show this on whatever
+        // page the user is on instead, with no route change left to come along and clear it.
+        if (isConflict && !this.stopped) {
           const notebookUid = this.scene.state.uid ?? '';
           appEvents.publish(
             new ShowConfirmModalEvent({

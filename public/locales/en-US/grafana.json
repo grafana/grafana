@@ -13225,6 +13225,14 @@
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
     },
+    "leave-prompt": {
+      "conflict-body": "Your changes could not be saved because someone else updated this notebook first. If you leave now, those changes will be lost.",
+      "conflict-title": "Someone else has updated this notebook",
+      "leave": "Leave anyway",
+      "saving-body": "Your most recent changes are still being saved. If you leave now, they might not be saved.",
+      "saving-title": "This notebook is still saving",
+      "stay": "Stay"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
