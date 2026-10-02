@@ -118,7 +118,7 @@ gcx datasources cloudmonitoring query -d <DATASOURCE_UID> --project my-project \
   --reducer REDUCE_MEAN --group-by resource.label.instance_name --since 1h
 ```
 
-Replace _`<DATASOURCE_UID>`_ with the UID of your Google Cloud Monitoring data source. You can omit the `-d` flag when `datasources.cloudmonitoring` is configured in your `gcx` context. Queries are structured rather than expression-based, so `--project` and `--metric` are required. The `--group-by` flag requires a `--reducer` other than `REDUCE_NONE`, and `--filter` matches are exact and case-sensitive, with no regex or wildcard support. The `list-projects` and `list-metrics` commands help you discover valid values.
+Replace _`<DATASOURCE_UID>`_ with the UID of your Google Cloud Monitoring data source. You can omit the `-d` flag when `datasources.cloudmonitoring` is configured in your `gcx` context. Queries are structured rather than expression-based, so `--project` and `--metric` are required. The `--group-by` flag requires a `--reducer` other than `REDUCE_NONE`, and `--filter` matches are exact and case-sensitive, with no regular expression or wildcard support. The `list-projects` and `list-metrics` commands help you discover valid values.
 
 ## Related resources
 
