@@ -660,17 +660,51 @@ func generateOpenFeatureReactForFlags(t *testing.T, featureFlags []FeatureFlag) 
 	return buf.String()
 }
 
+// getReactTypingsKeys renders a flag key union. The namespaced OpenFeature flags come first,
+// grouped by the prefix before their first dot, then the legacy un-namespaced toggles. Each group
+// gets a comment header, so related flags stay together and it is obvious which group a new flag
+// belongs in.
 func getReactTypingsKeys(keys []string) string {
 	if len(keys) == 0 {
 		return " never"
 	}
 
-	var s strings.Builder
+	byNamespace := map[string][]string{}
+	namespaces := []string{}
+	legacy := []string{}
 	for _, key := range keys {
-		s.WriteString("\n    | \"")
-		s.WriteString(key)
-		s.WriteString("\"")
+		namespace, _, isNamespaced := strings.Cut(key, ".")
+		if !isNamespaced {
+			legacy = append(legacy, key)
+			continue
+		}
+		if _, seen := byNamespace[namespace]; !seen {
+			namespaces = append(namespaces, namespace)
+		}
+		byNamespace[namespace] = append(byNamespace[namespace], key)
 	}
+	sort.Strings(namespaces)
+
+	var s strings.Builder
+	writeGroup := func(header string, groupKeys []string) {
+		if len(groupKeys) == 0 {
+			return
+		}
+		sort.Strings(groupKeys)
+		s.WriteString("\n    // ")
+		s.WriteString(header)
+		for _, key := range groupKeys {
+			s.WriteString("\n    | \"")
+			s.WriteString(key)
+			s.WriteString("\"")
+		}
+	}
+
+	for _, namespace := range namespaces {
+		writeGroup(namespace+".*", byNamespace[namespace])
+	}
+	writeGroup("legacy toggles", legacy)
+
 	return s.String()
 }
 
@@ -739,6 +773,9 @@ func TestGenerateOpenFeatureReactForFlags(t *testing.T) {
 		{Name: "test.mode", Expression: "experimental", Generate: Generate{React: true}},
 		{Name: "test.escapedString", Expression: "quote \" backslash \\ newline\n", Generate: Generate{React: true}},
 		{Name: "test.settings", Expression: `{"allowList":[]}`, Generate: Generate{React: true}},
+		// A second namespace and an un-namespaced toggle, so the typings grouping is covered
+		{Name: "other.enabled", Expression: "true", Generate: Generate{React: true}},
+		{Name: "legacyToggle", Expression: "true", Generate: Generate{React: true}},
 	}
 
 	source := generateOpenFeatureReactForFlags(t, flags)
@@ -757,13 +794,23 @@ func TestGenerateOpenFeatureReactForFlags(t *testing.T) {
 };`)
 
 	typings := generateOpenFeatureReactTypingsForFlags(t, flags)
+	// Namespaces come first in alphabetical order, each under its own header, then the
+	// un-namespaced legacy toggles.
 	require.Contains(t, typings, `export type BooleanFlagKey =
-    | "test.enabled";`)
+    // other.*
+    | "other.enabled"
+    // test.*
+    | "test.enabled"
+    // legacy toggles
+    | "legacyToggle";`)
 	require.Contains(t, typings, `export type NumberFlagKey =
+    // test.*
     | "test.limit";`)
 	require.Contains(t, typings, `export type StringFlagKey =
+    // test.*
     | "test.escapedString"
     | "test.mode";`)
 	require.Contains(t, typings, `export type ObjectFlagKey =
+    // test.*
     | "test.settings";`)
 }

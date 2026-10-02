@@ -10,43 +10,31 @@ import "@openfeature/core";
 
 declare module "@openfeature/core" {
   export type BooleanFlagKey =
-    | "alertRuleRestore"
+    // alerting.*
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "alerting.syncExternalAlertmanager"
-    | "alertingNavigationV2"
-    | "alertingRuleRecoverDeleted"
-    | "alertingTriage"
-    | "analyticsFramework"
+    // assistant.*
     | "assistant.dashboardPlanning"
     | "assistant.frontend.tools.dashboardTemplates"
     | "assistant.fullscreenWorkspace"
-    | "awsAssumeRolePerDatasourceExternalId"
-    | "canvasPanelNesting"
-    | "canvasPanelPanZoom"
+    // dashboard.*
     | "dashboard.notebooks"
     | "dashboard.recentlyDeletedViaTrash"
     | "dashboard.vectorSearch"
-    | "dashboardNewLayouts"
-    | "dashboardTemplatesAssistantButton"
-    | "dashboardUndoRedo"
+    // datasources.*
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "datasources.azureMonitorBatchAPI"
     | "datasources.config.ui.useNewDatasourceCRUDAPIs"
     | "datasources.gatewayGuardrails"
     | "datasources.querier.newName"
     | "datasources.queryGateway"
-    | "datasourcesApiServerEnableHealthEndpointFrontend"
+    // dataviz.*
     | "dataviz.experimentalColorSchemes"
-    | "enableColorblindSafePanelOptions"
-    | "enableExtensionsAdminPage"
-    | "experimentRecentlyViewedDashboards"
-    | "faroSessionReplay"
-    | "feedbackButton"
+    // flameGraph.*
     | "flameGraph.tableNg"
-    | "foldersAppPlatformAPI"
-    | "globalDashboardVariables"
+    // grafana.*
     | "grafana.cmdkHybridSearch"
     | "grafana.customDashboardTemplates"
     | "grafana.customizableMegaMenu"
@@ -82,55 +70,88 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "grafana.viewPanelPane"
     | "grafana.visualDesignRefresh"
-    | "inlineLogDetailsNoScrolls"
-    | "kubernetesTeamsApi"
+    // libraryelements.*
     | "libraryelements.kubernetesLibraryPanels"
-    | "logsTablePanelNG"
-    | "lokiShardSplitting"
-    | "managedPluginsV2"
-    | "newSavedQueriesExperience"
-    | "otelLogsFormatting"
+    // paneledit.*
     | "paneledit.buttonLabels"
-    | "perPanelNonApplicableDrilldowns"
-    | "pieChartGradientColorScheme"
-    | "playlistsRBAC"
+    // plugins.*
     | "plugins.initDataSourcesAsync"
     | "plugins.useMTPluginSettings"
     | "plugins.useMTPlugins"
+    // provisioning.*
     | "provisioning.gitConventions"
     | "provisioning.readmes"
     | "provisioning.userAttribution"
-    | "provisioningExport"
-    | "provisioningFolderMetadata"
-    | "queryEditorNext"
+    // queryHistory.*
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
-    | "queryLibrary"
+    // queryeditor.*
     | "queryeditor.coauthoringUi"
+    // rawPrometheus.*
     | "rawPrometheus.tableNg"
-    | "recentlyViewedDashboards"
+    // reporting.*
     | "reporting.anyPageReporting"
-    | "reportingFooterSettings"
-    | "reportingHeaderSettings"
-    | "savedQueriesRBAC"
-    | "secretsManagementAppPlatformUI"
+    // snapshots.*
     | "snapshots.kubernetesSnapshots"
-    | "splashScreen"
-    | "sqlExpressionsCodeMirror"
-    | "sqlExpressionsColumnAutoComplete"
+    // stateTimeline.*
     | "stateTimeline.nameAboveBars"
-    | "suggestedDashboardsAssistantButton"
+    // table.*
     | "table.autoColumnWidths"
     | "table.inspectDataTableNG"
     | "table.paginationPageSize"
     | "table.refresh"
     | "table.refreshNewFeatures"
-    | "tableSharedCrosshair"
+    // text.*
     | "text.newFeatures"
+    // legacy toggles
+    | "alertRuleRestore"
+    | "alertingNavigationV2"
+    | "alertingRuleRecoverDeleted"
+    | "alertingTriage"
+    | "analyticsFramework"
+    | "awsAssumeRolePerDatasourceExternalId"
+    | "canvasPanelNesting"
+    | "canvasPanelPanZoom"
+    | "dashboardNewLayouts"
+    | "dashboardTemplatesAssistantButton"
+    | "dashboardUndoRedo"
+    | "datasourcesApiServerEnableHealthEndpointFrontend"
+    | "enableColorblindSafePanelOptions"
+    | "enableExtensionsAdminPage"
+    | "experimentRecentlyViewedDashboards"
+    | "faroSessionReplay"
+    | "feedbackButton"
+    | "foldersAppPlatformAPI"
+    | "globalDashboardVariables"
+    | "inlineLogDetailsNoScrolls"
+    | "kubernetesTeamsApi"
+    | "logsTablePanelNG"
+    | "lokiShardSplitting"
+    | "managedPluginsV2"
+    | "newSavedQueriesExperience"
+    | "otelLogsFormatting"
+    | "perPanelNonApplicableDrilldowns"
+    | "pieChartGradientColorScheme"
+    | "playlistsRBAC"
+    | "provisioningExport"
+    | "provisioningFolderMetadata"
+    | "queryEditorNext"
+    | "queryLibrary"
+    | "recentlyViewedDashboards"
+    | "reportingFooterSettings"
+    | "reportingHeaderSettings"
+    | "savedQueriesRBAC"
+    | "secretsManagementAppPlatformUI"
+    | "splashScreen"
+    | "sqlExpressionsCodeMirror"
+    | "sqlExpressionsColumnAutoComplete"
+    | "suggestedDashboardsAssistantButton"
+    | "tableSharedCrosshair"
     | "useKubernetesShortURLsAPI"
     | "vizActionsAuth";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =
+    // grafana.*
     | "grafana.mtFallback";
 }
