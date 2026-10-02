@@ -591,6 +591,10 @@ approval_rules:
             - .github/workflows/pr-patch-check.yml
   - name: Workflow .github/workflows/pr-reembed-version-approval.yml succeeded or skipped
     if:
+      changed_files:
+        paths:
+          - ^pkg\/storage\/unified\/search\/embed\/dashboard\/extractor\.go$
+          - ^\.github\/workflows\/pr-reembed-version-approval\.yml$
       file_not_deleted:
         paths:
           - ^\.github\/workflows\/pr-reembed-version-approval\.yml$
