@@ -20,8 +20,14 @@ import (
 
 func initWatchServer(t *testing.T, backend StorageBackend) *server {
 	t.Helper()
+	return initWatchServerWithSeededWatches(t, backend, true)
+}
+
+func initWatchServerWithSeededWatches(t *testing.T, backend StorageBackend, enabled bool) *server {
+	t.Helper()
 	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
 		Backend: backend, StorageMetrics: ProvideStorageMetrics(prometheus.NewRegistry()), BookmarkFrequency: time.Second,
+		SeededWatchesEnabled: enabled,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -31,6 +37,57 @@ func initWatchServer(t *testing.T, backend StorageBackend) *server {
 	})
 	require.NoError(t, srv.initWatcher())
 	return srv
+}
+
+func TestKVWatchSeededWatchesToggle(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
+			backend := setupTestStorageBackend(t, withChannelNotifier)
+			base := snowflakeFromTime(time.Now().Add(-time.Hour))
+			saveWatchEvent(t, backend, durableWatchEvent(base))
+			srv := initWatchServerWithSeededWatches(t, backend, enabled)
+			if enabled {
+				require.NotNil(t, srv.watchStartup)
+				require.NoError(t, srv.watchStartup.broadcaster.waitReady(t.Context()))
+			} else {
+				require.Nil(t, srv.watchStartup)
+			}
+
+			ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), newWatchTestUser()), 5*time.Second)
+			defer cancel()
+			req := bookmarkWatchRequest()
+			req.AllowWatchBookmarks = false
+			req.Options.Key.Name = ""
+			req.Since = base - 1
+			stream := newMockWatchServer(ctx)
+			done := make(chan error, 1)
+			go func() { done <- srv.Watch(req, stream) }()
+			if enabled {
+				select {
+				case err := <-done:
+					require.True(t, IsResourceVersionExpired(err), "expected expiry, got %v", err)
+					require.Empty(t, stream.events)
+				case <-ctx.Done():
+					t.Fatal("seeded watch did not reject the expired cursor")
+				}
+				return
+			}
+
+			requireMetricEventually(t, srv.storageMetrics.Broadcaster.Subscribers.WithLabelValues(watchTestResource), 1)
+			live := durableWatchEvent(base + 1)
+			saveWatchEvent(t, backend, live)
+			backend.notifier.Publish(live)
+			select {
+			case event := <-stream.events:
+				require.Equal(t, resourcepb.WatchEvent_ADDED, event.Type)
+				require.Equal(t, live.ResourceVersion, event.Resource.Version)
+			case <-ctx.Done():
+				t.Fatal("unseeded watch did not deliver the live event")
+			}
+			cancel()
+			require.NoError(t, <-done)
+		})
+	}
 }
 
 func TestKVWatchResumeExpiryAndReplay(t *testing.T) {

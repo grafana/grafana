@@ -126,7 +126,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:              backend,
+			SeededWatchesEnabled: true,
 		})
 		require.NoError(t, err)
 	case StorageTypeUnified:

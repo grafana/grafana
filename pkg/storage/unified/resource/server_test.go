@@ -1463,12 +1463,13 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
-		Backend:           store,
-		WatchExpiry:       watchExpiry,
-		BookmarkFrequency: opts.BookmarkFrequency,
-		StorageMetrics:    opts.StorageMetrics,
-		AccessClient:      opts.AccessClient,
-		NatsWatchMaxAge:   opts.NatsWatchMaxAge,
+		Backend:              store,
+		WatchExpiry:          watchExpiry,
+		BookmarkFrequency:    opts.BookmarkFrequency,
+		SeededWatchesEnabled: true,
+		StorageMetrics:       opts.StorageMetrics,
+		AccessClient:         opts.AccessClient,
+		NatsWatchMaxAge:      opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {

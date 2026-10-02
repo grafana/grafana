@@ -498,6 +498,10 @@ type ResourceServerOptions struct {
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
 
+	// SeededWatchesEnabled enables KV watch-cache seeding and checked resume admission.
+	// Legacy SQL backends always use the unseeded path.
+	SeededWatchesEnabled bool
+
 	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
 	// Zero disables expiry.
 	NatsWatchMaxAge time.Duration
@@ -688,6 +692,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		seededWatchesEnabled:           opts.SeededWatchesEnabled,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -825,7 +830,8 @@ type server struct {
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
 
-	bookmarkFrequency time.Duration
+	bookmarkFrequency    time.Duration
+	seededWatchesEnabled bool
 
 	natsWatchMaxAge time.Duration
 	watchExpiry     WatchExpiry
@@ -2310,7 +2316,7 @@ const producerChanSize = 100
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
-	if backend, ok := s.backend.(seededWatchBackend); ok {
+	if backend, ok := s.backend.(seededWatchBackend); ok && s.seededWatchesEnabled {
 		s.initSeededWatcher(backend)
 		return nil
 	}
