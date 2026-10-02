@@ -462,6 +462,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/users/:uid',
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgUsersRead, AccessControlAction.UsersRead]),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "UserOverviewPage" */ 'app/features/admin/UserOverview/UserOverviewPage')
+      ),
+    },
+    {
       path: '/admin/orgs',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.OrgsRead]),
       component: SafeDynamicImport(

@@ -97,7 +97,9 @@ export const OrgUsersTable = ({
       {
         id: 'login',
         header: 'Login',
-        cell: ({ cell: { value } }: Cell<'login'>) => <div>{value}</div>,
+        cell: ({ row: { original } }: Cell<'login'>) => (
+          <TextLink href={`/admin/users/${original.uid}`}>{original.login}</TextLink>
+        ),
         sortType: 'string',
       },
       {
