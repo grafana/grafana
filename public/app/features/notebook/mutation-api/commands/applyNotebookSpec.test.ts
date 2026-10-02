@@ -329,7 +329,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(scene.state.body.state.isEditing).toBe(true);
   });
 
-  it('leaves the rebuilt body out of edit mode when the notebook was not being edited', async () => {
+  it('enters edit mode for the rebuilt body when the notebook was not being edited', async () => {
     const scene = notebookScene();
     expect(scene.state.isEditing).toBeFalsy();
 
@@ -339,10 +339,13 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
     });
 
-    expect(scene.state.body.state.isEditing).toBe(false);
+    // The assistant/workspace writing the notebook puts it into edit mode, same as a person clicking
+    // the toolbar's Edit toggle would, rather than leaving the toggle saying View over changed cells.
+    expect(scene.state.isEditing).toBe(true);
+    expect(scene.state.body.state.isEditing).toBe(true);
   });
 
-  it('saves the applied change, which the scene change signal would otherwise miss', async () => {
+  it('saves the applied change, which the explicit saveDocumentChange call guarantees regardless of debounce', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
 
@@ -352,8 +355,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     });
 
     expect(result.success).toBe(true);
-    // The notebook was never in edit mode, so the scene's own change signal is ignored for this write.
-    expect(scene.state.isEditing).toBeFalsy();
+    // Entering edit mode is itself part of the write; nothing undoes it once the spec is applied.
+    expect(scene.state.isEditing).toBe(true);
     // Asserted on the request, not on a call to autosave, so what was sent is what the caller asked for.
     expect(updateNotebook).toHaveBeenCalledTimes(1);
     const [, sent] = jest.mocked(updateNotebook).mock.calls[0];

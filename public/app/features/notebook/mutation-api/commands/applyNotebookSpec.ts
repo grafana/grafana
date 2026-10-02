@@ -3,6 +3,7 @@ import * as z from 'zod';
 import { sceneUtils } from '@grafana/scenes';
 import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/commands/types';
 
+import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../../analytics/types';
 import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
@@ -78,6 +79,8 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- unvalidated path: caller-supplied spec is checked by the transform
         notebookSpec = payload.spec as unknown as NotebookSpec;
       }
+
+      scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ASSISTANT);
 
       const { transformNotebookToScene } = await import(
         /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
