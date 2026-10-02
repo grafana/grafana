@@ -181,11 +181,6 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         ...s,
         fields: s.fields.map((field: Field) => ({
           ...field,
-          // With filters enabled this panel's frames switch between unfiltered and filtered rows. Scenes empties a
-          // panel's previous value arrays when new data arrives (_UNSAFE_clearPreviousFieldValues), so unfiltered
-          // output must not share arrays with the source panel, or the first filter would empty the source for
-          // every panel that reads it.
-          values: query.adHocFiltersEnabled ? field.values.slice() : field.values,
           config: {
             ...field.config,
             // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
@@ -200,12 +195,15 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       };
     });
 
-    if (!query.adHocFiltersEnabled || filters.length === 0) {
+    if (!query.adHocFiltersEnabled) {
       return series;
     }
 
     // Apply AdHoc filters to series data
-    return series.map((frame) => this.applyAdHocFilters(frame, filters));
+    const filtered = filters.length === 0 ? series : series.map((frame) => this.applyAdHocFilters(frame, filters));
+
+    const sourceValues = new Set(data.series.flatMap((frame) => frame.fields.map((field) => field.values)));
+    return filtered.map((frame) => unshareSourceValues(frame, sourceValues));
   }
 
   /**
@@ -457,4 +455,23 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Full implementation will be added in future PRs
     return Promise.resolve([]);
   }
+}
+
+/**
+ * With filters enabled a panel's frames switch between unfiltered rows (the source panel's value arrays) and
+ * filtered rows (new arrays). Dashboard panels set _UNSAFE_clearPreviousFieldValues, so Scenes empties a panel's
+ * previous value arrays in place when new data arrives; if those were the source panel's, the first filter would
+ * empty the source for every panel that reads it. Copy only the arrays that are still the source's.
+ */
+function unshareSourceValues(frame: DataFrame, sourceValues: Set<unknown[]>): DataFrame {
+  if (!frame.fields.some((field) => sourceValues.has(field.values))) {
+    return frame;
+  }
+
+  return {
+    ...frame,
+    fields: frame.fields.map((field) =>
+      sourceValues.has(field.values) ? { ...field, values: field.values.slice() } : field
+    ),
+  };
 }
