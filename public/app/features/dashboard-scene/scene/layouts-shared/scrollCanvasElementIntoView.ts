@@ -56,12 +56,9 @@ export function scrollCanvasElementIntoView(
 let activeHighlight: Animation | undefined;
 
 export function scrollIntoView(element: HTMLElement, options?: CanvasScrollOptions) {
-  // Repeated panels share a layout container, so prefer the requested panel when it is mounted.
-  const panel = options?.panelKey
-    ? Array.from(element.querySelectorAll<HTMLElement>('[data-viz-panel-key]')).find(
-        (candidate) => candidate.dataset.vizPanelKey === options.panelKey
-      )
-    : undefined;
+  // Custom-grid repeats share the layout container. Auto-grid repeats are siblings of the
+  // source wrapper that owns containerRef, so look beside it when the key is not inside.
+  const panel = options?.panelKey ? findRepeatedPanelElement(element, options.panelKey) : undefined;
   // Draw inside PanelChrome so its background cannot cover the inset outline.
   const target = panel?.querySelector<HTMLElement>('section') ?? panel ?? element;
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -99,4 +96,34 @@ export function scrollIntoView(element: HTMLElement, options?: CanvasScrollOptio
       }
     };
   }
+}
+
+function findRepeatedPanelElement(element: HTMLElement, panelKey: string): HTMLElement | undefined {
+  const matchIn = (root: ParentNode) =>
+    Array.from(root.querySelectorAll<HTMLElement>('[data-viz-panel-key]')).find(
+      (candidate) => candidate.dataset.vizPanelKey === panelKey
+    );
+
+  const nested = matchIn(element);
+  if (nested) {
+    return nested;
+  }
+
+  const parent = element.parentElement;
+  if (!parent) {
+    return undefined;
+  }
+
+  for (const child of Array.from(parent.children)) {
+    if (child === element || !(child instanceof HTMLElement)) {
+      continue;
+    }
+
+    const sibling = matchIn(child);
+    if (sibling) {
+      return sibling;
+    }
+  }
+
+  return undefined;
 }
