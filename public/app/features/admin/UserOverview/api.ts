@@ -1,5 +1,48 @@
 import { generatedAPI, type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { legacyAPI } from 'app/api/clients/legacy';
 import { rolesAPI } from 'app/api/clients/roles';
+import { type SyncInfo } from 'app/types/ldap';
+import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
+
+export type OverviewProfile = UserDTO & { createdAt?: string };
+
+const managementAPI = legacyAPI.injectEndpoints({
+  endpoints: (build) => ({
+    getOverviewProfile: build.query<OverviewProfile, string>({
+      query: (uid) => ({ url: `/users/${uid}`, params: { accesscontrol: true } }),
+      providesTags: ['users'],
+    }),
+    getOverviewOrgs: build.query<UserOrg[], string>({
+      query: (uid) => ({ url: `/users/${uid}/orgs` }),
+      providesTags: ['users'],
+    }),
+    getOverviewOrgUsers: build.query<OrgUser[], string>({
+      query: (login) => ({ url: '/org/users', params: { query: login, accesscontrol: true } }),
+      providesTags: ['org'],
+    }),
+    getOverviewSessions: build.query<Array<UserSession & { seenAtTimestamp: number }>, string>({
+      query: (uid) => ({ url: `/admin/users/${uid}/auth-tokens` }),
+      transformResponse: (sessions: UserSession[]) =>
+        [...sessions].reverse().map((session) => ({
+          ...session,
+          seenAtTimestamp: new Date(session.seenAt).getTime(),
+          seenAt: dateTimeFormatTimeAgo(session.seenAt),
+        })),
+    }),
+    getOverviewLdapStatus: build.query<SyncInfo, void>({
+      query: () => ({ url: '/admin/ldap-sync-status' }),
+    }),
+  }),
+});
+
+export const {
+  useGetOverviewProfileQuery,
+  useGetOverviewOrgsQuery,
+  useGetOverviewOrgUsersQuery,
+  useGetOverviewSessionsQuery,
+  useGetOverviewLdapStatusQuery,
+} = managementAPI;
 
 export interface RoleAssignment {
   id: string;

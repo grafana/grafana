@@ -16,6 +16,7 @@ interface Props {
   onUserDisable: (userUid: string) => void;
   onUserEnable: (userUid: string) => void;
   onPasswordChange(password: string): void;
+  showInformation?: boolean;
 }
 
 export function UserProfile({
@@ -25,6 +26,7 @@ export function UserProfile({
   onUserDisable,
   onUserEnable,
   onPasswordChange,
+  showInformation = true,
 }: Props) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDisableModal, setShowDisableModal] = useState(false);
@@ -90,50 +92,54 @@ export function UserProfile({
 
   return (
     <div>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.user-profile.title">User information</Trans>
-      </h3>
+      {showInformation && (
+        <h3 className="page-heading">
+          <Trans i18nKey="admin.user-profile.title">User information</Trans>
+        </h3>
+      )}
       <Stack direction="column" gap={1.5}>
-        <div>
-          <table className="filter-table form-inline">
-            <tbody>
-              <UserProfileRow
-                label={t('admin.user-profile.label-numerical-identifier', 'Numerical identifier')}
-                value={user.id.toString()}
-                locked={true}
-              />
-              <UserProfileRow
-                label={t('admin.user-profile.label-name', 'Name')}
-                value={user.name}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserNameChange}
-              />
-              <UserProfileRow
-                label={t('admin.user-profile.label-email', 'Email')}
-                value={user.email}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserEmailChange}
-              />
-              <UserProfileRow
-                label={t('admin.user-profile.label-username', 'Username')}
-                value={user.login}
-                locked={editLocked}
-                lockMessage={lockMessage}
-                onChange={onUserLoginChange}
-              />
-              <UserProfileRow
-                label={t('admin.user-profile.label-password', 'Password')}
-                value="********"
-                inputType="password"
-                locked={passwordChangeLocked}
-                lockMessage={lockMessage}
-                onChange={onPasswordChange}
-              />
-            </tbody>
-          </table>
-        </div>
+        {showInformation && (
+          <div>
+            <table className="filter-table form-inline">
+              <tbody>
+                <UserProfileRow
+                  label={t('admin.user-profile.label-numerical-identifier', 'Numerical identifier')}
+                  value={user.id.toString()}
+                  locked={true}
+                />
+                <UserProfileRow
+                  label={t('admin.user-profile.label-name', 'Name')}
+                  value={user.name}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserNameChange}
+                />
+                <UserProfileRow
+                  label={t('admin.user-profile.label-email', 'Email')}
+                  value={user.email}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserEmailChange}
+                />
+                <UserProfileRow
+                  label={t('admin.user-profile.label-username', 'Username')}
+                  value={user.login}
+                  locked={editLocked}
+                  lockMessage={lockMessage}
+                  onChange={onUserLoginChange}
+                />
+                <UserProfileRow
+                  label={t('admin.user-profile.label-password', 'Password')}
+                  value="********"
+                  inputType="password"
+                  locked={passwordChangeLocked}
+                  lockMessage={lockMessage}
+                  onChange={onPasswordChange}
+                />
+              </tbody>
+            </table>
+          </div>
+        )}
         <Stack gap={2}>
           {canDelete && (
             <>

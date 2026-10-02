@@ -98,7 +98,9 @@ export const OrgUsersTable = ({
         id: 'login',
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => (
-          <TextLink href={`/admin/users/${original.uid}`}>{original.login}</TextLink>
+          <TextLink color="primary" inline={false} href={`/admin/users/${original.uid}`}>
+            {original.login}
+          </TextLink>
         ),
         sortType: 'string',
       },

@@ -162,6 +162,7 @@ function loadUserSessions(userUid: string): ThunkResult<void> {
         id: session.id,
         isActive: session.isActive,
         seenAt: dateTimeFormatTimeAgo(session.seenAt),
+        seenAtTimestamp: new Date(session.seenAt).getTime(),
         createdAt: session.createdAt,
         clientIp: session.clientIp,
         browser: session.browser,
