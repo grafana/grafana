@@ -172,18 +172,24 @@ func TestBuild_HybridRegistrationPaths(t *testing.T) {
 		manifest:        manifest,
 	}
 	installer := hybridInstaller{gv: gv, manifest: manifest}
+	noHybrid := hybridManifest(gv)
+	noHybrid.Versions[0].Kinds[0].Search = nil
+	noHybridInstaller := hybridInstaller{gv: gv, manifest: noHybrid}
 	for _, tc := range []struct {
 		name       string
 		builders   []builder.APIGroupBuilder
 		installers []appsdkapiserver.AppInstaller
+		want       []string
 	}{
-		{"builder", []builder.APIGroupBuilder{b}, nil},
-		{"SDK installer", nil, []appsdkapiserver.AppInstaller{installer}},
-		{"both register the same resource", []builder.APIGroupBuilder{b}, []appsdkapiserver.AppInstaller{installer}},
+		{"builder", []builder.APIGroupBuilder{b}, nil, []string{"widgets/search", "widgets/search/hybrid"}},
+		{"SDK installer", nil, []appsdkapiserver.AppInstaller{installer}, []string{"widgets/search/hybrid"}},
+		{"both register the same resource", []builder.APIGroupBuilder{b}, []appsdkapiserver.AppInstaller{installer}, []string{"widgets/search", "widgets/search/hybrid"}},
+		{"SDK installer without hybrid", nil, []appsdkapiserver.AppInstaller{noHybridInstaller}, nil},
+		{"installer hybrid opt-out preserves builder search", []builder.APIGroupBuilder{b}, []appsdkapiserver.AppInstaller{noHybridInstaller}, []string{"widgets/search"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			routes := Build(false, false, nil, fakeClient{}, tc.builders, tc.installers, Options{HybridEnabled: true})
-			assert.Equal(t, map[string][]string{gv.String(): {"widgets/search/hybrid"}}, paths(routes))
+			routes := Build(true, true, nil, fakeClient{}, tc.builders, tc.installers, Options{HybridEnabled: true})
+			assert.ElementsMatch(t, tc.want, paths(routes)[gv.String()])
 		})
 	}
 }

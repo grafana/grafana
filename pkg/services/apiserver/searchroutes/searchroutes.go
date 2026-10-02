@@ -62,7 +62,8 @@ func Build(
 //
 // A host that learns about apps after it starts can pass those manifests here,
 // merged with the compiled-in set, and their kinds are mounted like any other.
-// Build supplies the compiled-in set. Both add installer and builder manifests.
+// Build supplies the compiled-in set. Both add builder manifests, and installer
+// manifests for hybrid routes only.
 //
 // The provider is built from the manifests passed in, so a route can only ever
 // validate against the declarations it was mounted from.
@@ -78,22 +79,45 @@ func BuildFromManifests(
 	installers []appsdkapiserver.AppInstaller,
 	opts Options,
 ) []builder.GroupVersionRoutes {
-	manifests = slices.Clone(manifests)
-	for _, installer := range installers {
-		manifests = append(manifests, installer.ManifestData())
-	}
-	manifests = append(manifests, builder.ManifestsFromBuilders(builders)...)
+	builderManifests := builder.ManifestsFromBuilders(builders)
+	served := builder.ServedGroupVersions(builders, installers)
 	routes, err := BuildForServedGroupVersions(
-		manifests,
-		builder.ServedGroupVersions(builders, installers),
+		slices.Concat(manifests, builderManifests),
+		served,
 		searchEnabled,
 		trashEnabled,
 		tracer,
 		index,
-		opts,
+		Options{},
 	)
 	if err != nil {
 		panic(err.Error())
+	}
+	if !opts.HybridEnabled {
+		return routes
+	}
+
+	// Installer manifests enable hybrid opt-in without exposing new lexical or
+	// trash routes, which default to enabled when a declaration is omitted.
+	manifests = slices.Clone(manifests)
+	for _, installer := range installers {
+		manifests = append(manifests, installer.ManifestData())
+	}
+	hybridRoutes, err := BuildForServedGroupVersions(
+		append(manifests, builderManifests...), served, false, false, tracer, index, opts,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, hybrid := range hybridRoutes {
+		i := slices.IndexFunc(routes, func(r builder.GroupVersionRoutes) bool {
+			return r.GroupVersion == hybrid.GroupVersion
+		})
+		if i < 0 {
+			routes = append(routes, hybrid)
+		} else {
+			routes[i].Routes.Namespace = append(routes[i].Routes.Namespace, hybrid.Routes.Namespace...)
+		}
 	}
 	return routes
 }
