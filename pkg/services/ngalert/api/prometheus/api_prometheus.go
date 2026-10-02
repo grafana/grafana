@@ -282,38 +282,6 @@ type RuleGroupStatusesOptions struct {
 	StatusPreparer    StatusPreparer
 }
 
-// filterAllowedNamespaces checks alerting rule read access for each namespace concurrently.
-// With many folders (e.g. 500+) the sequential loop is a meaningful overhead since each
-// HasAccessInFolder call evaluates RBAC in-memory against the user's permission set.
-func (srv PrometheusSrv) filterAllowedNamespaces(ctx context.Context, user identity.Requester, namespaceMap map[string]*folder.Folder) (map[string]string, error) {
-	type result struct {
-		uid      string
-		fullpath string
-		allowed  bool
-		err      error
-	}
-
-	results := make(chan result, len(namespaceMap))
-	for uid, f := range namespaceMap {
-		go func(uid string, f *folder.Folder) {
-			hasAccess, err := srv.authz.HasAccessInFolder(ctx, user, ngmodels.NewNamespace(f))
-			results <- result{uid: uid, fullpath: f.Fullpath, allowed: hasAccess, err: err}
-		}(uid, f)
-	}
-
-	allowed := make(map[string]string, len(namespaceMap))
-	for range namespaceMap {
-		r := <-results
-		if r.err != nil {
-			return nil, r.err
-		}
-		if r.allowed {
-			allowed[r.uid] = r.fullpath
-		}
-	}
-	return allowed, nil
-}
-
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
@@ -343,12 +311,19 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	}
 	span.AddEvent("User visible namespaces retrieved")
 
-	allowedNamespaces, err := srv.filterAllowedNamespaces(c.Req.Context(), c.SignedInUser, namespaceMap)
-	if err != nil {
-		ruleResponse.Status = "error"
-		ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
-		ruleResponse.ErrorType = apiv1.ErrServer
-		return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+	allowedNamespaces := map[string]string{}
+	for namespaceUID, folder := range namespaceMap {
+		// only add namespaces that the user has access to rules in
+		hasAccess, err := srv.authz.HasAccessInFolder(c.Req.Context(), c.SignedInUser, ngmodels.NewNamespace(folder))
+		if err != nil {
+			ruleResponse.Status = "error"
+			ruleResponse.Error = fmt.Sprintf("failed to get namespaces visible to the user: %s", err.Error())
+			ruleResponse.ErrorType = apiv1.ErrServer
+			return response.JSON(ruleResponse.HTTPStatusCode(), ruleResponse)
+		}
+		if hasAccess {
+			allowedNamespaces[namespaceUID] = folder.Fullpath
+		}
 	}
 	span.AddEvent("User permissions checked")
 	span.SetAttributes(attribute.Int("allowedNamespaces", len(allowedNamespaces)))
@@ -541,6 +516,7 @@ type paginationContext struct {
 	limitAlertsPerRule int64
 	limitRulesPerGroup int64
 	compact            bool
+	metadataOnly       bool
 }
 
 // pageResult is the result of fetching and filtering of one page
@@ -596,8 +572,9 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	)
 	span.AddEvent("Alert rules retrieved from store")
 
-	// Load provenance for this page's rules
-	if ctx.provenanceStore != nil {
+	// Load provenance for this page's rules — skipped in metadata_only mode since callers
+	// only need folder names and label keys, not rule provenance.
+	if ctx.provenanceStore != nil && !ctx.metadataOnly {
 		maxGroups := getInt64WithDefault(ctx.opts.Query, "group_limit", -1)
 		maxRules := getInt64WithDefault(ctx.opts.Query, "rule_limit", -1)
 
@@ -646,12 +623,11 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	}
 
 	for _, rg := range groupedRules {
-		skipMutator := ctx.compact && len(ctx.stateFilterSet) == 0 && len(ctx.healthFilterSet) == 0
 		ruleGroup, totals := toRuleGroup(
 			ctx.opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleMutator, ctx.compact, skipMutator,
+			ctx.ruleMutator, ctx.compact, ctx.metadataOnly,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -949,6 +925,12 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 	compact := getBoolWithDefault(opts.Query, "compact", false)
 	span.SetAttributes(attribute.Bool("compact", compact))
 
+	metadataOnly := getBoolWithDefault(opts.Query, "metadata_only", false)
+	span.SetAttributes(attribute.Bool("metadata_only", metadataOnly))
+	if metadataOnly && (len(stateFilterSet) > 0 || len(healthFilterSet) > 0) {
+		return badRequestError(errors.New("metadata_only cannot be combined with state or health filters"))
+	}
+
 	span.SetAttributes(attribute.Bool("order_by_full_path", opts.SortByFullpath))
 
 	pagCtx := &paginationContext{
@@ -976,6 +958,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 		limitAlertsPerRule: limitAlertsPerRule,
 		limitRulesPerGroup: limitRulesPerGroup,
 		compact:            compact,
+		metadataOnly:       metadataOnly,
 	}
 
 	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
@@ -1301,7 +1284,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, skipMutator bool) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, metadataOnly bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1318,34 +1301,37 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			provenance = prov
 		}
 		var query string
-		if !compact {
+		if !compact && !metadataOnly {
 			query = ruleToQuery(log, rule)
 		}
+
 		alertingRule := apimodels.AlertingRule{
-			State:                 "inactive",
-			Name:                  rule.Title,
-			Query:                 query,
-			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
-			Duration:              rule.For.Seconds(),
-			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
-			Annotations:           apimodels.LabelsFromMap(rule.Annotations),
+			State: "inactive",
+			Name:  rule.Title,
+			Query: query,
 			Rule: apimodels.Rule{
-				UID:        rule.UID,
-				Name:       rule.Title,
-				FolderUID:  rule.NamespaceUID,
-				Labels:     apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-				Type:       rule.Type().String(),
-				IsPaused:   rule.IsPaused,
-				Provenance: apimodels.Provenance(provenance),
+				UID:       rule.UID,
+				Name:      rule.Title,
+				FolderUID: rule.NamespaceUID,
+				Labels:    apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+				Type:      rule.Type().String(),
 			},
 		}
 
-		if rule.NotificationSettings != nil {
-			alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
+		if !metadataOnly {
+			alertingRule.QueriedDatasourceUIDs = extractDatasourceUIDs(rule)
+			alertingRule.Duration = rule.For.Seconds()
+			alertingRule.KeepFiringFor = rule.KeepFiringFor.Seconds()
+			alertingRule.Annotations = apimodels.LabelsFromMap(rule.Annotations)
+			alertingRule.Rule.IsPaused = rule.IsPaused
+			alertingRule.Rule.Provenance = apimodels.Provenance(provenance)
+			if rule.NotificationSettings != nil {
+				alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
+			}
 		}
 
 		var totals, totalsFiltered map[string]int64
-		if !skipMutator {
+		if !metadataOnly {
 			// mutate rule to apply status fields and alert states
 			totals, totalsFiltered = ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
 
