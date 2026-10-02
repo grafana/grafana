@@ -16,12 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// Each operation is checked with no grants, an unrelated grant, and its required
+// Each operation is checked with no grants, insufficient grants, and its required
 // grants on the same None user. Administrators only prepare and clean up fixtures.
 func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	h := common.SharedHelper(t, env)
 	u := h.CreateUser("none-permissions", apis.Org1, org.RoleNone, nil)
-	roles := map[string][]string{
+	grantSets := map[string][]string{
 		"none":              nil,
 		"repository-read":   {"provisioning.repositories:read"},
 		"repository-create": {"provisioning.repositories:create"},
@@ -51,6 +51,8 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	repoPath := "repositories/" + repo
 	filesPath := repoPath + "/files/"
 	repoClient := common.GetRepositoryClientV1Beta1(h.K8sTestHelper)
+	gv := repoClient.Args.GVR.GroupVersion()
+	adminREST := h.Org1.Admin.RESTClient(t, &gv)
 	h.CreateRepositoryNoWait(t, common.TestRepo{
 		Name: repo, SyncTarget: "folderless", Workflows: []string{"write"},
 	})
@@ -60,18 +62,34 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	_, err = common.GetConnectionClientV1Beta1(h.K8sTestHelper).Resource.Create(t.Context(),
 		&unstructured.Unstructured{Object: connection("none-connection")}, metav1.CreateOptions{})
 	require.NoError(t, err)
-	request(t, h.Org1.Admin, "POST", filesPath+"existing.json", dashboard("none-existing-dashboard"), 200)
+	err = adminREST.Post().
+		Namespace(repoClient.Args.Namespace).
+		Resource("repositories").
+		Name(repo).
+		SubResource("files", "existing.json").
+		Body(common.AsJSON(dashboard("none-existing-dashboard"))).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context()).Error()
+	require.NoError(t, err)
 	require.NoError(t, os.WriteFile(filepath.Join(h.ProvisioningPath, "README.md"), []byte("Permission fixture"), 0600))
-	request(t, h.Org1.Admin, "POST", "jobs", map[string]any{
-		"apiVersion": apiVersion, "kind": "Job", "metadata": map[string]any{"name": "none-job"},
-		"spec": map[string]any{"repository": repo, "action": "pull", "pull": map[string]any{}},
-	}, 201)
+	var job unstructured.Unstructured
+	err = adminREST.Post().
+		Namespace(repoClient.Args.Namespace).
+		Resource("repositories").
+		Name(repo).
+		SubResource("jobs").
+		Body(common.AsJSON(map[string]any{"action": "pull", "pull": map[string]any{}})).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context()).Into(&job)
+	require.NoError(t, err)
+	require.NotEmpty(t, job.GetName())
+	jobPath := "jobs/" + job.GetName()
 
 	cases := []struct {
-		name, method, path string
-		body               any
-		role, unrelated    string
-		status             int
+		name, method, path                 string
+		body                               any
+		requiredGrants, insufficientGrants string
+		status                             int
 	}{
 		{"read repository", "GET", repoPath, nil, "repository-read", "repository-write", 200},
 		{"list repositories", "GET", "repositories", nil, "repository-read", "repository-create", 200},
@@ -88,10 +106,11 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 		{"read connection status", "GET", "connections/none-connection/status", nil, "connection-read", "connection-write", 200},
 		{"read settings", "GET", "settings", nil, "settings-read", "stats-read", 200},
 		{"read stats", "GET", "stats", nil, "stats-read", "settings-read", 200},
-		{"read job", "GET", "jobs/none-job", nil, "job-read", "history-read", 200},
+		{"read job", "GET", jobPath, nil, "job-read", "history-read", 200},
 		{"list jobs", "GET", "jobs", nil, "job-read", "history-read", 200},
 		{"read repository jobs", "GET", repoPath + "/jobs", nil, "job-read", "history-read", 200},
 		{"read job history", "GET", "historicjobs", nil, "history-read", "job-read", 200},
+		{"delete job", "DELETE", jobPath, nil, "job-delete", "job-read", 200},
 		{"list files", "GET", filesPath, nil, "repository-read", "dashboard-read", 200},
 		{"read dashboard", "GET", filesPath + "existing.json", nil, "dashboard-read", "repository-read", 200},
 		{"read raw file", "GET", filesPath + "README.md", nil, "folder-read", "repository-read", 200},
@@ -104,22 +123,21 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 		{"release resources", "POST", "repositories/none-missing/jobs", map[string]any{"action": "releaseResources"}, "pull", "repository-write", 202},
 		{"delete resources", "POST", "repositories/none-missing/jobs", map[string]any{"action": "deleteResources"}, "pull", "repository-write", 202},
 		{"delete dashboard", "DELETE", filesPath + "existing.json", nil, "dashboard-delete", "dashboard-write", 200},
-		{"delete job", "DELETE", "jobs/none-job", nil, "job-delete", "job-read", 200},
 		{"delete connection", "DELETE", "connections/none-connection", nil, "connection-delete", "connection-write", 200},
 		{"delete repository", "DELETE", "repositories/none-created-repository", nil, "repository-delete", "repository-write", 200},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, expected := range []struct {
-				role   string
+				grants string
 				status int
 			}{
 				{"none", 403},
-				{tc.unrelated, 403},
-				{tc.role, tc.status},
+				{tc.insufficientGrants, 403},
+				{tc.requiredGrants, tc.status},
 			} {
-				t.Run(expected.role, func(t *testing.T) {
-					setPermissions(t, h, u, roles[expected.role])
+				t.Run(expected.grants, func(t *testing.T) {
+					setPermissions(t, h, u, grantSets[expected.grants])
 					response := request(t, u, tc.method, tc.path, tc.body, expected.status)
 					if expected.status == 202 {
 						var job struct {
@@ -134,7 +152,6 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	}
 
 	// Having jobs:create alone must not authorize administrative submissions.
-	gv := repoClient.Args.GVR.GroupVersion()
 	userREST := u.RESTClient(t, &gv)
 	for _, action := range []string{"pull", "releaseResources", "deleteResources"} {
 		t.Run(action+" without repository write", func(t *testing.T) {
@@ -144,7 +161,7 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 				target = repo
 				body["pull"] = map[string]any{}
 			}
-			setPermissions(t, h, u, roles["job-create"])
+			setPermissions(t, h, u, grantSets["job-create"])
 			var statusCode int
 			result := userREST.Post().
 				Namespace(repoClient.Args.Namespace).
