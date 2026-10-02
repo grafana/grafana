@@ -57,6 +57,6 @@ jobs:
           echo 'For sizing, query the affected deployments (this counts embedding rows, not dashboards):'
           echo 'sum(grafana_vector_storage_embeddings_stored{resource="dashboards"})'
           if [[ "$APPROVED" != true ]]; then
-            echo '::error::Add the re-embed-approved label after reviewing the dashboard re-embedding scope and cost.'
+            echo '::error::Add the re-embed-approved label after reviewing the dashboard re-embedding scope and cost. If you are unsure, reach out to #grafana-search-and-storage on Slack.'
             exit 1
           fi
