@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { type FormEventHandler, type KeyboardEventHandler, type ReactNode, useCallback, useId } from 'react';
 
-import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem, type SelectableValue } from '@grafana/data';
+import { type DataFrame, type GrafanaTheme2, type TransformerRegistryItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
@@ -15,7 +15,7 @@ import { TransformationSearchStatus } from './TransformationSearchStatus';
 import { type FilterCategory, VIEW_ALL_VALUE } from './types';
 
 interface TransformationPickerNgProps {
-  onTransformationAdd: (selectedItem: SelectableValue<string>) => void;
+  onTransformationAdd: (selectedItem: { value: string }) => void;
   onSearchChange: FormEventHandler<HTMLInputElement>;
   onSearchKeyDown: KeyboardEventHandler<HTMLInputElement>;
   onClose?: () => void;
