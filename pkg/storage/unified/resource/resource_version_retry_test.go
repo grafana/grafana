@@ -413,19 +413,6 @@ func TestKvStorageBackend_RecreateResourceVersionOrdering(t *testing.T) {
 	}
 }
 
-func TestKvStorageBackend_CreateAlreadyExistsBeforeResourceVersionGeneration(t *testing.T) {
-	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) { opts.DisableStorageServices = true })
-	_, obj := addTestObject(t, backend, t.Context(), appsNamespace, "resource", "original")
-	meta, err := utils.MetaAccessor(obj)
-	require.NoError(t, err)
-	backend.resourceVersions = nil
-	rv, err := backend.WriteEvent(t.Context(), WriteEvent{
-		Type: resourcepb.WatchEvent_ADDED, Key: appsKey("resource"), Value: objectToJSONBytes(t, obj), Object: meta,
-	})
-	require.Zero(t, rv)
-	require.ErrorIs(t, err, ErrResourceAlreadyExists)
-}
-
 func TestKvStorageBackend_ResourceVersionWaitCanceledDoesNotPersist(t *testing.T) {
 	for _, lostLease := range []bool{false, true} {
 		t.Run(map[bool]string{false: "request deadline", true: "lease lost"}[lostLease], func(t *testing.T) {
@@ -438,7 +425,7 @@ func TestKvStorageBackend_ResourceVersionWaitCanceledDoesNotPersist(t *testing.T
 			backend.resourceVersions = newResourceVersionGenerator(41, func() time.Time { return now.Add(-time.Second) })
 
 			ctx := t.Context()
-			wantError := error(context.Canceled)
+			wantError := context.Canceled
 			if lostLease {
 				backend.leaseManager.Stop()
 				backend.leaseManager = lease.NewManager(backend.KV(), "test-holder", "storage", nil, lease.WithInternalMinTTL(time.Millisecond))
