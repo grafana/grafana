@@ -362,7 +362,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		if resErr.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
 		} else {
-			err = resource.GetError(resErr)
+			err = resource.StatusError(resErr)
 		}
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
@@ -457,13 +457,13 @@ func (s *Storage) Delete(
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
 		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
+			return resource.StatusError(resource.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -514,7 +514,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resource.GetError(resource.AsErrorResult(err))
+		return nil, resource.StatusError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -557,7 +557,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.GetError(resErr)
+		return resource.StatusError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -588,10 +588,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return resource.StatusError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
+		return resource.StatusError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -753,7 +753,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
 			resErr := resource.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resource.GetError(resErr)
+				return resource.StatusError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -821,7 +821,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
