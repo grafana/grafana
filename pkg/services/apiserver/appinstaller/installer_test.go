@@ -593,9 +593,11 @@ func (f *registerAdmissionFakeBuilder) InstallSchema(*runtime.Scheme) error { re
 func (f *registerAdmissionFakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder.APIGroupOptions) error {
 	return nil
 }
-func (f *registerAdmissionFakeBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions { return nil }
-func (f *registerAdmissionFakeBuilder) AllowedV0Alpha1Resources() []string                  { return nil }
-func (f *registerAdmissionFakeBuilder) GetGroupVersion() schema.GroupVersion                { return f.gv }
+func (f *registerAdmissionFakeBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return nil
+}
+func (f *registerAdmissionFakeBuilder) AllowedV0Alpha1Resources() []string   { return nil }
+func (f *registerAdmissionFakeBuilder) GetGroupVersion() schema.GroupVersion { return f.gv }
 func (f *registerAdmissionFakeBuilder) Get(_ context.Context, _ schema.GroupVersionResource, _, _ string) (runtime.Object, error) {
 	return f.obj, nil
 }
