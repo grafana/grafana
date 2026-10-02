@@ -17111,6 +17111,8 @@
       "placeholder-value-or-variable": "Value or variable"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "Left operand",
+      "aria-label-right-operand": "Right operand",
       "label-operation": "Operation",
       "placeholder-field-or-number": "Field or number",
       "placeholder-fields-or-number": "Field(s) or number"
