@@ -68,6 +68,16 @@ const (
 	// initial delete call.
 	waitTimeoutCleanup = 2 * WaitTimeoutDefault
 
+	// waitTimeoutPathConflict is used for PathConflict condition checks.
+	// RepositoryPathConflictChecker reads repositories through the same
+	// informer.RepositoryGetter.List used for the quota count, which is
+	// documented to tolerate staleness up to the controller's informer resync
+	// interval (setting.ProvisioningControllerResyncIntervalDefault, currently
+	// 60s - same as WaitTimeoutDefault). A missed watch event only self-heals
+	// on the next resync, so this leaves a full resync cycle of margin instead
+	// of racing the two 60s values against each other with no slack.
+	waitTimeoutPathConflict = 2 * WaitTimeoutDefault
+
 	// waitTimeoutFolderCleanup is the budget for the folders step in
 	// CleanupAllResources. Folders are force-deleted, so this is no longer
 	// gated on the eventually-consistent empty-folder check; the larger budget
@@ -1288,6 +1298,30 @@ func (h *ProvisioningTestHelper) WaitForUnhealthyRepository(t *testing.T, name s
 		assert.True(collect, found, "repository %s does not have health status", name)
 		assert.False(collect, status, "repository %s should be unhealthy", name)
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repository %s should become unhealthy", name)
+}
+
+// WaitForRepositoryPathConflictMessageContains waits for a repository's PathConflict
+// status condition to report a conflict whose message contains substr (e.g. naming the
+// other repository it conflicts with). Unlike WaitForUnhealthyRepository, a path
+// conflict is purely informational - it does not affect status.health or block sync,
+// so this checks status.conditions instead.
+func (h *ProvisioningTestHelper) WaitForRepositoryPathConflictMessageContains(t *testing.T, name, substr string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		obj, err := h.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+		if !assert.NoError(collect, err, "failed to get repository %s", name) {
+			return
+		}
+		repo := MustFromUnstructured[provisioning.Repository](t, obj)
+		cond := FindCondition(repo.Status.Conditions, provisioning.ConditionTypePathConflict)
+		if !assert.NotNil(collect, cond, "repository %s should have a PathConflict condition", name) {
+			return
+		}
+		assert.Equal(collect, metav1.ConditionFalse, cond.Status,
+			"repository %s PathConflict condition should be False (conflict present)", name)
+		assert.Contains(collect, cond.Message, substr,
+			"repository %s PathConflict message %q should contain %q", name, cond.Message, substr)
+	}, waitTimeoutPathConflict, WaitIntervalDefault, "repository %s should report a path conflict containing %q", name, substr)
 }
 
 // WaitForHealthyConnection polls until the connection controller has reconciled

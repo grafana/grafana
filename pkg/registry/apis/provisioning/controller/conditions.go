@@ -9,6 +9,22 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
+// ConditionChanged reports whether newCondition differs (by Status, Reason, or Message)
+// from the matching condition already stored in existingConditions. Used to trigger a
+// reconcile pass for a repository whose condition changed for a reason the trigger
+// switch in RepositoryController.process does not otherwise catch - e.g. a PathConflict
+// condition that changed only because a different repository was created, updated, or
+// deleted, not because anything about this repository's own spec/health/quota changed.
+func ConditionChanged(existingConditions []metav1.Condition, newCondition metav1.Condition) bool {
+	existing := meta.FindStatusCondition(existingConditions, newCondition.Type)
+	if existing == nil {
+		return true
+	}
+	return existing.Status != newCondition.Status ||
+		existing.Reason != newCondition.Reason ||
+		existing.Message != newCondition.Message
+}
+
 // BuildConditionPatchOpsFromExisting creates condition patch operations for Repository or Connection resources.
 // Accepts one or more conditions. Returns nil if none of the conditions have changed to avoid unnecessary patches.
 //
