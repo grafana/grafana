@@ -99,6 +99,27 @@ preinstall_sync = stackdriver
 ; preinstall_sync = stackdriver@<version>
 ```
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your Google Cloud Monitoring data source, use the `gcx datasources cloudmonitoring` commands:
+
+```sh
+# List the projects and metrics available to the data source
+gcx datasources cloudmonitoring list-projects -d <DATASOURCE_UID>
+gcx datasources cloudmonitoring list-metrics -d <DATASOURCE_UID> --project my-project --service compute.googleapis.com
+
+# Run a structured metrics query
+gcx datasources cloudmonitoring query -d <DATASOURCE_UID> --project my-project \
+  --metric compute.googleapis.com/instance/cpu/utilization --since 1h
+
+# Split the result into one series per instance with a cross-series reducer
+gcx datasources cloudmonitoring query -d <DATASOURCE_UID> --project my-project \
+  --metric compute.googleapis.com/instance/cpu/utilization \
+  --reducer REDUCE_MEAN --group-by resource.label.instance_name --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Google Cloud Monitoring data source. You can omit the `-d` flag when `datasources.cloudmonitoring` is configured in your `gcx` context. Queries are structured rather than expression-based, so `--project` and `--metric` are required. The `--group-by` flag requires a `--reducer` other than `REDUCE_NONE`, and `--filter` matches are exact and case-sensitive, with no regex or wildcard support. The `list-projects` and `list-metrics` commands help you discover valid values.
+
 ## Related resources
 
 - [Google Cloud Monitoring documentation](https://cloud.google.com/monitoring/docs)
