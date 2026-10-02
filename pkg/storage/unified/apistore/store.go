@@ -339,7 +339,14 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 
 	if meta.GetResourceVersion() == OverwriteOnCreateResourceVersion {
 		meta.SetResourceVersion("")
-		return s.createOrReplace(ctx, key, obj, out, ttl)
+		validated := meta.GetAnnotation(utils.AnnoKeyOverwriteValidated) == "true"
+		meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "")
+		if validated {
+			return s.createOrReplace(ctx, key, obj, out, ttl)
+		}
+		// Sentinel present but never validated by admission (no Getter registered for this
+		// GV, or the marker was stripped/never set) - fall through to a plain create, which
+		// 409s on an existing name exactly like it always has.
 	}
 
 	// Make sure we are looking at the correct namespace

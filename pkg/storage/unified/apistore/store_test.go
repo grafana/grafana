@@ -135,6 +135,10 @@ func TestCreateOrReplaceCreatesWhenMissing(t *testing.T) {
 		},
 	}
 
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
 	out := &example.Pod{}
 	err = store.Create(ctx, key, obj, out, 0)
 	require.NoError(t, err)
@@ -162,12 +166,36 @@ func TestCreateOrReplaceReplacesWhenFound(t *testing.T) {
 		},
 		Spec: example.PodSpec{NodeName: "second-node"},
 	}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
 	secondOut := &example.Pod{}
 	err = store.Create(ctx, key, second, secondOut, 0)
 	require.NoError(t, err, "expected the sentinel to trigger a replace, not AlreadyExists")
 	require.Equal(t, "second-node", secondOut.Spec.NodeName)
 	require.Equal(t, firstOut.UID, secondOut.UID, "replace must preserve the original object's identity, proving this went through Update, not a second Create")
 	require.NotEqual(t, firstOut.ResourceVersion, secondOut.ResourceVersion, "a real write must bump the resourceVersion")
+}
+
+func TestCreateOrReplaceRequiresMarkerEvenWithSentinel(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/no-marker"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "no-marker", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	// Sentinel set, but no AnnoKeyOverwriteValidated - simulating a client that sent the
+	// sentinel directly without going through admission (or a GV admission never validated).
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "no-marker", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.True(t, storage.IsExist(err), "without the marker, a sentinel create against an existing object must still 409, exactly like a plain create would")
 }
 
 func TestCreateNonSentinelResourceVersionsUnchanged(t *testing.T) {
@@ -238,6 +266,7 @@ func TestCreateOrReplaceRejectsRepoManagedResource(t *testing.T) {
 		Kind:     utils.ManagerKindRepo,
 		Identity: "test-repo",
 	})
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
 
 	secondOut := &example.Pod{}
 	err = store.Create(ctx, key, second, secondOut, 0)
@@ -286,6 +315,10 @@ func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
 	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
 		Name: "create-only", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
 	}}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
 	secondOut := &example.Pod{}
 	err = store.Create(ctx, key, second, secondOut, 0)
 	require.Error(t, err, "the object exists, so this must now require VerbUpdate, which this AccessClient denies")
@@ -308,6 +341,10 @@ func TestCreateOrReplaceReplaceDoesNotMutateCallerObject(t *testing.T) {
 		},
 		Spec: example.PodSpec{NodeName: "replacement-node"},
 	}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
 	secondOut := &example.Pod{}
 	require.NoError(t, store.Create(ctx, key, second, secondOut, 0))
 
