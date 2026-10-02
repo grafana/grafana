@@ -1581,3 +1581,104 @@ func TestGlobalSearchIsUnavailableWhileTheIndexIsDisabled(t *testing.T) {
 	require.NotNil(t, rsp.Error)
 	assert.Equal(t, int32(http.StatusServiceUnavailable), rsp.Error.Code)
 }
+
+func TestRebuildRequestsCombineReconcile(t *testing.T) {
+	a := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), staleTypes: []schema.GroupResource{dashboardsGroupResource}}
+	b := rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true}
+
+	c, ok := combineRebuildRequests(a, b)
+	require.True(t, ok)
+	assert.True(t, c.reconcile)
+	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource}, c.staleTypes)
+}
+
+// A reconcile runs in the rebuild workers, so it never overlaps a rebuild of
+// the same index, and repairs every covered type.
+func TestRebuildWorkerReconcilesTheGlobalIndex(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
+	}}
+	// Missing folder-a, and still holding a dashboard deleted since.
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 50}, {Name: "dash-gone", RV: 40}},
+	})
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true})
+
+	var indexed, removed []string
+	for _, item := range idx.indexedItems() {
+		if item.Action == ActionDelete {
+			removed = append(removed, item.Key.Name)
+		} else {
+			indexed = append(indexed, item.Doc.Key.Name)
+		}
+	}
+	assert.Equal(t, []string{"folder-a"}, indexed)
+	assert.Equal(t, []string{"dash-gone"}, removed)
+	assert.NotZero(t, idx.reconciledAt, "recorded, so it is not compared again for an interval")
+}
+
+// Only the global indexes this instance owns are reconciled here, and only
+// once they are due.
+func TestReconcileQueuesOnlyOwnedGlobalIndexes(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	search := server.search.(*mockSearchBackend)
+	search.cache[GlobalSearchKey("elsewhere")] = &MockResourceIndex{}
+	search.cache[dashboardType("ns")] = &MockResourceIndex{}
+	server.ownsIndexFn = func(key NamespacedResource) (bool, error) { return key.Namespace == "ns", nil }
+
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns"), GlobalSearchKey("elsewhere"), dashboardType("ns")}, time.Now())
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+	assert.True(t, queued[0].reconcile)
+}
+
+// Each index is compared once per interval, at its own slot.
+func TestReconcileComesDueAtTheIndexSlot(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+	slot := lastReconcileSlot(GlobalSearchKey("ns"), time.Now())
+
+	idx.reconciledAt = slot.Add(time.Second)
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval-time.Second))
+	assert.Zero(t, server.rebuildQueue.Len(), "compared since its slot, and the next is not here yet")
+
+	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval+time.Second))
+	assert.Equal(t, 1, server.rebuildQueue.Len(), "its next slot has passed")
+}
+
+// Slots repeat every interval, at an offset taken from the key.
+func TestReconcileSlotsRepeatEveryInterval(t *testing.T) {
+	now := time.Now()
+	slot := lastReconcileSlot(GlobalSearchKey("ns"), now)
+	assert.False(t, slot.After(now))
+	assert.Less(t, now.Sub(slot), globalIndexReconcileInterval)
+	assert.Equal(t, slot.Add(globalIndexReconcileInterval), lastReconcileSlot(GlobalSearchKey("ns"), now.Add(globalIndexReconcileInterval)))
+}
+
+// A build lists everything, so it counts as a comparison with storage.
+func TestGlobalIndexBuildRecordsReconciledAt(t *testing.T) {
+	storage := &multiTypeStorage{live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
+	server := globalTestServer(t, storage, &mockSearchBackend{})
+	before := time.Now()
+
+	idx, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	reconciledAt, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.False(t, reconciledAt.Before(before))
+}
+
+// A reconcile that failed for a type is not recorded, so the next scan tries
+// again rather than waiting another interval.
+func TestFailedReconcileIsNotRecorded(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+	idx.documentRefsErr = errors.New("index unavailable")
+
+	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	assert.Zero(t, idx.reconciledAt)
+}
