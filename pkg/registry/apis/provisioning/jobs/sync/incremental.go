@@ -355,7 +355,7 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
-				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
+				name, oldFolderName, gvk, size, _, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, quotaTracker, renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
@@ -503,7 +503,7 @@ func deleteFolders(
 		if entry.Reason != "" {
 			resultBuilder.WithReason(entry.Reason)
 		}
-		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
+		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}
