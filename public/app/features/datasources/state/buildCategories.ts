@@ -90,6 +90,16 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
+    // Fix link name
+    // if learn more link exists, same link is updated
+    // if the learn more link doesnot exists , learn more link is updated with the documentation link 
+    // if documentation link doesnot exists, learn more link is updated with first link
+    const links = plugin.info.links;
+    if (links?.length && !links.some(({ name }) => ['learn more'].includes(name.toLowerCase()))) {
+      const learnMoreLink = links.find((link) => link.name.toLowerCase() === 'documentation') ?? links[0];
+      plugin.info.links = [...links, { ...learnMoreLink, name: 'Learn more' }];
+    }
+
     const category = categories.find((item) => item.id === plugin.category) || categoryIndex['other'];
     category.plugins.push(plugin);
     // add to plugin index
