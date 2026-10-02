@@ -1,0 +1,48 @@
+name: Re-embedding Version Approval
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check re-embedding approval
+    runs-on: ubuntu-arm64-small
+    timeout-minutes: 10
+    env:
+      GOWORK: 'off'
+      GO111MODULE: 'off'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Setup Go
+        uses: ./.github/actions/setup-go
+        with:
+          cache: 'false'
+
+      - name: Test checker
+        run: go test ./scripts/ci/reembed-version-approval
+
+      - name: Check re-embedding approval
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          go run ./scripts/ci/reembed-version-approval \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --event "$GITHUB_EVENT_PATH"
