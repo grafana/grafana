@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -51,7 +53,9 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	request(t, h.Org1.Admin, "PATCH", repoPath+"/status", map[string]any{"status": map[string]any{
 		"health": map[string]any{"healthy": true}, "sync": map[string]any{"state": "success", "started": 0},
 	}}, 200)
-	request(t, h.Org1.Admin, "POST", "connections", connection("none-connection"), 201)
+	_, err := common.GetConnectionClientV1Beta1(h.K8sTestHelper).Resource.Create(t.Context(),
+		&unstructured.Unstructured{Object: connection("none-connection")}, metav1.CreateOptions{})
+	require.NoError(t, err)
 	request(t, h.Org1.Admin, "POST", filesPath+"existing.json", dashboard("none-existing-dashboard"), 200)
 	require.NoError(t, os.WriteFile(filepath.Join(h.ProvisioningPath, "README.md"), []byte("Permission fixture"), 0600))
 	request(t, h.Org1.Admin, "POST", "jobs", map[string]any{
