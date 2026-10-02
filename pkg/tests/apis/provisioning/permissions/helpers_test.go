@@ -91,19 +91,19 @@ func request(t *testing.T, u apis.User, method, path string, body any, status in
 	return response
 }
 
-func repository(name, path string) map[string]any {
-	return map[string]any{
-		"apiVersion": apiVersion, "kind": "Repository", "metadata": map[string]any{"name": name},
-		"spec": map[string]any{"title": name, "type": "local", "local": map[string]any{"path": path}, "workflows": []string{"write"}, "sync": map[string]any{"enabled": true, "target": "folderless", "intervalSeconds": 60}},
-	}
+func repository(t *testing.T, h *common.ProvisioningTestHelper, name, path string) map[string]any {
+	t.Helper()
+	repo := h.RenderObject(t, common.TestdataPath("local.json.tmpl"), common.TestRepo{
+		Name: name, Path: path, SyncEnabled: true, SyncTarget: "folderless", WorkflowsJSON: `["write"]`,
+	})
+	repo.SetAPIVersion(apiVersion)
+	return repo.Object
 }
 
 func connection(name string) map[string]any {
-	return map[string]any{
-		"apiVersion": apiVersion, "kind": "Connection", "metadata": map[string]any{"name": name},
-		"spec":   map[string]any{"title": name, "type": "githubOAuth", "oauth": map[string]any{"clientID": "test-client"}},
-		"secure": map[string]any{"clientSecret": map[string]any{"create": "test-client-secret"}},
-	}
+	conn := common.NewGithubOAuthConnection(name, "test-client")
+	conn.SetAPIVersion(apiVersion)
+	return conn.Object
 }
 
 func dashboard(name string) map[string]any {

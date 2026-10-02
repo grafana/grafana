@@ -51,10 +51,10 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	repoPath := "repositories/" + repo
 	filesPath := repoPath + "/files/"
 	repoClient := common.GetRepositoryClientV1Beta1(h.K8sTestHelper)
-	_, err := repoClient.Resource.Create(t.Context(),
-		&unstructured.Unstructured{Object: repository(repo, h.ProvisioningPath)}, metav1.CreateOptions{})
-	require.NoError(t, err)
-	_, err = repoClient.Resource.Patch(t.Context(), repo, types.MergePatchType,
+	h.CreateRepositoryNoWait(t, common.TestRepo{
+		Name: repo, SyncTarget: "folderless", Workflows: []string{"write"},
+	})
+	_, err := repoClient.Resource.Patch(t.Context(), repo, types.MergePatchType,
 		[]byte(`{"status":{"health":{"healthy":true},"sync":{"state":"success","started":0}}}`), metav1.PatchOptions{}, "status")
 	require.NoError(t, err)
 	_, err = common.GetConnectionClientV1Beta1(h.K8sTestHelper).Resource.Create(t.Context(),
@@ -75,12 +75,12 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	}{
 		{"read repository", "GET", repoPath, nil, "repository-read", "repository-write", 200},
 		{"list repositories", "GET", "repositories", nil, "repository-read", "repository-create", 200},
-		{"create repository", "POST", "repositories", repository("none-created-repository", filepath.Join(h.ProvisioningPath, "created")), "repository-create", "repository-write", 201},
+		{"create repository", "POST", "repositories", repository(t, h, "none-created-repository", filepath.Join(h.ProvisioningPath, "created")), "repository-create", "repository-write", 201},
 		{"update repository", "PATCH", repoPath, map[string]any{"spec": map[string]any{"title": "Updated"}}, "repository-write", "repository-read", 200},
 		{"inspect resources", "GET", repoPath + "/resources", nil, "repository-write", "repository-read", 200},
 		{"read repository status", "GET", repoPath + "/status", nil, "repository-write", "repository-read", 200},
 		{"update repository status", "PATCH", repoPath + "/status", map[string]any{"status": map[string]any{"observedGeneration": 1}}, "repository-write", "repository-read", 200},
-		{"test repository", "POST", repoPath + "/test", repository(repo, h.ProvisioningPath), "repository-write", "repository-read", 200},
+		{"test repository", "POST", repoPath + "/test", repository(t, h, repo, h.ProvisioningPath), "repository-write", "repository-read", 200},
 		{"read connection", "GET", "connections/none-connection", nil, "connection-read", "connection-write", 200},
 		{"list connections", "GET", "connections", nil, "connection-read", "connection-create", 200},
 		{"create connection", "POST", "connections", connection("none-created-connection"), "connection-create", "connection-write", 201},
@@ -134,6 +134,8 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 	}
 
 	// Having jobs:create alone must not authorize administrative submissions.
+	gv := repoClient.Args.GVR.GroupVersion()
+	userREST := u.RESTClient(t, &gv)
 	for _, action := range []string{"pull", "releaseResources", "deleteResources"} {
 		t.Run(action+" without repository write", func(t *testing.T) {
 			target := "none-missing"
@@ -143,7 +145,17 @@ func TestIntegrationProvisioning_NoneRBAC(t *testing.T) {
 				body["pull"] = map[string]any{}
 			}
 			setPermissions(t, h, u, roles["job-create"])
-			request(t, u, "POST", "repositories/"+target+"/jobs", body, 403)
+			var statusCode int
+			result := userREST.Post().
+				Namespace(repoClient.Args.Namespace).
+				Resource("repositories").
+				Name(target).
+				SubResource("jobs").
+				Body(common.AsJSON(body)).
+				SetHeader("Content-Type", "application/json").
+				Do(t.Context()).StatusCode(&statusCode)
+			require.Error(t, result.Error())
+			require.Equal(t, 403, statusCode)
 		})
 	}
 }
