@@ -56,7 +56,7 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
   if (!fields.length) {
     return null;
   } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
@@ -104,7 +104,7 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   if (!fields.length) {
     return null;
   } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No results to display.');
+    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
