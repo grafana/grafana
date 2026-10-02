@@ -217,23 +217,28 @@ func TestKvStorageBackend_ResourceVersionOrderingAcrossPods(t *testing.T) {
 }
 
 func TestKvStorageBackend_ResourceVersionOrderingWithRVManager(t *testing.T) {
-	for _, eventType := range []resourcepb.WatchEvent_Type{resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED} {
+	for _, eventType := range []resourcepb.WatchEvent_Type{resourcepb.WatchEvent_ADDED, resourcepb.WatchEvent_MODIFIED, resourcepb.WatchEvent_DELETED} {
 		t.Run(eventType.String(), func(t *testing.T) {
 			backend, _ := setupCompatSqlKVStorageBackend(t)
 			previousRV := seedResource(t, backend, t.Context(), "resource", "")
-			now := time.UnixMilli(snowflakeTimestampMillis(previousRV)).Add(-5 * time.Second)
-			backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time { return now })
 			obj, err := createTestObjectWithName("resource", appsNamespace, "updated")
 			require.NoError(t, err)
 			meta, err := utils.MetaAccessor(obj)
 			require.NoError(t, err)
+			eventPreviousRV := previousRV
+			if eventType == resourcepb.WatchEvent_ADDED {
+				previousRV = deleteTestObject(t, backend, t.Context(), obj, previousRV, appsNamespace, "resource")
+				eventPreviousRV = 0
+			}
+			now := time.UnixMilli(snowflakeTimestampMillis(previousRV)).Add(-5 * time.Second)
+			backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time { return now })
 			rv, err := backend.WriteEvent(t.Context(), WriteEvent{
 				Type:       eventType,
 				Key:        appsKey("resource"),
 				Value:      objectToJSONBytes(t, obj),
 				Object:     meta,
 				ObjectOld:  meta,
-				PreviousRV: previousRV,
+				PreviousRV: eventPreviousRV,
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, previousRV)

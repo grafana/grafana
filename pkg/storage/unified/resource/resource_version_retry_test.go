@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -319,6 +320,110 @@ func TestKvStorageBackend_ResourceVersionWaitRecovery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestKvStorageBackend_RecreateResourceVersionOrdering(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		offset  time.Duration
+		maxWait time.Duration
+		recover bool
+		reason  string
+	}{
+		{name: "clock behind recovers", offset: -5 * time.Millisecond, recover: true, reason: "clock_behind"},
+		{name: "same timestamp recovers", recover: true, reason: "same_timestamp"},
+		{name: "exhausted", offset: -5 * time.Second, maxWait: 2 * time.Millisecond, reason: "clock_behind"},
+		{name: "disabled", offset: -5 * time.Millisecond, maxWait: -time.Second, reason: "clock_behind"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.DisableStorageServices = true
+				opts.ResourceVersionMaxWait = tc.maxWait
+			})
+			now := time.Now()
+			backend.resourceVersions = newResourceVersionGenerator(42, func() time.Time { return now })
+			created, original := addTestObject(t, backend, t.Context(), appsNamespace, "resource", "original")
+			deleted := deleteTestObject(t, backend, t.Context(), original, created, appsNamespace, "resource")
+			samples := 0
+			backend.resourceVersions = newResourceVersionGenerator(41, func() time.Time {
+				samples++
+				if tc.recover && samples > 1 {
+					return now.Add(time.Millisecond)
+				}
+				return now.Add(tc.offset)
+			})
+			obj, err := createTestObjectWithName("resource", appsNamespace, "recreated")
+			require.NoError(t, err)
+			meta, err := utils.MetaAccessor(obj)
+			require.NoError(t, err)
+			event := WriteEvent{Type: resourcepb.WatchEvent_ADDED, Key: appsKey("resource"), Value: objectToJSONBytes(t, obj), Object: meta}
+			rv, err := backend.WriteEvent(t.Context(), event)
+			wantHead := deleted
+			wantKeys := 2
+			if tc.recover {
+				require.NoError(t, err)
+				require.Greater(t, rv, deleted)
+				require.Equal(t, 2, samples)
+				require.EqualValues(t, 1, resourceVersionWaitObservation(t, backend.metrics, tc.reason, "recovered").GetSampleCount())
+				wantHead = rv
+				wantKeys++
+			} else {
+				require.Zero(t, rv)
+				require.True(t, apierrors.IsServiceUnavailable(err), "error: %v", err)
+				if tc.maxWait > 0 {
+					require.EqualValues(t, 1, resourceVersionWaitObservation(t, backend.metrics, tc.reason, "exhausted").GetSampleCount())
+				} else {
+					require.Equal(t, 1, samples)
+				}
+			}
+			response := backend.ReadResource(t.Context(), &resourcepb.ReadRequest{Key: event.Key})
+			if tc.recover {
+				require.Nil(t, response.Error)
+				require.Equal(t, rv, response.ResourceVersion)
+				require.Equal(t, event.Value, response.Value)
+			} else {
+				require.EqualValues(t, 404, response.Error.GetCode())
+			}
+			head, err := backend.eventStore.LastEventKey(t.Context())
+			require.NoError(t, err)
+			require.Equal(t, wantHead, head.ResourceVersion)
+			if tc.recover {
+				stored, err := backend.eventStore.Get(t.Context(), head)
+				require.NoError(t, err)
+				require.Zero(t, stored.PreviousRV)
+				require.Empty(t, stored.PreviousAction)
+				require.Empty(t, stored.PreviousFolder)
+			}
+			keys := 0
+			for _, err := range backend.dataStore.Keys(t.Context(), ListRequestKey{
+				Group: appsNamespace.Group, Resource: appsNamespace.Resource,
+				Namespace: appsNamespace.Namespace, Name: "resource",
+			}, SortOrderAsc) {
+				require.NoError(t, err)
+				keys++
+			}
+			require.Equal(t, wantKeys, keys)
+			events := 0
+			for _, err := range backend.eventStore.ListSince(t.Context(), 0) {
+				require.NoError(t, err)
+				events++
+			}
+			require.Equal(t, wantKeys, events)
+		})
+	}
+}
+
+func TestKvStorageBackend_CreateAlreadyExistsBeforeResourceVersionGeneration(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) { opts.DisableStorageServices = true })
+	_, obj := addTestObject(t, backend, t.Context(), appsNamespace, "resource", "original")
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	backend.resourceVersions = nil
+	rv, err := backend.WriteEvent(t.Context(), WriteEvent{
+		Type: resourcepb.WatchEvent_ADDED, Key: appsKey("resource"), Value: objectToJSONBytes(t, obj), Object: meta,
+	})
+	require.Zero(t, rv)
+	require.ErrorIs(t, err, ErrResourceAlreadyExists)
 }
 
 func TestKvStorageBackend_ResourceVersionWaitCanceledDoesNotPersist(t *testing.T) {

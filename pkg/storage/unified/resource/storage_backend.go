@@ -1152,38 +1152,28 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		previousKey = latestKey
 	}
 
-	// The SQL compatibility path replaces the generated RV with a database-assigned RV.
-	var minimumRV int64
-	if k.rvManager == nil {
-		minimumRV = previousKey.ResourceVersion
-	}
-	rv, err = k.generateResourceVersionWithRetry(ctx, minimumRV)
-	if err != nil {
-		var ordering *resourceVersionOrderingError
-		if errors.As(err, &ordering) {
-			k.metrics.recordResourceVersionOrderingRejection(event, ordering.rv)
-		}
-		if ctx.Err() != nil {
-			return 0, ctx.Err()
-		}
-		return 0, apierrors.NewServiceUnavailable(err.Error())
-	}
-
+	minimumRV := previousKey.ResourceVersion
 	obj := event.Object
 	var action kv.DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
-		// Check if resource already exists for create operations
-		_, err = k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		latestKey, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
-		})
+		}, 0, true)
 		if err == nil {
-			return 0, ErrResourceAlreadyExists
-		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
+			if latestKey.Action != DataActionDeleted {
+				return 0, ErrResourceAlreadyExists
+			}
+			// A recreated resource must sort after its tombstone to be visible.
+			minimumRV = latestKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
+		}
+		if k.rvManager != nil {
 			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
 			// In compat mode the legacy `resource` table is the source of truth
 			// for live resources, so a case-insensitive hit there is a committed
@@ -1198,9 +1188,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			if !errors.Is(err, ErrNotFound) {
 				return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 			}
-			// fallback also missed; resource truly doesn't exist — fall through to create.
-		} else if !errors.Is(err, ErrNotFound) {
-			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
 	case resourcepb.WatchEvent_MODIFIED:
 		action = DataActionUpdated
@@ -1213,6 +1200,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 
 	if obj == nil {
 		return 0, fmt.Errorf("object is nil")
+	}
+
+	// The SQL compatibility path replaces the generated RV with a database-assigned RV.
+	if k.rvManager != nil {
+		minimumRV = 0
+	}
+	rv, err = k.generateResourceVersionWithRetry(ctx, minimumRV)
+	if err != nil {
+		var ordering *resourceVersionOrderingError
+		if errors.As(err, &ordering) {
+			k.metrics.recordResourceVersionOrderingRejection(event, ordering.rv)
+		}
+		if ctx.Err() != nil {
+			return 0, ctx.Err()
+		}
+		return 0, apierrors.NewServiceUnavailable(err.Error())
 	}
 
 	// Write the data
