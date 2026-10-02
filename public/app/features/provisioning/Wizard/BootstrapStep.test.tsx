@@ -706,6 +706,138 @@ describe('BootstrapStep', () => {
     });
   });
 
+  describe('path conflict warning', () => {
+    const pathConflictCondition = {
+      type: 'PathConflict',
+      status: 'False',
+      reason: 'PathConflict',
+      message: 'repository path conflicts with existing repository: other-repo',
+      lastTransitionTime: '2024-01-01T00:00:00Z',
+    };
+
+    it('should show loading state, not the warning, while resource stats are still loading', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: [pathConflictCondition],
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: true, // still loading, even though the condition is already known
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Loading takes priority: the wizard must not let Next advance past a step
+      // that's still loading, which the warning status would otherwise allow.
+      expect(screen.getByText('Loading resource information...')).toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).not.toBeInTheDocument();
+    });
+
+    it('should render content with a warning once loading finishes and a conflict is present', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: undefined,
+        conditions: [pathConflictCondition],
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 0,
+        unmanagedCount: 0,
+        fileCount: 0,
+        resourceCount: 0,
+        resourceCountString: 'Empty',
+        fileCountString: 'Empty',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: true,
+      });
+
+      setup();
+
+      // Content stays visible: warning does not hard-block the wizard
+      expect(await screen.findByText('Sync external storage to a new Grafana folder')).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).toBeInTheDocument();
+    });
+
+    it('should show both the path conflict and quota warnings at once when both apply', async () => {
+      mockUseRepositoryStatus.mockReturnValue({
+        isReady: true,
+        isLoading: false,
+        isFetching: false,
+        hasError: false,
+        isHealthy: true,
+        isUnhealthy: false,
+        isReconciled: true,
+        healthMessage: undefined,
+        healthStatusNotReady: false,
+        fieldErrors: undefined,
+        quota: { maxResourcesPerRepository: 20 },
+        conditions: [pathConflictCondition],
+        refetch: jest.fn(),
+      });
+
+      mockUseResourceStats.mockReturnValue({
+        managedCount: 25,
+        unmanagedCount: 0,
+        fileCount: 25,
+        resourceCount: 25,
+        resourceCountString: '25 resources',
+        fileCountString: '25 files',
+        isLoading: false,
+        requiresMigration: false,
+        shouldSkipSync: false,
+      });
+
+      setup();
+
+      // Neither warning replaces the other - both are shown, one via the inline
+      // PathConflictBanner and one via the step's stepStatusInfo warning.
+      expect(
+        await screen.findByText(
+          'This repository shares a url, branch, and path combination with another repository. There will be sync errors because resources can only be managed by 1 repository.'
+        )
+      ).toBeInTheDocument();
+      expect(screen.getByText('Resource limit may be exceeded')).toBeInTheDocument();
+    });
+  });
+
   describe('repository health and reconciliation', () => {
     it('should show loading state when repository is unhealthy but not yet reconciled', async () => {
       // K8s may report unhealthy during reconciliation - we should wait, not show error
