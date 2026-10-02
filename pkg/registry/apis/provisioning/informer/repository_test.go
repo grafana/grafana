@@ -244,15 +244,36 @@ func TestRepositoryList_CarriesUnchangedForward(t *testing.T) {
 	assert.Zero(t, hydrationCount(t, reg, repoGVR), "an unchanged key must not be read back")
 }
 
+// padSnapshot returns filler repositories and their matching keys, enough that a
+// snapshot of that size plus readBacks drifted keys is allowed to read all of
+// them back. Read-backs are bounded against the full list they avoid, so a
+// handful of repositories is below the break-even and would take the list
+// instead -- a test of the read-back path has to be padded past it. The filler
+// never drifts, so it costs nothing and the named cases carry the behaviour.
+func padSnapshot(t *testing.T, readBacks int) (repos []*provisioningapis.Repository, keys []keysapi.Key) {
+	t.Helper()
+	for i := 0; maxHydrations(i+readBacks) < readBacks; i++ {
+		name := "filler-" + strconv.Itoa(i)
+		repos = append(repos, repoAt("ns", name, "10"))
+		keys = append(keys, keysapi.Key{Namespace: "ns", Name: name, ResourceVersion: "10"})
+	}
+	require.GreaterOrEqual(t, maxHydrations(len(keys)+readBacks), readBacks,
+		"the padded snapshot must allow %d read-backs", readBacks)
+	return repos, keys
+}
+
 // A key whose resource version moved is read back, which is how a soft delete
 // reaches the snapshot: the live MODIFIED event is deliberately not written
 // through, so the re-list is what notices.
 func TestRepositoryList_ReadsBackDrifted(t *testing.T) {
-	store := newFakeStore(repoAt("ns", "going", "10"), repoAt("ns", "steady", "10"))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{
-		{Namespace: "ns", Name: "going", ResourceVersion: "11"},
-		{Namespace: "ns", Name: "steady", ResourceVersion: "10"},
-	}}
+	seed, keyList := padSnapshot(t, 1)
+	seed = append(seed, repoAt("ns", "going", "10"), repoAt("ns", "steady", "10"))
+	keyList = append(keyList,
+		keysapi.Key{Namespace: "ns", Name: "going", ResourceVersion: "11"},
+		keysapi.Key{Namespace: "ns", Name: "steady", ResourceVersion: "10"},
+	)
+	store := newFakeStore(seed...)
+	keys := &stubKeysLister{listRV: 100, keys: keyList}
 	client := fake.NewClientset(terminating(repoAt("ns", "going", "11")), repoAt("ns", "steady", "10"))
 
 	recorder, reg := newTestRecorder(repoGVR)
@@ -265,7 +286,7 @@ func TestRepositoryList_ReadsBackDrifted(t *testing.T) {
 		require.True(t, ok)
 		byName[r.Name] = r
 	}
-	require.Len(t, byName, 2)
+	require.Len(t, byName, len(keyList))
 	assert.NotNil(t, byName["going"].DeletionTimestamp, "the read-back must pick up the soft delete")
 	assert.Equal(t, "11", byName["going"].ResourceVersion)
 	assert.Nil(t, byName["steady"].DeletionTimestamp)
@@ -291,18 +312,20 @@ func TestRepositoryList_EmptyStoreListsFullObjects(t *testing.T) {
 
 // Past the limit, reading each one back costs more than listing everything. The
 // limit tracks the snapshot, so the same drift can be worth reading back in a
-// large one and not in a small one; BenchmarkRepositoryRelist is where those
+// large one and not in a small one; BenchmarkRelistStrategies is where those
 // numbers come from.
 func TestMaxHydrations(t *testing.T) {
 	for _, tc := range []struct {
 		snapshot int
 		want     int
 	}{
-		{snapshot: 0, want: minHydrations},
-		{snapshot: 10, want: minHydrations},  // the floor: one read-back still beats listing ten
-		{snapshot: 100, want: minHydrations}, // 100/32 rounds below the floor
-		{snapshot: 1000, want: 31},           // measured crossover is ~35
-		{snapshot: 100000, want: 3125},       // a flat cap would force a 100k-object list here
+		// Below the break-even one list beats any read-back: the keys path costs
+		// an extra request that a small list does not earn back.
+		{snapshot: 0, want: 0},
+		{snapshot: 10, want: 0},
+		{snapshot: 100, want: 0},
+		{snapshot: 1000, want: 28},     // measured crossover is ~30
+		{snapshot: 100000, want: 3121}, // a flat cap would force a 100k-object list here
 	} {
 		assert.Equal(t, tc.want, maxHydrations(tc.snapshot), "snapshot of %d", tc.snapshot)
 	}
@@ -313,7 +336,7 @@ func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
 	// breaks if the limit stops tracking the snapshot.
 	const total = 1000
 	limit := maxHydrations(total)
-	require.Greater(t, limit, minHydrations, "the share must be what bounds this case")
+	require.Positive(t, limit, "past the break-even, so read-backs are allowed at all")
 
 	seed := make([]*provisioningapis.Repository, 0, total)
 	keyList := make([]keysapi.Key, 0, total)
@@ -341,18 +364,23 @@ func TestRepositoryList_TooManyDriftedListsFullObjects(t *testing.T) {
 // Hard-deleted between the keys list and the read-back. Leaving it out is right:
 // the Store's diff reports the removal from the snapshot's silence.
 func TestRepositoryList_ReadBackNotFoundDropsTheKey(t *testing.T) {
-	store := newFakeStore(repoAt("ns", "kept", "10"), repoAt("ns", "gone", "10"))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{
-		{Namespace: "ns", Name: "kept", ResourceVersion: "10"},
-		{Namespace: "ns", Name: "gone", ResourceVersion: "11"},
-	}}
+	seed, keyList := padSnapshot(t, 1)
+	seed = append(seed, repoAt("ns", "kept", "10"), repoAt("ns", "gone", "10"))
+	keyList = append(keyList,
+		keysapi.Key{Namespace: "ns", Name: "kept", ResourceVersion: "10"},
+		keysapi.Key{Namespace: "ns", Name: "gone", ResourceVersion: "11"},
+	)
+	store := newFakeStore(seed...)
+	keys := &stubKeysLister{listRV: 100, keys: keyList}
 	client := fake.NewClientset(repoAt("ns", "kept", "10"))
 
 	recorder, reg := newTestRecorder(repoGVR)
 	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
 	require.NoError(t, err, "a vanished repository is not a reason to fail the tick")
 
-	assert.Equal(t, []string{"kept"}, repoNames(t, objs))
+	assert.NotContains(t, repoNames(t, objs), "gone", "the vanished repository must be left out")
+	assert.Contains(t, repoNames(t, objs), "kept")
+	assert.Len(t, objs, len(keyList)-1, "every key but the vanished one")
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "keys"))
 }
 
@@ -360,8 +388,13 @@ func TestRepositoryList_ReadBackNotFoundDropsTheKey(t *testing.T) {
 // from a delete, so it would dispatch a spurious OnDelete. Take the
 // authoritative list instead.
 func TestRepositoryList_ReadBackErrorListsFullObjects(t *testing.T) {
-	store := newFakeStore(repoAt("ns", "a", "10"))
-	keys := &stubKeysLister{listRV: 100, keys: []keysapi.Key{{Namespace: "ns", Name: "a", ResourceVersion: "11"}}}
+	// Padded so the read-back is attempted at all: below the break-even the
+	// limit would take the list first and the failure would never be reached.
+	seed, keyList := padSnapshot(t, 1)
+	seed = append(seed, repoAt("ns", "a", "10"))
+	keyList = append(keyList, keysapi.Key{Namespace: "ns", Name: "a", ResourceVersion: "11"})
+	store := newFakeStore(seed...)
+	keys := &stubKeysLister{listRV: 100, keys: keyList}
 	client := fake.NewClientset(repoAt("ns", "from-full-list", "10"))
 	client.PrependReactor("get", "repositories", func(k8stesting.Action) (bool, runtime.Object, error) {
 		return true, nil, errors.New("apiserver unavailable")
@@ -373,6 +406,7 @@ func TestRepositoryList_ReadBackErrorListsFullObjects(t *testing.T) {
 
 	assert.Equal(t, []string{"from-full-list"}, repoNames(t, objs))
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
+	assert.Equal(t, float64(1), hydrationCount(t, reg, repoGVR), "the read-back was attempted, not skipped by the limit")
 }
 
 // Storage older than keys_only must degrade to the full list rather than stop

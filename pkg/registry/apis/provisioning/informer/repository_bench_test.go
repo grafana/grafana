@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
@@ -153,6 +154,12 @@ func newBenchServer(t testing.TB, repos []*provisioningapis.Repository, rtt time
 	return b
 }
 
+// report attributes the server's counters to one operation.
+func (b *benchServer) report(tb *testing.B) {
+	tb.ReportMetric(float64(b.requests.Load())/float64(tb.N), "reqs/op")
+	tb.ReportMetric(float64(b.bytes.Load())/float64(tb.N), "wire-B/op")
+}
+
 func (b *benchServer) clients(t testing.TB) (versioned.Interface, rest.Interface) {
 	t.Helper()
 	// The operator's clients disable client-side throttling
@@ -192,22 +199,102 @@ func seedStore(ctx context.Context, repos []*provisioningapis.Repository, driftC
 	return store
 }
 
-// BenchmarkRepositoryRelist compares one full list against the keys projection
-// plus per-key read-backs, at the repository counts and change rates a tick
-// actually sees. rtt=0 is loopback; rtt=1ms is the order of a same-cluster
-// apiserver hop, where each read-back costs a round trip and the list costs one.
-func BenchmarkRepositoryRelist(b *testing.B) {
+// BenchmarkRelistStrategies measures the two strategies directly, without the
+// read-back limit in the way. This is where the limit's numbers come from, so it
+// has to stay independent of the limit: running the shipped re-list instead
+// would make the expensive cases fall back to a list and quietly stop measuring
+// the thing being compared.
+//
+// full-list is one paged LIST of the whole snapshot. keys+readback is one keys
+// list plus drift sequential object reads, which is what the re-list does for a
+// snapshot that has drifted by that much.
+func BenchmarkRelistStrategies(b *testing.B) {
+	ctx := context.Background()
+
 	for _, rtt := range []time.Duration{0, time.Millisecond} {
-		for _, total := range []int{10, 100, 1000} {
-			repos := make([]*provisioningapis.Repository, total)
+		// Small snapshots decide the floor, large ones decide the share, so both
+		// ends are measured at the change rates that bracket the crossover.
+		for _, c := range []struct {
+			total  int
+			drifts []int
+		}{
+			{total: 10, drifts: []int{1, 2, 3, 4, 5, 6, 8, 10}},
+			{total: 32, drifts: []int{1, 2, 4, 6, 8, 12}},
+			{total: 100, drifts: []int{1, 4, 8, 16, 32}},
+			{total: 1000, drifts: []int{1, 16, 31, 64, 128, 256}},
+		} {
+			repos := make([]*provisioningapis.Repository, c.total)
 			for i := range repos {
 				repos[i] = benchRepo(i)
 			}
 
-			b.Run(fmt.Sprintf("rtt=%v/n=%d/full-list", rtt, total), func(b *testing.B) {
+			b.Run(fmt.Sprintf("rtt=%v/n=%d/full-list", rtt, c.total), func(b *testing.B) {
 				srv := newBenchServer(b, repos, rtt)
 				cs, _ := srv.clients(b)
-				list := repositoryList(cs.ProvisioningV0alpha1(), "", nil, usinformer.NewStore(), RelistRecorder{})
+				api := cs.ProvisioningV0alpha1()
+				b.ResetTimer()
+				for b.Loop() {
+					_, _, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
+						return api.Repositories("").List(ctx, opts)
+					})
+					if err != nil {
+						b.Fatal(err)
+					}
+				}
+				b.StopTimer()
+				srv.report(b)
+			})
+
+			for _, drift := range c.drifts {
+				b.Run(fmt.Sprintf("rtt=%v/n=%d/keys+readback=%d", rtt, c.total, drift), func(b *testing.B) {
+					srv := newBenchServer(b, repos, rtt)
+					cs, rc := srv.clients(b)
+					api := cs.ProvisioningV0alpha1()
+					keys := keysapi.NewHTTPLister(rc, provisioningapis.RepositoryResourceInfo.GroupVersionResource())
+					b.ResetTimer()
+					for b.Loop() {
+						_, seq := keys.ListKeys(ctx)
+						read := 0
+						for k, err := range seq {
+							if err != nil {
+								b.Fatal(err)
+							}
+							if read >= drift {
+								continue // carried forward from the snapshot, costs nothing
+							}
+							read++
+							if _, err := api.Repositories(k.Namespace).Get(ctx, k.Name, metav1.GetOptions{}); err != nil {
+								b.Fatal(err)
+							}
+						}
+					}
+					b.StopTimer()
+					srv.report(b)
+				})
+			}
+		}
+	}
+}
+
+// BenchmarkRepositoryRelistPolicy exercises the shipped re-list, limit included.
+// It does not establish the crossover -- BenchmarkRelistStrategies does -- it
+// shows what the limit decides: reqs/op stays at a keys list plus the drift until
+// the limit trips, then drops to the LIST pages.
+func BenchmarkRepositoryRelistPolicy(b *testing.B) {
+	for _, total := range []int{100, 1000} {
+		repos := make([]*provisioningapis.Repository, total)
+		for i := range repos {
+			repos[i] = benchRepo(i)
+		}
+		limit := maxHydrations(total)
+
+		for _, drift := range []int{0, 1, limit, limit + 1, total} {
+			b.Run(fmt.Sprintf("n=%d/drift=%d/limit=%d", total, drift, limit), func(b *testing.B) {
+				srv := newBenchServer(b, repos, 0)
+				cs, rc := srv.clients(b)
+				keys := keysapi.NewHTTPLister(rc, provisioningapis.RepositoryResourceInfo.GroupVersionResource())
+				store := seedStore(context.Background(), repos, drift)
+				list := repositoryList(cs.ProvisioningV0alpha1(), "", keys, store, RelistRecorder{})
 				b.ResetTimer()
 				for b.Loop() {
 					if _, _, err := list(context.Background()); err != nil {
@@ -215,35 +302,8 @@ func BenchmarkRepositoryRelist(b *testing.B) {
 					}
 				}
 				b.StopTimer()
-				b.ReportMetric(float64(srv.requests.Load())/float64(b.N), "reqs/op")
-				b.ReportMetric(float64(srv.bytes.Load())/float64(b.N), "wire-B/op")
+				srv.report(b)
 			})
-
-			for _, pct := range []int{0, 1, 5, 25, 100} {
-				drift := total * pct / 100
-				if pct == 1 {
-					drift = 1 // one changed repository, the steady-state case
-				}
-				b.Run(fmt.Sprintf("rtt=%v/n=%d/keys-drift=%d", rtt, total, drift), func(b *testing.B) {
-					srv := newBenchServer(b, repos, rtt)
-					cs, rc := srv.clients(b)
-					keys := keysapi.NewHTTPLister(rc, provisioningapis.RepositoryResourceInfo.GroupVersionResource())
-					// Seeded once: the re-list only reads the snapshot, so keeping
-					// it out of the loop leaves the allocations attributable to
-					// the re-list itself.
-					store := seedStore(context.Background(), repos, drift)
-					list := repositoryList(cs.ProvisioningV0alpha1(), "", keys, store, RelistRecorder{})
-					b.ResetTimer()
-					for b.Loop() {
-						if _, _, err := list(context.Background()); err != nil {
-							b.Fatal(err)
-						}
-					}
-					b.StopTimer()
-					b.ReportMetric(float64(srv.requests.Load())/float64(b.N), "reqs/op")
-					b.ReportMetric(float64(srv.bytes.Load())/float64(b.N), "wire-B/op")
-				})
-			}
 		}
 	}
 }

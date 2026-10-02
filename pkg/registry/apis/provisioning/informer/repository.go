@@ -122,26 +122,40 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 	}
 }
 
-// Read-backs are bounded as a share of the snapshot rather than by a flat count,
-// because the full list they are competing against also grows with it.
-// BenchmarkRepositoryRelist measures one read-back at roughly twenty times what
-// one object costs inside a list, so listing everything wins once a few percent
-// of the snapshot has drifted: at a thousand repositories and a 1ms server hop,
-// one list takes ~99ms while fifty read-backs take ~137ms. A flat cap is wrong
-// in both directions -- too slow for a small snapshot, too eager for a large one.
+// Read-backs are bounded against the full list they are avoiding, which also
+// grows with the snapshot, so the bound is not a flat count.
+// BenchmarkRelistStrategies measures both strategies directly. Two things come
+// out of it. A read-back costs roughly twenty times what one object costs inside
+// a list, so the number worth doing grows with the snapshot. And the keys path
+// needs at least two requests where the list needs one, so below roughly a
+// hundred repositories the list wins even for a single change: at a hundred
+// repositories and a 1ms server hop one list takes ~5ms against ~8ms for the
+// keys list plus one read-back.
 //
-// The floor keeps a small snapshot on the projection, where the share alone
-// would round to nothing: at ten repositories a single read-back still beats
-// listing all ten.
+// Hence a break-even and a share rather than a floor and a share. Below the
+// break-even the re-list still takes the cheap keys list and only pays for the
+// list when something actually changed; above it, one key in hydrationShare may
+// be read back. At a thousand repositories that allows 28, against a measured
+// crossover of about 30.
+//
+// This holds only because the operator's clients disable client-side throttling
+// (flowcontrol.NewFakeAlwaysRateLimiter in pkg/operators/provisioning), so
+// read-backs are bounded by the server rather than by a token bucket. Under the
+// client-go defaults of 5 QPS and burst 10, every read-back past the tenth would
+// serialize at 200ms and these numbers would not hold.
 const (
-	hydrationShare = 32 // read back at most one key in this many
-	minHydrations  = 4
+	hydrationBreakEven = 100
+	hydrationShare     = 32
 )
 
 // maxHydrations is how many keys this re-list will read back before it takes a
 // single full list instead.
 func maxHydrations(snapshot int) int {
-	return max(minHydrations, snapshot/hydrationShare)
+	if snapshot <= hydrationBreakEven {
+		return 0
+	}
+
+	return (snapshot - hydrationBreakEven) / hydrationShare
 }
 
 // errRelistFullObjects means the keys-only re-list gave up and the caller should

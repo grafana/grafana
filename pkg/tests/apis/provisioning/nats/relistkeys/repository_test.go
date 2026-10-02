@@ -33,10 +33,18 @@ func TestIntegrationProvisioningKeysReList_RepositoryReconciledFromKeys(t *testi
 	})
 }
 
-// Reconciling proves the pipeline works; this proves it kept working on keys, and
-// that a settled repository stops costing a read. The counters are cumulative and
-// the server is shared with the other tests here, so everything is measured as a
-// delta from the moment this repository settled.
+// Reconciling proves the pipeline works; this proves it kept working on keys.
+//
+// This server holds a handful of repositories, which is below the read-back
+// break-even, so the shipped policy here is: take the cheap keys list every
+// tick, and when something has actually changed take the full list rather than
+// read it back. So the assertion is that settled ticks run on keys and that
+// nothing is ever read back at this size -- not that the full list never runs,
+// which at this snapshot size is the correct answer whenever a repository moves.
+//
+// The counters are cumulative and the server is shared with the other tests
+// here, so everything is measured as a delta from the moment this repository
+// settled.
 func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -49,7 +57,6 @@ func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(
 	})
 
 	keysBefore := scrapeMetric(t, helper, repoKeysSample)
-	objectsBefore := scrapeMetric(t, helper, repoObjectsSample)
 	hydrationsBefore := scrapeMetric(t, helper, repoHydrationsSample)
 
 	const ticks = 3
@@ -58,13 +65,8 @@ func TestIntegrationProvisioningKeysReList_UsesTheKeysProjectionForRepositories(
 			"later ticks must run on the keys projection")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-	assert.Equal(t, objectsBefore, scrapeMetric(t, helper, repoObjectsSample),
-		"no tick past the initial list may have fallen back to full objects")
-	// The initial list is always full objects, so the projection only starts
-	// paying once a snapshot exists to carry forward. Fewer reads than ticks is
-	// the proof it does: an unchanged repository costs nothing.
-	assert.Less(t, scrapeMetric(t, helper, repoHydrationsSample)-hydrationsBefore, float64(ticks),
-		"a settled repository must not be read back on every tick")
+	assert.Equal(t, hydrationsBefore, scrapeMetric(t, helper, repoHydrationsSample),
+		"below the break-even nothing is read back: a changed repository takes the list instead")
 }
 
 // The quota count reads the snapshot the keys-only re-list writes, so it is the
