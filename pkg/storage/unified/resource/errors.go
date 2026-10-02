@@ -333,7 +333,7 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 }
 
 // StatusError converts an ErrorResult into a Kubernetes StatusError, preserving the HTTP code, reason, details and
-// causes; returns nil for nil; inverse of [AsErrorResult]
+// causes; returns nil for nil; counterpart of [AsErrorResult]
 func StatusError(res *resourcepb.ErrorResult) error {
 	if res == nil {
 		return nil
