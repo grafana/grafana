@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Ricerca annullata: {{numberOfRules}} regole trovate",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Le importazioni non sono disponibili mentre la sincronizzazione automatica di Mimir Alertmanager è attiva"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Usa la nuova esperienza",
         "view-previous-experience": "Torna all'esperienza precedente"
       },
-      "unknown-rule-type": "Tipo di regola sconosciuto"
+      "unknown-rule-type": "Tipo di regola sconosciuto",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errori durante il caricamento delle regole",
@@ -3193,7 +3198,10 @@
       "view-as": "Visualizza come"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Cancella i filtri"
+      "clear-filters": "Cancella i filtri",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Eliminazione",
@@ -11511,6 +11519,15 @@
         "open-explore": "Apri in Esplora",
         "set-up": "Configura"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU del cluster · ultime 24 ore",
         "description": "Visualizza lo stato di integrità del cluster, i costi e i risparmi derivanti dal ridimensionamento in un'unica schermata.",
@@ -11518,19 +11535,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11563,6 +11573,22 @@
         "data-points-per-minute": "{{value}} punti dati/min",
         "description": "Connetti metriche compatibili con Prometheus per esplorare lo stato di integrità e le tendenze dell'infrastruttura.",
         "disk-worst": "{{host}} al {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Esamina l'utilizzo del disco in Esplora",
         "series-trend": "Serie attive · ultime 24 ore",
         "setup-hint": "collega un'origine delle metriche",
