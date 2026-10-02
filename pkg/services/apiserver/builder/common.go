@@ -82,6 +82,14 @@ type APIGroupValidation interface {
 	Validate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error)
 }
 
+// APIGroupGetter lets a builder opt into supporting OverwriteOnCreateResourceVersion-driven
+// create-or-replace for its own resources: when implemented, the admission layer can fetch
+// the existing object to run real Update-flavored validation against, instead of only
+// Create-flavored validation, when a client signals intent to upsert.
+type APIGroupGetter interface {
+	Get(ctx context.Context, namespace, name string) (runtime.Object, error)
+}
+
 type APIGroupRouteProvider interface {
 	// Support direct HTTP routes from an APIGroup
 	GetAPIRoutes(gv schema.GroupVersion) *APIRoutes
