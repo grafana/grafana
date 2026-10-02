@@ -261,8 +261,9 @@ func TestChanges(t *testing.T) {
 				{Path: "folder/", Resource: "folders"},
 			},
 		}
-		changes, _, err := Changes(context.Background(), source, target, true)
+		changes, unsupported, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
+		require.Empty(t, unsupported, "must not be reported as unsupported")
 		require.Empty(t, changes, "hidden file must not be reported as unsupported just because it also fails an earlier check")
 	})
 
@@ -310,6 +311,53 @@ func TestChanges(t *testing.T) {
 		require.Equal(t, "folder/Backend - Synthesis API & UI.json", unsupported[0].Path)
 	})
 
+	t.Run("a resource renamed to an unsafe path is kept, not deleted", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "Backend & UI.json", Hash: "h1", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "h1", Resource: "dashboards", Name: "d1"},
+			},
+		}
+		changes, unsupported, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Empty(t, changes, "the existing dashboard must survive a rename to a path that cannot sync")
+		require.Len(t, unsupported, 1)
+		require.Equal(t, "Backend & UI.json", unsupported[0].Path)
+	})
+
+	t.Run("a resource renamed to a safe path is still replaced", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "Backend UI.json", Hash: "h1", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "dashboard.json", Hash: "h1", Resource: "dashboards", Name: "d1"},
+			},
+		}
+		changes, unsupported, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Empty(t, unsupported)
+		require.Len(t, changes, 2, "create at the new path and delete at the old one")
+	})
+
+	t.Run("an unrelated resource is still deleted next to an unsafe path", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "Backend & UI.json", Hash: "h1", Blob: true},
+		}
+		target := &provisioning.ResourceList{
+			Items: []provisioning.ResourceListItem{
+				{Path: "gone.json", Hash: "other", Resource: "dashboards", Name: "d2"},
+			},
+		}
+		changes, _, err := Changes(context.Background(), source, target, true)
+		require.NoError(t, err)
+		require.Len(t, changes, 1)
+		require.Equal(t, "gone.json", changes[0].Path)
+		require.Equal(t, repository.FileActionDeleted, changes[0].Action)
+	})
+
 	t.Run("every unsafe path is reported, not just the first", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "folder/one & two.json", Hash: "abc", Blob: true},
@@ -330,8 +378,9 @@ func TestChanges(t *testing.T) {
 			{Path: "folder/dashboard.json", Hash: "abc", Blob: true},
 		}
 		target := &provisioning.ResourceList{}
-		_, _, err := Changes(context.Background(), source, target, true)
+		_, unsupported, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
+		require.Empty(t, unsupported, "must not be reported as unsupported")
 	})
 
 	t.Run("non-resource file with an unsafe character is not reported as unsupported", func(t *testing.T) {
@@ -344,8 +393,9 @@ func TestChanges(t *testing.T) {
 			{Path: "folder/dashboard.json", Hash: "abc", Blob: true},
 		}
 		target := &provisioning.ResourceList{}
-		_, _, err := Changes(context.Background(), source, target, true)
+		_, unsupported, err := Changes(context.Background(), source, target, true)
 		require.NoError(t, err)
+		require.Empty(t, unsupported, "must not be reported as unsupported")
 	})
 
 	t.Run("unhidden path from hidden file", func(t *testing.T) {

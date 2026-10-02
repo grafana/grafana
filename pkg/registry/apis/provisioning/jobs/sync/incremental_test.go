@@ -642,7 +642,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					Return("folder-uid", nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Error() == nil
+					return result.Error() == nil && result.Warning() == nil
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -676,7 +676,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					Return("folder-uid", nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Error() == nil
+					return result.Error() == nil && result.Warning() == nil
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)
@@ -708,7 +708,7 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 					Return("folder-uid", nil)
 
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Error() == nil
+					return result.Error() == nil && result.Warning() == nil
 				})).Return()
 
 				progress.On("TooManyErrors").Return(nil)

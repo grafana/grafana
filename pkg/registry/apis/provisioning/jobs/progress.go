@@ -380,7 +380,10 @@ func (r *jobProgressRecorder) progress() float64 {
 		return 0
 	}
 
-	return float64(r.resultCount) / float64(r.total) * 100
+	// Results recorded before SetTotal (warnings found while comparing, such as
+	// unsupported paths) count towards resultCount but not towards the total, so
+	// the ratio can pass 1 once the real changes are applied.
+	return min(float64(r.resultCount)/float64(r.total)*100, 100)
 }
 
 func (r *jobProgressRecorder) currentStatus() provisioning.JobStatus {

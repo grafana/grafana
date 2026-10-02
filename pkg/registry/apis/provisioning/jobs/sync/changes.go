@@ -140,6 +140,11 @@ func Changes(
 	keep := safepath.NewTrie()
 	changes := make([]ResourceFileChange, 0, len(source))
 	var unsupported []resources.UnsupportedPath
+	// Content hashes of the files that were rejected as unsupported. A resource
+	// still in lookup with one of these hashes is most likely the same file
+	// renamed to the rejected path, so it is kept rather than deleted (the
+	// incremental sync keeps it too: it never applies the rejected rename).
+	unsupportedHashes := make(map[string]struct{})
 
 	for _, file := range source {
 		// TODO: why do we have to do this here?
@@ -209,6 +214,9 @@ func Changes(
 		if pathErr := resources.IsPathSupported(file.Path); pathErr != nil &&
 			!safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
 			unsupported = append(unsupported, resources.UnsupportedPath{Path: file.Path, Err: pathErr})
+			if file.Hash != "" {
+				unsupportedHashes[file.Hash] = struct{}{}
+			}
 
 			// Preserve the containing folder: an unsyncable file must not make an
 			// already-synced parent folder look orphaned and get deleted.
@@ -330,6 +338,11 @@ func Changes(
 	for _, items := range lookup {
 		for _, v := range items {
 			if v.Resource == resources.FolderResource.Resource && keep.Exists(v.Path) {
+				continue
+			}
+
+			if _, renamedToUnsupported := unsupportedHashes[v.Hash]; renamedToUnsupported && v.Hash != "" &&
+				v.Resource != resources.FolderResource.Resource {
 				continue
 			}
 
