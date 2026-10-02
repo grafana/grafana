@@ -37,7 +37,6 @@ export function clearLoginSectionTitle() {
 
 export function getLoginSectionTitle(): string | undefined {
   // Match the legacy redirection flag used by handleRedirectTo and LoginCtrl.
-  // eslint-disable-next-line @grafana/no-config-feature-toggles
   if (!config.featureToggles.useSessionStorageForRedirection) {
     return undefined;
   }
