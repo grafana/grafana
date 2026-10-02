@@ -16,8 +16,6 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
@@ -821,65 +819,6 @@ export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?
   const displayTitle = title || (uid ? uid : t('browse-dashboards.folder-picker.root-title', 'Dashboards'));
   return { uid, title: displayTitle };
 }
-
-const panelToRuleFormValues = async (
-  panel: PanelModel,
-  dashboard: DashboardModel
-): Promise<Partial<RuleFormValues> | undefined> => {
-  const { targets } = panel;
-  if (!panel.id || !dashboard.uid) {
-    return undefined;
-  }
-
-  // Interpolate interval to replace dashboard variables
-  const interpolatedInterval = panel.interval ? panel.replaceVariables(panel.interval, undefined) : undefined;
-
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
-  const queries = await dataQueriesToGrafanaQueries(
-    targets,
-    relativeTimeRange,
-    panel.scopedVars || {},
-    panel.datasource ?? undefined,
-    panel.maxDataPoints ?? undefined,
-    interpolatedInterval
-  );
-  // if no alerting capable queries are found, can't create a rule
-  if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
-    return undefined;
-  }
-
-  // Add default expression queries if they don't exist
-  if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    // Get the last data query's refId to use as the source for the reduce expression
-    const lastDataQueryRefId = queries[queries.length - 1].refId;
-    const reduceRefId = getNextRefId(queries);
-    const queriesWithReduce = [...queries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
-    const thresholdRefId = getNextRefId(queriesWithReduce);
-    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
-    queries.push(...expressions);
-  }
-
-  const folder = folderFromDashboardMeta(dashboard.meta);
-
-  const formValues = {
-    type: RuleFormType.grafana,
-    folder,
-    queries,
-    name: panel.title,
-    condition: queries[queries.length - 1].refId,
-    annotations: [
-      {
-        key: Annotation.dashboardUID,
-        value: dashboard.uid,
-      },
-      {
-        key: Annotation.panelID,
-        value: String(panel.id),
-      },
-    ],
-  };
-  return formValues;
-};
 
 export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<Partial<RuleFormValues> | undefined> => {
   if (!vizPanel.state.key) {

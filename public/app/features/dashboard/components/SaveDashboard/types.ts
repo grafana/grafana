@@ -1,15 +1,5 @@
-import { type Dashboard } from '@grafana/schema';
 import { type ObjectMeta } from 'app/features/apiserver/types';
-import { type CloneOptions, type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
-import { type SaveDashboardResponseDTO } from 'app/types/dashboard';
-
-interface SaveDashboardData {
-  clone: Dashboard; // cloned copy
-  diff: Diffs;
-  diffCount: number; // cumulative count
-  hasChanges: boolean; // not new and has changes
-}
+import { type CloneOptions } from 'app/features/dashboard/state/DashboardModel';
 
 export interface SaveDashboardOptions extends CloneOptions {
   folderUid?: string;
@@ -37,23 +27,4 @@ export interface SaveDashboardCommand<T> {
 
   // When loading dashboards from k8s, we need to have access to the metadata wrapper
   k8s?: Partial<ObjectMeta>;
-}
-
-interface SaveDashboardFormProps {
-  dashboard: DashboardModel;
-  isLoading: boolean;
-  onCancel: () => void;
-  onSuccess: () => void;
-  onSubmit?: (
-    saveModel: Dashboard,
-    options: SaveDashboardOptions,
-    dashboard: DashboardModel
-  ) => Promise<SaveDashboardResponseDTO>;
-}
-
-interface SaveDashboardModalProps {
-  dashboard: DashboardModel;
-  onDismiss: () => void;
-  onSaveSuccess?: () => void;
-  isCopy?: boolean;
 }

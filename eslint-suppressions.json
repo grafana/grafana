@@ -2837,9 +2837,6 @@
     }
   },
   "public/app/features/variables/inspect/utils.ts": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
     "@typescript-eslint/no-explicit-any": {
       "count": 3
     }

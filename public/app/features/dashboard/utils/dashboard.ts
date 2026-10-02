@@ -1,9 +1,5 @@
-import { cloneDeep, defaults, find } from 'lodash';
-
-import { type PanelPluginMeta, store } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { store } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { calculateNewPanelGridPos } from 'app/features/dashboard/utils/panel';
@@ -23,16 +19,6 @@ export function onCreateNewPanel(dashboard: DashboardModel, datasource?: string)
   return newPanel.id;
 }
 
-function onCreateNewRow(dashboard: DashboardModel) {
-  const newRow = {
-    type: 'row',
-    title: t('dashboard.on-create-new-row.new-row.title.row-title', 'Row title'),
-    gridPos: { x: 0, y: 0 },
-  };
-
-  dashboard.addPanel(newRow);
-}
-
 export function onImportDashboard() {
   locationService.push('/dashboard/import');
 }
@@ -44,54 +30,6 @@ export function onAddLibraryPanel(dashboard: DashboardModel) {
   };
 
   dashboard.addPanel(newPanel);
-}
-
-type PanelPluginInfo = { defaults: { gridPos: { w: number; h: number }; title: string } };
-
-function onPasteCopiedPanel(dashboard: DashboardModel, panelPluginInfo?: PanelPluginMeta & PanelPluginInfo) {
-  if (!panelPluginInfo) {
-    return;
-  }
-
-  const gridPos = calculateNewPanelGridPos(dashboard);
-
-  const newPanel = {
-    type: panelPluginInfo.id,
-    title: NEW_PANEL_TITLE,
-    gridPos: {
-      x: gridPos.x,
-      y: gridPos.y,
-      w: panelPluginInfo.defaults.gridPos.w,
-      h: panelPluginInfo.defaults.gridPos.h,
-    },
-  };
-
-  // apply panel template / defaults
-  if (panelPluginInfo.defaults) {
-    defaults(newPanel, panelPluginInfo.defaults);
-    newPanel.title = panelPluginInfo.defaults.title;
-    store.delete(LS_PANEL_COPY_KEY);
-  }
-
-  dashboard.addPanel(newPanel);
-}
-
-function getCopiedPanelPlugin(panels: PanelPluginMeta[]): (PanelPluginMeta & PanelPluginInfo) | undefined {
-  const copiedPanelJson = store.get(LS_PANEL_COPY_KEY);
-  if (copiedPanelJson) {
-    const copiedPanel = JSON.parse(copiedPanelJson);
-
-    const pluginInfo = find(panels, { id: copiedPanel.type });
-    if (pluginInfo) {
-      const pluginCopy: PanelPluginMeta = cloneDeep(pluginInfo);
-      pluginCopy.name = copiedPanel.title;
-      pluginCopy.sort = -1;
-
-      return { ...pluginCopy, defaults: { ...copiedPanel } };
-    }
-  }
-
-  return undefined;
 }
 
 type LastUsedDatasource =

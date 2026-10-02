@@ -5879,11 +5879,6 @@
       "footer-text": "This content is AI-generated using the <2>Grafana LLM plugin</2>",
       "placeholder-tell-ai-what-to-do-next": "Tell AI what to do next..."
     },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "Annotations"
-      }
-    },
     "get-field-override-categories": {
       "body-matcher-no-editor": "This override is active, but this matcher type can only be edited in the dashboard JSON.",
       "body-unknown-matcher": "This override has no effect. Remove it, or correct the matcher id in the dashboard JSON.",
@@ -6068,13 +6063,6 @@
       "title-label": "Title",
       "title-placeholder": "Add a title",
       "title-required": "Please enter a title"
-    },
-    "on-create-new-row": {
-      "new-row": {
-        "title": {
-          "row-title": "Row title"
-        }
-      }
     },
     "options-pane-category": {
       "aria-label-collapse": "Collapse {{title}} category",
@@ -17965,13 +17953,6 @@
     },
     "static-options": {
       "add-option-button-label": "Add new option"
-    },
-    "transform-usages-to-network": {
-      "result": {
-        "label": {
-          "dashboard": "dashboard"
-        }
-      }
     },
     "unknown-table": {
       "loading": "Loading...",
