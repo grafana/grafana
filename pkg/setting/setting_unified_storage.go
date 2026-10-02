@@ -308,7 +308,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
-	cfg.IndexSnapshotStorageKV = true
 	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
 	cfg.IndexSnapshotKVChunkSizeMiB = section.Key("index_snapshot_kv_chunk_size_mib").MustInt(0)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)

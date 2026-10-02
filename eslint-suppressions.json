@@ -2142,14 +2142,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -3112,11 +3104,6 @@
   },
   "public/app/plugins/datasource/azuremonitor/components/TracesQueryEditor/Filters.tsx": {
     "@grafana/require-no-margin": {
-      "count": 1
-    }
-  },
-  "public/app/plugins/datasource/azuremonitor/featureFlags.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

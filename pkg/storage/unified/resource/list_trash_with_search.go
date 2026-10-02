@@ -19,6 +19,7 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
 		Options:      req.Options,
@@ -28,24 +29,26 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		IsDeleted:    true,
 	}
+	sortAscending := req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil {
+			sortAscending = token.SortAscending
+		}
+	}
+	if sortAscending {
+		srq.SortBy[0].Desc = false
+		if minResourceVersion > 0 {
+			srq.SearchAfter = []string{sortableResourceVersion(minResourceVersion), ""}
+		}
+	}
 
 	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
+	errRes, err = s.trashSearchResultError(req, page, errRes, err, minResourceVersion)
 	if err != nil {
-		if req.NextPageToken == "" && AsErrorResult(err).GetCode() == http.StatusServiceUnavailable {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
-		}
 		return nil, err
 	}
 	if errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
-	}
-	if searchErr := page.response.GetError(); searchErr != nil {
-		if searchErr.GetCode() == http.StatusServiceUnavailable && req.NextPageToken == "" {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, ErrorFromResponse(searchErr, nil))
-		}
-		err := ErrorFromResponse(searchErr, nil)
-		s.log.Error("Search failed for trash List", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
@@ -119,7 +122,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
 			if s.listPageFull(req, rsp, pageBytes) {
-				token, err := NewSearchContinueToken(item.row.sortFields, page.resourceVersion)
+				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
 				}
@@ -128,7 +131,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			}
 		}
 	}
-	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, rsp); errRes != nil {
+	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, sortAscending, rsp); errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
@@ -138,10 +141,11 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
 		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
+		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||
 		req.KeysOnly || req.Options.Key.Namespace == "" || req.Options.Key.Name != "" ||
-		req.ResourceVersion > 0 || req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact ||
-		req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_NotOlderThan {
+		req.VersionMatchV2 == resourcepb.ResourceVersionMatchV2_Exact ||
+		(req.ResourceVersion > 0 && req.VersionMatchV2 != resourcepb.ResourceVersionMatchV2_NotOlderThan) {
 		return false
 	}
 	if req.NextPageToken != "" {
@@ -151,4 +155,43 @@ func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	}
 
 	return true
+}
+
+func (s *server) trashSearchResultError(
+	req *resourcepb.ListRequest,
+	page *searchListPage,
+	errRes *resourcepb.ErrorResult,
+	err error,
+	minComparableResourceVersion int64,
+) (*resourcepb.ErrorResult, error) {
+	if err != nil {
+		if req.NextPageToken == "" && AsErrorResult(err).GetCode() == http.StatusServiceUnavailable {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
+		}
+		return nil, err
+	}
+	if errRes != nil {
+		return errRes, nil
+	}
+	if searchErr := page.response.GetError(); searchErr != nil {
+		if searchErr.GetCode() == http.StatusServiceUnavailable && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, ErrorFromResponse(searchErr, nil))
+		}
+		err := ErrorFromResponse(searchErr, nil)
+		s.log.Error("Search failed for trash List", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return AsErrorResult(err), nil
+	}
+	if req.VersionMatchV2 != resourcepb.ResourceVersionMatchV2_NotOlderThan ||
+		ToSnowflakeRV(page.response.GetResourceVersion()) >= minComparableResourceVersion {
+		return nil, nil
+	}
+
+	indexBehind := NewServiceUnavailableError(fmt.Sprintf(
+		"trash search index resource version %d is older than requested resource version %d",
+		page.response.GetResourceVersion(), req.ResourceVersion,
+	))
+	if req.NextPageToken == "" {
+		return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, ErrorFromResponse(indexBehind, nil))
+	}
+	return indexBehind, nil
 }

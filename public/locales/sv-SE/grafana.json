@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Sökning avbruten – hittade {{numberOfRules}} regler",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Importer är inte tillgängliga när automatisk synkronisering av Mimir Alertmanager har aktiverats"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Använd ny upplevelse",
         "view-previous-experience": "Återgå till föregående upplevelse"
       },
-      "unknown-rule-type": "Okänd regeltyp"
+      "unknown-rule-type": "Okänd regeltyp",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fel vid laddning av regler",
@@ -3193,7 +3198,10 @@
       "view-as": "Visa som"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Rensa filter"
+      "clear-filters": "Rensa filter",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Raderar",
@@ -11511,6 +11519,15 @@
         "open-explore": "Öppna i Utforskaren",
         "set-up": "Konfigurera"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Kluster-CPU · senaste 24 timmarna",
         "description": "Se klusterhälsa, kostnad och besparingar genom anpassning med rätt storlek i en vy.",
@@ -11518,19 +11535,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11563,6 +11573,22 @@
         "data-points-per-minute": "{{value}} datapunkter/min",
         "description": "Anslut Prometheus-kompatibla mätvärden för att utforska infrastrukturens hälsa och trender.",
         "disk-worst": "{{host}} vid {{percent}} %",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Undersök diskanvändning i Utforskaren",
         "series-trend": "Aktiva serier · senaste 24 timmarna",
         "setup-hint": "anslut en mätvärdeskälla",
