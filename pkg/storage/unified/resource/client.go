@@ -167,11 +167,11 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 
-	// Add retry interceptor for transient conflict errors (same config as remote client).
+	// Retry transient failures, but leave resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 	cc = grpchan.InterceptClientConn(cc, retryInterceptor, nil)
 

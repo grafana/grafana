@@ -27,12 +27,12 @@ type retryConfig struct {
 //	`ResourceExhausted` means that the user quota, e.g. per-RPC limits, have been reached.
 //	`Unavailable` means that system is currently unavailable and the client should retry again.
 //
-// as well as `Aborted`, used when a concurrent write conflict is detected by the storage backend.
+// Resource-version conflicts require callers to re-read, so Aborted must not replay the same RPC.
 func unaryRetryInterceptor(cfg retryConfig) grpc.UnaryClientInterceptor {
 	return grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(cfg.Max),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(cfg.Backoff, cfg.BackoffJitter)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 }
 

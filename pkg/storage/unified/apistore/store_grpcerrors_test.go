@@ -150,6 +150,11 @@ func TestRetriesConflictFromBothErrorShapes(t *testing.T) {
 		"response error": func() (*resourcepb.ErrorResult, error) {
 			return &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"}, nil
 		},
+		// Transport retries exclude Aborted; the storage retry loop must still handle
+		// its detailed HTTP 409 conflict so updates and deletes can re-read before retrying.
+		"grpc aborted with details": func() (*resourcepb.ErrorResult, error) {
+			return nil, grpcErrorWithResult(grpccodes.Aborted, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+		},
 		"grpc status with details": func() (*resourcepb.ErrorResult, error) {
 			return nil, grpcErrorWithResult(grpccodes.AlreadyExists, &resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 		},
