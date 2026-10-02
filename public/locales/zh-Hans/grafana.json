@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "搜索已取消 – 找到 {{numberOfRules}} 个规则",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 自动同步处于活跃状态时，导入功能不可用"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "使用新体验",
         "view-previous-experience": "恢复为以前的体验"
       },
-      "unknown-rule-type": "未知规则类型"
+      "unknown-rule-type": "未知规则类型",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
@@ -3167,7 +3170,10 @@
       "view-as": "查看方式"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "清除筛选器"
+      "clear-filters": "清除筛选器",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "删除",
@@ -11443,6 +11449,15 @@
         "open-explore": "在“探索”中打开",
         "set-up": "设置"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "集群 CPU · 过去 24 小时",
         "description": "在一个视图中查看集群运行状况、费用和调整资源规模所节省的费用。",
@@ -11450,19 +11465,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11489,6 +11497,22 @@
         "data-points-per-minute": "{{value}} 个数据点/分钟",
         "description": "连接与 Prometheus 兼容的指标，以探索基础设施的运行状况和趋势。",
         "disk-worst": "{{host}} 为 {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "在“探索”中调查磁盘使用量",
         "series-trend": "活跃序列 · 过去 24 小时",
         "setup-hint": "连接指标源",

@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Impor tidak tersedia saat sinkronisasi otomatis Mimir Alertmanager aktif"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "Gunakan pengalaman baru",
         "view-previous-experience": "Kembali ke pengalaman sebelumnya"
       },
-      "unknown-rule-type": "Jenis aturan tidak diketahui"
+      "unknown-rule-type": "Jenis aturan tidak diketahui",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kesalahan saat memuat aturan",
@@ -3167,7 +3170,10 @@
       "view-as": "Tampilkan sebagai"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Hapus filter"
+      "clear-filters": "Hapus filter",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Menghapus",
@@ -11443,6 +11449,15 @@
         "open-explore": "Buka di Explore",
         "set-up": "Siapkan"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU Klaster · 24 jam terakhir",
         "description": "Lihat kesehatan klaster, biaya, dan penghematan akibat ukuran yang tepat dalam satu tampilan.",
@@ -11450,19 +11465,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11489,6 +11497,22 @@
         "data-points-per-minute": "{{value}} titik data/mnt",
         "description": "Hubungkan metrik yang kompatibel dengan Prometheus untuk menganalisis kesehatan dan tren infrastruktur.",
         "disk-worst": "{{host}} di {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Selidiki penggunaan disk di Explore",
         "series-trend": "Seri aktif · 24 jam terakhir",
         "setup-hint": "hubungkan sumber metrik",
