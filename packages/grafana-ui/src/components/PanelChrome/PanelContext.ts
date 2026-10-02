@@ -15,6 +15,18 @@ import { type AdHocFilterItem } from '../Table/types';
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
 /** @alpha */
+export interface AdHocFilterSelectionUpdate {
+  /** Ad hoc filter key, the name of the field whose values are selected */
+  key: string;
+  /** Selected values in display order; empty clears the selection */
+  values: string[];
+  /** The value whose click produced this update */
+  clickedValue: string;
+  /** How the click changed the selection */
+  mode: 'replace' | 'toggle' | 'range';
+}
+
+/** @alpha */
 export interface PanelContext {
   /** Identifier for the events scope */
   eventsScope: string;
@@ -63,6 +75,26 @@ export interface PanelContext {
    * Used to apply multiple filters at once
    */
   onAddAdHocFilters?: (items: AdHocFilterItem[]) => void;
+
+  /**
+   * Sets the values this panel selects for one ad hoc filter key (business intelligence mode).
+   * The written filter filters the other panels on the dashboard but not this one.
+   * An empty `values` list clears this panel's selection for the key.
+   * Resolves once the filter variable has been updated.
+   */
+  onSetAdHocFilterSelection?: (selection: AdHocFilterSelectionUpdate) => Promise<void>;
+
+  /**
+   * Returns the values this panel currently selects for an ad hoc filter key, or undefined when
+   * this panel has no selection for the key.
+   */
+  getAdHocFilterSelection?: (key: string) => string[] | undefined;
+
+  /**
+   * Calls `onChange` whenever ad hoc filters that could affect this panel's selection change.
+   * Returns an unsubscribe function.
+   */
+  subscribeToAdHocFilterSelection?: (onChange: () => void) => () => void;
 
   /**
    * Used by the panel header status popover to open the errors and notices view.

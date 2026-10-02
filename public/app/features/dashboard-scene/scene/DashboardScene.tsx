@@ -17,6 +17,7 @@ import { t } from '@grafana/i18n';
 import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
+  type AdHocFilterWithLabels,
   type CancelActivationHandler,
   SceneDataTransformer,
   sceneGraph,
@@ -67,6 +68,8 @@ import {
   type ResourceForCreate,
 } from '../../apiserver/types';
 import { edit } from '../actions/utils/edit';
+import { getValidBiSelection } from '../bi/biSelectionStamp';
+import { type DataRequestFiltersEnricher } from '../bi/scenesShim';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -88,16 +91,15 @@ import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
-import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
   resolvePredefinedVariablesForDashboard,
   type UseCrossDashboardVariables,
 } from '../utils/crossDashboardVariablesSelection';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { djb2Hash } from '../utils/djb2Hash';
 import { getDashboardUrl } from '../utils/getDashboardUrl';
 import { getLayoutManagerFor } from '../utils/getLayoutManagerFor';
+import { getPanelSourceIdentity, getRepeatClonePathHash } from '../utils/getPanelSourceIdentity';
 import { DashboardInteractions } from '../utils/interactions';
 import { getPanelStyleConfig, type PanelStyleConfig } from '../utils/panelStyleConfigs';
 import { persistUseCrossDashboardVariables } from '../utils/persistUseCrossDashboardVariables';
@@ -164,7 +166,10 @@ function extractOptionProps(source: Record<string, unknown>, props: readonly str
   return result;
 }
 
-export class DashboardScene extends SceneObjectBase<DashboardSceneState> implements DashboardSceneLike {
+export class DashboardScene
+  extends SceneObjectBase<DashboardSceneState>
+  implements DashboardSceneLike, DataRequestFiltersEnricher
+{
   static Component = DashboardSceneRenderer;
   public isDashboardScene = true;
 
@@ -1317,25 +1322,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
    * Called by the SceneQueryRunner to provide contextual parameters (tracking) props for the request
    */
   public enrichDataRequest(sceneObject: SceneObject): Partial<DataQueryRequest> {
-    const dashboard = getDashboardSceneFor(sceneObject);
-
-    let panel = getClosestVizPanel(sceneObject);
-
-    if (dashboard.state.isEditing && dashboard.state.editPanel) {
-      panel = dashboard.state.editPanel.state.panelRef.resolve();
-    }
+    const panel = getRequestSourcePanel(sceneObject);
 
     let panelId = 0;
 
     if (panel && panel.state.key) {
-      if (isRepeatCloneOrChildOf(panel)) {
-        // We check if any of the panel ancestors are clones because we can't use the original panel ID in this case
-        panelId = djb2Hash(panel.getPathId());
-      } else {
-        // Otherwise, it's the absolute original panel, and we can use the key directly
-        // getPanelIdForVizPanel extracts the panel ID from the key so we don't need to do it manually
-        panelId = getPanelIdForVizPanel(panel);
-      }
+      // Repeat clones can't use the original panel ID, so they get a hash of their path instead.
+      // Otherwise, it's the absolute original panel, and getPanelIdForVizPanel extracts the ID from the key.
+      panelId = getRepeatClonePathHash(panel) ?? getPanelIdForVizPanel(panel);
     }
 
     return {
@@ -1346,6 +1340,26 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       panelPluginId: panel?.state.pluginId,
       dashboardTitle: this.state.title,
     };
+  }
+
+  /**
+   * Called by the SceneQueryRunner with the ad hoc filters it is about to send. In BI mode a panel's own
+   * cross filter selection must not filter that panel, so filters stamped by the requesting panel are dropped.
+   */
+  public enrichDataRequestFilters(source: SceneObject, filters: AdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false)) {
+      return filters;
+    }
+
+    const panel = getRequestSourcePanel(source);
+    if (!panel) {
+      return filters;
+    }
+
+    const identity = getPanelSourceIdentity(panel);
+    const remaining = filters.filter((filter) => getValidBiSelection(filter)?.sourcePanel !== identity);
+
+    return remaining.length === filters.length ? filters : remaining;
   }
 
   canEditDashboard() {
@@ -1724,4 +1738,17 @@ class DashboardVariableDependency implements SceneVariableDependencyConfigLike {
       }
     }
   }
+}
+
+/**
+ * The panel a data request belongs to: the closest VizPanel, or the edited panel while the panel editor is open.
+ */
+function getRequestSourcePanel(sceneObject: SceneObject): VizPanel | undefined {
+  const dashboard = getDashboardSceneFor(sceneObject);
+
+  if (dashboard.state.isEditing && dashboard.state.editPanel) {
+    return dashboard.state.editPanel.state.panelRef.resolve();
+  }
+
+  return getClosestVizPanel(sceneObject) ?? undefined;
 }

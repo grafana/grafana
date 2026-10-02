@@ -3,9 +3,10 @@ import { distinctUntilChanged, takeUntil, takeWhile, timer } from 'rxjs';
 import { createAssistantContextItem, isAssistantAvailable, openAssistant } from '@grafana/assistant';
 import { AnnotationChangeEvent, type AnnotationEventUIModel, CoreApp, type DataFrame } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { getDatasourcePluginMeta } from '@grafana/runtime/internal';
+import { FlagKeys, getDatasourcePluginMeta, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
+  type AdHocFilterWithLabels,
   AdHocFiltersVariable,
   dataLayers,
   sceneGraph,
@@ -15,16 +16,18 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type AdHocFilterSelectionUpdate, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
 import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
+import { type BiSelectionStamp, getValidBiSelection } from '../bi/biSelectionStamp';
 import { buildEntries } from '../inspect/StandardErrorsAndNoticesInspector';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getDatasourceFromQueryRunner } from '../utils/getDatasourceFromQueryRunner';
+import { getPanelSourceIdentity } from '../utils/getPanelSourceIdentity';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, isNewPanelQueryErrorsUIEnabled } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -229,6 +232,10 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
   };
 
+  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false)) {
+    setBiSelectionContext(vizPanel, context);
+  }
+
   context.canExecuteActions = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     return dashboard.canEditDashboard();
@@ -269,6 +276,180 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
         vizPanel.forceRender();
       });
   }
+}
+
+/**
+ * BI mode cross filtering: a panel writes its selection as an ordinary ad hoc filter stamped with the
+ * panel's identity, so DashboardScene.enrichDataRequestFilters can keep it from filtering that panel.
+ */
+function setBiSelectionContext(vizPanel: VizPanel, context: PanelContext) {
+  context.onSetAdHocFilterSelection = async (update: AdHocFilterSelectionUpdate) => {
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return;
+    }
+
+    let datasource = getDatasourceFromQueryRunner(queryRunner);
+
+    // Type-only datasources (V2 schema queries may only set the group) are resolved to a full reference.
+    if (datasource && !datasource.uid) {
+      const datasourceToLoad = await getDataSourceInstance(datasource);
+      datasource = { uid: datasourceToLoad.uid, type: datasourceToLoad.type };
+    }
+
+    const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
+    const { filters, valuesCount } = applyBiSelection(filterVar, update, getPanelSourceIdentity(vizPanel));
+
+    // Force a publish: moving a selection to another panel keeps the filter expression the same, but changes
+    // which panel is excluded, so every panel has to re-run its query.
+    filterVar.updateFilters(filters, { forcePublish: true });
+
+    reportInteraction('grafana_bi_cross_filter_select', { mode: update.mode, valuesCount });
+  };
+
+  context.getAdHocFilterSelection = (key: string) => {
+    const queryRunner = getQueryRunnerFor(vizPanel);
+    if (!queryRunner) {
+      return undefined;
+    }
+
+    const filterVar = findAdHocFilterVariableFor(vizPanel, getDatasourceFromQueryRunner(queryRunner));
+    if (!filterVar) {
+      return undefined;
+    }
+
+    const identity = getPanelSourceIdentity(vizPanel);
+    for (const filter of filterVar.state.filters) {
+      if (filter.key !== key) {
+        continue;
+      }
+
+      const stamp = getValidBiSelection(filter);
+      if (stamp?.sourcePanel === identity) {
+        return [...stamp.values];
+      }
+    }
+
+    return undefined;
+  };
+
+  context.subscribeToAdHocFilterSelection = (onChange: () => void) => subscribeToAdHocFilters(vizPanel, onChange);
+}
+
+/**
+ * Replaces the selection for `update.key`: removes the ordinary `=` and `=|` filters on that key and writes the
+ * new selection in place of the first one removed. `!=`, group-by, injected (origin) and read-only filters stay.
+ */
+function applyBiSelection(
+  filterVar: AdHocFiltersVariable,
+  update: AdHocFilterSelectionUpdate,
+  sourcePanel: string
+): { filters: AdHocFilterWithLabels[]; valuesCount: number } {
+  const { key, values, clickedValue } = update;
+  const current = filterVar.state.filters;
+
+  const isReplaceable = (filter: AdHocFilterWithLabels) =>
+    filter.key === key && (filter.operator === '=' || filter.operator === '=|') && !filter.origin && !filter.readOnly;
+
+  const insertAt = current.findIndex(isReplaceable);
+  const filters = current.filter((filter) => !isReplaceable(filter));
+
+  let written: string[] = [];
+  if (values.length > 1 && filterVar.state.supportsMultiValueOperators) {
+    written = [...values];
+  } else if (values.length > 1) {
+    // Without multi-value operators only one value can be selected; keep the one the user clicked.
+    written = [values.includes(clickedValue) ? clickedValue : values[values.length - 1]];
+  } else if (values.length === 1) {
+    written = [values[0]];
+  }
+
+  if (written.length === 0) {
+    return { filters, valuesCount: 0 };
+  }
+
+  const biSelection: BiSelectionStamp = { sourcePanel, values: [...written] };
+  const selection: AdHocFilterWithLabels =
+    written.length === 1
+      ? { key, operator: '=', value: written[0], meta: { biSelection } }
+      : { key, operator: '=|', value: written[0], values: written, valueLabels: [...written], meta: { biSelection } };
+
+  // insertAt is the index of the first removed filter, so nothing before it was removed and it is still valid.
+  filters.splice(insertAt >= 0 ? insertAt : filters.length, 0, selection);
+
+  return { filters, valuesCount: written.length };
+}
+
+/**
+ * Synchronous counterpart of getAdHocFilterVariableFor that never creates a variable. A type-only datasource
+ * reference (no uid) is matched by type.
+ */
+function findAdHocFilterVariableFor(
+  sceneObject: SceneObject,
+  ds: DataSourceRef | null | undefined
+): AdHocFiltersVariable | undefined {
+  for (const variables of getVariableSetsInHierarchy(sceneObject)) {
+    for (const variable of variables.state.variables) {
+      if (!sceneUtils.isAdHocVariable(variable)) {
+        continue;
+      }
+
+      const filtersDs = variable.state.datasource;
+      const matches =
+        ds && !ds.uid && ds.type ? filtersDs?.type === ds.type : filtersDs === ds || filtersDs?.uid === ds?.uid;
+
+      if (matches) {
+        return variable;
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Calls `onChange` whenever the filters of an ad hoc variable in the panel's hierarchy change, including a
+ * variable added later (the first selection may create the dashboard's Filters variable).
+ */
+function subscribeToAdHocFilters(sceneObject: SceneObject, onChange: () => void): () => void {
+  const sets = getVariableSetsInHierarchy(sceneObject);
+  let variableSubs: Array<{ unsubscribe: () => void }> = [];
+
+  const subscribeToVariables = () => {
+    variableSubs.forEach((sub) => sub.unsubscribe());
+    variableSubs = [];
+
+    for (const set of sets) {
+      for (const variable of set.state.variables) {
+        if (sceneUtils.isAdHocVariable(variable)) {
+          variableSubs.push(
+            variable.subscribeToState((next, prev) => {
+              if (next.filters !== prev.filters) {
+                onChange();
+              }
+            })
+          );
+        }
+      }
+    }
+  };
+
+  const setSubs = sets.map((set) =>
+    set.subscribeToState((next, prev) => {
+      if (next.variables !== prev.variables) {
+        subscribeToVariables();
+        onChange();
+      }
+    })
+  );
+
+  subscribeToVariables();
+
+  return () => {
+    setSubs.forEach((sub) => sub.unsubscribe());
+    variableSubs.forEach((sub) => sub.unsubscribe());
+    variableSubs = [];
+  };
 }
 
 /**
