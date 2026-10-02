@@ -135,6 +135,61 @@ describe('applySavedViewState', () => {
       expect(env.state.value).toBe('dev');
     }
   });
+
+  it('resets a variable the spec does not mention back to the baseline, not whatever it currently is', () => {
+    // Regression test: selecting a view is a full, deterministic switch, not a partial overlay --
+    // a variable the view is silent on (e.g. one added to the dashboard after the view was saved)
+    // must not keep whatever ad-hoc value a prior view or manual edit left it in.
+    const scene = buildScene({ env: 'dev' }); // 'dev' is left over from something else entirely
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [
+        { name: 'adhocFilter', type: 'adhoc', filters: [] },
+        { name: 'env', type: 'query', value: 'prod' }, // the dashboard's own authored default
+      ],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-24h', to: 'now-1h' },
+      // Doesn't mention env at all.
+      variables: [{ name: 'adhocFilter', type: 'adhoc', filters: [{ key: 'host', operator: '=', value: 'b' }] }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
+
+  it('prefers the spec over the baseline when both mention the same variable', () => {
+    const scene = buildScene({ env: 'dev' });
+    const baseline: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: '',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'staging' }],
+    };
+    const spec: SavedDashboardViewSpec = {
+      dashboardUID: 'dash-1',
+      name: 'My view',
+      timeRange: { from: 'now-6h', to: 'now' },
+      variables: [{ name: 'env', type: 'query', value: 'prod' }],
+    };
+
+    applySavedViewState(scene, spec, baseline);
+
+    const env = scene.state.$variables?.getByName('env');
+    expect(env).toBeInstanceOf(QueryVariable);
+    if (env instanceof QueryVariable) {
+      expect(env.state.value).toBe('prod');
+    }
+  });
 });
 
 function buildSceneWithTabFilter(filters: AdHocVariableFilter[]) {
@@ -241,6 +296,32 @@ describe('applySavedViewState — tab/row-scoped section filters', () => {
 
     if (podFilter instanceof AdHocFiltersVariable) {
       expect(podFilter.state.filters).toEqual([{ key: 'pod', operator: '=', value: 'saved' }]);
+    }
+  });
+
+  it('resets a section the spec does not mention back to the baseline', () => {
+    // Same reset-on-select principle as dashboard-level variables, applied to a tab/row's own
+    // ad-hoc filters: selecting a view that doesn't mention a section's filter at all must not
+    // leave it at whatever a prior view or manual edit left it in.
+    const { scene, tab } = buildSceneWithTabFilter([]);
+    const baseline = captureSavedViewState(scene); // captured with no filters -- the authored default
+
+    const live = tab.state.$variables?.getByName('podFilter');
+    if (live instanceof AdHocFiltersVariable) {
+      live.setState({ filters: [{ key: 'pod', operator: '=', value: 'leftover' }] });
+    }
+
+    // This view's own spec says nothing about sectionFilters at all.
+    applySavedViewState(
+      scene,
+      { dashboardUID: 'dash-1', name: 'My view', timeRange: { from: 'now-1h', to: 'now' }, variables: [] },
+      baseline
+    );
+
+    const after = tab.state.$variables?.getByName('podFilter');
+    expect(after).toBeInstanceOf(AdHocFiltersVariable);
+    if (after instanceof AdHocFiltersVariable) {
+      expect(after.state.filters).toEqual([]);
     }
   });
 });

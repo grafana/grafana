@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 
 import { locationService } from '@grafana/runtime';
+import { QueryVariable, SceneVariableSet } from '@grafana/scenes';
 import { Sidebar, useSidebar } from '@grafana/ui';
 import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 
@@ -11,6 +12,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SavedViewsPane } from './SavedViewsPane';
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { captureSavedViewState } from './state';
 
 jest.mock('./api', () => ({
   savedDashboardViewsApi: {
@@ -147,6 +149,39 @@ describe('SavedViewsPane', () => {
     await userEvent.click(screen.getByText('My view'));
 
     expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+    partialSpy.mockRestore();
+  });
+
+  it('resets a variable the selected view does not mention back to the dashboard baseline', async () => {
+    // Regression test (found via manual testing): a view saved before "team" existed on the
+    // dashboard, or one that simply never touched it, must not leave team at whatever a prior
+    // view or a manual edit left it at -- selecting a view is a full, deterministic switch.
+    const partialSpy = jest.spyOn(locationService, 'partial').mockImplementation(() => {});
+    const team = new QueryVariable({ name: 'team', query: 'label_values(team)', value: 'platform', text: 'platform' });
+    const scene = new DashboardScene({
+      title: 'hello',
+      uid: 'dash-1',
+      $variables: new SceneVariableSet({ variables: [team] }),
+      savedViews: [buildView('view-1', { name: 'My view', variables: [] })], // doesn't mention "team"
+    });
+    // The baseline the real url-sync pass would have captured on load, before "team" was ever
+    // touched by anything -- its own authored default is '$__all'.
+    team.setState({ value: '$__all', text: 'All' });
+    scene.setState({ savedViewBaseline: captureSavedViewState(scene) });
+    // Simulate the manual edit (or a previous view) that left team somewhere else entirely.
+    team.setState({ value: 'platform', text: 'platform' });
+
+    const pane = new SavedViewsPane({});
+    scene.state.sidebar.openPane(pane);
+    render(
+      <WrapSidebar>
+        <pane.Component model={pane} />
+      </WrapSidebar>
+    );
+
+    await userEvent.click(screen.getByText('My view'));
+
+    expect(team.state.value).toBe('$__all');
     partialSpy.mockRestore();
   });
 
