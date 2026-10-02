@@ -345,9 +345,10 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					Signature: ds.Signature,
 					Module:    ds.Module,
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
-					BaseURL:      ds.BaseURL,
-					Angular:      ds.Angular,
-					Translations: ds.Translations,
+					BaseURL:                   ds.BaseURL,
+					Angular:                   ds.Angular,
+					MultiValueFilterOperators: ds.MultiValueFilterOperators,
+					Translations:              ds.Translations,
 				},
 			}
 			if ds.Name == grafanads.DatasourceName {
