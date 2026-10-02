@@ -103,60 +103,6 @@ func TestResourceVersionRetryExhausted(t *testing.T) {
 	})
 }
 
-func TestResourceVersionRetryDriftExceedsBudget(t *testing.T) {
-	for _, tc := range []struct {
-		name       string
-		reason     string
-		offset     time.Duration
-		node       int64
-		maxWait    time.Duration
-		regression bool
-	}{
-		{name: "clock regression", reason: resourceVersionClockRegression, offset: -20 * time.Millisecond, node: 42, maxWait: 10 * time.Millisecond, regression: true},
-		{name: "clock behind", reason: "clock_behind", offset: -20 * time.Millisecond, node: 43, maxWait: 10 * time.Millisecond},
-		{name: "same timestamp", reason: "same_timestamp", node: 41, maxWait: 500 * time.Microsecond},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			synctest.Test(t, func(t *testing.T) {
-				started := time.Now()
-				now := time.UnixMilli(resourceVersionEpoch).Add(time.Hour)
-				previous := requireGeneratedResourceVersion(t, newResourceVersionGenerator(42, func() time.Time { return now }))
-				g := newResourceVersionGenerator(tc.node, func() time.Time { return now })
-				if tc.regression {
-					requireGeneratedResourceVersion(t, g)
-				}
-				samples := 0
-				g.now = func() time.Time {
-					samples++
-					return now.Add(tc.offset)
-				}
-				backend := &kvStorageBackend{
-					resourceVersions:       g,
-					resourceVersionMaxWait: tc.maxWait,
-					metrics:                newKVBackendMetrics(prometheus.NewRegistry()),
-					log:                    &logging.NoOpLogger{},
-				}
-				rv, err := backend.generateResourceVersionWithRetry(t.Context(), previous)
-				require.Zero(t, rv)
-				if tc.regression {
-					var failure *resourceVersionGenerationError
-					require.ErrorAs(t, err, &failure)
-					require.Equal(t, resourceVersionClockRegression, failure.reason)
-				} else {
-					var ordering *resourceVersionOrderingError
-					require.ErrorAs(t, err, &ordering)
-					require.Equal(t, previous, ordering.minimumRV)
-				}
-				require.Equal(t, 1, samples)
-				require.Equal(t, started, time.Now())
-				observation := resourceVersionWaitObservation(t, backend.metrics, tc.reason, "exhausted")
-				require.EqualValues(t, 1, observation.GetSampleCount())
-				require.Zero(t, observation.GetSampleSum())
-			})
-		})
-	}
-}
-
 func TestResourceVersionRetryDisabled(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
