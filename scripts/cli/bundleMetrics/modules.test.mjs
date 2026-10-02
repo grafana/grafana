@@ -35,7 +35,7 @@ describe('module metrics', () => {
     });
   });
 
-  it('attributes initial leaves to feature folders across nested and shared chunks', () => {
+  it('attributes initial leaves to overlapping folder prefixes across nested and shared chunks', () => {
     const metrics = getModuleMetrics(
       {
         chunks: [
@@ -56,8 +56,8 @@ describe('module metrics', () => {
             path: 'C:\\repo\\public\\app\\features\\explore\\state\\main.ts',
             size: { parsedSize: 50 },
           },
-          { id: 4, kind: 0, path: '/repo/public/app/core/features/not-a-feature.ts' },
-          { id: 5, kind: 0, path: '/repo/public/app/features/root.ts' },
+          { id: 4, kind: 0, path: '/repo/public/app/core/features/not-a-feature.ts', size: { parsedSize: 40 } },
+          { id: 5, kind: 0, path: '/repo/public/app/features/root.ts', size: { parsedSize: 10 } },
           { id: 6, kind: 0, path: '/repo/public/app/features/alerting/nested/page.tsx', size: { parsedSize: 900 } },
           { id: 7, kind: 0, path: 'public/app/features/explore/empty.ts', size: { parsedSize: 0 } },
           {
@@ -77,6 +77,10 @@ describe('module metrics', () => {
       initialModules: 6,
       totalModules: 7,
       asyncOnlyModules: 1,
+      'initialCode.byFolder.public_app_features.modules': 5,
+      'initialCode.byFolder.public_app_features.parsedBytes': 360,
+      'initialCode.byFolder.public_app_core.modules': 1,
+      'initialCode.byFolder.public_app_core.parsedBytes': 40,
       'initialCode.byFolder.public_app_features_dashboard.modules': 2,
       'initialCode.byFolder.public_app_features_dashboard.parsedBytes': 300,
       'initialCode.byFolder.public_app_features_explore.modules': 2,
@@ -84,7 +88,39 @@ describe('module metrics', () => {
     });
   });
 
-  it('rejects missing or invalid parsed sizes rather than underreporting initial feature sizes', () => {
+  it('matches complete folder prefixes and excludes files directly under a configured path', () => {
+    const metrics = getModuleMetrics(
+      {
+        chunks: [{ initial: true, modules: [1, 2, 3, 4], assets: [] }],
+        assets: [],
+        entrypoints: [],
+      },
+      {
+        modules: [
+          { id: 1, kind: 0, path: '/repo/notpublic/app/features/dashboard/model.ts' },
+          { id: 2, kind: 0, path: '/repo/public/application/features/dashboard/model.ts' },
+          { id: 3, kind: 0, path: '/repo/public/app/index.ts' },
+          {
+            id: 4,
+            kind: 0,
+            path: '/repo/public/app/features-extra/dashboard/model.ts',
+            size: { parsedSize: 42 },
+          },
+        ],
+        dependencies: [],
+      }
+    );
+
+    assert.deepEqual(metrics, {
+      initialModules: 4,
+      totalModules: 4,
+      asyncOnlyModules: 0,
+      'initialCode.byFolder.public_app_features-extra.modules': 1,
+      'initialCode.byFolder.public_app_features-extra.parsedBytes': 42,
+    });
+  });
+
+  it('rejects missing or invalid parsed sizes rather than underreporting initial folder sizes', () => {
     for (const parsedSize of [undefined, -1, NaN, Infinity, '100']) {
       assert.throws(
         () =>
@@ -99,7 +135,7 @@ describe('module metrics', () => {
               dependencies: [],
             }
           ),
-        /Invalid Rsdoctor feature module parsed size: 1/
+        /Invalid Rsdoctor folder module parsed size: 1/
       );
     }
   });

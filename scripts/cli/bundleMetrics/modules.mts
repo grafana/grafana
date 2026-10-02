@@ -17,33 +17,46 @@ export interface ModuleGraph {
   dependencies: Dependency[];
 }
 
+const BY_FOLDER_PATHS = ['public/app/features', 'public/app'];
+
 export function getModuleMetrics(chunkGraph: ChunkGraph, moduleGraph: ModuleGraph): Record<string, number> {
   const chunks = readChunks(chunkGraph);
   const modules = readModules(moduleGraph);
   const visited = new Set<number>();
   let initialModules = 0;
   let totalModules = 0;
-  const featureMetrics: Record<string, number> = {};
+  const folderMetrics: Record<string, number> = {};
 
-  const collectFeature = (module: Module) => {
-    const feature = module.path?.replaceAll('\\', '/').match(/(?:^|\/)public\/app\/features\/([^/]+)\/[^/]+/)?.[1];
-    if (feature === undefined) {
+  const collectFolder = (module: Module) => {
+    if (module.path === undefined) {
       return;
     }
-    const parsedSize = module.size?.parsedSize;
-    if (typeof parsedSize !== 'number' || !Number.isFinite(parsedSize) || parsedSize < 0) {
-      throw new Error(`Invalid Rsdoctor feature module parsed size: ${module.id}`);
+    const modulePath = `/${module.path.replaceAll('\\', '/')}`;
+    for (const parentPath of BY_FOLDER_PATHS) {
+      const parentStart = modulePath.indexOf(`/${parentPath}/`);
+      if (parentStart === -1) {
+        continue;
+      }
+      const folderStart = parentStart + parentPath.length + 2;
+      const folderEnd = modulePath.indexOf('/', folderStart);
+      if (folderEnd <= folderStart || folderEnd === modulePath.length - 1) {
+        continue;
+      }
+      const folderPath = `${parentPath}/${modulePath.slice(folderStart, folderEnd)}`;
+      const parsedSize = module.size?.parsedSize;
+      if (typeof parsedSize !== 'number' || !Number.isFinite(parsedSize) || parsedSize < 0) {
+        throw new Error(`Invalid Rsdoctor folder module parsed size: ${module.id}`);
+      }
+      const prefix = `initialCode.byFolder.${folderPath.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+      folderMetrics[`${prefix}.modules`] = (folderMetrics[`${prefix}.modules`] ?? 0) + 1;
+      folderMetrics[`${prefix}.parsedBytes`] = (folderMetrics[`${prefix}.parsedBytes`] ?? 0) + parsedSize;
     }
-    const folderPath = `public/app/features/${feature}`.replace(/[^a-zA-Z0-9_-]/g, '_');
-    const prefix = `initialCode.byFolder.${folderPath}`;
-    featureMetrics[`${prefix}.modules`] = (featureMetrics[`${prefix}.modules`] ?? 0) + 1;
-    featureMetrics[`${prefix}.parsedBytes`] = (featureMetrics[`${prefix}.parsedBytes`] ?? 0) + parsedSize;
   };
 
   // Visit initial chunks first so shared leaves do not count as async-only modules.
   for (const chunk of chunks) {
     if (chunk.initial) {
-      const counts = collectModules(chunk.modules, modules, visited, collectFeature);
+      const counts = collectModules(chunk.modules, modules, visited, collectFolder);
       initialModules += counts;
       totalModules += counts;
     }
@@ -59,7 +72,7 @@ export function getModuleMetrics(chunkGraph: ChunkGraph, moduleGraph: ModuleGrap
     initialModules,
     totalModules,
     asyncOnlyModules: totalModules - initialModules,
-    ...featureMetrics,
+    ...folderMetrics,
   };
 }
 

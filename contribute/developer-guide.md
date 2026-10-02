@@ -146,6 +146,18 @@ Some consequences of this setup:
   `yarn start:rspack:noHmr`. To stop Grafana looking for one, pass
   `cfg:frontend_dev.server_url=` on the command line.
 
+#### Initial code metrics
+
+After `yarn build` and `yarn build:stats:rspack`, run `yarn bundle-metrics`.
+The output includes `build.rspack.initialCode.byFolder.<sanitisedFolderPath>.modules` and `.parsedBytes`.
+These metrics count unique initial leaf modules and sum their RSDoctor parsed sizes.
+
+`BY_FOLDER_PATHS` in `scripts/cli/bundleMetrics/modules.mts` defines the folder prefixes: `public/app` and `public/app/features`.
+Each prefix groups modules by its immediate child folders, including all nested files.
+A module contributes to every matching prefix, so parent and child totals overlap.
+Add a repository-relative path to this array to report another level.
+Characters outside ASCII letters, digits, underscores, and hyphens become underscores in metric paths.
+
 #### Plugins
 
 If you want to contribute to any of the plugins listed below (that are found within the `public/app/plugins` directory) they require running additional commands to watch and rebuild them.

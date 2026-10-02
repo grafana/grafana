@@ -41,6 +41,8 @@ const rsdoctorMetrics = {
   initialModules: 4,
   totalModules: 5,
   asyncOnlyModules: 1,
+  'initialCode.byFolder.public_app_features.modules': 3,
+  'initialCode.byFolder.public_app_features.parsedBytes': 150,
   'initialCode.byFolder.public_app_features_dashboard.modules': 2,
   'initialCode.byFolder.public_app_features_dashboard.parsedBytes': 120,
   'initialCode.byFolder.public_app_features_explore.modules': 1,
