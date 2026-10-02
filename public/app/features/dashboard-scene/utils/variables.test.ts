@@ -1,3 +1,5 @@
+import { waitFor } from '@testing-library/react';
+
 import {
   type ConstantVariableModel,
   type CustomVariableModel,
@@ -11,6 +13,7 @@ import {
   type TypedVariableModel,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   CustomVariable,
@@ -469,6 +472,42 @@ describe('when creating variables objects', () => {
       enableGroupBy: false,
       layout: 'combobox',
     });
+  });
+
+  it('detects multi-value operator support for the Dashboard datasource by its uid', async () => {
+    jest.mocked(getDataSourceInstanceSettings).mockImplementation(async (ref) => {
+      const dashboard = typeof ref === 'object' && ref?.uid === '-- Dashboard --';
+      return {
+        uid: dashboard ? '-- Dashboard --' : 'grafana',
+        type: 'datasource',
+        meta: { id: dashboard ? 'dashboard' : 'grafana', multiValueFilterOperators: dashboard },
+      } as unknown as Awaited<ReturnType<typeof getDataSourceInstanceSettings>>;
+    });
+
+    const variable: TypedVariableModel = {
+      id: 'adhoc',
+      global: false,
+      index: 0,
+      state: LoadingState.Done,
+      error: null,
+      name: 'adhoc',
+      label: 'Adhoc Label',
+      description: 'Adhoc Description',
+      type: 'adhoc',
+      rootStateKey: 'N4XLmH5Vz',
+      datasource: { uid: '-- Dashboard --', type: 'datasource' },
+      filters: [],
+      baseFilters: [],
+      hide: 0,
+      skipUrlSync: false,
+    };
+
+    const migrated = createSceneVariableFromVariableModel(variable);
+
+    await waitFor(() => expect(migrated.state).toMatchObject({ supportsMultiValueOperators: true }));
+    expect(getDataSourceInstanceSettings).toHaveBeenCalledWith({ uid: '-- Dashboard --', type: 'datasource' });
+
+    jest.mocked(getDataSourceInstanceSettings).mockReset().mockResolvedValue(undefined);
   });
 
   it('should migrate adhoc variable with default keys', () => {

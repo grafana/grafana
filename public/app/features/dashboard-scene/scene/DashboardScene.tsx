@@ -1351,7 +1351,7 @@ export class DashboardScene
       return filters;
     }
 
-    const panel = getRequestSourcePanel(source);
+    const panel = this.getFilterSourcePanel(source);
     if (!panel) {
       return filters;
     }
@@ -1360,6 +1360,25 @@ export class DashboardScene
     const remaining = filters.filter((filter) => getValidBiSelection(filter)?.sourcePanel !== identity);
 
     return remaining.length === filters.length ? filters : remaining;
+  }
+
+  /**
+   * The panel whose own selection a query runner must skip: the runner's closest VizPanel. Only a runner that belongs
+   * to the open panel editor without sitting under a VizPanel falls back to the edited panel. Unlike
+   * enrichDataRequest, other panels' runners keep their own identity while the editor is open.
+   */
+  private getFilterSourcePanel(source: SceneObject): VizPanel | undefined {
+    const panel = getClosestVizPanel(source);
+    if (panel) {
+      return panel;
+    }
+
+    const { editPanel } = this.state;
+    if (editPanel && isDescendantOf(source, editPanel)) {
+      return editPanel.state.panelRef.resolve();
+    }
+
+    return undefined;
   }
 
   canEditDashboard() {
@@ -1751,4 +1770,14 @@ function getRequestSourcePanel(sceneObject: SceneObject): VizPanel | undefined {
   }
 
   return getClosestVizPanel(sceneObject) ?? undefined;
+}
+
+function isDescendantOf(sceneObject: SceneObject, ancestor: SceneObject): boolean {
+  for (let current: SceneObject | undefined = sceneObject; current; current = current.parent) {
+    if (current === ancestor) {
+      return true;
+    }
+  }
+
+  return false;
 }

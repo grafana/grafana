@@ -1854,7 +1854,7 @@ describe('DashboardScene', () => {
       key: 'country',
       operator: '=',
       value,
-      meta: { biSelection: { sourcePanel, values: [value] } },
+      meta: { biSelection: { sourcePanel, key: 'country', values: [value] } },
     });
     const ordinary: AdHocFilterWithLabels = { key: 'region', operator: '=', value: 'EU' };
 
@@ -1903,14 +1903,43 @@ describe('DashboardScene', () => {
         expect(scene.enrichDataRequestFilters(runner('data-query-runner'), [fromClone])).toEqual([fromClone]);
       });
 
-      it('resolves the edited panel while the panel editor is open', () => {
-        scene.onEnterEditMode();
-        const editPanel = buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!);
-        scene.setState({ editPanel });
+      describe('while the panel editor is open', () => {
+        beforeEach(() => {
+          scene.onEnterEditMode();
+        });
 
-        const queryRunner = editPanel.getPanel().state.$data!;
+        const openEditor = () => {
+          const editPanel = buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!);
+          scene.setState({ editPanel });
+          return editPanel;
+        };
 
-        expect(scene.enrichDataRequestFilters(queryRunner, [stamped('panel-1'), ordinary])).toEqual([ordinary]);
+        it("drops the edited panel's own selection from its queries", () => {
+          const editPanel = openEditor();
+
+          const queryRunner = editPanel.getPanel().state.$data!;
+
+          expect(scene.enrichDataRequestFilters(queryRunner, [stamped('panel-1'), ordinary])).toEqual([ordinary]);
+        });
+
+        it('keeps other panels on their own identity', () => {
+          openEditor();
+          const fromEdited = stamped('panel-1', 'FR');
+          // Same hash as 'Should hash the key of the cloned panels and set it as panelId'
+          const fromClone = stamped('clone-3670868617', 'DE');
+
+          expect(scene.enrichDataRequestFilters(runner('data-query-runner2'), [fromEdited, fromClone])).toEqual([
+            fromEdited,
+          ]);
+        });
+
+        it('falls back to the edited panel for a runner that belongs to the editor but not to a panel', () => {
+          const editPanel = openEditor();
+          const editorRunner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+          editPanel.setState({ $data: editorRunner });
+
+          expect(scene.enrichDataRequestFilters(editorRunner, [stamped('panel-1'), ordinary])).toEqual([ordinary]);
+        });
       });
     });
   });

@@ -629,7 +629,7 @@ describe('sceneVariablesSetToVariables', () => {
   });
 
   it('should not save the BI selection stamp of a filter', () => {
-    const biSelection = { sourcePanel: 'panel-1', values: ['UK'] };
+    const biSelection = { sourcePanel: 'panel-1', key: 'country', values: ['UK'] };
     const variable = new AdHocFiltersVariable({
       name: 'test',
       datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -639,7 +639,7 @@ describe('sceneVariablesSetToVariables', () => {
           key: 'region',
           operator: '=',
           value: 'EU',
-          meta: { biSelection: { ...biSelection, values: ['EU'] }, other: 1 },
+          meta: { biSelection: { ...biSelection, key: 'region', values: ['EU'] }, other: 1 },
         },
       ],
     });
@@ -1564,7 +1564,7 @@ describe('sceneVariablesSetToVariables', () => {
     });
 
     it('should not save the BI selection stamp of a filter', () => {
-      const biSelection = { sourcePanel: 'panel-1', values: ['UK'] };
+      const biSelection = { sourcePanel: 'panel-1', key: 'country', values: ['UK'] };
       const variable = new AdHocFiltersVariable({
         name: 'test',
         datasource: { uid: 'fake-uid', type: 'fake-type' },
@@ -1574,7 +1574,7 @@ describe('sceneVariablesSetToVariables', () => {
             key: 'region',
             operator: '=',
             value: 'EU',
-            meta: { biSelection: { ...biSelection, values: ['EU'] }, other: 1 },
+            meta: { biSelection: { ...biSelection, key: 'region', values: ['EU'] }, other: 1 },
           },
         ],
       });

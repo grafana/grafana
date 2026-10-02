@@ -384,7 +384,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
       $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
-        getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
+        getDataSourceSrv().getInstanceSettings(ds?.uid ? ds : { type: ds?.type })?.meta.multiValueFilterOperators
       ),
       collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
       enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
@@ -614,7 +614,7 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             useQueriesAsFilterForOptions: true,
             applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             supportsMultiValueOperators: Boolean(
-              getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
+              getDataSourceSrv().getInstanceSettings(ds?.uid ? ds : { type: ds?.type })?.meta.multiValueFilterOperators
             ),
             enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
               ? (v.spec.enableGroupBy ?? false)

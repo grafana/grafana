@@ -10,6 +10,7 @@ import {
   AdHocFiltersVariable,
   dataLayers,
   sceneGraph,
+  SceneQueryRunner,
   sceneUtils,
   type SceneObject,
   type SceneVariables,
@@ -22,7 +23,12 @@ import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSideba
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
-import { type BiSelectionStamp, getValidBiSelection } from '../bi/biSelectionStamp';
+import {
+  type BiSelectionStamp,
+  getValidBiSelection,
+  haveSameExpression,
+  releaseIdenticalBiSelection,
+} from '../bi/biSelectionStamp';
 import { buildEntries } from '../inspect/StandardErrorsAndNoticesInspector';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -170,6 +176,17 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
 
     const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
+
+    if (isBiModeEnabled()) {
+      const released = releaseIdenticalBiSelection(filterVar.state.filters, newFilter);
+      if (released) {
+        // The filter already exists as a BI selection; make it an ordinary filter for every panel instead of
+        // appending a duplicate. The expression is unchanged, so force the publish to re-run the selecting panel.
+        filterVar.updateFilters(released, { forcePublish: true });
+        return;
+      }
+    }
+
     updateAdHocFilterVariable(filterVar, newFilter);
   };
 
@@ -221,7 +238,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
       };
     }
     const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
-    bulkUpdateAdHocFiltersVariable(filterVar, items);
+    bulkUpdateAdHocFiltersVariable(filterVar, items, isBiModeEnabled());
 
     if (items.length > 0) {
       const isFilterOut = items.every((item) => item.operator === FILTER_OUT_OPERATOR);
@@ -232,7 +249,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     }
   };
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false)) {
+  if (isBiModeEnabled()) {
     setBiSelectionContext(vizPanel, context);
   }
 
@@ -289,14 +306,8 @@ function setBiSelectionContext(vizPanel: VizPanel, context: PanelContext) {
       return;
     }
 
-    let datasource = getDatasourceFromQueryRunner(queryRunner);
-
-    // Type-only datasources (V2 schema queries may only set the group) are resolved to a full reference.
-    if (datasource && !datasource.uid) {
-      const datasourceToLoad = await getDataSourceInstance(datasource);
-      datasource = { uid: datasourceToLoad.uid, type: datasourceToLoad.type };
-    }
-
+    const datasource = await resolveTypeOnlyDatasource(getDatasourceFromQueryRunner(queryRunner));
+    const isNewVariable = !findAdHocFilterVariableFor(vizPanel, datasource);
     const filterVar = await getAdHocFilterVariableFor(vizPanel, datasource);
     const { filters, valuesCount } = applyBiSelection(filterVar, update, getPanelSourceIdentity(vizPanel));
 
@@ -305,28 +316,29 @@ function setBiSelectionContext(vizPanel: VizPanel, context: PanelContext) {
     filterVar.updateFilters(filters, { forcePublish: true });
 
     reportInteraction('grafana_bi_cross_filter_select', { mode: update.mode, valuesCount });
+
+    if (isNewVariable) {
+      await rerunTypeOnlyQueryRunners(filterVar);
+    }
   };
 
+  // Reads by ownership rather than by datasource, so it finds exactly the filter onSetAdHocFilterSelection wrote,
+  // whichever variable that resolved to. Datasource resolution is async and cannot run in this synchronous read.
   context.getAdHocFilterSelection = (key: string) => {
-    const queryRunner = getQueryRunnerFor(vizPanel);
-    if (!queryRunner) {
-      return undefined;
-    }
-
-    const filterVar = findAdHocFilterVariableFor(vizPanel, getDatasourceFromQueryRunner(queryRunner));
-    if (!filterVar) {
-      return undefined;
-    }
-
     const identity = getPanelSourceIdentity(vizPanel);
-    for (const filter of filterVar.state.filters) {
-      if (filter.key !== key) {
-        continue;
-      }
 
-      const stamp = getValidBiSelection(filter);
-      if (stamp?.sourcePanel === identity) {
-        return [...stamp.values];
+    for (const variables of getVariableSetsInHierarchy(vizPanel)) {
+      for (const variable of variables.state.variables) {
+        if (!sceneUtils.isAdHocVariable(variable)) {
+          continue;
+        }
+
+        for (const filter of variable.state.filters) {
+          const stamp = filter.key === key ? getValidBiSelection(filter) : undefined;
+          if (stamp?.sourcePanel === identity) {
+            return [...stamp.values];
+          }
+        }
       }
     }
 
@@ -368,11 +380,17 @@ function applyBiSelection(
     return { filters, valuesCount: 0 };
   }
 
-  const biSelection: BiSelectionStamp = { sourcePanel, values: [...written] };
+  const biSelection: BiSelectionStamp = { sourcePanel, key, values: [...written] };
   const selection: AdHocFilterWithLabels =
     written.length === 1
       ? { key, operator: '=', value: written[0], meta: { biSelection } }
       : { key, operator: '=|', value: written[0], values: written, valueLabels: [...written], meta: { biSelection } };
+
+  // A kept (injected or read-only) filter with the same expression already applies to every panel. Scenes would
+  // deduplicate the two, so write nothing rather than a selection that could replace it for this panel.
+  if (filters.some((filter) => haveSameExpression(filter, selection))) {
+    return { filters, valuesCount: written.length };
+  }
 
   // insertAt is the index of the first removed filter, so nothing before it was removed and it is still valid.
   filters.splice(insertAt >= 0 ? insertAt : filters.length, 0, selection);
@@ -381,8 +399,8 @@ function applyBiSelection(
 }
 
 /**
- * Synchronous counterpart of getAdHocFilterVariableFor that never creates a variable. A type-only datasource
- * reference (no uid) is matched by type.
+ * The ad hoc variable for `ds` closest to `sceneObject`, or undefined. Never creates a variable; this is the scan
+ * getAdHocFilterVariableFor runs after its awaits.
  */
 function findAdHocFilterVariableFor(
   sceneObject: SceneObject,
@@ -390,21 +408,58 @@ function findAdHocFilterVariableFor(
 ): AdHocFiltersVariable | undefined {
   for (const variables of getVariableSetsInHierarchy(sceneObject)) {
     for (const variable of variables.state.variables) {
-      if (!sceneUtils.isAdHocVariable(variable)) {
-        continue;
-      }
-
-      const filtersDs = variable.state.datasource;
-      const matches =
-        ds && !ds.uid && ds.type ? filtersDs?.type === ds.type : filtersDs === ds || filtersDs?.uid === ds?.uid;
-
-      if (matches) {
-        return variable;
+      if (sceneUtils.isAdHocVariable(variable)) {
+        const filtersDs = variable.state.datasource;
+        if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
+          return variable;
+        }
       }
     }
   }
 
   return undefined;
+}
+
+/**
+ * Resolves a type-only datasource reference (V2 schema queries may only set the group) to a full one.
+ */
+async function resolveTypeOnlyDatasource(
+  ds: DataSourceRef | null | undefined
+): Promise<DataSourceRef | null | undefined> {
+  if (!ds || ds.uid) {
+    return ds;
+  }
+
+  const settings = await getDataSourceInstanceSettings(ds);
+  return settings ? { uid: settings.uid, type: settings.type } : ds;
+}
+
+/**
+ * Scenes re-runs a query runner for a newly added ad hoc variable only when the runner's datasource uid matches
+ * the variable's. A runner whose reference is type-only has no uid to compare, so re-run those explicitly.
+ */
+async function rerunTypeOnlyQueryRunners(filterVar: AdHocFiltersVariable) {
+  const uid = filterVar.state.datasource?.uid;
+  if (!uid) {
+    return;
+  }
+
+  const runners = sceneGraph
+    .findAllObjects(getDashboardSceneFor(filterVar), (obj) => obj instanceof SceneQueryRunner)
+    .filter((obj): obj is SceneQueryRunner => obj instanceof SceneQueryRunner && obj.isActive);
+
+  await Promise.all(
+    runners.map(async (runner) => {
+      const ds = runner.state.datasource ?? runner.state.queries.find((query) => query.datasource)?.datasource;
+      if (ds && !ds.uid && (await resolveTypeOnlyDatasource(ds))?.uid === uid) {
+        runner.runQueries();
+      }
+    })
+  );
+}
+
+function isBiModeEnabled() {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false);
 }
 
 /**
@@ -590,18 +645,16 @@ export async function getAdHocFilterVariableFor(sceneObject: SceneObject, ds: Da
   // Resolve plugin meta before scanning so no await sits between the read and the
   // setState write. Overlapping "Filter for value" actions would otherwise both
   // miss the existing-variable scan and append a second Filters variable.
-  const pluginId = ds?.type ?? (await getDataSourceInstanceSettings(ds))?.type ?? '';
-  const supportsMultiValueOperators = Boolean((await getDatasourcePluginMeta(pluginId))?.multiValueFilterOperators);
+  // Look up by the full reference: built-in data sources such as -- Dashboard -- and -- Grafana -- share the type
+  // 'datasource', so the type alone does not identify the plugin.
+  const settings = await getDataSourceInstanceSettings(ds);
+  const pluginId = settings?.meta.id ?? ds?.type ?? '';
+  const pluginMeta = (await getDatasourcePluginMeta(pluginId)) ?? settings?.meta;
+  const supportsMultiValueOperators = Boolean(pluginMeta?.multiValueFilterOperators);
 
-  for (const variables of getVariableSetsInHierarchy(sceneObject)) {
-    for (const variable of variables.state.variables) {
-      if (sceneUtils.isAdHocVariable(variable)) {
-        const filtersDs = variable.state.datasource;
-        if (filtersDs === ds || filtersDs?.uid === ds?.uid) {
-          return variable;
-        }
-      }
-    }
+  const existing = findAdHocFilterVariableFor(sceneObject, ds);
+  if (existing) {
+    return existing;
   }
 
   // No matching filter variable exists anywhere in the hierarchy - create one at the dashboard
@@ -624,15 +677,29 @@ export async function getAdHocFilterVariableFor(sceneObject: SceneObject, ds: Da
   return newVariable;
 }
 
-function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilters: AdHocFilterItem[]) {
+function bulkUpdateAdHocFiltersVariable(
+  filterVar: AdHocFiltersVariable,
+  newFilters: AdHocFilterItem[],
+  releaseBiSelections: boolean
+) {
   if (!newFilters.length) {
     return;
   }
 
-  const updatedFilters = filterVar.state.filters.slice();
+  let updatedFilters = filterVar.state.filters.slice();
   let hasChanges = false;
+  let releasedBiSelection = false;
 
   for (const newFilter of newFilters) {
+    // An identical BI selection becomes an ordinary filter, so it also filters the panel that selected it.
+    const released = releaseBiSelections ? releaseIdenticalBiSelection(updatedFilters, newFilter) : undefined;
+    if (released) {
+      updatedFilters = released;
+      hasChanges = true;
+      releasedBiSelection = true;
+      continue;
+    }
+
     const existingFilterIndex = updatedFilters.findIndex(
       (filter) => filter.key === newFilter.key && filter.value === newFilter.value
     );
@@ -651,7 +718,10 @@ function bulkUpdateAdHocFiltersVariable(filterVar: AdHocFiltersVariable, newFilt
     hasChanges = true;
   }
 
-  if (hasChanges) {
+  if (hasChanges && releasedBiSelection) {
+    // Releasing a selection keeps the expression the same, so force the publish to re-run the selecting panel.
+    filterVar.updateFilters(updatedFilters, { forcePublish: true });
+  } else if (hasChanges) {
     filterVar.updateFilters(updatedFilters);
   }
 }

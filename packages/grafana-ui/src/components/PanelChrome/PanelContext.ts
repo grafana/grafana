@@ -78,8 +78,10 @@ export interface PanelContext {
 
   /**
    * Sets the values this panel selects for one ad hoc filter key (business intelligence mode).
+   * Replaces every editable `=` and `=|` filter on the key, whoever added it (another panel's
+   * selection or a manual filter); `!=`, group-by, injected and read-only filters are kept.
    * The written filter filters the other panels on the dashboard but not this one.
-   * An empty `values` list clears this panel's selection for the key.
+   * An empty `values` list removes those filters and writes nothing.
    * Resolves once the filter variable has been updated.
    */
   onSetAdHocFilterSelection?: (selection: AdHocFilterSelectionUpdate) => Promise<void>;
