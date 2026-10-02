@@ -10,8 +10,6 @@ import { dispatch } from 'app/types/store';
 import { searchNotebookTitles } from './notebookSearchApi';
 import { __resetSearchAvailabilityForTests, markNotebookSearchUnavailable } from './notebookSearchAvailability';
 
-// Deliberately no jest.mock of the api client: the point of this suite is to exercise the real RTK
-// Query endpoint, so the assertions are about the request that reaches the wire.
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
 const NOTEBOOKS_SEARCH_URL = `${NOTEBOOKS_URL}/search`;
 

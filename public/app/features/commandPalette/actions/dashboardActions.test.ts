@@ -211,11 +211,15 @@ describe('dashboardActions', () => {
       });
 
       it('keeps dashboard results if notebook search is unavailable', async () => {
+        const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
         mockSearchNotebookTitles.mockRejectedValue(new Error('notebook search unavailable'));
 
         const results = await getSearchResultActions('Incident', false, true);
 
         expect(results).toEqual([expect.objectContaining({ sectionId: 'dashboards' })]);
+        // Dropping the section silently would make a broken notebook search undiagnosable.
+        expect(consoleErrorSpy).toHaveBeenCalled();
+        consoleErrorSpy.mockRestore();
       });
     });
 

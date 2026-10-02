@@ -153,26 +153,37 @@ describe('CommandPalette', () => {
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
   });
 
-  it('shows notebook search results alongside other palette actions', async () => {
+  describe('notebook results', () => {
+    // contextSrv.user is a mutable singleton, so these are restored even when an assertion throws —
+    // otherwise a failure here leaks a signed-in user with notebooks:read into every later test.
     const originalPermissions = contextSrv.user.permissions;
     const originalIsSignedIn = contextSrv.user.isSignedIn;
-    contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
-    contextSrv.user.isSignedIn = true;
-    setTestFlags({ 'dashboard.notebooks': true });
-    server.use(
-      http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
-        HttpResponse.json({
-          items: [
-            {
-              resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
-              fields: { title: 'Incident latency notes' },
-            },
-          ],
-        })
-      )
-    );
 
-    try {
+    beforeEach(() => {
+      contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+      contextSrv.user.isSignedIn = true;
+      setTestFlags({ 'dashboard.notebooks': true });
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
+      contextSrv.user.isSignedIn = originalIsSignedIn;
+    });
+
+    it('shows notebook search results alongside other palette actions', async () => {
+      server.use(
+        http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
+          HttpResponse.json({
+            items: [
+              {
+                resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+                fields: { title: 'Incident latency notes' },
+              },
+            ],
+          })
+        )
+      );
+
       setup();
       await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
 
@@ -180,10 +191,7 @@ describe('CommandPalette', () => {
         'href',
         expect.stringContaining('/notebooks/nb1')
       );
-    } finally {
-      contextSrv.user.permissions = originalPermissions;
-      contextSrv.user.isSignedIn = originalIsSignedIn;
-    }
+    });
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {
