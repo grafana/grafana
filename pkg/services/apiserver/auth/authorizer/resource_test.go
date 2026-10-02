@@ -7,9 +7,25 @@ import (
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
+
+// recordingLogger captures Error() calls for assertions. With/WithContext
+// return itself, since FromContext calls WithContext before logging.
+type recordingLogger struct {
+	errorCalls [][]any
+}
+
+func (l *recordingLogger) Debug(string, ...any) {}
+func (l *recordingLogger) Info(string, ...any)  {}
+func (l *recordingLogger) Warn(string, ...any)  {}
+func (l *recordingLogger) Error(msg string, args ...any) {
+	l.errorCalls = append(l.errorCalls, append([]any{msg}, args...))
+}
+func (l *recordingLogger) With(...any) logging.Logger                 { return l }
+func (l *recordingLogger) WithContext(context.Context) logging.Logger { return l }
 
 // fakeAccessChecker is a fake implementation of claims.AccessChecker for testing
 type fakeAccessChecker struct {
@@ -276,6 +292,43 @@ func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckError(t *test
 	require.Contains(t, err.Error(), "check failed")
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Empty(t, reason)
+}
+
+func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckError_LogsFailure(t *testing.T) {
+	checkErr := errors.New("rpc error: code = Unauthenticated desc = transport: per-RPC creds failed due to error: missing required namespace")
+	mockChecker := &fakeAccessChecker{
+		checkFunc: func(ctx context.Context, ident types.AuthInfo, req types.CheckRequest, extra string) (types.CheckResponse, error) {
+			return types.CheckResponse{}, checkErr
+		},
+	}
+
+	auth := NewResourceAuthorizerWithSubresourceHandlers(mockChecker, map[string]SubresourceCheck{})
+
+	logger := &recordingLogger{}
+	ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+	ctx = logging.Context(ctx, logger)
+
+	attrs := mockAttributes{
+		isResourceRequest: true,
+		verb:              "delete",
+		apiGroup:          "folder.grafana.app",
+		resource:          "folders",
+		namespace:         "stacks-4669",
+		name:              "efzt6k5xkg3y8b",
+	}
+
+	decision, reason, err := auth.Authorize(ctx, attrs)
+	require.ErrorIs(t, err, checkErr)
+	require.Equal(t, authorizer.DecisionDeny, decision)
+	require.Empty(t, reason)
+
+	require.Len(t, logger.errorCalls, 1, "the access-check failure should be logged exactly once")
+	logged := logger.errorCalls[0]
+	require.Equal(t, "resource access check failed", logged[0])
+	require.Contains(t, logged, checkErr)
+	require.Contains(t, logged, "stacks-4669")
+	require.Contains(t, logged, "folders")
+	require.Contains(t, logged, "delete")
 }
 
 func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckDenied(t *testing.T) {
