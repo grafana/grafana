@@ -150,6 +150,29 @@ describe('NotebookPrompt', () => {
     );
   });
 
+  it('does not reopen the modal when the confirmed push re-enters history.block', async () => {
+    // The real `history` package re-runs every registered block callback on every push,
+    // including the one the confirm handler itself triggers — simulate that re-entrancy here,
+    // since mocking `push` away (as the other tests do) hides it entirely.
+    const scene = buildScene();
+    scene.setState({ isEditing: true });
+    scene.autosave.setState({ status: 'saving' });
+    renderPrompt(scene);
+    const message = mockHistory.block.mock.calls[0][0];
+    block();
+
+    jest.mocked(locationService.push).mockImplementation(() => {
+      act(() => {
+        message({ pathname: '/elsewhere', search: '', hash: '', state: undefined });
+      });
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: 'Leave anyway' }));
+
+    await waitFor(() => expect(locationService.push).toHaveBeenCalled());
+    expect(screen.queryByText('This notebook is still saving')).not.toBeInTheDocument();
+  });
+
   it('stays on the notebook and keeps nothing pending when the user dismisses', async () => {
     const scene = buildScene();
     scene.setState({ isEditing: true });
