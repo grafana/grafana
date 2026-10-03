@@ -72,6 +72,7 @@ enum PluginRequestHeaders {
   SkipQueryCache = 'X-Cache-Skip', // used by datasources to skip the query cache
   DashboardTitle = 'X-Dashboard-Title', // used by datasources to identify the dashboard title
   PanelTitle = 'X-Panel-Title', // used by datasources to identify the panel title
+  GrafanaSource = 'X-Grafana-Source',
 }
 
 /**
@@ -242,6 +243,22 @@ class DataSourceWithBackend<
     const headers: Record<string, string> = request.headers ?? {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
+    switch (request.app) {
+      case 'explore':
+        headers[PluginRequestHeaders.GrafanaSource] = 'explore';
+        break;
+      case 'dashboard':
+      case 'panel-editor':
+      case 'panel-viewer':
+        headers[PluginRequestHeaders.GrafanaSource] = 'dashboard';
+        break;
+      case 'cloud-alerting':
+      case 'unified-alerting':
+        headers[PluginRequestHeaders.GrafanaSource] = 'alerting';
+        break;
+      default:
+        headers[PluginRequestHeaders.GrafanaSource] = 'api';
+    }
 
     let url = '/api/ds/query?ds_type=' + this.type;
 
