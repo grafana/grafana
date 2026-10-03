@@ -2727,11 +2727,8 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-	if req.Resource == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "missing resource key",
-			Code:    http.StatusBadRequest,
-		}}, nil
+	if r := verifyRequestKey(req.Resource); r != nil {
+		return &resourcepb.PutBlobResponse{Error: r}, nil
 	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2755,11 +2752,6 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	name := req.Resource.Name
 	folder := ""
 	switch {
-	case parent == nil:
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "parent resource not found",
-			Code:    http.StatusNotFound,
-		}}, nil
 	case parent.Error != nil && parent.Error.Code == http.StatusNotFound:
 		verb = utils.VerbCreate
 		name = ""
@@ -2858,20 +2850,11 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-	if req.Resource == nil {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "missing resource key",
-			Code:    http.StatusBadRequest,
-		}}, nil
+	if r := verifyRequestKey(req.Resource); r != nil {
+		return &resourcepb.GetBlobResponse{Error: r}, nil
 	}
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
 		return &resourcepb.GetBlobResponse{Error: errRes}, nil
-	}
-	if req.Resource.Name == "" {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "missing resource name",
-			Code:    http.StatusBadRequest,
-		}}, nil
 	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2939,15 +2922,23 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 	}
 
 	var obj struct {
+		Metadata struct {
+			Annotations map[string]string `json:"annotations"`
+		} `json:"metadata"`
 		Blobs map[string]BlobReference `json:"blobs"`
 	}
 	if err := json.Unmarshal(rsp.Value, &obj); err != nil {
 		return nil, AsErrorResult(err)
 	}
-	refs := make(map[string]bool, len(obj.Blobs))
+	refs := make(map[string]bool, len(obj.Blobs)+1)
 	for _, ref := range obj.Blobs {
 		if ref.UID != "" {
 			refs[ref.UID] = true
+		}
+	}
+	if len(refs) > 0 {
+		if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
+			refs[info.UID] = true
 		}
 	}
 	return refs, nil

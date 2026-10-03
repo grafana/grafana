@@ -3531,6 +3531,40 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.Nil(t, rsp.Error)
 		require.True(t, blob.getReached)
 	})
+
+	withAnnotation := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default","annotations":{"` + utils.AnnoKeyBlob + `":"legacy-blob; size=2"}},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	createWithAnnotation := func(t *testing.T, srv *server, blobs string) {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withAnnotation(blobs)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	}
+
+	t.Run("returns the annotation blob by uid when the resource also has a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects an unreferenced blob when the resource has an annotation and a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource only has the annotation", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "older-legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
 }
 
 func TestClassifyAuthError(t *testing.T) {
