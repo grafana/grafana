@@ -7805,6 +7805,9 @@
       "new-alert-rule": "New alert rule",
       "title-no-alerting-capable-query-found": "No alerting capable query found"
     },
+    "scope-filters-edit-banner": {
+      "title": "Note: You are editing this dashboard with a Scope selected, which may affect your queries in unexpected ways. It is recommended that you review your selected Scope and select one without filters for editing."
+    },
     "scripted-dashboard-deprecation-banner": {
       "body": "This feature will be removed in Grafana 14. <2>Read the deprecation notice</2>.",
       "title": "Scripted dashboards are deprecated"
