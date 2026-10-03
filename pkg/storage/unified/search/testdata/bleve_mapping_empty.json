@@ -18,6 +18,19 @@
           }
         ]
       },
+      "_deleted_rv_sort": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "index": true,
+            "docvalues": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
       "_provisioned": {
         "enabled": true,
         "dynamic": true,
@@ -25,6 +38,18 @@
           {
             "type": "boolean",
             "index": true,
+            "skip_freq_norm": true
+          }
+        ]
+      },
+      "_rv": {
+        "enabled": true,
+        "dynamic": true,
+        "fields": [
+          {
+            "type": "text",
+            "analyzer": "keyword",
+            "store": true,
             "skip_freq_norm": true
           }
         ]

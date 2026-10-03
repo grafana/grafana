@@ -109,9 +109,9 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	providers := make(map[string]map[string]string)
 	for _, section := range cfg.Raw.Sections() {
 		sectionName := section.Name()
-		if strings.HasPrefix(sectionName, ProviderPrefix) {
+		if after, ok := strings.CutPrefix(sectionName, ProviderPrefix); ok {
 			// Extract the provider name (everything after the prefix)
-			providerName := strings.TrimPrefix(sectionName, ProviderPrefix)
+			providerName := after
 			if providerName != "" {
 				providers[providerName] = section.KeysHash()
 			}

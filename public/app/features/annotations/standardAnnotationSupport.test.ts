@@ -124,7 +124,7 @@ describe('DataFrame to annotations', () => {
           color: 'red',
           data: { text: 'a', value: 'A' },
           email: 'admin@unknown.us',
-          id: 1,
+          id: '1',
           login: 'admin',
           newState: 'alerting',
           panelId: 4,
@@ -140,6 +140,22 @@ describe('DataFrame to annotations', () => {
         },
       ],
     ]);
+  });
+
+  it('keeps a legacy id of 0 falsy so the annotation stays read-only', async () => {
+    const frame = toDataFrame({
+      fields: [
+        { name: 'time', values: [100, 200] },
+        { name: 'text', values: ['loki alert', 'user annotation'] },
+        { name: 'id', values: [0, 4683] },
+      ],
+    });
+
+    const observable = getAnnotationsFromData([frame]);
+
+    await expect(observable).toEmitValuesWith((received) => {
+      expect(received[0].map((anno) => anno.id)).toEqual([0, '4683']);
+    });
   });
 
   it('key names that are not valid should be excluded in the output result', async () => {

@@ -6,9 +6,7 @@ import {
   type PreferencesSpec,
 } from '@grafana/api-clients/rtkq/preferences/v1';
 
-import { type Props } from './utils';
-
-export const useSharedPreferences = (preferencesName: Props['resourceUri']) => {
+export const useSharedPreferences = (preferencesName: string) => {
   const { data, isLoading, isError } = useListPreferencesQuery({ fieldSelector: `metadata.name=${preferencesName}` });
   const [updatePreferences, { data: updateData, isLoading: isUpdating, isError: isUpdateError }] =
     useUpdatePreferencesMutation();

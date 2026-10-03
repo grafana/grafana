@@ -13,6 +13,7 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -34,7 +35,7 @@ type GRPCDecryptClient struct {
 	tokenExchanger authnlib.TokenExchanger
 }
 
-var _ decrypt.DecryptService = &GRPCDecryptClient{}
+var _ decrypt.DecryptService = (*GRPCDecryptClient)(nil)
 
 type TLSConfig struct {
 	UseTLS             bool
@@ -65,6 +66,8 @@ func NewGRPCDecryptClientWithTLS(
 	} else {
 		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	}
+
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if clientLoadBalancingEnabled {
 		// Use round_robin to balances requests more evenly over the available replicas.

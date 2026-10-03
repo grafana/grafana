@@ -106,6 +106,14 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 		if pr == nil {
 			return repository.WebhookEvent{}, fmt.Errorf("expected PR in event")
 		}
+		var isFork *bool
+		var forkURL string
+		if headID, baseID := pr.GetHead().GetRepo().GetID(), pr.GetBase().GetRepo().GetID(); headID != 0 && baseID != 0 {
+			isFork = new(headID != baseID)
+			if *isFork {
+				forkURL = pr.GetHead().GetRepo().GetHTMLURL()
+			}
+		}
 		return repository.WebhookEvent{
 			Type:      repository.WebhookEventPullRequest,
 			RepoSlug:  event.GetRepo().GetFullName(),
@@ -115,6 +123,8 @@ func (r *githubWebhookRepository) ProcessRequest(ctx context.Context, req *repos
 			PRURL:     pr.GetHTMLURL(),
 			SourceRef: pr.GetHead().GetRef(),
 			Hash:      pr.GetHead().GetSHA(),
+			IsFork:    isFork,
+			ForkURL:   forkURL,
 			Sender:    event.GetSender().GetLogin(),
 			SenderID:  senderID(event.GetSender()),
 		}, nil

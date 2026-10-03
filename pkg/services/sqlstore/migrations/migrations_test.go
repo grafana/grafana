@@ -212,22 +212,21 @@ func TestMigratorLocking(t *testing.T) {
 	migrations := &OSSMigrations{}
 	migrations.AddMigration(mg)
 
-	var errorNum int64
+	var errorNum atomic.Int64
 	t.Run("when concurrent migrations for the same migrator occur, the second one should fail", func(t *testing.T) {
-		for i := 0; i < 2; i++ {
-			i := i // capture i variable
+		for i := range 2 {
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				t.Parallel()
 				err := mg.Start(true, 0)
 				if err != nil {
 					if errors.Is(err, ErrMigratorIsLocked) {
-						atomic.AddInt64(&errorNum, 1)
+						errorNum.Add(1)
 					}
 				}
 			})
 		}
 	})
-	assert.Equal(t, int64(1), atomic.LoadInt64(&errorNum))
+	assert.Equal(t, int64(1), errorNum.Load())
 }
 
 func TestDatabaseLocking(t *testing.T) {
@@ -269,8 +268,7 @@ func TestDatabaseLocking(t *testing.T) {
 
 	var errorNum int64
 	t.Run("when concurrent migrations occur for different migrators occur, the second one should fail", func(t *testing.T) {
-		for i := 0; i < 2; i++ {
-			i := i // capture i variable
+		for i := range 2 {
 			t.Run(fmt.Sprintf("run migration %d", i), func(t *testing.T) {
 				mg, err := reg.get(i)
 				require.NoError(t, err)

@@ -10,7 +10,7 @@
         "name": "ZW1wdHk",
         "namespace": "default",
         "uid": "LtUsLXN5g8PDXHGdoRiZc2ddeLB90xS0I8XgChMqxuYX",
-        "resourceVersion": "d7c9689fe44f7d0b",
+        "resourceVersion": "54869f8aa0c2ffa3",
         "annotations": {
           "grafana.com/access/canAdmin": "true",
           "grafana.com/access/canDelete": "true",
@@ -35,7 +35,7 @@
         "name": "Z3JhZmFuYS1kZWZhdWx0LWVtYWls",
         "namespace": "default",
         "uid": "Kv3aohRRhZZgwZRUOA62GbN6vjUAa6Xs4Ql2TTYE2XIX",
-        "resourceVersion": "40409c09d2b2f217",
+        "resourceVersion": "2bd7e872a626fae7",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -57,7 +57,7 @@
         "name": "ZGlzY29yZA",
         "namespace": "default",
         "uid": "qZZWlsquf3y9Jq7t4DPEHSRuBoeHemHgnoHgUVV43OYX",
-        "resourceVersion": "faa7705455991f0a",
+        "resourceVersion": "9a6e3ae7164e3b7f",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -102,7 +102,7 @@
         "name": "ZW1haWw",
         "namespace": "default",
         "uid": "HqiXTxM48q3i9R6eNxGMsqRwFotgKfd2Y3Sgrg0QQagX",
-        "resourceVersion": "4d17750eb3c688f1",
+        "resourceVersion": "da0b13af2655712f",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -151,7 +151,7 @@
         "name": "amlyYQ",
         "namespace": "default",
         "uid": "lvjnZkpXPRYUr8kb6E5H009rCuobN8lPszXoThLzrxwX",
-        "resourceVersion": "20686dc4795761dc",
+        "resourceVersion": "1d8b76076e47fb35",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -210,7 +210,7 @@
         "name": "bXN0ZWFtcw",
         "namespace": "default",
         "uid": "k7o0Hz5XWPoVRtr7MrhMlPY1E6Ap1XXda4da4wEKgBYX",
-        "resourceVersion": "c327781b22fb2375",
+        "resourceVersion": "0210f5e2769f82fc",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -256,7 +256,7 @@
         "name": "b3BzZ2VuaWU",
         "namespace": "default",
         "uid": "14bze1pZagWIKYELPXs1Mcy8cL1DAlqpzJ4JkoLDfvYX",
-        "resourceVersion": "c70e8e240efa3837",
+        "resourceVersion": "6850b0bb5ba21028",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -318,7 +318,7 @@
         "name": "cGFnZXJkdXR5",
         "namespace": "default",
         "uid": "JV4UiQeX9R6UmwVHL7GXBskXRqvaunmRBIIaS7YMnl8X",
-        "resourceVersion": "f325da7f87ea80d2",
+        "resourceVersion": "bc14ddac8da39a89",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -390,7 +390,7 @@
         "name": "cHVzaG92ZXI",
         "namespace": "default",
         "uid": "KmdEYNvIFqIhZXDgo72RJqKNeg8dBQDKam9ROun2tZAX",
-        "resourceVersion": "8a8a575957af1a21",
+        "resourceVersion": "378960f69f74ae69",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -444,7 +444,7 @@
         "name": "c2xhY2s",
         "namespace": "default",
         "uid": "MHKEKXAOzOMISzPH7eCi0c2CvT0wODhSfSk1TiuNnKgX",
-        "resourceVersion": "b21cb4295ac326aa",
+        "resourceVersion": "886b87b2cc037b6e",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -529,7 +529,7 @@
         "name": "c25z",
         "namespace": "default",
         "uid": "0hEMltsOTiMXbcfNFtajn9V7A5Dc9PuJo91i3jT0UIYX",
-        "resourceVersion": "ba1eccdb05772026",
+        "resourceVersion": "59cfc163f64faa26",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -584,7 +584,7 @@
         "name": "dGVsZWdyYW0",
         "namespace": "default",
         "uid": "o6LIJM0yt1aXox7EVBiZmDVXGSfShDYsk1gVEENSSGcX",
-        "resourceVersion": "cd6f78ff21dc390c",
+        "resourceVersion": "0d5327f8641822f6",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -631,7 +631,7 @@
         "name": "dmljdG9yb3Bz",
         "namespace": "default",
         "uid": "aiBEoHeP0XnxaWsteUm7JXYlOUMgcXoX03DuzxiZteMX",
-        "resourceVersion": "ccbc6a7976745166",
+        "resourceVersion": "03537a82c6fd7e05",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -681,7 +681,7 @@
         "name": "d2ViZXg",
         "namespace": "default",
         "uid": "UWNKI0plkKlibdMG2E31fXv7rSp1bj5En5Ly8y7PXuIX",
-        "resourceVersion": "174f0aa8a946eca8",
+        "resourceVersion": "22cb4c9e94cb72f5",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -730,7 +730,7 @@
         "name": "d2ViaG9vaw",
         "namespace": "default",
         "uid": "Tb4lHkct27YZEAVtmU6UtYo31OKxl3aSZhvHUteYgQkX",
-        "resourceVersion": "bddcdf192a64cd03",
+        "resourceVersion": "2ca8dfcf1f3b1b9c",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",
@@ -775,7 +775,7 @@
         "name": "d2VjaGF0",
         "namespace": "default",
         "uid": "OjepUCGQaz7BU7QeECzRfv3L2jDQB4wnfCUQYGN5YBMX",
-        "resourceVersion": "6bf294b80b035167",
+        "resourceVersion": "059d3cb49003b5d3",
         "annotations": {
           "grafana.com/access/canModifyProtected": "true",
           "grafana.com/access/canReadSecrets": "true",

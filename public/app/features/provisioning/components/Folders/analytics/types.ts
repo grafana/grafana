@@ -1,6 +1,8 @@
 import { type EventProperty } from '@grafana/runtime/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
+import { type FolderDocKey } from '../../../utils/folderDocConventions';
+
 type RepoType = RepositoryView['type'];
 
 export interface ReadmePanelViewedProperties extends EventProperty {
@@ -34,4 +36,11 @@ export interface ReadmeLinkClickedProperties extends EventProperty {
 export interface ReadmeRetryClickedProperties extends EventProperty {
   /** Host repository type for the folder whose README load is being retried. */
   repositoryType: RepoType;
+}
+
+export interface ReadmeTabSelectedProperties extends EventProperty {
+  /** Host repository type for the folder whose doc tab was selected. */
+  repositoryType: RepoType;
+  /** Convention key of the opened doc (`readme`, `contributing`, `security`), or `other` for any other markdown file. */
+  doc: FolderDocKey | 'other';
 }

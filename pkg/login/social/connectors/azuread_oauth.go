@@ -9,14 +9,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"slices"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	jose "github.com/go-jose/go-jose/v4"
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -484,6 +485,10 @@ func (s *SocialAzureAD) Validate(ctx context.Context, newSettings ssoModels.SSOS
 
 func validateAllowedGroups(info *social.OAuthInfo, requester identity.Requester) error {
 	for _, groupId := range info.AllowedGroups {
+		// Preserve case-insensitive URN prefixes accepted in existing configurations.
+		if len(groupId) >= len("urn:uuid:") && strings.EqualFold(groupId[:len("urn:uuid:")], "urn:uuid:") {
+			groupId = "urn:uuid:" + groupId[len("urn:uuid:"):]
+		}
 		_, err := uuid.Parse(groupId)
 		if err != nil {
 			return ssosettings.ErrInvalidOAuthConfig("One or more of the Allowed groups are not in the correct format. Allowed groups should be a list of Object Ids.")
@@ -544,10 +549,8 @@ func validateFederatedCredentialAudience(info *social.OAuthInfo, requester ident
 	if info.ClientAuthentication != social.ManagedIdentity {
 		return nil
 	}
-	for _, supportedFederatedCredentialAudience := range supportedFederatedCredentialAudiences {
-		if info.FederatedCredentialAudience == supportedFederatedCredentialAudience {
-			return nil
-		}
+	if slices.Contains(supportedFederatedCredentialAudiences, info.FederatedCredentialAudience) {
+		return nil
 	}
 	return ssosettings.ErrInvalidOAuthConfig("FIC audience is not a supported audience.")
 }
@@ -750,10 +753,5 @@ func (s *SocialAzureAD) isAllowedTenant(logger log.Logger, tenantID string) bool
 		return true
 	}
 
-	for _, t := range s.allowedOrganizations {
-		if t == tenantID {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s.allowedOrganizations, tenantID)
 }

@@ -1,11 +1,9 @@
 import { isString, sortBy } from 'lodash';
 
 import { type Labels, type UrlQueryMap } from '@grafana/data';
-import { GrafanaEdition } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
-import { type FetchError, config, isFetchError } from '@grafana/runtime';
+import { type FetchError, isFetchError } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
-import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError, getRequestConfigFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
 import { escapePathSeparators } from 'app/features/alerting/unified/utils/rule-id';
@@ -35,6 +33,7 @@ import {
 
 import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
+import * as environment from './environment';
 import {
   type KnownErrorCodes,
   getErrorMessageFromApiMachineryErrorResponse,
@@ -273,17 +272,15 @@ export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {
 }
 
 export function isOpenSourceEdition() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.edition === GrafanaEdition.OpenSource;
+  return environment.isOpenSourceEdition();
 }
 
 export function isAdmin() {
-  return contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
+  return environment.isAdmin();
 }
 
 export function isLocalDevEnv() {
-  const buildInfo = config.buildInfo;
-  return buildInfo.env === 'development';
+  return environment.isLocalDevEnv();
 }
 
 export function isErrorLike(error: unknown): error is Error {

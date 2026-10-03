@@ -8,6 +8,7 @@
 import type * as z from 'zod';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import type { MutationResult } from '../types';
@@ -53,6 +54,14 @@ export interface MutationCommand<T = unknown, TScene = DashboardScene> {
   readOnly?: boolean;
   /** The handler function. */
   handler: (payload: T, context: MutationContext<TScene>) => Promise<MutationResult>;
+}
+
+export interface LazyMutationCommand<TScene = DashboardScene> {
+  name: string;
+  /** Mirrors the loaded command so guards can inspect it without loading its implementation. */
+  readOnly?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- payload types vary by lazily loaded command
+  load: () => Promise<MutationCommand<any, TScene>>;
 }
 
 /**
@@ -112,5 +121,38 @@ export function enterEditModeIfNeeded(scene: DashboardScene): void {
     scene.onEnterEditMode('assistant');
   }
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
+  // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();
+}
+
+const GLOBAL_DASHBOARD_VARIABLES_DISABLED =
+  'Cross-dashboard variables require the grafana.dashboardGlobalVariables feature toggle to be enabled.';
+
+function isGlobalDashboardVariablesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardGlobalVariables, false);
+}
+
+/** Requires the global-dashboard-variables feature toggle (read-only). */
+export function requiresGlobalDashboardVariablesReadOnly(_scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  return { allowed: true };
+}
+
+/**
+ * Requires the global-dashboard-variables feature toggle, edit permissions, and
+ * a dashboard that is not a locked managed resource.
+ */
+export function requiresGlobalDashboardVariables(scene: DashboardScene): PermissionCheckResult {
+  if (!isGlobalDashboardVariablesEnabled()) {
+    return { allowed: false, error: GLOBAL_DASHBOARD_VARIABLES_DISABLED };
+  }
+  if (scene.managedResourceCannotBeEdited()) {
+    return {
+      allowed: false,
+      error: 'Cannot edit cross-dashboard variables: dashboard is a managed resource',
+    };
+  }
+  return requiresEdit(scene);
 }

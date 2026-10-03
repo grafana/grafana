@@ -287,6 +287,46 @@ describe('NewProvisionedFolderForm', () => {
     expect(request.url.pathname).toContain('/dashboards/New%20Folder/');
   });
 
+  it('creates the folder under the trimmed name when it is typed with surrounding spaces', async () => {
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {
+        capturedRequest = { url: new URL(request.url), body: await request.json() };
+        return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+      })
+    );
+
+    const { user } = setup();
+
+    await user.type(await screen.findByRole('textbox', { name: /folder name/i }), '  My Team  ');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    await waitFor(() => expect(capturedRequest).not.toBeNull());
+    const request = requireCapturedRequest(capturedRequest);
+    expect(request.url.pathname).toBe(
+      '/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/My%20Team/'
+    );
+    expect(request.url.searchParams.get('message')).toBe('Create folder: My Team');
+    expect(request.body).toEqual({ title: 'My Team', type: 'folder' });
+  });
+
+  it('rejects a name made only of spaces as empty', async () => {
+    let posts = 0;
+    server.use(
+      http.post(`${BASE}/repositories/:name/files/*`, () => {
+        posts++;
+        return HttpResponse.json({ resource: { upsert: { metadata: { name: 'new-folder' } } } });
+      })
+    );
+
+    const { user } = setup();
+
+    await user.type(await screen.findByRole('textbox', { name: /folder name/i }), '   ');
+    await user.click(screen.getByRole('button', { name: /^create$/i }));
+
+    expect(await screen.findByText('Folder name is required')).toBeInTheDocument();
+    expect(posts).toBe(0);
+  });
+
   it('should create folder with branch workflow', async () => {
     server.use(
       http.post(`${BASE}/repositories/:name/files/*`, async ({ request }) => {

@@ -2,14 +2,18 @@ import { of, throwError } from 'rxjs';
 import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import {
+  CoreApp,
   type DataSourceApi,
   type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
+  EventBusSrv,
   type LinkModel,
+  PluginExtensionPoints,
+  PluginExtensionTypes,
   store,
   toDataFrame,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
@@ -18,6 +22,7 @@ import {
 } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { PanelContextProvider } from '@grafana/ui';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
 
 import { getTraceToLogsSpanQuery, getTraceToLogsTraceQuery } from '../../logsLink';
@@ -27,6 +32,7 @@ import {
   addNoSpanIdFallback,
   getLogsButtonCTA,
   getLogsButtonTooltip,
+  isDrilldownContext,
   LOKI_DATASOURCE_MATCH_STORAGE_KEY_PREFIX,
   lokiQueryMatchStorageKey,
   LogsLinkButton,
@@ -36,6 +42,7 @@ import {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   reportInteraction: jest.fn(),
+  usePluginLinks: jest.fn().mockReturnValue({ links: [], isLoading: false }),
 }));
 
 jest.mock('@grafana/runtime/unstable', () => ({
@@ -48,6 +55,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 const getDataSourceInstanceMock = jest.mocked(getDataSourceInstance);
 const useDataSourceInstanceSettingsMock = jest.mocked(useDataSourceInstanceSettings);
 const useDataSourceInstanceListMock = jest.mocked(useDataSourceInstanceList);
+const usePluginLinksMock = jest.mocked(usePluginLinks);
 
 const DYNAMIC_TRACE_TO_LOGS_FLAG = 'grafana.dynamicTraceToLogs';
 
@@ -66,9 +74,10 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
 }
 
 /** Presence checks run when interpolatedParams.query is set. */
-function createProbingLinkModel(query: DataQuery): LinkModel {
+function createProbingLinkModel(query: DataQuery, overrides: Partial<LinkModel> = {}): LinkModel {
   return createLinkModel({
-    interpolatedParams: { query },
+    ...overrides,
+    interpolatedParams: { query, ...overrides.interpolatedParams },
   });
 }
 
@@ -115,6 +124,7 @@ describe('LogsLinkButton', () => {
     store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
     await act(async () => {
@@ -402,7 +412,59 @@ describe('LogsLinkButton', () => {
     );
   });
 
-  it('does not rediscover variants when a stored loki query match returns no logs', async () => {
+  it('falls through to other naming conventions when a stored query match returns no logs', async () => {
+    // A different service behind the same trace/logs datasource pair may log under a different
+    // field-naming convention than the one already discovered for this datasource pair.
+    store.set(datasourceMatchKey(), 'logs-ds-uid');
+    store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
+    mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
+    useDataSourceInstanceSettingsMock.mockReturnValue({
+      isLoading: false,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      settings: { jsonData: {} } as any,
+    });
+    const query = jest
+      .fn()
+      .mockReturnValueOnce(of({ data: [emptyFrame] })) // stored match: t2l:job:trace_id
+      .mockReturnValueOnce(of({ data: [logsFrame] })); // falls through to: t2l:default:traceID
+    getDataSourceInstanceMock.mockResolvedValue({ query, type: 'loki' } as unknown as DataSourceApi);
+
+    const queries: DataQuery[] = [
+      { refId: 't2l:default:traceID', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:job:trace_id', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+      { refId: 't2l:line-contains', datasource: { uid: 'logs-ds-uid', type: 'loki' } },
+    ];
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query: queries[0], alternativeQueries: queries } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(2));
+    expect(query).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
+      })
+    );
+    expect(query).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        targets: [expect.objectContaining({ refId: 't2l:default:traceID', maxLines: 1 })],
+      })
+    );
+    expect(store.get(queryMatchKey('logs-ds-uid'))).toBe('t2l:default:traceID');
+    await waitFor(() =>
+      expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
+        logs: true,
+        refId: 't2l:default:traceID',
+      })
+    );
+  });
+
+  it('still reports absent when a stale stored query match and every other variation return no logs', async () => {
     store.set(datasourceMatchKey(), 'logs-ds-uid');
     store.set(queryMatchKey('logs-ds-uid'), 't2l:job:trace_id');
     mockLokiDatasourceList(['logs-ds-uid', 'loki-fallback-uid']);
@@ -426,12 +488,7 @@ describe('LogsLinkButton', () => {
       />
     );
 
-    await waitFor(() => expect(query).toHaveBeenCalledTimes(1));
-    expect(query).toHaveBeenCalledWith(
-      expect.objectContaining({
-        targets: [expect.objectContaining({ refId: 't2l:job:trace_id', maxLines: 1 })],
-      })
-    );
+    await waitFor(() => expect(query).toHaveBeenCalledTimes(queries.length));
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true'));
     expect(reportInteraction).toHaveBeenCalledWith('grafana_traces_trace_view_span_logs_checked', {
       logs: false,
@@ -609,6 +666,100 @@ describe('LogsLinkButton', () => {
     );
     await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
   });
+
+  it('rewrites a matching probe to a new-tab Explore href and still calls onClick', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const onClick = jest.fn();
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+    const interpolatedParams = { query: interpolatedQuery };
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams, target: '_self', onClick })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
+    expect(interpolatedParams.query).toEqual({
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    });
+
+    await userEvent.click(screen.getByRole('link'));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the Open in Logs Drilldown extension path when the panel app is unknown', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+    usePluginLinksMock.mockReturnValue({
+      isLoading: false,
+      links: [
+        {
+          id: '',
+          pluginId: 'grafana-lokiexplore-app',
+          path: '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid',
+          type: PluginExtensionTypes.link,
+          title: '',
+          description: '',
+        },
+      ],
+    });
+
+    render(
+      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
+        <LogsLinkButton
+          linkModel={createProbingLinkModel(interpolatedQuery, { target: '_self' })}
+          traceDatasourceUid={TRACE_DATASOURCE_UID}
+        />
+      </PanelContextProvider>
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', '/a/grafana-lokiexplore-app/explore?var-ds=logs-ds-uid');
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
+    expect(usePluginLinksMock).toHaveBeenCalledWith({
+      extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+      context: expect.objectContaining({
+        targets: [expect.objectContaining({ datasource: { uid: 'logs-ds-uid', type: 'loki' } })],
+      }),
+      limitPerPlugin: 1,
+    });
+  });
+
+  it('keeps the Explore href in a drilldown context when the extension does not return a path', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: LokiQuery = {
+      refId: 'A',
+      datasource: { uid: 'logs-ds-uid', type: 'loki' },
+      expr: '{job="api"} |= "trace1"',
+    };
+
+    render(
+      <PanelContextProvider value={{ eventsScope: 'test', eventBus: new EventBusSrv(), app: CoreApp.Unknown }}>
+        <LogsLinkButton
+          linkModel={createProbingLinkModel(interpolatedQuery, { target: '_self' })}
+          traceDatasourceUid={TRACE_DATASOURCE_UID}
+        />
+      </PanelContextProvider>
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='));
+    expect(screen.getByRole('link')).toHaveAttribute('target', '_blank');
+  });
 });
 
 describe('LogsLinkMenuItem', () => {
@@ -618,6 +769,7 @@ describe('LogsLinkMenuItem', () => {
     store.delete(datasourceMatchKey());
     mockLokiDatasourceList(['logs-ds-uid']);
     useDataSourceInstanceSettingsMock.mockReturnValue({ isLoading: false, settings: undefined });
+    usePluginLinksMock.mockReturnValue({ links: [], isLoading: false });
     // The presence check is gated behind this flag; enable it so most tests exercise the check.
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
     await act(async () => {
@@ -721,7 +873,7 @@ describe('LogsLinkMenuItem', () => {
     );
 
     await waitFor(() => expect(getDataSourceInstanceMock).toHaveBeenCalled());
-    expect(screen.getByRole('menuitem')).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeEnabled());
   });
 
   it('keeps the item disabled when the presence check errors', async () => {
@@ -751,7 +903,24 @@ describe('LogsLinkMenuItem', () => {
     render(<LogsLinkMenuItem linkModel={createLinkModel({ onClick })} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
     await userEvent.click(screen.getByRole('menuitem'));
-    expect(onClick).toHaveBeenCalled();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('invokes the original onClick after a matching probe', async () => {
+    mockDatasourceReturningFrames([logsFrame], 'loki');
+    const onClick = jest.fn();
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkMenuItem
+        linkModel={createProbingLinkModel(interpolatedQuery, { onClick })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByRole('menuitem')).toBeEnabled());
+    await userEvent.click(screen.getByRole('menuitem'));
+    expect(onClick).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -1023,17 +1192,30 @@ describe('addNoSpanIdFallback', () => {
     );
   });
 
-  it('does not strip line-contains queries because they have no span field name', () => {
+  it('only strips the span_id clause when an unrelated label filter elsewhere uses !=', () => {
+    const query: LokiQuery = {
+      refId: 'A',
+      expr: '{job="x", env!="prod"} | span_id="6605c7b08e715d6c"',
+    };
+    const [, fallback] = addNoSpanIdFallback(query) as LokiQuery[];
+    expect(fallback.expr).toBe('{job="x", env!="prod"}');
+  });
+
+  it('strips line-contains queries', () => {
     const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
-    const lineContains = queries.find((q) => q.refId === 't2l:line-contains');
+    const lineContains = queries.find((q) => q.refId === 't2l:line-contains') ?? { expr: '', refId: 'a' };
     expect(lineContains).toBeDefined();
-    expect(lineContains!.expr).toBe(
+    expect(lineContains.expr).toBe(
       '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a" |= "6605c7b08e715d6c"'
     );
 
-    // Line filters only embed the span id value, not a span_* field name, so no fallback is added.
-    expect(addNoSpanIdFallback(lineContains!)).toEqual([lineContains]);
+    const fallback = {
+      expr: '{cluster="cluster1", hostname="hostname1"} |= "7946b05c2e2e4e5a"',
+      refId: 't2l:line-contains',
+    };
+
+    expect(addNoSpanIdFallback(lineContains)).toEqual([lineContains, fallback]);
   });
 
   it('does not add a fallback for trace-level queries that already omit span filters', () => {
@@ -1052,5 +1234,18 @@ describe('addNoSpanIdFallback', () => {
     expect(structured?.expr).not.toMatch(/span/i);
     expect(addNoSpanIdFallback(structured!)).toHaveLength(1);
     expect(addNoSpanIdFallback(lineContains!)).toHaveLength(1);
+  });
+});
+
+describe('isDrilldownContext', () => {
+  it.each([
+    [CoreApp.Unknown, true],
+    [CoreApp.Explore, false],
+    [CoreApp.Dashboard, false],
+    ['grafana-exploretraces-app', false],
+    ['grafana-lokiexplore-app', false],
+    [undefined, false],
+  ])('app %s → %s', (app, expected) => {
+    expect(isDrilldownContext(app)).toBe(expected);
   });
 });

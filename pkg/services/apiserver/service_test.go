@@ -13,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	openapicommon "k8s.io/kube-openapi/pkg/common"
+
+	"github.com/grafana/grafana/pkg/registry/apis/search"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -167,4 +172,67 @@ func TestReprioritizeDiscovery_ServedOrder(t *testing.T) {
 func TestReprioritizeDiscovery_NoManagerNoop(t *testing.T) {
 	s := &service{vpRegistry: newTestRegistry(nil), groupPriority: testDiscoveryScheme(t).PrioritizedVersionsForGroup}
 	require.NotPanics(t, s.reprioritizeDiscovery)
+}
+
+// configWithBothOpenAPIVersions mirrors what builder.SetupConfig leaves behind: a v2
+// and a v3 OpenAPI config, both non-nil.
+func configWithBothOpenAPIVersions() *genericapiserver.RecommendedConfig {
+	cfg := &genericapiserver.RecommendedConfig{}
+	cfg.OpenAPIConfig = &openapicommon.Config{}
+	cfg.OpenAPIV3Config = &openapicommon.OpenAPIV3Config{}
+	return cfg
+}
+
+func sectionFromINI(t *testing.T, ini string) *setting.DynamicSection {
+	t.Helper()
+	cfg, err := setting.NewCfgFromBytes([]byte(ini))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cfg.SectionWithEnvOverrides(search.ConfigSection)
+}
+
+// The point of the setting is to drop v2 *only*. v3 has to survive, because the
+// frontend reads /openapi/v3/apis/<group>/<version> and genericapiserver's
+// SkipOpenAPIInstallation would have taken both versions down.
+func TestApplyOpenAPIV2Setting(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		ini       string
+		wantV2Nil bool
+	}{
+		{
+			name:      "absent defaults to enabled",
+			ini:       "",
+			wantV2Nil: false,
+		},
+		{
+			name:      "explicitly enabled",
+			ini:       "[grafana-apiserver]\nopenapi_v2_enabled = true\n",
+			wantV2Nil: false,
+		},
+		{
+			name:      "disabled drops v2",
+			ini:       "[grafana-apiserver]\nopenapi_v2_enabled = false\n",
+			wantV2Nil: true,
+		},
+		{
+			name:      "unrelated keys in the section do not disable it",
+			ini:       "[grafana-apiserver]\nenable_search_api = false\n",
+			wantV2Nil: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			serverConfig := configWithBothOpenAPIVersions()
+
+			applyOpenAPIV2Setting(serverConfig, sectionFromINI(t, tc.ini))
+
+			if gotNil := serverConfig.OpenAPIConfig == nil; gotNil != tc.wantV2Nil {
+				t.Errorf("OpenAPIConfig nil = %v, want %v", gotNil, tc.wantV2Nil)
+			}
+			if serverConfig.OpenAPIV3Config == nil {
+				t.Error("OpenAPIV3Config was cleared: /openapi/v3 must keep working, the frontend depends on it")
+			}
+		})
+	}
 }

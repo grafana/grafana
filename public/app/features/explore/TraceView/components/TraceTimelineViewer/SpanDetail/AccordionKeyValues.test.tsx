@@ -87,11 +87,11 @@ describe('AccordionKeyValues test', () => {
 
     expect(screen.getByRole('switch', { name: 'test accordion' })).toBeInTheDocument();
     expect(screen.getByRole('table')).toBeInTheDocument();
-    expect(screen.getByRole('row', { name: 'span.kind "client"' })).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: 'span.kind client' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'span.kind' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '"client"' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'client' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'omg' })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: '"mos-def"' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'mos-def' })).toBeInTheDocument();
   });
 
   it('renders the summary instead of the table when it is not expanded', () => {

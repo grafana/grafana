@@ -9,16 +9,16 @@ import (
 	"fmt"
 	"io"
 	"iter"
+	"maps"
 	"math/rand/v2"
 	"net/http"
+	"os"
 	"slices"
 	"strings"
-	"sync"
 	"time"
+	"uuid"
 
-	"github.com/bwmarrin/snowflake"
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/otel/attribute"
@@ -28,8 +28,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
@@ -43,9 +44,9 @@ import (
 const (
 	defaultListBufferSize             = 100
 	defaultEventRetentionPeriod       = 1 * time.Hour
-	minEventRetentionPeriod           = 10 * time.Minute
 	defaultEventPruningInterval       = 5 * time.Minute
 	defaultSearchLookback             = 1 * time.Second
+	defaultResourceVersionMaxWait     = 1 * time.Second
 	defaultGarbageCollectionBatchWait = 1 * time.Second
 	persistDeadline                   = 10 * time.Second
 )
@@ -78,7 +79,8 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	snowflake               *snowflake.Node
+	resourceVersions        *snowflakeResourceVersionGenerator
+	resourceVersionMaxWait  time.Duration
 	kv                      KV
 	bulkLock                *BulkLock
 	dataStore               *dataStore
@@ -86,7 +88,7 @@ type kvStorageBackend struct {
 	notifier                notifier
 	eventPublisher          EventPublisher
 	natsShadow              *natsShadow
-	log                     log.Logger
+	log                     logging.Logger
 	disableStorageServices  bool
 	dashboardVersionsToKeep int
 	eventRetentionPeriod    time.Duration
@@ -102,16 +104,12 @@ type kvStorageBackend struct {
 
 	rvManager *rvmanager.ResourceVersionManager
 
-	// leaseManager, when non-nil, is used to serialize writes to the same
-	// resource via per-resource leases. Ignored when using `rvManager`.
+	// leaseManager serializes writes to the same resource via per-resource leases.
 	leaseManager *lease.Manager
 
 	// leaseTTL is the TTL applied when acquiring a write lease. Zero uses the
 	// lease package default.
 	leaseTTL time.Duration
-
-	// leaseAutoRenew enables background auto-renewal of write leases.
-	leaseAutoRenew bool
 
 	// dbKeepAlive holds a reference to the database provider/connection owner to prevent it from being GC'd
 	dbKeepAlive any
@@ -131,85 +129,127 @@ type kvStorageBackend struct {
 }
 
 type kvBackendMetrics struct {
-	ConflictErrors                   *prometheus.CounterVec
-	EventEmitFailures                *prometheus.CounterVec
-	NatsNotifierDropped              *prometheus.CounterVec
-	WatchNotificationsPublished      *prometheus.CounterVec
-	WatchNotificationPublishFailures *prometheus.CounterVec
-	GCGroupResourceDuration          *prometheus.HistogramVec
+	WriteConflicts                    *prometheus.CounterVec
+	EventEmitFailures                 *prometheus.CounterVec
+	NatsNotifierDropped               *prometheus.CounterVec
+	WatchNotificationsPublished       *prometheus.CounterVec
+	WatchNotificationPublishFailures  *prometheus.CounterVec
+	GCGroupResourceDuration           *prometheus.HistogramVec
+	ResourceVersionGenerationFailures *prometheus.CounterVec
+	ResourceVersionClockRegression    prometheus.Gauge
+	ResourceVersionOrderingRejections *prometheus.CounterVec
+	ResourceVersionWaitDuration       *prometheus.HistogramVec
 }
 
 func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
+	failures := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_storage_resource_version_generation_failures_total",
+		Help: "Resource version generation failures by reason.",
+	}, []string{"reason"})
+	for _, reason := range []string{resourceVersionClockRegression, resourceVersionTimestampOutOfRange} {
+		failures.WithLabelValues(reason)
+	}
+	orderingRejections := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_storage_resource_version_ordering_rejections_total",
+		Help: "Update and delete writes rejected because the generated resource version is not greater than the stored revision, by operation and reason (clock_behind, same_timestamp).",
+	}, []string{"operation", "reason"})
+	for _, operation := range []string{"update", "delete"} {
+		for _, reason := range []string{"clock_behind", "same_timestamp"} {
+			orderingRejections.WithLabelValues(operation, reason)
+		}
+	}
+	waits := promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "grafana_storage_resource_version_wait_duration_seconds",
+		Help:    "Time spent waiting for resource version clock drift or ordering to recover, by reason and outcome (recovered, exhausted, canceled).",
+		Buckets: []float64{0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1},
+	}, []string{"reason", "outcome"})
+	for _, reason := range []string{resourceVersionClockRegression, "clock_behind", "same_timestamp"} {
+		for _, outcome := range []string{"recovered", "exhausted", "canceled"} {
+			waits.WithLabelValues(reason, outcome)
+		}
+	}
 	return &kvBackendMetrics{
-		ConflictErrors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "storage_server",
-			Name:      "optimistic_lock_conflicts_total",
-			Help:      "Total number of optimistic lock conflict errors in the KV storage backend",
+		ResourceVersionWaitDuration:       waits,
+		ResourceVersionGenerationFailures: failures,
+		ResourceVersionOrderingRejections: orderingRejections,
+		ResourceVersionClockRegression: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_storage_resource_version_clock_regression_seconds",
+			Help: "Wall-clock regression relative to the last emitted resource version, reset on successful generation.",
+		}),
+		WriteConflicts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_write_conflicts_total",
+			Help: "Total number of write conflicts in the KV storage backend (lease races and resource-version mismatches)",
 		}, []string{"resource", "action"}),
 		EventEmitFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Namespace: "storage_server",
-			Name:      "event_emit_after_commit_failures_total",
-			Help:      "Total number of writes whose data was committed but whose event failed to be emitted",
+			Name: "grafana_storage_server_event_emit_after_commit_failures_total",
+			Help: "Total number of writes whose data was committed but whose event failed to be emitted",
 		}, []string{"resource", "action"}),
 		NatsNotifierDropped: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_nats_notifier_dropped_events_total",
+			Name: "grafana_storage_server_nats_notifier_dropped_events_total",
 			Help: "Notifications dropped by the NATS notifier before delivery, by reason (unmarshal_error, unknown_type, buffer_full).",
 		}, []string{"reason"}),
 		WatchNotificationsPublished: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_watch_notifications_published_total",
+			Name: "grafana_storage_server_watch_notifications_published_total",
 			Help: "Watch notifications successfully published to NATS, by group, resource, and action. The denominator for consumer delivery completeness: compare against the consumers' live-received totals to measure events missed in flight.",
 		}, []string{"group", "resource", "action"}),
 		WatchNotificationPublishFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_watch_notifications_publish_failures_total",
+			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
 		}, []string{"group", "resource", "action"}),
 		GCGroupResourceDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: "storage_server",
-			Name:      "gc_group_resource_duration_seconds",
-			Help:      "Duration of a garbage-collection pass over one group/resource.",
-			Buckets:   []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 30, 60, 300, 1800, 7200},
+			Name:    "grafana_storage_server_gc_group_resource_duration_seconds",
+			Help:    "Duration of a garbage-collection pass over one group/resource.",
+			Buckets: []float64{0.01, 0.05, 0.1, 0.5, 1, 5, 30, 60, 300, 1800, 7200},
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 	}
 }
 
 // observeGCGroupResource records how long a GC pass over one group/resource took.
-// Nil-safe for test backends.
 func (m *kvBackendMetrics) observeGCGroupResource(group, resource string, d time.Duration) {
-	if m == nil {
-		return
-	}
 	m.GCGroupResourceDuration.WithLabelValues(group, resource).Observe(d.Seconds())
 }
 
-func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
-	if m == nil {
+func (m *kvBackendMetrics) recordResourceVersionOrderingRejection(event WriteEvent, rv int64) {
+	var operation string
+	switch event.Type {
+	case resourcepb.WatchEvent_MODIFIED:
+		operation = "update"
+	case resourcepb.WatchEvent_DELETED:
+		operation = "delete"
+	default:
 		return
 	}
-	m.ConflictErrors.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
+	reason := "same_timestamp"
+	if snowflakeTimestampMillis(rv) < snowflakeTimestampMillis(event.PreviousRV) {
+		reason = "clock_behind"
+	}
+	m.ResourceVersionOrderingRejections.WithLabelValues(operation, reason).Inc()
+}
+
+func (m *kvBackendMetrics) recordConflict(event WriteEvent) {
+	m.WriteConflicts.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordEventEmitFailure(event WriteEvent) {
-	if m == nil {
-		return
-	}
 	m.EventEmitFailures.WithLabelValues(event.Key.Resource, event.Type.String()).Inc()
 }
 
 func (m *kvBackendMetrics) recordWatchNotificationPublished(event Event) {
-	if m == nil {
-		return
-	}
 	m.WatchNotificationsPublished.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
 func (m *kvBackendMetrics) recordWatchNotificationPublishFailure(event Event) {
-	if m == nil {
-		return
-	}
 	m.WatchNotificationPublishFailures.WithLabelValues(event.Group, event.Resource, string(event.Action)).Inc()
 }
 
-var _ KVBackend = &kvStorageBackend{}
+var (
+	_ KVBackend      = (*kvStorageBackend)(nil)
+	_ KeyListBackend = (*kvStorageBackend)(nil)
+)
 
 type KVBackend interface {
 	StorageBackend
@@ -221,9 +261,9 @@ type KVBackend interface {
 	// opening a second connection.
 	KV() KV
 
-	// LeaseManager returns the lease manager used by this backend, or nil
-	// if leases are disabled. Exposed so other subsystems can share the
-	// same manager and avoid running a second heartbeat loop.
+	// LeaseManager returns the lease manager used by this backend. It is never nil.
+	// Exposed so other subsystems can share the same manager and avoid running a
+	// second heartbeat loop.
 	LeaseManager() *lease.Manager
 }
 
@@ -244,7 +284,7 @@ type KVBackendOptions struct {
 	EventRetentionPeriod time.Duration // How long to keep events (default: 1 hour)
 	EventPruningInterval time.Duration // How often to run the event pruning (default: 5 minutes)
 	Reg                  prometheus.Registerer
-	Log                  log.Logger
+	Log                  logging.Logger
 	GarbageCollection    GarbageCollectionConfig
 
 	// DisableStorageServices stops the background jobs that write, for a process
@@ -271,6 +311,9 @@ type KVBackendOptions struct {
 	// polling. Requires EventSubscriber set and enabled; falls back to the
 	// polling notifier otherwise.
 	EnableNatsNotifier bool
+
+	// WatchInvalidator is shared with the watch server; shadow mode never uses it.
+	WatchInvalidator Invalidator
 	// Adding RvManager overrides the RV generated with snowflake in order to keep backwards compatibility with
 	// unified/sql
 	RvManager *rvmanager.ResourceVersionManager
@@ -297,21 +340,17 @@ type KVBackendOptions struct {
 
 	DashboardVersionsToKeep int
 
-	// EnableKVLeases enables per-resource leases for serializing writes.
-	EnableKVLeases bool
-
-	// Holder identifies this process for lease ownership. Required when
-	// EnableKVLeases is true.
+	// Holder identifies this process for lease ownership. When empty, the
+	// backend generates a process-specific holder.
 	Holder string
 
 	// LeaseTTL overrides the per-resource write lease TTL. Zero uses the lease
-	// package default (10s). Only effective when EnableKVLeases is true.
+	// package default (10s).
 	LeaseTTL time.Duration
 
-	// LeaseAutoRenew enables background auto-renewal of the write lease so it
-	// is not lost while a slow write is still in flight. Only effective when
-	// EnableKVLeases is true.
-	LeaseAutoRenew bool
+	// ResourceVersionMaxWait bounds write latency from recoverable RV drift.
+	// Zero uses the default (1s); a negative value disables waiting.
+	ResourceVersionMaxWait time.Duration
 }
 
 // NewKVBackendOptions returns the options that come from Grafana's config. The
@@ -321,6 +360,9 @@ type KVBackendOptions struct {
 // rather than only the one it was added to.
 func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	return KVBackendOptions{
+		Holder:                  newLeaseHolder(cfg.InstanceID),
+		LeaseTTL:                cfg.KVLeaseTTL,
+		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
 		LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 		EventRetentionPeriod:    cfg.EventRetentionPeriod,
 		EventPruningInterval:    cfg.EventPruningInterval,
@@ -344,17 +386,15 @@ func NewKVBackendOptions(cfg *setting.Cfg) KVBackendOptions {
 	}
 }
 
-var (
-	snowflakeOnce sync.Once
-	snowflakeNode *snowflake.Node
-	snowflakeErr  error
-)
-
-func getSnowflakeNode() (*snowflake.Node, error) {
-	snowflakeOnce.Do(func() {
-		snowflakeNode, snowflakeErr = snowflake.NewNode(rand.Int64N(1024))
-	})
-	return snowflakeNode, snowflakeErr
+func newLeaseHolder(instanceID string) string {
+	if instanceID == "" {
+		hostname, err := os.Hostname()
+		if err != nil || hostname == "" {
+			hostname = "unknown"
+		}
+		instanceID = hostname
+	}
+	return fmt.Sprintf("%s-%s", instanceID, uuid.NewV4().String())
 }
 
 func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
@@ -367,23 +407,14 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	logger := opts.Log
 	if opts.Log == nil {
-		logger = log.NewNopLogger()
-	}
-
-	s, err := getSnowflakeNode()
-	if err != nil {
-		return nil, fmt.Errorf("failed to create snowflake node: %w", err)
+		logger = &logging.NoOpLogger{}
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	eventStore := newEventStore(kv)
 
 	eventRetentionPeriod := opts.EventRetentionPeriod
-	if eventRetentionPeriod < minEventRetentionPeriod {
-		if eventRetentionPeriod > 0 {
-			logger.Warn("configured event_retention_period is below the minimum; falling back to the default",
-				"configured", eventRetentionPeriod, "minimum", minEventRetentionPeriod, "default", defaultEventRetentionPeriod)
-		}
+	if eventRetentionPeriod <= 0 {
 		eventRetentionPeriod = defaultEventRetentionPeriod
 	}
 
@@ -402,16 +433,18 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		garbageCollection.BatchWait = defaultGarbageCollectionBatchWait
 	}
 
+	resourceVersionMaxWait := opts.ResourceVersionMaxWait
+	if resourceVersionMaxWait == 0 {
+		resourceVersionMaxWait = defaultResourceVersionMaxWait
+	}
+
 	metrics := newKVBackendMetrics(opts.Reg)
 
-	var leaseManager *lease.Manager
-	if opts.EnableKVLeases {
-		if opts.Holder == "" {
-			cancel()
-			return nil, errors.New("holder is required when enable_kv_leases is true")
-		}
-		leaseManager = lease.NewManager(kv, opts.Holder, opts.Reg)
+	holder := opts.Holder
+	if holder == "" {
+		holder = newLeaseHolder("")
 	}
+	leaseManager := lease.NewManager(kv, holder, "storage", opts.Reg)
 
 	backend := &kvStorageBackend{
 		kv:         kv,
@@ -424,17 +457,18 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			enableNatsNotifier: opts.EnableNatsNotifier,
 			eventSubscriber:    opts.EventSubscriber,
 			natsDropped:        metrics.NatsNotifierDropped,
+			invalidator:        opts.WatchInvalidator,
 		}),
 		eventPublisher:          opts.EventPublisher,
 		watchOpts:               opts.WatchOptions.normalize(),
-		snowflake:               s,
+		resourceVersions:        processResourceVersions,
+		resourceVersionMaxWait:  resourceVersionMaxWait,
 		log:                     logger,
 		eventRetentionPeriod:    eventRetentionPeriod,
 		eventPruningInterval:    eventPruningInterval,
 		rvManager:               opts.RvManager,
 		leaseManager:            leaseManager,
 		leaseTTL:                opts.LeaseTTL,
-		leaseAutoRenew:          opts.LeaseAutoRenew,
 		dbKeepAlive:             opts.DBKeepAlive,
 		lastImportStore:         newLastImportStore(kv),
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
@@ -446,8 +480,9 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 		cancel:                  cancel,
 		metrics:                 metrics,
 	}
-	err = backend.initPruner(ctx, opts.Reg)
+	err := backend.initPruner(ctx, opts.Reg)
 	if err != nil {
+		leaseManager.Stop()
 		cancel()
 		return nil, fmt.Errorf("failed to initialize pruner: %w", err)
 	}
@@ -458,6 +493,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			logger.Warn("garbage collection is enabled but storage services are disabled, not starting it")
 		} else if err := backend.initGarbageCollection(ctx); err != nil {
 			// The pruner is already running, so it has to be stopped here.
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to initialize garbage collection: %w", err)
 		}
@@ -469,6 +505,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			return backend.WriteEvent(ctx, *event)
 		}, *opts.TenantWatcherConfig)
 		if err != nil {
+			leaseManager.Stop()
 			cancel()
 			return nil, fmt.Errorf("failed to start tenant watcher: %w", err)
 		}
@@ -487,7 +524,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 
 	// Optionally start the shadow NATS notifier (metrics only; see natsShadow).
 	if opts.EnableNatsNotifierShadow && opts.EventSubscriber != nil && opts.EventSubscriber.Enabled() {
-		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.New("notifier", "natsShadow"))
+		backend.natsShadow = newNatsShadow(opts.EventSubscriber, backend.watchOpts, opts.Reg, logger.With("notifier", "natsShadow"))
 		backend.natsShadow.start(ctx)
 		logger.Info("nats notifier shadow enabled")
 	}
@@ -520,9 +557,7 @@ func (k *kvStorageBackend) Stop(_ context.Context) error {
 	if k.tenantDeleter != nil {
 		k.tenantDeleter.Stop()
 	}
-	if k.leaseManager != nil {
-		k.leaseManager.Stop()
-	}
+	k.leaseManager.Stop()
 	// Cancel the background context to stop runCleanups, GC, and other goroutines.
 	k.cancel()
 	return nil
@@ -589,7 +624,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 
 	prunerMaxLimit := LookupPrunerHistoryLimit(key.Group, key.Resource, k.dashboardVersionsToKeep)
 	counter := 0
-	deleted := 0
+	toDelete := make([]DataKey, 0)
 	// iterate over all keys for the resource and delete versions beyond the configured limit
 	for datakey, err := range k.dataStore.Keys(ctx, ListRequestKey{
 		Namespace: key.Namespace,
@@ -601,20 +636,22 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 			return err
 		}
 
-		// Pruner needs to exclude deleted events
-		if counter < prunerMaxLimit && datakey.Action != DataActionDeleted {
+		if datakey.Action == DataActionDeleted {
+			// Each deletion starts an older incarnation in this descending scan.
+			// Give it its own retention budget so newer incarnations cannot prune
+			// the predecessor
+			counter = 0
+			continue
+		}
+		if counter < prunerMaxLimit {
 			counter++
 			continue
 		}
 
-		// If we already have the configured number of versions, delete any more create or update events
-		if datakey.Action != DataActionDeleted {
-			err := k.dataStore.Delete(ctx, datakey)
-			if err != nil {
-				return err
-			}
-			deleted += 1
-		}
+		toDelete = append(toDelete, datakey)
+	}
+	if err := k.dataStore.BatchDelete(ctx, toDelete); err != nil {
+		return err
 	}
 
 	k.log.Debug("pruned history successfully",
@@ -622,7 +659,7 @@ func (k *kvStorageBackend) pruneEvents(ctx context.Context, key PruningKey) erro
 		"group", key.Group,
 		"resource", key.Resource,
 		"name", key.Name,
-		"rows", deleted)
+		"rows", len(toDelete))
 
 	return nil
 }
@@ -665,8 +702,7 @@ func (b *kvStorageBackend) KV() KV {
 	return b.kv
 }
 
-// LeaseManager returns the lease manager owned by this backend, or nil
-// if leases are disabled. See KVBackend.LeaseManager.
+// LeaseManager returns the lease manager owned by this backend. See KVBackend.LeaseManager.
 func (b *kvStorageBackend) LeaseManager() *lease.Manager {
 	return b.leaseManager
 }
@@ -686,6 +722,13 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 
 		// delay the first run by a random amount between 0 and the interval to avoid thundering herd
 		jitter := time.Duration(rand.Int64N(b.garbageCollection.Interval.Nanoseconds()))
+
+		// The ticker only starts after the jitter wait, so the first run is jitter plus one full interval.
+		b.log.Info("garbage collection first run scheduled",
+			"jitter", jitter,
+			"interval", b.garbageCollection.Interval,
+			"firstRunAt", time.Now().Add(jitter+b.garbageCollection.Interval))
+
 		select {
 		case <-time.After(jitter):
 		case <-ctx.Done():
@@ -734,17 +777,24 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 				"group", gr.Group,
 				"resource", gr.Resource,
 				"error", err)
-			break
+
+			// A cancelled context means the process is shutting down, so give up on the whole
+			// cycle. Any other failure only affects this group, and stopping here would leave
+			// the groups after it uncollected for good.
+			if ctx.Err() != nil {
+				return
+			}
 		}
 	}
 }
 
-// garbageCollectGroupResource scans batches of entries in the datastore for a given group+resource,
-// in descending order of resource version, looking for deleted entries with resource versions
-// older than the cutoff timestamp.
-// Once it finds a deleted entry, it looks for all previous versions of the same resource
-// up to the deleted version and deletes them in batch.
-// This ensures that we are not going to delete any keys that were created if the resource was recreated after deletion.
+// garbageCollectGroupResource scans batches of entries in the datastore for a given
+// group+resource, in ascending order of resource version. For each object it finds the
+// newest deletion marker older than the cutoff timestamp and hard-deletes that marker plus
+// every older revision of the same object.
+// Revisions newer than that marker are retained, so trash left behind by an object that was
+// deleted and later recreated with the same name is collected, while the recreated revisions
+// (and any deletion still within the retention window) are kept.
 func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) error {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.garbageCollectGroupResource")
 	batchSize := b.garbageCollection.BatchSize
@@ -757,9 +807,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
 	totalDeleted := int64(0)
-	totalDryRun := int64(0)
 	deletedPerNamespace := map[string]int64{}
-	dryRunPerNamespace := map[string]int64{}
 
 	// get the start and end keys for the list operation based on the resource prefix
 	// for example, for dashboards, the start key will be "unified/data/dashboard.grafana.app/dashboards/"
@@ -772,27 +820,32 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	startKey := prefix
 	endKey := PrefixRangeEnd(prefix)
 
-	// track keys that have been processed to avoid processing the same key twice
-	seenKeys := map[ListRequestKey]struct{}{}
+	var currentObject ListRequestKey
+	var buffer []DataKey
 
-	// Data keys are group/resource/namespace/name/{rv}~…, so lexicographic order (asc or
-	// desc) keeps all revisions for one resource contiguous. While iterating in descending
-	// RV order, only the first key per ListRequestKey is the head revision; older rows for
-	// the same resource are skipped. State persists across paginated batches.
-	var currentResource ListRequestKey
+	deleteBuffered := func() error {
+		if len(buffer) == 0 {
+			return nil
+		}
+		if !b.garbageCollection.DryRun {
+			if err := b.dataStore.BatchDelete(ctx, buffer); err != nil {
+				return fmt.Errorf("failed to batch delete keys: %s", err)
+			}
+		}
+		totalDeleted += int64(len(buffer))
+		deletedPerNamespace[currentObject.Namespace] += int64(len(buffer))
+		buffer = buffer[:0]
+		return nil
+	}
 
 	for {
 		keysProcessed := int64(0)
-		keysDeleted := int64(0)
 
-		// traverse all keys in descending order of resource version,
-		// for deleted keys with resource version older than the cutoff,
-		// we will scan a fixed number of keys (batchSize) each time
 		it := b.kv.Keys(ctx, kv.DataSection, kv.ListOptions{
 			StartKey: startKey,
 			EndKey:   endKey,
 			Limit:    int64(batchSize),
-			Sort:     kv.SortOrderDesc,
+			Sort:     kv.SortOrderAsc,
 		})
 
 		for dataKey, err := range it {
@@ -802,90 +855,45 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 			keysProcessed++
 
-			// parse the datakey to get the action and resource version
 			dk, err := ParseKey(dataKey)
 			if err != nil {
 				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
-			// get the request key for the current datakey, which will be used to calculate the next start and end key
-			k := ListRequestKey{
+			objectKey := ListRequestKey{
 				Group:     dk.Group,
 				Resource:  dk.Resource,
 				Namespace: dk.Namespace,
 				Name:      dk.Name,
 			}
 
-			// update the next end key for pagination. We will use this to continue scanning in the next batch
-			// the next end key is the immediate previous key for the current key
-			endKey = previousKey(dataKey)
+			// advance the start key so the next batch resumes strictly after this key
+			startKey = PrefixRangeEnd(dataKey)
 
-			if k == currentResource {
-				// Older revision for a resource we already handled at its head key.
+			if objectKey != currentObject {
+				// The previous object's leftover buffer does not have a delete past its retention period.
+				buffer = buffer[:0]
+				currentObject = objectKey
+			}
+
+			// ascending scan, skip anything that's too new to be considered
+			if dk.ResourceVersion >= cutoffTimestamp {
 				continue
 			}
-			currentResource = k
 
-			// if the action is deleted and the resource version is older than the cutoff, get all previous versions
-			// of the same resource and delete them in batch
-			if dk.Action == DataActionDeleted && dk.ResourceVersion < cutoffTimestamp {
-				// ensure we don't process/count the same resource twice
-				if _, seen := seenKeys[k]; seen {
-					continue
+			buffer = append(buffer, dk)
+			if dk.Action == DataActionDeleted {
+				// Every buffered revision is <= this expired marker's RV, so it is all trash.
+				if err := deleteBuffered(); err != nil {
+					return err
 				}
-				// mark the key as seen
-				seenKeys[k] = struct{}{}
-
-				// Collect all revisions of this resource, oldest-first, via the datastore.
-				keysToDelete := []DataKey{}
-				for deleteKey, err := range b.dataStore.Keys(ctx, k, SortOrderAsc) {
-					if err != nil {
-						return fmt.Errorf("failed to get keys for resource '%s': %s", dk, err)
-					}
-					keysToDelete = append(keysToDelete, deleteKey)
-				}
-
-				// check if the resource still exists
-				_, err := b.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
-					Group:     dk.Group,
-					Resource:  dk.Resource,
-					Namespace: dk.Namespace,
-					Name:      dk.Name,
-				})
-				if err == nil {
-					// resource still exists, no need to delete anything
-					continue
-				}
-				if !errors.Is(err, ErrNotFound) {
-					return fmt.Errorf("garbage collection: latest resource key lookup for %s: %w", dk, err)
-				}
-
-				if b.garbageCollection.DryRun {
-					// if in dry run mode, just count the keys to delete
-					totalDryRun += int64(len(keysToDelete))
-					dryRunPerNamespace[dk.Namespace] += int64(len(keysToDelete))
-					continue
-				}
-
-				// Oldest-first (SortOrderAsc), so a partial delete leaves the deletion marker
-				// behind and the next GC pass finishes.
-				err = b.dataStore.batchDelete(ctx, keysToDelete)
-				if err != nil {
-					return fmt.Errorf("failed to batch delete keys: %s", err)
-				}
-
-				// update the total number of keys deleted
-				keysDeleted = keysDeleted + int64(len(keysToDelete))
-				deletedPerNamespace[dk.Namespace] += int64(len(keysToDelete))
 			}
 		}
 
-		// if there are no more entries to process, break the loop
+		// an empty page means we have scanned every key, so stop
 		if keysProcessed == 0 {
 			break
 		}
-
-		totalDeleted += keysDeleted
 
 		select {
 		case <-ctx.Done():
@@ -894,58 +902,27 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		}
 	}
 
-	if totalDeleted > 0 {
-		b.log.Info("garbage collection deleted history",
+	// Logged even when nothing was eligible. A pass that finds no trash is the normal
+	// case for most groups, and staying silent leaves no way to tell it apart from a
+	// pass that never ran or was cut short.
+	b.log.Info("garbage collection finished",
+		"group", group,
+		"resource", resourceName,
+		"rows", totalDeleted,
+		"dryRun", b.garbageCollection.DryRun,
+		"seconds", time.Since(start).Seconds(),
+	)
+	for ns, count := range deletedPerNamespace {
+		b.log.Info("garbage collection finished per namespace",
 			"group", group,
 			"resource", resourceName,
-			"rows", totalDeleted,
-			"seconds", time.Since(start).Seconds(),
+			"namespace", ns,
+			"rows", count,
+			"dryRun", b.garbageCollection.DryRun,
 		)
-		for ns, count := range deletedPerNamespace {
-			b.log.Info("garbage collection deleted history per namespace",
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
-	}
-
-	if totalDryRun > 0 {
-		b.log.Info("garbage collection dry run",
-			"group", group,
-			"resource", resourceName,
-			"rows", totalDryRun,
-			"seconds", time.Since(start).Seconds(),
-		)
-		for ns, count := range dryRunPerNamespace {
-			b.log.Info("garbage collection dry run per namespace",
-				"group", group,
-				"resource", resourceName,
-				"namespace", ns,
-				"rows", count,
-			)
-		}
 	}
 
 	return nil
-}
-
-// previousKey returns the immediate previous key for the given key
-// for example, if the key is "unified/data/dashboard.grafana.app/dashboards/123-bbb",
-// the previous key will be "unified/data/dashboard.grafana.app/dashboards/123-bba"
-func previousKey(key string) string {
-	keyBuf := []byte(key)
-	buf := make([]byte, len(keyBuf))
-	copy(buf, keyBuf)
-	for i := len(buf) - 1; i >= 0; i-- {
-		if buf[i] > 0x00 {
-			buf[i] = buf[i] - 1
-			buf = buf[:i+1]
-			return string(buf)
-		}
-	}
-	return string(buf)
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
@@ -982,22 +959,14 @@ func conflictError(event WriteEvent, message string) error {
 	)
 }
 
-// maybeAcquireWriteLease acquires the per-resource lease that serializes WriteEvent
-// for this resource if leases are enabled. It returns:
+// acquireWriteLease acquires the per-resource lease that serializes WriteEvent
+// for this resource. It returns:
 //
 //   - a context derived from ctx that is cancelled if the lease is lost
 //     (e.g. its TTL expires while the write is in flight);
-//   - a boolean indicating whether a lease was acquired;
 //   - a release closure to be deferred — it stops the watcher goroutine and
 //     releases the lease.
-//
-// When leases are not active, it returns ctx unchanged and a no-op release.
-func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, bool, func(), error) {
-	leasesActive := k.leaseManager != nil
-	if !leasesActive {
-		return ctx, false, func() {}, nil
-	}
-
+func (k *kvStorageBackend) acquireWriteLease(ctx context.Context, event WriteEvent) (context.Context, func(), error) {
 	name := event.Key.Group + "/" + event.Key.Resource + "/" +
 		event.Key.Namespace + "/" + event.Key.Name
 	if event.Key.Namespace == "" {
@@ -1008,17 +977,13 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 	if k.leaseTTL > 0 {
 		acquireOpts = append(acquireOpts, lease.WithTTL(k.leaseTTL))
 	}
-	if k.leaseAutoRenew {
-		acquireOpts = append(acquireOpts, lease.WithAutoRenew())
-	}
-
 	l, err := k.leaseManager.Acquire(ctx, name, acquireOpts...)
 	if err != nil {
 		if errors.Is(err, lease.ErrLeaseAlreadyHeld) {
 			k.metrics.recordConflict(event)
-			return nil, false, nil, conflictError(event, "concurrent modification on the same resource, please retry")
+			return nil, nil, conflictError(event, "concurrent modification on the same resource, please retry")
 		}
-		return nil, false, nil, fmt.Errorf("acquiring write lease: %w", err)
+		return nil, nil, fmt.Errorf("acquiring write lease: %w", err)
 	}
 
 	leaseCtx, cancel := context.WithCancel(ctx)
@@ -1041,7 +1006,7 @@ func (k *kvStorageBackend) maybeAcquireWriteLease(ctx context.Context, event Wri
 		}
 	}
 
-	return leaseCtx, true, release, nil
+	return leaseCtx, release, nil
 }
 
 func recordSpanError(span trace.Span, err error) {
@@ -1077,7 +1042,7 @@ func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
 	}
 	dk, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group: group, Resource: resource, Namespace: namespace, Name: canonical,
-	}, rv)
+	}, rv, false)
 	if err != nil {
 		return DataKey{}, name, err
 	}
@@ -1085,6 +1050,37 @@ func (k *kvStorageBackend) lookupCaseInsensitiveFallback(
 		"namespace", namespace, "group", group, "resource", resource,
 		"requested", name, "canonical", canonical)
 	return dk, canonical, nil
+}
+
+func (k *kvStorageBackend) generateResourceVersion() (int64, error) {
+	rv, err := k.resourceVersions.Generate()
+	if err == nil {
+		k.metrics.ResourceVersionClockRegression.Set(0)
+		return rv, nil
+	}
+	var failure *resourceVersionGenerationError
+	if errors.As(err, &failure) {
+		k.metrics.ResourceVersionGenerationFailures.WithLabelValues(failure.reason).Inc()
+		if failure.reason == resourceVersionClockRegression {
+			skewSeconds := float64(failure.lastMillis-failure.currentMillis) / 1000
+			k.metrics.ResourceVersionClockRegression.Set(skewSeconds)
+			k.log.Error("Resource version clock moved backwards", "currentTime", failure.currentMillis,
+				"lastEmittedTime", failure.lastMillis, "skewSeconds", skewSeconds, "error", err)
+		}
+	}
+	return 0, err
+}
+
+func (k *kvStorageBackend) latestResourceVersion(ctx context.Context) (int64, error) {
+	key, err := k.eventStore.LastEventKey(ctx)
+	if errors.Is(err, ErrNotFound) {
+		// An empty store still needs a positive RV for initial watch bookmarks.
+		return k.generateResourceVersion()
+	}
+	if err != nil {
+		return 0, err
+	}
+	return key.ResourceVersion, nil
 }
 
 // WriteEvent writes a resource event (create/update/delete) to the storage backend.
@@ -1106,15 +1102,15 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	ctx, leasesActive, releaseLease, err := k.maybeAcquireWriteLease(ctx, event)
+	ctx, releaseLease, err := k.acquireWriteLease(ctx, event)
 	if err != nil {
 		return 0, err
 	}
 	defer releaseLease()
 
-	rv = k.snowflake.Generate().Int64()
 	namespace := event.Key.Namespace
 
+	var previousKey DataKey
 	// When PreviousRV is not 0, fetch the latest resource and verify that the RV matches the PreviousRV
 	if event.PreviousRV != 0 {
 		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
@@ -1153,44 +1149,31 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			k.metrics.recordConflict(event)
 			return 0, conflictError(event, "requested RV does not match current RV")
 		}
+		previousKey = latestKey
 	}
 
+	minimumRV := previousKey.ResourceVersion
 	obj := event.Object
 	var action kv.DataAction
 	switch event.Type {
 	case resourcepb.WatchEvent_ADDED:
 		action = DataActionCreated
-		// Check if resource already exists for create operations
-		latestKey, err := k.dataStore.GetLatestResourceKey(ctx, GetRequestKey{
+		latestKey, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 			Group:     event.Key.Group,
 			Resource:  event.Key.Resource,
 			Namespace: namespace,
 			Name:      event.Key.Name,
-		})
+		}, 0, true)
 		if err == nil {
-			if latestKey.Action == kv.DataActionUpdated {
+			if latestKey.Action != DataActionDeleted {
 				return 0, ErrResourceAlreadyExists
 			}
-
-			if leasesActive {
-				// Holding the lease guarantees no concurrent in-flight writes
-				// for this resource, so a non-deleted latest key is genuine.
-				return 0, ErrResourceAlreadyExists
-			}
-
-			// A creation event was found, but it might be a transient write from a
-			// concurrent create that hasn't gone through the optimistic lock
-			// checks. Confirm via the event store before returning AlreadyExists.
-			committed, err := k.confirmExistence(ctx, latestKey)
-			if err != nil {
-				return 0, fmt.Errorf("checking concurrent creation in event store: %w", err)
-			}
-			if committed {
-				return 0, ErrResourceAlreadyExists
-			}
-			// Not confirmed: the data is likely transient. Proceed with the
-			// write and let the optimistic lock checks determine the winner.
-		} else if errors.Is(err, ErrNotFound) && k.rvManager != nil {
+			// A recreated resource must sort after its tombstone to be visible.
+			minimumRV = latestKey.ResourceVersion
+		} else if !errors.Is(err, ErrNotFound) {
+			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
+		}
+		if k.rvManager != nil {
 			// TODO: remove this branch when sql/backend backwards compatibility is no longer needed.
 			// In compat mode the legacy `resource` table is the source of truth
 			// for live resources, so a case-insensitive hit there is a committed
@@ -1205,9 +1188,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 			if !errors.Is(err, ErrNotFound) {
 				return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 			}
-			// fallback also missed; resource truly doesn't exist — fall through to create.
-		} else if !errors.Is(err, ErrNotFound) {
-			return 0, fmt.Errorf("failed to check if resource exists: %w", err)
 		}
 	case resourcepb.WatchEvent_MODIFIED:
 		action = DataActionUpdated
@@ -1222,6 +1202,22 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		return 0, fmt.Errorf("object is nil")
 	}
 
+	// The SQL compatibility path replaces the generated RV with a database-assigned RV.
+	if k.rvManager != nil {
+		minimumRV = 0
+	}
+	rv, err = k.generateResourceVersionWithRetry(ctx, minimumRV)
+	if err != nil {
+		var ordering *resourceVersionOrderingError
+		if errors.As(err, &ordering) {
+			k.metrics.recordResourceVersionOrderingRejection(event, ordering.rv)
+		}
+		if ctx.Err() != nil {
+			return 0, ctx.Err()
+		}
+		return 0, apierrors.NewServiceUnavailable(err.Error())
+	}
+
 	// Write the data
 	dataKey := DataKey{
 		Group:           event.Key.Group,
@@ -1234,7 +1230,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	}
 
 	if k.rvManager != nil {
-		dataKey.GUID = uuid.New().String()
+		dataKey.GUID = uuid.NewV4().String()
 		var err error
 		// ExecWithRV commits the data on its own context regardless of client cancellation.
 		// Passing a detached context makes ExecWithRV wait for that guaranteed commit
@@ -1284,70 +1280,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	defer cancelPersist()
 	ctx = persistCtx
 
-	// Optimistic concurrency control to verify our write is the latest version
-	// and that the resource still had the expected PreviousRV when we wrote it.
-	if !leasesActive {
-		if event.PreviousRV != 0 {
-			// Update operations: verify PreviousRV matches and our write is latest
-			// Get both the latest and predecessor
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent write with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent modification detected")
-			}
-
-			if !rvmanager.IsRvEqual(prevKey.ResourceVersion, event.PreviousRV) {
-				// Another concurrent write happened between our read and write
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "resource was modified concurrently")
-			}
-		} else if event.Type == resourcepb.WatchEvent_ADDED {
-			// Create operations: verify our write is the latest version
-			latestKey, prevKey, err := k.dataStore.GetLatestAndPredecessor(ctx, ListRequestKey{
-				Group:     event.Key.Group,
-				Resource:  event.Key.Resource,
-				Namespace: namespace,
-				Name:      event.Key.Name,
-			})
-			if err != nil {
-				// If we can't read the latest version, clean up what we wrote
-				_ = k.dataStore.Delete(ctx, dataKey)
-				return 0, fmt.Errorf("failed to check latest version: %w", err)
-			}
-
-			// Check if the RV we just wrote is the latest. If not, a concurrent create with higher RV happened
-			if latestKey.ResourceVersion != dataKey.ResourceVersion {
-				// Delete the data we just wrote since it's not the latest
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create detected")
-			}
-
-			// Verify that the immediate predecessor is not a create
-			if prevKey.Action == DataActionCreated {
-				// Another concurrent create happened - delete our write and return error
-				_ = k.dataStore.Delete(ctx, dataKey)
-				k.metrics.recordConflict(event)
-				return 0, conflictError(event, "concurrent create attempts detected")
-			}
-		}
-	}
-
 	// Write event
 	eventData := Event{
 		Namespace:       namespace,
@@ -1358,6 +1290,8 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 		Action:          action,
 		Folder:          obj.GetFolder(),
 		PreviousRV:      event.PreviousRV,
+		PreviousAction:  previousKey.Action,
+		PreviousFolder:  previousKey.Folder,
 	}
 	if err := k.eventStore.Save(ctx, eventData); err != nil {
 		k.metrics.recordEventEmitFailure(event)
@@ -1382,43 +1316,6 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	k.publishWatchNotification(ctx, eventData)
 
 	return rv, nil
-}
-
-// confirmExistence checks whether a resource with the given `key` is genuinely
-// committed. During concurrent creates, the datastore can contain transient
-// writes that haven't survived the post-write optimistic lock checks. The
-// eventstore is used as a commit signal: an event is written only after the
-// optimistic locking checks, so its presence proves the write is committed.
-func (k *kvStorageBackend) confirmExistence(ctx context.Context, key DataKey) (bool, error) {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.confirmExistence")
-	defer span.End()
-
-	const eventThreshold = 30 * time.Second
-
-	// Extract the timestamp from the snowflake-formatted RV.
-	rvTime := time.Unix(0, snowflake.ID(key.ResourceVersion).Time()*int64(time.Millisecond))
-	if time.Since(rvTime) > eventThreshold {
-		// Old RV: by this point, it can be assumed to be committed.
-		return true, nil
-	}
-
-	// Recent RV: look up the corresponding event to confirm it was committed.
-	_, err := k.eventStore.Get(ctx, EventKey{
-		Namespace:       key.Namespace,
-		Group:           key.Group,
-		Resource:        key.Resource,
-		Name:            key.Name,
-		ResourceVersion: key.ResourceVersion,
-		Action:          key.Action,
-		Folder:          key.Folder,
-	})
-	if err == nil {
-		return true, nil
-	}
-	if errors.Is(err, ErrNotFound) {
-		return false, nil
-	}
-	return false, err
 }
 
 func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) (rsp *BackendReadResponse) {
@@ -1446,12 +1343,9 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 
 	// If a specific resource version is requested, validate that it's not too high
 	if req.ResourceVersion > 0 {
-		// Fetch the latest RV
-		latestRV := k.snowflake.Generate().Int64()
-		var lastEventKey EventKey
-		if lastEventKey, err = k.eventStore.LastEventKey(ctx); err == nil {
-			latestRV = lastEventKey.ResourceVersion
-		} else if !errors.Is(err, ErrNotFound) {
+		latestRV, latestErr := k.latestResourceVersion(ctx)
+		err = latestErr
+		if err != nil {
 			return &BackendReadResponse{Error: &resourcepb.ErrorResult{
 				Code:    http.StatusInternalServerError,
 				Message: fmt.Sprintf("failed to fetch latest resource version: %v", err),
@@ -1466,12 +1360,17 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		}
 	}
 
+	// The datastore rejects invalid names. Report that as a bad request, not a server error.
+	if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
+		return &BackendReadResponse{Error: NewBadRequestError(errs[0])}
+	}
+
 	meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 		Group:     req.Key.Group,
 		Resource:  req.Key.Resource,
 		Namespace: namespace,
 		Name:      req.Key.Name,
-	}, req.ResourceVersion)
+	}, req.ResourceVersion, false)
 	name := req.Key.Name
 
 	// TODO: remove this block when sql/backend backwards compatibility is no longer needed.
@@ -1494,7 +1393,12 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 		Action:          meta.Action,
 		Folder:          meta.Folder,
 	})
-	if err != nil || data == nil {
+	if errors.Is(err, ErrNotFound) || (err == nil && data == nil) {
+		// Metadata resolved but the body is gone (GC'd between resolve and read),
+		// which is a not-found like the batch path returns.
+		return &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+	}
+	if err != nil {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
 	}
 	value, err := readAndClose(data)
@@ -1509,13 +1413,200 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
+	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
+	// would otherwise resolve the highest retained revision below it, so the batch
+	// and single-read paths would disagree when search and storage briefly diverge.
+	var maxReqRV int64
+	for _, req := range requests {
+		if req != nil && req.Key != nil {
+			maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
+		}
+	}
+	var latestRV int64
+	if maxReqRV > 0 {
+		var err error
+		latestRV, err = k.latestResourceVersion(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch latest resource version: %w", err)
+		}
+	}
+
+	return func(yield func(*BackendReadResponse) bool) {
+		type batchReadEntry struct {
+			request  *resourcepb.ReadRequest
+			key      kv.DataKey
+			response *BackendReadResponse
+		}
+		entries := make([]batchReadEntry, 0, len(requests))
+		keys := make([]kv.DataKey, 0, len(requests))
+		for _, req := range requests {
+			entry := batchReadEntry{request: req}
+			if req == nil || req.Key == nil {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
+				entries = append(entries, entry)
+				continue
+			}
+
+			rv := ToSnowflakeRV(req.ResourceVersion)
+			if rv > latestRV {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
+				entries = append(entries, entry)
+				continue
+			}
+
+			// Same as ReadResource: an invalid name is a bad request, not a server error.
+			if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(errs[0])}
+				entries = append(entries, entry)
+				continue
+			}
+			meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
+				Group:     req.Key.Group,
+				Resource:  req.Key.Resource,
+				Namespace: req.Key.Namespace,
+				Name:      req.Key.Name,
+			}, rv, includeDeleted)
+			if errors.Is(err, ErrNotFound) {
+				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
+				entries = append(entries, entry)
+				continue
+			}
+			if err != nil {
+				entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
+				entries = append(entries, entry)
+				continue
+			}
+
+			entry.key = kv.DataKey{
+				Group:           req.Key.Group,
+				Resource:        req.Key.Resource,
+				Namespace:       req.Key.Namespace,
+				Name:            req.Key.Name,
+				ResourceVersion: meta.ResourceVersion,
+				Action:          meta.Action,
+				Folder:          meta.Folder,
+			}
+			entries = append(entries, entry)
+			keys = append(keys, entry.key)
+		}
+
+		next, stopPull := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
+		var peek DataObj
+		var hasPeek bool
+		stop := func() {
+			if hasPeek && peek.Value != nil {
+				_ = peek.Value.Close()
+			}
+			hasPeek = false
+			stopPull()
+		}
+		for _, entry := range entries {
+			if entry.response != nil {
+				if !yield(entry.response) {
+					stop()
+					return
+				}
+				continue
+			}
+			if !hasPeek {
+				var peekErr error
+				peek, peekErr, hasPeek = next()
+				if peekErr != nil {
+					yield(&BackendReadResponse{
+						Key:             entry.request.Key,
+						ResourceVersion: entry.key.ResourceVersion,
+						Folder:          entry.key.Folder,
+						Error:           &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: peekErr.Error()},
+					})
+					stop()
+					return
+				}
+			}
+
+			response := &BackendReadResponse{
+				Key:             entry.request.Key,
+				ResourceVersion: entry.key.ResourceVersion,
+				Folder:          entry.key.Folder,
+			}
+			if hasPeek && peek.Key.String() == entry.key.String() {
+				value, err := readAndClose(peek.Value)
+				hasPeek = false
+				if err != nil {
+					response.Error = &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}
+					yield(response)
+					stop()
+					return
+				}
+				response.Value = value
+			} else {
+				response.Error = NewNotFoundError(entry.request.Key)
+			}
+			if !yield(response) {
+				stop()
+				return
+			}
+		}
+		stop()
+	}, nil
+}
+
+func (*kvStorageBackend) SupportsDeletedBatchReads() bool {
+	return true
+}
+
+func (k *kvStorageBackend) FetchValues(ctx context.Context, items []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error) {
+	if len(items) > dataBatchSize {
+		return nil, fmt.Errorf("value fetch batch has %d items, maximum is %d", len(items), dataBatchSize)
+	}
+
+	keys := make([]DataKey, len(items))
+	for idx, item := range items {
+		if item.Key == nil {
+			return nil, fmt.Errorf("value fetch item %d has no resource key", idx)
+		}
+		if item.dataKey.Group != item.Key.Group || item.dataKey.Resource != item.Key.Resource ||
+			item.dataKey.Namespace != item.Key.Namespace || item.dataKey.Name != item.Key.Name ||
+			item.dataKey.ResourceVersion != item.ResourceVersion || item.dataKey.Folder != item.Folder {
+			return nil, fmt.Errorf("value fetch item %d does not match its backend key", idx)
+		}
+		keys[idx] = item.dataKey
+	}
+
+	return func(yield func(*BackendReadResponse, error) bool) {
+		for obj, err := range k.dataStore.BatchGet(ctx, keys) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+
+			value, err := readAndClose(obj.Value)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(&BackendReadResponse{
+				Key: &resourcepb.ResourceKey{
+					Namespace: obj.Key.Namespace,
+					Group:     obj.Key.Group,
+					Resource:  obj.Key.Resource,
+					Name:      obj.Key.Name,
+				},
+				ResourceVersion: obj.Key.ResourceVersion,
+				Folder:          obj.Key.Folder,
+				Value:           value,
+			}, nil) {
+				return
+			}
+		}
+	}, nil
+}
+
 // ListIterator returns an iterator for listing resources.
 func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (rv int64, err error) {
 	if req.Options == nil || req.Options.Key == nil {
 		return 0, fmt.Errorf("missing options or key in ListRequest")
 	}
-
-	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListIterator", trace.WithAttributes(
 		attribute.String("namespace", req.Options.Key.Namespace),
@@ -1525,7 +1616,49 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	defer span.End()
 	defer func() { recordSpanError(span, err) }()
 
-	// Parse continue token if provided
+	listRV, keys, err := k.listResourceKeys(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	it := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
+	defer it.stop()
+
+	if err := cb(it); err != nil {
+		return 0, err
+	}
+
+	return listRV, nil
+}
+
+func (k *kvStorageBackend) ListKeys(ctx context.Context, req *resourcepb.ListRequest, cb func(ListKeyIterator) error) (rv int64, err error) {
+	if req.Options == nil || req.Options.Key == nil {
+		return 0, fmt.Errorf("missing options or key in ListRequest")
+	}
+
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListKeys", trace.WithAttributes(
+		attribute.String("namespace", req.Options.Key.Namespace),
+		attribute.String("group", req.Options.Key.Group),
+		attribute.String("resource", req.Options.Key.Resource),
+	))
+	defer span.End()
+	defer func() { recordSpanError(span, err) }()
+
+	listRV, keys, err := k.listResourceKeys(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	it := newKvListKeyIterator(keys, listRV, req.Options.Key.Namespace == "" || req.KeysOnly, req.KeysOnly, req.Options.Key.Namespace == "")
+	defer it.stop()
+	if err := cb(it); err != nil {
+		return 0, err
+	}
+	return listRV, nil
+}
+
+func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb.ListRequest) (int64, iter.Seq2[DataKey, error], error) {
+	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
 			Group:     req.Options.Key.Group,
@@ -1539,12 +1672,14 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 	if req.NextPageToken != "" {
 		token, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
-			return 0, fmt.Errorf("invalid continue token: %w", err)
+			return 0, nil, fmt.Errorf("invalid continue token: %w", err)
 		}
 		if token.Name == "" {
-			return 0, fmt.Errorf("invalid continue token: name is required for list resources")
+			return 0, nil, fmt.Errorf("invalid continue token: name is required for list resources")
 		}
-		// Only use token namespace for cross-namespace queries (when request namespace is empty)
+		if !continueTokenMatchesListRequest(token, req) {
+			return 0, nil, apierrors.NewBadRequest("invalid continue token: list scope does not match request")
+		}
 		if req.Options.Key.Namespace == "" {
 			listOptions.ContinueNamespace = token.Namespace
 		}
@@ -1552,38 +1687,135 @@ func (k *kvStorageBackend) ListIterator(ctx context.Context, req *resourcepb.Lis
 		listOptions.ResourceVersion = ToSnowflakeRV(token.ResourceVersion)
 	}
 
-	// We set the listRV to the last event resource version.
-	// If no events exist yet, we generate a new snowflake.
-	listRV := k.snowflake.Generate().Int64()
-	if lastEventKey, err := k.eventStore.LastEventKey(ctx); err == nil {
-		listRV = lastEventKey.ResourceVersion
-	} else if !errors.Is(err, ErrNotFound) {
-		return 0, fmt.Errorf("failed to fetch last event: %w", err)
+	listRV, err := k.latestResourceVersion(ctx)
+	if err != nil {
+		return 0, nil, fmt.Errorf("failed to fetch last event: %w", err)
 	}
-
 	if listOptions.ResourceVersion > 0 {
 		listRV = listOptions.ResourceVersion
 	}
 
-	keys := k.dataStore.ListResourceKeysAtRevision(ctx, listOptions)
-	iter := newKvListIterator(ctx, k.dataStore, keys, listRV, req.Options.Key.Namespace == "")
-	defer iter.stop()
+	return listRV, k.dataStore.ListResourceKeysAtRevision(ctx, listOptions), nil
+}
 
-	if err := cb(iter); err != nil {
-		return 0, err
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
 	}
-
-	return listRV, nil
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
 }
 
 // newKvListIterator builds a kvListIterator that reads keys in bounded batches.
-func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, isCrossNamespace bool) *kvListIterator {
-	next, stopFn := iter.Pull2(batchGetResourceKeys(ctx, ds, keys))
+func newKvListIterator(ctx context.Context, ds *dataStore, keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListIterator {
+	objs := batchGetResourceKeys(ctx, ds, keys)
+	if keysOnly {
+		// The data key already carries namespace/name/rv/folder, so the value
+		// read is skipped entirely rather than fetched and discarded.
+		objs = keysAsDataObjs(keys)
+	}
+	next, stopFn := iter.Pull2(objs)
 	return &kvListIterator{
-		listRV:           listRV,
-		isCrossNamespace: isCrossNamespace,
-		next:             next,
-		stopFn:           stopFn,
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
+	}
+}
+
+// keysAsDataObjs adapts keys to the iterator's item type without reading values.
+func keysAsDataObjs(keys iter.Seq2[DataKey, error]) iter.Seq2[DataObj, error] {
+	return func(yield func(DataObj, error) bool) {
+		for key, err := range keys {
+			if !yield(DataObj{Key: key}, err) || err != nil {
+				return
+			}
+		}
+	}
+}
+
+type kvListKeyIterator struct {
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
+	next                  func() (DataKey, error, bool)
+	stopFn                func()
+	started               bool
+	current               DataKey
+	nextKey               DataKey
+	err                   error
+	nextErr               error
+	hasMore               bool
+}
+
+func newKvListKeyIterator(keys iter.Seq2[DataKey, error], listRV int64, includeTokenNamespace, keysOnly, clusterWide bool) *kvListKeyIterator {
+	next, stopFn := iter.Pull2(keys)
+	return &kvListKeyIterator{
+		listRV:                listRV,
+		includeTokenNamespace: includeTokenNamespace,
+		keysOnly:              keysOnly,
+		clusterWide:           clusterWide,
+		next:                  next,
+		stopFn:                stopFn,
+	}
+}
+
+func (i *kvListKeyIterator) stop() {
+	if i.stopFn != nil {
+		i.stopFn()
+	}
+}
+
+func (i *kvListKeyIterator) Next() bool {
+	if !i.started {
+		i.started = true
+		i.nextKey, i.nextErr, i.hasMore = i.next()
+	}
+	if !i.hasMore {
+		return false
+	}
+
+	i.current, i.err = i.nextKey, i.nextErr
+	if i.err != nil {
+		return false
+	}
+	i.nextKey, i.nextErr, i.hasMore = i.next()
+	return true
+}
+
+func (i *kvListKeyIterator) Error() error {
+	return i.err
+}
+
+func (i *kvListKeyIterator) Item() BackendListKey {
+	token := ContinueToken{
+		Name:            i.nextKey.Name,
+		ResourceVersion: i.listRV,
+		KeysOnly:        i.keysOnly,
+		ClusterWide:     i.clusterWide,
+	}
+	if i.includeTokenNamespace {
+		token.Namespace = i.nextKey.Namespace
+	}
+	return BackendListKey{
+		Key: &resourcepb.ResourceKey{
+			Namespace: i.current.Namespace,
+			Group:     i.current.Group,
+			Resource:  i.current.Resource,
+			Name:      i.current.Name,
+		},
+		ResourceVersion: i.current.ResourceVersion,
+		Folder:          i.current.Folder,
+		ContinueToken:   token.String(),
+		dataKey:         i.current,
 	}
 }
 
@@ -1620,8 +1852,10 @@ func batchGetResourceKeys(ctx context.Context, ds *dataStore, keys iter.Seq2[Dat
 }
 
 type kvListIterator struct {
-	listRV           int64
-	isCrossNamespace bool
+	listRV                int64
+	includeTokenNamespace bool
+	keysOnly              bool
+	clusterWide           bool
 
 	next   func() (DataObj, error, bool)
 	stopFn func()
@@ -1658,9 +1892,11 @@ func (i *kvListIterator) Next() bool {
 		return false
 	}
 
-	i.value, i.err = readAndClose(i.currentDataObj.Value)
-	if i.err != nil {
-		return false
+	if !i.keysOnly {
+		i.value, i.err = readAndClose(i.currentDataObj.Value)
+		if i.err != nil {
+			return false
+		}
 	}
 
 	i.nextDataObj, i.nextErr, i.hasMore = i.next()
@@ -1676,9 +1912,12 @@ func (i *kvListIterator) ContinueToken() string {
 		Name:            i.nextDataObj.Key.Name,
 		ResourceVersion: i.listRV,
 	}
-	// Only store namespace in token for cross-namespace queries
-	if i.isCrossNamespace {
+	if i.includeTokenNamespace {
 		token.Namespace = i.nextDataObj.Key.Namespace
+	}
+	if i.keysOnly {
+		token.KeysOnly = true
+		token.ClusterWide = i.clusterWide
 	}
 	return token.String()
 }
@@ -1856,7 +2095,7 @@ func (k *kvStorageBackend) ListModifiedSince(ctx context.Context, key Namespaced
 	// called with this same sinceRv and enough wall-clock time has elapsed since that
 	// call, any in-flight concurrent writes at sinceRv time must have committed, so
 	// lookback is unnecessary.
-	sinceRvTimestamp := snowflake.ID(sinceRv).Time()
+	sinceRvTimestamp := snowflakeTimestampMillis(sinceRv)
 	sinceRvTime := time.Unix(0, sinceRvTimestamp*int64(time.Millisecond))
 
 	var effectiveRv int64
@@ -2072,8 +2311,10 @@ func (k *kvStorageBackend) ListHistory(ctx context.Context, req *resourcepb.List
 		tokenSortAscending = token.SortAscending
 	}
 
-	// Generate a new resource version for the list
-	listRV := k.snowflake.Generate().Int64()
+	listRV, err := k.latestResourceVersion(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to fetch last event: %w", err)
+	}
 
 	// Handle trash differently from regular history
 	if req.Source == resourcepb.ListRequest_TRASH {
@@ -2400,15 +2641,7 @@ func nextEventBatch(notifications <-chan Event, buf []Event) ([]Event, bool) {
 func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, out chan<- *WrittenEvent) bool {
 	keys := make([]DataKey, len(batch))
 	for i, event := range batch {
-		keys[i] = DataKey{
-			Group:           event.Group,
-			Resource:        event.Resource,
-			Namespace:       event.Namespace,
-			Name:            event.Name,
-			ResourceVersion: event.ResourceVersion,
-			Action:          event.Action,
-			Folder:          event.Folder,
-		}
+		keys[i] = eventDataKey(event)
 	}
 
 	// Read the whole batch before emitting any of it: the iterator holds a
@@ -2452,136 +2685,13 @@ func (k *kvStorageBackend) emitWriteEvents(ctx context.Context, batch []Event, o
 			continue
 		}
 
-		var t resourcepb.WatchEvent_Type
-		switch event.Action {
-		case DataActionCreated:
-			t = resourcepb.WatchEvent_ADDED
-		case DataActionUpdated:
-			t = resourcepb.WatchEvent_MODIFIED
-		case DataActionDeleted:
-			t = resourcepb.WatchEvent_DELETED
-		}
-
 		select {
-		case out <- &WrittenEvent{
-			Key: &resourcepb.ResourceKey{
-				Namespace: event.Namespace,
-				Group:     event.Group,
-				Resource:  event.Resource,
-				Name:      event.Name,
-			},
-			Type:            t,
-			Folder:          event.Folder,
-			Value:           data,
-			ResourceVersion: event.ResourceVersion,
-			PreviousRV:      event.PreviousRV,
-			Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
-		}:
+		case out <- eventToWrittenEvent(event, data):
 		case <-ctx.Done():
 			return false
 		}
 	}
 	return true
-}
-
-// eventToWrittenEvent maps an event-store entry to a metadata-only WrittenEvent.
-// The object value is intentionally left nil: the resource server materialises
-// it lazily (via ReadResource) before sending to the client, so we don't read
-// from the database objects that would otherwise be discarded.
-func eventToWrittenEvent(event Event) *WrittenEvent {
-	var t resourcepb.WatchEvent_Type
-	switch event.Action {
-	case DataActionCreated:
-		t = resourcepb.WatchEvent_ADDED
-	case DataActionUpdated:
-		t = resourcepb.WatchEvent_MODIFIED
-	case DataActionDeleted:
-		t = resourcepb.WatchEvent_DELETED
-	}
-
-	return &WrittenEvent{
-		Key: &resourcepb.ResourceKey{
-			Namespace: event.Namespace,
-			Group:     event.Group,
-			Resource:  event.Resource,
-			Name:      event.Name,
-		},
-		Type:            t,
-		Folder:          event.Folder,
-		ResourceVersion: event.ResourceVersion,
-		PreviousRV:      event.PreviousRV,
-		Timestamp:       ResourceVersionTime(event.ResourceVersion).Unix(),
-	}
-}
-
-// maxEventReplayAge is how far back a watch may be resumed from: half the event
-// retention period. Staying strictly below the retention period leaves a margin
-// so the pruner cannot delete events in the range we are about to replay.
-func (k *kvStorageBackend) maxEventReplayAge() time.Duration {
-	return k.eventRetentionPeriod / 2
-}
-
-func (k *kvStorageBackend) CanReplayFrom(ctx context.Context, sinceRV int64) error {
-	latest, err := k.eventStore.LastEventKey(ctx)
-	switch {
-	case errors.Is(err, ErrNotFound):
-		return nil // no events at all
-	case err != nil:
-		return err
-	case sinceRV >= latest.ResourceVersion:
-		// Nothing was written after sinceRV, so there is nothing to replay.
-		return nil
-	}
-
-	if ResourceVersionTime(sinceRV).Before(time.Now().Add(-k.maxEventReplayAge())) {
-		return NewResourceVersionExpiredError(sinceRV)
-	}
-	return nil
-}
-
-// ListEventsSince returns metadata-only write events with a resource version
-// greater than sinceRV, in ascending resource version order. It reads straight
-// from the event store, so it is only complete for resource versions that are still
-// within the event retention period (see EventRetentionPeriod).
-//
-// Only events older than the settle window (now - SettleDelay) are returned.
-// Writes are not globally ordered without a hard lock, so a recent event may
-// still have a concurrent, lower-RV write that has not landed in the store yet.
-// To get the writes past (now - SettleDelay) the caller must subscribe to the watch stream
-// BEFORE calling ListEventsSince
-func (k *kvStorageBackend) ListEventsSince(ctx context.Context, sinceRV int64) iter.Seq2[*WrittenEvent, error] {
-	return func(yield func(*WrittenEvent, error) bool) {
-		ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.ListEventsSince", trace.WithAttributes(
-			attribute.Int64("sinceRV", sinceRV),
-		))
-		defer span.End()
-
-		// Snapshot the settle frontier once so a slow replay keeps a stable upper
-		// bound; events past it are the broadcaster's responsibility.
-		settledRV := snowflakeFromTime(time.Now().Add(-k.watchOpts.SettleDelay))
-
-		for event, err := range k.eventStore.ListSince(ctx, sinceRV, SortOrderAsc) {
-			if err != nil {
-				yield(nil, err)
-				return
-			}
-			if event.ResourceVersion <= sinceRV {
-				continue
-			}
-			// Ascending order: once we reach the unsettled window everything left
-			// is also unsettled, so stop and let the broadcaster deliver the rest.
-			if event.ResourceVersion > settledRV {
-				return
-			}
-			// Events written as part of a bulk update are not streamed to watchers.
-			if event.PreviousRV < 0 {
-				continue
-			}
-			if !yield(eventToWrittenEvent(event), nil) {
-				return
-			}
-		}
-	}
 }
 
 // GetResourceStats returns resource stats within the storage backend.
@@ -2622,22 +2732,15 @@ func (k *kvStorageBackend) ListStoredResources(ctx context.Context, filter Names
 	return k.dataStore.ListStoredResources(ctx, filter)
 }
 
-func (k *kvStorageBackend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTimes")
+func (k *kvStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error) {
+	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.GetResourceLastImportTime", trace.WithAttributes(
+		attribute.String("namespace", nsr.Namespace),
+		attribute.String("group", nsr.Group),
+		attribute.String("resource", nsr.Resource),
+	))
+	defer span.End()
 
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		defer span.End()
-		valid, _, err := k.lastImportStore.ListLastImportTimes(ctx, k.lastImportTimeMaxAge)
-		if err != nil {
-			yield(ResourceLastImportTime{}, err)
-			return
-		}
-		for _, v := range valid {
-			if !yield(v.ToResourceLastImportTime(), nil) {
-				return
-			}
-		}
-	}
+	return k.lastImportStore.GetLastImportTime(ctx, nsr, k.lastImportTimeMaxAge)
 }
 
 type kvBulkImportItem struct {
@@ -2760,7 +2863,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		}
 
 		previousCount := int64(len(historyKeys))
-		if err := b.dataStore.batchDelete(ctx, historyKeys); err != nil {
+		if err := b.dataStore.BatchDelete(ctx, historyKeys); err != nil {
 			reportError(err, "failed to delete collection")
 			return rsp
 		}
@@ -2786,9 +2889,9 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 	saved := make([]DataKey, 0)
 	rollback := func() {
 		// we don't have transactions in the kv store, so we simply delete everything we created
-		err = b.dataStore.batchDelete(ctx, saved)
+		err = b.dataStore.BatchDelete(ctx, saved)
 		if err != nil {
-			b.log.Error("failed to delete during rollback: %s", err)
+			b.log.Error("failed to delete during rollback", "error", err)
 		}
 	}
 
@@ -2835,9 +2938,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 		batchLastMicroRV := lastMicroRV
 		if rvManagerDB != nil {
 			batchLastMicroRV = make(map[string]int64, len(lastMicroRV)+len(batch))
-			for key, value := range lastMicroRV {
-				batchLastMicroRV[key] = value
-			}
+			maps.Copy(batchLastMicroRV, lastMicroRV)
 		}
 
 		for _, req := range batch {
@@ -2896,6 +2997,15 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 				continue
 			}
 
+			if errs := validation.IsReservedName(dataKey.Name); errs != nil {
+				rsp.Rejected = append(rsp.Rejected, &resourcepb.BulkResponse_Rejected{
+					Key:    req.Key,
+					Action: req.Action,
+					Error:  fmt.Sprintf("failed to save resource: %s", errs[0]),
+				})
+				continue
+			}
+
 			item := kvBulkImportItem{
 				req:     req,
 				dataKey: dataKey,
@@ -2918,7 +3028,7 @@ func (b *kvStorageBackend) ProcessBulk(ctx context.Context, setting BulkSettings
 
 			batchItems = append(batchItems, item)
 			importRow := kv.DataImportRow{
-				GUID:    uuid.New().String(),
+				GUID:    uuid.NewV4().String(),
 				KeyPath: kv.DataSection + "/" + dataKey.String(),
 				Value:   req.Value,
 			}

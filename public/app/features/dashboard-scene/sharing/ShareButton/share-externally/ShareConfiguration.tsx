@@ -8,7 +8,6 @@ import { sceneGraph } from '@grafana/scenes';
 import { FieldSet, Icon, Label, Spinner, Stack, Switch, Text, TimeRangeLabel, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { publicDashboardApi, useUpdatePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
-import { type ConfigPublicDashboardForm } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/ConfigPublicDashboard/ConfigPublicDashboard';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -16,7 +15,10 @@ import { useShareDrawerContext } from '../../ShareDrawer/ShareDrawerContext';
 
 const selectors = e2eSelectors.pages.ShareDashboardDrawer.ShareExternally.Configuration;
 
-type FormInput = Omit<ConfigPublicDashboardForm, 'isPaused'>;
+type FormInput = {
+  isAnnotationsEnabled: boolean;
+  isTimeSelectionEnabled: boolean;
+};
 
 export default function ShareConfiguration() {
   const styles = useStyles2(getStyles);

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
+import { locationUtil, type DataSourceSettings, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
@@ -33,7 +33,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
         size={size}
         variant="secondary"
         fill={fill}
-        href={`dashboard/new-with-ds/${dataSource.uid}`}
+        href={locationUtil.assureBaseUrl(`/dashboard/new-with-ds/${dataSource.uid}`)}
         onClick={() => {
           trackDsConfigClicked('build_a_dashboard');
           trackCreateDashboardClicked({
@@ -93,7 +93,7 @@ export const BuildDashboardButton = ({ dataSource, size, fill, context }: BuildD
               <Menu.Item
                 label={t('datasources.build-a-dashboard-button.blank', 'Blank')}
                 icon="plus"
-                url={`dashboard/new-with-ds/${dataSource.uid}`}
+                url={locationUtil.assureBaseUrl(`/dashboard/new-with-ds/${dataSource.uid}`)}
                 onClick={() => {
                   trackDsConfigClicked('build_a_dashboard');
                   trackCreateDashboardClicked({

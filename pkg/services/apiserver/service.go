@@ -28,6 +28,8 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -36,6 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/registry"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
@@ -43,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
@@ -69,6 +73,11 @@ type Service interface {
 	services.NamedService
 	registry.BackgroundService
 	registry.CanBeDisabled
+}
+
+// RequestRouter routes API groups before the embedded API server.
+type RequestRouter interface {
+	HandleFunc(http.ResponseWriter, *http.Request, http.Handler)
 }
 
 type service struct {
@@ -109,6 +118,7 @@ type service struct {
 
 	auditBackend            audit.Backend
 	auditPolicyRuleProvider auditing.PolicyRuleProvider
+	requestRouter           RequestRouter
 
 	// vpRegistry serves the resolved policy consulted by apistore.encode.
 	vpRegistry *versionpolicy.VersionPolicyRegistry
@@ -141,6 +151,7 @@ func ProvideService(
 	builderMetrics *builder.BuilderMetrics,
 	auditBackend audit.Backend,
 	auditPolicyRuleProvider auditing.PolicyRuleProvider,
+	requestRouter RequestRouter,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -168,6 +179,7 @@ func ProvideService(
 		builderMetrics:                    builderMetrics,
 		auditBackend:                      auditBackend,
 		auditPolicyRuleProvider:           auditPolicyRuleProvider,
+		requestRouter:                     requestRouter,
 	}
 	// This will be used when running as a dskit service
 	s.NamedService = services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -205,7 +217,7 @@ func ProvideService(
 			}
 
 			resp := responsewriter.WrapForHTTP1Or2(c.Resp)
-			s.handler.ServeHTTP(resp, req)
+			s.requestRouter.HandleFunc(resp, req, s.handler)
 		}
 		// Allow unauthenticated GET access to snapshots and the dashboard subresource.
 		// Snapshots are shared via URL with the key, so they are always publicly accessible.
@@ -213,6 +225,11 @@ func ProvideService(
 		snapshotPath := "/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/:namespace/snapshots/:name"
 		k8sRoute.Get(snapshotPath, handler)
 		k8sRoute.Get(snapshotPath+"/dashboard", handler)
+
+		// Allow unauthenticated GET of the SSO login-config singleton: the login
+		// page needs it before the user authenticates. The response is secret-free.
+		ssoLoginConfigPath := "/" + iamv0.GROUP + "/" + iamv0.VERSION + "/namespaces/:namespace/ssosettings/~"
+		k8sRoute.Get(ssoLoginConfigPath, handler)
 
 		k8sRoute.Any("/", middleware.ReqSignedIn, handler)
 		k8sRoute.Any("/*", middleware.ReqSignedIn, handler)
@@ -261,6 +278,15 @@ func (s *service) RegisterAPI(b builder.APIGroupBuilder) {
 
 func (s *service) RegisterAppInstaller(i appsdkapiserver.AppInstaller) {
 	s.appInstallers = append(s.appInstallers, i)
+}
+
+// applyOpenAPIV2Setting drops the v2 OpenAPI config when a deployment has turned
+// /openapi/v2 off. OpenAPIV3Config is left alone.
+func applyOpenAPIV2Setting(serverConfig *genericapiserver.RecommendedConfig, apiserverSection *setting.DynamicSection) {
+	if apiserverSection.Key("openapi_v2_enabled").MustBool(true) {
+		return
+	}
+	serverConfig.OpenAPIConfig = nil
 }
 
 // nolint:gocyclo
@@ -336,9 +362,23 @@ func (s *service) start(ctx context.Context) error {
 		s.cfg.BuildBranch,
 	)
 
+	// Read here rather than next to the routes: whether the search that spans
+	// resource types is on decides what the api resource config below enables.
+	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
+	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
+	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
+	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
+	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+
 	apiResourceConfig := appinstaller.NewAPIResourceConfig(s.appInstallers)
 	// add the builder group versions to the api resource config
 	apiResourceConfig.EnableVersions(groupVersions...)
+	if globalSearchAPIEnabled {
+		// No builder serves this group version, so nothing else enables it, and a
+		// group version that is not enabled has its custom routes skipped.
+		apiResourceConfig.EnableVersions(globalSearchGV)
+	}
 
 	if err := o.APIEnablementOptions.ApplyTo(&serverConfig.Config, apiResourceConfig, s.scheme); err != nil {
 		return err
@@ -403,10 +443,27 @@ func (s *service) start(ctx context.Context) error {
 
 	// Built once and used twice: the routes have to reach both the OpenAPI spec
 	// and the served WebServices, or the endpoint works but is undiscoverable.
-	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(false)
-	searchRoutes := searchroutes.Build(searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)
+	searchAndStorageRoutes := searchroutes.Build(
+		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.Options{HybridEnabled: hybridAPIEnabled},
+	)
+	if globalSearchAPIEnabled {
+		searchAndStorageRoutes = append(searchAndStorageRoutes,
+			searchroutes.BuildGlobalSearch(s.tracing, s.unified, builders)...)
+		// The search that spans resource types has no resource of its own to hold a
+		// permission on, so the request itself carries no check. Every result is
+		// authorized against its own group, resource and folder before it is
+		// returned, and a search reveals nothing that listing the same objects would
+		// not. That relies on get and list being one permission for every covered
+		// type, as they are for dashboards and folders; a type where they differ
+		// needs a list check here. Only this one route is served under this group
+		// version.
+		s.authorizer.Register(globalSearchGV, authorizer.NewAllowAuthorizer())
+	}
+
+	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
+	searchAndStorageRoutes = append(searchAndStorageRoutes,
+		keysroutes.Build(keysAPIEnabled, s.tracing, s.unified, builders, s.appInstallers)...)
 
 	// Add OpenAPI specs for each group+version (existing builders)
 	err = builder.SetupConfig(
@@ -419,11 +476,13 @@ func (s *service) start(ctx context.Context) error {
 		defGetters,
 		s.metrics,
 		apiResourceConfig,
-		searchRoutes...,
+		searchAndStorageRoutes...,
 	)
 	if err != nil {
 		return err
 	}
+
+	applyOpenAPIV2Setting(serverConfig, apiserverSection)
 
 	serverConfig.AdmissionControl, err = appinstaller.RegisterAdmission(
 		serverConfig.AdmissionControl,
@@ -451,9 +510,11 @@ func (s *service) start(ctx context.Context) error {
 			Scheme:                s.scheme,
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
+			SearchAPIEnabled:      searchAPIEnabled,
+			HybridAPIEnabled:      hybridAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
-			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, s.metrics),
+			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),
 			SecureValues:          s.secrets,
 			ConfigProvider:        s.restConfigProvider,
 			Metrics:               s.metrics,
@@ -515,7 +576,7 @@ func (s *service) start(ctx context.Context) error {
 			builders,
 			s.metrics,
 			serverConfig.MergedResourceConfig,
-			searchRoutes...,
+			searchAndStorageRoutes...,
 		); err != nil {
 			return fmt.Errorf("failed to augment web services with custom routes: %w", err)
 		}

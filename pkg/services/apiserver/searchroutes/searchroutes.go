@@ -1,4 +1,5 @@
-// Package searchroutes mounts the search API on the kinds that support it.
+// Package searchroutes mounts the search API on every namespaced kind a manifest
+// declares, unless the kind opts out.
 //
 // It exists as glue because the routes are the same for every kind and so belong
 // to no single builder, and because both the single-tenant and multi-tenant
@@ -6,10 +7,14 @@
 package searchroutes
 
 import (
-	"github.com/grafana/grafana-app-sdk/app"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"slices"
+
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/app"
+	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -21,28 +26,23 @@ import (
 // namespace. Cluster-scoped kinds have no namespace to search within.
 const namespacedScope = "Namespaced"
 
-// enrolledWithoutSearchFields keeps kinds that were already served but declare
-// no search fields, which enrolled would otherwise drop.
+// trashAllowlist holds the kinds allowed to serve the trash endpoint.
 //
-// Temporary: we plan to stop asking for fields at all.
-var enrolledWithoutSearchFields = map[string]bool{
-	"folder.grafana.app/folders":      true,
-	"dashboard.grafana.app/notebooks": true,
+// Trash grants access to whoever deleted the object, or to folder admins, which
+// only makes sense for kinds that live in folders.
+var trashAllowlist = map[string]bool{
+	"dashboard.grafana.app/dashboards": true,
 }
 
-// enrolled reports whether a kind gets the search endpoints at all.
-//
-// Declared fields stand in for "someone reviewed this kind". Search works
-// without them, so this gate is about review, not capability.
-func enrolled(group, resourceName string, kind app.ManifestVersionKind) bool {
-	return len(kind.SearchFields) > 0 || enrolledWithoutSearchFields[group+"/"+resourceName]
+type Options struct {
+	HybridEnabled bool
 }
 
-// Build returns the search and trash routes to mount, or nil when both are off or
+// Build returns the search, trash and hybrid routes to mount, or nil when all are off or
 // there is no client to serve them with.
 //
-// The two are switched separately because trash authorizes on a different rule
-// that has not been reviewed yet. See searchapi.ConfigKeyTrash.
+// Each endpoint has its own switch. Trash also has a separate allowlist because
+// it grants access differently from search.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -53,41 +53,71 @@ func Build(
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
+	opts Options,
 ) []builder.GroupVersionRoutes {
-	// Search fields come from the compiled-in app manifests, the same
-	// declarations the index mapping is built from.
-	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers)
+	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers, opts)
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
 //
 // A host that learns about apps after it starts can pass those manifests here,
 // merged with the compiled-in set, and their kinds are mounted like any other.
-// Build is the same call with only the compiled-in set.
+// Build supplies the compiled-in set. Both add builder manifests, and installer
+// manifests for hybrid routes only.
 //
 // The provider is built from the manifests passed in, so a route can only ever
 // validate against the declarations it was mounted from.
 //
 // Panics on a bad declaration, because in a compiled-in manifest that is a bug.
 func BuildFromManifests(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	searchEnabled bool,
 	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
+	opts Options,
 ) []builder.GroupVersionRoutes {
+	builderManifests := builder.ManifestsFromBuilders(builders)
+	served := builder.ServedGroupVersions(builders, installers)
 	routes, err := BuildForServedGroupVersions(
-		manifests,
-		servedGroupVersions(builders, installers),
+		slices.Concat(manifests, builderManifests),
+		served,
 		searchEnabled,
 		trashEnabled,
 		tracer,
 		index,
+		Options{},
 	)
 	if err != nil {
 		panic(err.Error())
+	}
+	if !opts.HybridEnabled {
+		return routes
+	}
+
+	// Installer manifests enable hybrid opt-in without exposing new lexical or
+	// trash routes, which default to enabled when a declaration is omitted.
+	manifests = slices.Clone(manifests)
+	for _, installer := range installers {
+		manifests = append(manifests, installer.ManifestData())
+	}
+	hybridRoutes, err := BuildForServedGroupVersions(
+		append(manifests, builderManifests...), served, false, false, tracer, index, opts,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, hybrid := range hybridRoutes {
+		i := slices.IndexFunc(routes, func(r builder.GroupVersionRoutes) bool {
+			return r.GroupVersion == hybrid.GroupVersion
+		})
+		if i < 0 {
+			routes = append(routes, hybrid)
+		} else {
+			routes[i].Routes.Namespace = append(routes[i].Routes.Namespace, hybrid.Routes.Namespace...)
+		}
 	}
 	return routes
 }
@@ -99,37 +129,43 @@ func BuildFromManifests(
 // Returns an error rather than panicking, because manifests read at runtime can
 // be malformed without this build being at fault.
 func BuildForServedGroupVersions(
-	manifests []app.Manifest,
+	manifests []*app.ManifestData,
 	served map[schema.GroupVersion]bool,
 	searchEnabled bool,
 	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
+	opts Options,
 ) ([]builder.GroupVersionRoutes, error) {
 	// Whether an endpoint is on is read by the caller, because the two servers
 	// that mount them are configured differently: one from an ini file, one from
 	// flags.
-	if (!searchEnabled && !trashEnabled) || index == nil {
+	if (!searchEnabled && !trashEnabled && !opts.HybridEnabled) || index == nil {
 		return nil, nil
 	}
 
-	provider, err := resource.ManifestBackedProvider(manifests)
-	if err != nil {
-		return nil, err
+	var handler *searchapi.Handler
+	if searchEnabled || trashEnabled {
+		provider, err := resource.ManifestBackedProvider(manifests...)
+		if err != nil {
+			return nil, err
+		}
+		handler = searchapi.NewHandler(index, provider, tracer)
 	}
-	handler := searchapi.NewHandler(index, provider, tracer)
+	hybridHandler := searchapi.NewHybridHandler(index, tracer)
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
+	mounted := map[schema.GroupVersionResource]bool{}
 
 	for _, m := range manifests {
-		if m.ManifestData == nil {
+		if m == nil {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			if !version.Served {
 				continue
 			}
-			gv := schema.GroupVersion{Group: m.ManifestData.Group, Version: version.Name}
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
 			if !served[gv] {
 				continue
 			}
@@ -138,18 +174,23 @@ func BuildForServedGroupVersions(
 					continue
 				}
 				resourceName := resource.ManifestResourceName(kind)
-				if !enrolled(gv.Group, resourceName, kind) {
+				gvr := gv.WithResource(resourceName)
+				if mounted[gvr] {
 					continue
 				}
-				// Answered separately so a kind can opt out of one endpoint
-				// without the other.
+				mounted[gvr] = true
+				// A kind can opt out of each endpoint independently.
 				if searchEnabled && kind.HasSearchEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled && kind.HasTrashEndpoint() {
+				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+				}
+				if opts.HybridEnabled && kind.HasHybridEndpoint() {
+					byGroupVersion[gv] = append(byGroupVersion[gv],
+						hybridHandler.HybridSearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
 			}
 		}
@@ -158,24 +199,48 @@ func BuildForServedGroupVersions(
 	return toGroupVersionRoutes(byGroupVersion), nil
 }
 
-// servedGroupVersions reports which group versions this process actually serves.
-// A manifest describes kinds that a given deployment may not serve at all.
-func servedGroupVersions(
+// BuildGlobalSearch returns the route for the search that spans resource types,
+// or nil when there is no client to serve it with.
+//
+// It is mounted under the search group itself, because it belongs to no kind's
+// group. Nothing serves kinds there, so the route is in no discovery document
+// and a caller has to know the path.
+func BuildGlobalSearch(
+	tracer tracing.Tracer,
+	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
-	installers []appsdkapiserver.AppInstaller,
-) map[schema.GroupVersion]bool {
-	served := map[schema.GroupVersion]bool{}
-	for _, b := range builders {
-		for _, gv := range builder.GetGroupVersions(b) {
-			served[gv] = true
+) []builder.GroupVersionRoutes {
+	if index == nil {
+		return nil
+	}
+	kinds := globalSearchKinds(slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders)))
+	// No field provider: the global index has a fixed field set, which the
+	// manifests do not declare.
+	handler := searchapi.NewHandler(index, nil, tracer)
+	gv := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
+	return toGroupVersionRoutes(map[schema.GroupVersion][]searchapi.Route{gv: {handler.GlobalSearchRoute(kinds)}})
+}
+
+// globalSearchKinds names the Kubernetes kind of each resource type the global
+// index covers, which a result reports and which cannot be derived from its
+// group and resource. Taken from every manifest, served here or not: the index
+// covers its types whichever API versions this process serves.
+func globalSearchKinds(manifests []*app.ManifestData) map[schema.GroupResource]string {
+	kinds := map[schema.GroupResource]string{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			for _, kind := range version.Kinds {
+				gr := schema.GroupResource{Group: m.Group, Resource: resource.ManifestResourceName(kind)}
+				if resource.GlobalIndexCoversType(gr) {
+					kinds[gr] = kind.Kind
+				}
+			}
 		}
 	}
-	for _, i := range installers {
-		for _, gv := range i.GroupVersions() {
-			served[gv] = true
-		}
-	}
-	return served
+	return kinds
 }
 
 func toGroupVersionRoutes(byGroupVersion map[schema.GroupVersion][]searchapi.Route) []builder.GroupVersionRoutes {
