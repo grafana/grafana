@@ -35,7 +35,7 @@ describe('barGaugePresetsSupplier', () => {
     expect(barGaugePresetsSupplier({ dataSummary: summary })).toEqual([]);
   });
 
-  it('all presets include cardOptions with maxSeries', () => {
+  it('caps every preset preview at 6 series', () => {
     const summary = getPanelDataSummary([
       createDataFrame({
         fields: [
@@ -45,9 +45,7 @@ describe('barGaugePresetsSupplier', () => {
       }),
     ]);
     const result = barGaugePresetsSupplier({ dataSummary: summary });
-    for (const preset of result!) {
-      expect(preset.cardOptions?.maxSeries).toBeDefined();
-    }
+    expect(result!.map((preset) => preset.cardOptions?.maxSeries)).toEqual([6, 6, 6, 6, 6, 6]);
   });
 
   it('returns presets when data has number fields with rows', () => {
