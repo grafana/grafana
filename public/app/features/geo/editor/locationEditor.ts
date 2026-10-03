@@ -10,14 +10,16 @@ export function addLocationFields<TOptions>(
   prefix: string,
   builder: PanelOptionsEditorBuilder<TOptions>, // ??? Perhaps pass in the filtered data?
   source?: FrameGeometrySource,
-  data?: DataFrame[]
+  data?: DataFrame[],
+  /** Restrict the selectable modes. Defaults to every mode. */
+  modes?: FrameGeometrySourceMode[]
 ) {
   builder.addCustomEditor({
     id: 'modeEditor',
     path: `${prefix}mode`,
     name: t('geo.location-editor.name-location-mode', 'Location Mode'),
     editor: LocationModeEditor,
-    settings: { data, source },
+    settings: { data, source, modes },
   });
 
   // TODO apply data filter to field pickers
@@ -69,5 +71,19 @@ export function addLocationFields<TOptions>(
           name: t('geo.location-editor.name-gazetteer', 'Gazetteer'),
           editor: GazetteerPathEditor,
         });
+      break;
+
+    case FrameGeometrySourceMode.Wkt:
+    case FrameGeometrySourceMode.Wkb:
+    case FrameGeometrySourceMode.GeoJson:
+      builder.addFieldNamePicker({
+        path: `${prefix}geometry`,
+        name: t('geo.location-editor.name-geometry-field', 'Geometry field'),
+        settings: {
+          filter: (f: Field) => f.type === FieldType.string,
+          noFieldsMessage: t('geo.location-editor.geometry-field.no-fields-message', 'No strings fields found'),
+        },
+      });
+      break;
   }
 }

@@ -148,6 +148,25 @@ describe('getActions', () => {
       expect(panel.doOptionsUpdate).toHaveBeenLastCalledWith(panel.layers.length - 1);
     });
 
+    it('defaults to the layer-declared location mode instead of Auto when one is restricted', async () => {
+      const { panel } = createPanel();
+      getIfExists.mockReturnValue({
+        id: 'geometry',
+        name: 'Geometry',
+        create: jest.fn(),
+        defaultOptions: {},
+        showLocation: true,
+        hideOpacity: false,
+        locationModes: [FrameGeometrySourceMode.Wkt, FrameGeometrySourceMode.Wkb, FrameGeometrySourceMode.GeoJson],
+      });
+      initLayerMock.mockResolvedValue(layerState('Layer 1'));
+
+      getActions(panel).addlayer('geometry');
+
+      const options = initLayerMock.mock.calls[0][2];
+      expect(options.location).toEqual({ mode: FrameGeometrySourceMode.Wkt });
+    });
+
     it('omits opacity and location when the layer type opts out', async () => {
       const { panel } = createPanel();
       getIfExists.mockReturnValue({

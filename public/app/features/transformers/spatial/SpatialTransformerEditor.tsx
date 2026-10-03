@@ -16,6 +16,16 @@ import { SpatialCalculation, SpatialOperation, SpatialAction, type SpatialTransf
 import { getDefaultOptions, getTransformerOptionPane } from './optionsHelper';
 import { isLineBuilderOption } from './spatialTransformer';
 
+// Pre-Geometry-layer mode set -- WKT/WKB/GeoJSON are explicit-mode-only formats meant for
+// rendering arbitrary line/polygon geometry on a map layer, not for this transformer's
+// point-based location pickers.
+const LOCATION_MODES = [
+  FrameGeometrySourceMode.Auto,
+  FrameGeometrySourceMode.Coords,
+  FrameGeometrySourceMode.Geohash,
+  FrameGeometrySourceMode.Lookup,
+];
+
 // Nothing defined in state
 const supplier = (
   builder: PanelOptionsEditorBuilder<SpatialTransformOptions>,
@@ -103,7 +113,7 @@ const supplier = (
         const loc = options.source ?? {
           mode: FrameGeometrySourceMode.Auto,
         };
-        addLocationFields('Point', '', b, loc);
+        addLocationFields('Point', '', b, loc, undefined, LOCATION_MODES);
       },
     });
 
@@ -114,11 +124,11 @@ const supplier = (
         const loc = options.modify?.target ?? {
           mode: FrameGeometrySourceMode.Auto,
         };
-        addLocationFields('Point', 'target.', b, loc);
+        addLocationFields('Point', 'target.', b, loc, undefined, LOCATION_MODES);
       },
     });
   } else {
-    addLocationFields('Location', 'source.', builder, options.source);
+    addLocationFields('Location', 'source.', builder, options.source, undefined, LOCATION_MODES);
   }
 };
 
