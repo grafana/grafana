@@ -109,7 +109,7 @@ func (h *K8sClientWithFallback) Get(
 		return nil, tracing.Error(span, err)
 	}
 
-	failed, storedVersion, conversionErr := getConversionStatus(result)
+	failed, storedVersion, conversionErr := GetConversionStatus(result)
 	if !failed {
 		// if the conversion did not fail, there is no need to fallback.
 		return result, nil
@@ -153,7 +153,7 @@ func (h *K8sClientWithFallback) GetWithPreferredAPIVersion(
 		return h.Get(ctx, name, orgID, options, subresources...)
 	}
 
-	failed, storedVersion, conversionErr := getConversionStatus(result)
+	failed, storedVersion, conversionErr := GetConversionStatus(result)
 	if !failed {
 		return result, nil
 	}
@@ -201,7 +201,7 @@ func (h *K8sClientWithFallback) List(
 	toFetch := make(map[string][]nameAndResourceVersion)
 
 	for _, item := range initial.Items {
-		failed, storedVersion, conversionErr := getConversionStatus(&item)
+		failed, storedVersion, conversionErr := GetConversionStatus(&item)
 		if !failed {
 			res.Items = append(res.Items, item)
 			continue
@@ -326,7 +326,9 @@ func (h *K8sClientWithFallback) fetchWithVersion(
 	return res, nil
 }
 
-func getConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVersion string, conversionErr string) {
+// GetConversionStatus reads status.conversion from a dashboard object. Every field is zero when the
+// object carries no conversion status.
+func GetConversionStatus(obj *unstructured.Unstructured) (failed bool, storedVersion string, conversionErr string) {
 	status, found, _ := unstructured.NestedMap(obj.Object, "status")
 	if !found {
 		return false, "", ""

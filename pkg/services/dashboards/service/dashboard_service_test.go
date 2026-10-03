@@ -2597,3 +2597,178 @@ func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
 	}, results)
 	k8sCliMock.AssertExpectations(t)
 }
+
+// versionRecordingK8sHandler records the preferred API version of every GetWithPreferredAPIVersion call.
+// The shared MockK8sHandler drops that argument, and these tests need to assert on it.
+type versionRecordingK8sHandler struct {
+	*client.MockK8sHandler
+	versions []string
+}
+
+func (h *versionRecordingK8sHandler) GetWithPreferredAPIVersion(ctx context.Context, name string, orgID int64, options metav1.GetOptions, preferredVersion string, subresource ...string) (*unstructured.Unstructured, error) {
+	h.versions = append(h.versions, preferredVersion)
+	return h.Get(ctx, name, orgID, options, subresource...)
+}
+
+func TestGetDashboardStoredAPIVersion(t *testing.T) {
+	const uid = "test-uid"
+
+	converted := func(apiVersion string, conversion map[string]any) *unstructured.Unstructured {
+		obj := &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": "dashboard.grafana.app/" + apiVersion,
+			"kind":       "Dashboard",
+			"metadata":   map[string]any{"name": uid, "generation": int64(1)},
+			"spec":       map[string]any{"title": "converted", "panels": []any{}},
+		}}
+		if conversion != nil {
+			obj.Object["status"] = map[string]any{"conversion": conversion}
+		}
+		return obj
+	}
+	stored := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "dashboard.grafana.app/v2beta1",
+		"kind":       "Dashboard",
+		"metadata":   map[string]any{"name": uid, "generation": int64(1)},
+		"spec": map[string]any{
+			"title":    "stored",
+			"elements": map[string]any{},
+			"layout":   map[string]any{"kind": "TabsLayout"},
+		},
+	}}
+
+	tests := []struct {
+		name           string
+		query          *dashboards.GetDashboardQuery
+		first          *unstructured.Unstructured
+		second         *unstructured.Unstructured
+		wantVersions   []string
+		wantAPIVersion string
+		wantTitle      string
+	}{
+		{
+			name:           "flag off keeps the converted payload",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1},
+			first:          converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
+			wantVersions:   []string{""},
+			wantAPIVersion: "v0alpha1",
+			wantTitle:      "converted",
+		},
+		{
+			name:           "flag on re-reads a dashboard stored in another version",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first:          converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
+			second:         stored,
+			wantVersions:   []string{"", "v2beta1"},
+			wantAPIVersion: "v2beta1",
+			wantTitle:      "stored",
+		},
+		{
+			name:           "flag on without conversion status reads once",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first:          converted("v0alpha1", nil),
+			wantVersions:   []string{""},
+			wantAPIVersion: "v0alpha1",
+			wantTitle:      "converted",
+		},
+		{
+			name:           "flag on with matching stored version reads once",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first:          converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v0alpha1"}),
+			wantVersions:   []string{""},
+			wantAPIVersion: "v0alpha1",
+			wantTitle:      "converted",
+		},
+		{
+			name:           "flag on with a preferred version reloads from that read's stored version",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sGetAPIVersion: "v1beta1", K8sUseStoredAPIVersion: true},
+			first:          converted("v1beta1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
+			second:         stored,
+			wantVersions:   []string{"v1beta1", "v2beta1"},
+			wantAPIVersion: "v2beta1",
+			wantTitle:      "stored",
+		},
+		{
+			// The fallback client answers a failed stored-version read with the default version, so the
+			// service sees a converted payload again and degrades to it instead of failing.
+			name:           "flag on degrades to the converted payload when the stored version read falls back",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first:          converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
+			second:         converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
+			wantVersions:   []string{"", "v2beta1"},
+			wantAPIVersion: "v0alpha1",
+			wantTitle:      "converted",
+		},
+		{
+			name:  "flag on with failed conversion keeps the existing stored payload fallback",
+			query: &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first: converted("v0alpha1", map[string]any{
+				"failed":        true,
+				"storedVersion": "v2beta1",
+				"error":         "unsupported layout",
+				"source":        map[string]any{"title": "source"},
+			}),
+			wantVersions:   []string{""},
+			wantAPIVersion: "v2beta1",
+			wantTitle:      "source",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			k8sCliMock := new(client.MockK8sHandler)
+			handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
+			service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+
+			k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).Return(tt.first, nil).Once()
+			if tt.second != nil {
+				k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).Return(tt.second, nil).Once()
+			}
+			k8sCliMock.On("GetUsersFromMeta", mock.Anything, mock.Anything).Return(map[string]*user.User{}, nil)
+
+			dashboard, err := service.GetDashboard(ctx, tt.query)
+			require.NoError(t, err)
+			require.NotNil(t, dashboard)
+
+			assert.Equal(t, tt.wantVersions, handler.versions)
+			assert.Equal(t, tt.wantAPIVersion, dashboard.APIVersion)
+			assert.Equal(t, tt.wantTitle, dashboard.Data.Get("title").MustString())
+			k8sCliMock.AssertExpectations(t)
+		})
+	}
+
+	t.Run("flag on maps a not found stored version read to ErrDashboardNotFound", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+
+		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).
+			Return(converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}), nil).Once()
+		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).
+			Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, uid)).Once()
+
+		_, err := service.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true})
+		require.ErrorIs(t, err, dashboards.ErrDashboardNotFound)
+		k8sCliMock.AssertExpectations(t)
+	})
+
+	t.Run("flag on wraps the error from the stored version read", func(t *testing.T) {
+		k8sCliMock := new(client.MockK8sHandler)
+		handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+
+		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).
+			Return(converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v2beta1"}), nil).Once()
+		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).
+			Return(nil, errors.New("boom")).Once()
+
+		_, err := service.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true})
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "boom")
+		assert.NotErrorIs(t, err, dashboards.ErrDashboardNotFound)
+		assert.Equal(t, []string{"", "v2beta1"}, handler.versions)
+		k8sCliMock.AssertExpectations(t)
+	})
+}
