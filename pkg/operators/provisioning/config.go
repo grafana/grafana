@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
@@ -36,7 +37,9 @@ import (
 	gitrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
 	githubrepo "github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/local"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
@@ -65,6 +68,7 @@ type ControllerConfig struct {
 	tlsConfig             *rest.TLSClientConfig
 	decryptService        decrypt.DecryptService
 	registry              prometheus.Registerer
+	relistProjection      *informer.RelistProjectionMetrics
 	repositoryFactory     repository.Factory
 	repositoryExtras      []repository.Extra
 	RepositoryExtrasFunc  func() ([]repository.Extra, error)
@@ -440,6 +444,42 @@ func (c *ControllerConfig) Registry() prometheus.Registerer {
 	c.registry = prometheus.NewPedanticRegistry()
 
 	return c.registry
+}
+
+// RelistProjectionMetrics returns the process's re-list projection metrics.
+// Memoized like Registry and Tracer above: the collectors register on first
+// call, so a second call that built them again would panic on the duplicate.
+// A process runs one operator today, so nothing calls this twice -- the
+// memoizing keeps it that way by construction rather than by that assumption.
+func (c *ControllerConfig) RelistProjectionMetrics() *informer.RelistProjectionMetrics {
+	if c.relistProjection == nil {
+		c.relistProjection = informer.NewRelistProjectionMetrics(c.Registry())
+	}
+
+	return c.relistProjection
+}
+
+// ProvisioningKeysLister returns a keys lister for one kind when [provisioning]
+// keys_only_relist is set, and nil otherwise. A nil lister keeps the full-object
+// re-list, so every operator reads the setting through here rather than
+// spelling it out again.
+//
+// Which projection a re-list actually got is reported by
+// grafana_provisioning_informer_relist_projection_total; the log line here says
+// only that it was asked for.
+func (c *ControllerConfig) ProvisioningKeysLister(logger logging.Logger, gvr schema.GroupVersionResource) (keysapi.Lister, error) {
+	if !c.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
+		return nil, nil
+	}
+
+	restClient, err := c.ProvisioningRESTClient()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create provisioning REST client: %w", err)
+	}
+
+	logger.Info("provisioning re-list will ask for keys only", "transport", "http", "resource", gvr.Resource)
+
+	return keysapi.NewHTTPLister(restClient, gvr), nil
 }
 
 func (c *ControllerConfig) Tracer() (tracing.Tracer, error) {
