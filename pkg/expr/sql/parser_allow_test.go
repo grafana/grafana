@@ -266,9 +266,19 @@ func TestAllowQuery(t *testing.T) {
 			err:  &ErrorWithCategory{},
 		},
 		{
-			name: "blocked: @user_variable",
-			q:    `SELECT @myvar FROM a`,
-			err:  &ErrorWithCategory{},
+			name: "allowed: column with @ character (e.g. elasticsearch @timestamp)",
+			q:    "SELECT `@timestamp` FROM a",
+			err:  nil,
+		},
+		{
+			name: "allowed: qualified column with @ character",
+			q:    "SELECT a.`@timestamp` FROM a",
+			err:  nil,
+		},
+		{
+			name: "allowed: column with nested @ characters",
+			q:    "SELECT `@timestamp.end_time.@end` FROM a",
+			err:  nil,
 		},
 	}
 	for _, tc := range testCases {
