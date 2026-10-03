@@ -74,7 +74,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = field.config.custom?.filterable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
-  const headerTooltip = field.config.custom?.headerTooltip;
+  const headerTooltip = field.config.custom?.headerTooltip ?? field.config.description;
 
   const filterKey = typeof parentIndex === 'number' ? `${column.key}-${parentIndex}` : column.key;
   const hasActiveFilter = filterable && filter[filterKey]?.filtered != null;
