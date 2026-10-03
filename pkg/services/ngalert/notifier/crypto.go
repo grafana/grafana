@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -176,7 +177,21 @@ func (c *alertmanagerCrypto) Encrypt(ctx context.Context, payload []byte, opt se
 }
 
 func (c *alertmanagerCrypto) Decrypt(ctx context.Context, payload []byte) ([]byte, error) {
-	return c.secrets.Decrypt(ctx, payload)
+	decrypted, err := c.secrets.Decrypt(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedValue := string(decrypted)
+	if strings.HasPrefix(decryptedValue, "$__env{") || strings.HasPrefix(decryptedValue, "$__file{") {
+		resolved, err := setting.ExpandVar(decryptedValue)
+		if err != nil {
+			return nil, err
+		}
+		return []byte(resolved), nil
+	}
+
+	return decrypted, nil
 }
 
 type ExtraConfigsCrypto struct {
@@ -231,6 +246,7 @@ func (c *ExtraConfigsCrypto) DecryptExtraConfigs(ctx context.Context, config *v1
 }
 
 // DecryptIntegrationSettings returns a function to decrypt integration settings.
+// Secret references are resolved by the Alertmanager crypto layer only when the integration is used for notification.
 func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.DecryptFn {
 	return func(value string) (string, error) {
 		decoded, err := base64.StdEncoding.DecodeString(value)
@@ -241,6 +257,7 @@ func DecryptIntegrationSettings(ctx context.Context, ss secretService) models.De
 		if err != nil {
 			return "", err
 		}
+
 		return string(decrypted), nil
 	}
 }
