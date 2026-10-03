@@ -6,10 +6,13 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -39,6 +42,66 @@ func TestSubQueryConvertConnect(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rr.Code)
 	require.Contains(t, rr.Body.String(), convertedReq)
+}
+
+type conversionContextFunc func(context.Context, *backend.DataSourceInstanceSettings) (backend.PluginContext, error)
+
+func (f conversionContextFunc) PluginContextForDataSource(ctx context.Context, settings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+	return f(ctx, settings)
+}
+
+func TestConvertQueryDataRequestDatasourceReferences(t *testing.T) {
+	const first = `{"refId":"A","datasource":{"type":"prometheus","uid":"ds"}}`
+	const second = `{"refId":"B","datasource":{"type":"prometheus","uid":"ds"}}`
+	for _, tc := range []struct {
+		name    string
+		queries string
+		valid   bool
+	}{
+		{name: "same datasource", queries: first + "," + second, valid: true},
+		{name: "mixed types", queries: first + "," + strings.ReplaceAll(second, "prometheus", "loki")},
+		{name: "mixed UIDs", queries: first + "," + strings.ReplaceAll(second, `"uid":"ds"`, `"uid":"other"`)},
+		{name: "missing later reference", queries: first + `,{"refId":"B"}`},
+		{name: "missing first reference", queries: `{"refId":"A"},` + second},
+		{name: "empty queries"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			contextCalls, conversionCalls := 0, 0
+			provider := conversionContextFunc(func(_ context.Context, settings *backend.DataSourceInstanceSettings) (backend.PluginContext, error) {
+				contextCalls++
+				require.Equal(t, "prometheus", settings.Type)
+				require.Equal(t, "ds", settings.UID)
+				return backend.PluginContext{
+					DataSourceInstanceSettings: settings,
+					GrafanaConfig:              config.NewGrafanaCfg(map[string]string{}),
+				}, nil
+			})
+			body := `{"queries":[` + tc.queries + `]}`
+			client := httpConversionFunc(func(_ context.Context, req *backend.ConversionRequest) (*backend.ConversionResponse, error) {
+				conversionCalls++
+				require.Len(t, req.Objects, 1)
+				require.JSONEq(t, body, string(req.Objects[0].Raw))
+				return &backend.ConversionResponse{Objects: []backend.RawObject{
+					{Raw: []byte(first), ContentType: "application/json"},
+					{Raw: []byte(second), ContentType: "application/json"},
+				}}, nil
+			})
+			req := httptest.NewRequest(http.MethodPost, "/queryconvert", strings.NewReader(body))
+			req.Header.Set("Content-Type", "application/json")
+			result, err := convertQueryDataRequest(req.Context(), req, client, provider)
+			if tc.valid {
+				require.NoError(t, err)
+				require.Len(t, result.Queries, 2)
+				require.Equal(t, 1, contextCalls)
+				require.Equal(t, 1, conversionCalls)
+			} else {
+				require.True(t, apierrors.IsBadRequest(err), "%v", err)
+				require.Nil(t, result)
+				require.Zero(t, contextCalls)
+				require.Zero(t, conversionCalls)
+			}
+		})
+	}
 }
 
 type mockConvertClient struct {

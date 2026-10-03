@@ -4,16 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	openapi "k8s.io/kube-openapi/pkg/common"
@@ -27,7 +24,6 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -64,6 +60,7 @@ type DataSourceAPIBuilder struct {
 	client                 PluginClient // will only ever be called with the same plugin id!
 	datasources            PluginDatasourceProvider
 	contextProvider        PluginContextWrapper
+	handlers               *HTTPHandlers
 	decrypter              decrypt.DecryptService // when not reading legacy
 	accessClient           authlib.AccessClient   // MT+ST
 	schemas                map[string]*pluginschema.PluginSchema
@@ -193,8 +190,6 @@ func NewDataSourceAPIBuilder(
 	dataSourceRequestValidator validations.DataSourceRequestValidator,
 	proxyDeps *ProxyDependencies,
 ) (*DataSourceAPIBuilder, error) {
-	registerSubresourceMetrics(prometheus.DefaultRegisterer)
-
 	builder := &DataSourceAPIBuilder{
 		datasourceResourceInfo:     datasourceV0.DataSourceResourceInfo.WithGroupAndShortName(groupName, plugin.ID),
 		pluginJSON:                 plugin,
@@ -207,17 +202,8 @@ func NewDataSourceAPIBuilder(
 		dataSourceRequestValidator: dataSourceRequestValidator,
 		proxyDeps:                  proxyDeps,
 	}
+	builder.initHTTPHandlers()
 	return builder, nil
-}
-
-// validateDataSourceRequest runs the configured request validator against the
-// datasource URL and jsonData. It is used by the proxy and health subresources
-// to mirror the legacy HTTP API, which rejects requests the validator denies.
-func (b *DataSourceAPIBuilder) validateDataSourceRequest(dsURL string, jsonData map[string]any, req *http.Request) error {
-	if b.dataSourceRequestValidator == nil {
-		return nil
-	}
-	return b.dataSourceRequestValidator.Validate(dsURL, jsonData, req)
 }
 
 func (b *DataSourceAPIBuilder) GetGroupVersion() schema.GroupVersion {
@@ -383,37 +369,13 @@ func (b *DataSourceAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOp
 }
 
 func (b *DataSourceAPIBuilder) getPluginContext(ctx context.Context, uid string) (backend.PluginContext, error) {
-	ctx, span := tracing.Start(ctx, "datasource.getPluginContext",
-		attribute.String("namespace", request.NamespaceValue(ctx)),
-		attribute.String("plugin_id", b.pluginJSON.ID),
-		attribute.String("datasource_uid", uid),
-	)
-	defer span.End()
-
-	getInstanceCtx, getInstanceSpan := tracing.Start(ctx, "datasource.getPluginContext.getInstanceSettings")
-	var err error
-	var instance *backend.DataSourceInstanceSettings
+	var load InstanceSettingsLoader
 	if b.store != nil && b.decrypter != nil {
-		// Load from storage + decrypter (respecting dual write settings)
-		instance, err = b.getInstanceSettings(getInstanceCtx, uid)
+		load = b.getInstanceSettings
 	} else {
-		// This is backed by the datasources abstraction, NOT storage
-		instance, err = b.datasources.GetInstanceSettings(getInstanceCtx, uid)
+		load = b.datasources.GetInstanceSettings
 	}
-	getInstanceSpan.End()
-	if err != nil {
-		err = tracing.Error(span, err)
-		return backend.PluginContext{}, err
-	}
-
-	buildContextCtx, buildContextSpan := tracing.Start(ctx, "datasource.getPluginContext.buildPluginContext")
-	pluginCtx, err := b.contextProvider.PluginContextForDataSource(buildContextCtx, instance)
-	buildContextSpan.End()
-	if err != nil {
-		err = tracing.Error(span, err)
-		return backend.PluginContext{}, err
-	}
-	return pluginCtx, nil
+	return ResolvePluginContext(ctx, b.pluginJSON.ID, uid, load, b.contextProvider)
 }
 
 func (b *DataSourceAPIBuilder) GetOpenAPIDefinitions() openapi.GetOpenAPIDefinitions {
