@@ -6,7 +6,7 @@ import {
   FieldType,
   getDefaultTimeRange,
 } from '@grafana/data';
-import { config, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
@@ -2262,42 +2262,17 @@ describe('validateDashboardSchemaV2', () => {
 });
 
 describe('normalizeDataSourceRef', () => {
-  let originalSrv: DataSourceSrv | undefined;
-  const getInstanceSettings = jest.fn(() => ({ uid: 'prom-uid', type: 'prometheus', apiVersion: 'v1' }));
-
-  beforeAll(() => {
-    try {
-      originalSrv = jest.requireActual('@grafana/runtime').getDataSourceSrv();
-    } catch {
-      originalSrv = undefined;
-    }
-    setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
-  });
-
-  afterAll(() => {
-    setDataSourceSrv(originalSrv as DataSourceSrv);
-  });
-
   it('passes through existing DataSourceRef and nullish inputs unchanged', () => {
     const ref = { uid: 'abc', type: 'prometheus' };
     expect(normalizeDataSourceRef(ref)).toBe(ref);
 
     expect(normalizeDataSourceRef(undefined)).toBeUndefined();
     expect(normalizeDataSourceRef(null)).toBeUndefined();
+    expect(normalizeDataSourceRef({})).toBeUndefined();
   });
 
-  it('resolves a string datasource into a DataSourceRef', () => {
-    expect(normalizeDataSourceRef('prometheus')).toEqual({
-      uid: 'prom-uid',
-      type: 'prometheus',
-      apiVersion: 'v1',
-    });
-
-    // Falls back to a UID-only ref when the datasource is unknown.
-    getInstanceSettings.mockReturnValueOnce(undefined as never);
+  it('turns a string datasource into a UID-only ref', () => {
     expect(normalizeDataSourceRef('nonexistent-ds')).toEqual({ uid: 'nonexistent-ds' });
-
-    // Template variables short-circuit and never call getInstanceSettings.
     expect(normalizeDataSourceRef('$datasource')).toEqual({ uid: '$datasource' });
     expect(normalizeDataSourceRef('${datasource}')).toEqual({ uid: '${datasource}' });
   });

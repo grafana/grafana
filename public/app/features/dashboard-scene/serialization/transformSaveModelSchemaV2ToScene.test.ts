@@ -1,6 +1,9 @@
+import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
+import { type DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   behaviors,
   ConstantVariable,
@@ -83,11 +86,9 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   apiVersion: 'v2',
 };
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    getInstanceSettings: jest.fn(),
-  }),
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('transformSaveModelSchemaV2ToScene', () => {
@@ -467,6 +468,20 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('adhoc variables', () => {
+    it('should resolve supportsMultiValueOperators from the datasource settings', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const dashboard = cloneDeep(defaultDashboard);
+      const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboard);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      expect(getDataSourceInstanceSettings).toHaveBeenCalledWith({ type: adhocVar.group });
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
+    });
+
     it('should convert empty defaultKeys array to undefined', () => {
       const dashboard = cloneDeep(defaultDashboard);
       const adhocVar = dashboard.spec.variables.find((v) => v.kind === 'AdhocVariable') as AdhocVariableKind;
@@ -613,6 +628,27 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
       const dataLayers = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayers.state.annotationLayers).toHaveLength(0);
+    });
+
+    it('should resolve supportsMultiValueOperators for adhoc variables', async () => {
+      jest.mocked(getDataSourceInstanceSettings).mockResolvedValueOnce({
+        meta: { multiValueFilterOperators: true },
+      } as DataSourceInstanceSettings);
+      const snapshot: DashboardWithAccessInfo<DashboardV2Spec> = {
+        ...defaultDashboard,
+        metadata: {
+          ...defaultDashboard.metadata,
+          annotations: {
+            ...defaultDashboard.metadata.annotations,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(snapshot);
+
+      const adhocVariable = scene.state.$variables?.getByName('adhocVar') as AdHocFiltersVariable;
+      await waitFor(() => expect(adhocVariable.state.supportsMultiValueOperators).toBe(true));
     });
 
     it('should convert empty defaultKeys array to undefined for adhoc variables', () => {

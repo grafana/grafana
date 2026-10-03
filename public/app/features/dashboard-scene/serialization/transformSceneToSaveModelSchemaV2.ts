@@ -1,7 +1,7 @@
 import { omit } from 'lodash';
 
-import { type AnnotationQuery, getDataSourceRef, isEmptyObject, type TimeRange } from '@grafana/data';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { type AnnotationQuery, isEmptyObject, type TimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import {
   behaviors,
@@ -1048,13 +1048,10 @@ export function normalizeDataSourceRef(ds: DataSourceRef | string | null | undef
     return undefined;
   }
 
+  // Known datasource names are resolved to refs when a v1 dashboard is loaded (see resolveLegacyDatasourceNames),
+  // so a string that is left is a template variable or an unknown datasource.
   if (typeof ds === 'string') {
-    if (ds.startsWith('$')) {
-      return { uid: ds };
-    }
-
-    const instance = getDataSourceSrv().getInstanceSettings(ds);
-    return instance ? getDataSourceRef(instance) : { uid: ds };
+    return { uid: ds };
   }
 
   return Object.keys(ds).length === 0 ? undefined : ds;

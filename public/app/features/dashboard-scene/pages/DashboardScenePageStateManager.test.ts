@@ -122,6 +122,11 @@ jest.mock('../utils/predefinedVariables', () => ({
   },
 }));
 
+const mockResolveLegacyDatasourceNames = jest.fn();
+jest.mock('../serialization/resolveLegacyDatasourceNames', () => ({
+  resolveLegacyDatasourceNames: (...args: unknown[]) => mockResolveLegacyDatasourceNames(...args),
+}));
+
 const createTestStore = () =>
   configureStore({
     reducer: {
@@ -258,6 +263,16 @@ describe('DashboardScenePageStateManager v1', () => {
       // should use cache second time
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
       expect(loadDashboardMock.mock.calls.length).toBe(1);
+    });
+
+    it('should resolve legacy datasource names before building the scene', async () => {
+      const dashboard = { uid: 'fake-dash', editable: true };
+      setupLoadDashboardMock({ dashboard, meta: {} });
+
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(mockResolveLegacyDatasourceNames).toHaveBeenCalledWith(expect.objectContaining(dashboard));
     });
 
     it('should not fetch predefined variables for v1 dashboards', async () => {
@@ -2169,6 +2184,23 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
       expect(getDashSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should resolve legacy datasource names for v1 dashboards only', async () => {
+      const dashboard = { uid: 'fake-dash', editable: true };
+      setupLoadDashboardMock({ dashboard, meta: {} });
+
+      const v1Manager = new UnifiedDashboardScenePageStateManager({});
+      await v1Manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(mockResolveLegacyDatasourceNames).toHaveBeenCalledWith(expect.objectContaining(dashboard));
+
+      mockResolveLegacyDatasourceNames.mockClear();
+      setupV1FailureV2Success();
+
+      const v2Manager = new UnifiedDashboardScenePageStateManager({});
+      await v2Manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      expect(v2Manager['activeManager']).toBeInstanceOf(DashboardScenePageStateManagerV2);
+      expect(mockResolveLegacyDatasourceNames).not.toHaveBeenCalled();
     });
 
     it('should keep v2 manager state in sync after loadDashboard', async () => {
