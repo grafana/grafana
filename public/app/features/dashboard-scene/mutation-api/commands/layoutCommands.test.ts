@@ -812,6 +812,7 @@ describe('Layout mutation commands', () => {
         state,
         serializer: mockSerializer({ 'elem-a': 1, 'elem-b': 2, 'elem-c': 3 }),
         canEditDashboard: jest.fn(() => true),
+        isPlanning: jest.fn(() => false),
         onEnterEditMode: jest.fn(() => {
           state.isEditing = true;
         }),
