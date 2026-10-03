@@ -46,17 +46,22 @@ jest.mock('@grafana/ui/unstable', () => ({
     value,
     onChange,
     basicSetup,
+    htmlAutocompleteEventHandlers,
     'aria-label': ariaLabel,
   }: {
     value: string;
     onChange: (value: string) => void;
     basicSetup?: { lineNumbers?: boolean };
+    htmlAutocompleteEventHandlers?: boolean;
     'aria-label'?: string;
   }) => (
     <textarea
       aria-label={ariaLabel}
       value={value}
       data-line-numbers={String(Boolean(basicSetup?.lineNumbers))}
+      data-html-autocomplete-event-handlers={
+        htmlAutocompleteEventHandlers !== undefined ? String(htmlAutocompleteEventHandlers) : undefined
+      }
       onChange={(e) => onChange(e.target.value)}
     />
   ),
@@ -224,6 +229,16 @@ describe('TextNGEditor', () => {
 
       const preview = screen.getByTestId(PREVIEW_TEST_ID);
       expect(within(preview).getByRole('textbox')).toHaveAttribute('data-line-numbers', 'true');
+    });
+
+    it('disables HTML event handler autocomplete in CodeMirrorEditor', async () => {
+      setup('content', TextMode.HTML);
+      await enterWriteMode();
+
+      expect(screen.getByRole('textbox', { name: 'Text content' })).toHaveAttribute(
+        'data-html-autocomplete-event-handlers',
+        'false'
+      );
     });
 
     it('interpolates variables in the preview but keeps the raw template in the editor', async () => {

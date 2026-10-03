@@ -270,6 +270,20 @@ describe('CodeMirror CodeEditor', () => {
     await waitFor(() => expect(loadLanguageExtensionMock).toHaveBeenCalledWith('sql', { sqlDialect: 'mySql' }));
   });
 
+  it('forwards htmlAutocompleteEventHandlers to the language loader', async () => {
+    const languageExtension = EditorState.languageData.of(() => [{ autocomplete: jest.fn() }]);
+    loadLanguageExtensionMock.mockResolvedValue(languageExtension);
+
+    render(<CodeEditor value="" onChange={jest.fn()} language="html" htmlAutocompleteEventHandlers={false} />);
+
+    await waitFor(() =>
+      expect(loadLanguageExtensionMock).toHaveBeenCalledWith('html', {
+        sqlDialect: undefined,
+        htmlAutocompleteEventHandlers: false,
+      })
+    );
+  });
+
   it('reports language extension load failures and shows a warning while keeping the editor rendered', async () => {
     const error = new Error('Failed to import SQL support');
     loadLanguageExtensionMock.mockRejectedValue(error);
