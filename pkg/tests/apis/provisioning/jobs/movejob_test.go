@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -132,6 +133,9 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 	})
 
 	t.Run("move non-existent uid", func(t *testing.T) {
+		// A move naming only a resource that doesn't exist is rejected at
+		// authorization time (nothing to authorize), rather than being accepted
+		// and failing later during processing.
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -146,9 +150,16 @@ func TestIntegrationProvisioning_MoveJob(t *testing.T) {
 			},
 		}
 
-		job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-		state := common.MustNestedString(job.Object, "status", "state")
-		require.Equal(t, "error", state, "move job should have failed due to non-existent uid")
+		result := helper.AdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(common.AsJSON(spec)).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context())
+
+		helper.RequireApiErrorStatus(result.Error(), metav1.StatusReasonBadRequest, http.StatusBadRequest)
 	})
 
 	t.Run("move without target path", func(t *testing.T) {

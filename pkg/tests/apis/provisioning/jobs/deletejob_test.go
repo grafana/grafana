@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -285,8 +284,10 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 		})
 
 		t.Run("delete non-existent resource by reference", func(t *testing.T) {
-			// Create delete job for non-existent resource
-			spec := provisioning.JobSpec{
+			// A delete naming only a resource that doesn't exist is rejected at
+			// authorization time (nothing to authorize), rather than being
+			// accepted and warning later during processing.
+			body := common.AsJSON(provisioning.JobSpec{
 				Action: provisioning.JobActionDelete,
 				Delete: &provisioning.DeleteJobOptions{
 					Resources: []provisioning.ResourceRef{
@@ -297,11 +298,18 @@ func TestIntegrationProvisioning_DeleteJob(t *testing.T) {
 						},
 					},
 				},
-			}
+			})
 
-			job := helper.TriggerJobAndWaitForComplete(t, repo, spec)
-			state := common.MustNestedString(job.Object, "status", "state")
-			assert.Equal(t, string(provisioning.JobStateWarning), state, "delete job should have warned due to non-existent file")
+			result := helper.AdminREST.Post().
+				Namespace("default").
+				Resource("repositories").
+				Name(repo).
+				SubResource("jobs").
+				Body(body).
+				SetHeader("Content-Type", "application/json").
+				Do(t.Context())
+
+			require.Error(t, result.Error(), "delete job naming only a non-existent resource should be rejected at creation")
 		})
 	})
 
