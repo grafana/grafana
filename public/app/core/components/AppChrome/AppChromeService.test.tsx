@@ -1,4 +1,5 @@
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { AppChromeService } from './AppChromeService';
 
@@ -10,6 +11,27 @@ jest.mock('@grafana/runtime', () => ({
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 describe('AppChromeService', () => {
+  it('does not read the location when session-storage redirection is disabled', () => {
+    const originalToggle = config.featureToggles.useSessionStorageForRedirection;
+    const originalSignedIn = contextSrv.user.isSignedIn;
+    config.featureToggles.useSessionStorageForRedirection = false;
+    contextSrv.user.isSignedIn = true;
+    const readLocation = jest.spyOn(locationService, 'getLocation').mockImplementation(() => {
+      throw new Error('Location is unavailable');
+    });
+    try {
+      const chrome = new AppChromeService();
+      const node = { id: 'explore', text: 'Explore' };
+      chrome.update({ sectionNav: { node, main: node } });
+      expect(chrome.state.getValue().sectionNav.node.id).toBe('explore');
+      expect(readLocation).not.toHaveBeenCalled();
+    } finally {
+      readLocation.mockRestore();
+      contextSrv.user.isSignedIn = originalSignedIn;
+      config.featureToggles.useSessionStorageForRedirection = originalToggle;
+    }
+  });
+
   it('Ignore state updates when sectionNav and pageNav have new instance but same text, url or active child', () => {
     const chromeService = new AppChromeService();
     let stateChanges = 0;

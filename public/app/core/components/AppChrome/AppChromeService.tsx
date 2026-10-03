@@ -5,6 +5,8 @@ import { useObservable } from '@grafana/data/unstable';
 import { t } from '@grafana/i18n';
 import { config, HistoryWrapper, locationService, reportInteraction } from '@grafana/runtime';
 import { appEvents } from 'app/core/app_events';
+import { contextSrv } from 'app/core/services/context_srv';
+import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { isShallowEqual } from 'app/core/utils/isShallowEqual';
 import { KioskMode } from 'app/types/dashboard';
 
@@ -65,6 +67,14 @@ export class AppChromeService {
   }
 
   public update(update: Partial<AppChromeState>) {
+    // Match the legacy redirection flag used by handleRedirectTo and LoginCtrl.
+    if (config.featureToggles.useSessionStorageForRedirection && update.sectionNav && contextSrv.user.isSignedIn) {
+      const pathname = locationService.getLocation().pathname;
+      if (pathname !== '/login') {
+        rememberLoginSectionTitle(update.sectionNav.node, pathname);
+      }
+    }
+
     const current = this.state.getValue();
     const newState: AppChromeState = {
       ...current,
