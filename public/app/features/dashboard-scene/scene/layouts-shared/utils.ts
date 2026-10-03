@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 
-import { config } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';
 
