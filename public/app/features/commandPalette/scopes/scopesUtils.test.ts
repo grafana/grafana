@@ -240,6 +240,7 @@ describe('useScopeServicesState', () => {
         expanded: false,
         query: '',
       },
+      quickJumpGroups: [],
     } as ScopesSelectorServiceState,
     stateObservable: new Observable(),
   };
@@ -323,6 +324,7 @@ describe('useScopeServicesState', () => {
         expanded: true,
         query: 'test',
       },
+      quickJumpGroups: [],
     };
 
     (useScopesServices as jest.Mock).mockReturnValue({

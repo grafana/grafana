@@ -63,6 +63,7 @@ export const getNotFoundForFilterClear = () => screen.getByTestId(selectors.dash
 
 export const getTreeSearch = () => screen.getByTestId<HTMLInputElement>(selectors.tree.search);
 export const getTreeHeadline = () => screen.getByTestId(selectors.tree.headline);
+export const queryTreeHeadline = () => screen.queryByTestId(selectors.tree.headline);
 
 export const findResultApplicationsExpand = async () =>
   await screen.findByTestId(selectors.tree.expand('applications'));

@@ -44,6 +44,7 @@ import {
   expectResultEnvironmentsProdNotSelected,
   expectResultEnvironmentsProdSelected,
   expectScopesHeadline,
+  expectScopesHeadlineNotPresent,
   expectScopesSelectorValue,
 } from './utils/assertions';
 import { getDatasource, getInstanceSettings } from './utils/mocks';
@@ -334,12 +335,12 @@ describe('Tree', () => {
     });
   });
 
-  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
+  it('Should not show a headline for an unfiltered (non-search) list', async () => {
     await openSelector();
     await expandResultApplications();
     await expandResultApplicationsCloud();
     await waitFor(() => {
-      expectScopesHeadline('Recommended');
+      expectScopesHeadlineNotPresent();
     });
   });
 

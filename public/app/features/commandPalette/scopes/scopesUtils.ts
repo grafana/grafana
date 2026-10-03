@@ -23,6 +23,7 @@ const defaultState: ScopesSelectorServiceState = {
     expanded: false,
     query: '',
   },
+  quickJumpGroups: [],
 };
 
 export function useScopeServicesState() {

@@ -15831,10 +15831,15 @@
       "title": "Select scopes"
     },
     "tree": {
+      "breadcrumb": {
+        "back": "Back to top"
+      },
       "headline": {
         "noResults": "No results found for your query",
-        "recommended": "Recommended",
         "results": "Results"
+      },
+      "quick-jump": {
+        "aria-label": "Jump to {{title}}"
       },
       "search": "Search {{parentTitle}}"
     }

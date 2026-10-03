@@ -3,6 +3,7 @@ import { type ScopeNode } from '@grafana/data';
 import {
   closeNodes,
   expandNodes,
+  getExpandedPath,
   isNodeExpandable,
   isNodeSelectable,
   getPathOfNode,
@@ -93,6 +94,65 @@ describe('scopesTreeUtils', () => {
       };
 
       expect(() => expandNodes(tree, ['', 'nonexistent'])).toThrow('Node nonexistent not found in tree');
+    });
+  });
+
+  describe('getExpandedPath', () => {
+    it('should return an empty array when nothing is expanded', () => {
+      const tree: TreeNode = {
+        expanded: false,
+        scopeNodeId: '',
+        query: '',
+        children: {
+          child1: { expanded: false, scopeNodeId: 'child1', query: '' },
+        },
+      };
+
+      expect(getExpandedPath(tree)).toEqual([]);
+    });
+
+    it('should follow the single expanded branch down to its deepest expanded node', () => {
+      const tree: TreeNode = {
+        expanded: true,
+        scopeNodeId: '',
+        query: '',
+        children: {
+          child1: {
+            expanded: true,
+            scopeNodeId: 'child1',
+            query: '',
+            children: {
+              grandchild1: {
+                expanded: true,
+                scopeNodeId: 'grandchild1',
+                query: '',
+                children: {
+                  leaf1: { expanded: false, scopeNodeId: 'leaf1', query: '' },
+                },
+              },
+              grandchild2: { expanded: false, scopeNodeId: 'grandchild2', query: '' },
+            },
+          },
+          siblingOfChild1: { expanded: false, scopeNodeId: 'siblingOfChild1', query: '' },
+        },
+      };
+
+      const path = getExpandedPath(tree);
+
+      expect(path.map((n) => n.scopeNodeId)).toEqual(['child1', 'grandchild1']);
+    });
+
+    it('should stop at a node with no children', () => {
+      const tree: TreeNode = {
+        expanded: true,
+        scopeNodeId: '',
+        query: '',
+        children: {
+          child1: { expanded: true, scopeNodeId: 'child1', query: '' },
+        },
+      };
+
+      expect(getExpandedPath(tree).map((n) => n.scopeNodeId)).toEqual(['child1']);
     });
   });
 
