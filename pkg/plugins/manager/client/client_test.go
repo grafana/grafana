@@ -20,7 +20,7 @@ import (
 func TestQueryData(t *testing.T) {
 	t.Run("Empty registry should return not registered error", func(t *testing.T) {
 		registry := pluginfakes.NewFakePluginRegistry()
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 		_, err := client.QueryData(context.Background(), &backend.QueryDataRequest{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, plugins.ErrPluginNotRegistered)
@@ -80,7 +80,7 @@ func TestQueryData(t *testing.T) {
 				err := registry.Add(context.Background(), p)
 				require.NoError(t, err)
 
-				client := ProvideService(registry)
+				client := ProvideService(registry, false)
 				_, err = client.QueryData(context.Background(), &backend.QueryDataRequest{
 					PluginContext: backend.PluginContext{
 						PluginID: "grafana",
@@ -100,7 +100,7 @@ func TestQueryData(t *testing.T) {
 func TestCheckHealth(t *testing.T) {
 	t.Run("empty plugin registry should return plugin not registered error", func(t *testing.T) {
 		registry := pluginfakes.NewFakePluginRegistry()
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 		_, err := client.CheckHealth(context.Background(), &backend.CheckHealthRequest{})
 		require.Error(t, err)
 		require.ErrorIs(t, err, plugins.ErrPluginNotRegistered)
@@ -146,7 +146,7 @@ func TestCheckHealth(t *testing.T) {
 				err := registry.Add(context.Background(), p)
 				require.NoError(t, err)
 
-				client := ProvideService(registry)
+				client := ProvideService(registry, false)
 				_, err = client.CheckHealth(context.Background(), &backend.CheckHealthRequest{
 					PluginContext: backend.PluginContext{
 						PluginID: "grafana",
@@ -210,7 +210,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
@@ -224,6 +224,86 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, http.StatusOK, res.Status)
 		require.Equal(t, []byte(backendResponse), res.Body)
 		require.Equal(t, "should not be deleted", actualReq.Headers["X-Custom"][0])
+	})
+
+	t.Run("Should strip Accept-Encoding when feature is enabled", func(t *testing.T) {
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+			Headers: map[string][]string{
+				"Accept-Encoding": {"gzip, br"},
+				"X-Custom":        {"should remain"},
+			},
+		}
+
+		var actualReq *backend.CallResourceRequest
+
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				actualReq = req
+				return nil
+			},
+		})
+
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(
+			registry,
+			true,
+		)
+
+		err = client.CallResource(
+			context.Background(),
+			req,
+			backend.CallResourceResponseSenderFunc(func(*backend.CallResourceResponse) error {
+				return nil
+			}),
+		)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualReq)
+		require.Empty(t, actualReq.Headers["Accept-Encoding"])
+		require.Equal(t, "should remain", actualReq.Headers["X-Custom"][0])
+	})
+
+	t.Run("Should preserve Accept-Encoding when feature is disabled", func(t *testing.T) {
+		req := &backend.CallResourceRequest{
+			PluginContext: backend.PluginContext{
+				PluginID: "pid",
+			},
+			Headers: map[string][]string{
+				"Accept-Encoding": {"gzip, br"},
+				"X-Custom":        {"should remain"},
+			},
+		}
+
+		var actualReq *backend.CallResourceRequest
+
+		p.RegisterClient(&fakePluginBackend{
+			crr: func(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+				actualReq = req
+				return nil
+			},
+		})
+
+		err := registry.Add(context.Background(), p)
+		require.NoError(t, err)
+
+		client := ProvideService(registry, false)
+
+		err = client.CallResource(
+			context.Background(),
+			req,
+			backend.CallResourceResponseSenderFunc(func(*backend.CallResourceResponse) error {
+				return nil
+			}),
+		)
+		require.NoError(t, err)
+
+		require.NotNil(t, actualReq)
+		require.Equal(t, []string{"gzip, br"}, actualReq.Headers["Accept-Encoding"])
 	})
 
 	t.Run("Should strip request and response headers present in Connection", func(t *testing.T) {
@@ -273,7 +353,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
@@ -319,7 +399,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
@@ -361,7 +441,7 @@ func TestCallResource(t *testing.T) {
 		err := registry.Add(context.Background(), p)
 		require.NoError(t, err)
 
-		client := ProvideService(registry)
+		client := ProvideService(registry, false)
 
 		err = client.CallResource(context.Background(), req, sender)
 		require.NoError(t, err)
@@ -429,7 +509,7 @@ func TestCallResource(t *testing.T) {
 				err := registry.Add(context.Background(), p)
 				require.NoError(t, err)
 
-				client := ProvideService(registry)
+				client := ProvideService(registry, false)
 
 				err = client.CallResource(context.Background(), req, sender)
 				require.NoError(t, err)
@@ -483,7 +563,7 @@ func TestCallResourceErrors(t *testing.T) {
 			})
 			require.NoError(t, registry.Add(context.Background(), p))
 
-			client := ProvideService(registry)
+			client := ProvideService(registry, false)
 			err := client.CallResource(
 				context.Background(),
 				&backend.CallResourceRequest{PluginContext: backend.PluginContext{PluginID: "pid"}},
