@@ -7,6 +7,7 @@ import (
 
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -21,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -820,6 +823,46 @@ func TestRBACSync_translateK8sPermissions(t *testing.T) {
 			assert.ElementsMatch(t, tt.expectedPerms, perms)
 		})
 	}
+}
+
+func TestRBACSync_SyncPermissionsHook_ResolvesUIDSubjectFromUserSync(t *testing.T) {
+	// End-to-end for the reported permissions.sync.forbidden 401: a token subject
+	// arrives as a UID. FetchSyncedUserHook resolves it and normalizes id.ID to the
+	// numeric internal ID, so permissions.sync resolves it instead of failing.
+	userSrv := usertest.NewMockService(t)
+	userSrv.On("GetByUID", mock.Anything, &user.GetUserByUIDQuery{UID: "u000000002"}).
+		Return(&user.User{ID: 2, UID: "u000000002"}, nil).Once()
+	userSrv.On("GetSignedInUser", mock.Anything, &user.GetSignedInUserQuery{UserID: 2, OrgID: 1}).
+		Return(&user.SignedInUser{UserID: 2, UserUID: "u000000002", OrgID: 1}, nil).Once()
+
+	us := &UserSync{userService: userSrv, tracer: tracing.InitializeTracerForTest()}
+
+	id := &authn.Identity{
+		ID:           "u000000002",
+		Type:         claims.TypeUser,
+		OrgID:        1,
+		ClientParams: authn.ClientParams{FetchSyncedUser: true, SyncPermissions: true},
+	}
+	require.NoError(t, us.FetchSyncedUserHook(context.Background(), id, &authn.Request{OrgID: 1}))
+
+	var gotSubject string
+	rs := &RBACSync{
+		ac: &acmock.Mock{
+			GetUserPermissionsFunc: func(_ context.Context, siu identity.Requester, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
+				gotSubject = siu.GetID()
+				return []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:1"}}, nil
+			},
+		},
+		log:          log.New("permissions.sync"),
+		tracer:       tracing.InitializeTracerForTest(),
+		permRegistry: permreg.ProvidePermissionRegistry(t),
+		mapper:       rbac.NewMapperRegistry(),
+		cfg:          setting.NewCfg(),
+	}
+
+	require.NoError(t, rs.SyncPermissionsHook(context.Background(), id, &authn.Request{}))
+	require.Equal(t, "user:2", gotSubject)
+	require.NotEmpty(t, id.Permissions[1])
 }
 
 func setupTestEnv(t *testing.T) *RBACSync {
