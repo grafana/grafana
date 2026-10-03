@@ -1,37 +1,46 @@
 import { useMemo, type CSSProperties } from 'react';
 
-import {
-  type PanelData,
-  type DataFrame,
-  type GrafanaTheme2,
-  FieldColorModeId,
-  getFrameDisplayName,
-  fieldColorModeRegistry,
-} from '@grafana/data';
-import { SceneDataNode, type VizConfig, type VizPanel } from '@grafana/scenes';
-import { VizPanel as VizPanelReact } from '@grafana/scenes-react';
-import { useTheme2, Spinner, type ElementSelectionContextState, ElementSelectionContext } from '@grafana/ui';
+import { type DataFrame, type GrafanaTheme2, type PanelData } from '@grafana/data';
+import { type VizConfig, type VizPanel } from '@grafana/scenes';
+import { useTheme2, type ElementSelectionContextState, ElementSelectionContext } from '@grafana/ui';
 
-import { bySeriesMode, getLabelFromMode } from './ViewPanelSidePane';
+import { createDataGroups, FanoutDataGroup } from './FanoutByData';
+import { createTimeWindowGroups, FanoutTimeWindowGroup } from './FanoutByTimeWindow';
+import { defaultWindowCount, getTimeWindowFromMode } from './ViewPanelSidePane';
+
+export type SplitGroup = DataSplitGroup | TimeWindowSplitGroup;
+
+/**
+ * Renders a slice of the data the panel has already fetched
+ */
+export interface DataSplitGroup {
+  type: 'data';
+  name: string;
+  frames: DataFrame[];
+}
+
+/**
+ * Re-runs the panel queries against a time range shifted back by one or more time windows
+ */
+export interface TimeWindowSplitGroup {
+  type: 'timeWindow';
+  name: string;
+  timeShift: string;
+  panel: VizPanel;
+}
 
 export function FanoutPanel({
   panel,
   panelDataIn,
   fanoutMode,
+  windowCount,
 }: {
   panel: VizPanel;
   panelDataIn: PanelData;
-  fanoutMode: string;
+  fanoutMode?: string;
+  windowCount?: number;
 }) {
   const theme = useTheme2();
-  const viz: VizConfig = {
-    pluginId: panel.state.pluginId,
-    pluginVersion: panel.state.pluginVersion ?? '0.0.0',
-    options: {
-      ...panel.state.options,
-    },
-    fieldConfig: panel.state.fieldConfig,
-  };
 
   const selectionContext: ElementSelectionContextState = useMemo(() => {
     return {
@@ -42,11 +51,22 @@ export function FanoutPanel({
     };
   }, []);
 
-  if (!panelDataIn) {
-    return <Spinner />;
-  }
+  /**
+   * Memoized as the time window groups clone the panel, which we do not want to do on every render
+   */
+  const groups = useMemo(
+    () => createFanoutGroups(panel, panelDataIn, fanoutMode, windowCount, theme),
+    [panel, panelDataIn, fanoutMode, windowCount, theme]
+  );
 
-  const groups = groupDataByMode(panel, panelDataIn, fanoutMode, theme);
+  const viz: VizConfig = {
+    pluginId: panel.state.pluginId,
+    pluginVersion: panel.state.pluginVersion ?? '0.0.0',
+    options: {
+      ...panel.state.options,
+    },
+    fieldConfig: panel.state.fieldConfig,
+  };
 
   const style: CSSProperties = {
     display: 'grid',
@@ -61,84 +81,30 @@ export function FanoutPanel({
   return (
     <ElementSelectionContext.Provider value={selectionContext}>
       <div style={style}>
-        {groups.map((group, index) => {
-          const dataNode = new SceneDataNode({
-            data: {
-              ...panelDataIn,
-              series: group.frames,
-            },
-          });
-          return <VizPanelReact key={index} title={group.name} viz={viz} dataProvider={dataNode} />;
-        })}
+        {groups.map((group, index) =>
+          group.type === 'timeWindow' ? (
+            <FanoutTimeWindowGroup key={index} group={group} viz={viz} />
+          ) : (
+            <FanoutDataGroup key={index} group={group} viz={viz} panelDataIn={panelDataIn} />
+          )
+        )}
       </div>
     </ElementSelectionContext.Provider>
   );
 }
 
-interface SplitGroup {
-  name: string;
-  frames: DataFrame[];
-}
+function createFanoutGroups(
+  panel: VizPanel,
+  data: PanelData,
+  mode: string | undefined,
+  windowCount: number | undefined,
+  theme: GrafanaTheme2
+): SplitGroup[] {
+  const timeWindow = mode ? getTimeWindowFromMode(mode) : undefined;
 
-function groupDataByMode(panel: VizPanel, data: PanelData, mode: string, theme: GrafanaTheme2): SplitGroup[] {
-  const fieldConfig = panel.state.fieldConfig.defaults;
-
-  if (mode === bySeriesMode) {
-    return data.series.map((frame, index) => {
-      const valueField = frame.fields.find((f) => f.type === 'number');
-      if (valueField) {
-        const mode =
-          fieldColorModeRegistry.getIfExists(valueField.config.color?.mode) ??
-          fieldColorModeRegistry.getIfExists(fieldConfig.color?.mode) ??
-          fieldColorModeRegistry.get(FieldColorModeId.PaletteClassic);
-
-        if (!mode.isByValue) {
-          valueField.state = { ...valueField.state, seriesIndex: index };
-          valueField.config = {
-            ...valueField.config,
-            color: {
-              mode: FieldColorModeId.Fixed,
-              fixedColor: mode.getCalculator(valueField, theme)(0, 0),
-            },
-          };
-        }
-      }
-
-      return {
-        name: getFrameDisplayName(frame, 0),
-        frames: [frame],
-      };
-    });
+  if (timeWindow) {
+    return createTimeWindowGroups(panel, data, timeWindow, windowCount ?? defaultWindowCount);
   }
 
-  const label = getLabelFromMode(mode);
-  return groupDataFramesByLabel(data, label);
-}
-
-export function groupDataFramesByLabel(data: PanelData, label: string): SplitGroup[] {
-  const groups: Record<string, DataFrame[]> = {};
-
-  for (const frame of data.series) {
-    const labelsField = frame.fields.find((f) => f.labels);
-    const labels = labelsField?.labels ?? {};
-
-    let groupKey = Object.entries(labels)
-      .filter(([key]) => key === label)
-      .map(([key, value]) => `${key}=${value}`)
-      .join(',');
-
-    if (!groupKey) {
-      groupKey = '__missing_label__';
-    }
-
-    if (!groups[groupKey]) {
-      groups[groupKey] = [];
-    }
-    groups[groupKey].push(frame);
-  }
-
-  return Object.entries(groups).map(([name, frames]) => ({
-    name,
-    frames,
-  }));
+  return createDataGroups(panel, data, mode, theme);
 }
