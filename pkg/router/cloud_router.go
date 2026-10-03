@@ -63,6 +63,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 	}
 
+	staticGroups, err := parseStaticGroups(section)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+	}
+
 	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
 	// endpoint), so it stays out of the cap_token gate below.
 	var pluginsTarget *pluginManifestsTarget
@@ -173,7 +178,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 	}
 
-	return newCloudLoader(clients, aggregateTargets, pluginsTarget, singleTenantFallback)
+	return newCloudLoader(clients, aggregateTargets, pluginsTarget, singleTenantFallback, staticGroups)
 }
 
 // embeddedManifestKey is the key component used for API groups sourced from
@@ -181,6 +186,12 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 // It has no ResourceVersion to track, so a constant marks it as "changes only
 // on redeploy" for the fingerprint in combineByName.
 const embeddedManifestKey = "embedded"
+
+// staticGroupManifestKey is the key component used for API groups sourced
+// from the static_groups ini fallback (see parseStaticGroups). Like
+// embeddedManifestKey, it has no ResourceVersion to track, since this source
+// only changes on a router config change/redeploy.
+const staticGroupManifestKey = "static-config"
 
 // cloudLoader is a RoutesLoader and a dskit service. It merges the configured
 // cloud sources (see Load for their priority).
@@ -193,6 +204,11 @@ type cloudLoader struct {
 	transports                 map[tlsCacheKey]*http.Transport
 	dialer                     *transport.DialHolder
 	coreGroupsWithoutManifests map[string]metav1.APIGroup
+
+	// staticGroups is the static_groups ini fallback: group/version metadata
+	// for a RouteBackend whose name has neither a live AppManifest CR nor a
+	// compiled-in manifest. See parseStaticGroups.
+	staticGroups map[string]metav1.APIGroup
 
 	// The informers wake the router through Watcher(), and once synced their
 	// caches replace listing from the remote apiserver on every Load. nil when
@@ -228,11 +244,12 @@ type apiGroupWithKey struct {
 	key   string
 }
 
-func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget, singleTenantFallback *singleTenantFallback) (*cloudLoader, error) {
+func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTarget, pluginsTarget *pluginManifestsTarget, singleTenantFallback *singleTenantFallback, staticGroups map[string]metav1.APIGroup) (*cloudLoader, error) {
 	l := &cloudLoader{
 		dirty:                      make(chan struct{}, 1),
 		transports:                 map[tlsCacheKey]*http.Transport{},
 		coreGroupsWithoutManifests: getAPIGroupsForCoreGroupsWithoutManifests(),
+		staticGroups:               staticGroups,
 		clients:                    clients,
 		aggregateTargets:           aggregateTargets,
 		pluginsTarget:              pluginsTarget,
@@ -717,6 +734,11 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 		if !ok {
 			if group, found := l.coreGroupsWithoutManifests[b.Name]; found {
 				m, ok = apiGroupWithKey{group: group, key: embeddedManifestKey}, true
+			}
+		}
+		if !ok {
+			if group, found := l.staticGroups[b.Name]; found {
+				m, ok = apiGroupWithKey{group: group, key: staticGroupManifestKey}, true
 			}
 		}
 		if ok {

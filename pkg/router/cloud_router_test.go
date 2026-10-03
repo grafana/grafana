@@ -640,3 +640,71 @@ func TestAPIGroupPreferredVersion(t *testing.T) {
 		require.Equal(t, "v1", group.PreferredVersion.Version)
 	})
 }
+
+// TestCombineByName_FallsBackToStaticGroups covers the third tier: a
+// RouteBackend whose name has no AppManifest CR (manifestMap) and no
+// compiled-in manifest (coreGroupsWithoutManifests) still gets wired, using
+// group/version metadata from the static_groups ini fallback.
+func TestCombineByName_FallsBackToStaticGroups(t *testing.T) {
+	l := &cloudLoader{
+		transports: map[tlsCacheKey]*http.Transport{},
+		staticGroups: map[string]metav1.APIGroup{
+			"grafana-setupguide-app": {
+				Name: "grafana-setupguide-app.ext.grafana.app",
+				Versions: []metav1.GroupVersionForDiscovery{
+					{GroupVersion: "grafana-setupguide-app.ext.grafana.app/v0alpha1", Version: "v0alpha1"},
+				},
+				PreferredVersion: metav1.GroupVersionForDiscovery{
+					GroupVersion: "grafana-setupguide-app.ext.grafana.app/v0alpha1", Version: "v0alpha1",
+				},
+			},
+		},
+	}
+
+	backends := []v1alpha2.RouteBackend{{
+		ObjectMeta: metav1.ObjectMeta{Name: "grafana-setupguide-app", ResourceVersion: "7"},
+		Spec: v1alpha2.RouteBackendSpec{
+			Mode:    v1alpha2.RouteBackendSpecModeForward,
+			Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: "http://backend.invalid"},
+		},
+	}}
+
+	combined := l.combineByName(t.Context(), nil, backends)
+	require.Len(t, combined, 1)
+	require.Equal(t, "grafana-setupguide-app.ext.grafana.app", combined[0].Group().Name)
+}
+
+// TestCombineByName_LiveManifestWinsOverStaticGroups covers precedence: a
+// live AppManifest CR for the same name must still win over a configured
+// static_groups entry.
+func TestCombineByName_LiveManifestWinsOverStaticGroups(t *testing.T) {
+	l := &cloudLoader{
+		transports: map[tlsCacheKey]*http.Transport{},
+		staticGroups: map[string]metav1.APIGroup{
+			"grafana-setupguide-app": {Name: "stale-static-group.ext.grafana.app"},
+		},
+	}
+
+	manifests := []v1alpha2.AppManifest{{
+		ObjectMeta: metav1.ObjectMeta{Name: "grafana-setupguide-app", ResourceVersion: "3"},
+		Spec: v1alpha2.AppManifestSpec{
+			AppName: "grafana-setupguide-app",
+			Group:   "grafana-setupguide-app.ext.grafana.app",
+			Versions: []v1alpha2.AppManifestManifestVersion{
+				{Name: "v0alpha1"},
+			},
+		},
+	}}
+	backends := []v1alpha2.RouteBackend{{
+		ObjectMeta: metav1.ObjectMeta{Name: "grafana-setupguide-app", ResourceVersion: "7"},
+		Spec: v1alpha2.RouteBackendSpec{
+			Mode:    v1alpha2.RouteBackendSpecModeForward,
+			Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: "http://backend.invalid"},
+		},
+	}}
+
+	combined := l.combineByName(t.Context(), manifests, backends)
+	require.Len(t, combined, 1)
+	require.Equal(t, "grafana-setupguide-app.ext.grafana.app", combined[0].Group().Name)
+	require.NotEqual(t, "stale-static-group.ext.grafana.app", combined[0].Group().Name)
+}

@@ -90,7 +90,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Loader selection | `loader_factory.go` |
 | Forward-mode backend (RouteBackend CR) | `forward.go` |
-| Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
+| Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go`, `static_groups.go` |
 | Aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
@@ -113,9 +113,11 @@ earlier ones:
    routed to the right stack by the namespace in the path.
 2. **Aggregate targets**, discovered by polling each target's `/apis`. A later target overrides an
    earlier one.
-3. **RouteBackend CRs**, correlated by name with an AppManifest CR, or with the manifests embedded
-   in the binary for core groups. Only Forward mode is implemented. Backends without a `Forward`
-   block (Operator and Plugin modes) are skipped with a warning.
+3. **RouteBackend CRs**, correlated by name with an AppManifest CR, with the manifests embedded
+   in the binary for core groups, or (last resort) with the `static_groups` ini fallback for a
+   deployed app this binary has no other way to learn the group/version of. Only Forward mode is
+   implemented. Backends without a `Forward` block (Operator and Plugin modes) are skipped with a
+   warning.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
@@ -199,6 +201,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `static_groups` | JSON array of `{name,group,versions,preferredVersion}`, a last-resort fallback `combineByName` uses for a RouteBackend's group/version metadata when there's neither a live AppManifest CR nor a compiled-in manifest for it. `name` must match the RouteBackend CR's own `metadata.name`. `preferredVersion` defaults to the last entry in `versions`. A stopgap for an app deployed outside this binary with no AppManifest CR of its own yet -- see `parseStaticGroups`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 
 Every URL must be absolute; a trailing slash is tolerated.

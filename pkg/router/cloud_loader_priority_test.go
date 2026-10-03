@@ -53,7 +53,7 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	loader, err := newCloudLoader(clients, []*aggregateTarget{
 		priorityAggregate(priorityBackend("shared", "first-aggregate"), priorityBackend("a-aggregate-only", "aggregate")),
 		priorityAggregate(priorityBackend("shared", "second-aggregate")),
-	}, &pluginManifestsTarget{}, st)
+	}, &pluginManifestsTarget{}, st, nil)
 	require.NoError(t, err)
 	plugins := []Backend{priorityBackend("shared", "plugin"), priorityBackend("p-plugin-only", "plugin")}
 	loader.pluginsTarget.snapshot.Store(&plugins)
@@ -99,7 +99,7 @@ func TestCloudLoaderSingleTenantDiscoveryFailure(t *testing.T) {
 		}
 		return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 	})
-	loader, err := newCloudLoader(nil, nil, nil, st)
+	loader, err := newCloudLoader(nil, nil, nil, st, nil)
 	require.NoError(t, err)
 	_, err = loader.Load(t.Context())
 	require.ErrorIs(t, err, errSingleTenantDiscoveryPending)
@@ -183,7 +183,7 @@ func TestCloudLoaderReadsRouteResourcesFromInformerCache(t *testing.T) {
 	t.Cleanup(api.Close)
 
 	clients := k8s.NewClientRegistry(rest.Config{Host: api.URL}, k8s.ClientConfig{})
-	loader, err := newCloudLoader(clients, nil, nil, nil)
+	loader, err := newCloudLoader(clients, nil, nil, nil, nil)
 	require.NoError(t, err)
 
 	requireExampleGroup := func() {
@@ -240,7 +240,7 @@ func TestCloudLoaderReportsShadowedGroupsAndSourceStatus(t *testing.T) {
 	require.NoError(t, err)
 	aggregate := priorityAggregate(shared)
 	aggregate.name = "baas_apiserver"
-	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st)
+	loader, err := newCloudLoader(nil, []*aggregateTarget{aggregate}, nil, st, nil)
 	require.NoError(t, err)
 
 	pollDiscovery(t, st)
