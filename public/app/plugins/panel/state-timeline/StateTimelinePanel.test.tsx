@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
 import { type ReactNode } from 'react';
+import { act, render, screen } from 'test/test-utils';
 
 import {
   applyFieldOverrides,
@@ -11,7 +11,9 @@ import {
   LoadingState,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { getPanelProps } from '../test-utils';
 
@@ -68,9 +70,13 @@ describe('StateTimelinePanel', () => {
 
   beforeEach(() => {
     consoleSpy = jest.spyOn(console, 'error').mockImplementation();
+    setTestFlags({ [FlagKeys.StateTimelineNameAboveBars]: false });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags();
+    });
     consoleSpy.mockRestore();
   });
 
