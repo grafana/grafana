@@ -309,6 +309,8 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		}
 		s.LastEvaluationTime = now
 		s.Values = map[string]float64{}
+		s.EvalMatches = nil
+		s.LastEvaluationString = ""
 		transitions = append(transitions, StateTransition{
 			State:               s,
 			PreviousState:       oldState,

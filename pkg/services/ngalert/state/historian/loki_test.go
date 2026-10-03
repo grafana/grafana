@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"slices"
@@ -132,6 +133,86 @@ func TestRemoteLokiBackend(t *testing.T) {
 			res := StatesToStream(rule, states, nil, l)
 
 			_ = requireSingleEntry(t, res)
+		})
+
+		t.Run("includes classic condition matches", func(t *testing.T) {
+			rule := createTestRule()
+			l := log.NewNopLogger()
+			value := 42.0
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				EvalMatches: []state.EvaluationMatch{{
+					RefID:  "B0",
+					Metric: "http_requests_total",
+					Labels: data.Labels{"instance": "server-1"},
+					Value:  &value,
+				}},
+			})
+
+			res := StatesToStream(rule, states, nil, l)
+
+			entry := requireSingleEntry(t, res)
+			require.Len(t, entry.EvalMatches, 1)
+			require.Equal(t, "B0", entry.EvalMatches[0].RefID)
+			require.Equal(t, "http_requests_total", entry.EvalMatches[0].Metric)
+			require.Equal(t, data.Labels{"instance": "server-1"}, entry.EvalMatches[0].Labels)
+			require.NotNil(t, entry.EvalMatches[0].Value)
+			require.Equal(t, 42.0, *entry.EvalMatches[0].Value)
+		})
+
+		t.Run("includes classic condition matches with special values", func(t *testing.T) {
+			nan, inf, ninf := math.NaN(), math.Inf(1), math.Inf(-1)
+			states := singleFromNormal(&state.State{
+				State: eval.Alerting,
+				EvalMatches: []state.EvaluationMatch{
+					{RefID: "B0", Metric: "nan", Value: &nan},
+					{RefID: "B1", Metric: "inf", Value: &inf},
+					{RefID: "B2", Metric: "ninf", Value: &ninf},
+				},
+			})
+
+			entry := requireSingleEntry(t, StatesToStream(createTestRule(), states, nil, log.NewNopLogger()))
+
+			require.Len(t, entry.EvalMatches, 3)
+			require.True(t, math.IsNaN(*entry.EvalMatches[0].Value))
+			require.True(t, math.IsInf(*entry.EvalMatches[1].Value, 1))
+			require.True(t, math.IsInf(*entry.EvalMatches[2].Value, -1))
+		})
+
+		t.Run("keeps matches tied to each evaluation transition", func(t *testing.T) {
+			rule := createTestRule()
+			firstValue, secondValue := 1.0, 2.0
+			first := &state.State{
+				State:              eval.Alerting,
+				LastEvaluationTime: time.Unix(1, 0),
+			}
+			firstResult := eval.Result{Values: map[string]eval.NumberValueCapture{
+				"B0": {Var: "B", Metric: "series-old", Labels: data.Labels{"pod": "old"}, Value: &firstValue, Type: "classic_conditions"},
+			}}
+			first.SetNextValues(firstResult)
+			firstTransition := state.StateTransition{State: first, PreviousState: eval.Normal}
+
+			second := first.Copy()
+			second.State = eval.Normal
+			second.LastEvaluationTime = time.Unix(2, 0)
+			secondResult := eval.Result{Values: map[string]eval.NumberValueCapture{
+				"B0": {Var: "B", Metric: "series-new", Labels: data.Labels{"pod": "new"}, Value: &secondValue, Type: "classic_conditions"},
+			}}
+			second.SetNextValues(secondResult)
+			secondTransition := state.StateTransition{State: second, PreviousState: eval.Alerting}
+
+			stream := StatesToStream(rule, []state.StateTransition{firstTransition, secondTransition}, nil, log.NewNopLogger())
+			require.Len(t, stream.Values, 2)
+			entries := []LokiEntry{requireEntry(t, stream.Values[0]), requireEntry(t, stream.Values[1])}
+			require.Equal(t, "series-old", entries[0].EvalMatches[0].Metric)
+			require.Equal(t, "series-new", entries[1].EvalMatches[0].Metric)
+			require.Equal(t, "old", entries[0].EvalMatches[0].Labels["pod"])
+			require.Equal(t, "new", entries[1].EvalMatches[0].Labels["pod"])
+
+			_, firstAnnotationData, _ := BuildAnnotationTextAndData(rule, first, 4096)
+			_, secondAnnotationData, _ := BuildAnnotationTextAndData(rule, second, 4096)
+			assert.JSONEq(t, `{"values":{"B0":1},"evalMatches":[{"refId":"B0","metric":"series-old","labels":{"pod":"old"},"value":"1"}]}`, assertValidJSON(t, firstAnnotationData))
+			assert.JSONEq(t, `{"values":{"B0":2},"evalMatches":[{"refId":"B0","metric":"series-new","labels":{"pod":"new"},"value":"2"}]}`, assertValidJSON(t, secondAnnotationData))
 		})
 
 		t.Run("produces expected stream identifier", func(t *testing.T) {
