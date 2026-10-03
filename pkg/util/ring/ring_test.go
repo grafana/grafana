@@ -294,6 +294,70 @@ func TestRing(t *testing.T) {
 	})
 }
 
+func TestRingClear(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name     string
+		capacity int
+		min      int
+		enqueued int
+		dequeued int
+	}{
+		{name: "empty zero value"},
+		{name: "empty allocated buffer", capacity: 4},
+		{name: "unshifted queue", capacity: 4, enqueued: 3},
+		{name: "partially consumed queue", capacity: 4, enqueued: 3, dequeued: 1},
+		{name: "queue ending at buffer boundary", capacity: 4, enqueued: 4, dequeued: 1},
+		{name: "wrapped full queue", capacity: 4, enqueued: 6},
+		{name: "wrapped partially consumed queue", capacity: 4, enqueued: 5, dequeued: 1},
+		{name: "fully consumed queue", capacity: 4, enqueued: 3, dequeued: 3},
+		{name: "minimum equals capacity", capacity: 4, min: 4, enqueued: 3, dequeued: 1},
+		{name: "shrink to minimum", capacity: 4, min: 2, enqueued: 4, dequeued: 1},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			q := &Ring[*int]{Min: tc.min, Max: tc.capacity}
+			q.Grow(tc.capacity)
+			for _, value := range ints(tc.enqueued) {
+				q.Enqueue(&value)
+			}
+			for range tc.dequeued {
+				require.NotNil(t, q.Dequeue())
+			}
+
+			queued := q.Len()
+			dequeued := q.stats.Dequeued
+			expectedCap := q.Cap()
+			if tc.min > 0 {
+				expectedCap = tc.min
+			}
+
+			var cleared int
+			require.NotPanics(t, func() {
+				cleared = q.Clear()
+			})
+			require.Equal(t, queued, cleared)
+			require.Zero(t, q.Len())
+			require.Zero(t, q.back)
+			require.Equal(t, expectedCap, q.Cap())
+			require.Equal(t, dequeued+uint64(queued), q.stats.Dequeued)
+			for _, value := range q.buf {
+				require.Nil(t, value)
+			}
+			require.Zero(t, q.Clear())
+
+			value := 42
+			q.Enqueue(&value)
+			require.Same(t, &value, q.Peek())
+			require.Same(t, &value, q.Dequeue())
+			require.Zero(t, q.Len())
+		})
+	}
+}
+
 // enq enqueues the given items into the given Ring.
 func enq[T any](t *testing.T, q *Ring[T], s ...T) {
 	t.Helper()
