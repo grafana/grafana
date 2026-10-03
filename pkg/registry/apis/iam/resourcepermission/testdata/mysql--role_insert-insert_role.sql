@@ -6,4 +6,4 @@ VALUES (
     'managed:builtins:editor:1:permissions',
     '2025-08-27 21:35:00',
     '2025-08-27 21:35:00'
-)
+) ON DUPLICATE KEY UPDATE uid = IF(org_id = VALUES(org_id) AND name = VALUES(name), uid, NULL)

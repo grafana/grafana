@@ -3,6 +3,7 @@ package resourcepermissions
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -357,6 +358,52 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestIntegrationStore_SetResourcePermissionsConcurrentRoleCreation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	store, _, _ := setupTestEnv(t)
+	commands := func(resourceID string, roles ...string) []SetResourcePermissionsCommand {
+		result := make([]SetResourcePermissionsCommand, 0, len(roles))
+		for _, role := range roles {
+			result = append(result, SetResourcePermissionsCommand{
+				BuiltinRole: role,
+				SetResourcePermissionCommand: SetResourcePermissionCommand{
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        resourceID,
+					ResourceAttribute: "uid",
+				},
+			})
+		}
+		return result
+	}
+
+	for orgID := int64(100); orgID < 120; orgID++ {
+		start := make(chan struct{})
+		errs := make(chan error, 2)
+		var wg sync.WaitGroup
+		for _, cmds := range [][]SetResourcePermissionsCommand{
+			commands(fmt.Sprintf("folder-%d", orgID), "Editor", "Viewer"),
+			commands(fmt.Sprintf("datasource-%d", orgID), "Viewer", "Editor"),
+		} {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				<-start
+				_, err := store.SetResourcePermissions(context.Background(), orgID, cmds, ResourceHooks{})
+				errs <- err
+			}()
+		}
+
+		close(start)
+		wg.Wait()
+		close(errs)
+		for err := range errs {
+			require.NoError(t, err)
+		}
 	}
 }
 
