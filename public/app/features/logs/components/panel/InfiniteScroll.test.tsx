@@ -534,6 +534,188 @@ describe('InfiniteScroll consecutive loads (regression #129033)', () => {
   });
 });
 
+describe('InfiniteScroll loading at the top in interval mode', () => {
+  // The page sits well inside the range so there is room to load older logs above it.
+  const pageFrom = absoluteRange.from + 20 * SCROLLING_THRESHOLD;
+  const pageTo = absoluteRange.to - 20 * SCROLLING_THRESHOLD;
+
+  // Enough lines that the last one is not rendered, so the loader starts idle instead of pre-scroll-bottom.
+  function makeLogs(from = pageFrom, to = pageTo, n = 30): LogListModel[] {
+    return Array.from({ length: n }, (_, i) => {
+      const ts = from + Math.round(((to - from) * i) / (n - 1));
+      return createLogLine({ entry: `line ${i}`, uid: `log-${i}`, timeEpochMs: ts });
+    });
+  }
+
+  function ui(
+    currentLogs: LogListModel[],
+    element: ReturnType<typeof getMockElement>['element'],
+    loadMore: jest.Mock,
+    loadingState: LoadingState = LoadingState.Done,
+    height = 100
+  ) {
+    return (
+      <InfiniteScroll
+        {...defaultProps}
+        sortOrder={LogsSortOrder.Ascending}
+        logs={currentLogs}
+        scrollElement={element as unknown as HTMLDivElement}
+        loadMore={loadMore}
+        loadingState={loadingState}
+        infiniteScrollMode="interval"
+      >
+        {({ getItemKey, itemCount, onItemsRendered, Renderer }) => (
+          <VariableSizeList
+            height={height}
+            itemCount={itemCount}
+            itemSize={() => virtualization.getLineHeight()}
+            itemKey={getItemKey}
+            layout="vertical"
+            onItemsRendered={onItemsRendered}
+            style={{ overflow: 'scroll' }}
+            width="100%"
+          >
+            {Renderer}
+          </VariableSizeList>
+        )}
+      </InfiniteScroll>
+    );
+  }
+
+  function wheelUp(events: Record<string, (e: Event | WheelEvent) => void>, timeStamp: number) {
+    act(() => {
+      const event = new WheelEvent('wheel', { deltaY: -5 });
+      jest.spyOn(event, 'timeStamp', 'get').mockReturnValue(timeStamp);
+      events['wheel'](event);
+    });
+  }
+
+  test('prompts at the top and requests older logs on the next scroll (Ascending)', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(0);
+    const logs = makeLogs();
+    render(ui(logs, element, loadMoreMock));
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheelUp(events, 1);
+    wheelUp(events, 600);
+    expect(await screen.findByText('Scroll to load more')).toBeInTheDocument();
+    expect(loadMoreMock).not.toHaveBeenCalled();
+
+    wheelUp(events, 1200);
+    expect(loadMoreMock).toHaveBeenCalledWith(
+      { from: absoluteRange.from, to: logs[0].timeEpochMs },
+      ScrollDirection.Top
+    );
+    expect(await screen.findByText('Loading older logs...')).toBeInTheDocument();
+    expect(screen.queryByText('Loading newer logs...')).not.toBeInTheDocument();
+  });
+
+  test('does not prompt when the page already starts at the beginning of the range', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(0);
+    render(ui(makeLogs(absoluteRange.from), element, loadMoreMock));
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheelUp(events, 1);
+    wheelUp(events, 600);
+    wheelUp(events, 1200);
+    expect(screen.queryByText('Scroll to load more')).not.toBeInTheDocument();
+    expect(loadMoreMock).not.toHaveBeenCalled();
+  });
+
+  test('settles to idle and stops asking when a top load returns no new rows', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(0);
+    const { rerender } = render(ui(makeLogs(), element, loadMoreMock));
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheelUp(events, 1);
+    wheelUp(events, 600);
+    wheelUp(events, 1200);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      rerender(ui(makeLogs(), element, loadMoreMock, LoadingState.Loading));
+    });
+    act(() => {
+      rerender(ui(makeLogs(), element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Loading older logs...')).not.toBeInTheDocument();
+
+    wheelUp(events, 3000);
+    wheelUp(events, 3600);
+    wheelUp(events, 4200);
+    expect(screen.queryByText('Scroll to load more')).not.toBeInTheDocument();
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+  });
+
+  test('ignores further scrolling while a top load is in flight and pages again once it settles', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(0);
+    const page1 = makeLogs();
+    const { rerender } = render(ui(page1, element, loadMoreMock));
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheelUp(events, 1);
+    wheelUp(events, 600);
+    wheelUp(events, 1200);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+
+    act(() => {
+      rerender(ui(makeLogs(), element, loadMoreMock, LoadingState.Loading));
+    });
+    wheelUp(events, 1800);
+    wheelUp(events, 2400);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('Loading older logs...')).toBeInTheDocument();
+    expect(screen.queryByText('Scroll to load more')).not.toBeInTheDocument();
+
+    const older = createLogLine({ entry: 'older line', uid: 'log-older', timeEpochMs: pageFrom - SCROLLING_THRESHOLD });
+    const grown = [older, ...page1];
+    act(() => {
+      rerender(ui(grown, element, loadMoreMock, LoadingState.Done));
+    });
+    expect(screen.queryByText('Loading older logs...')).not.toBeInTheDocument();
+    expect(screen.queryByText('End of the selected time range.')).not.toBeInTheDocument();
+
+    wheelUp(events, 3000);
+    wheelUp(events, 3600);
+    wheelUp(events, 4200);
+    expect(loadMoreMock).toHaveBeenCalledTimes(2);
+    expect(loadMoreMock).toHaveBeenLastCalledWith(
+      { from: absoluteRange.from, to: older.timeEpochMs },
+      ScrollDirection.Top
+    );
+  });
+
+  test('keeps the prompt when the list re-renders while still at the top', async () => {
+    const loadMoreMock = jest.fn();
+    const { element, events } = getMockElement(0);
+    const logs = makeLogs();
+    const { rerender } = render(ui(logs, element, loadMoreMock));
+
+    expect(await screen.findByText('line 0')).toBeInTheDocument();
+
+    wheelUp(events, 1);
+    wheelUp(events, 600);
+    expect(await screen.findByText('Scroll to load more')).toBeInTheDocument();
+
+    act(() => {
+      rerender(ui(logs, element, loadMoreMock, LoadingState.Done, 60));
+    });
+    expect(screen.getByText('Scroll to load more')).toBeInTheDocument();
+
+    wheelUp(events, 1200);
+    expect(loadMoreMock).toHaveBeenCalledTimes(1);
+  });
+});
+
 function createLogs(from: number, to: number) {
   const rows = [
     createLogLine({ entry: 'log line 1', uid: 'log-1' }),
