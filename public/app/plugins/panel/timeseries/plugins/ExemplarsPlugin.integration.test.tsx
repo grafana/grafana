@@ -207,6 +207,61 @@ describe('ExemplarsPlugin', () => {
     expect(screen.queryByTestId(selectors.components.UPlotChart.xyCanvas)).not.toBeInTheDocument();
   });
 
+  it('opens a retained request when data arrives and preserves dismissal upon refresh', async () => {
+    const result = setUp({ exemplars: [] });
+    const sample = createDataFrame({
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418750000] },
+        { name: 'Value', values: [0.5, 0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['wrong-trace', 'exact-trace'] },
+      ],
+      meta: { custom: { experimentalOpenExemplar: { requestId: 'navigation-1', rowIndex: 1 } } },
+    });
+    const updateData = () =>
+      result.rerender(
+        <div>
+          <ExemplarsPlugin config={config} timeZone="browser" exemplars={[{ ...sample }]} />
+        </div>
+      );
+
+    updateData();
+    expect(await screen.findByText('exact-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('wrong-trace')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByLabelText('Close'));
+    updateData();
+
+    expect(getMarker(1)).toBeVisible();
+    expect(screen.queryByText('exact-trace')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+  });
+
+  it('consumes a request present before chart initialization once the markers render', async () => {
+    setUp(
+      {
+        exemplars: [
+          createDataFrame({
+            fields: [
+              { name: 'Time', values: [1670418750000] },
+              { name: 'Value', values: [0.5] },
+              { name: 'traceID', type: FieldType.string, values: ['early-trace'] },
+            ],
+            meta: { custom: { experimentalOpenExemplar: { requestId: 'navigation-early', rowIndex: 0 } } },
+          }),
+        ],
+      },
+      undefined,
+      undefined,
+      false
+    );
+
+    runPlotHooks(new uPlot({} as uPlot.Options));
+
+    expect(await screen.findByText('early-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+  });
+
   it('renders xy-canvas', () => {
     setUp();
 
