@@ -1,0 +1,90 @@
+{
+  "name": "Catppuccin Latte",
+  "id": "catppuccin_latte",
+  "colors": {
+    "mode": "light",
+    "text": {
+      "primary": "#4c4f69",
+      "secondary": "#5c5f77",
+      "disabled": "#8c8fa1",
+      "link": "#8839ef",
+      "maxContrast": "#4c4f69"
+    },
+    "border": {
+      "weak": "#ccd0da",
+      "medium": "#acb0be",
+      "strong": "#8c8fa1"
+    },
+    "primary": {
+      "main": "#8839ef",
+      "mainEmphasis": "#7a33d7",
+      "text": "#8839ef",
+      "contrastText": "#ffffff"
+    },
+    "accent": {
+      "main": "#8839ef",
+      "text": "#8839ef",
+      "contrastText": "#ffffff"
+    },
+    "secondary": {
+      "main": "#ccd0da",
+      "text": "#4c4f69",
+      "contrastText": "#4c4f69",
+      "border": "#acb0be"
+    },
+    "tertiary": {
+      "main": "#7287fd",
+      "text": "#4c4f69",
+      "contrastText": "#000000"
+    },
+    "info": {
+      "main": "#1e66f5",
+      "text": "#1e66f5",
+      "contrastText": "#ffffff"
+    },
+    "error": {
+      "main": "#d20f39",
+      "text": "#d20f39",
+      "contrastText": "#eff1f5"
+    },
+    "success": {
+      "main": "#40a02b",
+      "shade": "#53a940",
+      "text": "#4c4f69",
+      "contrastText": "#000000"
+    },
+    "warning": {
+      "main": "#df8e1d",
+      "text": "#4c4f69",
+      "contrastText": "#000000"
+    },
+    "background": {
+      "canvas": "#dce0e8",
+      "page": "#e6e9ef",
+      "primary": "#eff1f5",
+      "secondary": "#ccd0da",
+      "elevated": "#eff1f5"
+    },
+    "action": {
+      "hover": "#ccd0da",
+      "selected": "#bcc0cc",
+      "selectedBorder": "#8839ef",
+      "focus": "#bcc0cc",
+      "disabledBackground": "#ccd0da",
+      "disabledText": "#8c8fa1"
+    },
+    "scrollbar": "#9ca0b0",
+    "gradients": {
+      "brandHorizontal": "linear-gradient(90deg, #8839ef 0%, #8839ef 100%)",
+      "brandVertical": "linear-gradient(0deg, #8839ef 0%, #8839ef 100%)"
+    }
+  },
+  "visualization": {
+    "hues": [
+      {
+        "name": "green",
+        "shades": [{ "name": "semi-dark-green", "color": "#179299" }]
+      }
+    ]
+  }
+}
