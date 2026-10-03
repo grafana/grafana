@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	claims "github.com/grafana/authlib/types"
@@ -40,6 +41,15 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	}, "") // NOTE: we do not know the folder in this context
 
 	if err != nil {
+		// The client only ever sees a generic 500 for this, so log it here.
+		logging.FromContext(ctx).Error("resource access check failed",
+			"err", err,
+			"apiGroup", attr.GetAPIGroup(),
+			"resource", attr.GetResource(),
+			"namespace", attr.GetNamespace(),
+			"name", attr.GetName(),
+			"verb", attr.GetVerb(),
+		)
 		return authorizer.DecisionDeny, "", err
 	}
 
