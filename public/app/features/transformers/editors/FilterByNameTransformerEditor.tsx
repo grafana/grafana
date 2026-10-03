@@ -11,7 +11,7 @@ import {
 import { type FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
-import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+import { Box, Button, Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
 
 interface FilterByNameTransformerEditorProps extends TransformerUIProps<FilterFieldsByNameTransformerOptions> {}
 
@@ -86,15 +86,41 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     []
   );
 
-  // Only field name changes reset the state: resetting on every options change would discard
-  // in-progress edits, such as a regex that is not yet valid.
-  const [prevFieldNames, setPrevFieldNames] = useState(fieldNames);
-  if (prevFieldNames !== fieldNames) {
-    setPrevFieldNames(fieldNames);
-    setSelected(getSelectedNames(fieldNames, options));
-    setByVariable(options.byVariable || false);
-    setVariable(options.include?.variable);
-    setRegex(options.include?.pattern);
+  // Key on the names, not the input: upstream transformations send a new input array on every
+  // options change. Sorted so a reorder alone does not count as new names.
+  const fieldNamesKey = JSON.stringify(fieldNames.map((n) => n.name).sort());
+  const optionsKey = JSON.stringify(options);
+
+  // The options this editor last sent. When they come back, local state already matches them, and
+  // resetting would turn "no fields selected" (saved as an empty include) back into "all fields selected".
+  const [sentOptionsKey, setSentOptionsKey] = useState<string>();
+  const sendOptions = (nextOptions: FilterFieldsByNameTransformerOptions) => {
+    setSentOptionsKey(JSON.stringify(nextOptions));
+    onChange(nextOptions);
+  };
+
+  // New field names reset the state. So do options this editor did not send, such as another
+  // transformation's after the list is reordered: the panel editor keys rows by position, so this
+  // instance stays mounted. The regex only resets when its saved pattern changes, so an unrelated
+  // options change keeps an in-progress regex that is not yet valid.
+  const [prev, setPrev] = useState({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
+  if (prev.fieldNamesKey !== fieldNamesKey || prev.optionsKey !== optionsKey) {
+    const isNewFieldNames = prev.fieldNamesKey !== fieldNamesKey;
+    const isNewOptions = prev.optionsKey !== optionsKey && optionsKey !== sentOptionsKey;
+
+    setPrev({ fieldNamesKey, optionsKey, pattern: options.include?.pattern });
+    if (prev.optionsKey !== optionsKey) {
+      setSentOptionsKey(undefined);
+    }
+
+    if (isNewFieldNames || isNewOptions) {
+      setSelected(getSelectedNames(fieldNames, options));
+      setByVariable(options.byVariable || false);
+      setVariable(options.include?.variable);
+    }
+    if (isNewFieldNames || (isNewOptions && prev.pattern !== options.include?.pattern)) {
+      setRegex(options.include?.pattern);
+    }
   }
 
   const onSelectionChange = (nextSelected: string[]) => {
@@ -109,7 +135,17 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     }
 
     setSelected(nextSelected);
-    onChange(nextOptions);
+    sendOptions(nextOptions);
+  };
+
+  // An empty include keeps every field, including ones that appear later, so both "Select all" and
+  // "Deselect all" save it: the transformer has no way to show no fields. The pattern is cleared too,
+  // otherwise only the fields it matches would pass.
+  const onResetSelection = (nextSelected: string[]) => {
+    setRegex(undefined);
+    setIsRegexValid(true);
+    setSelected(nextSelected);
+    sendOptions({ ...options, include: { names: [] } });
   };
 
   const onFieldToggle = (fieldName: string) => {
@@ -132,12 +168,12 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     }
 
     if (nextIsRegexValid) {
-      onChange({
+      sendOptions({
         ...options,
         include: { pattern: regex },
       });
     } else {
-      onChange({
+      sendOptions({
         ...options,
         include: { names: selected },
       });
@@ -147,7 +183,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
   };
 
   const onVariableChange = (nextSelected: SelectableValue) => {
-    onChange({
+    sendOptions({
       ...options,
       include: { variable: nextSelected.value },
     });
@@ -157,7 +193,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
 
   const onFromVariableChange = (e: FormEvent<HTMLInputElement>) => {
     const val = e.currentTarget.checked;
-    onChange({ ...options, byVariable: val });
+    sendOptions({ ...options, byVariable: val });
     setByVariable(val);
   };
 
@@ -192,6 +228,14 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
               width={25}
             />
           </InlineField>
+          <Box display="flex" gap={0.5} marginRight={0.5}>
+            <Button variant="secondary" onClick={() => onResetSelection(fieldNames.map((n) => n.name))}>
+              {t('transformers.filter-by-name-transformer-editor.select-all', 'Select all')}
+            </Button>
+            <Button variant="secondary" onClick={() => onResetSelection([])}>
+              {t('transformers.filter-by-name-transformer-editor.deselect-all', 'Deselect all')}
+            </Button>
+          </Box>
           {fieldNames.map((o, i) => {
             const label = `${o.name}${o.count > 1 ? ' (' + o.count + ')' : ''}`;
             const isSelected = selected.indexOf(o.name) > -1;

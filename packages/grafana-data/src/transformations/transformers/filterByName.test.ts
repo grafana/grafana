@@ -106,6 +106,23 @@ describe('filterByName transformer', () => {
       });
     });
 
+    it('inclusion of every field, including unlisted ones, when names is empty', async () => {
+      const cfg = {
+        id: DataTransformerID.filterFieldsByName,
+        options: {
+          include: {
+            names: [],
+          },
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesWithNamesToMatch])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        expect(filtered.fields.map((f) => f.name)).toEqual(['startsWithA', 'B', 'startsWithC', 'D']);
+      });
+    });
+
     it('exclusion by names', async () => {
       const cfg = {
         id: DataTransformerID.filterFieldsByName,
