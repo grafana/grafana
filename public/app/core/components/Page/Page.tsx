@@ -3,7 +3,7 @@ import { useLayoutEffect } from 'react';
 
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { useStyles2 } from '@grafana/ui';
+import { HeadingSection, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import NativeScrollbar from '../NativeScrollbar';
@@ -84,7 +84,9 @@ export const Page: PageType = ({
               />
             )}
             {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-            <div className={styles.pageContent}>{children}</div>
+            <div className={styles.pageContent}>
+              {pageHeaderNav ? <HeadingSection>{children}</HeadingSection> : children}
+            </div>
           </div>
         </NativeScrollbar>
       )}

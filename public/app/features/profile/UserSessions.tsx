@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
-import { memo, type ReactNode } from 'react';
+import { memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Icon, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
+import { Button, Heading, Icon, LoadingPlaceholder, ScrollContainer, useStyles2 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { formatDate } from 'app/core/internationalization/dates';
 import { type UserSession } from 'app/types/user';
@@ -11,11 +11,10 @@ import { type UserSession } from 'app/types/user';
 interface Props {
   sessions: UserSession[];
   isLoading: boolean;
-  heading: ReactNode;
   revokeUserSession: (tokenId: number) => void;
 }
 
-const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession, heading }) => {
+const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession }) => {
   const styles = useStyles2(getStyles);
 
   if (isLoading) {
@@ -28,7 +27,9 @@ const UserSessions = memo<Props>(({ isLoading, sessions, revokeUserSession, head
 
   return (
     <div className={styles.wrapper}>
-      {heading}
+      <Heading variant="h2">
+        <Trans i18nKey="profile.user-sessions.sessions">Sessions</Trans>
+      </Heading>
 
       <ScrollContainer overflowY="visible" overflowX="auto" width="100%">
         <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
