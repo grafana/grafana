@@ -477,7 +477,7 @@ describe('NewProvisionedFolderForm', () => {
 
   // Repository titles and source paths routinely contain "/", which must not reach the page HTML-escaped
   it.each([
-    { sourcePath: 'dashboards/team', text: 'Will be created in owner/repo under dashboards/team' },
+    { sourcePath: 'dashboards/team', text: 'Will be created in owner/repo under dashboards/team/' },
     { sourcePath: undefined, text: 'Will be created at the root of owner/repo' },
   ])('shows "$text" verbatim', async ({ sourcePath, text }) => {
     setup(

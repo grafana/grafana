@@ -19,16 +19,11 @@ interface SaveRepositoryArgs {
   /** Known from an annotation, so it settles without waiting on the lookup */
   isManaged?: boolean;
   /** A stored resource resolves from its own manager, never from the folder it sits in */
-  isNew?: boolean;
+  isNew: boolean;
 }
 
 /** Resolves where a dashboard or folder is saved, so every save surface follows the same rule */
-export function useSaveRepositoryView({
-  folderUid,
-  name,
-  isManaged,
-  isNew = true,
-}: SaveRepositoryArgs): SaveRepositoryView {
+export function useSaveRepositoryView({ folderUid, name, isManaged, isNew }: SaveRepositoryArgs): SaveRepositoryView {
   const targetFolderUid = isRootFolderUID(folderUid) ? undefined : folderUid;
   const view = useGetResourceRepositoryView({
     name,

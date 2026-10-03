@@ -8,7 +8,7 @@ import { Alert, Button, Field, Input, Stack, Text } from '@grafana/ui';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning/v0alpha1';
 import { useUrlParams } from 'app/core/navigation/hooks';
-import { AnnoKeySourcePath, type Resource } from 'app/features/apiserver/types';
+import { type Resource } from 'app/features/apiserver/types';
 import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { GENERAL_FOLDER_UID } from 'app/features/search/constants';
 import { type FolderDTO } from 'app/types/folders';
@@ -85,15 +85,13 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
 
   const { prTitle } = usePullRequestTitle({ repository, vars: templateVars, workflow });
 
-  // The same value doSave commits under, so the destination shown cannot drift from the destination used
-  const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
   const repoLabel = repository?.title || repository?.name;
   // Rendered as React text, which escapes it already; escaping here too would show "/" as "&#x2F;"
-  const destination = basePath
+  const destination = initialValues.path
     ? t(
         'browse-dashboards.new-provisioned-folder-form.text-destination-path',
         'Will be created in {{repository}} under {{path}}',
-        { repository: repoLabel, path: basePath, interpolation: { escapeValue: false } }
+        { repository: repoLabel, path: initialValues.path, interpolation: { escapeValue: false } }
       )
     : t(
         'browse-dashboards.new-provisioned-folder-form.text-destination-root',
@@ -163,7 +161,7 @@ function FormContent({ initialValues, repository, canPushToConfiguredBranch, fol
     },
   });
 
-  const doSave = async ({ ref, title, workflow }: BaseProvisionedFormData) => {
+  const doSave = async ({ ref, title, workflow, path: basePath }: BaseProvisionedFormData) => {
     setError(undefined);
     const repoName = repository?.name;
     if (!title || !repoName) {
@@ -306,7 +304,7 @@ export function NewProvisionedFolderForm({ onDismiss, view }: Props) {
 
   return (
     <ProvisionedFormGate
-      isLoading={view.isLoading}
+      isLoading={view.status === RepoViewStatus.Loading}
       // A deleted or unreachable repository is a dead end of its own, not the same as a location
       // that was never provisioned, so each gets its own notice rather than the generic banner
       isOrphaned={view.status === RepoViewStatus.Orphaned}

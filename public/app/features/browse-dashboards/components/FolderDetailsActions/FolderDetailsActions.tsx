@@ -28,7 +28,7 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
   const { data: rootFolderDTO } = useGetFolderQueryFacade(folderDTO ? undefined : 'general');
   // At the root this resolves no repository on purpose. Creating a folder in the database is always
   // valid there, so a read-only Git repository must not disable the New menu
-  const { isReadOnlyRepo, repoType } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
+  const { isReadOnlyRepo, repoType, repository } = useGetResourceRepositoryView({ folderName: folderDTO?.uid });
   const { canCreateDashboards, canCreateFolders } = getFolderPermissions(folderDTO ?? rootFolderDTO);
   const dispatch = useDispatch();
 
@@ -67,7 +67,14 @@ export const FolderDetailsActions = ({ folderDTO }: { folderDTO?: CombinedFolder
       >
         <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
       </LinkButton>
-      {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
+      {folderDTO && (
+        <FolderActionsButton
+          folder={folderDTO}
+          repoType={repoType}
+          isReadOnlyRepo={isReadOnlyRepo}
+          repository={repository}
+        />
+      )}
       {(canCreateDashboards || canCreateFolders) && (
         <CreateNewButton
           parentFolder={folderDTO}

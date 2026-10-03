@@ -27,6 +27,7 @@ interface Props {
 export function NewFolderDrawerContent({ parentFolder, onDismiss, onCreateDatabaseFolder }: Props) {
   const view = useSaveRepositoryView({
     folderUid: parentFolder?.uid,
+    isNew: true,
     isManaged: isItemManagedByRepository(parentFolder),
   });
   const [chosenTarget, setChosenTarget] = useState<SaveTarget | undefined>(undefined);
