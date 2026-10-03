@@ -2880,11 +2880,6 @@
       "count": 2
     }
   },
-  "public/app/features/variables/pickers/shared/VariableInput.tsx": {
-    "@grafana/no-gf-form": {
-      "count": 1
-    }
-  },
   "public/app/features/variables/query/QueryVariableRefreshSelect.tsx": {
     "@grafana/require-no-margin": {
       "count": 1

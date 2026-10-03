@@ -1,6 +1,7 @@
 import { memo, type KeyboardEvent, type HTMLProps } from 'react';
 
 import { t } from '@grafana/i18n';
+import { Input } from '@grafana/ui';
 
 import { NavigationKey } from '../types';
 
@@ -24,7 +25,7 @@ export const VariableInput = memo(({ value, id, onNavigate, onChange, ...restPro
   };
 
   return (
-    <input
+    <Input
       {...restProps}
       ref={(instance) => {
         if (instance) {
@@ -34,7 +35,6 @@ export const VariableInput = memo(({ value, id, onNavigate, onChange, ...restPro
       }}
       id={id}
       type="text"
-      className="gf-form-input"
       value={value ?? ''}
       onChange={handleChange}
       onKeyDown={onKeyDown}
