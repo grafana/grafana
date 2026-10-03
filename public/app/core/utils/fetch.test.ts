@@ -195,6 +195,19 @@ describe('parseResponseBody', () => {
     expect(console.warn).toHaveBeenCalledTimes(1);
   });
 
+  it('throws a descriptive error when the JSON body cannot be parsed', async () => {
+    // response.json() rejects like this for a body larger than the browser's maximum string length
+    const parseError = new SyntaxError('Unexpected end of JSON input');
+    const json = jest.fn().mockRejectedValueOnce(parseError);
+
+    const result = parseResponseBody({ ...rsp, json }, 'json');
+
+    await expect(result).rejects.toThrow(
+      'Failed to parse the response body as JSON: Unexpected end of JSON input. The response may be too large for the browser to process.'
+    );
+    await expect(result).rejects.toHaveProperty('cause', parseError);
+  });
+
   it('parses text', async () => {
     const value = 'RAW TEXT';
     const body = await parseResponseBody(
