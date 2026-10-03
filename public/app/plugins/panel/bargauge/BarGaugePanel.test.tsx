@@ -6,7 +6,9 @@ import {
   dateTime,
   type EventBus,
   type FieldDisplay,
+  FieldType,
   LoadingState,
+  ThresholdsMode,
   type TimeRange,
   toDataFrame,
   VizOrientation,
@@ -20,6 +22,7 @@ import {
   BigValueTextMode,
   LegendDisplayMode,
   type LegendPlacement,
+  ScaleDistribution,
 } from '@grafana/schema';
 
 import {
@@ -254,6 +257,56 @@ describe('BarGaugePanel', () => {
       // The name stays in the DOM, hidden by the styles getTitleStyles applies.
       expect(screen.getByText(/onlyseries/i)).not.toBeVisible();
       expect(screen.queryByTestId(valueSelector)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('scale labels', () => {
+    function renderLogScaleBar(showThresholdLabels: boolean) {
+      const defaults = buildPanelData();
+      render(
+        <BarGaugePanel
+          {...buildPanelData({
+            options: { ...defaults.options, displayMode: BarGaugeDisplayMode.Gradient, showThresholdLabels },
+            data: {
+              series: [
+                toDataFrame({
+                  fields: [
+                    {
+                      name: 'pressure',
+                      type: FieldType.number,
+                      values: [300],
+                      config: {
+                        min: 1,
+                        max: 10000,
+                        custom: { scaleDistribution: { type: ScaleDistribution.Log } },
+                        // the panel framework always fills in default thresholds
+                        thresholds: { mode: ThresholdsMode.Absolute, steps: [{ value: -Infinity, color: 'green' }] },
+                      },
+                    },
+                  ],
+                }),
+              ],
+              timeRange: createTimeRange(),
+              state: LoadingState.Done,
+            },
+          })}
+        />
+      );
+    }
+
+    it('labels each power of ten along a log-scaled bar when Show labels is on', () => {
+      renderLogScaleBar(true);
+
+      for (const text of ['1', '10', '100', '1000', '10000']) {
+        expect(screen.getByText(text)).toBeInTheDocument();
+      }
+    });
+
+    it('does not label the bar when Show labels is off', () => {
+      renderLogScaleBar(false);
+
+      expect(screen.getByText('300')).toBeInTheDocument();
+      expect(screen.queryByText('1000')).not.toBeInTheDocument();
     });
   });
 

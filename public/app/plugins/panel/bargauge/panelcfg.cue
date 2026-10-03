@@ -35,15 +35,19 @@ composableKinds: PanelCfg: {
 					//	}
 					//}
 					common.SingleStatBaseOptions
-					displayMode:   common.BarGaugeDisplayMode & (*"gradient" | _)
-					valueMode:     common.BarGaugeValueMode & (*"color" | _)
-					namePlacement: common.BarGaugeNamePlacement & (*"auto" | _)
-					showUnfilled:  bool | *true
-					textMode:      common.BigValueTextMode & (*"auto" | _)
-					sizing:        common.BarGaugeSizing & (*"auto" | _)
-					minVizWidth:   uint32 | *8
-					minVizHeight:  uint32 | *16
-					maxVizHeight:  uint32 | *300
+					displayMode:          common.BarGaugeDisplayMode & (*"gradient" | _)
+					valueMode:            common.BarGaugeValueMode & (*"color" | _)
+					namePlacement:        common.BarGaugeNamePlacement & (*"auto" | _)
+					showUnfilled:         bool | *true
+					showThresholdLabels?: bool | *false
+					textMode:             common.BigValueTextMode & (*"auto" | _)
+					sizing:               common.BarGaugeSizing & (*"auto" | _)
+					minVizWidth:          uint32 | *8
+					minVizHeight:         uint32 | *16
+					maxVizHeight:         uint32 | *300
+				} @cuetsy(kind="interface")
+				FieldConfig: {
+					scaleDistribution?: common.ScaleDistributionConfig
 				} @cuetsy(kind="interface")
 			}
 		}]

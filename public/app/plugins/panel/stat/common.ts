@@ -2,14 +2,19 @@
 
 import {
   escapeStringForRegex,
+  type FieldConfigEditorBuilder,
   type FieldOverrideContext,
+  FieldType,
   getFieldDisplayName,
+  identityOverrideProcessor,
   type PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+import { type ScaleDistributionConfig, type SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+
+import { GaugeScaleEditor } from './GaugeScaleEditor';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -127,5 +132,25 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
       ],
     },
     defaultValue: VizOrientation.Auto,
+  });
+}
+
+export function addGaugeScaleOption(
+  builder: FieldConfigEditorBuilder<{ scaleDistribution?: ScaleDistributionConfig }>,
+  category?: string[]
+) {
+  builder.addCustomEditor<void, ScaleDistributionConfig | undefined>({
+    id: 'scaleDistribution',
+    path: 'scaleDistribution',
+    name: t('stat.add-gauge-scale-option.name-scale', 'Scale'),
+    description: t(
+      'stat.add-gauge-scale-option.description-scale',
+      'Logarithmic requires a min greater than 0. Otherwise, a linear scale is used.'
+    ),
+    category,
+    editor: GaugeScaleEditor,
+    override: GaugeScaleEditor,
+    shouldApply: (field) => field.type === FieldType.number,
+    process: identityOverrideProcessor,
   });
 }
