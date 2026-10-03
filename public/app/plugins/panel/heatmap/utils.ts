@@ -91,8 +91,6 @@ export function prepConfig(opts: PrepConfigOpts) {
     isTime = false;
   }
 
-  const pxRatio = devicePixelRatio;
-
   let heatmapType = dataRef.current?.heatmap?.meta?.type;
   const exemplarFillColor = theme.visualization.getColorByName(opts.exemplarColor);
 
@@ -551,6 +549,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       if (seriesIdx === 1) {
         hRect = null;
 
+        const pxRatio = uPlot.pxRatio;
         let cx = u.cursor.left! * pxRatio;
         let cy = u.cursor.top! * pxRatio;
 
@@ -571,6 +570,7 @@ export function prepConfig(opts: PrepConfigOpts) {
       fill: 'rgba(255,255,255, 0.3)',
       bbox: (u, seriesIdx) => {
         let isHovered = hRect && seriesIdx === hRect.sidx;
+        const pxRatio = uPlot.pxRatio;
 
         return {
           left: isHovered ? hRect!.x / pxRatio : -10,
@@ -753,8 +753,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
-          let w = 8;
-          let h = 8;
+          let w = 4 * uPlot.pxRatio;
+          let h = 4 * uPlot.pxRatio;
 
           rect(points, x - w / 2, y - h / 2, w, h);
 
