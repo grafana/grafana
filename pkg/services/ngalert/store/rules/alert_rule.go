@@ -445,9 +445,22 @@ func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmo
 //
 // Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
 func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
-	err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		var dbHelper *legacysql.LegacyDatabaseHelper
+		dbHelper, err = st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
+	}
+
+	err = conn.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var uids []string
-		err := sess.Table(alertRule{}).Distinct("namespace_uid").
+		err := sess.Table(alertRuleTable).Distinct("namespace_uid").
 			Where("org_id = ?", orgID).Find(&uids)
 		if err != nil {
 			return err
