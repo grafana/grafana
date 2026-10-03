@@ -13,8 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
+
 	collectionsV1 "github.com/grafana/grafana/apps/collections/pkg/apis/collections/v1alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/obsolete"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
@@ -48,7 +50,10 @@ func (tc *starsTestCase) Resources() []schema.GroupVersionResource {
 }
 
 func (tc *starsTestCase) AddLegacySQLMigrations(mg *migrator.Migrator) {
-	// none
+	old := obsolete.StarsMigrations()
+	for _, m := range old.Migrations {
+		mg.AddMigration(m.Id(), m)
+	}
 }
 
 func (tc *starsTestCase) Setup(t *testing.T, helper *apis.K8sTestHelper) bool {
