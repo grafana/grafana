@@ -255,8 +255,16 @@ For example, if you have a series of four linked variables (country, region, ser
 Using the **Regex** query option, you filter the list of options returned by the variable query or modify the options returned.
 
 This section shows how to use a regular expression to filter or modify values in the variable drop-down list.
+For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
 
-Using the **Regex** query option, you filter the list of options returned by the Variable query or modify the options returned. For more information, refer to the Mozilla guide on [Regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions).
+How the regular expression changes an option depends on its capture groups:
+
+- **No capture group**: The regular expression filters the list. Options that don't match are dropped, and matching options keep their original value and display name.
+- **An unnamed capture group**: The captured text replaces both the value and the display name of the option.
+- **Named `text` and `value` capture groups**: Each group replaces only the part it names, so the display name and the value can differ.
+
+The **Apply regex to** option controls which string the pattern is matched against&mdash;the variable value or the display text.
+It doesn't control which part of the option the capture group replaces.
 
 Examples of filtering on the following list of options:
 
@@ -354,3 +362,29 @@ enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 {{< admonition type="note" >}}
 Only `text` and `value` capture group names are supported.
 {{< /admonition >}}
+
+Keep the following requirements in mind when you use named capture groups:
+
+- **Add the global flag `g` when the groups are in separate alternatives**: In the preceding pattern, `text` and `value` are in different alternatives of a `|` expression, so Grafana needs more than one pass to capture both. Without the `g` flag, Grafana stops at the first match and uses that single captured string as both the display name and the value. A pattern that captures both groups in one match doesn't need the flag.
+- **Name both groups**: If you name only one group, Grafana uses the captured string for both the display name and the value.
+- **Keep values unique**: Grafana drops options that share the same value, so make sure the `value` group captures the part of the string that uniquely identifies each option.
+
+### Show a friendly name and keep the full value
+
+When a query returns long values such as ARNs, resource IDs, or full metric paths, use named capture groups to show a short name in the drop-down list while the variable value stays the full string.
+Use one variable for both, not two:
+
+- Reference `$varName` or `${varName}` in queries to interpolate the full value.
+- Reference `${varName:text}` in panel titles, descriptions, and links to interpolate the display name.
+
+For example, the following regular expression captures the last segment of an ARN as the display name and the whole ARN as the value:
+
+```regex
+/(?<value>.*:(?<text>[^:]+))/
+```
+
+Don't add a second, hidden variable to hold the full value.
+A hidden variable contributes only a single value to a query unless you explicitly select and save the **All** option, so panels that reference it return no data as soon as a viewer selects more than one option in the visible variable.
+For more information, refer to [Include All option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#include-all-option).
+
+Because `${varName:text}` joins multiple selected values with a `+` separator, use it in titles, descriptions, and links rather than in queries.
