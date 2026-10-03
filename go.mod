@@ -17,6 +17,7 @@ replace (
 	github.com/grafana/grafana/apps/dashvalidator => ./apps/dashvalidator
 	github.com/grafana/grafana/apps/example => ./apps/example
 	github.com/grafana/grafana/apps/folder => ./apps/folder
+	github.com/grafana/grafana/apps/foldernaming => ./apps/foldernaming
 	github.com/grafana/grafana/apps/iam => ./apps/iam
 	github.com/grafana/grafana/apps/live => ./apps/live
 	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
@@ -165,6 +166,7 @@ require (
 	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // @grafana/sharing-squad
 	github.com/grafana/grafana/apps/example v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/foldernaming v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/access-squad
 	github.com/grafana/grafana/apps/live v0.0.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs

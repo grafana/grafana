@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/foldernaming"
 	"github.com/grafana/grafana/pkg/registry/apps/live"
 	"github.com/grafana/grafana/pkg/registry/apps/logsdrilldown"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
@@ -53,6 +54,7 @@ func ProvideAppInstallers(
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
 	policyAppInstaller *policy.AppInstaller,
 	rulePolicyAppInstaller *rulepolicy.AppInstaller,
+	folderNamingAppInstaller *foldernaming.AppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -61,6 +63,7 @@ func ProvideAppInstallers(
 		quotasAppInstaller,
 		policyAppInstaller,
 		rulePolicyAppInstaller,
+		folderNamingAppInstaller,
 	}
 	installers = append(installers, shorturlAppInstaller)
 

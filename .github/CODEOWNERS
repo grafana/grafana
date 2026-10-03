@@ -101,6 +101,7 @@
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/grafana-catalog
 /apps/policy/ @grafana/alerting-squad
+/apps/foldernaming/ @grafana/alerting-squad
 /apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
@@ -1299,6 +1300,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apps/annotation @grafana/grafana-backend-services-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
 /pkg/registry/apps/policy @grafana/alerting-squad
+/pkg/registry/apps/foldernaming @grafana/alerting-squad
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code

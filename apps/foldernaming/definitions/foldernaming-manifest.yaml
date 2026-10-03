@@ -1,0 +1,119 @@
+apiVersion: apps.grafana.app/v1alpha2
+kind: AppManifest
+metadata:
+  name: foldernaming
+spec:
+  appDisplayName: foldernaming
+  appName: foldernaming
+  extraPermissions:
+    accessKinds:
+    - actions:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+      group: policy.grafana.app
+      resource: validationpolicies
+    - actions:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+      group: policy.grafana.app
+      resource: validationpolicybindings
+  group: foldernaming.grafana.app
+  preferredVersion: v0alpha1
+  versions:
+  - kinds:
+    - admission:
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: FolderNamingPolicy
+      plural: FolderNamingPolicies
+      schemas:
+        Enforcement:
+          enum:
+          - Deny
+          - Warn
+          type: string
+        FolderNamingPolicy:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        spec:
+          additionalProperties: false
+          properties:
+            description:
+              description: 'Explains the convention to whoever breaks it, e.g. "Start
+                with the owning team, like ''team-a: Alerts''".'
+              type: string
+            enforcement:
+              $ref: '#/components/schemas/Enforcement'
+              description: |-
+                What happens when a folder title breaks the convention. Deny rejects the write. Warn admits
+                it with a warning, so a convention can be assessed before it is enforced.
+            titlePattern:
+              description: 'An RE2 regular expression the whole folder title must
+                match, e.g. "[a-z0-9-]+: .+".'
+              type: string
+          required:
+          - enforcement
+          - titlePattern
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
+    name: v0alpha1
+    served: false

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
 	"github.com/grafana/grafana/pkg/registry/apps/dashvalidator"
 	"github.com/grafana/grafana/pkg/registry/apps/example"
+	"github.com/grafana/grafana/pkg/registry/apps/foldernaming"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
 	"github.com/grafana/grafana/pkg/registry/apps/policy"
@@ -67,6 +68,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				dashvalidatorAppInstaller,
 				&policy.AppInstaller{},
 				&rulepolicy.AppInstaller{},
+				&foldernaming.AppInstaller{},
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)
