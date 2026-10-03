@@ -16,7 +16,6 @@ const mockData = {
   type: 'loki',
   name: 'Loki',
   meta: {},
-  isDefault: true,
 } as DataSourceInstanceListItem;
 
 describe('getDataSourceInstanceList', () => {
@@ -41,7 +40,6 @@ describe('getDataSourceInstanceList', () => {
         type: 'loki',
         name: 'Loki',
         meta: {},
-        isDefault: true,
       },
     ]);
   });
