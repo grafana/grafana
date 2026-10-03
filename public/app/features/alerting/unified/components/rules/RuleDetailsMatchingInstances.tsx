@@ -106,11 +106,15 @@ export function RuleDetailsMatchingInstances(props: Props) {
     [promRule, alertState, queryString]
   );
 
+  // Memoize the sliced result so callers receive a stable array reference when
+  // the content has not changed. Without this, every parent re-render produces a
+  // new array from .slice() and unnecessarily re-triggers effects that depend on
+  // the instances identity (e.g. useHasAlertInstancePluginLinks).
+  const visibleInstances = useMemo(() => alerts.slice(0, itemsDisplayLimit), [alerts, itemsDisplayLimit]);
+
   if (!prometheusRuleType.alertingRule(promRule)) {
     return null;
   }
-
-  const visibleInstances = alerts.slice(0, itemsDisplayLimit);
 
   // Count All By State is used only when filtering is enabled and we have access to all instances
   const countAllByState = countBy(promRule.alerts, (alert) => mapStateWithReasonToBaseState(alert.state));
