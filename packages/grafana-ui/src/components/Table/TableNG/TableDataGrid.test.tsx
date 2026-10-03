@@ -308,6 +308,58 @@ describe('TableDataGrid', () => {
     });
   });
 
+  describe('summary stacking', () => {
+    afterEach(() => jest.restoreAllMocks());
+
+    it.each([false, true])(
+      'keeps the summary row above active and hovered cells with table.refresh=%s',
+      (tableRefreshEnabled) => {
+        jest.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
+        jest.spyOn(Element.prototype, 'clientHeight', 'get').mockReturnValue(100);
+        const props = makeProps({
+          tableRefreshEnabled,
+          hasFooter: true,
+          footerHeight: 36,
+          columns: [
+            { key: 'frozen', name: 'Frozen', frozen: true, renderSummaryCell: () => 'Total' },
+            { key: 'value', name: 'Value' },
+          ],
+          rows: [{ __index: 0, __depth: 0, frozen: 'Frozen value', value: 'Body value' }],
+          renderers: {
+            renderRow: (key, props) => <Row key={key} {...props} />,
+            renderCell: (key, props) => <Cell key={key} {...props} />,
+          },
+        });
+        render(<TableDataGrid {...props} />);
+
+        const summaryRow = screen.getByRole('gridcell', { name: 'Total' }).closest('[role="row"]')!;
+        const summaryZIndex = Number(window.getComputedStyle(summaryRow).zIndex);
+        for (const [idx, name] of ['Frozen value', 'Body value'].entries()) {
+          act(() => props.gridRef.current?.setActivePosition({ rowIdx: 0, idx }));
+          const cell = screen.getByRole('gridcell', { name });
+          expect(cell).toHaveAttribute('aria-selected', 'true');
+          expect(summaryZIndex).toBeGreaterThan(Number(window.getComputedStyle(cell).zIndex));
+        }
+
+        // jsdom does not apply :hover; inspect this grid's hover layers in Emotion's rules.
+        const gridClass = Array.from(screen.getByRole('grid').classList).find((name) => name.startsWith('css-'));
+        const hoverLayers = Array.from(document.styleSheets)
+          .flatMap((sheet) => Array.from(sheet.cssRules))
+          .filter((rule): rule is CSSStyleRule => rule instanceof CSSStyleRule)
+          .filter(
+            (rule) =>
+              rule.selectorText.includes(`.${gridClass} `) &&
+              rule.selectorText.includes(':hover') &&
+              rule.style.getPropertyValue('z-index') !== ''
+          )
+          .map((rule) => Number(rule.style.getPropertyValue('z-index')));
+        expect(hoverLayers).toContain(1038);
+        expect(summaryZIndex).toBeGreaterThan(Math.max(...hoverLayers));
+        expect(summaryZIndex).toBeLessThan(createTheme().zIndex.tooltip);
+      }
+    );
+  });
+
   describe('layout', () => {
     it('lets its wrapper shrink below the content height', () => {
       // The multi-frame panel stacks the frame picker under the table in a flex column. The grid
@@ -619,6 +671,21 @@ describe('TableDataGrid', () => {
       const grid = window.getComputedStyle(screen.getByRole('grid'));
       expect(grid.getPropertyValue('--rdg-header-background-color')).toBe(theme.components.panel.background);
       expect(grid.getPropertyValue('--rdg-row-hover-background-color')).toBe(theme.components.table.rowHoverBackground);
+    });
+
+    it('disables the grid tabular-nums until table.refresh, then lets it stand', () => {
+      // The beta.61 grid roots `font-variant-numeric: tabular-nums`. It's part of the refreshed
+      // experience, so off-toggle we override it back to `normal`; on-toggle we leave the grid's own
+      // rule in place (unset here, since the grid's stylesheet isn't loaded in jsdom).
+      const { unmount } = render(<TableDataGrid {...makeProps()} />);
+      const classic = window.getComputedStyle(screen.getByRole('grid'));
+      expect(classic.getPropertyValue('font-variant-numeric')).toBe('normal');
+
+      unmount();
+
+      render(<TableDataGrid {...makeProps({ tableRefreshEnabled: true })} />);
+      const refreshed = window.getComputedStyle(screen.getByRole('grid'));
+      expect(refreshed.getPropertyValue('font-variant-numeric')).toBe('');
     });
   });
 

@@ -25,7 +25,7 @@ import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS } from './constants';
 
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
@@ -2458,12 +2458,9 @@ describe('TableNG', () => {
 
       // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
-      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
-        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
-      );
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(/^repeat\(1, 34px\)\s*100px$/);
     });
 
     it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {

@@ -2788,8 +2788,8 @@ __metadata:
   linkType: hard
 
 "@grafana/plugin-ui@npm:^0.17.0, @grafana/plugin-ui@npm:^0.17.3":
-  version: 0.17.6
-  resolution: "@grafana/plugin-ui@npm:0.17.6"
+  version: 0.17.5
+  resolution: "@grafana/plugin-ui@npm:0.17.5"
   dependencies:
     "@emotion/css": "npm:11.13.5"
     "@hello-pangea/dnd": "npm:17.0.0"
@@ -2820,7 +2820,7 @@ __metadata:
   peerDependenciesMeta:
     monaco-editor:
       optional: true
-  checksum: 10/dd11add62dc4347b2296c58a6f5b498768d4224ad7bf46503bca63437aa02d8be42164521ce285cb185270a7695aa8a16f60399856f5fac029079bebe443d86f
+  checksum: 10/26eb87ce74c706044a0f4c4911eab0f8a516cfff903f3c25dbdec94faf65dc1812098d383614a2177214e8010402421ae5e674d7e73816103e45a50da7acd9b3
   languageName: node
   linkType: hard
 
@@ -2908,15 +2908,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/react-data-grid@npm:7.0.0-beta.58":
-  version: 7.0.0-beta.58
-  resolution: "@grafana/react-data-grid@npm:7.0.0-beta.58"
-  dependencies:
-    clsx: "npm:^2.0.0"
+"@grafana/react-data-grid@npm:7.0.0-beta.60":
+  version: 7.0.0-beta.60
+  resolution: "@grafana/react-data-grid@npm:7.0.0-beta.60"
   peerDependencies:
-    react: ^18.0 || ^19.0
-    react-dom: ^18.0 || ^19.0
-  checksum: 10/a642dabe392dcfc3e331c98a4cf7527e6d4b67903e08e984d10831c379b92f4d43d77f7536d7fdd825ef85219e8ff5265b1af492b0fc51db854de2043ee8dedc
+    react: ^19.2
+    react-dom: ^19.2
+  checksum: 10/a4f05b742e8f07ac4bcd5bfbbd9a1ad7e9521a388b0b8798290ae5c978bab79a4ce5e742d188fd16a4aaa8a6bdc151732d2d42ea2b7fe75fdf3cd24aa6f88f35
   languageName: node
   linkType: hard
 
@@ -3220,7 +3218,7 @@ __metadata:
     "@grafana/e2e-selectors": "npm:13.3.0-pre"
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/i18n": "npm:13.3.0-pre"
-    "@grafana/react-data-grid": "npm:7.0.0-beta.58"
+    "@grafana/react-data-grid": "npm:7.0.0-beta.60"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
@@ -5403,11 +5401,11 @@ __metadata:
   linkType: hard
 
 "@lezer/highlight@npm:^1.0.0, @lezer/highlight@npm:^1.1.3, @lezer/highlight@npm:^1.2.0, @lezer/highlight@npm:^1.2.3":
-  version: 1.2.4
-  resolution: "@lezer/highlight@npm:1.2.4"
+  version: 1.2.3
+  resolution: "@lezer/highlight@npm:1.2.3"
   dependencies:
     "@lezer/common": "npm:^1.3.0"
-  checksum: 10/314a680c323be163ae036ca7b585713ced7bf0ba21d3fe9b851ffbb2e66cb2fa440c1e03f682a7e2da5dd4e19c2fb83b28738a290630948dfe8197bde621f008
+  checksum: 10/8f787d464f8a036f117a0b23e73ac034d224a57d72501c6559089098a28f127c9e495b90ac7d132acc86199e0b64d4c038f75f9293a37c7c61add52fa1acdb4e
   languageName: node
   linkType: hard
 
