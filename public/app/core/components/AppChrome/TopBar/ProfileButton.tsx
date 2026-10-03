@@ -19,9 +19,10 @@ import { TopNavBarMenu } from './TopNavBarMenu';
 export interface Props {
   profileNode: NavModelItem;
   onToggleKioskMode: () => void;
+  placement?: 'bottom-end' | 'right-end' | 'top-start';
 }
 
-export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
+export function ProfileButton({ profileNode, onToggleKioskMode, placement = 'bottom-end' }: Props) {
   const styles = useStyles2(getStyles);
   const node = enrichWithInteractionTracking(cloneDeep(profileNode), false);
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
@@ -73,7 +74,7 @@ export function ProfileButton({ profileNode, onToggleKioskMode }: Props) {
 
   return (
     <>
-      <Dropdown overlay={renderMenu} placement="bottom-end">
+      <Dropdown overlay={renderMenu} placement={placement}>
         <ToolbarButton
           className={styles.profileButton}
           imgSrc={contextSrv.user.gravatarUrl}

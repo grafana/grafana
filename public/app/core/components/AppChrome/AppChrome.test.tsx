@@ -2,12 +2,14 @@ import userEvent from '@testing-library/user-event';
 import { KBarProvider } from 'kbar';
 import { type ReactNode } from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
-import { render, screen, waitFor, act, getWrapper } from 'test/test-utils';
+import { render, screen, waitFor, act, getWrapper, within } from 'test/test-utils';
 
+import { type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, setBackendSrv, useScopes } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { KioskMode } from 'app/types/dashboard';
@@ -16,6 +18,7 @@ import { backendSrv } from '../../services/backend_srv';
 import { Page } from '../Page/Page';
 
 import { AppChrome, EXTENSION_SIDEBAR_FLOATING_TESTID } from './AppChrome';
+import { DOCKED_LOCAL_STORAGE_KEY } from './AppChromeService';
 import {
   type ExtensionSidebarContextType,
   useExtensionSidebarContext,
@@ -61,7 +64,7 @@ const openSidebarContext: ExtensionSidebarContextType = {
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const setup = (children: ReactNode) => {
+const setup = (children: ReactNode, extraNavItems: NavModelItem[] = []) => {
   config.bootData.navTree = [
     {
       id: HOME_NAV_ID,
@@ -81,6 +84,7 @@ const setup = (children: ReactNode) => {
       text: 'Help',
       id: 'help',
     },
+    ...extraNavItems,
   ];
 
   const context = getGrafanaContextMock();
@@ -205,6 +209,71 @@ describe('AppChrome', () => {
 
       await screen.findByTestId('ext-sidebar-stub');
       expect(screen.queryByTestId(EXTENSION_SIDEBAR_FLOATING_TESTID)).not.toBeInTheDocument();
+    });
+  });
+
+  describe('menu rail', () => {
+    beforeEach(async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true);
+      await act(async () => setTestFlags({ 'grafana.sectionSidebar': true }));
+    });
+
+    afterEach(async () => {
+      await act(async () => setTestFlags({}));
+    });
+
+    afterEach(() => {
+      window.localStorage.removeItem(DOCKED_LOCAL_STORAGE_KEY);
+    });
+
+    it('docks the full menu open from the hamburger instead of overlaying the page', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => expect(context.chrome.state.getValue().megaMenuDocked).toBe(true));
+      await userEvent.click(await screen.findByRole('button', { name: 'Main menu' }));
+
+      await waitFor(() => expect(context.chrome.state.getValue().megaMenuOpen).toBe(true));
+      expect(context.chrome.state.getValue().megaMenuDocked).toBe(true);
+      expect(screen.queryByRole('dialog', { name: 'Navigation' })).not.toBeInTheDocument();
+    });
+
+    it('keeps help at the bottom of the docked menu instead of the top bar', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      await waitFor(() => expect(context.chrome.state.getValue().megaMenuDocked).toBe(true));
+      act(() => context.chrome.setMegaMenuOpen(true));
+
+      // The docked menu is only visible from the xl breakpoint, which jsdom does not apply
+      const helpButtons = await screen.findAllByRole('button', { name: 'Help', hidden: true });
+      expect(helpButtons).toHaveLength(1);
+      expect(
+        within(screen.getByTestId(selectors.components.NavMenu.Menu)).getByRole('button', {
+          name: 'Help',
+          hidden: true,
+        })
+      ).toBe(helpButtons[0]);
+      expect(screen.queryByRole('button', { name: 'Customise navigation', hidden: true })).not.toBeInTheDocument();
+    });
+
+    it('pins administration below the main list in the docked menu', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>, [
+        { id: 'cfg', text: 'Administration', url: '/admin', icon: 'cog' },
+      ]);
+      await waitFor(() => expect(context.chrome.state.getValue().megaMenuDocked).toBe(true));
+      act(() => context.chrome.setMegaMenuOpen(true));
+
+      const menu = await screen.findByTestId(selectors.components.NavMenu.Menu);
+      const lists = within(menu).getAllByRole('list', { name: 'Navigation', hidden: true });
+      const lastList = lists[lists.length - 1];
+      expect(within(lastList).getByText('Administration')).toBeInTheDocument();
+      expect(within(lists[0]).queryByText('Administration')).not.toBeInTheDocument();
+    });
+
+    it('shows the rail when the docked menu is closed', async () => {
+      const { context } = setup(<Page navId="child1">Children</Page>);
+      act(() => context.chrome.setMegaMenuOpen(false));
+
+      expect(await screen.findByRole('button', { name: 'Main menu' })).toBeInTheDocument();
+      expect(context.chrome.state.getValue().megaMenuDocked).toBe(true);
     });
   });
 });

@@ -4,6 +4,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
+import { AppChromeSectionSidebar } from 'app/core/components/AppChrome/SectionSidebar/AppChromeSectionSidebar';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
@@ -29,6 +30,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     isEditing,
     layoutOrchestrator,
     planning,
+    meta,
+    uid,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -81,9 +84,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
   }, [isSettingsOpen, editPanel, viewPanel, model]);
 
+  const sectionSidebar = <AppChromeSectionSidebar context={{ folderUid: meta.folderUid, dashboardUid: uid }} />;
+
   if (editview) {
     return (
       <>
+        {sectionSidebar}
         <editview.Component model={editview} />
         <DashboardOverlay dashboard={model} />
       </>
@@ -123,6 +129,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
 
   return (
     <>
+      {sectionSidebar}
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
       <Page navModel={navModel} pageNav={pageNav} layout={PageLayoutType.Custom}>
         {editPanel && <editPanel.Component model={editPanel} />}

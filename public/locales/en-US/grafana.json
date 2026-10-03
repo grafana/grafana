@@ -4709,6 +4709,17 @@
       "view-dashboard": "View dashboard",
       "view-folder": "View folder"
     },
+    "section-sidebar": {
+      "browse": "Browse dashboards",
+      "folders": "Folders",
+      "pages": "Dashboards pages",
+      "recent": "Recent",
+      "recent-empty": "No recently viewed dashboards",
+      "search": "Search dashboards",
+      "starred": "Starred",
+      "starred-empty": "No starred dashboards yet",
+      "title": "Dashboards"
+    },
     "shared-with-me": "Shared with me",
     "starred-folders": "Starred folders",
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there.",
@@ -13071,6 +13082,8 @@
       "dock": "Dock menu",
       "header-title": "Navigation",
       "list-label": "Navigation",
+      "new": "New",
+      "new-in-section": "New in {{sectionName}}",
       "open": "Main menu",
       "pin-error": "Failed to update pinned menu items",
       "pinned-list-label": "Pinned items",
@@ -15894,6 +15907,24 @@
           "alphabetically-za": "Alphabetically (Z-A)"
         }
       }
+    }
+  },
+  "section-sidebar": {
+    "item": {
+      "collapse": "Collapse {{title}}",
+      "expand": "Expand {{title}}"
+    },
+    "nav": {
+      "more": "More"
+    },
+    "new": "New",
+    "search": {
+      "empty": "No results found",
+      "error": "Search failed",
+      "results": "Results"
+    },
+    "tree": {
+      "empty": "No items"
     }
   },
   "select": {

@@ -2024,6 +2024,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.sectionSidebar",
+			Description: "Enables a section sidebar next to the mega menu, first adopted by the dashboards section",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+		},
+		{
 			Name:        "grafana.newTextPanel",
 			Description: "Enables the new text panel",
 			Stage:       FeatureStageExperimental,

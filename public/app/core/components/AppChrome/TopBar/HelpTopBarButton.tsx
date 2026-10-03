@@ -16,9 +16,10 @@ import { useHelpNode } from './useHelpNode';
 
 interface Props {
   isSmallScreen: boolean;
+  placement?: 'bottom-end' | 'right-end' | 'top-start';
 }
 
-export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }: Props) {
+export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen, placement = 'bottom-end' }: Props) {
   const enrichedHelpNode = useHelpNode();
   const { setDockedComponentId, dockedComponentId, availableComponents } = useExtensionSidebarContext();
 
@@ -30,7 +31,7 @@ export const HelpTopBarButton = memo(function HelpTopBarButton({ isSmallScreen }
 
   if (isSmallScreen || !enrichedHelpNode.hideFromTabs || interactiveLearningPluginId === undefined) {
     return (
-      <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement="bottom-end">
+      <Dropdown overlay={() => <TopNavBarMenu node={enrichedHelpNode} />} placement={placement}>
         <ToolbarButton
           iconOnly
           icon="question-circle"

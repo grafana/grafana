@@ -268,6 +268,11 @@ const PROTECTED_NAV_IDS = new Set(['home', 'bookmarks', 'starred']);
  */
 export const NON_MENU_NAV_IDS = new Set(['profile', 'help', HOME_NAV_ID]);
 
+/** With the rail, settings-like sections sit at the bottom of the rail and the docked menu */
+const RAIL_BOTTOM_NAV_IDS = new Set(['cfg']);
+
+export const isRailBottomItem = (item: NavModelItem): boolean => Boolean(item.id && RAIL_BOTTOM_NAV_IDS.has(item.id));
+
 /**
  * The stable key identifying an item for hiding — its id, or its url when it has no id (plugin nav
  * items often have only a url). Everything hiding-related keys on this so any linked row can be hidden.
@@ -418,4 +423,9 @@ export function useMegaMenuFocusHelper(isOpen: boolean, isDocked: boolean) {
       document.getElementById(MEGA_MENU_TOGGLE_ID)?.focus();
     }
   }, [isDocked]);
+}
+
+/** A section's "create" nav items (e.g. New dashboard), wherever they sit beneath it */
+export function getCreateActions(items: NavModelItem[] = []): NavModelItem[] {
+  return items.flatMap((item) => (item.isCreateAction ? [item] : getCreateActions(item.children)));
 }
