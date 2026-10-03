@@ -1,8 +1,10 @@
 import { type AnyAction, createAction } from '@reduxjs/toolkit';
+import { cloneDeep } from 'lodash';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { pluginNavLoaded } from '../navtree/state';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
@@ -134,6 +136,22 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     return next;
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
+  } else if (pluginNavLoaded.match(action)) {
+    // getAppPluginRoutes builds the app plugin routes from this index, so the
+    // merged apps have to reach it or their pages 404.
+    //
+    // Laid over the existing state rather than replacing it, so entries a page
+    // registered via updateNavIndex survive. The new object also busts
+    // getNavModel's memoization.
+    const rootNodes = cloneDeep(action.payload.tree);
+    const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
+    const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
+    const mergedIndex: NavIndex = {};
+    if (homeNav) {
+      buildNavIndex(mergedIndex, [homeNav]);
+    }
+    buildNavIndex(mergedIndex, otherRootNodes, mergedIndex[HOME_NAV_ID] ?? state[HOME_NAV_ID]);
+    return { ...state, ...mergedIndex };
   }
 
   return state;

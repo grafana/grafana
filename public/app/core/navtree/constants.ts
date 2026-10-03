@@ -1,3 +1,5 @@
+import { type NavModelItem } from '@grafana/data';
+
 // The order (and therefore sort weight) of every nav section, mirroring the
 // WeightX iota constants in pkg/services/navtree/models.go. It MUST stay in
 // lockstep with the Go order: the client- and server-built trees are merged
@@ -90,3 +92,15 @@ export const NavID = {
 
 /** The set of known nav ids (the literal values of NavID). */
 export type NavId = (typeof NavID)[keyof typeof NavID];
+
+// The "More apps" section only exists to group plugin nav items, so it is
+// created on demand when the first app plugin is merged in. The url is
+// app-sub-url relative; children are filled at creation time.
+export const MORE_APPS_SHELL: NavModelItem = {
+  text: 'More apps',
+  icon: 'layer-group',
+  subTitle: 'App plugins that extend the Grafana experience',
+  id: NavID.apps,
+  sortWeight: NavWeight.apps,
+  url: '/apps',
+};

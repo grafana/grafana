@@ -13,6 +13,7 @@ import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { useNavTree } from 'app/core/navtree/useNavTree';
 import { ScopesDashboards } from 'app/features/scopes/dashboards/ScopesDashboards';
 import { useVisualRefreshNudge } from 'app/features/visual-refresh/useVisualRefreshNudge';
 
@@ -87,6 +88,9 @@ export function AppChrome({ children }: Props) {
   const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   useResponsiveDockedMegaMenu(chrome);
+  // The menu may not be mounted (undocked, closed) but the command palette and
+  // plugin routes still need the merged tree, so the nav hook lives here too.
+  useNavTree();
   useMegaMenuFocusHelper(state.megaMenuOpen, state.megaMenuDocked);
 
   const contentClass = cx({
