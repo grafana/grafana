@@ -1590,6 +1590,24 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
         secure: false,
         dependsOn: '',
       },
+      {
+        element: 'checkbox',
+        inputType: '',
+        label: 'Send Message as Image Caption',
+        description:
+          'Sends a single screenshot and the alert text in one message when the text fits in a Telegram caption.',
+        placeholder: '',
+        propertyName: 'send_message_as_caption',
+        selectOptions: null,
+        showWhen: {
+          field: '',
+          is: '',
+        },
+        required: false,
+        validationRule: '',
+        secure: false,
+        dependsOn: '',
+      },
     ],
   },
   webhook: {
