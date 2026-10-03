@@ -47,4 +47,89 @@ describe('Datasource reducer', () => {
 
     expect(result).toMatchObject(expectedState);
   });
+
+  it('should update queries datasource uid when switching from datasource A to datasource B', () => {
+    const datasourceInstanceA = {
+      uid: 'prom-a',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        mixed: false,
+      },
+      getRef: () => ({ uid: 'prom-a', type: 'prometheus' }),
+    } as unknown as DataSourceApi;
+
+    const datasourceInstanceB = {
+      uid: 'prom-b',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        mixed: false,
+      },
+      getRef: () => ({ uid: 'prom-b', type: 'prometheus' }),
+    } as unknown as DataSourceApi;
+
+    const initialQueries: DataQuery[] = [
+      { refId: 'A', datasource: { uid: 'prom-a', type: 'prometheus' } },
+      { refId: 'B', datasource: { uid: 'prom-a', type: 'prometheus' } },
+    ];
+
+    const initialState: ExploreItemState = {
+      datasourceInstance: datasourceInstanceA,
+      queries: initialQueries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+
+    const result = datasourceReducer(
+      initialState,
+      updateDatasourceInstanceAction({ exploreId: 'left', datasourceInstance: datasourceInstanceB, history: [] })
+    );
+
+    expect(result.datasourceInstance).toBe(datasourceInstanceB);
+    expect(result.queries).toEqual([
+      { refId: 'A', datasource: { uid: 'prom-b', type: 'prometheus' } },
+      { refId: 'B', datasource: { uid: 'prom-b', type: 'prometheus' } },
+    ]);
+  });
+
+  it('should not overwrite queries datasource when switching to a mixed datasource', () => {
+    const datasourceInstanceA = {
+      uid: 'prom-a',
+      type: 'prometheus',
+      meta: {
+        id: 'prometheus',
+        mixed: false,
+      },
+      getRef: () => ({ uid: 'prom-a', type: 'prometheus' }),
+    } as unknown as DataSourceApi;
+
+    const mixedDatasourceInstance = {
+      uid: '-- Mixed --',
+      type: 'mixed',
+      meta: {
+        id: 'mixed',
+        mixed: true,
+      },
+      getRef: () => ({ uid: '-- Mixed --', type: 'mixed' }),
+    } as unknown as DataSourceApi;
+
+    const initialQueries: DataQuery[] = [
+      { refId: 'A', datasource: { uid: 'prom-a', type: 'prometheus' } },
+      { refId: 'B', datasource: { uid: 'loki-a', type: 'loki' } },
+    ];
+
+    const initialState: ExploreItemState = {
+      datasourceInstance: datasourceInstanceA,
+      queries: initialQueries,
+      queryKeys: [],
+    } as unknown as ExploreItemState;
+
+    const result = datasourceReducer(
+      initialState,
+      updateDatasourceInstanceAction({ exploreId: 'left', datasourceInstance: mixedDatasourceInstance, history: [] })
+    );
+
+    expect(result.datasourceInstance).toBe(mixedDatasourceInstance);
+    expect(result.queries).toEqual(initialQueries);
+  });
 });

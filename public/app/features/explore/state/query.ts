@@ -329,32 +329,74 @@ export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
       dispatch(changeCorrelationEditorDetails({ queryEditorDirty: true }));
     }
 
+    let nextQueries = queries;
     for (const newQuery of queries) {
       for (const oldQuery of oldQueries) {
-        if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-          // Skip automatic import if explicitly requested (e.g., query library replacement)
-          if (!options?.skipAutoImport) {
-            const queryDatasource = await getDataSourceInstance(oldQuery.datasource);
-            const targetDS = await getDataSourceInstance({ uid: newQuery.datasource?.uid });
-            await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
-            queriesImported = true;
-          }
-        }
+        if (newQuery.refId === oldQuery.refId) {
+          const oldUid =
+            (typeof oldQuery.datasource === 'string' ? oldQuery.datasource : oldQuery.datasource?.uid) ?? rootUID;
+          const newUid =
+            (typeof newQuery.datasource === 'string' ? newQuery.datasource : newQuery.datasource?.uid) ?? rootUID;
 
-        if (
-          rootUID === MIXED_DATASOURCE_NAME &&
-          newQuery.refId === oldQuery.refId &&
-          newQuery.datasource?.uid !== oldQuery.datasource?.uid
-        ) {
-          const correlations = await getCorrelationsFromStorage(dispatch, queries, rootUID);
-          dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
+          if (oldUid !== newUid) {
+            let targetDS: DataSourceApi | undefined;
+            let queryDatasource: DataSourceApi | undefined;
+            try {
+              if (newQuery.datasource) {
+                targetDS = await getDataSourceInstance(newQuery.datasource);
+              } else if (newUid) {
+                targetDS = await getDataSourceInstance({ uid: newUid });
+              }
+            } catch {
+              // fallback if getDataSourceInstance fails
+            }
+
+            try {
+              if (oldQuery.datasource) {
+                queryDatasource = await getDataSourceInstance(oldQuery.datasource);
+              } else if (oldUid) {
+                queryDatasource = await getDataSourceInstance({ uid: oldUid });
+              }
+            } catch {
+              // fallback if getDataSourceInstance fails
+            }
+
+            const targetType =
+              targetDS?.type ?? (typeof newQuery.datasource === 'object' ? newQuery.datasource?.type : undefined);
+            const sourceType =
+              queryDatasource?.type ?? (typeof oldQuery.datasource === 'object' ? oldQuery.datasource?.type : undefined);
+
+            if (targetType && sourceType && targetType !== sourceType) {
+              // Skip automatic import if explicitly requested (e.g., query library replacement)
+              if (!options?.skipAutoImport && queryDatasource && targetDS) {
+                await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+                queriesImported = true;
+              }
+            } else if (targetDS) {
+              nextQueries = nextQueries.map((q) =>
+                q.refId === newQuery.refId
+                  ? {
+                      ...q,
+                      datasource: targetDS!.getRef
+                        ? targetDS!.getRef()
+                        : { uid: targetDS!.uid, type: targetDS!.type },
+                    }
+                  : q
+              );
+            }
+
+            if (rootUID === MIXED_DATASOURCE_NAME) {
+              const correlations = await getCorrelationsFromStorage(dispatch, nextQueries, rootUID);
+              dispatch(saveCorrelationsAction({ exploreId: exploreId, correlations: correlations.correlations || [] }));
+            }
+          }
         }
       }
     }
 
     // Importing queries changes the same state, therefore if we are importing queries we don't want to change the state again
     if (!queriesImported) {
-      dispatch(changeQueriesAction({ queries, exploreId }));
+      dispatch(changeQueriesAction({ queries: nextQueries, exploreId }));
     }
 
     // if we are removing a query we want to run the remaining ones
@@ -376,29 +418,54 @@ export const importQueries = (
   exploreId: string,
   queries: DataQuery[],
   sourceDataSource: DataSourceApi | undefined | null,
-  targetDataSource: DataSourceApi,
+  targetDataSource?: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
 ): ThunkResult<Promise<DataQuery[] | void>> => {
   return async (dispatch) => {
-    if (!sourceDataSource) {
-      // explore not initialized
+    if (!sourceDataSource || !targetDataSource) {
+      // explore not initialized or target datasource not provided
       dispatch(queriesImportedAction({ exploreId, queries }));
       return;
     }
 
     let importedQueries = queries;
     // If going to mixed, keep queries with source datasource
-    if (targetDataSource.uid === MIXED_DATASOURCE_NAME) {
+    if (
+      targetDataSource.uid === MIXED_DATASOURCE_NAME ||
+      targetDataSource.meta?.mixed ||
+      targetDataSource.type === 'mixed'
+    ) {
       importedQueries = queries.map((query) => {
-        return { ...query, datasource: sourceDataSource.getRef() };
+        return {
+          ...query,
+          datasource: sourceDataSource.getRef
+            ? sourceDataSource.getRef()
+            : { uid: sourceDataSource.uid, type: sourceDataSource.type },
+        };
       });
     }
     // If going from mixed, see what queries you keep by their individual datasources
-    else if (sourceDataSource.uid === MIXED_DATASOURCE_NAME) {
-      const groupedQueries = groupBy(queries, (query) => query.datasource?.uid);
+    else if (
+      sourceDataSource.uid === MIXED_DATASOURCE_NAME ||
+      sourceDataSource.meta?.mixed ||
+      sourceDataSource.type === 'mixed'
+    ) {
+      const groupedQueries = groupBy(queries, (query) =>
+        typeof query.datasource === 'string' ? query.datasource : query.datasource?.uid
+      );
       const groupedImportableQueries = await Promise.all(
         Object.keys(groupedQueries).map(async (key: string) => {
-          const queryDatasource = await getDataSourceInstance({ uid: key });
+          let queryDatasource: DataSourceApi | undefined;
+          try {
+            if (key && key !== 'undefined') {
+              queryDatasource = await getDataSourceInstance({ uid: key });
+            }
+          } catch {
+            // fallback if getDataSourceInstance fails
+          }
+          if (!queryDatasource) {
+            return [];
+          }
           return await getImportableQueries(targetDataSource, queryDatasource, groupedQueries[key]);
         })
       );
@@ -415,7 +482,10 @@ export const importQueries = (
     }
 
     // this will be the entire imported set, or the single imported query in an array
-    let nextQueries = await ensureQueries(importedQueries, targetDataSource.getRef());
+    let nextQueries = await ensureQueries(
+      importedQueries,
+      targetDataSource.getRef ? targetDataSource.getRef() : { uid: targetDataSource.uid, type: targetDataSource.type }
+    );
 
     if (singleQueryChangeRef !== undefined) {
       // if the query import didn't return a result, there was no ability to import between datasources. Create an empty query for the datasource

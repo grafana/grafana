@@ -14,6 +14,7 @@ import { cancelQueries, runQueries, setQueriesAction } from 'app/features/explor
 import { updateTime } from 'app/features/explore/state/time';
 import { fromURLRange } from 'app/features/explore/state/utils';
 import { withUniqueRefIds } from 'app/features/explore/utils/queries';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
 import { type ThunkDispatch } from 'app/types/store';
 
@@ -73,7 +74,18 @@ export function syncFromURL(
           }
 
           if (update.queries) {
-            dispatch(setQueriesAction({ exploreId, queries: withUniqueRefIds(queries) }));
+            let nextQueries = withUniqueRefIds(queries);
+            const currentDS = await dispatch((_, getState) => getState().explore.panes[exploreId]?.datasourceInstance);
+            if (
+              currentDS &&
+              !currentDS.meta?.mixed &&
+              currentDS.uid !== MIXED_DATASOURCE_NAME &&
+              currentDS.type !== 'mixed' &&
+              currentDS.getRef
+            ) {
+              nextQueries = nextQueries.map((query) => ({ ...query, datasource: currentDS.getRef() }));
+            }
+            dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
           }
 
           if (update.queries || update.range) {
