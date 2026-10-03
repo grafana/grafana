@@ -5,9 +5,11 @@ import {
   SceneObjectStateChangedEvent,
   type SceneObjectState,
   type SceneObjectStateChangedPayload,
+  type SceneTimeRangeLike,
   type VizPanel,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_FAILED_REASON, NOTEBOOK_ENTRY_POINT } from '../analytics/types';
@@ -17,7 +19,12 @@ import { type NotebookElement, type PanelKind, type Spec as NotebookSpec } from 
 
 import { type NotebookScene } from './NotebookScene';
 import { type NotebookCellItem } from './layout-notebook/NotebookCellItem';
-import { type CellTimeRangeSpec, withQueryOptionsTimeRange } from './layout-notebook/cellTimeRange';
+import {
+  buildCellSceneTimeRange,
+  buildCellTimeRangeSpec,
+  type CellTimeRangeSpec,
+  withQueryOptionsTimeRange,
+} from './layout-notebook/cellTimeRange';
 
 type PanelVizConfigState = Pick<VizPanel['state'], 'pluginId' | 'pluginVersion' | 'options' | 'fieldConfig'>;
 
@@ -68,6 +75,17 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private vizConfigsEdited = new Set<string>();
   /** Each cell's own time range in `baseline`, by cell identity. As `savedVizConfigs`. */
   private savedCellTimeRanges = new Map<NotebookCellItem, CellTimeRangeSpec | undefined>();
+  /**
+   * The panel in `baseline` and its own time override, by cell identity. As `savedCellTimeRanges`.
+   *
+   * The panel is held here rather than looked up in `savedVizPanels`, which is keyed by element name:
+   * a layout may legally reference one element from more than one cell (see
+   * NotebookLayoutManager.setElementBody), and that map keeps only the last of them.
+   */
+  private savedPanelTimeRanges = new Map<
+    NotebookCellItem,
+    { panel: VizPanel | undefined; timeRange: SceneTimeRangeLike | undefined }
+  >();
   /** The cells whose own time range was edited this session, by cell identity. As `vizConfigsEdited`. */
   private cellTimeRangesEdited = new Set<NotebookCellItem>();
   /** The panels a reader changed, by element name, waiting on the prompt edit mode opens with. */
@@ -87,6 +105,14 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   private editedByWriter = false;
   private changeSub?: Unsubscribable;
   private inFlight = false;
+  /**
+   * The time settings and cell ranges the save in flight carries, because `saveNow` clears the flags
+   * that said so when the request starts. Without them a restore could not tell a writer's edit that
+   * is mid-write from a reader's, and a blanket "not while saving" would skip the restore for the whole
+   * visit — nothing runs it again when the request lands.
+   */
+  private inFlightTimeSettingsEdited = false;
+  private inFlightCellTimeRangesEdited: ReadonlySet<NotebookCellItem> = new Set();
   /** Set while `write` adopts a freshly created uid, so that is not mistaken for someone's edit. */
   private adoptingUid = false;
   /** The save now running, so a caller that reports an outcome can wait for the write to land. */
@@ -299,6 +325,76 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     if (restoredWriterEdit) {
       this.editedByWriter = true;
       this.schedule();
+    }
+  }
+
+  /**
+   * Puts back the time settings and cell ranges a reader moved, so the notebook opens on its own range.
+   *
+   * Saves already hold these back (see `buildSpecToSave`), so the server copy is right. This is the
+   * other half: the page caches the scene and hands the same one back on the next visit, so without
+   * this a reader's range outlives them. `NotebookScene`'s teardown resets `isEditing` for the same
+   * reason.
+   */
+  public discardViewOnlyTimeChanges(): void {
+    // Replacing `$timeRange` under a live tree would orphan every cell range's ancestor subscription
+    // (SceneTimeRangeTransformerBase resolves it once, at activation), and the url sync manager would
+    // answer the change by rewriting the address bar. A notebook still open in an embed therefore keeps
+    // the reader's range, which is right: someone is reading it.
+    if (this.scene.isActive) {
+      return;
+    }
+
+    const saved = this.savedTimeSettings;
+    // A range edited this session is the notebook's own, and may still be waiting on the debounce, on a
+    // retry after a failed save (`saveNow` puts the flag back), or in the request itself. A save that
+    // carries something else is no reason to hold off: what it writes for the time settings is the
+    // saved value being put back here.
+    if (!saved || this.timeSettingsEdited || this.inFlightTimeSettingsEdited) {
+      return;
+    }
+
+    // Rebuilt rather than patched, so every time setting comes back together and `value` is
+    // re-evaluated. Panels re-query on their next activation, where they see data for another range.
+    this.scene.setState({ $timeRange: buildSceneTimeRange(saved) });
+
+    const { refreshPicker } = this.scene.state;
+    if (refreshPicker.state.refresh !== saved.autoRefresh) {
+      refreshPicker.setState({ refresh: saved.autoRefresh });
+    }
+
+    this.restoreSavedCellTimeRanges();
+  }
+
+  private restoreSavedCellTimeRanges(): void {
+    const currentCells = new Set(this.scene.state.body.state.cells);
+
+    for (const [cell, savedRange] of this.savedCellTimeRanges) {
+      // A cell that has left the notebook, or whose panel was replaced, is not the one this entry was
+      // recorded for.
+      const panel = cell.state.body;
+      const savedPanel = this.savedPanelTimeRanges.get(cell);
+      if (
+        !savedPanel ||
+        this.cellTimeRangesEdited.has(cell) ||
+        this.inFlightCellTimeRangesEdited.has(cell) ||
+        !currentCells.has(cell) ||
+        panel !== savedPanel.panel
+      ) {
+        continue;
+      }
+
+      const savedPanelRange = savedPanel.timeRange;
+      const currentRange = cell.state.$timeRange ? buildCellTimeRangeSpec(cell.state.$timeRange) : undefined;
+      if (isEqual(currentRange, savedRange) && panel?.state.$timeRange === savedPanelRange) {
+        continue;
+      }
+
+      cell.setState({ $timeRange: savedRange ? buildCellSceneTimeRange(savedRange.from, savedRange.to) : undefined });
+      // Setting a cell range clears the panel's own override (see setCellTimeRange), so it has to go
+      // back too or a reader's toggle costs the notebook a `timeFrom` of its own. Not via
+      // setCellTimeRange: that runs the cell's queries, which SceneQueryRunner does even off screen.
+      panel?.setState({ $timeRange: savedPanelRange });
     }
   }
 
@@ -521,13 +617,39 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     spec: NotebookSpec,
     serialized = JSON.stringify(spec),
     panels = collectVizPanels(this.scene),
-    cells = this.scene.state.body.contentCells()
+    cells = this.scene.state.body.contentCells(),
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem> = this.cellTimeRangesEdited
   ): void {
     this.baseline = serialized;
     this.savedTimeSettings = spec.timeSettings;
     this.savedVizConfigs = collectVizConfigs(spec);
     this.savedVizPanels = panels;
     this.savedCellTimeRanges = collectCellTimeRangesFromSpec(spec, cells);
+    this.savedPanelTimeRanges = this.collectPanelTimeRanges(cells, cellTimeRangesEdited);
+  }
+
+  /**
+   * The panel's own time override for each cell, as the spec just written leaves it.
+   *
+   * From the scene, not the spec: a one-sided override (`timeFrom` with no `timeTo`) stays on the panel
+   * and never becomes a cell range, so `collectCellTimeRangesFromSpec` records nothing for it.
+   *
+   * Only a cell whose range this save wrote is read from the scene. Any other can be showing a reader's
+   * toggle, which clears the panel's override, so reading it now would record that loss as saved.
+   */
+  private collectPanelTimeRanges(
+    cells: NotebookCellItem[],
+    cellTimeRangesEdited: ReadonlySet<NotebookCellItem>
+  ): typeof this.savedPanelTimeRanges {
+    const previous = this.savedPanelTimeRanges;
+    const ranges: typeof this.savedPanelTimeRanges = new Map();
+
+    for (const cell of cells) {
+      const carried = !cellTimeRangesEdited.has(cell) ? previous.get(cell) : undefined;
+      ranges.set(cell, carried ?? { panel: cell.state.body, timeRange: cell.state.body?.state.$timeRange });
+    }
+
+    return ranges;
   }
 
   /** What to report when there is nothing waiting to be written. */
@@ -593,6 +715,8 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     this.cellTimeRangesEdited.clear();
     this.editedByWriter = false;
     this.inFlight = true;
+    this.inFlightTimeSettingsEdited = timeSettingsEdited;
+    this.inFlightCellTimeRangesEdited = cellTimeRangesEdited;
     this.setState({ status: 'saving', errorMessage: undefined });
 
     // Read here rather than at the top: a notebook with no uid has not been created yet, and its first
@@ -601,7 +725,7 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
 
     this.inFlightSave = this.write(uid, spec)
       .then(({ generation }) => {
-        this.recordWritten(spec, serialized, panels, cells);
+        this.recordWritten(spec, serialized, panels, cells, cellTimeRangesEdited);
         this.hasSavedOnce = true;
         this.failedAttempts = 0;
         this.setState({
@@ -637,6 +761,10 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
       })
       .finally(() => {
         this.inFlight = false;
+        // A write that landed is in `savedTimeSettings` now, and one that failed put the flags back, so
+        // either way these have nothing left to say.
+        this.inFlightTimeSettingsEdited = false;
+        this.inFlightCellTimeRangesEdited = new Set();
         // Cleared before the queued save runs, so that save can record its own request here.
         this.inFlightSave = undefined;
         if (this.saveAgainWhenIdle) {
