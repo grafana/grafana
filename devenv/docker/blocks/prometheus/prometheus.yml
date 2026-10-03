@@ -37,6 +37,26 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:3000']
 
+  # Duplicate scrapes of the same Grafana self-metrics target, each tagged with a different
+  # fake `cluster` label, so grafana_vault_cache_size (a real Grafana self-metric — there is
+  # no fake-data-gen source to modify) shows up as distinct multi-cluster series for the
+  # Service Center scopes demo. service_name=vault is attached the same way; harmless here
+  # since this target is only used for that demo, but not a generally-correct pattern if this
+  # devenv gets reused for something else later.
+  - job_name: 'grafana-prod-us-central-0'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+        labels:
+          cluster: prod-us-central-0
+          service_name: vault
+
+  - job_name: 'grafana-prod-us-east-1'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+        labels:
+          cluster: prod-us-east-1
+          service_name: vault
+
   - job_name: 'prometheus-random-data'
     static_configs:
       - targets: ['prometheus-random-data:8080']

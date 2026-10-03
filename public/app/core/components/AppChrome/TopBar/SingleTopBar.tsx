@@ -12,6 +12,7 @@ import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { contextSrv } from 'app/core/services/context_srv';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
@@ -88,7 +89,15 @@ export const SingleTopBar = memo(function SingleTopBar({
               </ToolbarButton>
             </>
           )}
-          {topLevelScopes ? <ScopesSelector /> : undefined}
+          {topLevelScopes ? (
+            <>
+              <ScopesSelector />
+              {/* DEMO HACK — not meant to ship. See the matching note in SingleTopBarActions.tsx;
+                  this is the other of the two top-bar branches (showToolbarLevel false), which
+                  renders the scopes selector directly here instead of via SingleTopBarActions. */}
+              <ContextualNavigationPaneToggle />
+            </>
+          ) : undefined}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
           {!showToolbarLevel && breadcrumbActions}
         </Stack>

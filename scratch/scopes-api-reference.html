@@ -1,0 +1,762 @@
+<title>Scopes API Reference</title>
+<style>
+  /* Layout: two-column reference doc — sticky left TOC nav (collapses to a top
+     disclosure on phones), single reading column for content; code/JSON blocks
+     and tables get their own horizontal scroll container. */
+  :root {
+    --bg: #f5f6f4;
+    --surface: #ffffff;
+    --fg: #1b2420;
+    --muted: #5b6b64;
+    --accent: #0f7b6c;
+    --border: #d9ddd7;
+    --code-bg: #eef1ee;
+    --font-display: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101614;
+      --surface: #171f1c;
+      --fg: #e7ece8;
+      --muted: #8fa39b;
+      --accent: #36c2a8;
+      --border: #263430;
+      --code-bg: #1d2623;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101614;
+    --surface: #171f1c;
+    --fg: #e7ece8;
+    --muted: #8fa39b;
+    --accent: #36c2a8;
+    --border: #263430;
+    --code-bg: #1d2623;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.6;
+    padding-inline: 16px;
+    padding-block: 24px;
+  }
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 230px minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .page { grid-template-columns: 1fr; }
+  }
+
+  nav.toc {
+    position: sticky;
+    top: 24px;
+    font-size: 13px;
+    border-right: 1px solid var(--border);
+    padding-right: 20px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  @media (max-width: 860px) {
+    nav.toc {
+      position: static;
+      border-right: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      max-height: none;
+    }
+  }
+  nav.toc .toc-title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  nav.toc ul { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin-bottom: 7px; }
+  nav.toc a {
+    color: var(--fg);
+    text-decoration: none;
+    opacity: 0.75;
+  }
+  nav.toc a:hover { opacity: 1; color: var(--accent); }
+  nav.toc .sub { padding-left: 14px; font-size: 12px; }
+
+  main { min-width: 0; }
+
+  header.hero {
+    margin-bottom: 36px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 700;
+    margin: 0 0 10px;
+    text-wrap: balance;
+  }
+  .tagline {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 640px;
+  }
+  .badges { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--surface);
+  }
+
+  section { margin-bottom: 48px; scroll-margin-top: 16px; }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 23px;
+    font-weight: 700;
+    margin: 0 0 6px;
+    padding-top: 4px;
+  }
+  h3 {
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    margin: 28px 0 10px;
+  }
+  .section-note {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 18px;
+    max-width: 680px;
+  }
+  p { margin: 0 0 14px; max-width: 700px; }
+  ul, ol { max-width: 700px; padding-left: 22px; margin: 0 0 14px; }
+  li { margin-bottom: 6px; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--code-bg);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  pre {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 0 0 16px;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; font-size: 1em; }
+
+  .table-wrap { overflow-x: auto; margin-bottom: 18px; }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13.5px; }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    font-family: var(--font-display);
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  td code { white-space: nowrap; }
+
+  .verb {
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 11.5px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+  }
+  .verb-get { background: #0f7b6c22; color: var(--accent); }
+  .verb-post { background: #3b6fd622; color: #3b6fd6; }
+  .verb-put { background: #c2820022; color: #c28200; }
+  .verb-patch { background: #c2820022; color: #c28200; }
+  .verb-delete { background: #c2403b22; color: #c2403b; }
+
+  .callout {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 12px 16px;
+    background: var(--surface);
+    font-size: 13.5px;
+    margin-bottom: 16px;
+  }
+  .callout.warn { border-left-color: #c28200; }
+  .callout strong { color: var(--fg); }
+
+  .pill-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .pill {
+    font-size: 12px;
+    font-family: var(--font-mono);
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+  }
+  .pill.verified { color: var(--accent); border-color: var(--accent); }
+  .pill.sourced { color: var(--muted); }
+
+  .mermaid { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 56px;
+    padding-top: 20px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="page">
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#model">Resource model</a></li>
+      <li><a href="#base">Base path &amp; auth</a></li>
+      <li><a href="#endpoints">CRUD endpoints</a>
+        <ul>
+          <li class="sub"><a href="#ep-scope">Scope</a></li>
+          <li class="sub"><a href="#ep-scopenode">ScopeNode</a></li>
+          <li class="sub"><a href="#ep-scopenav">ScopeNavigation</a></li>
+          <li class="sub"><a href="#ep-binding">ScopeDashboardBinding</a></li>
+        </ul>
+      </li>
+      <li><a href="#filters">Filter model</a></li>
+      <li><a href="#find">Find / query endpoints</a></li>
+      <li><a href="#upsert">Upsert pattern</a></li>
+      <li><a href="#workflow">End-to-end workflow</a></li>
+      <li><a href="#delete">Deletion</a></li>
+      <li><a href="#downstream">How filters reach consumers</a></li>
+      <li><a href="#caveats">Stability &amp; caveats</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <h1>Scopes API Reference</h1>
+      <p class="tagline">
+        A client-oriented reference for <code>scope.grafana.app/v0alpha1</code> — the
+        Kubernetes-style API behind Grafana's Scopes feature. Covers CRUD endpoints,
+        payload shapes, and the intended end-to-end workflow for generating scope
+        hierarchies, independent of any particular calling application.
+      </p>
+      <div class="badges">
+        <span class="badge">group: scope.grafana.app</span>
+        <span class="badge">version: v0alpha1</span>
+        <span class="badge">stage: experimental</span>
+      </div>
+    </header>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p>
+        The Scopes API models a navigable hierarchy that end users select from to filter
+        and navigate a Grafana instance — a "hat" a user puts on (e.g. a team, a service,
+        a cluster) that narrows what they see. The hierarchy is built from two kinds working
+        together:
+      </p>
+      <ul>
+        <li><strong>ScopeNode</strong> — the tree structure itself (containers and leaves).</li>
+        <li><strong>Scope</strong> — the actual filterable unit a leaf node links to, carrying
+          the label filters that get applied once selected.</li>
+      </ul>
+      <p>
+        A third kind, <strong>ScopeNavigation</strong>, attaches dashboard/page links to a
+        selected scope, grouped into folders in the navigation UI. A fourth,
+        <strong>ScopeDashboardBinding</strong>, is an older flat dashboard-link mechanism that
+        <code>ScopeNavigation</code> has superseded — included here for completeness since it's
+        still a live, separate collection.
+      </p>
+      <div class="callout">
+        <strong>This is a real, live, CRUD-capable REST API</strong> — not a config file loaded
+        once at startup. Every write in this document was exercised against a running Grafana
+        instance before being documented; see <a href="#caveats">Stability &amp; caveats</a> for
+        exactly what was and wasn't verified this way.
+      </div>
+    </section>
+
+    <section id="model">
+      <h2>Resource model</h2>
+      <p class="section-note">
+        A typical generated hierarchy: containers from the root down to a service, a leaf node
+        per filterable unit (here, a cluster), and navigation links hanging off the scope that
+        leaf links to.
+      </p>
+      <pre class="mermaid">
+graph TD
+  root["ScopeNode: root<br/>(container, parentName: '')"]
+  team["ScopeNode: team-platform<br/>(container)"]
+  svc["ScopeNode: svc-checkout<br/>(container)"]
+  leaf["ScopeNode: svc-checkout-cluster-us-east<br/>(leaf, linkType: scope)"]
+  scope["Scope: scope-checkout-us-east<br/>(filters: cluster=us-east, service_name=checkout)"]
+  nav1["ScopeNavigation<br/>url: /d/abc123"]
+  nav2["ScopeNavigation<br/>url: /d/def456"]
+
+  root --> team
+  team --> svc
+  svc --> leaf
+  leaf -- linkId --> scope
+  scope -. "spec.scope" .-> nav1
+  scope -. "spec.scope" .-> nav2
+      </pre>
+      <p>
+        Containers exist purely to organize the tree — they have no filters of their own.
+        Only leaf nodes link to a <code>Scope</code>, and only once selected does that
+        <code>Scope</code>'s <code>filters</code> take effect.
+      </p>
+    </section>
+
+    <section id="base">
+      <h2>Base path &amp; auth</h2>
+      <p>All endpoints below are relative to:</p>
+      <pre><code>apis/scope.grafana.app/v0alpha1/namespaces/{namespace}/{collection}</code></pre>
+      <ul>
+        <li><code>{namespace}</code> — the stack/org namespace (e.g. <code>default</code> for a
+          single-tenant instance; a Cloud stack namespace like <code>stacks-&lt;id&gt;</code> in
+          a multi-tenant deployment).</li>
+        <li><code>{collection}</code> — one of <code>scopes</code>, <code>scopenodes</code>,
+          <code>scopenavigations</code>, <code>scopedashboardbindings</code>.</li>
+      </ul>
+      <p>
+        Authentication is whatever your Grafana instance normally requires for its HTTP API
+        (session cookie, API key, or service account bearer token) — nothing scope-specific.
+        This is an embedded Grafana App Platform API group, served in-process alongside the
+        other built-in groups (<code>dashboard.grafana.app</code>, <code>folder.grafana.app</code>,
+        etc.) — it does not require any cross-cluster aggregation setup to reach.
+      </p>
+    </section>
+
+    <section id="endpoints">
+      <h2>CRUD endpoints</h2>
+      <p class="section-note">
+        Standard Kubernetes-style REST semantics throughout: <code>GET</code> on the collection
+        lists, <code>GET</code> on an item name fetches one, <code>POST</code> to the collection
+        creates, <code>PUT</code>/<code>PATCH</code> on an item name updates, <code>DELETE</code>
+        on an item name removes it. There is no native upsert verb — see
+        <a href="#upsert">Upsert pattern</a>.
+      </p>
+
+      <h3 id="ep-scope">Scope</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Verb</th><th>Path</th><th>Notes</th></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopes</code></td><td>List all scopes</td></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopes/{name}</code></td><td>Fetch one</td></tr>
+          <tr><td><span class="verb verb-post">POST</span></td><td><code>/scopes</code></td><td>Create. 409 if the name already exists.</td></tr>
+          <tr><td><span class="verb verb-put">PUT</span></td><td><code>/scopes/{name}</code></td><td>Full replace. Requires current <code>metadata.resourceVersion</code> in the body.</td></tr>
+          <tr><td><span class="verb verb-patch">PATCH</span></td><td><code>/scopes/{name}</code></td><td>Listed in the OpenAPI schema; not exercised in validation for this document.</td></tr>
+          <tr><td><span class="verb verb-delete">DELETE</span></td><td><code>/scopes/{name}</code></td><td>No observed cascade — see <a href="#delete">Deletion</a>.</td></tr>
+        </table>
+      </div>
+      <p>Payload shape:</p>
+      <pre><code>{
+  "apiVersion": "scope.grafana.app/v0alpha1",
+  "kind": "Scope",
+  "metadata": {
+    "name": "scope-checkout-us-east"
+  },
+  "spec": {
+    "title": "us-east",
+    "filters": [
+      { "key": "cluster", "operator": "equals", "value": "us-east" },
+      { "key": "service_name", "operator": "equals", "value": "checkout" }
+    ],
+    "defaultPath": ["svc-checkout", "team-platform", "root"]
+  }
+}</code></pre>
+      <ul>
+        <li><code>spec.title</code> — display title shown in the scope picker.</li>
+        <li><code>spec.filters</code> — the label filters applied once this scope is selected.
+          See <a href="#filters">Filter model</a>.</li>
+        <li><code>spec.defaultPath</code> — optional. Direct-parent-to-root list of
+          <code>ScopeNode</code> names (i.e. the linking leaf node's own ancestors, not
+          including the leaf itself). Drives which tree path auto-expands when this scope is
+          selected from elsewhere. Order confirmed by construction against a live tree; the
+          auto-expand UI behavior itself was not independently re-verified.</li>
+      </ul>
+
+      <h3 id="ep-scopenode">ScopeNode</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Verb</th><th>Path</th><th>Notes</th></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopenodes</code></td><td>List all nodes</td></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopenodes/{name}</code></td><td>Fetch one</td></tr>
+          <tr><td><span class="verb verb-post">POST</span></td><td><code>/scopenodes</code></td><td>Create</td></tr>
+          <tr><td><span class="verb verb-put">PUT</span></td><td><code>/scopenodes/{name}</code></td><td>Full replace, needs <code>resourceVersion</code></td></tr>
+          <tr><td><span class="verb verb-patch">PATCH</span></td><td><code>/scopenodes/{name}</code></td><td>Listed in schema; not exercised</td></tr>
+          <tr><td><span class="verb verb-delete">DELETE</span></td><td><code>/scopenodes/{name}</code></td><td>No observed cascade</td></tr>
+        </table>
+      </div>
+      <p>Container node:</p>
+      <pre><code>{
+  "apiVersion": "scope.grafana.app/v0alpha1",
+  "kind": "ScopeNode",
+  "metadata": { "name": "svc-checkout" },
+  "spec": {
+    "parentName": "team-platform",
+    "nodeType": "container",
+    "title": "Checkout"
+  }
+}</code></pre>
+      <p>Leaf node (links to a <code>Scope</code>):</p>
+      <pre><code>{
+  "apiVersion": "scope.grafana.app/v0alpha1",
+  "kind": "ScopeNode",
+  "metadata": { "name": "svc-checkout-cluster-us-east" },
+  "spec": {
+    "parentName": "svc-checkout",
+    "nodeType": "leaf",
+    "title": "us-east",
+    "linkType": "scope",
+    "linkId": "scope-checkout-us-east"
+  }
+}</code></pre>
+      <ul>
+        <li><code>spec.parentName</code> — the parent node's name. An <strong>empty string</strong>
+          marks a root node (no parent). Confirmed live: a node created with
+          <code>parentName: ""</code> is correctly treated as a tree root by the
+          <code>find/scope_node_children</code> query below, and is simply omitted (zero-value)
+          from the object you read back rather than rejected.</li>
+        <li><code>spec.nodeType</code> — <code>container</code> (pure hierarchy, no
+          <code>linkId</code>) or <code>leaf</code> (links to a <code>Scope</code>).</li>
+        <li><code>spec.linkType</code> / <code>spec.linkId</code> — only set on leaves;
+          <code>linkType</code> is currently always <code>"scope"</code>, <code>linkId</code> is
+          the target <code>Scope</code>'s <code>metadata.name</code>.</li>
+        <li><code>spec.subTitle</code>, <code>spec.description</code> — optional, not covered by
+          live testing for this document but present in the type definitions.</li>
+        <li><code>spec.disableMultiSelect</code> — boolean, defaults to <code>false</code> in
+          server responses even when omitted on write.</li>
+        <li><code>spec.redirectPath</code> — optional string; jumps straight to a URL when this
+          node is selected, bypassing normal scope selection. Not exercised for this document.</li>
+      </ul>
+
+      <h3 id="ep-scopenav">ScopeNavigation</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Verb</th><th>Path</th><th>Notes</th></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopenavigations</code></td><td>List all</td></tr>
+          <tr><td><span class="verb verb-get">GET</span></td><td><code>/scopenavigations/{name}</code></td><td>Fetch one</td></tr>
+          <tr><td><span class="verb verb-post">POST</span></td><td><code>/scopenavigations</code></td><td>Create</td></tr>
+          <tr><td><span class="verb verb-put">PUT</span></td><td><code>/scopenavigations/{name}</code></td><td>Replaces <code>spec</code> only</td></tr>
+          <tr><td><span class="verb verb-put">PUT</span></td><td><code>/scopenavigations/{name}/status</code></td><td>Status subresource — see below</td></tr>
+          <tr><td><span class="verb verb-delete">DELETE</span></td><td><code>/scopenavigations/{name}</code></td><td>No observed cascade</td></tr>
+        </table>
+      </div>
+      <p>Create (spec only):</p>
+      <pre><code>POST /scopenavigations
+{
+  "apiVersion": "scope.grafana.app/v0alpha1",
+  "kind": "ScopeNavigation",
+  "metadata": { "name": "scope-checkout-us-east-nav-overview" },
+  "spec": {
+    "url": "/d/abc123",
+    "scope": "scope-checkout-us-east"
+  }
+}</code></pre>
+      <div class="callout">
+        <strong>The spec write above does not set <code>status</code>.</strong> Title and folder
+        grouping live in <code>status</code>, which is a separate subresource — write it with a
+        second request, carrying forward the <code>resourceVersion</code> the first write
+        returned:
+      </div>
+      <pre><code>PUT /scopenavigations/scope-checkout-us-east-nav-overview/status
+{
+  "apiVersion": "scope.grafana.app/v0alpha1",
+  "kind": "ScopeNavigation",
+  "metadata": {
+    "name": "scope-checkout-us-east-nav-overview",
+    "resourceVersion": "&lt;resourceVersion from the create response&gt;"
+  },
+  "spec": {
+    "url": "/d/abc123",
+    "scope": "scope-checkout-us-east"
+  },
+  "status": {
+    "title": "Checkout overview",
+    "groups": ["Dashboards"]
+  }
+}</code></pre>
+      <ul>
+        <li><code>spec.url</code> — a raw path (e.g. <code>/d/{dashboardUid}</code>), not a typed
+          resource reference. Anything the frontend can navigate to works.</li>
+        <li><code>spec.scope</code> — the <code>Scope</code> this navigation entry belongs to.</li>
+        <li><code>status.title</code> — display title for the navigation entry.</li>
+        <li><code>status.groups</code> — list of folder names the entry is filed under in the
+          navigation drawer. Confirmed live: setting <code>groups: ["Dashboards"]</code> files
+          the entry under a "Dashboards" folder instead of showing it flat at the top level.</li>
+      </ul>
+      <div class="callout warn">
+        Writing to a <code>status</code> subresource directly from a client is unusual for
+        Kubernetes-style APIs — <code>status</code> is normally controller-written. For
+        <code>ScopeNavigation</code> there's no reconciler populating it, so a direct client
+        write is the only way it gets set. Treat this as this API's actual contract, not a
+        workaround.
+      </div>
+
+      <h3 id="ep-binding">ScopeDashboardBinding <span class="pill sourced">legacy</span></h3>
+      <p>
+        An older, flatter alternative to <code>ScopeNavigation</code> — a direct
+        <code>dashboard</code> ↔ <code>scope</code> pair with no grouping or nested
+        sub-scope support. Same collection shape (<code>/scopedashboardbindings</code>,
+        full CRUD, a <code>status</code> subresource with <code>dashboardTitle</code> and
+        <code>groups</code>). Not exercised for this document — <code>ScopeNavigation</code> is
+        the actively-developed mechanism and the one to use for new integrations.
+      </p>
+    </section>
+
+    <section id="filters">
+      <h2>Filter model</h2>
+      <p>Each entry in <code>Scope.spec.filters</code>:</p>
+      <pre><code>{
+  "key": "cluster",
+  "operator": "equals",
+  "value": "us-east",
+  "values": ["us-east", "us-west"]
+}</code></pre>
+      <ul>
+        <li><code>key</code> — a literal label/column name (e.g. <code>cluster</code>,
+          <code>service_name</code>, <code>team</code>) — not a dashboard template variable
+          name. See <a href="#downstream">How filters reach consumers</a>.</li>
+        <li><code>value</code> — single-value operators' operand.</li>
+        <li><code>values</code> — multi-value operators' operand (<code>one-of</code> /
+          <code>not-one-of</code>).</li>
+        <li><code>operator</code> — one of the six below.</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Operator</th><th>Matcher equivalent</th></tr>
+          <tr><td><code>equals</code></td><td><code>=</code></td></tr>
+          <tr><td><code>not-equals</code></td><td><code>!=</code></td></tr>
+          <tr><td><code>regex-match</code></td><td><code>=~</code></td></tr>
+          <tr><td><code>regex-not-match</code></td><td><code>!~</code></td></tr>
+          <tr><td><code>one-of</code></td><td>multi-value match (<code>values</code>)</td></tr>
+          <tr><td><code>not-one-of</code></td><td>multi-value exclusion (<code>values</code>)</td></tr>
+        </table>
+      </div>
+      <p class="section-note">
+        This mapping (sourced from <code>@grafana/data</code>'s
+        <code>scopeFilterOperatorMap</code>) is what a Prometheus/Loki-style consumer resolves
+        each operator to. It's informative for constructing filters correctly, even though the
+        Scopes API itself has no opinion on how a given datasource applies them.
+      </p>
+    </section>
+
+    <section id="find">
+      <h2>Find / query endpoints</h2>
+      <p class="section-note">
+        Non-CRUD connector endpoints for reading the tree, rather than listing a whole
+        collection and filtering client-side. All are <code>GET</code>, under the same base
+        path, e.g. <code>apis/scope.grafana.app/v0alpha1/namespaces/{namespace}/find/...</code>.
+      </p>
+      <div class="pill-row">
+        <span class="pill verified">✓ verified live</span>
+        <span class="pill sourced">○ listed in OpenAPI schema, not exercised</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Status</th><th>Path</th><th>Purpose</th></tr>
+          <tr><td>✓</td><td><code>find/scope_node_children?parent={nodeName}</code></td><td>Children of a node — the tree-traversal primitive. <code>parent</code> omitted or empty returns root-level nodes.</td></tr>
+          <tr><td>✓</td><td><code>find/scope_navigations?scope={scopeName}</code></td><td>Navigation entries for a scope, with <code>status</code> populated.</td></tr>
+          <tr><td>○</td><td><code>find/scope_dashboard_bindings?scope={scopeName}</code></td><td>Legacy equivalent of the above for <code>ScopeDashboardBinding</code>.</td></tr>
+          <tr><td>○</td><td><code>find/default_scope</code></td><td>Presumed: the instance/org's default scope. Not exercised.</td></tr>
+        </table>
+      </div>
+      <p>Example response from <code>find/scope_node_children</code>:</p>
+      <pre><code>GET find/scope_node_children?parent=svc-checkout
+
+{
+  "items": [
+    {
+      "kind": "ScopeNode",
+      "metadata": { "name": "svc-checkout-cluster-us-east" },
+      "spec": {
+        "parentName": "svc-checkout",
+        "nodeType": "leaf",
+        "title": "us-east",
+        "linkType": "scope",
+        "linkId": "scope-checkout-us-east"
+      }
+    }
+  ]
+}</code></pre>
+      <p>
+        Note the ~15 minute cache observed on <code>find/scope_navigations</code> in practice —
+        a navigation entry written moments ago may not appear immediately in this endpoint's
+        response. Don't mistake that lag for a write failure.
+      </p>
+    </section>
+
+    <section id="upsert">
+      <h2>Upsert pattern</h2>
+      <p>
+        There's no native "create or update" verb. The idempotent pattern that works, verified
+        live end to end (including re-running it against objects that already existed):
+      </p>
+      <ol>
+        <li><code>GET {collection}/{name}</code>.</li>
+        <li>If <strong>200</strong>: <code>PUT {collection}/{name}</code> with the new desired
+          <code>spec</code>, carrying forward <code>metadata.resourceVersion</code> from the GET
+          response. A PUT without the current <code>resourceVersion</code> is rejected.</li>
+        <li>If <strong>404</strong>: <code>POST {collection}</code> to create it.</li>
+        <li>Any other error status: surface it — don't treat it as "doesn't exist".</li>
+      </ol>
+      <p>
+        A no-op update (identical content to what's already stored) was observed to return the
+        same <code>resourceVersion</code> rather than erroring or bumping it — safe to re-run
+        unconditionally for idempotent generation.
+      </p>
+    </section>
+
+    <section id="workflow">
+      <h2>End-to-end workflow</h2>
+      <p class="section-note">
+        The generic recipe for generating a scope hierarchy from some external source of truth
+        (a service catalog, an inventory system, anything), independent of what that source is.
+      </p>
+      <ol>
+        <li>
+          <strong>Pick a deterministic naming scheme.</strong> <code>metadata.name</code> is the
+          primary key across every collection here (RFC 1123: lowercase alphanumeric and
+          hyphens). Deriving names deterministically from your source data (rather than
+          generating random IDs) is what makes the whole pipeline idempotent — see
+          <a href="#upsert">Upsert pattern</a>.
+        </li>
+        <li>
+          <strong>Create container <code>ScopeNode</code>s top-down.</strong> Start with one or
+          more roots (<code>parentName: ""</code>), then each level referencing its parent's
+          name. Order matters for clarity but wasn't observed to matter for correctness — the
+          API accepted nodes referencing not-yet-created parents without error in testing,
+          though creating top-down is the safer assumption to build on.
+        </li>
+        <li>
+          <strong>Create the <code>Scope</code> objects</strong> that your leaf nodes will link
+          to — one per actual filterable unit, with its <code>filters</code> and (if useful)
+          <code>defaultPath</code>.
+        </li>
+        <li>
+          <strong>Create the leaf <code>ScopeNode</code>s</strong>, each with
+          <code>nodeType: "leaf"</code>, <code>linkType: "scope"</code>, and
+          <code>linkId</code> pointing at the <code>Scope</code> from step 3.
+        </li>
+        <li>
+          <strong>Create <code>ScopeNavigation</code> entries</strong> per scope — one per
+          dashboard/page you want surfaced when that scope is selected — then follow up with the
+          <code>/status</code> write for title and folder grouping.
+        </li>
+        <li>
+          <strong>Re-run the whole pipeline on a schedule or on source-data change</strong>,
+          relying on the upsert pattern rather than tracking a diff yourself.
+        </li>
+      </ol>
+    </section>
+
+    <section id="delete">
+      <h2>Deletion</h2>
+      <p>
+        <code>DELETE {collection}/{name}</code> per object. No cascade was observed — deleting a
+        parent <code>ScopeNode</code> does not delete its children, and nothing was observed
+        enforcing referential integrity on delete (deleting a <code>Scope</code> that a
+        <code>ScopeNode</code> still links to was not tested against a blocking constraint).
+      </p>
+      <div class="callout">
+        Since generated names are deterministic (see <a href="#workflow">End-to-end workflow</a>),
+        bulk cleanup doesn't need to walk the tree at all: list each collection, delete anything
+        matching your naming prefix, done. This also cleans up orphans left behind by a partial
+        or failed generation run, which a tree-walk would miss. Delete
+        <code>scopenavigations</code> and <code>scopes</code> before <code>scopenodes</code> as a
+        defensive ordering (children-ish before parents-ish) — not confirmed to be required by
+        the server, but cheap to do regardless.
+      </div>
+    </section>
+
+    <section id="downstream">
+      <h2>How filters reach consumers</h2>
+      <p>
+        Worth understanding even though it's downstream of this API: a selected scope's
+        <code>filters</code> reach query execution two ways, and neither is tied to a specific
+        dashboard variable name:
+      </p>
+      <ul>
+        <li><strong>Raw passthrough</strong> — the full <code>Scope[]</code> (filters included)
+          is attached directly to the outgoing data query request. A datasource plugin that's
+          scope-aware can read it and build its own matchers.</li>
+        <li><strong>Ad-hoc filter merge</strong> — each selected scope's filters are converted to
+          ad-hoc filter entries and merged into a dashboard's existing ad-hoc-filters variable,
+          if one is present.</li>
+      </ul>
+      <p>
+        Practically: a scope's filters apply automatically to any datasource that already reads
+        raw scope filters off the request, with zero dashboard-side setup. For datasources that
+        don't, the target dashboard needs an ad-hoc-filters variable bound to a datasource that
+        recognizes the filter's <code>key</code> as a real label/column — without one, nothing
+        on the dashboard visibly reflects the filter even though it may still be silently applied
+        at the datasource level.
+      </p>
+    </section>
+
+    <section id="caveats">
+      <h2>Stability &amp; caveats</h2>
+      <ul>
+        <li><strong>API stage:</strong> <code>v0alpha1</code>, explicitly experimental. No
+          stability guarantees — field names and behavior can change.</li>
+        <li><strong>Deployment-dependent availability:</strong> this API group is served by
+          Grafana's embedded App Platform layer. It's been observed present in a build that also
+          links Grafana Enterprise; its availability in a plain OSS build was not independently
+          confirmed for this document.</li>
+        <li><strong><code>scopeFilters</code> / <code>useScopesNavigationEndpoint</code> feature
+          toggles:</strong> these govern whether Grafana's own UI surfaces scope selection and
+          the navigation drawer to end users. They do not gate the REST API itself — a client can
+          read and write scope objects via the API regardless, though with the toggles off,
+          nothing in the UI will reflect what you've written.</li>
+        <li><strong>Verification basis for this document:</strong> endpoints and payload shapes
+          marked verified were exercised directly against a running instance (create, read,
+          update-with-resourceVersion, delete, and the two <code>find/*</code> endpoints marked
+          ✓ above). Everything else (<code>PATCH</code>, <code>ScopeDashboardBinding</code>,
+          <code>find/default_scope</code>, <code>redirectPath</code>,
+          <code>disableMultiSelect</code>'s effect) is sourced from the API's type definitions
+          and OpenAPI schema, not independently exercised.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Reference compiled from direct API usage and the Grafana source tree backing
+      <code>scope.grafana.app/v0alpha1</code>.
+    </footer>
+  </main>
+</div>

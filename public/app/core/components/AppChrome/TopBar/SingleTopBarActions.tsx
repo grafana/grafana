@@ -6,6 +6,7 @@ import { type ScopesContextValue } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Stack, useStyles2 } from '@grafana/ui';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
+import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 
 import { useExtensionSidebarContext } from '../ExtensionSidebar/ExtensionSidebarProvider';
@@ -31,7 +32,16 @@ export function SingleTopBarActions({ actions, breadcrumbActions, scopes }: Prop
       className={cx(styles.actionsBar, isExtensionSidebarOpen && !isSmallScreen && styles.constrained)}
     >
       <Stack alignItems="center" justifyContent="flex-start" flex={1} wrap="nowrap" minWidth={0}>
-        {scopes?.state.enabled ? <ScopesSelector /> : undefined}
+        {scopes?.state.enabled ? (
+          <>
+            <ScopesSelector />
+            {/* DEMO HACK — not meant to ship. Normally only rendered inside a dashboard's own
+                DashboardControls (see DashboardControls.tsx); surfaced globally here so the
+                "expand suggested dashboards" toggle is visible everywhere a scope is applied,
+                not just while viewing a dashboard. Revert before this goes near a real PR. */}
+            <ContextualNavigationPaneToggle />
+          </>
+        ) : undefined}
         <Stack alignItems="center" justifyContent={'flex-end'} flex={1} wrap="nowrap" minWidth={0}>
           {breadcrumbActions}
           {breadcrumbActions && actions && <NavToolbarSeparator />}

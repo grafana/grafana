@@ -1,0 +1,4 @@
+- group: servicemodel.ext.grafana.com
+  version: v1alpha1
+  host: localhost
+  port: 6443
