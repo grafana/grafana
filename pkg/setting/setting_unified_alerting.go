@@ -195,6 +195,12 @@ type RecordingRuleSettings struct {
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
+	// MaxWriteBatchSize splits a write larger than this many (estimated) bytes
+	// into several requests. 0 never splits.
+	MaxWriteBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -609,6 +615,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
+		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
+		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")

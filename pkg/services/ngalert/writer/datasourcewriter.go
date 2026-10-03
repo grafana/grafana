@@ -73,6 +73,13 @@ type DatasourceWriterConfig struct {
 	// CustomHeaders is a map of optional custom HTTP headers
 	// to include in recording rule write requests.
 	CustomHeaders map[string]string
+
+	// MaxBatchSize splits a write larger than this many (estimated) bytes into
+	// several requests. 0 never splits.
+	MaxBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 type PluginContextProvider interface {
@@ -292,8 +299,10 @@ func (w *DatasourceWriter) makeWriter(ctx context.Context, orgID int64, dsUID st
 			CustomOptions: ho.CustomOptions,
 			Middlewares:   ho.Middlewares,
 		},
-		Timeout:     w.cfg.Timeout,
-		BackendType: backend,
+		Timeout:             w.cfg.Timeout,
+		BackendType:         backend,
+		MaxBatchSize:        w.cfg.MaxBatchSize,
+		MaxWriteConcurrency: w.cfg.MaxWriteConcurrency,
 	}
 	if err != nil {
 		return nil, err
