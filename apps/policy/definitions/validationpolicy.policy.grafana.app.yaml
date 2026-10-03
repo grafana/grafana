@@ -1,0 +1,183 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: validationpolicies.policy.grafana.app
+spec:
+  group: policy.grafana.app
+  names:
+    kind: ValidationPolicy
+    plural: validationpolicies
+  scope: Namespaced
+  versions:
+  - name: v0alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: |-
+              A set of CEL validations applied to resources of one or more kinds when they are written.
+              The shape follows Kubernetes ValidatingAdmissionPolicy.
+            properties:
+              failurePolicy:
+                enum:
+                - Fail
+                - Ignore
+                type: string
+              match:
+                description: |-
+                  Selects the resources the policy applies to. The policy is type-checked against the
+                  schema of every kind and version it matches.
+                items:
+                  properties:
+                    group:
+                      type: string
+                    kinds:
+                      items:
+                        type: string
+                      type: array
+                    operations:
+                      description: Defaults to CREATE and UPDATE.
+                      items:
+                        enum:
+                        - CREATE
+                        - UPDATE
+                        - DELETE
+                        type: string
+                      type: array
+                    versions:
+                      items:
+                        type: string
+                      type: array
+                  required:
+                  - group
+                  - versions
+                  - kinds
+                  type: object
+                type: array
+              matchConditions:
+                description: Further filters matched resources. All conditions must
+                  be true for the policy to apply.
+                items:
+                  properties:
+                    expression:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - name
+                  - expression
+                  type: object
+                type: array
+              paramKind:
+                properties:
+                  group:
+                    type: string
+                  kind:
+                    type: string
+                  version:
+                    type: string
+                required:
+                - group
+                - version
+                - kind
+                type: object
+              validations:
+                description: The rules a matched resource must satisfy.
+                items:
+                  properties:
+                    expression:
+                      type: string
+                    fieldPath:
+                      description: The field responsible for the failure, e.g. "spec.labels".
+                      type: string
+                    message:
+                      description: Returned when the validation fails.
+                      type: string
+                    messageExpression:
+                      description: A CEL expression returning the message. Takes precedence
+                        over message.
+                      type: string
+                    name:
+                      description: Identifies the validation in results. Defaults
+                        to its index.
+                      type: string
+                    reason:
+                      enum:
+                      - Invalid
+                      - Forbidden
+                      - Unauthorized
+                      type: string
+                  required:
+                  - expression
+                  type: object
+                type: array
+              variables:
+                description: |-
+                  Named expressions available as variables.<name> to later variables, match conditions
+                  and validations.
+                items:
+                  properties:
+                    expression:
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - name
+                  - expression
+                  type: object
+                type: array
+            required:
+            - match
+            - validations
+            type: object
+          status:
+            properties:
+              additionalFields:
+                description: additionalFields is reserved for future use
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              compileErrors:
+                description: Errors from the most recent attempt to compile the policy.
+                items:
+                  type: string
+                type: array
+              operatorStates:
+                additionalProperties:
+                  properties:
+                    descriptiveState:
+                      description: descriptiveState is an optional more descriptive
+                        state field which has no requirements on format
+                      type: string
+                    details:
+                      description: details contains any extra information that is
+                        operator-specific
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    lastEvaluation:
+                      description: lastEvaluation is the ResourceVersion last evaluated
+                      type: string
+                    state:
+                      description: |-
+                        state describes the state of the lastEvaluation.
+                        It is limited to three possible states for machine evaluation.
+                      enum:
+                      - success
+                      - in_progress
+                      - failed
+                      type: string
+                  required:
+                  - lastEvaluation
+                  - state
+                  type: object
+                description: |-
+                  operatorStates is a map of operator ID to operator state evaluations.
+                  Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

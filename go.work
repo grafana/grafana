@@ -21,6 +21,7 @@ use (
 	./apps/live
 	./apps/logsdrilldown
 	./apps/playlist
+	./apps/policy
 	./apps/plugins
 	./apps/preferences
 	./apps/provisioning

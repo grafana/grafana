@@ -100,6 +100,7 @@
 /apps/folder/ @grafana/grafana-app-platform-squad
 /apps/playlist/ @grafana/grafana-app-platform-squad
 /apps/plugins/ @grafana/grafana-catalog
+/apps/policy/ @grafana/alerting-squad
 /apps/collections/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/preferences/ @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
 /apps/shorturl/ @grafana/sharing-squad
@@ -183,6 +184,7 @@
 /pkg/services/frontend/ @grafana/grafana-frontend-platform
 /pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/apiserver/auth/authorizer/storewrapper @grafana/access-squad
+/pkg/services/apiserver/policyadmission @grafana/alerting-squad
 /pkg/services/hooks/ @grafana/grafana-operator-experience-squad
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
 /pkg/services/licensing/ @grafana/grafana-operator-experience-squad
@@ -1296,6 +1298,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apps/alerting @grafana/alerting-squad
 /pkg/registry/apps/annotation @grafana/grafana-backend-services-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
+/pkg/registry/apps/policy @grafana/alerting-squad
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code

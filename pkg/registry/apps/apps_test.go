@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/example"
 	"github.com/grafana/grafana/pkg/registry/apps/playlist"
 	"github.com/grafana/grafana/pkg/registry/apps/plugins"
+	"github.com/grafana/grafana/pkg/registry/apps/policy"
 	"github.com/grafana/grafana/pkg/registry/apps/quotas"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -63,6 +64,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				historianAppInstaller,
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
+				&policy.AppInstaller{},
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)

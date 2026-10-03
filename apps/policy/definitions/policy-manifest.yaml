@@ -1,0 +1,306 @@
+apiVersion: apps.grafana.app/v1alpha2
+kind: AppManifest
+metadata:
+  name: policy
+spec:
+  appDisplayName: policy
+  appName: policy
+  group: policy.grafana.app
+  preferredVersion: v0alpha1
+  versions:
+  - kinds:
+    - admission:
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: ValidationPolicy
+      plural: ValidationPolicies
+      schemas:
+        FailurePolicy:
+          enum:
+          - Fail
+          - Ignore
+          type: string
+        NamedExpression:
+          additionalProperties: false
+          properties:
+            expression:
+              type: string
+            name:
+              type: string
+          required:
+          - name
+          - expression
+          type: object
+        Operation:
+          enum:
+          - CREATE
+          - UPDATE
+          - DELETE
+          type: string
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        ParamKind:
+          additionalProperties: false
+          properties:
+            group:
+              type: string
+            kind:
+              type: string
+            version:
+              type: string
+          required:
+          - group
+          - version
+          - kind
+          type: object
+        Reason:
+          enum:
+          - Invalid
+          - Forbidden
+          - Unauthorized
+          type: string
+        ResourceMatch:
+          additionalProperties: false
+          properties:
+            group:
+              type: string
+            kinds:
+              items:
+                type: string
+              type: array
+            operations:
+              description: Defaults to CREATE and UPDATE.
+              items:
+                $ref: '#/components/schemas/Operation'
+              type: array
+            versions:
+              items:
+                type: string
+              type: array
+          required:
+          - group
+          - versions
+          - kinds
+          type: object
+        Validation:
+          additionalProperties: false
+          properties:
+            expression:
+              type: string
+            fieldPath:
+              description: The field responsible for the failure, e.g. "spec.labels".
+              type: string
+            message:
+              description: Returned when the validation fails.
+              type: string
+            messageExpression:
+              description: A CEL expression returning the message. Takes precedence
+                over message.
+              type: string
+            name:
+              description: Identifies the validation in results. Defaults to its index.
+              type: string
+            reason:
+              $ref: '#/components/schemas/Reason'
+              description: Machine-readable reason returned when the validation fails.
+                Defaults to Invalid.
+          required:
+          - expression
+          type: object
+        ValidationPolicy:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        spec:
+          additionalProperties: false
+          properties:
+            failurePolicy:
+              $ref: '#/components/schemas/FailurePolicy'
+              description: How evaluation errors are treated. Fail treats them as
+                violations; Ignore drops them.
+            match:
+              description: |-
+                Selects the resources the policy applies to. The policy is type-checked against the
+                schema of every kind and version it matches.
+              items:
+                $ref: '#/components/schemas/ResourceMatch'
+              type: array
+            matchConditions:
+              description: Further filters matched resources. All conditions must
+                be true for the policy to apply.
+              items:
+                $ref: '#/components/schemas/NamedExpression'
+              type: array
+            paramKind:
+              $ref: '#/components/schemas/ParamKind'
+              description: |-
+                The kind of the parameter object available to expressions as params. Bindings select
+                the parameter object with paramRef.
+            validations:
+              description: The rules a matched resource must satisfy.
+              items:
+                $ref: '#/components/schemas/Validation'
+              type: array
+            variables:
+              description: |-
+                Named expressions available as variables.<name> to later variables, match conditions
+                and validations.
+              items:
+                $ref: '#/components/schemas/NamedExpression'
+              type: array
+          required:
+          - match
+          - validations
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            compileErrors:
+              description: Errors from the most recent attempt to compile the policy.
+              items:
+                type: string
+              type: array
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
+    - admission:
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: ValidationPolicyBinding
+      plural: ValidationPolicyBindings
+      schemas:
+        Action:
+          description: Deny rejects the request. Warn admits it and returns a warning
+            to the caller.
+          enum:
+          - Deny
+          - Warn
+          type: string
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        ParamRef:
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+          required:
+          - name
+          type: object
+        ValidationPolicyBinding:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        spec:
+          additionalProperties: false
+          properties:
+            actions:
+              items:
+                $ref: '#/components/schemas/Action'
+              type: array
+            paramRef:
+              $ref: '#/components/schemas/ParamRef'
+              description: |-
+                Selects the parameter object, in the same namespace. Required when the policy declares
+                a paramKind. When the object does not exist, the binding does not apply.
+            policyName:
+              type: string
+          required:
+          - policyName
+          - actions
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      selectableFields:
+      - spec.policyName
+      userReadable: false
+    name: v0alpha1
+    served: false

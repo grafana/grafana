@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/audit"
 	discoveryendpoint "k8s.io/apiserver/pkg/endpoints/discovery/aggregated"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
@@ -26,6 +27,7 @@ import (
 	"github.com/grafana/dskit/services"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	policyv0alpha1 "github.com/grafana/grafana/apps/policy/pkg/apis/policy/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -48,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	grafanaapiserveroptions "github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/apiserver/policyadmission"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
@@ -488,6 +491,15 @@ func (s *service) start(ctx context.Context) error {
 	)
 	if err != nil {
 		return err
+	}
+
+	// Validation policies are evaluated only while their API is served, which is opt-in.
+	if apiResourceConfig.ResourceEnabled(policyv0alpha1.ValidationPolicyKind().GroupVersionResource()) {
+		policyPlugin := policyadmission.New(s.appInstallers, builder.GetOpenAPIDefinitions(builders, defGetters...), s.scheme)
+		serverConfig.AdmissionControl = admission.NewChainHandler(serverConfig.AdmissionControl, policyPlugin)
+		if err := serverConfig.AddPostStartHook(policyadmission.PostStartHookName, policyPlugin.PostStartHook); err != nil {
+			return fmt.Errorf("failed to register validation policy post start hook: %w", err)
+		}
 	}
 
 	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
