@@ -678,6 +678,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.notebooksContentSearch",
+			Description: "Search saved notebook markdown and code after the unified search server supports content indexing",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true, React: true},
+			Owner:       grafanaSharingSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
