@@ -494,7 +494,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.18.0",
+  "packageManager": "yarn@4.18.1",
   "dependenciesMeta": {
     "msw": {
       "built": true
