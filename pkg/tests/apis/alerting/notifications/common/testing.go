@@ -72,7 +72,7 @@ func UpdateDefaultRoute(t *testing.T, user apis.User, r *definitions.Route) {
 	require.NoError(t, err)
 	route := v1.NewManagedRoute(models.DefaultRoutingTreeName, v1.RouteToModel(r))
 	route.Version = "" // Avoid version conflict.
-	v1route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), route, func(int64) string { return apis.DefaultNamespace }, nil)
+	v1route, err := routingtree.ConvertToK8sResource(user.Identity.GetOrgID(), route, route.GetUID(), func(int64) string { return apis.DefaultNamespace }, nil)
 	require.NoError(t, err)
 	_, err = routeClient.Update(context.Background(), v1route, resource.UpdateOptions{})
 	require.NoError(t, err)

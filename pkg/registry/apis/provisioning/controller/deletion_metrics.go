@@ -9,12 +9,10 @@ import (
 // Deletion stages, used as the "stage" label on the error counter so the
 // distinct delete-path failure points are distinguishable from one another.
 const (
-	// deletionStageBuild is the repoFactory.Build() call that constructs the
-	// repository before its finalizers can run. Its failure (e.g. missing or
-	// invalid credentials) leaves the repository stuck in Terminating.
-	deletionStageBuild = "build"
 	// deletionStageFinalizers is the finalizer.process() call that runs the
-	// registered finalizers (orphan-resource cleanup, etc.).
+	// registered finalizers (webhook removal, orphan-resource cleanup, etc.).
+	// A build failure while processing the cleanup finalizer (e.g. expired
+	// credentials) surfaces here, since the build now happens inside process.
 	deletionStageFinalizers = "process_finalizers"
 	// deletionStageRemoveFinalizers is the JSON-Patch that removes the finalizers
 	// once processing succeeds. Its failure (notably RetryOnConflict exhaustion)
@@ -54,17 +52,17 @@ var repositoryDeletionPendingBuckets = []float64{
 // its age climbing in pendingSeconds) at resync cadence rather than firing once
 // and going quiet.
 type repositoryDeletionMetrics struct {
-	pendingSeconds prometheus.Histogram
+	pendingSeconds *prometheus.HistogramVec
 	deletionsTotal prometheus.Counter
 	errorsTotal    *prometheus.CounterVec
 }
 
 func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *repositoryDeletionMetrics {
-	pendingSeconds := prometheus.NewHistogram(prometheus.HistogramOpts{
+	pendingSeconds := prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "grafana_provisioning_repository_deletion_pending_seconds",
-		Help:    "Age of a repository still in Terminating, observed on each delete reconcile.",
+		Help:    "Age of a repository still in Terminating, observed on each delete reconcile. cause reflects the previously recorded deletion failure and is empty when none was recorded; filter cause!=\"user\" to exclude customer-fixable blocks (e.g. revoked credentials) from alerting.",
 		Buckets: repositoryDeletionPendingBuckets,
-	})
+	}, []string{"cause"})
 	deletionsTotal := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "grafana_provisioning_repository_deletions_total",
 		Help: "Total number of repository deletions the controller completed by removing finalizers. A repository deleted with no finalizers is a no-op (nothing to clean up; GC removes it) and is not counted, keeping this paired with the finalizer errors in deletion_errors_total over the same population.",
@@ -84,15 +82,18 @@ func registerRepositoryDeletionMetrics(registry prometheus.Registerer) *reposito
 
 // observePending records how long a repository has been in Terminating. Called
 // once per delete reconcile, so a stuck repository re-observes its growing age at
-// resync cadence and its observations climb through the buckets.
-func (m *repositoryDeletionMetrics) observePending(age time.Duration) {
+// resync cadence and its observations climb through the buckets. cause is the
+// persisted classification of the previous blocking error
+// ("user" or "system"), or "" when no failure was recorded. Older failures
+// without a cause default to "system".
+func (m *repositoryDeletionMetrics) observePending(age time.Duration, cause string) {
 	if m == nil {
 		return
 	}
 	if age < 0 {
 		age = 0
 	}
-	m.pendingSeconds.Observe(age.Seconds())
+	m.pendingSeconds.WithLabelValues(cause).Observe(age.Seconds())
 }
 
 // recordDeletion counts a repository deletion that the delete path completed

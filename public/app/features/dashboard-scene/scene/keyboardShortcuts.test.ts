@@ -276,7 +276,7 @@ describe('setupKeyboardShortcuts', () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
       mockScene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
       setupKeyboardShortcuts(mockScene);
 

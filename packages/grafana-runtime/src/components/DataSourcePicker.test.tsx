@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
@@ -24,7 +24,7 @@ describe('DataSourcePicker', () => {
   });
 
   describe('long datasource names', () => {
-    it('should display full datasource name without truncation when current is passed as UID', () => {
+    it('should display full datasource name without truncation when current is passed as UID', async () => {
       const longDatasourceName = 'grafanacloud-demokitcloudamersandbox-prom';
       const currentUid = 'grafanacloud-prom';
       const mockDs: DataSourceInstanceSettings = {
@@ -59,6 +59,8 @@ describe('DataSourcePicker', () => {
       mockGetList.mockReturnValue([mockDs]);
 
       render(<DataSourcePicker current={currentUid} onChange={jest.fn()} />);
+      // Flush the pending default-data-source resolution before asserting.
+      await act(async () => {});
 
       // The full name should be visible in the select value
       expect(screen.getByText(longDatasourceName)).toBeInTheDocument();
@@ -122,6 +124,7 @@ describe('DataSourcePicker', () => {
 
     it('should not render clear button when no onClear function is passed', async () => {
       const select = render(<DataSourcePicker onChange={jest.fn()} current={null} />);
+      await act(async () => {});
 
       expect(() => {
         select.getByLabelText('Clear value');
@@ -130,9 +133,52 @@ describe('DataSourcePicker', () => {
 
     it('should pass disabled prop', async () => {
       render(<DataSourcePicker onChange={jest.fn()} current={null} disabled={true} />);
+      await act(async () => {});
 
       const input = screen.getByLabelText('Select a data source');
       expect(input).toHaveProperty('disabled', true);
+    });
+  });
+
+  describe('isDefault label', () => {
+    function buildMockDs(uid: string, name: string, isDefault: boolean): DataSourceInstanceSettings {
+      return {
+        uid,
+        name,
+        type: 'prometheus',
+        isDefault,
+        meta: {
+          id: 'prometheus',
+          name: 'Prometheus',
+          type: 'datasource',
+          info: {
+            logos: { small: 'prometheus_logo.svg', large: 'prometheus_logo.svg' },
+            author: { name: 'Grafana Labs' },
+            description: 'Prometheus data source',
+            links: [],
+            screenshots: [],
+            updated: '2021-01-01',
+            version: '1.0.0',
+          },
+          module: 'core:plugin/prometheus',
+          baseUrl: '',
+        } as DataSourcePluginMeta,
+        readOnly: false,
+        jsonData: {},
+        access: 'proxy',
+      };
+    }
+
+    it('should append " (default)" to the option label of the default data source only', async () => {
+      const defaultDs = buildMockDs('default-uid', 'Default Prometheus', true);
+      const otherDs = buildMockDs('other-uid', 'Other Prometheus', false);
+      mockGetList.mockReturnValue([defaultDs, otherDs]);
+
+      render(<DataSourcePicker current={null} onChange={jest.fn()} />);
+      await userEvent.click(screen.getByLabelText('Select a data source'));
+
+      expect(await screen.findByText('Default Prometheus (default)')).toBeInTheDocument();
+      expect(screen.getByText('Other Prometheus')).toBeInTheDocument();
     });
   });
 
@@ -151,11 +197,12 @@ describe('DataSourcePicker', () => {
       expect(InjectedPicker.mock.lastCall?.[0]).toMatchObject({ current: 'some-uid', placeholder: 'pick one' });
     });
 
-    it('should render the legacy picker again after the injected component is unset', () => {
+    it('should render the legacy picker again after the injected component is unset', async () => {
       setDataSourcePicker(() => <div>injected picker</div>);
       setDataSourcePicker(undefined);
 
       render(<DataSourcePicker onChange={jest.fn()} current={null} />);
+      await act(async () => {});
 
       expect(screen.queryByText('injected picker')).not.toBeInTheDocument();
       expect(screen.getByLabelText('Select a data source')).toBeInTheDocument();

@@ -19,10 +19,6 @@ const (
 	// Support new streaming approach for loki (prototype, needs special loki build)
 	FlagLokiExperimentalStreaming = "lokiExperimentalStreaming"
 
-	// FlagFeatureHighlights
-	// Highlight Grafana Enterprise features
-	FlagFeatureHighlights = "featureHighlights"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
@@ -104,7 +100,7 @@ const (
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
 
 	// FlagGrafanaFrontendLegacyFeatureToggleHandling
-	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (report each toggle once) or "block" (report, and resolve every toggle to undefined).
+	// Controls how the frontend handles reads of the legacy config.featureToggles map. One of "off", "log" (warn in the console once per toggle), "alert" (also raise a warning alert) or "block" (console only, and resolve every toggle to undefined).
 	FlagGrafanaFrontendLegacyFeatureToggleHandling = "grafana.frontendLegacyFeatureToggleHandling"
 
 	// FlagProvisioningPerformance
@@ -338,6 +334,10 @@ const (
 	// FlagQueryLibrary
 	// Enables Saved queries (query library) feature
 	FlagQueryLibrary = "queryLibrary"
+
+	// FlagGrafanaSavedQueriesSearch
+	// Enables unified search for saved queries
+	FlagGrafanaSavedQueriesSearch = "grafana.savedQueriesSearch"
 
 	// FlagGrafanaSavedQueriesPage
 	// Enables the dedicated Saved queries page and its navigation entry
@@ -642,10 +642,6 @@ const (
 	// Enables the API to import Alertmanager configuration
 	FlagAlertingImportAlertmanagerAPI = "alertingImportAlertmanagerAPI"
 
-	// FlagAlertingDisableDMAinUI
-	// Disables the DMA feature in the UI
-	FlagAlertingDisableDMAinUI = "alertingDisableDMAinUI"
-
 	// FlagPreferLibraryPanelTitle
 	// Prefer library panel title over viz panel title.
 	FlagPreferLibraryPanelTitle = "preferLibraryPanelTitle"
@@ -749,10 +745,6 @@ const (
 	// FlagSecretsManagementAppPlatformAwsKeeper
 	// Enables the creation of keepers that manage secrets stored on AWS secrets manager
 	FlagSecretsManagementAppPlatformAwsKeeper = "secretsManagementAppPlatformAwsKeeper"
-
-	// FlagProfilesExemplars
-	// Enables profiles exemplars support in profiles drilldown
-	FlagProfilesExemplars = "profilesExemplars"
 
 	// FlagPyroscopeUTF8LabelNames
 	// Enables support for UTF-8 label names in Pyroscope label selectors
@@ -862,10 +854,6 @@ const (
 	// Repairs library_element rows whose folder_uid drifted from folder_id, once per org at startup
 	FlagLibraryElementFolderUIDRepair = "libraryElementFolderUIDRepair"
 
-	// FlagReact19
-	// Whether to use the new React 19 runtime
-	FlagReact19 = "react19"
-
 	// FlagManagedPluginsV2
 	// Enables managed plugins v2 (expanded rollout, community plugin coverage)
 	FlagManagedPluginsV2 = "managedPluginsV2"
@@ -947,24 +935,12 @@ const (
 	FlagPluginsMarketplaceLicensing = "plugins.marketplaceLicensing"
 
 	// FlagAlertingSyncExternalAlertmanager
-	// Automatically syncs external Alertmanager datasource configuration as ExtraConfiguration in Grafana
+	// Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
 	FlagAlertingSyncExternalAlertmanager = "alerting.syncExternalAlertmanager"
 
 	// FlagFrontendServiceReducedBootDataAPI
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
-
-	// FlagDashboardSearchFieldValueResults
-	// Uses field-value results for dashboard search requests
-	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
-
-	// FlagDashboardApiSearchFieldValueResults
-	// Uses field-value results for requests from the /api/search endpoint
-	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
-
-	// FlagSearchApiFieldValueResults
-	// Uses field-value results for generic resource search API requests
-	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
 
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
@@ -1058,6 +1034,10 @@ const (
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 
+	// FlagDatasourcesQueryGatewaySlimAudit
+	// Only attach query payloads to query gateway audit events when a guardrail fires
+	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
+
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
@@ -1065,4 +1045,8 @@ const (
 	// FlagUnifiedStorageClientRequireCallerIdentity
 	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
 	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
+
+	// FlagUnifiedStorageClientOnBehalfOf
+	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
+	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
 )

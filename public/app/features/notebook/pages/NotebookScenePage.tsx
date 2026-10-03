@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
@@ -13,7 +13,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
 import { type NotebookScene } from '../scene/NotebookScene';
-import { NotebookToolbar } from '../toolbar/NotebookToolbar';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
@@ -83,6 +83,8 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
+  // Varies with the mega menu, and this page is what knows there is an app header at all.
+  const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
 
@@ -101,10 +103,10 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {/* Rendered before the notebook exists too, with its actions disabled. Hiding it until the
-          first save produced a uid meant the bar appeared under someone who was already typing and
-          pushed the whole document down. The toolbar owns that distinction, not this page. */}
-      <NotebookToolbar uid={uid} scene={scene} />
+      {/* Composed here rather than by the scene: whether a surface shows the controls row is a
+          property of the surface. Page's own wrapper is already a flex column, so this and the
+          document below sit in it as siblings. The toolbar rides inside the row. */}
+      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
       <scene.Component model={scene} />
     </Page>
   );

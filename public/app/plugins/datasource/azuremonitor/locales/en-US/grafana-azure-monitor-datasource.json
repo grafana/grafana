@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Select custom namespace",
+      "aria-label-select-dimension-name": "Select dimension name",
+      "aria-label-select-metric-name": "Select metric name",
       "aria-label-select-namespace": "Select namespace",
       "aria-label-select-query-type": "Select query type",
       "aria-label-select-region": "Select region",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Select resource group",
       "aria-label-select-subscription": "Select subscription",
       "label-custom-namespace": "Custom Namespace",
+      "label-dimension-name": "Dimension Name",
+      "label-metric-name": "Metric Name",
       "label-namespace": "Namespace",
       "label-query-type": "Query Type",
       "label-region": "Region",

@@ -144,13 +144,11 @@ describe('dashboardV2SpecSchema', () => {
   it('tolerates Go-marshaled null arrays (nil slices) and normalizes them to []', () => {
     const result = dashboardV2SpecSchema.safeParse(
       minimalSpec({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- exercising the null-array serialization shape
-        tags: null as any,
+        tags: null,
         variables: [
           {
             kind: 'CustomVariable',
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any -- exercising the null-array serialization shape
-            spec: { name: 'v', query: 'a,b', options: null as any },
+            spec: { name: 'v', query: 'a,b', options: null },
           },
         ],
       })

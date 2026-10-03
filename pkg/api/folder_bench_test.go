@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -169,7 +170,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)
@@ -298,7 +299,7 @@ func setupDB(b testing.TB) benchScenario {
 				OrgID:     signedInUser.OrgID,
 				IsFolder:  false,
 				UID:       str,
-				FolderID:  f0.ID,
+				FolderID:  f0.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 				FolderUID: f0.UID,
 				Slug:      str,
 				Title:     str,
@@ -326,7 +327,7 @@ func setupDB(b testing.TB) benchScenario {
 					OrgID:     signedInUser.OrgID,
 					IsFolder:  false,
 					UID:       str,
-					FolderID:  f1.ID,
+					FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 					FolderUID: f1.UID,
 					Slug:      str,
 					Title:     str,
@@ -354,7 +355,7 @@ func setupDB(b testing.TB) benchScenario {
 						OrgID:     signedInUser.OrgID,
 						IsFolder:  false,
 						UID:       str,
-						FolderID:  f1.ID,
+						FolderID:  f1.ID, //nolint:staticcheck // Exercise legacy field compatibility.
 						FolderUID: f2.UID,
 						Slug:      str,
 						Title:     str,
@@ -425,16 +426,16 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 		ac, sc.userSvc, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), folderSearchMock, sort.ProvideService(), apiserver.WithoutRestConfig)
 	acSvc := acimpl.ProvideOSSService(
 		sc.cfg, acdb.ProvideService(sc.db), actionSets, localcache.ProvideService(),
-		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil,
+		features, tracing.InitializeTracerForTest(), sc.db, permreg.ProvidePermissionRegistry(), nil, iam.Features{},
 	)
 	serviceAccountRetriever := &serviceaccountstest.FakeServiceAccountService{}
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 	dashboardSvc, err := dashboardservice.ProvideDashboardServiceImpl(
 		sc.cfg,
 		sc.db,
-		features,
+		iam.Features{},
 		folderPermissions,
 		ac,
 		actest.FakeService{},
@@ -460,7 +461,7 @@ func setupServer(b testing.TB, sc benchScenario, features featuremgmt.FeatureTog
 	require.NoError(b, err)
 
 	_, err = ossaccesscontrol.ProvideDashboardPermissions(
-		cfg, features, routing.NewRouteRegister(), sc.db, ac, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
+		cfg, features, routing.NewRouteRegister(), sc.db, ac, iam.Features{}, license, dashboardSvc, folderServiceWithFlagOn, acSvc, sc.teamSvc, sc.userSvc, serviceAccountRetriever, actionSets, dashboardSvc, &mockDirectRestConfigProvider{host: "http://localhost"})
 	require.NoError(b, err)
 
 	starClient := starapi.NewMockK8sClients(b)

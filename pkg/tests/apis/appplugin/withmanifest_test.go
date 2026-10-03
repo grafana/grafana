@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -707,4 +709,46 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	for _, resource := range versions[0].Resources {
 		require.NotEqual(t, "app", resource.Resource)
 	}
+}
+
+// A manifest may declare custom routes and no kinds. The version still needs
+// storage for the apiserver to install it, and that placeholder must not leak
+// into the OpenAPI spec.
+func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelperFull(t, rest.Mode5, "app-sdk-manifest-routes-only.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+	client := helper.NewDiscoveryClient().RESTClient()
+	ctx := context.Background()
+
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
+	require.NoError(t, err)
+	var versions []struct {
+		Version   string `json:"version"`
+		Resources []struct {
+			Resource string   `json:"resource"`
+			Verbs    []string `json:"verbs"`
+		} `json:"resources"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
+	require.Len(t, versions, 1)
+	require.Equal(t, "v1", versions[0].Version)
+	// The placeholder is visible in discovery, but serves no verbs.
+	for _, resource := range versions[0].Resources {
+		require.Empty(t, resource.Verbs, "resource %s", resource.Resource)
+	}
+
+	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppGroup + "/v1").DoRaw(ctx)
+	require.NoError(t, err)
+	var doc struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	root := "/apis/" + testAppGroup + "/v1/"
+	require.ElementsMatch(t, []string{root, root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)))
+
+	// The route is mounted and reaches the plugin, which has no v3 backend.
+	raw, err = client.Get().AbsPath(root + "namespaces/default/ping").DoRaw(ctx)
+	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+	require.Contains(t, string(raw), "does not implement ClientV3")
 }

@@ -84,9 +84,13 @@ type StorageOptions struct {
 	// every version of a resource, so options registered there must leave it
 	// empty. Use [RESTOptionsGetter.WithStorageOptions] to set it.
 	//
-	// Left empty, writes are serialized through the group's versioning codec,
-	// which picks the storage version itself -- see [Storage.encodeViaCodec].
+	// Left empty, the serializer receives the object's existing GVK.
 	GVK schema.GroupVersionKind
+
+	// Serializer overrides encoding and decoding for writes, reads, lists, and watches.
+	// When nil, storage decodes through the configured Kubernetes codec and encodes
+	// through it unless GVK is declared, in which case writes preserve the object's GVK.
+	Serializer Serializer
 
 	// Required to force unique constraints
 	Index resourcepb.ResourceIndexClient
@@ -121,7 +125,6 @@ type StorageOptions struct {
 // Storage implements storage.Interface and storage resources as JSON files on disk.
 type Storage struct {
 	gr           schema.GroupResource
-	codec        runtime.Codec
 	keyFunc      func(obj runtime.Object) (string, error)
 	newFunc      func() runtime.Object
 	newListFunc  func() runtime.Object
@@ -139,7 +142,8 @@ type Storage struct {
 	// during API group installation — before the server is ready.
 	getDynClient func(ctx context.Context) (dynamic.Interface, error)
 
-	versioner storage.Versioner
+	serializer Serializer
+	versioner  storage.Versioner
 
 	// Resource options like large object support
 	opts StorageOptions
@@ -172,7 +176,6 @@ func NewStorage(
 	s := &Storage{
 		store:          store,
 		gr:             config.GroupResource,
-		codec:          config.Codec,
 		keyFunc:        keyFunc,
 		newFunc:        newFunc,
 		newListFunc:    newListFunc,
@@ -183,9 +186,14 @@ func NewStorage(
 
 		getKey: keyParser,
 
-		versioner: &storage.APIObjectVersioner{},
+		serializer: opts.Serializer,
+		versioner:  &storage.APIObjectVersioner{},
 
 		opts: opts,
+	}
+
+	if s.serializer == nil {
+		s.serializer = &codecSerializer{codec: config.Codec, preserveGVK: !opts.GVK.Empty()}
 	}
 
 	// Validate the GVK
@@ -199,24 +207,28 @@ func NewStorage(
 	}
 
 	if opts.EnableFolderSupport && configProvider != nil {
-		var (
-			initOnce sync.Once
-			client   dynamic.Interface
-			initErr  error
-		)
+		var mu sync.Mutex
+		var client dynamic.Interface
 		s.getDynClient = func(ctx context.Context) (dynamic.Interface, error) {
-			initOnce.Do(func() {
-				cfg, err := configProvider.GetRestConfig(ctx)
-				if err != nil {
-					initErr = fmt.Errorf("failed to get REST config: %w", err)
-					return
-				}
-				client, initErr = dynamic.NewForConfig(cfg)
-				if initErr != nil {
-					initErr = fmt.Errorf("failed to create dynamic client: %w", initErr)
-				}
-			})
-			return client, initErr
+			mu.Lock()
+			defer mu.Unlock()
+			if err := ctx.Err(); err != nil {
+				return nil, err
+			}
+			if client != nil {
+				return client, nil
+			}
+			cfg, err := configProvider.GetRestConfig(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get REST config: %w", err)
+			}
+			initialized, err := dynamic.NewForConfig(cfg)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create dynamic client: %w", err)
+			}
+			// Cache only successful initialization so a canceled request cannot poison the store.
+			client = initialized
+			return client, nil
 		}
 	} else if opts.EnableFolderSupport {
 		logging.DefaultLogger.Warn("configProvider is not configured; repo-manager folder consistency checks will be skipped",
@@ -287,10 +299,9 @@ func (s *Storage) Versioner() storage.Versioner {
 }
 
 func (s *Storage) convertToObject(ctx context.Context, data []byte, obj runtime.Object) (runtime.Object, error) {
-	_, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
+	ctx, span := tracer.Start(ctx, "apistore.Storage.convertToObject")
 	defer span.End()
-	obj, _, err := s.codec.Decode(data, nil, obj)
-	return obj, err
+	return s.serializer.Decode(ctx, data, obj)
 }
 
 // cleanupSecretsAfterFailedPreparation deletes inline secrets a failed preparation created, but only
@@ -335,7 +346,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 	}
 	req := &resourcepb.CreateRequest{
-		Value: v.raw.Bytes(),
+		Value: v.raw,
 		Key:   rkey,
 	}
 
@@ -351,7 +362,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		if resErr.Code == http.StatusConflict {
 			err = storage.NewKeyExistsError(key, 0)
 		} else {
-			err = resource.GetError(resErr)
+			err = resource.StatusError(resErr)
 		}
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
@@ -446,13 +457,13 @@ func (s *Storage) Delete(
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
 		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
+			return resource.StatusError(resource.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -503,11 +514,11 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resource.GetError(resource.AsErrorResult(err))
+		return nil, resource.StatusError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
-	decoder := newStreamDecoder(client, s.newFunc, predicate, s.codec, cancelWatch, cmd.SendInitialEvents)
+	decoder := newStreamDecoder(client, s.newFunc, predicate, s.serializer, cancelWatch, cmd.SendInitialEvents)
 
 	return watch.NewStreamWatcher(decoder, reporter), nil
 }
@@ -546,7 +557,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.GetError(resErr)
+		return resource.StatusError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -577,10 +588,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return resource.StatusError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
+		return resource.StatusError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -742,7 +753,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
 			resErr := resource.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resource.GetError(resErr)
+				return resource.StatusError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -804,13 +815,13 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
-		req.Value = v.raw.Bytes()
+		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
 		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
