@@ -5687,37 +5687,123 @@
         ]
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverIntegration": {
-        "type": "object",
-        "required": [
-          "type",
-          "version",
-          "settings"
-        ],
-        "properties": {
-          "disableResolveMessage": {
-            "type": "boolean"
+        "description": "One definition per integration type and version, in integration_*.cue.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDingdingV1"
           },
-          "secureFields": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "boolean"
-            }
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDiscordV0mimir1"
           },
-          "settings": {
-            "type": "object",
-            "additionalProperties": true
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDiscordV1"
           },
-          "type": {
-            "type": "string"
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverEmailV0mimir1"
           },
-          "uid": {
-            "type": "string"
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverEmailV1"
           },
-          "version": {
-            "type": "string"
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGooglechatV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverJiraV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverJiraV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverKafkaV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverLINEV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverMqttV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOncallV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOpsgenieV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOpsgenieV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPagerdutyV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPagerdutyV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPrometheusAlertmanagerV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPushoverV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPushoverV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSensugoV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSlackV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSlackV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSnsV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSnsV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV0mimir2"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTelegramV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTelegramV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverThreemaV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverVictoropsV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverVictoropsV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebexV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebexV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebhookV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebhookV1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWechatV0mimir1"
+          },
+          {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWecomV1"
           }
-        },
-        "additionalProperties": false
+        ]
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverList": {
         "type": "object",
@@ -5763,23 +5849,23 @@
         ]
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSpec": {
-        "type": "object",
-        "required": [
-          "title",
-          "integrations"
-        ],
+        "additionalProperties": false,
         "properties": {
           "integrations": {
-            "type": "array",
             "items": {
               "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverIntegration"
-            }
+            },
+            "type": "array"
           },
           "title": {
             "type": "string"
           }
         },
-        "additionalProperties": false
+        "required": [
+          "title",
+          "integrations"
+        ],
+        "type": "object"
       },
       "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.RoutingTree": {
         "type": "object",
@@ -6762,7 +6848,7 @@
         }
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.FieldsV1": {
-        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:\u003cname\u003e', where \u003cname\u003e is the name of a field in a struct, or key in a map 'v:\u003cvalue\u003e', where \u003cvalue\u003e is the exact json formatted value of a list item 'i:\u003cindex\u003e', where \u003cindex\u003e is position of a item in a list 'k:\u003ckeys\u003e', where \u003ckeys\u003e is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
+        "description": "FieldsV1 stores a set of fields in a data structure like a Trie, in JSON format.\n\nEach key is either a '.' representing the field itself, and will always map to an empty set, or a string representing a sub-field or item. The string will follow one of these four formats: 'f:<name>', where <name> is the name of a field in a struct, or key in a map 'v:<value>', where <value> is the exact json formatted value of a list item 'i:<index>', where <index> is position of a item in a list 'k:<keys>', where <keys> is a map of  a list item's key fields to their unique values If a key maps to an empty Fields value, the field that key represents is part of the set.\n\nThe exact format is defined in sigs.k8s.io/structured-merge-diff",
         "type": "object"
       },
       "io.k8s.apimachinery.pkg.apis.meta.v1.LabelSelector": {
@@ -7187,6 +7273,3503 @@
       },
       "io.k8s.apimachinery.pkg.runtime.RawExtension": {
         "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverCreateReceiverIntegrationTestAlert": {
+        "additionalProperties": false,
+        "properties": {
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": [
+          "labels",
+          "annotations"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverCreateReceiverIntegrationTestIntegrationInput": {
+        "additionalProperties": false,
+        "description": "The test route takes one integration in its request body, and codegen does not allow\na union there, so that route keeps the flat shape.",
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverEmailMimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "smarthost": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "email"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "email/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverEmailV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "addresses": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "singleEmail": {
+                "type": "boolean"
+              },
+              "subject": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "addresses"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "email"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "email/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSlackMimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "channel": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "fallback": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "slack"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "slack/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSlackV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "color": {
+                "type": "string"
+              },
+              "endpointUrl": {
+                "type": "string"
+              },
+              "footer": {
+                "type": "string"
+              },
+              "icon_emoji": {
+                "type": "string"
+              },
+              "icon_url": {
+                "type": "string"
+              },
+              "mentionChannel": {
+                "enum": [
+                  "here",
+                  "channel"
+                ],
+                "type": "string"
+              },
+              "mentionGroups": {
+                "type": "string"
+              },
+              "mentionUsers": {
+                "type": "string"
+              },
+              "recipient": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "recipient"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "slack"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "slack/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebhookV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "authorization_credentials": {
+                "type": "boolean"
+              },
+              "hmacConfig.secret": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.caCertificate": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.clientCertificate": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.tls_config.clientKey": {
+                "type": "boolean"
+              },
+              "password": {
+                "type": "boolean"
+              },
+              "tlsConfig.caCertificate": {
+                "type": "boolean"
+              },
+              "tlsConfig.clientCertificate": {
+                "type": "boolean"
+              },
+              "tlsConfig.clientKey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "authorization_scheme": {
+                "type": "string"
+              },
+              "headers": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "hmacConfig": {
+                "additionalProperties": false,
+                "properties": {
+                  "header": {
+                    "type": "string"
+                  },
+                  "timestampHeader": {
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              },
+              "httpMethod": {
+                "enum": [
+                  "POST",
+                  "PUT"
+                ],
+                "type": "string"
+              },
+              "http_config": {
+                "additionalProperties": false,
+                "properties": {
+                  "oauth2": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "client_id": {
+                        "type": "string"
+                      },
+                      "endpoint_params": {
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      },
+                      "proxy_config": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "no_proxy": {
+                            "type": "string"
+                          },
+                          "proxy_connect_header": {
+                            "additionalProperties": {
+                              "type": "string"
+                            },
+                            "type": "object"
+                          },
+                          "proxy_from_environment": {
+                            "type": "boolean"
+                          },
+                          "proxy_url": {
+                            "type": "string"
+                          }
+                        },
+                        "type": "object"
+                      },
+                      "scopes": {
+                        "type": "string"
+                      },
+                      "tls_config": {
+                        "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGrafanaTLSConfig"
+                      },
+                      "token_url": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "token_url",
+                      "client_id"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              },
+              "maxAlerts": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "payload": {
+                "additionalProperties": false,
+                "properties": {
+                  "template": {
+                    "type": "string"
+                  },
+                  "vars": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "template"
+                ],
+                "type": "object"
+              },
+              "title": {
+                "type": "string"
+              },
+              "tlsConfig": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGrafanaTLSConfig"
+              },
+              "url": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "webhook"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "webhook/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDingdingV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "msgType": {
+                "enum": [
+                  "link",
+                  "actionCard"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "dingding"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "dingding/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDiscordV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "webhook_url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "discord"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "discord/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverDiscordV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "avatar_url": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "use_discord_username": {
+                "type": "boolean"
+              },
+              "use_embed_description": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "discord"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "discord/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverEmailV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "auth_password": {
+                "type": "boolean"
+              },
+              "auth_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "auth_identity": {
+                "type": "string"
+              },
+              "auth_username": {
+                "type": "string"
+              },
+              "from": {
+                "type": "string"
+              },
+              "headers": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "hello": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "require_tls": {
+                "type": "boolean"
+              },
+              "smarthost": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "tls_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTLSConfig"
+              },
+              "to": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "to"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "email"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "email/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGooglechatV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "hide_open_button": {
+                "type": "boolean"
+              },
+              "hide_version_info": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "googlechat"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "googlechat/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverJiraV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "fields": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "issue_type": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "project": {
+                "type": "string"
+              },
+              "reopen_duration": {
+                "type": "string"
+              },
+              "reopen_transition": {
+                "type": "string"
+              },
+              "resolve_transition": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "wont_fix_resolution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "api_url",
+              "project",
+              "issue_type"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "jira"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "jira/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverJiraV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_token": {
+                "type": "boolean"
+              },
+              "password": {
+                "type": "boolean"
+              },
+              "user": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "dedup_key_field": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "fields": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "issue_type": {
+                "type": "string"
+              },
+              "labels": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "project": {
+                "type": "string"
+              },
+              "reopen_duration": {
+                "type": "string"
+              },
+              "reopen_transition": {
+                "type": "string"
+              },
+              "resolve_transition": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "wont_fix_resolution": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "api_url",
+              "project",
+              "issue_type"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "jira"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "jira/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverKafkaV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "password": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "apiVersion": {
+                "enum": [
+                  "v2",
+                  "v3"
+                ],
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "details": {
+                "type": "string"
+              },
+              "kafkaClusterId": {
+                "type": "string"
+              },
+              "kafkaRestProxy": {
+                "type": "string"
+              },
+              "kafkaTopic": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kafkaRestProxy",
+              "kafkaTopic",
+              "kafkaClusterId"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "kafka"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "kafka/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverLINEV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "token": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "LINE"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "LINE/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverMqttV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "password": {
+                "type": "boolean"
+              },
+              "tlsConfig.caCertificate": {
+                "type": "boolean"
+              },
+              "tlsConfig.clientCertificate": {
+                "type": "boolean"
+              },
+              "tlsConfig.clientKey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "brokerUrl": {
+                "type": "string"
+              },
+              "clientId": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "messageFormat": {
+                "enum": [
+                  "json",
+                  "text"
+                ],
+                "type": "string"
+              },
+              "qos": {
+                "enum": [
+                  "0",
+                  "1",
+                  "2"
+                ],
+                "type": "string"
+              },
+              "retain": {
+                "type": "boolean"
+              },
+              "tlsConfig": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGrafanaTLSConfig"
+              },
+              "topic": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "brokerUrl",
+              "topic"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "mqtt"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "mqtt/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOncallV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "authorization_credentials": {
+                "type": "boolean"
+              },
+              "password": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "authorization_scheme": {
+                "type": "string"
+              },
+              "httpMethod": {
+                "enum": [
+                  "POST",
+                  "PUT"
+                ],
+                "type": "string"
+              },
+              "maxAlerts": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "oncall"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "oncall/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOpsgenieV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_key": {
+                "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "actions": {
+                "type": "string"
+              },
+              "api_url": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "entity": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "responders": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "string"
+              },
+              "update_alerts": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "api_url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "opsgenie"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "opsgenie/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOpsgenieV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "apiKey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "apiUrl": {
+                "type": "string"
+              },
+              "autoClose": {
+                "type": "boolean"
+              },
+              "description": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "overridePriority": {
+                "type": "boolean"
+              },
+              "responders": {
+                "type": "string"
+              },
+              "sendTagsAs": {
+                "enum": [
+                  "tags",
+                  "details",
+                  "both"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "apiUrl"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "opsgenie"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "opsgenie/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPagerdutyV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "routing_key": {
+                "type": "boolean"
+              },
+              "service_key": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "class": {
+                "type": "string"
+              },
+              "client": {
+                "type": "string"
+              },
+              "client_url": {
+                "type": "string"
+              },
+              "component": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "group": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "images": {
+                "type": "string"
+              },
+              "links": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "pagerduty"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "pagerduty/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPagerdutyV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "integrationKey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "class": {
+                "type": "string"
+              },
+              "client": {
+                "type": "string"
+              },
+              "client_url": {
+                "type": "string"
+              },
+              "component": {
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "group": {
+                "type": "string"
+              },
+              "severity": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "pagerduty"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "pagerduty/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPrometheusAlertmanagerV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "basicAuthPassword": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "basicAuthUser": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "prometheus-alertmanager"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "prometheus-alertmanager/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPushoverV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "token": {
+                "type": "boolean"
+              },
+              "user_key": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "device": {
+                "type": "string"
+              },
+              "expire": {
+                "type": "string"
+              },
+              "html": {
+                "type": "boolean"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "retry": {
+                "type": "string"
+              },
+              "sound": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "ttl": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "url_title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "pushover"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "pushover/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverPushoverV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "apiToken": {
+                "type": "boolean"
+              },
+              "userKey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "device": {
+                "type": "string"
+              },
+              "expire": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "okPriority": {
+                "type": "string"
+              },
+              "okSound": {
+                "enum": [
+                  "default",
+                  "pushover",
+                  "bike",
+                  "bugle",
+                  "cashregister",
+                  "classical",
+                  "cosmic",
+                  "falling",
+                  "gamelan",
+                  "incoming",
+                  "intermission",
+                  "magic",
+                  "mechanical",
+                  "pianobar",
+                  "siren",
+                  "spacealarm",
+                  "tugboat",
+                  "alien",
+                  "climb",
+                  "persistent",
+                  "echo",
+                  "updown",
+                  "none"
+                ],
+                "type": "string"
+              },
+              "priority": {
+                "type": "string"
+              },
+              "retry": {
+                "type": "string"
+              },
+              "sound": {
+                "enum": [
+                  "default",
+                  "pushover",
+                  "bike",
+                  "bugle",
+                  "cashregister",
+                  "classical",
+                  "cosmic",
+                  "falling",
+                  "gamelan",
+                  "incoming",
+                  "intermission",
+                  "magic",
+                  "mechanical",
+                  "pianobar",
+                  "siren",
+                  "spacealarm",
+                  "tugboat",
+                  "alien",
+                  "climb",
+                  "persistent",
+                  "echo",
+                  "updown",
+                  "none"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "pushover"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "pushover/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSensugoV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "apikey": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "check": {
+                "type": "string"
+              },
+              "entity": {
+                "type": "string"
+              },
+              "handler": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "sensugo"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "sensugo/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSlackV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "actions": {
+                "type": "string"
+              },
+              "callback_id": {
+                "type": "string"
+              },
+              "channel": {
+                "type": "string"
+              },
+              "color": {
+                "type": "string"
+              },
+              "fallback": {
+                "type": "string"
+              },
+              "fields": {
+                "type": "string"
+              },
+              "footer": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "icon_emoji": {
+                "type": "string"
+              },
+              "icon_url": {
+                "type": "string"
+              },
+              "image_url": {
+                "type": "string"
+              },
+              "link_names": {
+                "type": "boolean"
+              },
+              "mrkdwn_in": {
+                "type": "string"
+              },
+              "pretext": {
+                "type": "string"
+              },
+              "short_fields": {
+                "type": "boolean"
+              },
+              "text": {
+                "type": "string"
+              },
+              "thumb_url": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "title_link": {
+                "type": "string"
+              },
+              "username": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "slack"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "slack/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSnsV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "sigv4.secret_key": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "attributes": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "phone_number": {
+                "type": "string"
+              },
+              "sigv4": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSigv4"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "target_arn": {
+                "type": "string"
+              },
+              "topic_arn": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "sns"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "sns/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSnsV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "sigv4.access_key": {
+                "type": "boolean"
+              },
+              "sigv4.secret_key": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "attributes": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "message": {
+                "type": "string"
+              },
+              "phone_number": {
+                "type": "string"
+              },
+              "sigv4": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSigv4"
+              },
+              "subject": {
+                "type": "string"
+              },
+              "target_arn": {
+                "type": "string"
+              },
+              "topic_arn": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "sns"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "sns/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "webhook_url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "text": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "teams"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "teams/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV0mimir2": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "webhook_url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "text": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "teams"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "teams/v0mimir2"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir2"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTeamsV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "message": {
+                "type": "string"
+              },
+              "sectiontitle": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "teams"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "teams/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTelegramV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "token": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "chat_id": {
+                "type": "string"
+              },
+              "disable_notifications": {
+                "type": "boolean"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "parse_mode": {
+                "enum": [
+                  "MarkdownV2",
+                  "Markdown",
+                  "HTML"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "chat_id"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "telegram"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "telegram/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTelegramV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "bottoken": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "chatid": {
+                "type": "string"
+              },
+              "disable_notifications": {
+                "type": "boolean"
+              },
+              "disable_web_page_preview": {
+                "type": "boolean"
+              },
+              "message": {
+                "type": "string"
+              },
+              "message_thread_id": {
+                "type": "string"
+              },
+              "parse_mode": {
+                "enum": [
+                  "None",
+                  "HTML",
+                  "Markdown",
+                  "MarkdownV2"
+                ],
+                "type": "string"
+              },
+              "protect_content": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "chatid"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "telegram"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "telegram/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverThreemaV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "gateway_id": {
+                "type": "string"
+              },
+              "recipient_id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "gateway_id",
+              "recipient_id"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "threema"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "threema/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverVictoropsV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_key": {
+                "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "custom_fields": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "entity_display_name": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message_type": {
+                "type": "string"
+              },
+              "monitoring_tool": {
+                "type": "string"
+              },
+              "routing_key": {
+                "type": "string"
+              },
+              "state_message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "routing_key"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "victorops"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "victorops/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverVictoropsV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "messageType": {
+                "enum": [
+                  "CRITICAL",
+                  "WARNING"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "victorops"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "victorops/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebexV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "room_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "room_id"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "webex"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "webex/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebexV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "bot_token": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "api_url": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "room_id": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "room_id"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "webex"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "webex/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWebhookV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "max_alerts": {
+                "type": "string"
+              },
+              "timeout": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "webhook"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "webhook/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWechatV0mimir1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "api_secret": {
+                "type": "boolean"
+              },
+              "http_config.authorization.credentials": {
+                "type": "boolean"
+              },
+              "http_config.basic_auth.password": {
+                "type": "boolean"
+              },
+              "http_config.oauth2.client_secret": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_id": {
+                "type": "string"
+              },
+              "api_url": {
+                "type": "string"
+              },
+              "corp_id": {
+                "type": "string"
+              },
+              "http_config": {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig"
+              },
+              "message": {
+                "type": "string"
+              },
+              "message_type": {
+                "enum": [
+                  "text",
+                  "markdown"
+                ],
+                "type": "string"
+              },
+              "to_party": {
+                "type": "string"
+              },
+              "to_tag": {
+                "type": "string"
+              },
+              "to_user": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "wechat"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "wechat/v0mimir1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v0mimir1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverWecomV1": {
+        "additionalProperties": false,
+        "properties": {
+          "disableResolveMessage": {
+            "type": "boolean"
+          },
+          "secureFields": {
+            "additionalProperties": false,
+            "properties": {
+              "secret": {
+                "type": "boolean"
+              },
+              "url": {
+                "type": "boolean"
+              }
+            },
+            "type": "object"
+          },
+          "settings": {
+            "additionalProperties": false,
+            "properties": {
+              "agent_id": {
+                "type": "string"
+              },
+              "corp_id": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "msgtype": {
+                "enum": [
+                  "text",
+                  "markdown"
+                ],
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "touser": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "agent_id",
+              "corp_id"
+            ],
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "wecom"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "variant": {
+            "enum": [
+              "wecom/v1"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "enum": [
+              "v1"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "version",
+          "settings"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverAuthorization": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverBasicAuth": {
+        "additionalProperties": false,
+        "properties": {
+          "username": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverGrafanaTLSConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "insecureSkipVerify": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverHTTPClientConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "authorization": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverAuthorization"
+          },
+          "basic_auth": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverBasicAuth"
+          },
+          "enable_http2": {
+            "type": "boolean"
+          },
+          "follow_redirects": {
+            "type": "boolean"
+          },
+          "http_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "no_proxy": {
+            "type": "string"
+          },
+          "oauth2": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOAuth2"
+          },
+          "proxy_connect_header": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "proxy_from_environment": {
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "type": "string"
+          },
+          "tls_config": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTLSConfig"
+          }
+        },
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverOAuth2": {
+        "additionalProperties": false,
+        "properties": {
+          "client_id": {
+            "type": "string"
+          },
+          "endpoint_params": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "no_proxy": {
+            "type": "string"
+          },
+          "proxy_connect_header": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "proxy_from_environment": {
+            "type": "boolean"
+          },
+          "proxy_url": {
+            "type": "string"
+          },
+          "scopes": {
+            "type": "string"
+          },
+          "tls_config": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTLSConfig"
+          },
+          "token_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "client_id",
+          "token_url"
+        ],
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverSigv4": {
+        "additionalProperties": false,
+        "properties": {
+          "profile": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "role_arn": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.alertingnotifications.v1beta1.ReceiverTLSConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "insecure_skip_verify": {
+            "type": "boolean"
+          },
+          "max_version": {
+            "type": "string"
+          },
+          "min_version": {
+            "type": "string"
+          },
+          "server_name": {
+            "type": "string"
+          }
+        },
         "type": "object"
       }
     }
