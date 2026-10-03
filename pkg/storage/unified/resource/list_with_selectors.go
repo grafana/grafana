@@ -75,7 +75,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		return result, nil
 	}
 
-	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, rsp); errRes != nil {
+	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, false, rsp); errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
@@ -133,6 +133,7 @@ func setSearchListContinueToken(
 	searchResp *resourcepb.ResourceSearchResponse,
 	rows []listSearchRow,
 	listRV int64,
+	sortAscending bool,
 	rsp *resourcepb.ListResponse,
 ) *resourcepb.ErrorResult {
 	if !searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
@@ -142,7 +143,7 @@ func setSearchListContinueToken(
 	if len(sortFields) == 0 {
 		return nil
 	}
-	token, err := NewSearchContinueToken(sortFields, listRV)
+	token, err := newSearchContinueToken(sortFields, listRV, sortAscending)
 	if err != nil {
 		return NewBadRequestError("invalid continue token")
 	}

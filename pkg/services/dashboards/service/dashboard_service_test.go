@@ -1645,7 +1645,7 @@ func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
 	count, err := service.CountDashboardsInOrg(ctx, 1)
 
 	require.Zero(t, count)
-	require.Equal(t, resource.GetError(failure), err)
+	require.Equal(t, resource.StatusError(failure), err)
 	k8sCliMock.AssertExpectations(t)
 }
 
