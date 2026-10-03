@@ -5,12 +5,19 @@ import type { TimeRange } from '@grafana/data';
 import type { MetricInfo } from '../types';
 
 import * as client from './metricResourceClient';
-import { useMetricCatalog } from './useMetricCatalog';
+import type { Catalog } from './metricResourceClient';
+import { SEARCH_DEBOUNCE_MS, useMetricCatalog } from './useMetricCatalog';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 const rows: MetricInfo[] = [
   { name: 'http_requests_total', type: 'counter', help: 'h' },
   { name: 'node_load1', type: 'gauge', help: 'l' },
+];
+const complete: Catalog = { metrics: rows, truncated: false };
+const truncated: Catalog = { metrics: rows, truncated: true };
+const found: MetricInfo[] = [
+  { name: 'quickpizza_requests_total', type: 'counter' },
+  { name: 'quickpizza_latency_seconds', type: 'gauge' },
 ];
 
 function deferred<T>(): { promise: Promise<T>; resolve: (value: T) => void } {
@@ -25,7 +32,7 @@ describe('useMetricCatalog', () => {
   afterEach(() => jest.restoreAllMocks());
 
   it('loads then exposes metrics', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     expect(result.current.loading).toBe(true);
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -33,7 +40,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('applies substring filter and type filter', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() =>
       useMetricCatalog({ uid: 'p1' }, range, { searchText: 'load', typeFilter: 'gauge' })
     );
@@ -50,21 +57,21 @@ describe('useMetricCatalog', () => {
   });
 
   it('filters case-insensitively on search text', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: 'LOAD' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
   });
 
   it('trims the search text, which otherwise matches no metric name at all', async () => {
-    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range, { searchText: '  load ' }));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
   });
 
   it('refetches when the datasource uid changes', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { uid: 'p1' } },
     });
@@ -78,7 +85,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('refetches when a type-only ref changes type, even though `uid` is undefined both times', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { type: 'prometheus' } },
     });
@@ -94,7 +101,7 @@ describe('useMetricCatalog', () => {
   it('refetches when a uid-only ref is swapped for a type-only ref of the same string', async () => {
     // The client keys these two apart (`u:prometheus` vs `t:prometheus`), so the hook must too —
     // otherwise it keeps painting the first one's catalog while the client holds a different entry.
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
       initialProps: { dsRef: { uid: 'prometheus' } as { uid?: string; type?: string } },
     });
@@ -109,7 +116,7 @@ describe('useMetricCatalog', () => {
 
   it('refetches when the cache is invalidated, so a host refresh control reaches a mounted tree', async () => {
     // Expiry alone never gets here: a relative range is one request key for the life of the page.
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(spy).toHaveBeenCalledTimes(1);
@@ -120,7 +127,7 @@ describe('useMetricCatalog', () => {
   });
 
   it('ignores an invalidation aimed at a different datasource', async () => {
-    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(rows);
+    const spy = jest.spyOn(client, 'fetchCatalog').mockResolvedValue(complete);
     const { result } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
@@ -130,8 +137,8 @@ describe('useMetricCatalog', () => {
   });
 
   it('does not let a superseded response overwrite a newer one (stale-response ordering)', async () => {
-    const first = deferred<MetricInfo[]>();
-    const second = deferred<MetricInfo[]>();
+    const first = deferred<Catalog>();
+    const second = deferred<Catalog>();
     const spy = jest
       .spyOn(client, 'fetchCatalog')
       .mockImplementationOnce(() => first.promise)
@@ -147,11 +154,11 @@ describe('useMetricCatalog', () => {
     // resolutions are wrapped in `act` so the resulting state updates (or lack thereof, if the
     // `cancelled` guard drops the stale one) are flushed before the assertion below runs.
     await act(async () => {
-      second.resolve([{ name: 'p2_metric', type: 'counter', help: 'from p2' }]);
+      second.resolve({ metrics: [{ name: 'p2_metric', type: 'counter', help: 'from p2' }], truncated: false });
       await second.promise;
     });
     await act(async () => {
-      first.resolve([{ name: 'p1_metric', type: 'gauge', help: 'from p1' }]);
+      first.resolve({ metrics: [{ name: 'p1_metric', type: 'gauge', help: 'from p1' }], truncated: false });
       await first.promise;
     });
 
@@ -159,12 +166,12 @@ describe('useMetricCatalog', () => {
   });
 
   it('does not throw when unmounting mid-flight', async () => {
-    const { promise, resolve } = deferred<MetricInfo[]>();
+    const { promise, resolve } = deferred<Catalog>();
     jest.spyOn(client, 'fetchCatalog').mockImplementation(() => promise);
     const { unmount } = renderHook(() => useMetricCatalog({ uid: 'p1' }, range));
     unmount();
     await act(async () => {
-      resolve(rows);
+      resolve(complete);
       await promise;
     });
     // No assertion beyond "the above didn't throw" — this is a smoke check only, not proof the
@@ -172,10 +179,10 @@ describe('useMetricCatalog', () => {
   });
 
   it('raises `loading` and clears stale `metrics` in the render that starts a fetch for a new datasource, before the promise resolves', async () => {
-    const pending = deferred<MetricInfo[]>();
+    const pending = deferred<Catalog>();
     const spy = jest
       .spyOn(client, 'fetchCatalog')
-      .mockResolvedValueOnce(rows)
+      .mockResolvedValueOnce(complete)
       .mockImplementationOnce(() => pending.promise);
 
     const { result, rerender } = renderHook(({ dsRef }) => useMetricCatalog(dsRef, range), {
@@ -191,5 +198,144 @@ describe('useMetricCatalog', () => {
     expect(spy).toHaveBeenCalledTimes(2);
     expect(result.current.loading).toBe(true);
     expect(result.current.metrics).toEqual([]);
+  });
+
+  describe('search', () => {
+    beforeEach(() => jest.useFakeTimers());
+    afterEach(() => jest.useRealTimers());
+
+    const renderSearch = (catalog: Catalog) => {
+      jest.spyOn(client, 'fetchCatalog').mockResolvedValue(catalog);
+      const search = jest.spyOn(client, 'searchCatalog').mockResolvedValue(found);
+      const hook = renderHook(({ searchText }) => useMetricCatalog({ uid: 'p1' }, range, { searchText }), {
+        initialProps: { searchText: '' },
+      });
+      return { ...hook, search };
+    };
+
+    it('filters a complete catalog locally, without asking the datasource', async () => {
+      const { result, rerender, search } = renderSearch(complete);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'load' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(false);
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      expect(search).not.toHaveBeenCalled();
+    });
+
+    it('searches the datasource for a truncated catalog once the user stops typing', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'q' });
+      rerender({ searchText: 'qu' });
+      rerender({ searchText: ' quick ' });
+      // The truncated catalog is no answer, so the wait for the debounce reads as loading.
+      expect(result.current.loading).toBe(true);
+      expect(search).not.toHaveBeenCalled();
+
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.metrics.map((m) => m.name)).toEqual([
+        'quickpizza_requests_total',
+        'quickpizza_latency_seconds',
+      ]);
+      expect(search).toHaveBeenCalledTimes(1);
+      expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'quick');
+    });
+
+    it('narrows the last search results by the live term while the next search waits on the debounce', async () => {
+      const { result, rerender } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'quickpizza_lat' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['quickpizza_latency_seconds']);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('keeps the local matches on screen while the datasource search is in flight', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'load' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'load');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+
+      await act(async () => pending.resolve([{ name: 'node_load15', type: 'gauge' }]));
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load15']);
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('keeps the previous search results, narrowed by the live term, while the next search is in flight', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.metrics).toHaveLength(2));
+      const pending = deferred<MetricInfo[]>();
+      search.mockReturnValue(pending.promise);
+
+      rerender({ searchText: 'quickpizza_lat' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      expect(search).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'quickpizza_lat');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['quickpizza_latency_seconds']);
+      expect(result.current.loading).toBe(true);
+    });
+
+    it('shows the whole truncated catalog again as soon as the search is cleared', async () => {
+      const { result, rerender } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.metrics).toHaveLength(2));
+
+      rerender({ searchText: '' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['http_requests_total', 'node_load1']);
+      expect(result.current.loading).toBe(false);
+    });
+
+    it('does not narrow the previous search by a term typed straight after clearing', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.metrics).toHaveLength(2));
+
+      rerender({ searchText: '' });
+      rerender({ searchText: 'node' });
+
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(search).toHaveBeenLastCalledWith({ uid: 'p1' }, range, 'node');
+    });
+
+    it('surfaces a failed search as the error', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      search.mockRejectedValue(new Error('search failed'));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+
+      await waitFor(() => expect(result.current.error?.message).toBe('search failed'));
+      expect(result.current.metrics).toEqual([]);
+    });
   });
 });
