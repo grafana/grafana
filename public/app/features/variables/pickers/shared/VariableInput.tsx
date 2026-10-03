@@ -27,12 +27,8 @@ export const VariableInput = memo(({ value, id, onNavigate, onChange, ...restPro
   return (
     <Input
       {...restProps}
-      ref={(instance) => {
-        if (instance) {
-          instance.focus();
-          instance.setAttribute('style', `width:${Math.max(instance.width, 150)}px`);
-        }
-      }}
+      width={19}
+      autoFocus
       id={id}
       type="text"
       value={value ?? ''}
