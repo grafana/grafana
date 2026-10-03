@@ -20,6 +20,7 @@ import {
   toDataQueryError,
 } from '@grafana/runtime';
 
+import { createLiveMathTransform } from '../../expressions/liveMath';
 import { StreamingResponseDataType } from '../data/utils';
 
 import { type DataStreamSubscriptionKey, type StreamingDataQueryResponse } from './service';
@@ -237,6 +238,9 @@ export class LiveDataStream<T = unknown> {
     this.prepareInternalStreamForNewSubscription(options);
 
     const shouldSendLastPacketOnly = options?.buffer?.action === StreamingFrameAction.Replace;
+
+    const mathTransform = options.mathExpression ? createLiveMathTransform(options.mathExpression) : undefined;
+
     const fieldsNamesFilter = options.filter?.fields;
     const dataNeedsFiltering = fieldsNamesFilter?.length;
     const fieldFilterPredicate = dataNeedsFiltering ? ({ name }: Field) => fieldsNamesFilter.includes(name) : undefined;
@@ -257,7 +261,10 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer),
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer);
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
             },
           ],
           error,
@@ -272,7 +279,10 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 });
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
             },
           ],
           error,
@@ -288,7 +298,10 @@ export class LiveDataStream<T = unknown> {
           data: [
             {
               type: StreamingResponseDataType.FullFrame,
-              frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 }),
+              frame: (() => {
+                const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, { maxLength: 0 });
+                return mathTransform?.frame(serialized) ?? serialized;
+              })(),
             },
           ],
           error,
@@ -301,9 +314,12 @@ export class LiveDataStream<T = unknown> {
         data: [
           {
             type: StreamingResponseDataType.FullFrame,
-            frame: this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
-              maxLength: this.frameBuffer.packetInfo.length,
-            }),
+            frame: (() => {
+              const serialized = this.frameBuffer.serialize(fieldFilterPredicate, buffer, {
+                maxLength: this.frameBuffer.packetInfo.length,
+              });
+              return mathTransform?.frame(serialized) ?? serialized;
+            })(),
           },
         ],
         error,
@@ -319,7 +335,13 @@ export class LiveDataStream<T = unknown> {
           ? lastMessage.values
           : reduceNewValuesSameSchemaMessages(messages).values;
 
-      const filteredValues = matchingFieldIndexes ? values.filter((v, i) => matchingFieldIndexes?.includes(i)) : values;
+      const currentNumericFieldIndexes = this.frameBuffer.fields
+        .map((field, index) => (field.type === 'number' ? index : -1))
+        .filter((index) => index >= 0);
+      const transformedValues = mathTransform?.values(values, currentNumericFieldIndexes) ?? values;
+      const filteredValues = matchingFieldIndexes
+        ? transformedValues.filter((v, i) => matchingFieldIndexes?.includes(i))
+        : transformedValues;
 
       return {
         key: subKey,
