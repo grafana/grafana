@@ -151,6 +151,65 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
+// FindExistingAncestor resolves directories nearest-first, including the repository
+// root, and verifies the stored folder belongs to that repository path. An empty
+// result means no real folder exists; callers must still check read permission.
+func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (string, error) {
+	if grafanautil.IsInterfaceNil(fm.client) {
+		return "", errors.New("folder client is required to find an existing ancestor")
+	}
+
+	cfg := fm.repo.Config()
+	// Existence must not depend on the caller's permissions, but repository metadata
+	// is still read with the original caller context below.
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return "", fmt.Errorf("create identity for ancestor lookup: %w", err)
+	}
+
+	root := RootFolder(cfg)
+	for dir = safepath.EnsureTrailingSlash(dir); ; dir = safepath.Dir(dir) {
+		folderID := root
+		if dir != "" {
+			// Authorization callers must see invalid metadata, not the sync resolver's
+			// fallback to a cached folder or a hash-derived UID.
+			var err error
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
+			if err != nil {
+				return "", fmt.Errorf("resolve ancestor %q: %w", dir, err)
+			}
+		}
+
+		// Instance and folderless repositories have no wrapper root folder to probe.
+		if folderID != "" {
+			obj, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
+			if err == nil {
+				meta, err := utils.MetaAccessor(obj)
+				if err != nil {
+					return "", fmt.Errorf("get ancestor folder metadata: %w", err)
+				}
+				manager, _ := meta.GetManagerProperties()
+				source, _ := meta.GetSourceProperties()
+				// UIDs can collide with unrelated folders. Such a folder cannot stand
+				// in for this path, even if the caller can read it. The repository
+				// root legitimately has no source path annotation.
+				if manager.Kind != utils.ManagerKindRepo || manager.Identity != cfg.Name || safepath.EnsureTrailingSlash(source.Path) != dir {
+					return "", apierrors.NewForbidden(FolderResource.GroupResource(), folderID, errors.New("folder does not belong to the configured repository path"))
+				}
+				return folderID, nil
+			}
+			if !apierrors.IsNotFound(err) {
+				return "", fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+			}
+		}
+
+		// Stop at the repository root, after checking its wrapper folder if applicable.
+		if dir == "" {
+			return "", nil
+		}
+	}
+}
+
 // EnsureFolderPathExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
 	epCfg := newEnsurePathConfig(opts)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -13,12 +14,17 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
 
+	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/nanogit/storage"
 )
 
 func TestGetPathType(t *testing.T) {
@@ -309,7 +315,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -338,7 +344,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				t.Cleanup(func() { assert.NotEmpty(t, capturedUID, "_folder.json should have a non-empty metadata.name") })
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
@@ -353,7 +359,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config() before the IsDir check
 				accessMock := auth.NewMockAccessChecker(t)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "not-a-folder"}
 			},
 			wantErr:     true,
@@ -372,7 +378,7 @@ func TestCreateFolder(t *testing.T) {
 				rw := repository.NewMockReaderWriter(t)
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite will call Config()
 				accessMock := auth.NewMockAccessChecker(t)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -385,7 +391,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Config").Return(config).Maybe() // AuthorizeWrite calls Config()
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(fmt.Errorf("unauthorized")).Maybe()
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -399,7 +405,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Create", mock.Anything, "newfolder/", "", ([]byte)(nil), "").Return(fmt.Errorf("git error"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false)}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false)}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr:     true,
@@ -416,7 +422,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -432,7 +438,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(&repository.FileInfo{Data: existingData}, nil)
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false), folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -449,7 +455,7 @@ func TestCreateFolder(t *testing.T) {
 				rw.On("Read", mock.Anything, "newfolder/_folder.json", "").Return(nil, fmt.Errorf("network error"))
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false), folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr:     true,
@@ -485,7 +491,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -525,7 +531,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "parent/child/", Ref: "new-branch"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -557,7 +563,7 @@ func TestCreateFolder(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/", Ref: "new-branch"}
 			},
 			wantErr: true,
@@ -586,7 +592,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -614,7 +620,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -638,7 +644,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -668,7 +674,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm, folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm, folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			check: func(t *testing.T, result *provisioning.ResourceWrapper) {
@@ -693,7 +699,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm, folderMetadataEnabled: true}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm, folderMetadataEnabled: true}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -719,7 +725,7 @@ func TestCreateFolder(t *testing.T) {
 				t.Cleanup(func() { mockClient.AssertExpectations(t) })
 
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{Path: "newfolder/"}
 			},
 			wantErr: true,
@@ -789,7 +795,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: false, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: false, folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -815,7 +821,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -841,7 +847,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -881,7 +887,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				fm := NewFolderManager(urlRepo, nil, NewEmptyFolderTree(), FolderKind)
-				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false), folders: fm}
+				dw := &DualReadWriter{repo: urlRepo, authorizer: NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), fm, false), folders: fm}
 				return dw, DualWriteOptions{
 					OriginalPath: "old/",
 					Path:         "new/",
@@ -940,7 +946,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 		}), "").Return(nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
 
 		require.NoError(t, err)
@@ -969,7 +975,7 @@ func TestCreateFolder_Nested_FolderMetadata(t *testing.T) {
 		}), "").Return(nil)
 
 		fm := NewFolderManager(rw, nil, NewEmptyFolderTree(), FolderKind)
-		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), false), folderMetadataEnabled: true, folders: fm}
+		dw := &DualReadWriter{repo: rw, authorizer: NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false), folderMetadataEnabled: true, folders: fm}
 		result, err := dw.CreateFolder(context.Background(), DualWriteOptions{Path: "parent/child/"})
 
 		require.NoError(t, err)
@@ -1029,7 +1035,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1069,7 +1075,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1099,7 +1105,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1119,7 +1125,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock := auth.NewMockAccessChecker(t)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1143,7 +1149,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1171,7 +1177,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1199,7 +1205,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1226,7 +1232,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1268,7 +1274,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1322,7 +1328,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				fm := NewFolderManager(rw, mockClient, tree, FolderKind, WithFolderMetadataEnabled(true))
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), fm, false),
 					folders:               fm,
 					folderMetadataEnabled: true,
 				}
@@ -1348,7 +1354,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 					Return(fmt.Errorf("access denied"))
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1376,7 +1382,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1425,7 +1431,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  urlRepo,
-					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, urlRepo, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1466,7 +1472,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 				accessMock.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 				dw := &DualReadWriter{
 					repo:                  rw,
-					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), false),
+					authorizer:            NewAuthorizer(config, rw, accessMock, authTestClients(t), nil, false),
 					folderMetadataEnabled: true,
 				}
 				return dw, DualWriteOptions{
@@ -1670,4 +1676,1036 @@ func TestMoveResourceAndCreateNewFolderMetadata(t *testing.T) {
 		rw.AssertNotCalled(t, "Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		rw.AssertCalled(t, "Move", mock.Anything, "old-folder/dashboard.json", "new-folder/dashboard.json", "test-ref", "msg")
 	})
+}
+
+// TestDualReadWriter_ReadNewResourcePreviewWithTokenAuth exercises previews of new
+// resources whose folders have not been synced to Grafana. It uses the real parser,
+// authorizer, and token checker with mocked storage and ancestor-scoped grants.
+// Token auth prevents the Editor role fallback from masking authorization failures.
+// The cases cover branch and folder-metadata variants, allowing or denying previews
+// according to ancestor permissions while preserving the caller identity and the
+// resource's destination folder. Preview reads must not persist any changes.
+func TestDualReadWriter_ReadNewResourcePreviewWithTokenAuth(t *testing.T) {
+	forEachPreviewResource(t, testReadNewResourcePreviewWithTokenAuth)
+}
+
+func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
+	t.Helper()
+	resourceName := "preview-" + resource.Resource
+	for _, tt := range []struct {
+		name                  string
+		path                  string
+		ref                   string
+		folderMetadata        bool
+		metadataOnlyOnFeature bool
+		canReadAncestor       bool
+	}{
+		{name: "feature branch with one missing hash folder", path: "new/dashboard.json", ref: "feature", canReadAncestor: true},
+		{name: "feature branch with multiple missing hash folders", path: "new/nested/dashboard.json", ref: "feature", canReadAncestor: true},
+		{name: "feature branch with one missing metadata folder", path: "new/dashboard.json", ref: "feature", folderMetadata: true, canReadAncestor: true},
+		{name: "feature branch with multiple missing metadata folders", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, canReadAncestor: true},
+		{name: "folder metadata exists only on feature branch", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, metadataOnlyOnFeature: true, canReadAncestor: true},
+		{name: "configured branch awaiting sync", path: "new/nested/dashboard.json", ref: "main", folderMetadata: true, canReadAncestor: true},
+		{name: "empty ref uses configured branch", path: "new/dashboard.json", canReadAncestor: true},
+		{name: "hash folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature"},
+		{name: "metadata folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				},
+			}
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(mock.Anything, tt.path, tt.ref).Return(&repository.FileInfo{
+				Path: tt.path,
+				Ref:  tt.ref,
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Preview resource"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
+			}, nil).Once()
+
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			ctx := authlib.WithAuthInfo(context.Background(), caller)
+			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+			require.NoError(t, err)
+			provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(ctx)
+				return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+			})
+
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			var destination string
+			for dir := safepath.Dir(tt.path); dir != ""; dir = safepath.Dir(dir) {
+				folderID := ParseFolder(dir, cfg.Name).ID
+				if tt.folderMetadata {
+					folderID = "stable-" + safepath.Base(dir)
+					metadataPath := safepath.Join(dir, folderMetadataFileName)
+					file := &repository.FileInfo{Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, folderID))}
+					if destination == "" {
+						repo.EXPECT().Read(mock.Anything, metadataPath, tt.ref).Return(file, nil).Once()
+					}
+					if tt.metadataOnlyOnFeature {
+						repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(nil, repository.ErrFileNotFound).Once()
+					} else {
+						repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(file, nil).Once()
+					}
+				}
+				if destination == "" {
+					destination = folderID
+				}
+				if tt.metadataOnlyOnFeature {
+					folderID = ParseFolder(dir, cfg.Name).ID
+				}
+				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+			}
+			folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
+				Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
+
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(resource.GroupResource(), resourceName)).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.MatchedBy(func(clientCtx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(clientCtx)
+				return ok && id == caller
+			}), kind).Return(resourceClient, resource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+				{GroupKind: kind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo: provisioning.ResourceRepositoryInfo{
+					Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type,
+				},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: tt.folderMetadata,
+			}
+			var checkedFolders []string
+			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Same(t, caller, id)
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource,
+					Verb: utils.VerbGet, Name: resourceName,
+				}, req)
+				checkedFolders = append(checkedFolders, folder)
+				return authlib.CheckResponse{Allowed: tt.canReadAncestor && folder == cfg.Name}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.folderMetadata))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, tt.folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
+
+			parsed, err := readWriter.Read(ctx, tt.path, tt.ref)
+			if tt.canReadAncestor {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				assert.Nil(t, parsed.Existing)
+				assert.Nil(t, parsed.Upsert)
+				assert.Equal(t, destination, parsed.Meta.GetFolder())
+			} else {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				assert.Nil(t, parsed)
+			}
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			assert.Equal(t, destination, meta.GetFolder())
+			assert.Equal(t, []string{cfg.Name}, checkedFolders)
+			assert.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+			for _, call := range folders.Calls {
+				assert.Equal(t, "Get", call.Method, "preview must not create folders")
+			}
+			for _, call := range repo.Calls {
+				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
+func TestDualReadWriter_ReadPreviewAtRoot(t *testing.T) {
+	for _, target := range []provisioning.SyncTargetType{provisioning.SyncTargetTypeInstance, provisioning.SyncTargetTypeFolderless} {
+		t.Run(string(target), func(t *testing.T) {
+			forEachPreviewResource(t, func(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
+				testReadPreviewAtRoot(t, kind, resource, target, "new/nested/resource.json")
+			})
+			for _, path := range []string{"new/nested/_folder.json", "new/_folder.json"} {
+				t.Run(path, func(t *testing.T) {
+					testReadPreviewAtRoot(t, FolderKind, FolderResource, target, path)
+				})
+			}
+		})
+	}
+}
+
+func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource, target provisioning.SyncTargetType, resourcePath string) {
+	t.Helper()
+	for _, tt := range []struct {
+		name        string
+		newChecker  func(authlib.AccessChecker) auth.AccessChecker
+		role        identity.RoleType
+		rootAllowed bool
+		wantAllowed bool
+	}{
+		{name: "token permits root", newChecker: auth.NewTokenAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "token denies root without role fallback", newChecker: auth.NewTokenAccessChecker, role: identity.RoleViewer},
+		{name: "session permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone, rootAllowed: true, wantAllowed: true},
+		{name: "session denies root without matching role", newChecker: auth.NewSessionAccessChecker, role: identity.RoleNone},
+		{name: "session viewer fallback permits root", newChecker: auth.NewSessionAccessChecker, role: identity.RoleViewer, wantAllowed: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "root-preview", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: target},
+				},
+			}
+			resourceName := "root-" + resource.Resource
+			folderMetadata := resource == FolderResource
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: tt.role}
+			ctx := identity.WithRequester(context.Background(), caller)
+			callerContext := mock.MatchedBy(func(readCtx context.Context) bool {
+				id, err := identity.GetRequester(readCtx)
+				return err == nil && id == caller
+			})
+			provisioningContext := mock.MatchedBy(func(lookupCtx context.Context) bool {
+				id, err := identity.GetRequester(lookupCtx)
+				return err == nil && identity.IsProvisioningServiceIdentity(id) && id.GetNamespace() == cfg.Namespace
+			})
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(callerContext, resourcePath, "feature").Return(&repository.FileInfo{
+				Path: resourcePath, Ref: "feature",
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Root preview"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
+			}, nil).Once()
+			if parent := safepath.Dir(safepath.Dir(resourcePath)); folderMetadata && parent != "" {
+				repo.EXPECT().Read(callerContext, safepath.Join(parent, folderMetadataFileName), "feature").Return(nil, repository.ErrFileNotFound).Once()
+			}
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			var probedFolders, expectedProbes []string
+			for dir := safepath.Dir(resourcePath); dir != ""; dir = safepath.Dir(dir) {
+				if folderMetadata {
+					repo.EXPECT().Read(callerContext, safepath.Join(dir, folderMetadataFileName), "").Return(nil, repository.ErrFileNotFound).Once()
+				}
+				folderID := ParseFolder(dir, cfg.Name).ID
+				expectedProbes = append(expectedProbes, folderID)
+				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+					Run(func(args mock.Arguments) { probedFolders = append(probedFolders, args.String(1)) }).
+					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+			}
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(resource.GroupResource(), resourceName)).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(callerContext, kind).Return(resourceClient, resource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: kind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: folderMetadata,
+			}
+			var checkedFolders []string
+			access := tt.newChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.Same(t, caller, id)
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource, Name: resourceName, Verb: utils.VerbGet,
+				}, req, "root authorization must retain the resource name, including Folder previews")
+				require.Empty(t, folder)
+				require.Equal(t, expectedProbes, probedFolders)
+				checkedFolders = append(checkedFolders, folder)
+				return authlib.CheckResponse{Allowed: tt.rootAllowed}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(folderMetadata))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, folderMetadata)
+
+			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+			if tt.wantAllowed {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				require.Nil(t, parsed.Existing)
+				require.Nil(t, parsed.Upsert)
+			} else {
+				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				require.Nil(t, parsed)
+			}
+			require.Equal(t, []string{""}, checkedFolders)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			destinationPath := safepath.Dir(resourcePath)
+			if folderMetadata {
+				destinationPath = safepath.Dir(destinationPath)
+			}
+			if destinationPath == "" {
+				require.Empty(t, meta.GetFolder(), "top-level folders must retain their root parent context")
+			} else {
+				require.Equal(t, ParseFolder(destinationPath, cfg.Name).ID, meta.GetFolder(), "root authorization must preserve the unsynced destination")
+			}
+			require.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+			require.Len(t, folders.Calls, len(expectedProbes), "preview probes directories without creating or probing a root folder")
+			for _, call := range repo.Calls {
+				require.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
+func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
+	const resourcePath = "team/new/dashboard.json"
+	const resourceName = "decoy-preview-dashboard"
+	cfg := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "decoy-preview-repo", Namespace: "default"},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+	repo := repository.NewMockReaderWriter(t)
+	repo.EXPECT().Config().Return(cfg)
+	repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
+		Path: resourcePath, Ref: "feature",
+		Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Decoy preview"}}`, DashboardKind.GroupVersion().String(), DashboardKind.Kind, resourceName)),
+	}, nil).Once()
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+	ctx := authlib.WithAuthInfo(context.Background(), caller)
+	_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	require.NoError(t, err)
+	provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+		id, ok := authlib.AuthInfoFrom(ctx)
+		return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+	})
+	decoyUID := ParseFolder(safepath.Dir(resourcePath), cfg.Name).ID
+	decoy := &unstructured.Unstructured{}
+	decoy.SetName(decoyUID)
+	decoy.SetNamespace(cfg.Namespace)
+	original := decoy.DeepCopy()
+	folders := &MockDynamicResourceInterface{}
+	t.Cleanup(func() { folders.AssertExpectations(t) })
+	folders.On("Get", provisioningContext, decoyUID, metav1.GetOptions{}, mock.Anything).
+		Return(decoy, nil).Once()
+	resourceClient := &MockDynamicResourceInterface{}
+	t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+	resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+		Return(nil, apierrors.NewNotFound(DashboardResource.GroupResource(), resourceName)).Once()
+	resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+		}).Return(&unstructured.Unstructured{}, nil).Once()
+	clients := NewMockResourceClients(t)
+	clients.EXPECT().ForKind(mock.Anything, DashboardKind).Return(resourceClient, DashboardResource, nil).Once()
+	clients.EXPECT().SupportedResources().Return([]SupportedResource{
+		{GroupKind: DashboardKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+	}).Once()
+	parser := &parser{
+		repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+		reader: repo, config: cfg, clients: clients,
+	}
+	var checkedFolders []string
+	access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(_ context.Context, id authlib.AuthInfo, _ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+		require.Same(t, caller, id)
+		checkedFolders = append(checkedFolders, folder)
+		return authlib.CheckResponse{Allowed: folder == decoyUID}, nil
+	})).WithFallbackRole(identity.RoleViewer)
+	fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind)
+	authorizer := NewAuthorizer(cfg, repo, access, clients, fm, false)
+	readWriter := NewDualReadWriter(repo, parser, nil, authorizer, false)
+
+	parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+	require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+	require.Nil(t, parsed)
+	require.Empty(t, checkedFolders, "an unmanaged decoy must not be used for authorization")
+	require.Equal(t, original, decoy, "preview must not claim the unmanaged folder")
+	require.Len(t, folders.Calls, 1, "an ownership conflict must stop the ancestor lookup")
+	require.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+	for _, call := range repo.Calls {
+		require.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+	}
+}
+
+// PR metadata must not select the folder used for authorization; only the
+// configured branch's nearest existing folder controls access.
+func TestDualReadWriter_ReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T) {
+	forEachPreviewResource(t, testReadNewResourcePreviewValidatesConfiguredFolder)
+}
+
+func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
+	t.Helper()
+	resourceName := "preview-" + resource.Resource
+	for _, tt := range []struct {
+		name              string
+		path              string
+		target            provisioning.SyncTargetType
+		folderMetadata    bool
+		unsynced          bool
+		configuredFolder  string
+		denyDestination   bool
+		canReadConfigured bool
+		ancestorExists    bool
+		canReadAncestor   bool
+		wantAllowed       bool
+	}{
+		{name: "allowed PR folder cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder"},
+		{name: "different allowed configured folder permits preview", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadConfigured: true, wantAllowed: true},
+		{name: "denied PR folder cannot override allowed configured folder", folderMetadata: true, configuredFolder: "other-allowed-folder", denyDestination: true, canReadConfigured: true, wantAllowed: true},
+		{name: "matching allowed folder permits preview", folderMetadata: true, configuredFolder: "preview-folder", wantAllowed: true},
+		{name: "missing hash folder requires instance root permission", target: provisioning.SyncTargetTypeInstance, unsynced: true, canReadConfigured: true},
+		{name: "missing repository root before folder sync forbids preview", path: "dashboard.json", unsynced: true, canReadConfigured: true},
+		{name: "matching allowed metadata folder requires ancestor permission", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true},
+		{name: "matching allowed metadata folder inherits from allowed ancestor", folderMetadata: true, configuredFolder: "preview-folder", unsynced: true, ancestorExists: true, canReadAncestor: true, wantAllowed: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			resourcePath := tt.path
+			if resourcePath == "" {
+				resourcePath = "team/resource.json"
+			}
+			const metadataPath = "team/_folder.json"
+			target := tt.target
+			if target == "" {
+				target = provisioning.SyncTargetTypeFolder
+			}
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: target},
+				},
+			}
+			destination := "preview-folder"
+			configuredFolder := tt.configuredFolder
+			if !tt.folderMetadata {
+				destination = ParentFolder(resourcePath, cfg)
+				configuredFolder = destination
+			}
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
+				Path: resourcePath, Ref: "feature",
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Preview resource"}}`, kind.GroupVersion().String(), kind.Kind, resourceName)),
+			}, nil).Once()
+			if tt.folderMetadata {
+				repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(&repository.FileInfo{
+					Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, destination)),
+				}, nil).Once()
+				repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(&repository.FileInfo{
+					Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, configuredFolder)),
+				}, nil).Once()
+			}
+
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			ctx := authlib.WithAuthInfo(context.Background(), caller)
+			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+			require.NoError(t, err)
+			provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(ctx)
+				return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+			})
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			probedFolderIDs := []string{configuredFolder}
+			if tt.unsynced && safepath.Dir(resourcePath) != "" && target == provisioning.SyncTargetTypeFolder {
+				probedFolderIDs = append(probedFolderIDs, cfg.Name)
+			}
+			for _, folderID := range probedFolderIDs {
+				folderExists := !tt.unsynced || (folderID == cfg.Name && tt.ancestorExists)
+				if !folderExists {
+					folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+					continue
+				}
+				folderPath := safepath.Dir(resourcePath)
+				if folderID == cfg.Name {
+					folderPath = ""
+				}
+				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+					Return(newManagedAncestorFolder(t, cfg, folderID, folderPath), nil).Once()
+			}
+
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(resource.GroupResource(), resourceName)).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.MatchedBy(func(clientCtx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(clientCtx)
+				return ok && id == caller
+			}), kind).Return(resourceClient, resource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+				{GroupKind: kind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: tt.folderMetadata,
+			}
+			var checkedFolders []string
+			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Same(t, caller, id)
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource,
+					Verb: utils.VerbGet, Name: resourceName,
+				}, req)
+				checkedFolders = append(checkedFolders, folder)
+				allowed := (!tt.denyDestination && folder == destination) ||
+					(tt.canReadConfigured && folder == configuredFolder) ||
+					(tt.canReadAncestor && folder == cfg.Name)
+				return authlib.CheckResponse{Allowed: allowed}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.folderMetadata))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, tt.folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
+
+			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+			if tt.wantAllowed {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				assert.Nil(t, parsed.Existing)
+				assert.Nil(t, parsed.Upsert)
+				assert.Equal(t, destination, parsed.Meta.GetFolder())
+			} else {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				assert.Nil(t, parsed)
+			}
+			var checkedFolderIDs []string
+			if !tt.unsynced {
+				checkedFolderIDs = append(checkedFolderIDs, configuredFolder)
+			} else if tt.ancestorExists {
+				checkedFolderIDs = append(checkedFolderIDs, cfg.Name)
+			} else if target == provisioning.SyncTargetTypeInstance {
+				checkedFolderIDs = append(checkedFolderIDs, "")
+			}
+			assert.Equal(t, checkedFolderIDs, checkedFolders)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			assert.Equal(t, destination, meta.GetFolder())
+			assert.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+			for _, call := range folders.Calls {
+				assert.Equal(t, "Get", call.Method, "preview must not create folders")
+			}
+			for _, call := range repo.Calls {
+				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
+func TestDualReadWriter_ReadNewFolderPreviewUsesParentAncestors(t *testing.T) {
+	for _, tt := range []struct {
+		name          string
+		parentExists  bool
+		canReadParent bool
+		rootExists    bool
+		canReadRoot   bool
+		wantAllowed   bool
+	}{
+		{name: "allowed existing parent permits preview", parentExists: true, canReadParent: true, wantAllowed: true},
+		{name: "denied existing parent forbids preview", parentExists: true},
+		{name: "allowed real root permits preview", rootExists: true, canReadRoot: true, wantAllowed: true},
+		{name: "denied real root forbids preview", rootExists: true},
+		{name: "missing parent and root forbid preview"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			const resourcePath = "team/new/_folder.json"
+			const parentMetadataPath = "team/_folder.json"
+			const resourceName = "preview-folder"
+			const parentFolder = "parent-folder"
+			const decoyFolder = "allowed-decoy"
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "synced-resources", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				},
+			}
+			repo := repository.NewMockReaderWriter(t)
+			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Read(mock.Anything, resourcePath, "feature").Return(&repository.FileInfo{
+				Path: resourcePath, Ref: "feature",
+				Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Preview folder"}}`, FolderKind.GroupVersion().String(), FolderKind.Kind, resourceName)),
+			}, nil).Once()
+			parentMetadata := &repository.FileInfo{
+				Path: parentMetadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, parentFolder)),
+			}
+			repo.EXPECT().Read(mock.Anything, parentMetadataPath, "feature").Return(parentMetadata, nil).Once()
+			repo.EXPECT().Read(mock.Anything, resourcePath, "").Return(nil, repository.ErrFileNotFound).Once()
+			repo.EXPECT().Read(mock.Anything, parentMetadataPath, "").Return(parentMetadata, nil).Once()
+
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			ctx := authlib.WithAuthInfo(context.Background(), caller)
+			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+			require.NoError(t, err)
+			provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(ctx)
+				return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+			})
+			folders := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { folders.AssertExpectations(t) })
+			folderID := ParseFolder(safepath.Dir(resourcePath), cfg.Name).ID
+			folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+			if tt.parentExists {
+				folders.On("Get", provisioningContext, parentFolder, metav1.GetOptions{}, mock.Anything).
+					Return(newManagedAncestorFolder(t, cfg, parentFolder, "team/"), nil).Once()
+			} else {
+				folders.On("Get", provisioningContext, parentFolder, metav1.GetOptions{}, mock.Anything).
+					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), parentFolder)).Once()
+				if tt.rootExists {
+					folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
+						Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
+				} else {
+					folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
+						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), cfg.Name)).Once()
+				}
+			}
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), resourceName)).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Create", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.CreateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.MatchedBy(func(clientCtx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(clientCtx)
+				return ok && id == caller
+			}), FolderKind).Return(resourceClient, FolderResource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: FolderKind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: true,
+			}
+			var checkedFolders []string
+			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Same(t, caller, id)
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: FolderResource.Group, Resource: FolderResource.Resource,
+					Verb: utils.VerbGet, Name: folder,
+				}, req)
+				checkedFolders = append(checkedFolders, folder)
+				allowed := req.Name == decoyFolder ||
+					(tt.canReadParent && req.Name == parentFolder) ||
+					(tt.canReadRoot && req.Name == cfg.Name)
+				return authlib.CheckResponse{Allowed: allowed}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(true))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, true)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, true)
+
+			parsed, err := readWriter.Read(ctx, resourcePath, "feature")
+			if tt.wantAllowed {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				assert.Nil(t, parsed.Existing)
+				assert.Nil(t, parsed.Upsert)
+				assert.Equal(t, parentFolder, parsed.Meta.GetFolder())
+			} else {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				assert.Nil(t, parsed)
+			}
+			var checkedFolderIDs []string
+			if tt.parentExists {
+				checkedFolderIDs = append(checkedFolderIDs, parentFolder)
+			} else if tt.rootExists {
+				checkedFolderIDs = append(checkedFolderIDs, cfg.Name)
+			}
+			assert.Equal(t, checkedFolderIDs, checkedFolders)
+			folders.AssertNotCalled(t, "Get", mock.Anything, decoyFolder, metav1.GetOptions{}, mock.Anything)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			assert.Equal(t, parentFolder, meta.GetFolder())
+			assert.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
+			for _, call := range folders.Calls {
+				assert.Equal(t, "Get", call.Method, "preview must not create folders")
+			}
+			for _, call := range repo.Calls {
+				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
+func TestDualReadWriter_ReadMovedResourcePreviewWithTokenAuth(t *testing.T) {
+	forEachPreviewResource(t, testReadMovedResourcePreviewWithTokenAuth)
+	t.Run("Folder", func(t *testing.T) {
+		testReadMovedResourcePreviewWithTokenAuth(t, FolderKind, FolderResource)
+	})
+}
+
+type movedResourcePreviewCase struct {
+	name                  string
+	folderMetadata        bool
+	metadataOnlyOnFeature bool
+	configuredFolder      string
+	canReadSource         bool
+	canReadAncestor       bool
+	noAncestor            bool
+	sameFolder            bool
+	sourceMatchesAncestor bool
+	wantAllowed           bool
+}
+
+type movedResourcePreviewFixture struct {
+	isFolder              bool
+	folderMetadata        bool
+	resourceName          string
+	resourcePath          string
+	sourcePath            string
+	sourceFolder          string
+	destination           string
+	ancestor              string
+	configuredDestination string
+	resolvedFolder        string
+	checkSource           bool
+	lookupAncestors       bool
+}
+
+func newMovedResourcePreviewFixture(tt movedResourcePreviewCase, resource schema.GroupVersionResource, repoName string) movedResourcePreviewFixture {
+	f := movedResourcePreviewFixture{
+		isFolder:       resource == FolderResource,
+		folderMetadata: tt.folderMetadata || resource == FolderResource,
+		resourceName:   "existing-" + resource.Resource,
+		resourcePath:   "team/renamed/resource.json",
+		sourcePath:     "team/original/resource.json",
+		sourceFolder:   ParseFolder("team/original/", repoName).ID,
+		destination:    ParseFolder("team/renamed/", repoName).ID,
+		ancestor:       ParseFolder("team/", repoName).ID,
+	}
+	if f.isFolder {
+		f.resourcePath = "team/renamed/child/_folder.json"
+		f.sourcePath = "team/original/child/_folder.json"
+	}
+	if f.folderMetadata {
+		f.sourceFolder, f.destination = "source-folder", "destination-folder"
+		if !tt.metadataOnlyOnFeature {
+			f.ancestor = "team-folder"
+		}
+	}
+	if tt.sameFolder {
+		f.sourceFolder = f.destination
+		f.sourcePath = "team/renamed/previous.json"
+		if f.isFolder {
+			f.sourcePath = "team/renamed/previous/_folder.json"
+		}
+	}
+	if tt.sourceMatchesAncestor {
+		f.sourceFolder = f.ancestor
+		f.sourcePath = "team/resource.json"
+		if f.isFolder {
+			f.sourcePath = "team/child/_folder.json"
+		}
+	}
+	f.configuredDestination = f.destination
+	if tt.metadataOnlyOnFeature {
+		f.configuredDestination = ParseFolder("team/renamed/", repoName).ID
+	} else if tt.configuredFolder != "" {
+		f.configuredDestination = tt.configuredFolder
+	}
+	f.resolvedFolder = f.ancestor
+	if tt.sameFolder {
+		f.resolvedFolder = f.configuredDestination
+		if f.isFolder && tt.configuredFolder == "" {
+			f.resolvedFolder = f.resourceName
+		}
+	}
+	f.checkSource = f.sourceFolder != f.destination
+	f.lookupAncestors = !f.checkSource || tt.canReadSource
+	return f
+}
+
+func (f movedResourcePreviewFixture) expectRepositoryReads(t *testing.T, tt movedResourcePreviewCase, cfg *provisioning.Repository, kind schema.GroupVersionKind) *repository.MockReaderWriter {
+	t.Helper()
+	repo := repository.NewMockReaderWriter(t)
+	repo.EXPECT().Config().Return(cfg).Maybe()
+	repo.EXPECT().Read(mock.Anything, f.resourcePath, "feature").Return(&repository.FileInfo{
+		Path: f.resourcePath, Ref: "feature",
+		Data: []byte(fmt.Sprintf(`{"apiVersion":%q,"kind":%q,"metadata":{"name":%q},"spec":{"title":"Moved resource"}}`, kind.GroupVersion().String(), kind.Kind, f.resourceName)),
+	}, nil).Once()
+	if !f.folderMetadata {
+		return repo
+	}
+
+	metadataPath := "team/renamed/_folder.json"
+	metadata := &repository.FileInfo{Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, f.destination))}
+	repo.EXPECT().Read(mock.Anything, metadataPath, "feature").Return(metadata, nil).Once()
+	if !f.lookupAncestors {
+		return repo
+	}
+
+	if f.isFolder {
+		if tt.sameFolder {
+			repo.EXPECT().Read(mock.Anything, f.resourcePath, "").Return(&repository.FileInfo{
+				Path: f.resourcePath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, f.resolvedFolder)),
+			}, nil).Once()
+		} else {
+			repo.EXPECT().Read(mock.Anything, f.resourcePath, "").Return(nil, repository.ErrFileNotFound).Once()
+		}
+	}
+	if !f.isFolder || !tt.sameFolder {
+		if tt.metadataOnlyOnFeature {
+			repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(nil, repository.ErrFileNotFound).Once()
+		} else {
+			repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(&repository.FileInfo{
+				Path: metadataPath, Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, f.configuredDestination)),
+			}, nil).Once()
+		}
+	}
+	if !tt.sameFolder {
+		if tt.metadataOnlyOnFeature {
+			repo.EXPECT().Read(mock.Anything, "team/_folder.json", "").Return(nil, repository.ErrFileNotFound).Once()
+		} else {
+			repo.EXPECT().Read(mock.Anything, "team/_folder.json", "").Return(&repository.FileInfo{
+				Path: "team/_folder.json", Data: []byte(fmt.Sprintf(`{"metadata":{"name":%q}}`, f.ancestor)),
+			}, nil).Once()
+		}
+	}
+	return repo
+}
+
+func (f movedResourcePreviewFixture) expectFolderProbes(t *testing.T, tt movedResourcePreviewCase, cfg *provisioning.Repository, provisioningContext interface{}, checkedFolders *[]string) *MockDynamicResourceInterface {
+	t.Helper()
+	folders := &MockDynamicResourceInterface{}
+	t.Cleanup(func() { folders.AssertExpectations(t) })
+	var probedFolders []string
+	if f.lookupAncestors {
+		if f.isFolder && tt.sameFolder {
+			probedFolders = append(probedFolders, f.resolvedFolder)
+		} else {
+			if f.isFolder {
+				probedFolders = append(probedFolders, ParseFolder(safepath.Dir(f.resourcePath), cfg.Name).ID)
+			}
+			probedFolders = append(probedFolders, f.configuredDestination)
+		}
+		if !tt.sameFolder {
+			probedFolders = append(probedFolders, f.ancestor)
+		}
+		if tt.noAncestor {
+			probedFolders = append(probedFolders, cfg.Name)
+		}
+	}
+	for _, folderID := range probedFolders {
+		checkOrder := func(mock.Arguments) {
+			if f.checkSource {
+				require.Equal(t, []string{f.sourceFolder}, *checkedFolders, "authorize the existing resource before probing ancestors")
+			} else {
+				require.Empty(t, *checkedFolders, "resolve the configured ancestor before checking same-folder access")
+			}
+		}
+		folderExists := !tt.noAncestor && folderID == f.resolvedFolder
+		if !folderExists {
+			folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+				Run(checkOrder).Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+		} else {
+			folderPath := "team/"
+			if tt.sameFolder {
+				folderPath = safepath.Dir(f.resourcePath)
+			}
+			folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+				Run(checkOrder).
+				Return(newManagedAncestorFolder(t, cfg, folderID, folderPath), nil).Once()
+		}
+	}
+	return folders
+}
+
+func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVersionKind, resource schema.GroupVersionResource) {
+	t.Helper()
+	isFolder := resource == FolderResource
+	for _, tt := range []movedResourcePreviewCase{
+		{name: "directory rename inherits allowed hash ancestor", canReadSource: true, canReadAncestor: true, wantAllowed: true},
+		{name: "directory rename respects denied hash ancestor", canReadSource: true},
+		{name: "directory rename requires source permission", canReadAncestor: true},
+		{name: "metadata move inherits allowed ancestor", folderMetadata: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
+		{name: "metadata move respects denied ancestor", folderMetadata: true, canReadSource: true},
+		{name: "metadata move requires source permission", folderMetadata: true, canReadAncestor: true},
+		{name: "feature-only metadata uses configured hash ancestor", folderMetadata: true, metadataOnlyOnFeature: true, canReadSource: true, canReadAncestor: true, wantAllowed: true},
+		{name: "move without any real ancestor is forbidden", canReadSource: true, canReadAncestor: true, noAncestor: true},
+		{name: "same-folder rename retains original resource check", folderMetadata: true, canReadSource: true, sameFolder: true, wantAllowed: true},
+		{name: "same-folder rename respects denied resource permission", folderMetadata: true, sameFolder: true},
+		{name: "same-folder PR metadata cannot bypass denied configured folder", folderMetadata: true, configuredFolder: "restricted-folder", canReadSource: true, sameFolder: true},
+		{name: "same-folder PR metadata permits allowed configured folder", folderMetadata: true, configuredFolder: "other-allowed-folder", canReadSource: true, canReadAncestor: true, sameFolder: true, wantAllowed: true},
+		{name: "source folder is the nearest configured ancestor", folderMetadata: true, canReadSource: true, canReadAncestor: true, sourceMatchesAncestor: true, wantAllowed: true},
+	} {
+		if isFolder && !tt.folderMetadata && !tt.noAncestor {
+			continue // Folder manifests require folder metadata support.
+		}
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "synced-resources", Namespace: "default"},
+				Spec: provisioning.RepositorySpec{
+					Type: provisioning.GitRepositoryType,
+					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
+					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+				},
+			}
+			f := newMovedResourcePreviewFixture(tt, resource, cfg.Name)
+			repo := f.expectRepositoryReads(t, tt, cfg, kind)
+
+			caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: cfg.Namespace, OrgRole: identity.RoleEditor}
+			ctx := authlib.WithAuthInfo(context.Background(), caller)
+			_, provisioningID, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+			require.NoError(t, err)
+			provisioningContext := mock.MatchedBy(func(ctx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(ctx)
+				return ok && id.GetUID() == provisioningID.GetUID() && id.GetNamespace() == cfg.Namespace
+			})
+			var checkedFolders []string
+			folders := f.expectFolderProbes(t, tt, cfg, provisioningContext, &checkedFolders)
+
+			existing := &unstructured.Unstructured{Object: map[string]interface{}{
+				"metadata": map[string]interface{}{"name": f.resourceName, "namespace": cfg.Namespace, "resourceVersion": "42"},
+			}}
+			existingMeta, err := utils.MetaAccessor(existing)
+			require.NoError(t, err)
+			existingMeta.SetFolder(f.sourceFolder)
+			existingMeta.SetSourceProperties(utils.SourceProperties{Path: f.sourcePath})
+			existingMeta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name})
+			resourceClient := &MockDynamicResourceInterface{}
+			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
+			resourceClient.On("Get", provisioningContext, f.resourceName, metav1.GetOptions{}, mock.Anything).
+				Return(existing, nil).Once()
+			var dryRunObject *unstructured.Unstructured
+			resourceClient.On("Update", provisioningContext, mock.Anything, mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					dryRunObject = args.Get(1).(*unstructured.Unstructured)
+					require.Equal(t, []string{metav1.DryRunAll}, args.Get(2).(metav1.UpdateOptions).DryRun)
+				}).Return(&unstructured.Unstructured{}, nil).Once()
+			clients := NewMockResourceClients(t)
+			clients.EXPECT().ForKind(mock.MatchedBy(func(clientCtx context.Context) bool {
+				id, ok := authlib.AuthInfoFrom(clientCtx)
+				return ok && id == caller
+			}), kind).Return(resourceClient, resource, nil).Once()
+			clients.EXPECT().SupportedResources().Return([]SupportedResource{
+				{GroupKind: kind.GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+			}).Once()
+			parser := &parser{
+				repo:   provisioning.ResourceRepositoryInfo{Name: cfg.Name, Namespace: cfg.Namespace, Type: cfg.Spec.Type},
+				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: f.folderMetadata,
+			}
+			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+				require.NotNil(t, storage.FromContext(checkCtx))
+				require.Same(t, caller, id)
+				name := f.resourceName
+				if f.isFolder && (!f.checkSource && f.resourceName == f.resolvedFolder || len(checkedFolders) > 0) {
+					name = folder
+				}
+				require.Equal(t, authlib.CheckRequest{
+					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource,
+					Verb: utils.VerbGet, Name: name,
+				}, req)
+				checkedFolders = append(checkedFolders, folder)
+				allowed := (folder == f.sourceFolder && tt.canReadSource) || (folder == f.resolvedFolder && tt.canReadAncestor)
+				if f.isFolder && req.Name == f.resourceName {
+					allowed = tt.canReadSource
+				}
+				return authlib.CheckResponse{Allowed: allowed}, nil
+			})).WithFallbackRole(identity.RoleViewer)
+			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(f.folderMetadata))
+			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, f.folderMetadata)
+			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, f.folderMetadata)
+
+			parsed, err := readWriter.Read(ctx, f.resourcePath, "feature")
+			if tt.wantAllowed {
+				require.NoError(t, err)
+				require.NotNil(t, parsed)
+				assert.Same(t, existing, parsed.Existing)
+				assert.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+				assert.Nil(t, parsed.Upsert)
+				assert.Equal(t, f.destination, parsed.Meta.GetFolder())
+			} else {
+				require.Error(t, err)
+				assert.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+				assert.Nil(t, parsed)
+			}
+			wantChecks := []string{f.sourceFolder}
+			if f.isFolder && tt.sameFolder && tt.configuredFolder == "" {
+				wantChecks = []string{f.resourceName}
+			} else if tt.canReadSource && !tt.noAncestor && (!tt.sameFolder || f.configuredDestination != f.destination) {
+				wantChecks = append(wantChecks, f.resolvedFolder)
+			}
+			assert.Equal(t, wantChecks, checkedFolders)
+			require.NotNil(t, dryRunObject)
+			meta, err := utils.MetaAccessor(dryRunObject)
+			require.NoError(t, err)
+			assert.Equal(t, f.resourceName, dryRunObject.GetName())
+			assert.Equal(t, "42", dryRunObject.GetResourceVersion())
+			assert.Equal(t, f.destination, meta.GetFolder())
+			assert.Equal(t, f.sourceFolder, existingMeta.GetFolder(), "preview must not mutate the existing resource")
+			assert.Len(t, resourceClient.Calls, 2, "preview only gets the existing resource and dry-runs its update")
+			for _, call := range folders.Calls {
+				assert.Equal(t, "Get", call.Method, "preview must not create folders")
+			}
+			for _, call := range repo.Calls {
+				assert.Contains(t, []string{"Read", "Config"}, call.Method, "preview must not mutate the repository")
+			}
+		})
+	}
+}
+
+func forEachPreviewResource(t *testing.T, run func(*testing.T, schema.GroupVersionKind, schema.GroupVersionResource)) {
+	t.Helper()
+	for _, resource := range []struct {
+		kind     schema.GroupVersionKind
+		resource schema.GroupVersionResource
+	}{
+		{kind: DashboardKind, resource: DashboardResource},
+		{kind: dashboardv0.LibraryPanelResourceInfo.GroupVersionKind(), resource: dashboardv0.LibraryPanelResourceInfo.GroupVersionResource()},
+		{
+			kind:     schema.GroupVersionKind{Group: "example.grafana.app", Version: "v1alpha1", Kind: "Widget"},
+			resource: schema.GroupVersionResource{Group: "example.grafana.app", Version: "v1alpha1", Resource: "widgets"},
+		},
+	} {
+		t.Run(resource.kind.Kind, func(t *testing.T) {
+			run(t, resource.kind, resource.resource)
+		})
+	}
+}
+
+type previewTokenAccessChecker func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error)
+
+func (f previewTokenAccessChecker) Check(ctx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+	return f(ctx, id, req, folder)
 }
