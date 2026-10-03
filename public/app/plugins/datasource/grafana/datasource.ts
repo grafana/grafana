@@ -21,6 +21,7 @@ import { DataSourceWithBackend, getGrafanaLiveSrv, getTemplateSrv, type Streamin
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
+import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -247,6 +248,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         }
       }
       params.tags = tags;
+    }
+
+    // Screenshots retain manual annotations without fetching alert state history.
+    if (isRenderTarget()) {
+      params.type = 'annotation';
     }
 
     const df = await annotationServer().query(
