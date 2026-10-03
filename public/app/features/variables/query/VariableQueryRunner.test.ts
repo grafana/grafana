@@ -104,6 +104,24 @@ function getTestContext(variable?: QueryVariableModel) {
 }
 
 describe('VariableQueryRunner', () => {
+  it('labels the request passed to the datasource variable runner', (done) => {
+    const { identifier, runner, datasource, queryRunner } = getTestContext();
+    expectOnResults({
+      identifier,
+      runner,
+      done,
+      expect: () => {
+        expect(queryRunner.runRequest).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.objectContaining({
+            headers: { 'X-Grafana-Query-Purpose': 'variable' },
+          })
+        );
+      },
+    });
+    runner.queueRequest({ identifier, datasource });
+  });
+
   describe('happy case', () => {
     it('then it should work as expected', (done) => {
       const { key, identifier, runner, datasource, getState, getVariable, queryRunners, queryRunner, dispatch } =

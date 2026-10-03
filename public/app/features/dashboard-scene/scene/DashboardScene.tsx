@@ -1340,6 +1340,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     return {
       app: CoreApp.Dashboard,
+      headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
       dashboardUID: this.state.uid,
       panelId,
       panelName: panel?.state?.title,

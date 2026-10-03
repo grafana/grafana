@@ -195,6 +195,10 @@ describe('PanelQueryRunner', () => {
       expect(ctx.queryCalledWith?.requestId).toBe('Q100');
     });
 
+    it('labels dashboard requests with their query purpose', () => {
+      expect(ctx.queryCalledWith?.headers).toEqual({ 'X-Grafana-Query-Purpose': 'dashboard' });
+    });
+
     it('should set datasource uid on request', async () => {
       expect(ctx.queryCalledWith?.targets[0].datasource?.uid).toBe('TestDB-uid');
     });

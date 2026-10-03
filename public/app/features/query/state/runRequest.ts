@@ -19,6 +19,7 @@ import {
   type TimeRange,
 } from '@grafana/data';
 import { config, isMigrationHandler, migrateRequest, toDataQueryError, isExpressionReference } from '@grafana/runtime';
+import { dataLayers, QueryVariable } from '@grafana/scenes';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -123,6 +124,18 @@ export function runRequest(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ): Observable<PanelData> {
+  // Scenes supplies the originating object for requests that share app: Dashboard.
+  const sceneObject = request.scopedVars?.__sceneObject?.value?.valueOf();
+  const purpose =
+    sceneObject instanceof QueryVariable
+      ? 'variable'
+      : sceneObject instanceof dataLayers.AnnotationsDataLayer
+        ? 'annotation'
+        : undefined;
+  if (purpose) {
+    request = { ...request, headers: { ...request.headers, 'X-Grafana-Query-Purpose': purpose } };
+  }
+
   let state: RunningQueryState = {
     panelData: {
       state: LoadingState.Loading,
