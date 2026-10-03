@@ -566,7 +566,7 @@ describe('plugin', () => {
       expect(mockImport).toHaveBeenCalledTimes(1);
 
       // Sync from an already-fetched payload — no network round trip.
-      syncDataSourceInstanceSettings({
+      await syncDataSourceInstanceSettings({
         datasources: { [settings.name]: settings },
         defaultDatasource: settings.name,
       });
