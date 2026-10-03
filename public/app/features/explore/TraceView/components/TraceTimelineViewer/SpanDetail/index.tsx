@@ -36,7 +36,6 @@ import { type TimeZone } from '@grafana/schema';
 import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { type SpanLinkFunc } from '../../types/links';
@@ -136,7 +135,7 @@ const getStyles = (theme: GrafanaTheme2) => {
           border: '1px solid ' + theme.colors.border.strong,
         },
       },
-      borderRadius: theme.shape.radius.md,
+      borderRadius: theme.shape.radius.lg,
       margin: '6px',
       padding: '5px',
       minWidth: 0,
@@ -217,22 +216,22 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     AccordionWarnings: css({
       label: 'AccordionWarnings',
-      background: autoColor(theme, '#fafafa'),
-      border: `1px solid ${autoColor(theme, '#e4e4e4')}`,
+      background: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.warning.borderTransparent}`,
       marginBottom: '0.25rem',
     }),
     AccordionWarningsHeader: css({
       label: 'AccordionWarningsHeader',
-      background: autoColor(theme, '#fff7e6'),
+      background: theme.colors.warning.transparent,
       padding: '0.25rem 0.5rem',
     }),
     AccordionWarningsHeaderOpen: css({
       label: 'AccordionWarningsHeaderOpen',
-      borderBottom: `1px solid ${autoColor(theme, '#e8e8e8')}`,
+      borderBottom: `1px solid ${theme.colors.warning.borderTransparent}`,
     }),
     AccordionWarningsLabel: css({
       label: 'AccordionWarningsLabel',
-      color: autoColor(theme, '#d36c08'),
+      color: theme.colors.warning.text,
     }),
     Textarea: css({
       wordBreak: 'break-all',

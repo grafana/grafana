@@ -17,12 +17,11 @@ import cx from 'clsx';
 import * as React from 'react';
 import { memo, useMemo } from 'react';
 
-import { type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
+import { colorManipulator, type GrafanaTheme2, type TraceKeyValuePair } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';
 import type TNil from '../types/TNil';
 import { SpanLinkType, type SpanLinkFunc } from '../types/links';
@@ -67,14 +66,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
   const animations = {
     flash: keyframes`
     from {
-      background-color: ${autoColor(theme, '#68b9ff')};
+      background-color: ${theme.colors.info.main};
     }
     to {
-      background-color: 'default';
+      background-color: ${theme.colors.info.transparent};
     }
   `,
   };
-  const backgroundColor = showSpanFilterMatchesOnly ? '' : autoColor(theme, '#fffce4');
+  const backgroundColor = showSpanFilterMatchesOnly ? '' : theme.colors.warning.transparent;
 
   return {
     nameWrapper: css({
@@ -106,7 +105,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     endpointName: css({
       label: 'endpointName',
-      color: autoColor(theme, '#484848'),
+      color: theme.colors.text.secondary,
       fontSize: '0.9em',
     }),
     view: css({
@@ -115,13 +114,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     viewExpanded: css({
       label: 'viewExpanded',
-      background: autoColor(theme, '#f8f8f8'),
-      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      background: theme.colors.background.secondary,
+      outline: `1px solid ${theme.colors.border.weak}`,
     }),
     viewExpandedAndMatchingFilter: css({
       label: 'viewExpandedAndMatchingFilter',
-      background: autoColor(theme, '#fff3d7'),
-      outline: `1px solid ${autoColor(theme, '#ddd')}`,
+      background: theme.colors.warning.transparent,
+      outline: `1px solid ${theme.colors.warning.borderTransparent}`,
     }),
     row: css({
       label: 'row',
@@ -131,19 +130,14 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         opacity: 1,
       },
       [`&:hover .${spanBarLabelClassName}`]: {
-        color: autoColor(theme, '#000'),
+        color: theme.colors.text.primary,
       },
       [`&:hover .${nameWrapperClassName}`]: {
-        background: `linear-gradient(
-          90deg,
-          ${autoColor(theme, '#fafafa')},
-          ${autoColor(theme, '#f8f8f8')} 75%,
-          ${autoColor(theme, '#eee')}
-        )`,
+        background: theme.colors.action.hover,
       },
       [`&:hover .${viewClassName}`]: {
-        backgroundColor: autoColor(theme, '#f5f5f5'),
-        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+        backgroundColor: theme.colors.action.hover,
+        outline: `1px solid ${theme.colors.border.weak}`,
       },
       ['& .icon-wrapper']: {
         borderBottomColor: `${serviceColor}CF`,
@@ -160,8 +154,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         width: '6px',
         backgroundImage: `linear-gradient(
           to right,
-          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
-          ${autoColor(theme, 'rgba(32, 32, 32, 0)')}
+          ${colorManipulator.alpha(theme.colors.text.primary, 0.25)},
+          ${colorManipulator.alpha(theme.colors.text.primary, 0)}
         )`,
         left: '100%',
         zIndex: -1,
@@ -176,8 +170,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         width: '6px',
         backgroundImage: `linear-gradient(
           to left,
-          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')},
-          ${autoColor(theme, 'rgba(25, 25, 25, 0.25)')}
+          ${colorManipulator.alpha(theme.colors.text.primary, 0.25)},
+          ${colorManipulator.alpha(theme.colors.text.primary, 0.25)}
         )`,
         right: '0%',
         zIndex: 1,
@@ -189,33 +183,28 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         opacity: 1,
       },
       [`& .${spanBarLabelClassName}`]: {
-        color: autoColor(theme, '#000'),
+        color: theme.colors.text.primary,
       },
       [`& .${nameWrapperClassName}, &:hover .${nameWrapperClassName}`]: {
-        background: autoColor(theme, '#f0f0f0'),
-        boxShadow: `0 1px 0 ${autoColor(theme, '#ddd')}`,
+        background: theme.colors.background.secondary,
+        boxShadow: `0 1px 0 ${theme.colors.border.weak}`,
       },
       [`& .${nameWrapperMatchingFilterClassName}`]: {
-        background: autoColor(theme, '#fff3d7'),
+        background: theme.colors.warning.transparent,
       },
       [`&:hover .${viewClassName}`]: {
-        background: autoColor(theme, '#eee'),
+        background: theme.colors.action.hover,
       },
     }),
     rowMatchingFilter: css({
       label: 'rowMatchingFilter',
 
       [`&:hover .${nameWrapperClassName}`]: {
-        background: `linear-gradient(
-          90deg,
-          ${autoColor(theme, '#fffbde')},
-          ${autoColor(theme, '#fffbde')} 75%,
-          ${autoColor(theme, '#f7f1c6')}
-        )`,
+        background: theme.colors.warning.transparent,
       },
       [`&:hover .${viewClassName}`]: {
-        backgroundColor: autoColor(theme, '#f7f1c6'),
-        outline: `1px solid ${autoColor(theme, '#ddd')}`,
+        backgroundColor: theme.colors.warning.transparent,
+        outline: `1px solid ${theme.colors.warning.borderTransparent}`,
       },
     }),
     rowFocused: css({
@@ -224,7 +213,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
       },
       [`& .${viewClassName}`]: {
-        backgroundColor: autoColor(theme, '#cbe7ff'),
+        backgroundColor: theme.colors.info.transparent,
         [theme.transitions.handleMotion('no-preference')]: {
           animation: `${animations.flash} 1s cubic-bezier(0.12, 0, 0.39, 0)`,
         },
@@ -233,7 +222,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         opacity: 1,
       },
       [`& .${spanBarLabelClassName}`]: {
-        color: autoColor(theme, '#000'),
+        color: theme.colors.text.primary,
       },
     }),
 
@@ -252,13 +241,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     rowExpandedAndMatchingFilter: css({
       label: 'rowExpandedAndMatchingFilter',
       [`&:hover .${viewClassName}`]: {
-        background: autoColor(theme, '#ffeccf'),
+        background: theme.colors.warning.transparent,
       },
     }),
 
     name: css({
       label: 'name',
-      color: autoColor(theme, '#000'),
+      color: theme.colors.text.primary,
       cursor: 'pointer',
       flex: '1 1 auto',
       outline: 'none',
@@ -275,7 +264,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         textDecoration: 'none',
       },
       '&:hover > span': {
-        color: autoColor(theme, '#000'),
+        color: theme.colors.text.primary,
       },
       textAlign: 'left',
       border: 'none',
@@ -302,8 +291,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     errorIcon: css({
       label: 'errorIcon',
-      borderRadius: theme.shape.radius.md,
-      color: autoColor(theme, '#fff'),
+      borderRadius: theme.shape.radius.sm,
+      color: theme.colors.error.contrastText,
       fontSize: '0.6em',
       marginRight: '0.25rem',
       padding: '1px',
@@ -316,12 +305,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       flexShrink: 0,
       padding: '4px',
       '&:hover': {
-        color: `#fff`,
+        color: theme.colors.text.primary,
       },
     }),
     rpcColorMarker: css({
       label: 'rpcColorMarker',
-      borderRadius: theme.shape.radius.md,
+      borderRadius: theme.shape.radius.sm,
       display: 'inline-block',
       fontSize: '0.85em',
       height: '1em',
@@ -357,7 +346,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
       label: 'summaryToggle',
       background: 'transparent',
       border: 'none',
-      color: autoColor(theme, '#000'),
+      color: theme.colors.text.primary,
       cursor: 'pointer',
       // Do not shrink: the wrapper (summaryLabel) owns horizontal scroll, so the toggle keeps its
       // natural width and pushes the stats along rather than shrinking and letting its nowrap text
@@ -371,12 +360,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
         textDecoration: 'none',
       },
       '&:hover > span': {
-        color: autoColor(theme, '#000'),
+        color: theme.colors.text.primary,
       },
     }),
     summaryStats: css({
       label: 'summaryStats',
-      color: autoColor(theme, '#484848'),
+      color: theme.colors.text.secondary,
       flex: '0 0 auto',
       fontSize: '0.9em',
       paddingBlock: '4px',
@@ -551,7 +540,7 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
         <Icon
           name={'exclamation-circle'}
           style={{
-            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
+            backgroundColor: span.errorIconColor || theme.colors.error.main,
           }}
           className={styles.errorIcon}
         />
