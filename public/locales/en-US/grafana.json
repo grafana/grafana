@@ -6525,6 +6525,7 @@
         "actions-aria-label": "Actions",
         "author": "Created by %AUTHOR%",
         "author-unknown": "Unknown author",
+        "default-indicator": "Your default view for this dashboard",
         "delete": "Delete",
         "delete-confirm-body": "Delete \"%NAME%\"? This cannot be undone.",
         "delete-confirm-confirm": "Delete",
@@ -6553,8 +6554,10 @@
           "no-results": "No results found for your query"
         },
         "search-placeholder": "Search views",
+        "set-default": "Set as default",
         "title": "Views",
         "tooltip": "Saved views",
+        "unset-default": "Remove as default",
         "view-mode-compact": "Show compact list",
         "view-mode-expanded": "Show details"
       },

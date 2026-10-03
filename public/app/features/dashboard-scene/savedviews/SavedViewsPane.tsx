@@ -14,6 +14,7 @@ import {
   EmptyState,
   Field,
   FilterInput,
+  Icon,
   IconButton,
   Input,
   Label,
@@ -33,6 +34,7 @@ import { AnnoKeyCreatedBy } from 'app/features/apiserver/types';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { getDefaultSavedView, setDefaultSavedView } from './defaultView';
 import { loadSavedViews } from './loadSavedViews';
 import { applySavedViewState, captureSavedViewState } from './state';
 
@@ -132,6 +134,7 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
   const [editDescription, setEditDescription] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | undefined>();
+  const [defaultViewName, setDefaultViewName] = useState<string | undefined>();
   const [loadFailed, setLoadFailed] = useState(false);
 
   // undefined means "not fetched yet" (e.g. the pane was opened without a ?viewFilter= link
@@ -141,6 +144,23 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       loadSavedViews(dashboard).then((ok) => setLoadFailed(!ok));
     }
   }, [dashboard, savedViews]);
+
+  useEffect(() => {
+    if (!uid) {
+      return;
+    }
+    let cancelled = false;
+    getDefaultSavedView(uid).then((name) => {
+      if (!cancelled) {
+        setDefaultViewName(name);
+      }
+    });
+    // The pane can unmount mid-fetch (closing the sidebar) -- without this guard, a resolved
+    // fetch would setState on a stale closure after the component is gone.
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
 
   function retryLoad() {
     setLoadFailed(false);
@@ -333,7 +353,27 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
       if (viewFilter === view.metadata.name) {
         handleClearSelection();
       }
+      if (uid && view.metadata.name === defaultViewName) {
+        // Clear proactively rather than leaving a dangling stored name -- otherwise the next
+        // cold load on this dashboard pays for a fetch of a view that no longer exists before
+        // DashboardSceneUrlSync's own self-heal discovers the same thing.
+        setDefaultViewName(undefined);
+        await setDefaultSavedView(uid, undefined);
+      }
       setPendingDelete(undefined);
+    });
+  }
+
+  function handleToggleDefault(view: SavedDashboardView) {
+    return withBusy(async () => {
+      if (!uid) {
+        return;
+      }
+      const isCurrentDefault = view.metadata.name === defaultViewName;
+      // Storage holds exactly one name per dashboard, so setting a new default implicitly
+      // un-defaults whichever view held it before -- no separate "clear the old one" step needed.
+      await setDefaultSavedView(uid, isCurrentDefault ? undefined : view.metadata.name);
+      setDefaultViewName(isCurrentDefault ? undefined : view.metadata.name);
     });
   }
 
@@ -386,9 +426,21 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                       t('dashboard.sidebar.saved-views.author-unknown', 'Unknown author'))
                     : undefined;
 
+                  const isDefault = view.metadata.name === defaultViewName;
+
                   return (
                     <div key={view.metadata.name} className={cx(styles.row, isSelected && styles.rowSelected)}>
                       <Stack alignItems="center" justifyContent="space-between" gap={1}>
+                        {isDefault && (
+                          <Icon
+                            name="favorite"
+                            size="sm"
+                            title={t(
+                              'dashboard.sidebar.saved-views.default-indicator',
+                              'Your default view for this dashboard'
+                            )}
+                          />
+                        )}
                         <Button
                           variant={isSelected ? 'primary' : 'secondary'}
                           fill="text"
@@ -405,6 +457,15 @@ function SavedViewsPaneRenderer({ model }: SceneComponentProps<SavedViewsPane>) 
                                 label={t('dashboard.sidebar.saved-views.edit', 'Edit')}
                                 icon="pen"
                                 onClick={() => openEditModal(view)}
+                              />
+                              <Menu.Item
+                                label={
+                                  isDefault
+                                    ? t('dashboard.sidebar.saved-views.unset-default', 'Remove as default')
+                                    : t('dashboard.sidebar.saved-views.set-default', 'Set as default')
+                                }
+                                icon="favorite"
+                                onClick={() => handleToggleDefault(view)}
                               />
                               <Menu.Item
                                 label={t('dashboard.sidebar.saved-views.delete', 'Delete')}
