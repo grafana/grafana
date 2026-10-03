@@ -2851,11 +2851,14 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-	if r := verifyRequestKey(req.Resource); r != nil {
-		return &resourcepb.GetBlobResponse{Error: r}, nil
+	if req.Resource == nil {
+		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing resource key")}, nil
 	}
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
 		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
+	if r := verifyRequestKey(req.Resource); r != nil {
+		return &resourcepb.GetBlobResponse{Error: r}, nil
 	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2880,11 +2883,11 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 			}}, nil
 		}
 	} else {
-		refs, status := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
-		if status != nil {
-			return &resourcepb.GetBlobResponse{Error: status}, nil
+		refs, hasBlobs, err := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
+		if err != nil {
+			return &resourcepb.GetBlobResponse{Error: err}, nil
 		}
-		if len(refs) > 0 && !refs[req.Uid] {
+		if hasBlobs && !refs[req.Uid] {
 			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
 				Message: "blob is not referenced by the resource",
 				Code:    http.StatusNotFound,
@@ -2909,9 +2912,9 @@ type BlobReference struct {
 	ContentType string `json:"contentType,omitempty"`
 }
 
-func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, *resourcepb.ErrorResult) {
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
-		return nil, r
+		return nil, false, r
 	}
 
 	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
@@ -2919,7 +2922,7 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 		ResourceVersion: rv,
 	})
 	if rsp.Error != nil {
-		return nil, rsp.Error
+		return nil, false, rsp.Error
 	}
 
 	var obj struct {
@@ -2929,7 +2932,10 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 		Blobs map[string]BlobReference `json:"blobs"`
 	}
 	if err := json.Unmarshal(rsp.Value, &obj); err != nil {
-		return nil, AsErrorResult(err)
+		return nil, false, AsErrorResult(err)
+	}
+	if obj.Blobs == nil {
+		return nil, false, nil
 	}
 	refs := make(map[string]bool, len(obj.Blobs)+1)
 	for _, ref := range obj.Blobs {
@@ -2937,12 +2943,10 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 			refs[ref.UID] = true
 		}
 	}
-	if len(refs) > 0 {
-		if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
-			refs[info.UID] = true
-		}
+	if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
+		refs[info.UID] = true
 	}
-	return refs, nil
+	return refs, true, nil
 }
 
 func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {

@@ -3563,6 +3563,30 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		require.True(t, blob.getReached)
 	})
 
+	t.Run("rejects any blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("rejects a detached blob once the last reference is removed", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
 	t.Run("returns a blob referenced by the requested older version", func(t *testing.T) {
 		srv, _, blob := newBlobAuthzTestServer(t, nil)
 		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
@@ -3602,6 +3626,19 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
 		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
 		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns only the annotation blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{}`)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
 	})
 
 	t.Run("allows any blob when the resource only has the annotation", func(t *testing.T) {
