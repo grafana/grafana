@@ -41,9 +41,13 @@ func (dc *databaseCache) Run(ctx context.Context) error {
 func (dc *databaseCache) internalRunGC() {
 	err := dc.SQLStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		now := getTime().Unix()
-		sql := `DELETE FROM cache_data WHERE (? - created_at) >= expires AND expires <> 0`
+		// Future-stamped rows only age out once real time catches up
+		// with their timestamp, which for a large clock skew means
+		// effectively never; drop them too so a backwards correction
+		// recovers immediately.
+		sql := `DELETE FROM cache_data WHERE expires <> 0 AND ((? - created_at) >= expires OR created_at > ?)`
 
-		_, err := session.Exec(sql, now)
+		_, err := session.Exec(sql, now, now)
 		return err
 	})
 
@@ -67,7 +71,11 @@ func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 		}
 
 		if cacheHit.Expires > 0 {
-			existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
+			// A negative age means the row was written while the clock was
+			// ahead (e.g. a VM booted with skewed time). Treat it as expired
+			// instead of serving it until real time reaches its timestamp.
+			age := getTime().Unix() - cacheHit.CreatedAt
+			existedButExpired := age < 0 || age >= cacheHit.Expires
 			if existedButExpired {
 				err = dc.Delete(ctx, key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
 				if err != nil {
