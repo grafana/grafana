@@ -20,6 +20,7 @@ import {
   upsertRuntimeSettings,
 } from './cache';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
+import { isDataSourceLoadError } from './errors';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
@@ -121,7 +122,17 @@ export async function reloadDataSourceInstanceSettings(): Promise<void> {
 export async function syncDataSourceInstanceSettings(settings: BootDataSourceSettings): Promise<void> {
   // The boot source builds its snapshot from the payload. The MT source ignores it and refetches.
   const source = getDataSourceCacheSource() ?? new BootDataSource(settings);
-  const snapshot = await source.refreshList(settings);
+  let snapshot;
+  try {
+    snapshot = await source.refreshList(settings);
+  } catch (error) {
+    // The source already logged the failure. Keep the current cache: the data source change that
+    // triggered this sync has succeeded, and must not look like it failed.
+    if (isDataSourceLoadError(error)) {
+      return;
+    }
+    throw error;
+  }
   clearPluginCache();
   applySnapshot(snapshot);
 }
