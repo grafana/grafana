@@ -2,6 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { type Transformation } from '../types';
 
@@ -228,5 +229,32 @@ describe('useTransformationInputData', () => {
     unmount();
 
     expect(unsubscribe).toHaveBeenCalled();
+  });
+
+  it('replays only annotation-topic transformations ahead of an annotation-topic selection', () => {
+    const annotationTransformation = (id: string): Transformation => ({
+      ...makeTransformation(id),
+      transformConfig: { id, options: {}, topic: DataTopic.Annotations },
+    });
+    const transformations = [
+      makeTransformation('joinByField'),
+      annotationTransformation('filterByRefId'),
+      annotationTransformation('organize'),
+    ];
+    const annotationFrames = makeFrames(['annotation']);
+
+    renderHook(() =>
+      useTransformationInputData({
+        selectedTransformation: transformations[2],
+        allTransformations: transformations,
+        rawData: annotationFrames,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [transformations[1].transformConfig],
+      annotationFrames,
+      expect.any(Object)
+    );
   });
 });
