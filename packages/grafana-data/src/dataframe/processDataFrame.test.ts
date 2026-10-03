@@ -10,6 +10,7 @@ import {
   isTableData,
   reverseDataFrame,
   sortDataFrame,
+  sortDataFrameByFields,
   toDataFrame,
   toLegacyResponseData,
   getProcessedDataFrames,
@@ -401,6 +402,33 @@ describe('sorted DataFrame by nanos', () => {
     expect(sorted.fields[0].values).toEqual([3, 2, 3, 1]);
     expect(sorted.fields[0].nanos).toBeUndefined();
     expect(sorted.fields[1].values).toEqual(['c', 'b', 'b', 'a']);
+  });
+});
+
+describe('sortDataFrameByFields', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'group', type: FieldType.string, values: ['b', 'a', 'b', 'a'] },
+      { name: 'time', type: FieldType.time, values: [1, 1, 2, 1], nanos: [0, 5, 0, 2] },
+      { name: 'name', type: FieldType.string, values: ['w', 'x', 'y', 'z'] },
+    ],
+  });
+
+  it('breaks ties on the first field with the next one, including nanos', () => {
+    const sorted = sortDataFrameByFields(frame, [{ index: 0 }, { index: 1, desc: true }]);
+    expect(sorted.fields[0].values).toEqual(['a', 'a', 'b', 'b']);
+    expect(sorted.fields[1].values).toEqual([1, 1, 2, 1]);
+    expect(sorted.fields[1].nanos).toEqual([5, 2, 0, 0]);
+    expect(sorted.fields[2].values).toEqual(['x', 'z', 'y', 'w']);
+  });
+
+  it('ignores indexes that do not exist in the frame', () => {
+    const sorted = sortDataFrameByFields(frame, [{ index: 0 }, { index: 7 }, { index: 2, desc: true }]);
+    expect(sorted.fields[2].values).toEqual(['z', 'x', 'y', 'w']);
+  });
+
+  it('returns the same frame when no field matches', () => {
+    expect(sortDataFrameByFields(frame, [{ index: -1 }])).toBe(frame);
   });
 });
 
