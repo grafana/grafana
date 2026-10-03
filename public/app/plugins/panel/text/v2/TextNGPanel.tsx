@@ -71,6 +71,7 @@ export function TextNGPanel(props: Props) {
     transparent,
     height,
     width,
+    title,
   } = props;
   const styles = useStyles2(getStyles);
   const isEditing = app === CoreApp.PanelEditor;
@@ -246,6 +247,7 @@ export function TextNGPanel(props: Props) {
         view={view}
         onViewChange={setView}
         transparent={transparent}
+        hasTitle={Boolean(title)}
       />
     </Suspense>
   ) : (
