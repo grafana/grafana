@@ -1,8 +1,10 @@
 import { type DataSourceInstanceListItem, type DataSourceRef } from '@grafana/data';
 
+import { isExpressionReference } from '../../utils/expressionRef';
 import { getDatasourcePluginMeta, getPluginIdFromDatasourceInstanceType } from '../pluginMeta/datasources';
 
-import { lookupByUid, toListItem } from './settings';
+import { awaitFill, getListItemByUid, toListItem } from './cache';
+import { getExpressionDataSourceSettings } from './expressionDs';
 
 /**
  * Look up a data source **by uid** and return the slim {@link DataSourceInstanceListItem} —
@@ -31,16 +33,27 @@ export async function getDataSourceInstanceListItem(
     return undefined;
   }
 
-  const settings = lookupByUid(uid);
-  if (!settings) {
+  await awaitFill();
+
+  const item = lookupListItem(uid);
+  if (!item) {
     return undefined;
   }
 
-  const item = toListItem(settings);
   // Built-ins report the plugin *type* as their instance type, so the plugin id has to be
   // derived from the name before the plugin meta cache can be queried.
   const pluginId = getPluginIdFromDatasourceInstanceType(item.type, item.name);
   const meta = await getDatasourcePluginMeta(pluginId);
 
   return meta ? { ...item, meta } : item;
+}
+
+// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
+// registered under; they sit outside the list layer only because they are set at boot.
+function lookupListItem(uid: string): DataSourceInstanceListItem | undefined {
+  if (isExpressionReference(uid)) {
+    const settings = getExpressionDataSourceSettings();
+    return settings ? toListItem(settings) : undefined;
+  }
+  return getListItemByUid(uid);
 }

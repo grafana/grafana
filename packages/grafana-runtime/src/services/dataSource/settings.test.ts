@@ -6,7 +6,11 @@ import { setLogger } from '../logging/registry';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
 import { getDataSourceCacheGeneration, subscribeToDataSourceCache } from './cacheGeneration';
-import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
+import {
+  FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+  NUMERIC_ID_REF_WARNING,
+} from './constants';
 import { setExpressionDataSourceInstance } from './expressionDs';
 import {
   _resetForTests,
@@ -1185,5 +1189,65 @@ describe('instanceSettings', () => {
         expect(logWarning).not.toHaveBeenCalled();
       });
     });
+  });
+});
+
+describe('numeric id refs', () => {
+  function numericIdWarnings() {
+    return logWarning.mock.calls.filter(([message]) => message === NUMERIC_ID_REF_WARNING);
+  }
+
+  it('logs the id, the source and a stack naming the API when a ref resolves through a numeric id', async () => {
+    initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+    const result = await getDataSourceInstanceSettings('3');
+
+    expect(result?.name).toBe('Charlie');
+    expect(numericIdWarnings()).toEqual([
+      [
+        NUMERIC_ID_REF_WARNING,
+        { id: '3', path: 'bootData', stack: expect.stringMatching(/at (async )?getDataSourceInstanceSettings \(/) },
+      ],
+    ]);
+  });
+
+  it('logs when a template variable interpolates to a numeric id', async () => {
+    initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+    await getDataSourceInstanceSettings('${dsById}');
+
+    expect(numericIdWarnings()).toHaveLength(1);
+    expect(numericIdWarnings()[0][1]).toMatchObject({ id: '3' });
+  });
+
+  it('logs a repeated lookup from the same call path once', async () => {
+    initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+    for (let i = 0; i < 3; i++) {
+      await getDataSourceInstanceSettings('3');
+    }
+
+    expect(numericIdWarnings()).toHaveLength(1);
+  });
+
+  it.each([
+    { desc: 'a uid', ref: 'uid-charlie' },
+    { desc: 'a name', ref: 'Charlie' },
+  ])('does not log when the ref is $desc', async ({ ref }) => {
+    initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+    const result = await getDataSourceInstanceSettings(ref);
+
+    expect(result?.uid).toBe('uid-charlie');
+    expect(numericIdWarnings()).toEqual([]);
+  });
+
+  it('does not log when a numeric string is a data source name', async () => {
+    initDataSourceInstanceSettings({ ...fixtures, '3': ds({ id: 9, uid: 'uid-three', name: '3' }) }, 'Bravo');
+
+    const result = await getDataSourceInstanceSettings('3');
+
+    expect(result?.uid).toBe('uid-three');
+    expect(numericIdWarnings()).toEqual([]);
   });
 });

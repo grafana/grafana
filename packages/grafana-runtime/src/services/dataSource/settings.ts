@@ -3,58 +3,34 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceRef,
   type ScopedVars,
-  isObject,
-  matchPluginId,
 } from '@grafana/data';
 
 import { isExpressionReference } from '../../utils/expressionRef';
 import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCachedPromise';
-import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
-import { getTemplateSrv } from '../templateSrv';
 
-import { notifyDataSourceCacheChanged } from './cacheGeneration';
+import {
+  _resetForTests as resetCache,
+  applySnapshot,
+  awaitFill,
+  getDataSourceCacheSource,
+  loadSettingsCached,
+  setDataSourceCacheSource,
+  toListItem,
+  upsertRuntimeSettings,
+} from './cache';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
+import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
+import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
+import { BootDataSource, createBootDataSnapshot } from './sources/bootDataSource';
+import { createDataSourceCacheSource } from './sources/selectSource';
+import { type BootDataSourceSettings } from './sources/types';
 
-let byName: Record<string, DataSourceInstanceSettings> = {};
-let byUid: Record<string, DataSourceInstanceSettings> = {};
-let byId: Record<string, DataSourceInstanceSettings> = {};
-let runtimeByUid: Record<string, DataSourceInstanceSettings> = {};
-let defaultName = '';
-
-function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
-  byName = {};
-  byUid = {};
-  byId = {};
-
-  for (const dsSettings of Object.values(settings)) {
-    if (!dsSettings.uid) {
-      dsSettings.uid = dsSettings.name; // e.g. -- Grafana --, -- Mixed --
-    }
-    byName[dsSettings.name] = dsSettings;
-    byUid[dsSettings.uid] = dsSettings;
-    if (dsSettings.id) {
-      byId[String(dsSettings.id)] = dsSettings;
-    }
-  }
-
-  // Re-apply any previously registered runtime data sources so they survive a refetch.
-  for (const ds of Object.values(runtimeByUid)) {
-    byUid[ds.uid] = ds;
-  }
-}
-
-function replaceInstanceSettings(
-  settings: Record<string, DataSourceInstanceSettings>,
-  defaultDatasourceName: string
-): void {
-  populateMaps(settings);
-  defaultName = defaultDatasourceName;
-  notifyDataSourceCacheChanged();
-}
+export { toListItem } from './cache';
+export type { GetDataSourceInstanceListFilters } from './listFilters';
 
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
@@ -67,7 +43,7 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  replaceInstanceSettings(settings, defaultDsName);
+  setDataSourceCacheSource(createDataSourceCacheSource({ datasources: settings, defaultDatasource: defaultDsName }));
 }
 
 /**
@@ -88,9 +64,11 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
-  replaceInstanceSettings(
-    structuredClone(settings),
-    defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? ''
+  setDataSourceCacheSource(
+    new BootDataSource({
+      datasources: structuredClone(settings),
+      defaultDatasource: defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '',
+    })
   );
 }
 
@@ -103,8 +81,8 @@ export function setDataSourceInstanceSettings(
 const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
 
 async function fetchAndPopulate(): Promise<void> {
-  const settings = await getBackendSrv().get('/api/frontend/settings');
-  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
+  const source = getDataSourceCacheSource() ?? new BootDataSource({ datasources: {}, defaultDatasource: '' });
+  applySnapshot(await source.refreshList());
 }
 
 async function performReload(): Promise<void> {
@@ -127,15 +105,10 @@ export async function reloadDataSourceInstanceSettings(): Promise<void> {
   }
 }
 
-interface SyncDataSourceSettings {
-  datasources: Record<string, DataSourceInstanceSettings>;
-  defaultDatasource: string;
-}
-
 /**
  * Sync the instance-settings cache from an already-fetched `/api/frontend/settings`
  * payload, without issuing another backend request. Built-in (e.g. expression) and
- * runtime data sources survive because `populateMaps` re-applies them.
+ * runtime data sources survive because the cache re-applies them.
  *
  * Transition-period helper: while both the legacy `DataSourceSrv` and the new async
  * datasource APIs exist, `DataSourceSrv.reload()` calls this so a single fetch updates
@@ -143,9 +116,9 @@ interface SyncDataSourceSettings {
  *
  * @internal
  */
-export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
+export function syncDataSourceInstanceSettings(settings: BootDataSourceSettings): void {
   clearPluginCache();
-  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
+  applySnapshot(createBootDataSnapshot(settings));
 }
 
 /**
@@ -161,26 +134,29 @@ export async function getDataSourceInstanceSettings(
   ref?: DataSourceRef | string | null,
   scopedVars?: ScopedVars
 ): Promise<DataSourceInstanceSettings | undefined> {
-  const result = lookupFromMaps(ref, scopedVars);
-  if (result) {
-    return result;
-  }
-  return getInstanceSettingsFallback(ref, scopedVars);
-}
+  await awaitFill();
 
-/**
- * Filters for {@link getDataSourceInstanceList} and {@link useDataSourceInstanceList}.
- *
- * Identical to {@link GetDataSourceListFilters} except the `filter` callback receives a
- * {@link DataSourceInstanceListItem} instead of the full {@link DataSourceInstanceSettings}.
- * This reflects the long-term data model: the list API will only expose the slim item shape,
- * so filter callbacks must not rely on settings-specific fields such as `jsonData` or `url`.
- *
- * @public
- */
-export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceListFilters, 'filter'> {
-  /** Apply a function to filter the list. Receives a slim {@link DataSourceInstanceListItem}. */
-  filter?: (item: DataSourceInstanceListItem) => boolean;
+  if (isExpressionReference(ref)) {
+    return getExpressionDataSourceSettings() ?? getInstanceSettingsFallback(ref, scopedVars);
+  }
+
+  const resolved = resolveRef(ref, scopedVars);
+  if (!resolved) {
+    return getInstanceSettingsFallback(ref, scopedVars);
+  }
+
+  const settings = await loadSettingsCached(resolved.item.uid);
+  if (!settings || !resolved.templated) {
+    return settings;
+  }
+
+  return {
+    ...settings,
+    isDefault: false,
+    name: resolved.templated,
+    uid: resolved.templated,
+    rawRef: { type: settings.type, uid: settings.uid },
+  };
 }
 
 /**
@@ -193,36 +169,17 @@ export interface GetDataSourceInstanceListFilters extends Omit<GetDataSourceList
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
-  const { filter: itemFilter, ...settingsFilters } = filters ?? {};
-  // Wrap the slim filter into a settings-compatible callback so applyFilters applies
-  // it with the same semantics as the legacy getList(): checked on base items and on
-  // -- Grafana --, but NOT on -- Mixed -- or -- Dashboard -- (which are appended
-  // unconditionally). Passing it through here avoids a post-map filter pass that would
-  // incorrectly gate those built-ins.
-  const settingsFilter = itemFilter ? (ds: DataSourceInstanceSettings) => itemFilter(toListItem(ds)) : undefined;
-  const filtersWithAdapter = { ...settingsFilters, filter: settingsFilter };
-  const results = applyFilters(filtersWithAdapter);
-  return (results.length > 0 ? results : getInstanceSettingsListFallback(filtersWithAdapter)).map(toListItem);
-}
+  await awaitFill();
 
-// Expressions are included because `__expr__` (and the legacy `-100`) is the uid they are
-// registered under; they sit outside `byUid` only because they are set at boot.
-export function lookupByUid(uid: string): DataSourceInstanceSettings | undefined {
-  if (isExpressionReference(uid)) {
-    return getExpressionDataSourceSettings();
+  const results = applyFilters(filters);
+  if (results.length > 0) {
+    return results;
   }
-  return byUid[uid];
-}
 
-export function toListItem(settings: DataSourceInstanceSettings): DataSourceInstanceListItem {
-  return {
-    uid: settings.uid,
-    type: settings.type,
-    apiVersion: settings.apiVersion,
-    name: settings.name,
-    meta: settings.meta,
-    isDefault: settings.isDefault ?? false,
-  };
+  // The legacy getList() filters settings, so adapt the slim filter for it.
+  const { filter: itemFilter, ...settingsFilters } = filters ?? {};
+  const settingsFilter = itemFilter ? (ds: DataSourceInstanceSettings) => itemFilter(toListItem(ds)) : undefined;
+  return getInstanceSettingsListFallback({ ...settingsFilters, filter: settingsFilter }).map(toListItem);
 }
 
 // Mirrors the type predicate inside applyFilters, aliasID arm included.
@@ -262,191 +219,7 @@ export async function hasDataSourceInstance(type: string): Promise<boolean> {
  * @internal
  */
 export function upsertRuntimeDataSourceInstanceSettings(settings: DataSourceInstanceSettings): void {
-  if (runtimeByUid[settings.uid] || byUid[settings.uid]) {
-    throw new Error(`A data source with uid ${settings.uid} has already been registered`);
-  }
-  runtimeByUid[settings.uid] = settings;
-  byUid[settings.uid] = settings;
-}
-
-function lookupFromMaps(
-  ref: DataSourceRef | string | null | undefined,
-  scopedVars: ScopedVars | undefined
-): DataSourceInstanceSettings | undefined {
-  if (isExpressionReference(ref)) {
-    return getExpressionDataSourceSettings();
-  }
-
-  const nameOrUid = getNameOrUid(ref);
-
-  if (nameOrUid == null || nameOrUid === 'default') {
-    if (isDataSourceRef(ref) && ref.type) {
-      const byType = findByType(ref.type);
-      if (byType) {
-        return byType;
-      }
-    }
-    return byUid[defaultName] ?? byName[defaultName];
-  }
-
-  // Template variable reference — interpolate and preserve the raw ref. The variable can
-  // sit anywhere in the string (e.g. `logs-${stage}-loki`), not only at the start; legacy
-  // DataSourceSrv.get() interpolates unconditionally. When interpolation changes nothing
-  // (a datasource name that merely contains `$`), fall through to the plain lookup.
-  if (nameOrUid.includes('$')) {
-    const interpolated = getTemplateSrv().replace(nameOrUid, scopedVars, variableInterpolation);
-    if (interpolated !== nameOrUid) {
-      // The plain lookup below reads three maps; this branch must read the same three. Legacy
-      // DataSourceSrv.get() interpolates itself and then re-enters getInstanceSettings through
-      // that plain branch, so it reaches the id map and this one has to as well.
-      const resolved =
-        interpolated === 'default'
-          ? byName[defaultName]
-          : (byUid[interpolated] ?? byName[interpolated] ?? byId[interpolated]);
-      if (!resolved) {
-        return undefined;
-      }
-      return {
-        ...resolved,
-        isDefault: false,
-        name: nameOrUid,
-        uid: nameOrUid,
-        rawRef: { type: resolved.type, uid: resolved.uid },
-      };
-    }
-  }
-
-  return byUid[nameOrUid] ?? byName[nameOrUid] ?? byId[nameOrUid];
-}
-
-function findByType(type: string): DataSourceInstanceSettings | undefined {
-  const matches = applyFilters({ type });
-  if (!matches.length) {
-    return undefined;
-  }
-  return matches.find((s) => s.isDefault) ?? matches[0];
-}
-
-function applyFilters(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
-  const base = Object.values(byName).filter((x) => {
-    if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
-      return false;
-    }
-    if (filters.metrics && !x.meta.metrics) {
-      return false;
-    }
-    if (filters.tracing && !x.meta.tracing) {
-      return false;
-    }
-    if (filters.logs && x.meta.category !== 'logging' && !x.meta.logs) {
-      return false;
-    }
-    if (filters.annotations && !x.meta.annotations) {
-      return false;
-    }
-    if (filters.alerting && !x.meta.alerting) {
-      return false;
-    }
-    if (filters.pluginId && !matchPluginId(filters.pluginId, x.meta)) {
-      return false;
-    }
-    if (filters.filter && !filters.filter(x)) {
-      return false;
-    }
-    if (filters.type) {
-      if (Array.isArray(filters.type)) {
-        if (!filters.type.includes(x.type)) {
-          return false;
-        }
-      } else if (!(x.type === filters.type || x.meta.aliasIDs?.includes(filters.type))) {
-        return false;
-      }
-    }
-    if (
-      !filters.all &&
-      x.meta.metrics !== true &&
-      x.meta.annotations !== true &&
-      x.meta.tracing !== true &&
-      x.meta.logs !== true &&
-      x.meta.alerting !== true
-    ) {
-      return false;
-    }
-    return true;
-  });
-
-  if (filters.variables) {
-    for (const variable of getTemplateSrv().getVariables()) {
-      if (variable.type !== 'datasource') {
-        continue;
-      }
-      let dsValue = variable.current.value === 'default' ? defaultName : variable.current.value;
-      if (Array.isArray(dsValue)) {
-        dsValue = dsValue[0];
-      }
-      const dsSettings = !Array.isArray(dsValue) && (byName[dsValue] || byUid[dsValue]);
-      if (dsSettings) {
-        const key = `\${${variable.name}}`;
-        base.push({
-          ...dsSettings,
-          isDefault: false,
-          name: key,
-          uid: key,
-        });
-      }
-    }
-  }
-
-  const results = base.sort((a, b) => {
-    if (a.name.toLowerCase() > b.name.toLowerCase()) {
-      return 1;
-    }
-    if (a.name.toLowerCase() < b.name.toLowerCase()) {
-      return -1;
-    }
-    return 0;
-  });
-
-  if (!filters.pluginId && !filters.alerting) {
-    if (filters.mixed) {
-      const mixed = byName['-- Mixed --'] ?? byUid['-- Mixed --'];
-      if (mixed) {
-        results.push(mixed);
-      }
-    }
-    if (filters.dashboard) {
-      const dashboard = byName['-- Dashboard --'] ?? byUid['-- Dashboard --'];
-      if (dashboard) {
-        results.push(dashboard);
-      }
-    }
-    if (!filters.tracing) {
-      const grafana = byName['-- Grafana --'] ?? byUid['-- Grafana --'];
-      if (grafana && filters.filter?.(grafana) !== false) {
-        results.push(grafana);
-      }
-    }
-  }
-
-  return results;
-}
-
-function getNameOrUid(ref: DataSourceRef | string | null | undefined): string | undefined {
-  if (ref == null) {
-    return undefined;
-  }
-  return typeof ref === 'string' ? ref : ref.uid;
-}
-
-function isDataSourceRef(ref: DataSourceRef | string | null | undefined): ref is DataSourceRef {
-  return ref != null && isObject(ref) && 'type' in ref;
-}
-
-function variableInterpolation<T>(value: T | T[]): T {
-  if (Array.isArray(value)) {
-    return value[0];
-  }
-  return value;
+  upsertRuntimeSettings(settings);
 }
 
 /**
@@ -498,10 +271,7 @@ export function _resetForTests(): void {
   if (process.env.NODE_ENV !== 'test') {
     throw new Error('_resetForTests must only be called from tests');
   }
-  byName = {};
-  byUid = {};
-  byId = {};
-  runtimeByUid = {};
-  defaultName = '';
+  resetCache();
+  resetResolveRef();
   resetExpressionDs();
 }
