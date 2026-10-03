@@ -1102,10 +1102,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Determine the main triggering condition
 	var reason string
 	switch {
-	// First, we check if the repository is blocked
-	case isCurrentlyBlocked && isOverQuota:
-		reason = "blocked_over_quota"
-		logger.Info("repository blocked and over quota, reconciling but skipping sync")
 	case !isCurrentlyBlocked && isOverQuota:
 		reason = "over_quota"
 		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
