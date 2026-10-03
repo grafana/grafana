@@ -1,4 +1,11 @@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { dispatch } from 'app/types/store';
+
+import {
+  confirmNotebookSearchAvailable,
+  isNotebookSearchUnavailable,
+  markNotebookSearchUnavailable,
+} from './notebookSearchAvailability';
 
 /**
  * Client for `POST .../notebooks/search`, the per-kind search endpoint mounted by
@@ -187,7 +194,61 @@ const notebookSearchAPI = dashboardAPIv2beta1.injectEndpoints({
         },
       }),
     }),
+
+    /**
+     * Title matches for the command palette.
+     *
+     * Provides the `Notebook` tag that the generated notebook mutations invalidate, so a notebook
+     * deleted between two identical searches stops being offered — untagged, the cached entry would
+     * answer the repeat. Sharing that tag is free here because the only caller dispatches with
+     * `subscribe: false`: an invalidated entry with no subscribers is dropped rather than refetched.
+     */
+    searchNotebookTitles: build.query<SearchResults, { query: string; limit: number }>({
+      query: ({ query, limit }) => ({
+        url: '/notebooks/search',
+        method: 'POST',
+        body: {
+          apiVersion: SEARCH_API_VERSION,
+          kind: SEARCH_QUERY_KIND,
+          where: { text: { value: query, fields: ['title'] } },
+          fields: ['title'],
+          limit,
+        },
+      }),
+      providesTags: [notebookListTag],
+    }),
   }),
 });
+
+/**
+ * Imperative rather than a hook: the caller is a debounced module-level function, not a component.
+ * Resolves empty when the route is absent (see `notebookSearchAvailability`) and rethrows anything
+ * else, so the palette can tell "nothing matched" from "search broke".
+ */
+export async function searchNotebookTitles(query: string, limit: number): Promise<ResultItem[]> {
+  if (isNotebookSearchUnavailable()) {
+    return [];
+  }
+
+  const { data, error } = await dispatch(
+    notebookSearchAPI.endpoints.searchNotebookTitles.initiate({ query, limit }, { subscribe: false })
+  );
+
+  if (error) {
+    if (markNotebookSearchUnavailable(error)) {
+      return [];
+    }
+    throw error;
+  }
+
+  // An invalidation mid-flight drops the entry, leaving neither data nor error. Nothing was learned
+  // about the route, so the latch stays as it was.
+  if (!data) {
+    return [];
+  }
+
+  confirmNotebookSearchAvailable();
+  return data.items;
+}
 
 export const { useSearchNotebooksInfiniteQuery, useLazyNotebookFieldFacetQuery } = notebookSearchAPI;

@@ -19,7 +19,8 @@ import {
   type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
+import { __resetSearchAvailabilityForTests } from '../list/notebookSearchAvailability';
+import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
