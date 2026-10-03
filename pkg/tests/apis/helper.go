@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"testing"
@@ -122,12 +123,24 @@ func NewK8sTestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
 
 func NewK8sTestHelperWithOpts(t *testing.T, opts K8sTestHelperOpts) *K8sTestHelper {
 	t.Helper()
+	opts, listenerAddress, env := startK8sTestHelper(t, opts)
+	return buildK8sTestHelper(t, opts, listenerAddress, env)
+}
+
+func newOpenAPITestHelper(t *testing.T, opts testinfra.GrafanaOpts) *K8sTestHelper {
+	t.Helper()
+	helperOpts, listenerAddress, env := startK8sTestHelper(t, K8sTestHelperOpts{GrafanaOpts: opts})
+	return buildOpenAPITestHelper(t, helperOpts, listenerAddress, env)
+}
+
+func startK8sTestHelper(t *testing.T, opts K8sTestHelperOpts) (K8sTestHelperOpts, string, *server.TestEnv) {
+	t.Helper()
 	opts = prepareK8sOpts(t, opts)
 	listenerAddress, env, testDB := testinfra.StartGrafanaEnvWithDB(t, opts.Dir, opts.DirPath)
 	if !opts.DisableDBCleanup {
 		t.Cleanup(testDB.Cleanup)
 	}
-	return buildK8sTestHelper(t, opts, listenerAddress, env)
+	return opts, listenerAddress, env
 }
 
 // NewK8sTestHelperShared is like NewK8sTestHelperWithOpts but uses
@@ -182,6 +195,49 @@ func fillK8sOpts(t *testing.T, opts K8sTestHelperOpts, createDir func(*testing.T
 func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
 	t.Helper()
 
+	c := newK8sTestHelperBase(t, opts, listenerAddress, env)
+
+	_ = c.CreateOrg(Org1)
+	_ = c.CreateOrg(Org2)
+
+	if opts.Org1Users != nil {
+		c.Org1 = *opts.Org1Users
+		c.Org1.Admin.baseURL = listenerAddress
+		c.Org1.Editor.baseURL = listenerAddress
+		c.Org1.Viewer.baseURL = listenerAddress
+		c.Org1.None.baseURL = listenerAddress
+	} else {
+		c.Org1 = c.createTestUsers(Org1)
+	}
+	if opts.OrgBUsers != nil {
+		c.OrgB = *opts.OrgBUsers
+		c.OrgB.Admin.baseURL = listenerAddress
+		c.OrgB.Editor.baseURL = listenerAddress
+		c.OrgB.Viewer.baseURL = listenerAddress
+		c.OrgB.None.baseURL = listenerAddress
+	} else {
+		c.OrgB = c.createTestUsers(Org2)
+	}
+
+	return finishK8sTestHelper(t, c)
+}
+
+func buildOpenAPITestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
+	t.Helper()
+
+	c := newK8sTestHelperBase(t, opts, listenerAddress, env)
+	c.Org1 = OrgUsers{
+		Admin:  c.CreateUser("admin2", Org1, org.RoleAdmin, nil),
+		Viewer: c.CreateUser("viewer", Org1, org.RoleViewer, nil),
+	}
+	c.Org1.OrgID = c.Org1.Admin.Identity.GetOrgID()
+
+	return finishK8sTestHelper(t, c)
+}
+
+func newK8sTestHelperBase(t *testing.T, opts K8sTestHelperOpts, listenerAddress string, env *server.TestEnv) *K8sTestHelper {
+	t.Helper()
+
 	httpClient := sharedHTTPClient
 	if opts.CustomHTTPClient != nil {
 		httpClient = opts.CustomHTTPClient
@@ -212,27 +268,11 @@ func buildK8sTestHelper(t *testing.T, opts K8sTestHelperOpts, listenerAddress st
 	require.NoError(c.t, err)
 	c.userSvc = userSvc
 
-	_ = c.CreateOrg(Org1)
-	_ = c.CreateOrg(Org2)
+	return c
+}
 
-	if opts.Org1Users != nil {
-		c.Org1 = *opts.Org1Users
-		c.Org1.Admin.baseURL = listenerAddress
-		c.Org1.Editor.baseURL = listenerAddress
-		c.Org1.Viewer.baseURL = listenerAddress
-		c.Org1.None.baseURL = listenerAddress
-	} else {
-		c.Org1 = c.createTestUsers(Org1)
-	}
-	if opts.OrgBUsers != nil {
-		c.OrgB = *opts.OrgBUsers
-		c.OrgB.Admin.baseURL = listenerAddress
-		c.OrgB.Editor.baseURL = listenerAddress
-		c.OrgB.Viewer.baseURL = listenerAddress
-		c.OrgB.None.baseURL = listenerAddress
-	} else {
-		c.OrgB = c.createTestUsers(Org2)
-	}
+func finishK8sTestHelper(t *testing.T, c *K8sTestHelper) *K8sTestHelper {
+	t.Helper()
 
 	c.loadAPIGroups()
 
@@ -1079,8 +1119,16 @@ func (c *K8sTestHelper) CreateTeam(name, email string, orgID int64) team.Team {
 	return team
 }
 
-// Compare the OpenAPI schema from one api against a cached snapshot
+// VerifyOpenAPISnapshots compares the OpenAPI schema from one API against a cached snapshot.
 func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
+	verifyOpenAPISnapshots(t, dir, gv, h, false)
+}
+
+func updateOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper) {
+	verifyOpenAPISnapshots(t, dir, gv, h, true)
+}
+
+func verifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h *K8sTestHelper, update bool) {
 	if gv.Group == "" {
 		return // skip invalid groups
 	}
@@ -1123,13 +1171,19 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 		// We can ignore the gosec G304 warning since this is a test and the function is only called with explicit paths
 		body, err = os.ReadFile(fpath)
 		if err == nil {
-			if !assert.JSONEq(t, string(body), pretty) {
+			if update {
+				equal, err := openAPISnapshotEqual(string(body), pretty)
+				require.NoError(t, err)
+				write = !equal
+			} else if !assert.JSONEq(t, string(body), pretty) {
 				t.Logf("openapi spec has changed: %s", path)
 				t.Fail()
 				write = true
 			}
 		} else {
-			t.Errorf("missing openapi spec for: %s", path)
+			if !update {
+				t.Errorf("missing openapi spec for: %s", path)
+			}
 			write = true
 		}
 
@@ -1140,6 +1194,20 @@ func VerifyOpenAPISnapshots(t *testing.T, dir string, gv schema.GroupVersion, h 
 			}
 		}
 	})
+}
+
+func openAPISnapshotEqual(expected, actual string) (bool, error) {
+	var expectedJSON any
+	if err := json.Unmarshal([]byte(expected), &expectedJSON); err != nil {
+		return false, nil
+	}
+
+	var actualJSON any
+	if err := json.Unmarshal([]byte(actual), &actualJSON); err != nil {
+		return false, fmt.Errorf("invalid OpenAPI response JSON: %w", err)
+	}
+
+	return reflect.DeepEqual(expectedJSON, actualJSON), nil
 }
 
 // CreateServiceAccount creates a service account with the specified name, organization, and role using the HTTP API

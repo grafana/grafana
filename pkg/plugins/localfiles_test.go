@@ -293,6 +293,29 @@ func TestStaticFS(t *testing.T) {
 	})
 }
 
+func TestLocalFSSkipsNodeModules(t *testing.T) {
+	tmp := t.TempDir()
+	require.NoError(t, createDummyTempFile(tmp, "panel.js"))
+
+	nodeModulesDir := filepath.Join(tmp, "node_modules")
+	require.NoError(t, os.Mkdir(nodeModulesDir, 0o750))
+	require.NoError(t, createDummyTempFile(nodeModulesDir, "dependency.js"))
+
+	localFS := NewLocalFS(tmp)
+	files, err := localFS.Files()
+	require.NoError(t, err)
+	require.Equal(t, []string{"panel.js"}, files)
+
+	staticFS, err := NewStaticFS(localFS)
+	require.NoError(t, err)
+	files, err = staticFS.Files()
+	require.NoError(t, err)
+	require.Equal(t, []string{"panel.js"}, files)
+
+	_, err = staticFS.Open(filepath.Join("node_modules", "dependency.js"))
+	require.ErrorIs(t, err, ErrFileNotExist)
+}
+
 // TestFSTwoDotsInFileName ensures that LocalFS and StaticFS allow two dots in file names.
 // This makes sure that FSes do not believe that two dots in a file name (anywhere in the path)
 // represent a path traversal attempt.
