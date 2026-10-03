@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
@@ -204,7 +204,12 @@ function setTags(tags: string[]) {
 }
 
 describe('NotebooksListPage', () => {
+  const originalRudderstackWriteKey = config.rudderstackWriteKey;
+  const originalRudderstackDataPlaneUrl = config.rudderstackDataPlaneUrl;
+
   beforeEach(() => {
+    config.rudderstackWriteKey = 'test-key';
+    config.rudderstackDataPlaneUrl = 'https://example.com';
     jest.clearAllMocks();
     __resetSearchAvailabilityForTests();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
@@ -220,6 +225,8 @@ describe('NotebooksListPage', () => {
   });
 
   afterEach(async () => {
+    config.rudderstackWriteKey = originalRudderstackWriteKey;
+    config.rudderstackDataPlaneUrl = originalRudderstackDataPlaneUrl;
     // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state
     // updates while the component is still mounted.
     await act(async () => {
@@ -441,6 +448,19 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText("You haven't created any notebooks yet")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'New notebook' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Give feedback' })).toBeInTheDocument();
+  });
+
+  it('opens feedback from the list header without leaving the list', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Give feedback' }));
+
+    expect(screen.getByRole('dialog', { name: 'Tell us about your experience with notebooks' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
   });
 
   // Create is its own action, so a writer who cannot create gets the read-only empty state rather
