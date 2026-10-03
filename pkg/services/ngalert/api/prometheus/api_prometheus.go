@@ -516,6 +516,7 @@ type paginationContext struct {
 	limitAlertsPerRule int64
 	limitRulesPerGroup int64
 	compact            bool
+	metadataOnly       bool
 }
 
 // pageResult is the result of fetching and filtering of one page
@@ -556,7 +557,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 		Limit:              remainingGroups,
 		RuleLimit:          remainingRules,
 		ContinueToken:      token,
-		Compact:            ctx.compact,
+		Compact:            ctx.compact || ctx.metadataOnly,
 		SortByFullpath:     ctx.opts.SortByFullpath,
 	}
 
@@ -571,8 +572,9 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	)
 	span.AddEvent("Alert rules retrieved from store")
 
-	// Load provenance for this page's rules
-	if ctx.provenanceStore != nil {
+	// Load provenance for this page's rules — skipped in metadata_only mode since callers
+	// only need folder names and label keys, not rule provenance.
+	if ctx.provenanceStore != nil && !ctx.metadataOnly {
 		maxGroups := getInt64WithDefault(ctx.opts.Query, "group_limit", -1)
 		maxRules := getInt64WithDefault(ctx.opts.Query, "rule_limit", -1)
 
@@ -625,7 +627,7 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 			ctx.opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules,
 			ctx.provenanceRecords, ctx.limitAlertsPerRule,
 			ctx.stateFilterSet, ctx.matchers, ctx.labelOptions,
-			ctx.ruleMutator, ctx.compact,
+			ctx.ruleMutator, ctx.compact, ctx.metadataOnly,
 		)
 		ruleGroup.Totals = totals
 		accumulateTotals(result.totalsDelta, totals)
@@ -923,6 +925,12 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 	compact := getBoolWithDefault(opts.Query, "compact", false)
 	span.SetAttributes(attribute.Bool("compact", compact))
 
+	metadataOnly := getBoolWithDefault(opts.Query, "metadata_only", false)
+	span.SetAttributes(attribute.Bool("metadata_only", metadataOnly))
+	if metadataOnly && (len(stateFilterSet) > 0 || len(healthFilterSet) > 0) {
+		return badRequestError(errors.New("metadata_only cannot be combined with state or health filters"))
+	}
+
 	span.SetAttributes(attribute.Bool("order_by_full_path", opts.SortByFullpath))
 
 	pagCtx := &paginationContext{
@@ -950,6 +958,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 		limitAlertsPerRule: limitAlertsPerRule,
 		limitRulesPerGroup: limitRulesPerGroup,
 		compact:            compact,
+		metadataOnly:       metadataOnly,
 	}
 
 	groups, rulesTotals, continueToken, err := paginateRuleGroups(log, store, pagCtx, span, maxGroups, maxRules, nextToken)
@@ -1096,7 +1105,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts R
 			break
 		}
 
-		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false)
+		ruleGroup, totals := toRuleGroup(opts.Ctx, log, rg.GroupKey, rg.Folder, rg.Rules, provenanceRecords, limitAlertsPerRule, stateFilterSet, matchers, labelOptions, ruleMutator, false, false)
 		ruleGroup.Totals = totals
 		for k, v := range totals {
 			rulesTotals[k] += v
@@ -1275,7 +1284,7 @@ func matchersMatch(matchers []*labels.Matcher, labels map[string]string) bool {
 	return true
 }
 
-func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool) (*apimodels.RuleGroup, map[string]int64) {
+func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRuleGroupKey, folderFullPath string, rules []*ngmodels.AlertRule, provenanceRecords map[string]ngmodels.Provenance, limitAlerts int64, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, ruleMutator RuleMutator, compact bool, metadataOnly bool) (*apimodels.RuleGroup, map[string]int64) {
 	newGroup := &apimodels.RuleGroup{
 		Name: groupKey.RuleGroup,
 		// file is what Prometheus uses for provisioning, we replace it with namespace which is the folder in Grafana.
@@ -1292,51 +1301,55 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			provenance = prov
 		}
 		var query string
-		if !compact {
+		if !compact && !metadataOnly {
 			query = ruleToQuery(log, rule)
 		}
+
 		alertingRule := apimodels.AlertingRule{
-			State:                 "inactive",
-			Name:                  rule.Title,
-			Query:                 query,
-			QueriedDatasourceUIDs: extractDatasourceUIDs(rule),
-			Duration:              rule.For.Seconds(),
-			KeepFiringFor:         rule.KeepFiringFor.Seconds(),
-			Annotations:           apimodels.LabelsFromMap(rule.Annotations),
+			State: "inactive",
+			Name:  rule.Title,
+			Query: query,
 			Rule: apimodels.Rule{
-				UID:        rule.UID,
-				Name:       rule.Title,
-				FolderUID:  rule.NamespaceUID,
-				Labels:     apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
-				Type:       rule.Type().String(),
-				IsPaused:   rule.IsPaused,
-				Provenance: apimodels.Provenance(provenance),
+				UID:       rule.UID,
+				Name:      rule.Title,
+				FolderUID: rule.NamespaceUID,
+				Labels:    apimodels.LabelsFromMap(rule.GetLabels(labelOptions...)),
+				Type:      rule.Type().String(),
 			},
 		}
 
-		if rule.NotificationSettings != nil {
-			alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
+		if !metadataOnly {
+			alertingRule.QueriedDatasourceUIDs = extractDatasourceUIDs(rule)
+			alertingRule.Duration = rule.For.Seconds()
+			alertingRule.KeepFiringFor = rule.KeepFiringFor.Seconds()
+			alertingRule.Annotations = apimodels.LabelsFromMap(rule.Annotations)
+			alertingRule.Rule.IsPaused = rule.IsPaused
+			alertingRule.Rule.Provenance = apimodels.Provenance(provenance)
+			if rule.NotificationSettings != nil {
+				alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
+			}
 		}
 
-		// mutate rule to apply status fields and alert states
-		totals, totalsFiltered := ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
+		var totals, totalsFiltered map[string]int64
+		if !metadataOnly {
+			// mutate rule to apply status fields and alert states
+			totals, totalsFiltered = ruleMutator(ctx, rule, &alertingRule, stateFilterSet, matchers, labelOptions, limitAlerts)
 
-		if alertingRule.State != "" {
-			rulesTotals[alertingRule.State] += 1
-		}
+			if alertingRule.State != "" {
+				rulesTotals[alertingRule.State] += 1
+			}
 
-		if alertingRule.Health == "error" || alertingRule.Health == "nodata" {
-			rulesTotals[alertingRule.Health] += 1
-		}
+			if alertingRule.Health == "error" || alertingRule.Health == "nodata" {
+				rulesTotals[alertingRule.Health] += 1
+			}
 
-		alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
+			alertsBy := apimodels.AlertsBy(apimodels.AlertsByImportance)
 
-		if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
-			alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
-		} else {
-			// If there is no effective limit, then just sort the alerts.
-			// For large numbers of alerts, this can be faster.
-			alertsBy.Sort(alertingRule.Alerts)
+			if limitAlerts > -1 && int64(len(alertingRule.Alerts)) > limitAlerts {
+				alertingRule.Alerts = alertsBy.TopK(alertingRule.Alerts, int(limitAlerts))
+			} else {
+				alertsBy.Sort(alertingRule.Alerts)
+			}
 		}
 
 		alertingRule.Totals = totals
