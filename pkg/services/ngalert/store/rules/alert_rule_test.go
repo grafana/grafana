@@ -944,13 +944,22 @@ func TestRuleStore_legacyDatabaseProvider(t *testing.T) {
 // read went through this specific connection rather than through st.SQLStore directly.
 type dbSpy struct {
 	db.DB
-	withDbSessionCalled bool
-	lastSession         *db.Session
+	withDbSessionCalled              bool
+	withTransactionalDbSessionCalled bool
+	lastSession                      *db.Session
 }
 
 func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	s.withDbSessionCalled = true
 	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withTransactionalDbSessionCalled = true
+	return s.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		s.lastSession = sess
 		return callback(sess)
 	})
@@ -996,37 +1005,6 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *
 	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 }
 
-// TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession is the same regression
-// test as above, for the analogous folder-key read.
-func TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession(t *testing.T) {
-	tutil.SkipIntegrationTestInShortMode(t)
-
-	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-
-	spy := &dbSpy{DB: sqlStore}
-	dbHelper := &legacysql.LegacyDatabaseHelper{
-		DB:    spy,
-		Table: func(n string) string { return n },
-	}
-
-	var ambientSess *db.Session
-	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
-		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-			ambientSess = sess
-			return nil
-		}); err != nil {
-			return err
-		}
-		_, err := deletedRuleFolderKeysOnDB(ctx, dbHelper, 1, []string{"does-not-exist"})
-		return err
-	})
-	require.NoError(t, err)
-
-	require.NotNil(t, ambientSess)
-	require.NotNil(t, spy.lastSession)
-	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
-}
-
 func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -1056,14 +1034,17 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	require.NoError(t, err)
 
 	assert.Contains(t, requestedTables, "alert_rule")
+	assert.Contains(t, requestedTables, "alert_instance")
+	assert.Contains(t, requestedTables, "alert_rule_state")
 	assert.Contains(t, requestedTables, "alert_rule_version")
-	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+	assert.True(t, spy.withTransactionalDbSessionCalled, "the whole delete should run on dbHelper.DB, not st.SQLStore directly")
 }
 
-// TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded asserts that a permanent
-// delete with FlagAlertingFolderHasRulesLabel off (so no folder-key or version lookup happens)
-// doesn't need LegacyDatabaseProvider to succeed, even if the provider itself would error.
-func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded(t *testing.T) {
+// TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired asserts that once a
+// provider is configured, delete can no longer silently fall back to st.SQLStore when it fails to
+// resolve: the writes need to know which database to run on, so a resolution error must block the
+// delete rather than writing to the wrong one.
+func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
 	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -1078,7 +1059,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded(t *te
 	rule := createRule(t, store, models.RuleGen)
 
 	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, true, rule.UID)
-	require.NoError(t, err)
+	require.ErrorContains(t, err, "provider unavailable")
 }
 
 func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
