@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -129,7 +130,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
+            isEditing={isFullDashboardEditing(model.state)}
             isPlanning={Boolean(planning)}
             controls={renderControls()}
             body={renderBody()}

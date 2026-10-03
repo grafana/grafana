@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -24,6 +24,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
@@ -32,6 +33,8 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
 import { type DashboardSidebarPane } from './types';
+
+const DashboardCodeView = lazy(() => import(/* webpackChunkName: "dashboard-code-mode" */ '../code/DashboardCodeView'));
 
 interface Props {
   dashboard: DashboardScene;
@@ -128,10 +131,14 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   };
 
   function renderBody() {
-    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
+    const isCodeMode = dashboardModesEnabled() && getDashboardMode(dashboard.state) === 'code';
+    const renderWithoutSidebar =
+      isPlaying ||
+      kioskMode === KioskMode.Full ||
+      (dashboardModesEnabled() && getDashboardMode(dashboard.state) !== 'edit' && !dashboard.state.viewPanel);
 
-    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
-    if (renderWithoutSidebar) {
+    // Code mode must scroll inside its bounded pane; full-page views use document scrolling.
+    if (renderWithoutSidebar && !isCodeMode) {
       return (
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk, isPlanning && styles.planningCanvas)}
@@ -146,12 +153,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
+        {...(renderWithoutSidebar ? {} : sidebarContext.outerWrapperProps)}
       >
         <div
           className={cx(
             styles.scrollContainer,
-            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            (renderWithoutSidebar || sidebarContext.isHiddenPreference) && styles.scrollContainerNoSidebar,
             isPlanning && styles.planningCanvas
           )}
           ref={onBodyRef}
@@ -166,9 +173,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardSidebarRenderer dashboard={dashboard} />
-        </Sidebar>
+        {!renderWithoutSidebar && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardSidebarRenderer dashboard={dashboard} />
+          </Sidebar>
+        )}
       </div>
     );
   }
@@ -182,7 +191,13 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       >
         <ElementSelectionContext.Provider value={selectionContext}>
           <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-          {renderBody()}
+          {dashboardModesEnabled() && getDashboardMode(dashboard.state) === 'code' ? (
+            <Suspense fallback={renderBody()}>
+              <DashboardCodeView dashboard={dashboard}>{renderBody()}</DashboardCodeView>
+            </Suspense>
+          ) : (
+            renderBody()
+          )}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
     </div>

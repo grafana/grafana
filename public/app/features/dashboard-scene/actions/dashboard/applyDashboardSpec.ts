@@ -27,6 +27,8 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
   const { isOverlayLoading: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
+    // Template identity is not part of the dashboard spec or its access DTO.
+    meta: { ...rebuilt.state.meta, isDashboardTemplate: scene.state.meta.isDashboardTemplate },
   });
   const { isOverlayLoading: previousLoading, ...previousState } = scene.state;
 
@@ -51,10 +53,16 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
         urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
       }
 
-      scene.setState({ ...newState, editPanel: undefined, isDirty: true });
+      scene.setState({
+        ...newState,
+        mode: scene.state.mode,
+        codeSession: scene.state.codeSession,
+        editPanel: undefined,
+        isDirty: true,
+      });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.state.body.editModeChanged?.(true);
+      scene.applyEditPresentation();
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -69,7 +77,8 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       }
     },
     undo: () => {
-      scene.setState(previousState);
+      scene.setState({ ...previousState, mode: scene.state.mode, codeSession: scene.state.codeSession });
+      scene.applyEditPresentation();
       scene.state.sidebar.refreshAfterRebuild();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
     },

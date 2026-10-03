@@ -12,7 +12,7 @@ import { type LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { UNCONFIGURED_PANEL_PLUGIN_ID } from './UnconfiguredPanel';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { refuseWhilePlanning } from './refuseWhilePlanning';
-import { type DashboardSceneState } from './types/dashboard';
+import { isFullDashboardEditing, type DashboardSceneState } from './types/dashboard';
 
 export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   /**
@@ -79,6 +79,9 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,
     // undoing the invariant a plan preview depends on (see refuseWhilePlanning).
     if (typeof values.editview === 'string' && this._scene.canEditDashboard() && !refuseWhilePlanning(this._scene)) {
+      if (isEditing) {
+        this._scene.openFullEditor();
+      }
       update.editview = createDashboardEditViewFor(values.editview);
 
       // If we are not in editing (for example after full page reload)
@@ -129,10 +132,10 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       }
 
       // If we are not in editing (for example after full page reload)
-      if (!isEditing) {
-        // Entering edit mode publishes state before the editor exists; keep its URL through that update.
+      if (!isEditing || !isFullDashboardEditing(this._scene.state)) {
+        // Keep the editor URL while entering full editing before its view has loaded.
         this._heldEditPanelId = values.editPanel;
-        this._scene.onEnterEditMode();
+        this._scene.openFullEditor();
       }
 
       const libPanelBehavior = getLibraryPanelBehavior(panel);

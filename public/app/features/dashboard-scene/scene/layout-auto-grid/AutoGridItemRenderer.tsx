@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useFlagGrafanaDashboardsAutoHeightPanels } from '@grafana/runtime/internal';
 import { LazyLoader, sceneGraph, type SceneComponentProps, VizPanelFitScope, type VizPanel } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { type ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
@@ -29,7 +30,9 @@ import { DRAGGED_ITEM_HEIGHT, DRAGGED_ITEM_LEFT, DRAGGED_ITEM_TOP, DRAGGED_ITEM_
 export function AutoGridItemRenderer({ model }: SceneComponentProps<AutoGridItem>) {
   const { body, repeatedPanels = [], key, fitContent: itemFitContent } = model.useState();
   const { draggingKey } = model.getParentGrid().useState();
-  const { isEditing, preload } = useDashboardState(model);
+  const dashboardState = useDashboardState(model);
+  const { preload } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
   const styles = useStyles2(getStyles);
   const soloPanelContext = useSoloPanelContext();
   const isLazy = useMemo(() => getIsLazy(preload), [preload]);

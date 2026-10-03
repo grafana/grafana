@@ -1,3 +1,5 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import {
   type SceneGridItemLike,
   SceneGridLayout,
@@ -20,6 +22,43 @@ import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
 describe('DefaultGridLayoutManager', () => {
+  it('disables a freshly attached grid when it activates during review', () => {
+    const manager = DefaultGridLayoutManager.createEmpty();
+    new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+    expect(manager.state.grid.state.isDraggable).toBe(true);
+
+    const deactivate = manager.activate();
+    expect(manager.state.grid.state.isDraggable).toBe(false);
+    deactivate();
+  });
+
+  describe('edit presentation', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+    it('disables interaction immediately and cancels a pending enable when switching to review', () => {
+      jest.useFakeTimers();
+      try {
+        const { manager, grid } = setup();
+        grid.setState({ isDraggable: true, isResizable: true });
+        manager.editModeChanged(true);
+        manager.editModeChanged(false);
+
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+
+        manager.editModeChanged(true);
+        jest.runOnlyPendingTimers();
+        expect(grid.state.isDraggable).toBe(true);
+        expect(grid.state.isResizable).toBe(true);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+  });
+
   describe('getVizPanels', () => {
     it('Should return all panels', () => {
       const { manager } = setup();

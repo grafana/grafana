@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { Box, Drawer, EmptyState, ScrollContainer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
 import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
 import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
@@ -22,6 +22,7 @@ import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
 import { isNewDashboard } from './shared';
+import { useDashboardSaveChanges } from './useDashboardSaveChanges';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -91,7 +92,12 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTarget,
   } = model.useState();
 
-  const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
+  const changeInfo = useDashboardSaveChanges(
+    model.state.dashboardRef.resolve(),
+    saveTimeRange,
+    saveVariables,
+    saveRefresh
+  );
 
   const {
     changedSaveModel,
@@ -122,7 +128,7 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
         active={!showDiff}
         onChangeTab={() => model.setState({ showDiff: false })}
       />
-      {changesCount > 0 && !managedResourceCannotBeEdited && (
+      {(changesCount > 0 || showDiff) && !managedResourceCannotBeEdited && (
         <Tab
           label={t('dashboard-scene.save-dashboard-drawer.tabs.label-changes', 'Changes')}
           active={showDiff}
@@ -192,19 +198,31 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   };
 
   return (
-    <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
+    <Drawer
+      title={title}
+      subtitle={dashboard.state.title}
+      onClose={model.onClose}
+      tabs={tabs}
+      scrollableContent={false}
+    >
       {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
-      <div style={{ display: showDiff ? 'none' : 'contents' }}>
-        <Stack direction="column" gap={2}>
-          {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
-          {renderForm()}
-          {canChooseTarget && (
-            <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
-          )}
-        </Stack>
-      </div>
-      {showDiff && (
+      <Box display={showDiff ? 'none' : 'flex'} direction="column" height="100%">
+        <ScrollContainer showScrollIndicators>
+          <Stack direction="column" gap={2}>
+            {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+            {renderForm()}
+            {canChooseTarget && (
+              <SaveTargetSwitch target={target} onChange={(saveTarget) => model.setState({ saveTarget })} />
+            )}
+          </Stack>
+        </ScrollContainer>
+      </Box>
+      {showDiff && changesCount === 0 && (
+        <EmptyState variant="completed" message={t('dashboard.review.no-changes', 'No changes to save')} />
+      )}
+      {showDiff && changesCount > 0 && (
         <SaveDashboardDiff
+          fillHeight
           diff={diffs}
           oldValue={initialSaveModel}
           newValue={changedSaveModel}

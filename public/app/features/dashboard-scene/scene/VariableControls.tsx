@@ -16,6 +16,7 @@ import {
   useSceneObjectState,
 } from '@grafana/scenes';
 import { useElementSelection, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { duplicateVariable } from '../actions/variable/duplicateVariable';
 import { removeVariable } from '../actions/variable/removeVariable';
@@ -46,7 +47,8 @@ export function VariableControls({
   variablesOverride?: SceneVariable[];
 }) {
   const { variables: dashboardVariables } = sceneGraph.getVariables(dashboard)!.useState();
-  const { isEditing } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const isEditing = isFullDashboardEditing(dashboardState);
   const isEditingNewLayouts = isEditing && config.featureToggles.dashboardNewLayouts;
   const variables = variablesOverride ?? dashboardVariables;
 

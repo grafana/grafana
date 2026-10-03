@@ -1,4 +1,4 @@
-import { screen, render, act } from '@testing-library/react';
+import { screen, render, act, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
@@ -6,6 +6,7 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, LocationServiceProvider, locationService } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, UrlSyncContextProvider, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockLocalStorage } from 'app/features/alerting/unified/mocks';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import {
@@ -16,11 +17,18 @@ import {
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { DashboardInteractions } from '../utils/interactions';
 
 import { DashboardScene } from './DashboardScene';
 import { NavToolbarActions, ToolbarActions } from './NavToolbarActions';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
+
+jest.mock('@fingerprintjs/fingerprintjs', () => ({
+  load: jest.fn().mockResolvedValue({
+    get: jest.fn().mockResolvedValue({ visitorId: 'test-device' }),
+  }),
+}));
 
 jest.mock('../utils/interactions', () => ({
   DashboardInteractions: {
@@ -265,6 +273,35 @@ describe('NavToolbarActions', () => {
       expect(await screen.findByText('Share')).toBeInTheDocument();
       expect(screen.queryByText('Read only')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('preview controls in the navigation toolbar', () => {
+  beforeEach(() => setTestFlags({ 'grafana.dashboardPreviewMode': true }));
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it.each([false, true])('switches presentations and opens Changes from Save (new dashboard: %s)', async (isNew) => {
+    const { dashboard } = setup();
+    act(() => {
+      if (isNew) {
+        dashboard.setState({ uid: '' });
+      }
+      dashboard.setInitialSaveModel(transformSceneToSaveModel(dashboard));
+      dashboard.onEnterEditMode();
+    });
+    expect(screen.getByRole('button', { name: 'Exit edit' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('switch', { name: 'Preview' }));
+    expect(screen.getByRole('button', { name: 'Exit edit' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'View changes' })).not.toBeInTheDocument();
+    const openChanges = jest.spyOn(dashboard, 'openChanges');
+    await userEvent.click(screen.getByRole('button', { name: 'More save options' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'View changes' }));
+    expect(openChanges).toHaveBeenCalledTimes(1);
+    await userEvent.click(screen.getByRole('switch', { name: 'Preview' }));
+    expect(screen.getByRole('button', { name: 'Exit edit' })).toBeInTheDocument();
   });
 });
 

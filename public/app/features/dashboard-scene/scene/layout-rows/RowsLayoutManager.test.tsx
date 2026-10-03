@@ -103,6 +103,19 @@ describe('RowsLayoutManager', () => {
   });
 
   describe('addNewRow', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      const manager = new RowsLayoutManager({ rows: [] });
+      new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewRow(new RowItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });

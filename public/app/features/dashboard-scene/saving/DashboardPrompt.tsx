@@ -34,7 +34,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
         return;
       }
 
-      if (dashboard.state.isDirty) {
+      if (dashboard.state.isDirty || dashboard.hasPendingCodeChanges()) {
         event.preventDefault();
         // No browser actually displays this message anymore.
         // But Chrome requires it to be defined else the popup won't show.
@@ -83,7 +83,7 @@ export const DashboardPrompt = memo(({ dashboard }: DashboardPromptProps) => {
       return true;
     }
 
-    if (!dashboard.state.isDirty) {
+    if (!dashboard.state.isDirty && !dashboard.hasPendingCodeChanges()) {
       return true;
     }
 
@@ -168,6 +168,9 @@ const getStyles = () => ({
  * For some dashboards and users changes should be ignored *
  */
 export function ignoreChanges(scene: DashboardScene | null) {
+  if (scene?.hasPendingCodeChanges()) {
+    return false;
+  }
   const original = scene?.getInitialSaveModel();
 
   if (!original) {
