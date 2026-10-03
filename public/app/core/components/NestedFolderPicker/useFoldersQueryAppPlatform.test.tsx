@@ -17,7 +17,7 @@ jest.mock('app/types/store', () => ({
 jest.mock('app/api/clients/dashboard/v0alpha1', () => ({
   dashboardAPIv0alpha1: {
     endpoints: {
-      listFolderChildren: {
+      searchDashboardsAndFolders: {
         initiate: (...args: unknown[]) => mockInitiate(...args),
         select: (...args: unknown[]) => mockSelect(...args),
       },
@@ -109,8 +109,22 @@ describe('useFoldersQueryAppPlatform', () => {
       result.current.requestNextPage(undefined);
     });
 
-    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', permission: 'edit', offset: 0, limit: 50 });
+    expect(mockInitiate).toHaveBeenCalledWith({
+      folder: 'general',
+      permission: 'edit',
+      offset: 0,
+      limit: 50,
+      type: 'folder',
+      sort: 'title',
+    });
     expect(dispatch).toHaveBeenCalledWith(subscription);
-    expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', permission: 'edit', offset: 0, limit: 50 });
+    expect(mockSelect).toHaveBeenCalledWith({
+      folder: 'general',
+      permission: 'edit',
+      offset: 0,
+      limit: 50,
+      type: 'folder',
+      sort: 'title',
+    });
   });
 });

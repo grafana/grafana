@@ -16,7 +16,9 @@ import { getPaginationPlaceholders } from '../../../features/browse-dashboards/s
 import { type UseFoldersQueryProps } from './useFoldersQuery';
 import { getRootFolderItem } from './utils';
 
-type GetFolderChildrenQuery = ReturnType<ReturnType<typeof dashboardAPIv0alpha1.endpoints.listFolderChildren.select>>;
+type GetFolderChildrenQuery = ReturnType<
+  ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>
+>;
 type GetFolderChildrenRequest = {
   unsubscribe: () => void;
 };
@@ -60,7 +62,7 @@ export function useFoldersQueryAppPlatform({
 
   // Keep a list of selectors for dynamic state selection
   const [selectors, setSelectors] = useState<
-    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.listFolderChildren.select>>
+    Array<ReturnType<typeof dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select>>
   >([]);
 
   // This is an aggregated dynamic selector of all the selectors for all the request issued while loading the folder
@@ -116,13 +118,20 @@ export function useFoldersQueryAppPlatform({
         return;
       }
 
-      const args = { folder: finalParentUid, permission, offset: nextOffset, limit: PAGE_SIZE };
+      const args = {
+        folder: finalParentUid,
+        permission,
+        offset: nextOffset,
+        limit: PAGE_SIZE,
+        type: 'folder' as const,
+        sort: 'title',
+      };
 
       // Make a request
-      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.listFolderChildren.initiate(args));
+      const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
 
       // Add selector for the response to the list so we can then have an aggregated selector for all the folders
-      const selector = dashboardAPIv0alpha1.endpoints.listFolderChildren.select(args);
+      const selector = dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.select(args);
       setSelectors((selectors) => selectors.concat(selector));
 
       // the subscriptions are saved in a ref so they can be unsubscribed on unmount
