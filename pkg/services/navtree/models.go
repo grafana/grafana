@@ -22,6 +22,7 @@ const (
 	WeightSigil
 	WeightAlerting
 	WeightAlertsAndIncidents
+	WeightWorkflows
 	WeightAIAndML
 	WeightAdaptiveTelemetry
 	WeightCMAB
