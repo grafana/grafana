@@ -12,7 +12,7 @@ export interface Props {
 
 export function RowExpander({ row, tableStyles }: Props) {
   return (
-    <div className={tableStyles.expanderCell} {...row.getToggleRowExpandedProps()}>
+    <div className={tableStyles.expanderCell} role="cell" {...row.getToggleRowExpandedProps()}>
       <Icon
         aria-label={
           row.isExpanded
