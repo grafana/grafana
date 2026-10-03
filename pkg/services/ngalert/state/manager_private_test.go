@@ -5456,7 +5456,7 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 		res := State{
 			AlertRuleUID:      baseRule.UID,
 			OrgID:             baseRule.OrgID,
-			Image:             image,
+			Image:             newImageAttempt(image, nil),
 			Labels:            labels,
 			ResultFingerprint: labels.Fingerprint(),
 			State:             s,
@@ -5578,13 +5578,94 @@ func TestProcessEvalResults_Screenshots(t *testing.T) {
 				transitions, _ := mgr.ProcessEvalResults(ctx, t1, &baseRule, results, nil, nil)
 
 				for _, transition := range transitions {
-					assert.Equalf(t, tc.imageService.Image, transition.Image, "Transition %s does not have image but should", transition.Labels.String())
+					assert.Equalf(t, newImageAttempt(tc.imageService.Image, nil), transition.Image, "Transition %s does not have image but should", transition.Labels.String())
 				}
 			}
 
 			assert.Equal(t, tc.expectedCalledTimes, tc.imageService.Called)
 		})
 	}
+}
+
+func TestProcessEvalResults_SharedImageCaptureBackoff(t *testing.T) {
+	gen := ngmodels.RuleGen
+	rule := gen.With(gen.WithLabels(nil), gen.WithFor(0)).Generate()
+	clk := clock.NewMock()
+	evaluatedAt := time.Now()
+	clk.Set(evaluatedAt)
+	images := NewFailingCountingImageService(context.DeadlineExceeded)
+	mgr := NewManager(ManagerCfg{
+		Metrics:       metrics.NewNGAlert(prometheus.NewPedanticRegistry()).GetStateMetrics(),
+		InstanceStore: &FakeInstanceStore{},
+		Images:        images,
+		Clock:         clk,
+		Historian:     &FakeHistorian{},
+		Tracer:        tracing.InitializeTracerForTest(),
+		Log:           &logtest.Fake{},
+	}, NewNoopPersister())
+
+	previous := make(map[string]*ImageAttempt)
+	results := make(eval.Results, 0, 3)
+	for _, tc := range []struct {
+		name     string
+		timeouts int
+		cooldown bool
+	}{
+		{"first", 1, false},
+		{"second", 3, false},
+		{"cooldown", 2, true},
+		{"stale", 4, true},
+	} {
+		var image *ImageAttempt
+		for range tc.timeouts {
+			image = newImageAttempt(nil, context.DeadlineExceeded).withPrevious(image)
+		}
+		if !tc.cooldown {
+			image.ExpiresAt = time.Now().Add(-time.Second)
+		}
+		previous[tc.name] = image
+		labels := data.Labels{"instance_label": tc.name}
+		s := &State{
+			AlertRuleUID:       rule.UID,
+			OrgID:              rule.OrgID,
+			Labels:             labels,
+			ResultFingerprint:  labels.Fingerprint(),
+			State:              eval.Alerting,
+			Image:              image,
+			StartsAt:           evaluatedAt.Add(-time.Hour),
+			LastEvaluationTime: evaluatedAt.Add(-time.Duration(rule.IntervalSeconds) * time.Second),
+		}
+		if tc.name == "stale" {
+			s.LastEvaluationTime = evaluatedAt.Add(-time.Duration(rule.GetMissingSeriesEvalsToResolve()+1) * time.Duration(rule.IntervalSeconds) * time.Second)
+		} else {
+			results = append(results, eval.Result{State: eval.Alerting, Instance: labels, EvaluatedAt: evaluatedAt})
+		}
+		mgr.cache.set(setCacheID(s))
+	}
+
+	transitions, _ := mgr.ProcessEvalResults(context.Background(), evaluatedAt, &rule, results, nil, nil)
+	require.Equal(t, 1, images.Called, "all instances, including stale resolution, share one capture")
+	require.Len(t, transitions, 4)
+	for _, transition := range transitions {
+		name := transition.Labels["instance_label"]
+		old := previous[name]
+		require.NotNil(t, old)
+		if name == "cooldown" {
+			assert.Same(t, old, transition.Image)
+			continue
+		}
+		assert.NotSame(t, old, transition.Image)
+		assert.Equal(t, old.consecutiveTimeouts+1, transition.Image.consecutiveTimeouts)
+		assert.Equal(t, imageCaptureBackoffDuration(old.consecutiveTimeouts+1), transition.Image.ExpiresAt.Sub(transition.Image.CreatedAt))
+		if name == "stale" {
+			assert.Equal(t, eval.Normal, transition.State.State)
+			assert.Equal(t, ngmodels.StateReasonMissingSeries, transition.StateReason)
+		}
+	}
+	assert.Equal(t, 1, previous["first"].consecutiveTimeouts)
+	assert.Equal(t, 3, previous["second"].consecutiveTimeouts)
+	assert.Equal(t, 2, previous["cooldown"].consecutiveTimeouts)
+	assert.Equal(t, 4, previous["stale"].consecutiveTimeouts)
 }
 
 func setCacheID(s *State) *State {

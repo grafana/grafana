@@ -604,10 +604,10 @@ func randomState(ruleKey models.AlertRuleKey) *State {
 			Condition: "A",
 		},
 		Error: errors.New(util.GenerateShortUID()),
-		Image: &models.Image{
+		Image: newImageAttempt(&models.Image{
 			ID:    rand.Int63(),
 			Token: util.GenerateShortUID(),
-		},
+		}, nil),
 		Annotations: models.GenerateAlertLabels(2, "current-"),
 		Labels:      models.GenerateAlertLabels(2, "current-"),
 		Values: map[string]float64{
