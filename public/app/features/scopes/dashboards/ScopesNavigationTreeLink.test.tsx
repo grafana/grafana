@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom-v5-compat';
 
@@ -173,6 +173,33 @@ describe('ScopesNavigationTreeLink', () => {
     const icon = link.querySelector('svg');
     expect(icon).toBeInTheDocument();
     expect(link).toHaveTextContent('Metrics Drilldown');
+  });
+
+  it('shows the external icon for URLs to other origins', () => {
+    renderWithRouter(<ScopesNavigationTreeLink to="https://example.com/path" title="External" id="external-id" />);
+
+    const link = screen.getByTestId('scopes-dashboards-external-id');
+    expect(link).toHaveAttribute('href', 'https://example.com/path');
+    expect(within(link).getByTestId('icon-external-link-alt')).toBeInTheDocument();
+  });
+
+  it.each(['/\\example.com', '\\\\example.com', '//example.com'])(
+    'treats %s as external because it resolves to another origin',
+    (to) => {
+      renderWithRouter(<ScopesNavigationTreeLink to={to} title="Disguised" id="disguised-id" />);
+
+      const link = screen.getByTestId('scopes-dashboards-disguised-id');
+      expect(link).toHaveAttribute('href', to);
+      expect(within(link).getByTestId('icon-external-link-alt')).toBeInTheDocument();
+      expect(within(link).queryByTestId('icon-link')).not.toBeInTheDocument();
+    }
+  );
+
+  it('keeps the internal icon for same-origin paths', () => {
+    renderWithRouter(<ScopesNavigationTreeLink to="/some/page" title="Internal" id="internal-id" />);
+
+    const link = screen.getByTestId('scopes-dashboards-internal-id');
+    expect(within(link).getByTestId('icon-link')).toBeInTheDocument();
   });
 
   describe('click handler with subScope', () => {
