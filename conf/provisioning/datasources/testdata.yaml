@@ -1,0 +1,9 @@
+apiVersion: 1
+
+datasources:
+  - name: TestData
+    uid: testdata
+    type: grafana-testdata-datasource
+    access: proxy
+    isDefault: true
+    editable: true

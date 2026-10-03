@@ -1,0 +1,390 @@
+{
+  "uid": "demo-service-overview",
+  "title": "Demo: Service Overview",
+  "tags": ["demo", "dummy", "service"],
+  "timezone": "browser",
+  "editable": true,
+  "graphTooltip": 1,
+  "refresh": "5s",
+  "schemaVersion": 41,
+  "fiscalYearStartMonth": 0,
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "templating": { "list": [] },
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Request rate",
+      "description": "Synthetic RPS from TestData",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 400 },
+              { "color": "red", "value": 700 }
+            ]
+          },
+          "unit": "reqps",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "rps",
+          "min": 180,
+          "max": 620,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "p95 latency",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 180 },
+              { "color": "red", "value": 280 }
+            ]
+          },
+          "unit": "ms",
+          "decimals": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "p95",
+          "min": 40,
+          "max": 320,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Error rate",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "yellow", "value": 1.5 },
+              { "color": "red", "value": 3 }
+            ]
+          },
+          "unit": "percent",
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "errors",
+          "min": 0.1,
+          "max": 4.2,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "Availability",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "min": 99,
+          "max": 100,
+          "unit": "percent",
+          "decimals": 3,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": 0 },
+              { "color": "yellow", "value": 99.5 },
+              { "color": "green", "value": 99.9 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "availability",
+          "min": 99.2,
+          "max": 100,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Traffic by endpoint",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 18,
+            "gradientMode": "opacity",
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "pointSize": 5,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": { "type": "linear" },
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" },
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          },
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "GET /api/orders",
+          "labels": "endpoint=/api/orders,method=GET",
+          "min": 80,
+          "max": 240,
+          "seriesCount": 1
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "POST /api/checkout",
+          "labels": "endpoint=/api/checkout,method=POST",
+          "min": 20,
+          "max": 90,
+          "seriesCount": 1
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "GET /api/catalog",
+          "labels": "endpoint=/api/catalog,method=GET",
+          "min": 120,
+          "max": 360,
+          "seriesCount": 1
+        },
+        {
+          "refId": "D",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "GET /health",
+          "labels": "endpoint=/health,method=GET",
+          "min": 8,
+          "max": 20,
+          "seriesCount": 1
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Latency pulse",
+      "description": "Predictable pulse scenario — dummy SLO-style spikes",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 5 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "bars",
+            "lineWidth": 1,
+            "fillOpacity": 60,
+            "gradientMode": "none",
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "pointSize": 5,
+            "barAlignment": 0,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": { "type": "linear" },
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" },
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          },
+          "unit": "ms"
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "predictable_pulse",
+          "alias": "latency spikes",
+          "pulseWave": {
+            "timeStep": 5000,
+            "onCount": 2,
+            "onValue": 240,
+            "offCount": 8,
+            "offValue": 55
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Error budget burn",
+      "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "continuous-RdYlGr" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 25,
+            "gradientMode": "scheme",
+            "showPoints": "never",
+            "spanNulls": false,
+            "insertNulls": false,
+            "pointSize": 5,
+            "axisPlacement": "auto",
+            "axisColorMode": "text",
+            "axisBorderShow": false,
+            "scaleDistribution": { "type": "linear" },
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "line+area" },
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false }
+          },
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": 0 },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "calcs": ["mean", "max", "lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "5m burn",
+          "min": 0.2,
+          "max": 3.8,
+          "seriesCount": 1
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "grafana-testdata-datasource", "uid": "testdata" },
+          "scenarioId": "random_walk",
+          "alias": "1h burn",
+          "min": 0.1,
+          "max": 1.6,
+          "seriesCount": 1
+        }
+      ]
+    }
+  ]
+}
