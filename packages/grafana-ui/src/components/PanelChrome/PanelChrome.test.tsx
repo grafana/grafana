@@ -61,6 +61,17 @@ it('renders a panel with subtitle and title', () => {
   expect(screen.getByText("Panel's Content").parentElement).toHaveStyle({ padding: '0px 8px 8px 8px' });
 });
 
+it('exposes an accessible trigger for the panel description tooltip', async () => {
+  const { user } = setup({ description: 'Panel description' });
+
+  const trigger = screen.getByRole('button', { name: 'More information' });
+  expect(trigger).toBeInTheDocument();
+
+  await user.tab();
+  await user.tab();
+  expect(screen.getByRole('tooltip')).toBeInTheDocument();
+});
+
 it('renders an empty panel without padding', () => {
   setup({ padding: 'none' });
 
