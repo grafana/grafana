@@ -125,7 +125,12 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               });
               observer.observe(document.body, { childList: true, subtree: true });
 
-              locationService.partial({ [urlKey]: mySlug });
+              if (dashboard.state.meta.isEmbedded) {
+                // Embedded dashboards do not sync state from the host page's URL.
+                parentLayout.switchToTab(model);
+              } else {
+                locationService.partial({ [urlKey]: mySlug });
+              }
             }}
             onPointerDown={(evt) => {
               evt.stopPropagation();
