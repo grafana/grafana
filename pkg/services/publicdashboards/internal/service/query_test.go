@@ -1153,9 +1153,9 @@ func TestSanitizeMetadataFromQueryData(t *testing.T) {
 		}
 		sanitizeMetadataFromQueryData(fakeResponse)
 		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.ExecutedQueryString, "")
-		assert.Equal(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom, map[string]string{"test1": "test1"})
+		assert.Nil(t, fakeResponse.Responses["A"].Frames[0].Meta.Custom)
 		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.ExecutedQueryString, "")
-		assert.Equal(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom, map[string]string{"test2": "test2"})
+		assert.Nil(t, fakeResponse.Responses["A"].Frames[1].Meta.Custom)
 		assert.Equal(t, fakeResponse.Responses["B"].Frames[0].Meta.ExecutedQueryString, "")
 		assert.Nil(t, fakeResponse.Responses["B"].Frames[0].Meta.Custom)
 	})
