@@ -7,7 +7,6 @@ import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';
 
 import { requiresNotebookEdit } from './permissions';
@@ -89,6 +88,10 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
         overlay: undefined,
       });
+
+      const { transformNotebookSceneToSaveModel } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+      );
 
       let appliedNotebook: NotebookSpec | undefined;
       try {

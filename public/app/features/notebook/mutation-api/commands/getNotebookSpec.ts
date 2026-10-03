@@ -9,7 +9,6 @@ import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/
 
 import { type NotebookScene } from '../../scene/NotebookScene';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
-import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 
 import { requiresNotebookRead } from './permissions';
 
@@ -39,6 +38,9 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
   handler: async (payload, context) => {
     const { scene } = context;
     try {
+      const { transformNotebookSceneToSaveModel } = await import(
+        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+      );
       const notebook = transformNotebookSceneToSaveModel(scene);
 
       // Opt-in, default off so a read never fails on someone else's notebook. Worth requesting: a read

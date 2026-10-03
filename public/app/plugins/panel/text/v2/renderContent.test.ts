@@ -9,13 +9,14 @@ import {
   FieldType,
   type InterpolateFunction,
   MappingType,
+  standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
+import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -38,6 +39,7 @@ afterAll(() => {
 });
 
 // applyFieldOverrides copies panel defaults through this registry, which app.ts seeds.
+standardEditorsRegistry.setInit(getAllOptionEditors);
 standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
 
 const hosts = toDataFrame({
