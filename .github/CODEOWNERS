@@ -477,6 +477,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/general-dashboards.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/import-dashboard.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/load-options-from-url.spec.ts @grafana/dashboards-squad
+/e2e-playwright/dashboards-suite/meticulous-feature-flags.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/new-constant-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-custom-variable.spec.ts @grafana/dashboards-squad
 /e2e-playwright/dashboards-suite/new-interval-variable.spec.ts @grafana/dashboards-squad
