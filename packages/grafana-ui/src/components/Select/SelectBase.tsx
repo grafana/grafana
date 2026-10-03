@@ -23,7 +23,7 @@ import { CustomInput } from './CustomInput';
 import { DropdownIndicator } from './DropdownIndicator';
 import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
-import { MultiValueContainer, MultiValueRemove } from './MultiValue';
+import { MultiValueContainer, MultiValueLabel, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
 import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
@@ -404,6 +404,7 @@ export function SelectBase<T, Rest = {}>({
           },
           SelectContainer,
           MultiValueContainer: MultiValueContainer,
+          MultiValueLabel: MultiValueLabel,
           MultiValueRemove: !disabled ? MultiValueRemove : () => null,
           Input: CustomInput,
           ...components,
