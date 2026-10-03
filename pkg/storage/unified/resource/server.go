@@ -2755,6 +2755,7 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	case parent.Error != nil && parent.Error.Code == http.StatusNotFound:
 		verb = utils.VerbCreate
 		name = ""
+		folder = req.Folder
 	case parent.Error != nil:
 		// Surface backend status as-is; collapsing to 404 would hide
 		// transient 5xx as "not found".

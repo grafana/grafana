@@ -3307,6 +3307,52 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		require.Empty(t, capturedFolder)
 	})
 
+	folderOnlyCreate := func(allowed string) func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+		return func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == utils.VerbCreate && folder == allowed {
+				return allow()
+			}
+			return deny()
+		}
+	}
+
+	t.Run("checks create permission in the requested folder when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+	})
+
+	t.Run("rejects with 403 when create is only allowed in a folder the request does not name", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("ignores the requested folder when parent resource exists", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+
+		var capturedFolder string
+		ac.fn = func(_ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedFolder = folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, "", capturedFolder)
+	})
+
 	t.Run("rejects with 403 when access.Check denies create for a missing parent", func(t *testing.T) {
 		srv, ac, blob := newBlobAuthzTestServer(t, nil)
 		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }

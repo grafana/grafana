@@ -1283,6 +1283,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Method:      resourcepb.PutBlobRequest_GRPC,
 			ContentType: "plain/text",
 			Value:       []byte("before parent"),
+			Folder:      "fff",
 		})
 		require.NoError(t, err)
 		require.Nil(t, preExisting.Error)
@@ -1292,6 +1293,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		initialMeta.SetName(key.Name)
 		initialMeta.SetNamespace(key.Namespace)
+		initialMeta.SetFolder("fff")
 		initial.SetAPIVersion(key.Group + "/v1")
 		initial.SetKind("Test")
 		initialVal, err := initial.MarshalJSON()
@@ -1339,6 +1341,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
 		meta.SetName(key.Name)
 		meta.SetNamespace(key.Namespace)
+		meta.SetFolder("fff")
 		obj.SetAPIVersion(key.Group + "/v1")
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
