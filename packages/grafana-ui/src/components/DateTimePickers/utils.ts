@@ -1,4 +1,4 @@
-import { dateMath, dateTimeParse, isDateTime, type TimeRange, type TimeZone } from '@grafana/data';
+import { dateMath, parseTimeWithNanos, isDateTime, type TimeRange, type TimeZone } from '@grafana/data';
 
 export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): boolean {
   if (isDateTime(value)) {
@@ -10,7 +10,7 @@ export function isValid(value: string, roundUp?: boolean, timeZone?: TimeZone): 
     return dateMath.isValid(value);
   }
 
-  const parsed = dateTimeParse(value, { roundUp, timeZone });
+  const { time: parsed } = parseTimeWithNanos(value, { roundUp, timeZone });
   return parsed.isValid();
 }
 

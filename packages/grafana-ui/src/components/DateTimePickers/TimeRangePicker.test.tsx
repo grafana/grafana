@@ -25,6 +25,70 @@ const relativeValue: TimeRange = {
 };
 
 describe('TimePicker', () => {
+  it.each([
+    {
+      from: '2026-09-30T20:00:00.123000001Z',
+      to: '2026-09-30T20:00:01.123999999Z',
+      display: '2026-09-30 13:00:00.123000001to2026-09-30 13:00:01.123999999',
+    },
+    {
+      from: '2026-09-30T20:00:00.123Z',
+      to: '2026-09-30T20:00:01.123999999Z',
+      display: '2026-09-30 13:00:00.123000000to2026-09-30 13:00:01.123999999',
+    },
+  ])('shows the precise range in the tooltip for $from', async ({ from, to, display }) => {
+    render(
+      <TimeRangePicker
+        value={makeTimeRange(from, to)}
+        timeZone="America/Los_Angeles"
+        onChange={() => {}}
+        onChangeTimeZone={() => {}}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    await userEvent.hover(screen.getByTestId(selectors.openButton));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(display);
+  });
+
+  it.each([
+    {
+      name: 'both bounds',
+      from: '2026-09-30T20:00:00.123000001Z',
+      to: '2026-09-30T20:00:01.123999999Z',
+      display: '2026-09-30 13:00:00.123000001 to 2026-09-30 13:00:01.123999999',
+    },
+    {
+      name: 'the from bound',
+      from: '2026-09-30T20:00:00.123000001Z',
+      to: '2026-09-30T20:00:01.123Z',
+      display: '2026-09-30 13:00:00.123000001 to 2026-09-30 13:00:01.123000000',
+    },
+    {
+      name: 'the to bound',
+      from: '2026-09-30T20:00:00.123Z',
+      to: '2026-09-30T20:00:01.123999999Z',
+      display: '2026-09-30 13:00:00.123000000 to 2026-09-30 13:00:01.123999999',
+    },
+  ])('shows nanoseconds on $name in the closed picker', ({ from, to, display }) => {
+    render(
+      <TimeRangePicker
+        value={makeTimeRange(from, to)}
+        timeZone="America/Los_Angeles"
+        onChange={() => {}}
+        onChangeTimeZone={() => {}}
+        onMoveBackward={() => {}}
+        onMoveForward={() => {}}
+        onZoom={() => {}}
+      />
+    );
+
+    expect(screen.getByTestId(selectors.openButton)).toHaveTextContent(display);
+    expect(screen.getByTestId(selectors.openButton)).toHaveAccessibleName(`Time range selected: ${display}`);
+  });
+
   it('renders buttons correctly', () => {
     render(
       <TimeRangePicker

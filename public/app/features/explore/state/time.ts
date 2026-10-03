@@ -3,7 +3,6 @@ import { type AnyAction, createAction } from '@reduxjs/toolkit';
 import {
   type AbsoluteTimeRange,
   AppEvents,
-  dateTimeForTimeZone,
   LoadingState,
   rangeUtil,
   type RawTimeRange,
@@ -90,10 +89,7 @@ export const updateTime = (config: {
     let rawRange: RawTimeRange = rangeInState.raw;
 
     if (absRange) {
-      rawRange = {
-        from: dateTimeForTimeZone(timeZone, absRange.from),
-        to: dateTimeForTimeZone(timeZone, absRange.to),
-      };
+      rawRange = rangeUtil.convertAbsoluteToRaw(absRange, timeZone);
     }
 
     if (actionRange) {
@@ -101,7 +97,7 @@ export const updateTime = (config: {
     }
 
     const range = getTimeRange(timeZone, rawRange, fiscalYearStartMonth);
-    const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    const absoluteRange = rangeUtil.toAbsoluteTimeRange(range);
 
     // @deprecated - set because some internal plugins read the range this way; please use QueryEditorProps.range instead
     getTimeSrv().init({
@@ -163,7 +159,7 @@ function modifyExplorePanesTimeRange(
  */
 export function makeAbsoluteTime(): ThunkResult<void> {
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
-    const absoluteRange: AbsoluteTimeRange = { from: range.from.valueOf(), to: range.to.valueOf() };
+    const absoluteRange = rangeUtil.toAbsoluteTimeRange(range);
     dispatch(updateTimeRange({ exploreId, absoluteRange }));
   });
 }

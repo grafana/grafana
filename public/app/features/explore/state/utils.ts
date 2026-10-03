@@ -3,7 +3,8 @@ import { uniq } from 'lodash';
 import {
   type AbsoluteTimeRange,
   type DataSourceApi,
-  dateMath,
+  parseTimeWithNanos,
+  rangeUtil,
   type DateTime,
   type EventBusExtended,
   getDefaultTimeRange,
@@ -181,6 +182,8 @@ export function createCacheKey(absRange: AbsoluteTimeRange) {
   const params = {
     from: absRange.from,
     to: absRange.to,
+    ...(absRange.fromNano ? { fromNano: absRange.fromNano } : {}),
+    ...(absRange.toNano ? { toNano: absRange.toNano } : {}),
   };
 
   const cacheKey = Object.entries(params)
@@ -200,9 +203,9 @@ export function getResultsFromCache(
 }
 
 export function getRange(raw: RawTimeRange, timeZone: TimeZone): TimeRange {
+  const range = rangeUtil.convertRawToRange(raw, timeZone);
   return {
-    from: dateMath.parse(raw.from, false, timeZone)!,
-    to: dateMath.parse(raw.to, true, timeZone)!,
+    ...range,
     raw,
   };
 }
@@ -256,6 +259,10 @@ function parseRawTime(urlRangeValue: URLRangeValue | DateTime): TimeFragment | n
   }
 
   // This should handle ISO strings
+  const precise = parseTimeWithNanos(value);
+  if (precise.nanos) {
+    return value;
+  }
   const time = toUtc(value);
   if (time.isValid()) {
     return time;

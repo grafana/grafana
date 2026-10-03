@@ -6,6 +6,7 @@ import {
 } from '@grafana/schema';
 
 import { dateTime, type DateTime } from '../datetime/moment_wrapper';
+import { parseTimeWithNanos, toISOStringWithNanos } from '../datetime/nanoseconds';
 
 export interface RawTimeRange {
   from: DateTime | string;
@@ -15,6 +16,10 @@ export interface RawTimeRange {
 export interface TimeRange {
   from: DateTime;
   to: DateTime;
+  /** Nanoseconds within the millisecond, from 0 to 999999. */
+  fromNano?: number;
+  /** Nanoseconds within the millisecond, from 0 to 999999. */
+  toNano?: number;
   raw: RawTimeRange;
 }
 
@@ -30,6 +35,10 @@ export interface RelativeTimeRange {
 export interface AbsoluteTimeRange {
   from: number;
   to: number;
+  /** Nanoseconds within the millisecond, from 0 to 999999. */
+  fromNano?: number;
+  /** Nanoseconds within the millisecond, from 0 to 999999. */
+  toNano?: number;
 }
 
 export interface IntervalValues {
@@ -92,14 +101,18 @@ export function getDefaultRelativeTimeRange(): RelativeTimeRange {
  * DateTime objects.
  */
 export function makeTimeRange(from: DateTime | string, to: DateTime | string): TimeRange {
-  const fromDateTime = typeof from === 'string' ? dateTime(from) : from;
-  const toDateTime = typeof to === 'string' ? dateTime(to) : to;
+  const fromParsed = parseTimeWithNanos(from);
+  const toParsed = parseTimeWithNanos(to);
+  const fromDateTime = fromParsed.nanos ? fromParsed.time : typeof from === 'string' ? dateTime(from) : from;
+  const toDateTime = toParsed.nanos ? toParsed.time : typeof to === 'string' ? dateTime(to) : to;
   return {
     from: fromDateTime,
     to: toDateTime,
+    ...(fromParsed.nanos ? { fromNano: fromParsed.nanos } : {}),
+    ...(toParsed.nanos ? { toNano: toParsed.nanos } : {}),
     raw: {
-      from: fromDateTime,
-      to: toDateTime,
+      from: fromParsed.nanos ? toISOStringWithNanos(fromDateTime, fromParsed.nanos) : fromDateTime,
+      to: toParsed.nanos ? toISOStringWithNanos(toDateTime, toParsed.nanos) : toDateTime,
     },
   };
 }
