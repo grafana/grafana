@@ -16,6 +16,9 @@ import { type PanelElement } from '../types';
  *
  * Two things are not frozen along with the rest. The Grafana time macros stay dynamic (see
  * preserveTimeMacros), and the datasource is resolved rather than kept as written.
+ *
+ * The panel's title is dropped: notebook panels are untitled, whether added from here, from Explore,
+ * or in the notebook itself.
  */
 export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promise<PanelElement> {
   const queryRunner = getQueryRunnerFor(vizPanel);
@@ -38,18 +41,9 @@ export async function buildPanelElementFromDashboard(vizPanel: VizPanel): Promis
     capturedRunner.setState({ queries, ...(datasource && { datasource }) });
   }
 
-  // Interpolated against the source panel, not the clone: the clone is detached from the dashboard,
-  // so it has no variables to resolve through. Time macros are stashed for the same reason the
-  // queries stash them - a title naming the window has to follow the notebook's, not the dashboard's.
-  if (captured.state.title) {
-    captured.setState({
-      // `text` is the format VizPanelRenderer titles with, so a variable whose label differs from its
-      // value reads as the label the panel showed rather than the value behind it.
-      title: preserveTimeMacros(captured.state.title, (title) =>
-        sceneGraph.interpolate(vizPanel, title, undefined, 'text')
-      ),
-    });
-  }
+  // Dropped rather than carried over, so a panel added here starts untitled like every other notebook
+  // panel — the surrounding prose is what labels a cell in a notebook.
+  captured.setState({ title: '' });
 
   // The description reads as prose rather than driving a query, so a stray `$service` here is a
   // cosmetic wrong rather than wrong data - but it would still show the reader a variable name that

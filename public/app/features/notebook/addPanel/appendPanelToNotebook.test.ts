@@ -79,6 +79,17 @@ describe('appendPanelToNotebook', () => {
     expect(elementNames(spec)).toEqual(['p95-latency', 'p95-latency-2', 'p95-latency-3']);
   });
 
+  // Panels added from Explore are untitled, so several in one notebook all fall back to the same
+  // base name.
+  it('suffixes the fallback name when untitled panels collide', () => {
+    let spec = appendPanelToNotebook(notebook(), panel(''));
+
+    spec = appendPanelToNotebook(spec, panel(''));
+    spec = appendPanelToNotebook(spec, panel(''));
+
+    expect(elementNames(spec)).toEqual(['panel', 'panel-2', 'panel-3']);
+  });
+
   // Slugs are lowercased, so `constructor` is the Object.prototype key a title can still land on.
   // With `name in elements` the empty notebook would report it as taken and this would be
   // `constructor-2`.

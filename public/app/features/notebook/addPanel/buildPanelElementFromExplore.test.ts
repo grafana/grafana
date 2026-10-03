@@ -28,6 +28,18 @@ describe('buildPanelElementFromExplore', () => {
     expect(element.spec.data.spec.queries[0].spec.query.datasource).toEqual({ name: 'loki-1' });
   });
 
+  // Explore's builder names its panel "New Panel" for the dashboard flow, and the notebook copy is
+  // meant to arrive untitled like a panel added in the notebook itself.
+  it('leaves the panel untitled', () => {
+    const element = buildPanelElementFromExplore({
+      queries: [{ refId: 'A' }],
+      queryResponse: queryResponseWith(),
+      datasource,
+    });
+
+    expect(element.kind === 'Panel' && element.spec.title).toBe('');
+  });
+
   // The visualization type comes from Explore's own inference, which is the reason this goes through
   // buildDashboardPanelFromExploreState rather than assembling a VizPanel from pane state.
   it('infers the visualization from the response frames', () => {

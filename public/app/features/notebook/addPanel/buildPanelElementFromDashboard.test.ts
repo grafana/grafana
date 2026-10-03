@@ -1,10 +1,8 @@
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import {
-  CustomVariable,
   type SceneObject,
   SceneQueryRunner,
   SceneTimeRange,
-  type SceneVariable,
   SceneVariableSet,
   TestVariable,
   VizPanel,
@@ -31,7 +29,6 @@ function buildPanel(
   extra: {
     datasource?: DataQuery['datasource'];
     behaviors?: SceneObject[];
-    variables?: SceneVariable[];
     timeRange?: SceneTimeRange;
   } = {}
 ) {
@@ -43,9 +40,7 @@ function buildPanel(
     $behaviors: extra.behaviors,
     $timeRange: extra.timeRange,
     $variables: new SceneVariableSet({
-      variables: extra.variables ?? [
-        new TestVariable({ name: 'service', value: 'checkout', text: 'checkout', query: 'A' }),
-      ],
+      variables: [new TestVariable({ name: 'service', value: 'checkout', text: 'checkout', query: 'A' })],
     }),
     $data: new SceneQueryRunner({ datasource: extra.datasource ?? { uid: 'prom' }, queries }),
   });
@@ -104,29 +99,12 @@ describe('buildPanelElementFromDashboard', () => {
     });
   });
 
-  it('interpolates the title too, so the cell is not labelled with a variable name', async () => {
+  // A dashboard panel's title is the dashboard's label for it, and a notebook labels its cells with
+  // the prose around them instead.
+  it('drops the title, so the panel lands untitled like any other notebook panel', async () => {
     const element = await buildPanelElementFromDashboard(buildPanel([{ refId: 'A' }], 'Errors for $service'));
 
-    expect(element.kind === 'Panel' && element.spec.title).toBe('Errors for checkout');
-  });
-
-  // The title is what VizPanelRenderer shows, and it renders with the `text` format - so a variable
-  // whose label differs from its value would otherwise be captured as something the reader never saw.
-  it('captures the label a variable displayed in the title, not the value behind it', async () => {
-    const element = await buildPanelElementFromDashboard(
-      buildPanel([{ refId: 'A' }], 'Errors for $service', undefined, {
-        variables: [
-          new CustomVariable({
-            name: 'service',
-            query: 'Checkout Service : checkout-svc',
-            value: 'checkout-svc',
-            text: 'Checkout Service',
-          }),
-        ],
-      })
-    );
-
-    expect(element.kind === 'Panel' && element.spec.title).toBe('Errors for Checkout Service');
+    expect(element.kind === 'Panel' && element.spec.title).toBe('');
   });
 
   // Prose rather than a query, so this is cosmetic rather than wrong data - but a notebook has no
@@ -140,10 +118,11 @@ describe('buildPanelElementFromDashboard', () => {
   });
 
   // Panel text names a window as much as a query does, and the notebook has its own picker. Frozen
-  // here, a title would go on naming the dashboard's range however the reader moves the notebook's.
-  it('leaves the time macros in the title and description for the notebook to resolve', async () => {
+  // here, a description would go on naming the dashboard's range however the reader moves the
+  // notebook's.
+  it('leaves the time macros in the description for the notebook to resolve', async () => {
     const element = await buildPanelElementFromDashboard(
-      buildPanel([{ refId: 'A' }], 'Errors for $service since $__from', 'Up to $__to, binned by $__interval', {
+      buildPanel([{ refId: 'A' }], 'CPU', 'Errors for $service up to $__to, binned by $__interval', {
         timeRange: new SceneTimeRange({ from: '2026-01-01T00:00:00.000Z', to: '2026-01-02T00:00:00.000Z' }),
       })
     );
@@ -152,8 +131,7 @@ describe('buildPanelElementFromDashboard', () => {
       throw new Error('expected a Panel element');
     }
     // The variable beside them still resolves: it is the macros alone that are held back.
-    expect(element.spec.title).toBe('Errors for checkout since $__from');
-    expect(element.spec.description).toBe('Up to $__to, binned by $__interval');
+    expect(element.spec.description).toBe('Errors for checkout up to $__to, binned by $__interval');
   });
 
   // Interpolating means rewriting queries, and the user is still looking at the dashboard it came from.
