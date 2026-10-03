@@ -177,3 +177,9 @@ func TestInitTracerProvider_FilterOperationalEndpointsToggle(t *testing.T) {
 	assert.Equal(t, 0, recordMetricsSpan(t, true), "filter enabled should drop the /metrics span")
 	assert.Equal(t, 1, recordMetricsSpan(t, false), "filter disabled should export the /metrics span")
 }
+
+func TestInitializeTracerForTestDoesNotPanicWithJaegerPropagation(t *testing.T) {
+	require.NotPanics(t, func() {
+		require.NotNil(t, InitializeTracerForTest())
+	})
+}
