@@ -54,10 +54,13 @@ func TestProvidePluginInstanceConfigMarketplaceLicenseDirectory(t *testing.T) {
 func TestProvidePluginInstanceConfigOpenFeature(t *testing.T) {
 	u, err := url.Parse("http://features.example.com:1031")
 	require.NoError(t, err)
+	pluginURL, err := url.Parse("http://flags.example.com:1031")
+	require.NoError(t, err)
 
 	openFeature := setting.OpenFeatureSettings{
 		ProviderType: setting.OFREPProviderType,
 		URL:          u,
+		PluginURL:    pluginURL,
 		TargetingKey: "stacks-123",
 		ContextAttrs: map[string]string{"namespace": "stacks-123"},
 		CacheTTL:     time.Minute,

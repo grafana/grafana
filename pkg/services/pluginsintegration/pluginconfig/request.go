@@ -62,9 +62,9 @@ func (s *RequestConfigProvider) PluginRequestConfig(ctx context.Context, pluginI
 		m[featuretoggles.EnabledFeatures] = strings.Join(features, ",")
 	}
 
-	if providerURL := s.cfg.openFeatureProviderURL(); s.cfg.OpenFeature.ProviderType != "" && providerURL != "" {
+	if providerURL, providerType := s.cfg.openFeatureDiscovery(); providerURL != "" {
 		m[openFeatureProviderURLKey] = providerURL
-		m[openFeatureProviderTypeKey] = string(s.cfg.OpenFeature.ProviderType)
+		m[openFeatureProviderTypeKey] = providerType
 		m[openFeatureCacheTTLKey] = s.cfg.openFeatureCacheTTLSeconds()
 
 		if len(s.cfg.OpenFeature.ContextAttrs) > 0 {
