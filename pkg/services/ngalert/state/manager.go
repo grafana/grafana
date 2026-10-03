@@ -533,7 +533,28 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	updated := ruleStates{
 		states: make(map[data.Fingerprint]*State, len(currentStates)),
 	}
+	// Floor at 2: the tick immediately after a state's last real touch is always
+	// exactly 1 interval away, but that tick's NoData/Error evaluation is itself
+	// a legitimate touch here, not a miss. A configured value of 1 would
+	// otherwise make every state look already-stale on sight. This only affects
+	// this sweep -- processMissingSeriesStates below still resolves a genuinely
+	// missing series after just 1 evaluation when the rule is configured that
+	// way.
+	missingEvalsToResolve := alertRule.GetMissingSeriesEvalsToResolve()
+	if missingEvalsToResolve < 2 {
+		missingEvalsToResolve = 2
+	}
 	for _, currentState := range currentStates {
+		// Skip states already past their missing-series grace period; refreshing
+		// them here would hide them from processMissingSeriesStates below, which
+		// is what actually resolves/evicts them. Uses the plain (floored)
+		// threshold, not the 1-eval NoData/Error override: a state can
+		// legitimately sit in Pending/Alerting with that reason for several
+		// ticks as part of this sweep (e.g. while waiting out 'for').
+		if stateIsStale(result.EvaluatedAt, currentState.LastEvaluationTime, alertRule.IntervalSeconds, missingEvalsToResolve) {
+			updated.states[currentState.CacheID] = currentState
+			continue
+		}
 		start := st.clock.Now()
 		newState := currentState.Copy()
 		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
