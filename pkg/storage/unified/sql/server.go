@@ -90,6 +90,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
 	if err != nil {
@@ -215,6 +216,11 @@ func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.Resour
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
+	return nil
+}
+
+func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
 	return nil
 }
 
