@@ -14,6 +14,7 @@ labels:
 menuTitle: Trace correlations
 title: Trace correlations
 weight: 900
+review_date: 2026-09-10
 aliases:
   - ../traces-in-grafana/trace-correlations/
 ---
@@ -79,7 +80,7 @@ To use trace correlations, you need:
 
 1. Select **Save** to save the correlation.
 
-## Verifying correlations in Explore
+## Verify correlations in Explore
 
 1. Open **Explore** and select your Tempo tracing source.
 
