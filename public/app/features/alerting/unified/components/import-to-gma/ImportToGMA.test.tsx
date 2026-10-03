@@ -28,23 +28,25 @@ jest.mock('@grafana/runtime', () => ({
 // variables referenced from inside a jest.mock factory. Each describe block resets it in its own setup.
 let mockScenario: 'yaml' | 'auto-sync' = 'yaml';
 
-// Seeds either a valid YAML notifications source (config + policy tree name + template files, dry-run
-// triggered) or an Auto-sync-checked data source (dry-run never runs for that path). Next is gated on a
-// passing dry-run for the YAML fixture, so the policy tree name and the onTriggerDryRun call are both
-// required for the wizard to advance there. The real step body pulls in network-backed pickers we don't
-// need — the assertion target is handleConfirmImport's behavior, not the step UI.
+// Seeds form values directly instead of rendering the real step body (network-backed pickers we
+// don't need). policyTreeName also gets a real input, since tests below need to edit it.
 jest.mock('./steps/Step1AlertmanagerResources', () => {
   const { useEffect } = require('react');
   const { useFormContext } = require('react-hook-form');
   return {
-    Step1Content: function Step1Content({ onTriggerDryRun }: { onTriggerDryRun?: () => void }) {
-      const { setValue } = useFormContext();
+    Step1Content: function Step1Content() {
+      const { setValue, register, getValues } = useFormContext();
       useEffect(() => {
         if (mockScenario === 'auto-sync') {
           setValue('notificationsSource', 'datasource');
           setValue('notificationsDatasourceUID', 'mimir-uid');
           setValue('notificationsDatasourceName', 'Mimir Alertmanager');
           setValue('autoSyncNotificationsEnabled', true);
+          return;
+        }
+        // Don't reseed on remount (e.g. navigating back to Step 1) — a fresh File would get a new
+        // lastModified and look like an edit.
+        if (getValues('notificationsYamlFile')) {
           return;
         }
         setValue('notificationsSource', 'yaml');
@@ -59,12 +61,11 @@ jest.mock('./steps/Step1AlertmanagerResources', () => {
           new File(['{{ define "email" }}{{ end }}'], 'email.tmpl', { type: 'text/plain' }),
           new File(['{{ define "slack" }}{{ end }}'], 'slack.tmpl', { type: 'text/plain' }),
         ]);
-        // Mounting on the wizard's very first render (Notifications is now step one), these setValue
-        // calls aren't guaranteed to be visible via getValues() yet within the same tick — defer so
-        // handleTriggerDryRun reads the values above rather than the stale defaults.
-        queueMicrotask(() => onTriggerDryRun?.());
-      }, [setValue, onTriggerDryRun]);
-      return null;
+      }, [setValue, getValues]);
+      if (mockScenario === 'auto-sync') {
+        return null;
+      }
+      return <input placeholder="prometheus-prod" {...register('policyTreeName')} />;
     },
     useStep1Validation: () => true,
   };
@@ -196,8 +197,8 @@ describe('ImportToGMA wizard — stage analytics', () => {
 });
 
 describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
-  it('keeps the notifications-step Next disabled when the dry-run fails', async () => {
-    // Fail the dry-run itself, so the step never reaches a passing validation state.
+  it('runs a fresh dry-run when Next is clicked and blocks navigation when it fails', async () => {
+    // Fail the dry-run itself, so the click-time check never passes.
     server.use(
       http.post(CONVERT_URL, ({ request }) =>
         request.headers.get('X-Grafana-Alerting-Dry-Run') === 'true'
@@ -208,17 +209,21 @@ describe('ImportToGMA wizard — step 1 dry-run gating & review', () => {
     const { user } = render(<ImportWizardGate />);
 
     await screen.findByRole('group', { name: /import notification resources/i });
+    // Next is available immediately — the check happens on click, not while typing.
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    expect(nextButton).toHaveAttribute('aria-disabled', 'false');
 
-    // The dry-run runs and fails; Next stays disabled (aria-disabled keeps the tooltip reachable).
+    await user.click(nextButton);
+
     await waitFor(() =>
       expect(mockReportInteraction).toHaveBeenCalledWith('grafana_alerting_import_to_gma_dryrun_error')
     );
-    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
-    expect(nextButton).toHaveAttribute('aria-disabled', 'true');
-
-    // Clicking a blocked Next must not advance to the rules step.
-    await user.click(nextButton);
     expect(screen.queryByRole('group', { name: /import alert rules/i })).not.toBeInTheDocument();
+    // The failed check doesn't permanently lock the step — Next stays clickable for a retry.
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
+    );
   });
 
   it('lists the uploaded template files in the review step', async () => {
@@ -475,5 +480,96 @@ describe('ImportToGMA wizard — auto-sync confirm flow', () => {
     );
     expect(mockReportInteraction).not.toHaveBeenCalledWith('grafana_alerting_import_to_gma_success', expect.anything());
     expect(within(dialog).getByText(/failed to enable auto-sync/i)).toBeInTheDocument();
+  });
+});
+
+describe('dry-run wiring (wizard-level)', () => {
+  beforeEach(() => {
+    mockScenario = 'yaml';
+  });
+
+  it('keeps Next enabled while editing, and checks the latest value when clicked', async () => {
+    const identifiersSeen: Array<string | null> = [];
+    server.use(
+      http.post(CONVERT_URL, ({ request }) => {
+        identifiersSeen.push(request.headers.get('X-Grafana-Alerting-Config-Identifier'));
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+
+    const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.type(input, '2');
+
+    // Editing the (still-valid) name never disables Next — there's nothing to "wait out" anymore.
+    const nextButton = screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton);
+    expect(nextButton).toHaveAttribute('aria-disabled', 'false');
+
+    await user.click(nextButton);
+    await screen.findByRole('group', { name: /import alert rules/i });
+
+    // Whatever the debounced preview checked along the way, the click-time check used the
+    // current, fully-edited value.
+    expect(identifiersSeen.at(-1)).toBe('prometheus-prod2');
+  });
+
+  it('does not disable Next when navigating back to a Step 1 that is already valid', async () => {
+    server.use(http.post(CONVERT_URL, () => HttpResponse.json({ status: 'success' })));
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
+    );
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+
+    await screen.findByRole('group', { name: /import alert rules/i });
+    // PreviousButton has no e2e-selector entry; it renders a plain data-testid.
+    await user.click(screen.getByTestId('wizard-prev-button'));
+
+    // No waitFor: Next's enablement depends only on form validity, which persists across
+    // navigation — there's no cached dry-run state that could be reset or re-triggered on remount.
+    await screen.findByRole('group', { name: /import notification resources/i });
+    expect(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton)).toHaveAttribute(
+      'aria-disabled',
+      'false'
+    );
+  });
+
+  it('validates the current value on click, unaffected by a slow, superseded preview request', async () => {
+    let resolveStalePreview: (() => void) | undefined;
+    let requestCount = 0;
+    server.use(
+      http.post(CONVERT_URL, async () => {
+        requestCount += 1;
+        if (requestCount === 1) {
+          // The initial (pre-edit) debounced preview — never resolves until told to.
+          await new Promise<void>((resolve) => {
+            resolveStalePreview = resolve;
+          });
+        }
+        return HttpResponse.json({ status: 'success' });
+      })
+    );
+
+    const { user } = render(<ImportWizardGate />);
+
+    await screen.findByRole('group', { name: /import notification resources/i });
+    // Wait for the initial preview request to actually start before editing away from it.
+    await waitFor(() => expect(requestCount).toBe(1));
+
+    const input = screen.getByPlaceholderText(/prometheus-prod/i);
+    await user.type(input, '-changed');
+
+    // Click Next while the stale preview for the old value is still hanging.
+    await user.click(screen.getByTestId(selectors.pages.Alerting.ImportToGMA.nextButton));
+    resolveStalePreview?.();
+
+    // Next's own click-time check (for the edited value) isn't blocked by the still-pending,
+    // now-irrelevant preview request for the old one.
+    await screen.findByRole('group', { name: /import alert rules/i });
   });
 });
