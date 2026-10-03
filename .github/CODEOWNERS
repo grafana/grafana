@@ -166,6 +166,7 @@
 /pkg/apimachinery @grafana/grafana-app-platform-squad
 /pkg/apimachinery/identity/ @grafana/identity-squad
 /pkg/apimachinery/errutil/ @grafana/grafana-app-platform-squad
+/pkg/policy/ @grafana/alerting-squad
 /pkg/storage/ @grafana/grafana-search-and-storage
 /pkg/storage/secret/ @grafana/grafana-operator-experience-squad
 /pkg/services/annotations/ @grafana/grafana-backend-services-squad

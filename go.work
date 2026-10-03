@@ -35,6 +35,7 @@ use (
 	./pkg/infra/features
 	./pkg/plugins
 	./pkg/plugins/codegen
+	./pkg/policy
 	./pkg/storage/unified/resource/kv
 	./pkg/storage/unified/resourcepb
 	./pkg/util/sqlite
