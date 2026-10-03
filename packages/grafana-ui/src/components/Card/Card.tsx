@@ -15,8 +15,10 @@ import { CardContainer, type CardContainerProps, getCardContainerStyles } from '
 /**
  * @public
  */
-export interface Props
-  extends Omit<CardContainerProps, 'disableEvents' | 'disableHover' | 'hasDescriptionComponent' | 'hasTagsComponent'> {
+export interface Props extends Omit<
+  CardContainerProps,
+  'disableEvents' | 'disableHover' | 'hasDescriptionComponent' | 'hasTagsComponent'
+> {
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */

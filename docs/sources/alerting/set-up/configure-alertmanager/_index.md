@@ -47,7 +47,7 @@ Grafana includes a built-in **Grafana Alertmanager** to handle notifications. Th
 
 - Use different [types of Alertmanagers](#types-of-alertmanagers-in-grafana) with Grafana
 - [Add other Alertmanager](#add-an-alertmanager) and [enable it to receive all Grafana-managed alerts](#enable-an-alertmanager-to-receive-grafana-managed-alerts)
-- Use an [Alertmanager as a contact point]() to route specific alerts
+- Use an [Alertmanager as a contact point](<>) to route specific alerts
 
 ## Alertmanager resources
 

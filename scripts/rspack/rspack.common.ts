@@ -119,9 +119,8 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         // correctly we must alias this package to the correct file
         // the alternative to this alias is to copy-paste the file into our
         // source code and miss out in updates
-        '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
-          '@locker/near-membrane-dom/custom-devtools-formatter.js'
-        ),
+        '@locker/near-membrane-dom/custom-devtools-formatter':
+          require.resolve('@locker/near-membrane-dom/custom-devtools-formatter.js'),
         // TODO: Remove once Rspack replaces Webpack.
         // Rspack emits worker chunks as ES modules (workerChunkLoading: 'import' below), which
         // resolve to module-worker variants instead of the importScripts based originals used by

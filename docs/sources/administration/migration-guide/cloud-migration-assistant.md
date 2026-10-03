@@ -108,19 +108,20 @@ After connecting to the cloud stack, this is the empty state of the migration as
 
    {{< admonition type="note" >}}
    Some resources can't be uploaded to your cloud stack alone because they rely on other resources:
-   | Desired resource | Requires |
-   | :---- | :---- |
-   | Dashboards | <ul><li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li></ul> |
-   | Library Elements | Folders |
-   | Data Sources | Plugins |
-   | Plugins | Nothing else |
-   | Folders | Nothing else |
-   | All Alert rule groups | All other resources |
-   | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
-   | Notification Templates | Nothing else |
-   | Contact Points | Notification Templates |
-   | Mute Timings | Nothing else |
+
+   | Desired resource       | Requires                                                                                                                                                                                                                    |
+   | :--------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | Dashboards             | <ul><li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li></ul>                                                                                                                                  |
+   | Library Elements       | Folders                                                                                                                                                                                                                     |
+   | Data Sources           | Plugins                                                                                                                                                                                                                     |
+   | Plugins                | Nothing else                                                                                                                                                                                                                |
+   | Folders                | Nothing else                                                                                                                                                                                                                |
+   | All Alert rule groups  | All other resources                                                                                                                                                                                                         |
+   | Alert Rules            | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
+   | Notification Policies  | <ul><li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul>                                                                                                                                      |
+   | Notification Templates | Nothing else                                                                                                                                                                                                                |
+   | Contact Points         | Notification Templates                                                                                                                                                                                                      |
+   | Mute Timings           | Nothing else                                                                                                                                                                                                                |
    {{< /admonition >}}
 
 1. Click **Build snapshot**

@@ -38,7 +38,7 @@ The generator automates the following:
 4. For OSS APIs only:
    - Exports Redux reducers and middleware in `rtkq/index.ts`
    - Updates `package.json` exports to include the new API client
-5. Formats all generated files using Prettier and ESLint
+5. Formats all generated files using oxfmt and ESLint
 6. Automatically runs the appropriate command to generate endpoints from the OpenAPI schema
 
 For complete existing clients, the generator skips the create steps and only runs the appropriate endpoint generation

@@ -69,7 +69,7 @@ yarn e2e:playwright path/to/test.spec.ts           # Specific test
 make lint-go                      # Go linter
 yarn lint                         # ESLint
 yarn lint:fix                     # ESLint auto-fix
-yarn prettier:write               # Prettier auto-format
+yarn format:write                 # oxfmt auto-format
 yarn typecheck                    # TypeScript check
 ```
 

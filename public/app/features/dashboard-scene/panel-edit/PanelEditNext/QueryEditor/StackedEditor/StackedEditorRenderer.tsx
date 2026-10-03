@@ -30,13 +30,11 @@ export function StackedEditorRenderer() {
 
   const items: StackedItem[] = [
     ...queries.map((query): StackedItem => ({ type: getStackedQueryEditorType(query), id: query.refId, query })),
-    ...transformations.map(
-      (transformation): StackedItem => ({
-        type: QueryEditorType.Transformation,
-        id: transformation.transformId,
-        transformation,
-      })
-    ),
+    ...transformations.map((transformation): StackedItem => ({
+      type: QueryEditorType.Transformation,
+      id: transformation.transformId,
+      transformation,
+    })),
   ];
 
   // The selected card, in the identity-only shape the scroll machinery speaks.

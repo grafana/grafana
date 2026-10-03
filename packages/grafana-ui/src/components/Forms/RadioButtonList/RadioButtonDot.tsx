@@ -5,8 +5,10 @@ import { type GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 
-export interface RadioButtonDotProps<T>
-  extends Omit<React.HTMLProps<HTMLInputElement>, 'label' | 'value' | 'onChange' | 'type'> {
+export interface RadioButtonDotProps<T> extends Omit<
+  React.HTMLProps<HTMLInputElement>,
+  'label' | 'value' | 'onChange' | 'type'
+> {
   id: string;
   name: string;
   checked?: boolean;

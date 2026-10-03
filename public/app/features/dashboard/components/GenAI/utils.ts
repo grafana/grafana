@@ -10,10 +10,10 @@ import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 export enum Role {
   // System content cannot be overwritten by user prompts.
-  'system' = 'system',
+  system = 'system',
   // User content is the content that the user has entered.
   // This content can be overwritten by following prompt.
-  'user' = 'user',
+  user = 'user',
 }
 
 export type Message = llm.Message;

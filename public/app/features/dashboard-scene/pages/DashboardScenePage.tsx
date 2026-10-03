@@ -54,8 +54,10 @@ function TemplateDashboardModal() {
   );
 }
 
-export interface Props
-  extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
+export interface Props extends Omit<
+  GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>,
+  'match'
+> {}
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();

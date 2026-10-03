@@ -47,7 +47,7 @@ The following table highlights the key differences between mute timings and sile
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
 
-[//]: <> ({{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+[//]: <> '{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
 
 ## Add time intervals
 

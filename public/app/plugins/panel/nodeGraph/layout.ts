@@ -103,13 +103,11 @@ export function useLayout(
       // The layout function turns source and target fields from string to NodeDatum, so we do that here as well.
       const nodesMap = fromPairs(rawNodes.map((node) => [node.id, node]));
       setEdgesGraph(
-        rawEdges.map(
-          (e): EdgeDatumLayout => ({
-            ...e,
-            source: nodesMap[e.source],
-            target: nodesMap[e.target],
-          })
-        )
+        rawEdges.map((e): EdgeDatumLayout => ({
+          ...e,
+          source: nodesMap[e.source],
+          target: nodesMap[e.target],
+        }))
       );
       setLoading(false);
       return;

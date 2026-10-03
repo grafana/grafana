@@ -97,9 +97,8 @@ async function initFaroBackend() {
     .filter(Boolean)
     .map((url) => new RegExp(`${url}.*.`));
 
-  const { GrafanaJavascriptAgentBackend } = await import(
-    './backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend'
-  );
+  const { GrafanaJavascriptAgentBackend } =
+    await import('./backends/grafana-javascript-agent/GrafanaJavascriptAgentBackend');
 
   registerEchoBackend(
     new GrafanaJavascriptAgentBackend({

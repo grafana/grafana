@@ -41,28 +41,29 @@ A log is created every time:
 ### Format
 
 Logs of usage insights contain the following fields, where the fields followed by \* are always available, and the others depend on the logged event:
-| Field name | Type | Description |
-| ---------- | ---- | ----------- |
-| `eventName`\* | string | Type of the event, which can be either `data-request` or `dashboard-view`. |
-| `folderName`\* | string | Name of the dashboard folder. |
-| `dashboardName`\* | string | Name of the dashboard where the event happened. |
-| `dashboardId`\* | number | ID of the dashboard where the event happened. |
-| `datasourceName`| string | Name of the data source that was queried. |
-| `datasourceType` | string | Type of the data source that was queried. For example, `prometheus`, `elasticsearch`, or `loki`. |
-| `datasourceId` | number | ID of the data source that was queried. |
-| `panelId` | number | ID of the panel of the query. |
-| `panelName` | string | Name of the panel of the query. |
-| `error` | string | Error returned by the query. |
-| `duration` | number | Duration of the query. |
-| `source` | string | Source of the query. For example, `dashboard` or `explore`. |
-| `orgId`\* | number | ID of the user’s organization. |
-| `orgName`\* | string | Name of the user’s organization. |
-| `timestamp`\* | string | The date and time that the request was made, in Coordinated Universal Time (UTC) in [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |
-| `tokenId`\* | number | ID of the user’s authentication token. |
-| `username`\* | string | Name of the Grafana user that made the request. |
-| `userId`\* | number | ID of the Grafana user that made the request. |
-| `totalQueries`\* | number | Number of queries executed for the data request. |
-| `cachedQueries`\* | number | Number of fetched queries that came from the cache. |
+
+| Field name        | Type   | Description                                                                                                                                            |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `eventName`\*     | string | Type of the event, which can be either `data-request` or `dashboard-view`.                                                                             |
+| `folderName`\*    | string | Name of the dashboard folder.                                                                                                                          |
+| `dashboardName`\* | string | Name of the dashboard where the event happened.                                                                                                        |
+| `dashboardId`\*   | number | ID of the dashboard where the event happened.                                                                                                          |
+| `datasourceName`  | string | Name of the data source that was queried.                                                                                                              |
+| `datasourceType`  | string | Type of the data source that was queried. For example, `prometheus`, `elasticsearch`, or `loki`.                                                       |
+| `datasourceId`    | number | ID of the data source that was queried.                                                                                                                |
+| `panelId`         | number | ID of the panel of the query.                                                                                                                          |
+| `panelName`       | string | Name of the panel of the query.                                                                                                                        |
+| `error`           | string | Error returned by the query.                                                                                                                           |
+| `duration`        | number | Duration of the query.                                                                                                                                 |
+| `source`          | string | Source of the query. For example, `dashboard` or `explore`.                                                                                            |
+| `orgId`\*         | number | ID of the user’s organization.                                                                                                                         |
+| `orgName`\*       | string | Name of the user’s organization.                                                                                                                       |
+| `timestamp`\*     | string | The date and time that the request was made, in Coordinated Universal Time (UTC) in [RFC3339](https://tools.ietf.org/html/rfc3339#section-5.6) format. |
+| `tokenId`\*       | number | ID of the user’s authentication token.                                                                                                                 |
+| `username`\*      | string | Name of the Grafana user that made the request.                                                                                                        |
+| `userId`\*        | number | ID of the Grafana user that made the request.                                                                                                          |
+| `totalQueries`\*  | number | Number of queries executed for the data request.                                                                                                       |
+| `cachedQueries`\* | number | Number of fetched queries that came from the cache.                                                                                                    |
 
 ## Configuration
 

@@ -204,7 +204,7 @@ const getDefaultSearchHandler = () =>
         filters.push(({ item }) =>
           Boolean(
             item.kind === 'folder' &&
-              item.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference))
+            item.ownerReferences?.some((ownerReference) => ownerReferenceFilter.includes(ownerReference))
           )
         );
       }

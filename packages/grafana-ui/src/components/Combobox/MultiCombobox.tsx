@@ -26,8 +26,10 @@ import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
 import { isKeyboardEvent } from './utils';
 
-interface MultiComboboxBaseProps<T extends string | number>
-  extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
+interface MultiComboboxBaseProps<T extends string | number> extends Omit<
+  ComboboxBaseProps<T>,
+  'value' | 'onChange' | 'isClearable'
+> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (option: Array<ComboboxOption<T>>) => void;
   isClearable?: boolean;

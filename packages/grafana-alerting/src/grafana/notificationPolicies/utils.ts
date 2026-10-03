@@ -212,12 +212,10 @@ export function matchInstancesToRoute(rootRoute: Route, instances: Label[][]): T
  */
 export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
   const convertRoutingTreeRoutes = (routes: RoutingTreeRoute[]): Route[] => {
-    return routes.map(
-      (route): Route => ({
-        ...route,
-        routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
-      })
-    );
+    return routes.map((route): Route => ({
+      ...route,
+      routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
+    }));
   };
 
   // Create the root route by merging defaults with the route structure

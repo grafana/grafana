@@ -34,8 +34,7 @@ export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<
 export interface ColorDimensionConfig extends BaseDimensionConfig<string>, Omit<raw.ColorDimensionConfig, 'fixed'> {}
 
 export interface ResourceDimensionConfig
-  extends BaseDimensionConfig<string>,
-    Omit<raw.ResourceDimensionConfig, 'fixed'> {}
+  extends BaseDimensionConfig<string>, Omit<raw.ResourceDimensionConfig, 'fixed'> {}
 
 export * from '../common/common.gen';
 

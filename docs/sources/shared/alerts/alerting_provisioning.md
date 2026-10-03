@@ -1713,11 +1713,11 @@ This API is deprecated and will be removed in a future release. Use the Grafana 
 
 {{% responsive-table %}}
 
-| Name                         | Source | Type                                            | Go type                       | Required | Default | Description                                               |
+| Name | Source | Type | Go type | Required | Default | Description |
 | ---------------------------- | ------ | ----------------------------------------------- | ----------------------------- | :------: | ------- | --------------------------------------------------------- | --- |
-| `UID`                        | path   | string                                          | string                        |    ✓     |         | Alert rule UID                                            |
-| `X-Disable-Provenance: true` | header | string                                          | string                        |          |         | Allows editing of provisioned resources in the Grafana UI |
-| `Body`                       | body   | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` |          |         |                                                           |     |
+| `UID` | path | string | string | ✓ | | Alert rule UID |
+| `X-Disable-Provenance: true` | header | string | string | | | Allows editing of provisioned resources in the Grafana UI |
+| `Body` | body | [ProvisionedAlertRule](#provisioned-alert-rule) | `models.ProvisionedAlertRule` | | | | |
 
 {{% /responsive-table %}}
 
@@ -1961,11 +1961,11 @@ This API is deprecated and will be removed in a future release. Use the [Grafana
 
 #### Parameters
 
-| Name                         | Source | Type                                                          | Go type                              | Required | Default | Description                                               |
+| Name | Source | Type | Go type | Required | Default | Description |
 | ---------------------------- | ------ | ------------------------------------------------------------- | ------------------------------------ | -------- | :-----: | --------------------------------------------------------- | --- |
-| `name`                       | path   | string                                                        | string                               | ✓        |         | Name of the template group                                |
-| `X-Disable-Provenance: true` | header | string                                                        | string                               |          |         | Allows editing of provisioned resources in the Grafana UI |
-| `Body`                       | body   | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` |          |         |                                                           |     |
+| `name` | path | string | string | ✓ | | Name of the template group |
+| `X-Disable-Provenance: true` | header | string | string | | | Allows editing of provisioned resources in the Grafana UI |
+| `Body` | body | [NotificationTemplateContent](#notification-template-content) | `models.NotificationTemplateContent` | | | | |
 
 {{% /responsive-table %}}
 

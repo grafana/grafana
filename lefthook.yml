@@ -15,12 +15,12 @@ pre-commit:
       run: |
         yarn eslint --ext .js,.jsx,.ts,.tsx,.mjs,.cjs,.mts,.cts --cache --prune-suppressions --fix {staged_files} &&
         git add eslint-suppressions.json &&
-        yarn prettier --write {staged_files}
+        yarn oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
 
     other-format:
       glob: '*.{json,scss,md,mdx}'
-      run: yarn prettier --write {staged_files}
+      run: yarn oxfmt --no-error-on-unmatched-pattern {staged_files}
       stage_fixed: true
 
     typecheck-smoke:

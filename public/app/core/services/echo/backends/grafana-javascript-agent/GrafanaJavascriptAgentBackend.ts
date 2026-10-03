@@ -31,9 +31,10 @@ export const TRACKING_URLS = [
   /\/collect(?:\/[\w]*)?$/,
 ];
 
-export class GrafanaJavascriptAgentBackend
-  implements EchoBackend<GrafanaJavascriptAgentEchoEvent, GrafanaJavascriptAgentBackendOptions>
-{
+export class GrafanaJavascriptAgentBackend implements EchoBackend<
+  GrafanaJavascriptAgentEchoEvent,
+  GrafanaJavascriptAgentBackendOptions
+> {
   supportedEvents = [EchoEventType.GrafanaJavascriptAgent];
 
   constructor(public options: GrafanaJavascriptAgentBackendOptions) {

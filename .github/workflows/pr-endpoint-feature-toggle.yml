@@ -40,7 +40,7 @@ jobs:
               - 'scripts/webpack/**'
               - 'scripts/rspack/**'
               - '.eslintrc*'
-              - '.prettierrc*'
+              - '.oxfmtrc.json'
               - '.stylelintrc*'
               - 'tsconfig*'
               - 'yarn.lock'
