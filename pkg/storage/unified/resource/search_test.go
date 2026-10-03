@@ -929,6 +929,16 @@ func TestShouldRebuildIndex(t *testing.T) {
 			lastImportTime:  now,
 			expectedRebuild: true,
 		},
+		"build time equal to last import time": {
+			buildInfo:       IndexBuildInfo{BuildTime: now},
+			lastImportTime:  now,
+			expectedRebuild: true,
+		},
+		"build and import in the same second": {
+			buildInfo:       IndexBuildInfo{BuildTime: now.Truncate(time.Second)},
+			lastImportTime:  now.Truncate(time.Second).Add(500 * time.Millisecond),
+			expectedRebuild: true,
+		},
 		"build time after last import time": {
 			buildInfo:       IndexBuildInfo{BuildTime: now.Add(2 * time.Hour)},
 			lastImportTime:  now,
