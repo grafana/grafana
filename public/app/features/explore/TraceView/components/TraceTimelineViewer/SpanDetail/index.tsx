@@ -56,6 +56,7 @@ import SpanFlameGraph from './SpanFlameGraph';
 import SpanExceptionDetails from './exceptions/SpanExceptionDetails';
 import { getSpanException } from './exceptions/span-exception';
 import { useAttributePluginPromoGetter } from './pluginPromo/attributePluginPromos';
+import { shouldPinEventsFirst } from './spanDetailSectionOrder';
 
 const useResourceAttributesExtensionLinks = ({
   process,
@@ -481,6 +482,19 @@ export default function SpanDetail(props: SpanDetailProps) {
   const openLinksInSameTab = app === CoreApp.Explore || isDrilldownContext(app);
 
   const listOfContentCards = [];
+  const pinEventsFirst = shouldPinEventsFirst(span);
+  const eventsCard =
+    logs && logs.length > 0 ? (
+      <AccordionLogs
+        key="events"
+        logs={logs}
+        isOpen={logsState.isOpen}
+        openedItems={logsState.openedItems}
+        onToggle={() => logsToggle(spanID)}
+        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
+        timestamp={traceStartTime}
+      />
+    ) : null;
 
   if (isSummarySpan && aggregationTags.length > 0) {
     listOfContentCards.push(
@@ -495,6 +509,10 @@ export default function SpanDetail(props: SpanDetailProps) {
         openLinksInSameTab={openLinksInSameTab}
       />
     );
+  }
+
+  if (pinEventsFirst && eventsCard) {
+    listOfContentCards.push(eventsCard);
   }
 
   listOfContentCards.push(
@@ -536,17 +554,8 @@ export default function SpanDetail(props: SpanDetailProps) {
     />
   );
 
-  if (logs && logs.length > 0) {
-    listOfContentCards.push(
-      <AccordionLogs
-        logs={logs}
-        isOpen={logsState.isOpen}
-        openedItems={logsState.openedItems}
-        onToggle={() => logsToggle(spanID)}
-        onItemToggle={(logItem) => logItemToggle(spanID, logItem)}
-        timestamp={traceStartTime}
-      />
-    );
+  if (!pinEventsFirst && eventsCard) {
+    listOfContentCards.push(eventsCard);
   }
 
   if (warnings && warnings.length > 0) {
