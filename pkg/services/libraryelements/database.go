@@ -810,11 +810,18 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 // checking folder permissions; callers must have already confirmed the folder is gone. Elements
 // still connected to a dashboard are kept and block the delete (as in the permission-checked path).
 func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c context.Context, orgID int64, folderUID string) error {
+	dbHelper, err := l.legacyDatabaseProvider(c)
+	if err != nil {
+		return err
+	}
+	libraryElementTable := dbHelper.Table("library_element")
+	ctx := withoutAmbientSession(c)
+
 	var elements []struct {
 		UID string `xorm:"uid"`
 	}
-	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		return session.SQL("SELECT uid FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID).Find(&elements)
+	err = dbHelper.DB.WithDbSession(ctx, func(session *db.Session) error {
+		return session.SQL(fmt.Sprintf("SELECT uid FROM %s WHERE folder_uid=? AND org_id=?", libraryElementTable), folderUID, orgID).Find(&elements)
 	})
 	if err != nil {
 		return err
@@ -831,8 +838,8 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 		}
 	}
 
-	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		_, err := session.Exec("DELETE FROM library_element WHERE folder_uid=? AND org_id=?", folderUID, orgID)
+	return dbHelper.DB.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+		_, err := session.Exec(fmt.Sprintf("DELETE FROM %s WHERE folder_uid=? AND org_id=?", libraryElementTable), folderUID, orgID)
 		return err
 	})
 }

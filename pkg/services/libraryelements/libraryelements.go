@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, dashboardsService dashboards.DashboardService, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, userService user.Service) *LibraryElementService {
@@ -29,6 +31,8 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		features:          features,
 		AccessControl:     ac,
 		k8sHandler:        newLibraryElementsK8sHandler(cfg, clientConfigProvider, folderService, userService, dashboardsService),
+		// LegacyDatabaseProvider is left unset here: it must stay nil unless a deployment
+		// explicitly configures a routed database (see legacyDatabaseProvider).
 	}
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	l.treeCache = newFolderTreeCache(folderService, features != nil && features.IsEnabledGlobally(featuremgmt.FlagLibraryElementsFolderTreeViaSearch))
@@ -64,9 +68,27 @@ type LibraryElementService struct {
 	AccessControl     accesscontrol.AccessControl
 	k8sHandler        *libraryElementsK8sHandler
 	treeCache         *folderTreeCache
+	// LegacyDatabaseProvider resolves table names for this service's SQL queries. If unset,
+	// queries use bare table names.
+	LegacyDatabaseProvider legacysql.LegacyDatabaseProvider
 }
 
 var _ Service = (*LibraryElementService)(nil)
+
+// legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so
+// a LibraryElementService built directly (as in tests) keeps working unchanged.
+func (l *LibraryElementService) legacyDatabaseProvider(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+	if l.LegacyDatabaseProvider == nil {
+		return legacysql.NewDatabaseProvider(l.SQLStore)(ctx)
+	}
+	return l.LegacyDatabaseProvider(ctx)
+}
+
+// withoutAmbientSession forces a fresh session, since sqlstore reuses whatever's on ctx without
+// checking it came from the right db.DB.
+func withoutAmbientSession(ctx context.Context) context.Context {
+	return context.WithValue(ctx, sqlstore.ContextSessionKey{}, nil)
+}
 
 // GetElement gets an element from a UID.
 func (l *LibraryElementService) GetElement(c context.Context, signedInUser identity.Requester, cmd model.GetLibraryElementCommand) (model.LibraryElementDTO, error) {

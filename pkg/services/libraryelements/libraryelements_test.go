@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -97,6 +98,67 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result.Elements))
 		})
+
+	scenarioWithPanel(t, "When an admin deletes a folder, the delete query is routed through LegacyDatabaseProvider",
+		func(t *testing.T, sc scenarioContext) {
+			var requestedTables []string
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB: spy,
+					Table: func(n string) string {
+						requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+						return n
+					},
+				}, nil
+			}
+
+			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+			require.Contains(t, requestedTables, "library_element")
+			require.True(t, spy.withDbSessionCalled, "select should run on dbHelper.DB, not l.SQLStore directly")
+			require.True(t, spy.withTransactionalDbSessionCalled, "delete should run on dbHelper.DB, not l.SQLStore directly")
+		})
+}
+
+// dbSpy wraps a db.DB and records whether WithDbSession/WithTransactionalDbSession were called on
+// it, so a test can prove a query went through this specific connection rather than l.SQLStore.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled              bool
+	withTransactionalDbSessionCalled bool
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, callback)
+}
+
+func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withTransactionalDbSessionCalled = true
+	return s.DB.WithTransactionalDbSession(ctx, callback)
+}
+
+func TestLibraryElementService_legacyDatabaseProvider(t *testing.T) {
+	t.Run("falls back to identity table names when LegacyDatabaseProvider is unset", func(t *testing.T) {
+		svc := &LibraryElementService{}
+		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "library_element", dbHelper.Table("library_element"))
+	})
+
+	t.Run("delegates to the configured provider when set", func(t *testing.T) {
+		svc := &LibraryElementService{
+			LegacyDatabaseProvider: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					Table: func(n string) string { return "hg_stack1." + n },
+				}, nil
+			},
+		}
+		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "hg_stack1.library_element", dbHelper.Table("library_element"))
+	})
 }
 
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
