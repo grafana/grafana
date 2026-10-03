@@ -1,10 +1,12 @@
 package features
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/baggage"
@@ -65,4 +67,106 @@ func TestEvaluationContextFromTargetingKey(t *testing.T) {
 
 	assert.Equal(t, "stacks-42", evalCtx.TargetingKey())
 	assert.Empty(t, evalCtx.Attributes())
+}
+
+func TestWithTransactionContextFallback(t *testing.T) {
+	t.Run("empty namespace leaves ctx untouched", func(t *testing.T) {
+		ctx := WithTransactionContextFallback(context.Background(), "")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Empty(t, tctx.TargetingKey())
+	})
+
+	t.Run("sets namespace when nothing already set one", func(t *testing.T) {
+		ctx := WithTransactionContextFallback(context.Background(), "stacks-42")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-42", tctx.TargetingKey())
+		assert.Equal(t, "stacks-42", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("does not override an existing targeting key, e.g. from baggage", func(t *testing.T) {
+		existing := openfeature.NewEvaluationContext("stacks-1", map[string]any{"slug": "mystack"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-999")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-1", tctx.TargetingKey())
+		assert.Equal(t, "mystack", tctx.Attributes()["slug"])
+	})
+
+	t.Run("does not override an existing namespace attribute even without a targeting key", func(t *testing.T) {
+		existing := openfeature.NewTargetlessEvaluationContext(map[string]any{NamespaceKey: "stacks-1"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-999")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-1", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("existing targeting key with no namespace attribute: fills the attribute from the targeting key, not ns", func(t *testing.T) {
+		existing := openfeature.NewEvaluationContext("stacks-1", map[string]any{"slug": "mystack"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-999")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-1", tctx.TargetingKey())
+		assert.Equal(t, "stacks-1", tctx.Attributes()["namespace"], "namespace attribute should match the existing targeting key, not the freshly-derived ns")
+	})
+
+	t.Run("existing namespace attribute with no targeting key: fills the targeting key from the attribute, not ns", func(t *testing.T) {
+		existing := openfeature.NewTargetlessEvaluationContext(map[string]any{NamespaceKey: "stacks-1"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-999")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-1", tctx.TargetingKey(), "targeting key should be filled from the existing namespace attribute, not the freshly-derived ns")
+		assert.Equal(t, "stacks-1", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("both already set to the same value: no-op", func(t *testing.T) {
+		existing := openfeature.NewEvaluationContext("stacks-1", map[string]any{NamespaceKey: "stacks-1"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-999")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-1", tctx.TargetingKey())
+		assert.Equal(t, "stacks-1", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("existing 'default' sentinel is treated as unresolved and overridden", func(t *testing.T) {
+		existing := openfeature.NewEvaluationContext("default", map[string]any{NamespaceKey: "default"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-42")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-42", tctx.TargetingKey(), "'default' is a fallback sentinel (pkg/setting/setting_openfeature.go), not a real namespace")
+		assert.Equal(t, "stacks-42", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("existing '*' wildcard sentinel is treated as unresolved and overridden", func(t *testing.T) {
+		existing := openfeature.NewEvaluationContext("*", map[string]any{NamespaceKey: "*"})
+		ctx := openfeature.WithTransactionContext(context.Background(), existing)
+
+		ctx = WithTransactionContextFallback(ctx, "stacks-42")
+
+		tctx := openfeature.TransactionContext(ctx)
+		assert.Equal(t, "stacks-42", tctx.TargetingKey(), "'*' is a wildcard/service-scoped identity, not a real namespace")
+		assert.Equal(t, "stacks-42", tctx.Attributes()["namespace"])
+	})
+
+	t.Run("ns itself being 'default' or '*' is never used", func(t *testing.T) {
+		for _, ns := range []string{"default", "*"} {
+			ctx := WithTransactionContextFallback(context.Background(), ns)
+
+			tctx := openfeature.TransactionContext(ctx)
+			assert.Empty(t, tctx.TargetingKey(), "ns=%q", ns)
+		}
+	})
 }
