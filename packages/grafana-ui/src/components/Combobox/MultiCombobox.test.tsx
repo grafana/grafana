@@ -552,7 +552,10 @@ describe('MultiCombobox', () => {
       expect(item).toBeInTheDocument();
 
       expect(asyncOptions).toHaveBeenCalledTimes(1);
-      expect(asyncOptions).toHaveBeenCalledWith('abc');
+      expect(asyncOptions).toHaveBeenCalledWith(
+        'abc',
+        expect.objectContaining({ signal: expect.any(AbortSignal), publish: expect.any(Function) })
+      );
     });
 
     it('should allow deselecting items', async () => {

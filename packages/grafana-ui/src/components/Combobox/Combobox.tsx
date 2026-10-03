@@ -21,7 +21,7 @@ import {
   MENU_OPTION_HEIGHT_DESCRIPTION,
   MENU_PADDING,
 } from './getComboboxStyles';
-import { type ComboboxOption } from './types';
+import { type ComboboxAsyncOptionsContext, type ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
 import { isNewGroup, isKeyboardEvent } from './utils';
@@ -47,8 +47,12 @@ interface ComboboxStaticProps<T extends string | number>
   /**
    * An array of options, or a function that returns a promise resolving to an array of options.
    * If a function, it will be called when the menu is opened and on keypress with the current search query.
+   * Call `context.publish` with the full list so far to show rows before that promise resolves.
+   * Resolve with `void` to keep the last published list.
    */
-  options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
+  options:
+    | Array<ComboboxOption<T>>
+    | ((inputValue: string, context: ComboboxAsyncOptionsContext<T>) => Promise<Array<ComboboxOption<T>> | void>);
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
