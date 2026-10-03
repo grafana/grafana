@@ -74,6 +74,8 @@ public/css/*.min.css
 .DS_Store
 .vscode/
 !.vscode/launch.json
+.zed/
+!.zed/debug.json
 .vs/
 .cursor/
 .devcontainer/
