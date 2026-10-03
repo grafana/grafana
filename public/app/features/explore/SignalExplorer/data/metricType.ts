@@ -27,7 +27,9 @@ export function baseMetricName(name: string): string {
 const HELP_TEXT_TYPES = ['histogram', 'summary'] as const;
 
 /**
- * The type of a metric, from its `/api/v1/metadata` entry and, failing that, from its help text.
+ * The type of a metric, from its `/api/v1/metadata` entry and, failing that, from its name and then
+ * its help text. `catalog` is every metric name the datasource listed, which the name fallback needs
+ * to tell a histogram's `_sum`/`_count` from a summary's.
  *
  * Adapted from `@grafana/prometheus`'s metrics-modal `generateMetricData`, with two deliberate
  * differences:
@@ -37,9 +39,13 @@ const HELP_TEXT_TYPES = ['histogram', 'summary'] as const;
  * - upstream treats only `_bucket` as a classic (non-native) histogram series; a classic histogram
  *   also explodes into `_sum` and `_count`, so those count here too.
  */
-export function deriveMetricType(name: string, meta?: { type?: string; help?: string }): MetricType {
+export function deriveMetricType(
+  name: string,
+  meta: { type?: string; help?: string } | undefined,
+  catalog: ReadonlySet<string>
+): MetricType {
   const declared = (meta?.type ?? '').toLowerCase();
-  const raw = isKnownType(declared) ? declared : fromHelpText(meta?.help);
+  const raw = isKnownType(declared) ? declared : fromName(name, catalog) || fromHelpText(meta?.help);
 
   switch (raw) {
     case 'counter':
@@ -59,6 +65,39 @@ export function deriveMetricType(name: string, meta?: { type?: string; help?: st
 
 function isKnownType(type: string): boolean {
   return type === 'counter' || type === 'gauge' || type === 'summary' || type === 'histogram';
+}
+
+/**
+ * Only suffixes Prometheus reserves for one type are trusted; anything else stays `unknown`, because
+ * a wrong type is worse than none. A gauge has no such suffix, so it is never inferred.
+ */
+function fromName(name: string, catalog: ReadonlySet<string>): string {
+  if (name.endsWith('_total')) {
+    return 'counter';
+  }
+  if (name.endsWith('_bucket')) {
+    return 'histogram';
+  }
+  // `_sum`/`_count` alone could be either a histogram or a summary, so the family's other series decide.
+  if (name.endsWith('_sum') || name.endsWith('_count')) {
+    const family = baseMetricName(name);
+    if (catalog.has(`${family}_bucket`)) {
+      return 'histogram';
+    }
+    return isSummaryFamily(family, catalog) ? 'summary' : '';
+  }
+  return isSummaryFamily(name, catalog) ? 'summary' : '';
+}
+
+// A summary's quantiles live under the bare family name. With `_bucket` present as well, the bare name
+// is more likely a native histogram scraped alongside its classic form.
+function isSummaryFamily(family: string, catalog: ReadonlySet<string>): boolean {
+  return (
+    catalog.has(family) &&
+    catalog.has(`${family}_sum`) &&
+    catalog.has(`${family}_count`) &&
+    !catalog.has(`${family}_bucket`)
+  );
 }
 
 function fromHelpText(help?: string): string {
