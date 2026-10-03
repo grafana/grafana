@@ -1,3 +1,5 @@
+import type uPlot from 'uplot';
+
 import { createTheme, type Field, type FieldSparkline, FieldType, toDataFrame } from '@grafana/data';
 
 import { getYRange, prepareConfig, preparePlotFrame } from './utils';
@@ -345,5 +347,132 @@ describe('prepareConfig', () => {
     const config = prepareConfig(sparkline, dataFrame, createTheme(), false);
     expect(config.series.length).toBe(1);
     expect(config.series[0].getConfig().points?.show).not.toBe(true);
+  });
+});
+
+describe('prepareConfig hover', () => {
+  const theme = createTheme();
+
+  const makeHoverSparkline = (yConfig: Field['config'] = {}): FieldSparkline => ({
+    x: { name: 'x', values: [0, 1, 2, 3, 4], type: FieldType.number, config: {} },
+    y: { name: 'y', values: [10, 20, 30, 40, 50], type: FieldType.number, config: yConfig },
+  });
+
+  const getSetCursorHook = (onHover: jest.Mock, sparkline = makeHoverSparkline()) => {
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+    const builder = prepareConfig(sparkline, dataFrame, theme, false, true, onHover);
+    const hook = builder.getConfig().hooks?.setCursor?.[0];
+    if (!hook) {
+      throw new Error('expected a setCursor hook to be registered');
+    }
+    return hook;
+  };
+
+  const makeU = (
+    idxs: Array<number | null>,
+    { left = 40, top = 10, data }: { left?: number; top?: number; data?: Array<Array<number | null>> } = {}
+  ) =>
+    ({
+      cursor: { idxs, left, top },
+      data: data ?? [
+        [0, 1, 2, 3, 4],
+        [10, 20, 30, 40, 50],
+      ],
+      rect: { left: 100, top: 50 },
+    }) as unknown as uPlot;
+
+  it('disables the cursor and registers no hover hook by default', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme).getConfig();
+
+    expect(config.cursor?.show).toBe(false);
+    expect(config.hooks?.setCursor).toBeUndefined();
+  });
+
+  it('enables a non-dragging crosshair cursor and one hover hook when enabled', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme, false, true, jest.fn()).getConfig();
+
+    expect(config.cursor?.show).toBe(true);
+    expect(config.cursor?.x).toBe(true);
+    expect(config.cursor?.y).toBe(false);
+    expect(config.hooks?.setCursor).toHaveLength(1);
+  });
+
+  // uPlot's default cursor-point color fn reads the builder's `frames`, which Sparkline never
+  // populates, so it throws on gradient series. We override it with a solid color string.
+  it('paints the cursor point with a solid color string, not the frames-reading default fn', () => {
+    const sparkline = makeHoverSparkline();
+    const dataFrame = toDataFrame({ fields: [sparkline.x, sparkline.y] });
+
+    const config = prepareConfig(sparkline, dataFrame, theme, false, true, jest.fn()).getConfig();
+
+    expect(typeof config.cursor?.points?.stroke).toBe('string');
+    expect(typeof config.cursor?.points?.fill).toBe('string');
+  });
+
+  it('emits the hovered index, raw value, formatted display and cursor viewport coords', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover, makeHoverSparkline({ decimals: 1 }));
+
+    hook(makeU([null, 2]));
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith({ index: 2, value: 30, display: '30.0', left: 140, top: 60 });
+  });
+
+  it('dedupes repeated hovers on the same index', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    hook(makeU([null, 2], { left: 41 }));
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+  });
+
+  it('emits null once when leaving a previously-hovered point', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    onHover.mockClear();
+    hook(makeU([null, null]));
+    hook(makeU([null, null]));
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('does not emit before any point has been hovered', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, null]));
+
+    expect(onHover).not.toHaveBeenCalled();
+  });
+
+  it('treats a non-finite value as no hover', () => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+
+    hook(makeU([null, 2]));
+    onHover.mockClear();
+    hook(
+      makeU([null, 3], {
+        data: [
+          [0, 1, 2, 3, 4],
+          [10, 20, 30, NaN, 50],
+        ],
+      })
+    );
+
+    expect(onHover).toHaveBeenCalledTimes(1);
+    expect(onHover).toHaveBeenCalledWith(null);
   });
 });
