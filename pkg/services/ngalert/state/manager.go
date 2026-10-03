@@ -103,6 +103,10 @@ type ManagerCfg struct {
 	// Duration for which a resolved alert state transition will continue to be sent to the Alertmanager.
 	ResolvedRetention time.Duration
 
+	// Minimum time between re-sending a still-firing alert to the Alertmanager.
+	// Zero uses the default ResendDelay (30s).
+	ResendDelay time.Duration
+
 	Tracer tracing.Tracer
 	Log    log.Logger
 
@@ -130,6 +134,11 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 		readiness = newGatedProbe(cfg.Clock, cfg.WarmGateTimeout)
 	}
 
+	resendDelay := cfg.ResendDelay
+	if resendDelay == 0 {
+		resendDelay = ResendDelay
+	}
+
 	maxLabelValueSize := cfg.MaxLabelValueSize
 	switch {
 	case maxLabelValueSize == 0:
@@ -140,7 +149,7 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 
 	m := &Manager{
 		cache:                  c,
-		ResendDelay:            ResendDelay, // TODO: make this configurable
+		ResendDelay:            resendDelay,
 		ResolvedRetention:      cfg.ResolvedRetention,
 		log:                    cfg.Log,
 		metrics:                cfg.Metrics,
@@ -517,7 +526,7 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			patch(newState, curState, result)
 		}
 		start := st.clock.Now()
-		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError)
+		s := newState.transition(alertRule, result, nil, logger, takeImageFn, st.ignorePendingForNoDataAndError, st.ResendDelay)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -536,7 +545,7 @@ func (st *Manager) setNextStateForAll(alertRule *ngModels.AlertRule, result eval
 	for _, currentState := range currentStates {
 		start := st.clock.Now()
 		newState := currentState.Copy()
-		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError)
+		t := newState.transition(alertRule, result, extraAnnotations, logger, takeImageFn, st.ignorePendingForNoDataAndError, st.ResendDelay)
 		if st.metrics != nil {
 			st.metrics.StateUpdateDuration.Observe(st.clock.Now().Sub(start).Seconds())
 		}
@@ -609,7 +618,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			staleStates[s.CacheID] = struct{}{}
 		} else if s.State == eval.Alerting {
 			// Update 'EndsAt' so the Alertmanager won't auto-resolve this alert.
-			s.Maintain(alertRule.IntervalSeconds, evaluatedAt)
+			s.Maintain(alertRule.IntervalSeconds, evaluatedAt, st.ResendDelay)
 		}
 
 		missingTransitions = append(missingTransitions, StateTransition{
