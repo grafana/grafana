@@ -58,6 +58,7 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
+  getHeaderAffordanceWidth,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
@@ -75,6 +76,26 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([
+    [true, false, 22],
+    [true, true, 22],
+    [false, false, 0],
+  ])('reserves Assistant menu space once (refresh=%s filterable=%s)', (tableRefreshEnabled, filterable, expected) => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.string, values: [], config: { custom: { sortable: false, filterable } } },
+      ],
+    });
+    expect(
+      getHeaderAffordanceWidth(frame.fields[0], {
+        showTypeIcons: false,
+        tableRefreshEnabled,
+        isFiltered: false,
+        hasAssistantAction: true,
+      })
+    ).toBe(expected);
+  });
+
   describe('inferPills', () => {
     it('returns an empty array for empty/nullish values', () => {
       expect(inferPills('')).toEqual([]);

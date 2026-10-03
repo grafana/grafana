@@ -12,6 +12,7 @@ import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
 
 interface HeaderCellMenuProps {
+  onAddToAssistant?: () => void;
   displayName: string;
   filterable: boolean;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
@@ -27,7 +28,13 @@ interface HeaderCellMenuProps {
  * Built on Dropdown + Menu so it matches the dashboard panel menu. The filter popup itself is owned
  * by `HeaderCell`, which also opens it from the persistent filter icon.
  */
-export function HeaderCellMenu({ displayName, filterable, hasActiveFilter, onOpenFilter }: HeaderCellMenuProps) {
+export function HeaderCellMenu({
+  displayName,
+  filterable,
+  hasActiveFilter,
+  onOpenFilter,
+  onAddToAssistant,
+}: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
   // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -50,9 +57,19 @@ export function HeaderCellMenu({ displayName, filterable, hasActiveFilter, onOpe
             onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
           />
         )}
+        {onAddToAssistant && (
+          <>
+            {filterable && <Menu.Divider />}
+            <Menu.Item
+              label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+              icon="ai-sparkle"
+              onClick={onAddToAssistant}
+            />
+          </>
+        )}
       </Menu>
     ),
-    [filterable, hasActiveFilter, menuLabel, onOpenFilter]
+    [filterable, hasActiveFilter, menuLabel, onOpenFilter, onAddToAssistant]
   );
 
   return (

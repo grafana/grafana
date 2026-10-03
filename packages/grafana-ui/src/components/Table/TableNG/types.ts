@@ -128,6 +128,7 @@ interface BaseTableProps {
    * frame indexes (`TableRow.__index`), not the current page slice.
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;
