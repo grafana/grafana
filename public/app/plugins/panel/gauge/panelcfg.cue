@@ -49,6 +49,9 @@ composableKinds: PanelCfg: {
 					neutral?:             number
 					effects: GaugePanelEffects | *{}
 				} @cuetsy(kind="interface")
+				FieldConfig: {
+					scaleDistribution?: common.ScaleDistributionConfig
+				} @cuetsy(kind="interface")
 			}
 		}]
 		lenses: []

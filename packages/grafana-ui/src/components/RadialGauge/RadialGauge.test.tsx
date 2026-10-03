@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { type ComponentProps } from 'react';
 
-import { ThresholdsMode } from '@grafana/schema';
+import { createTheme } from '@grafana/data';
+import { ScaleDistribution, ThresholdsMode } from '@grafana/schema';
 
 import { RadialGaugeExample } from './RadialGauge.story';
 
@@ -270,6 +271,78 @@ describe('RadialGauge', () => {
 
       expect(screen.getByRole('img')).toBeInTheDocument();
       expect(screen.queryByTestId('radial-gauge-thresholds-bar')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('log scale', () => {
+    const logScale = { type: ScaleDistribution.Log };
+
+    it.each([
+      { desc: 'linear', scaleDistribution: undefined, trackSegments: 3 },
+      { desc: 'log', scaleDistribution: logScale, trackSegments: 1 },
+    ])(
+      'leaves $trackSegments of 4 segments unfilled for 300 on a 1-10000 $desc scale',
+      ({ scaleDistribution, trackSegments }) => {
+        const trackColor = createTheme().colors.border.medium;
+        const { container } = render(
+          <RadialGaugeExample segmentCount={4} min={1} max={10000} value={300} scaleDistribution={scaleDistribution} />
+        );
+
+        const strokes = Array.from(container.querySelectorAll('path')).map((path) => path.getAttribute('stroke'));
+        expect(strokes).toHaveLength(4);
+        expect(strokes.filter((stroke) => stroke === trackColor)).toHaveLength(trackSegments);
+      }
+    );
+
+    it('colors each segment by the threshold at its log position', () => {
+      const theme = createTheme();
+      const green = theme.visualization.getColorByName('green');
+      const red = theme.visualization.getColorByName('red');
+      // segments start at 1, 10, 100 and 1000
+      const { container } = render(
+        <RadialGaugeExample
+          segmentCount={4}
+          min={1}
+          max={10000}
+          value={10000}
+          scaleDistribution={logScale}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 100, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      const strokes = Array.from(container.querySelectorAll('path')).map((path) => path.getAttribute('stroke'));
+      expect(strokes).toEqual([green, green, red, red]);
+    });
+
+    it('places a threshold at the geometric midpoint halfway around a circle', () => {
+      render(
+        <RadialGaugeExample
+          showScaleLabels
+          shape="circle"
+          min={1}
+          max={10000}
+          unit="none"
+          scaleDistribution={logScale}
+          thresholds={{
+            mode: ThresholdsMode.Absolute,
+            steps: [
+              { value: -Infinity, color: 'green' },
+              { value: 100, color: 'red' },
+            ],
+          }}
+        />
+      );
+
+      const textPath = screen.getByLabelText('Threshold 100').querySelector('textPath')!;
+      const labelsPath = document.getElementById(textPath.getAttribute('href')!.slice(1))!;
+      const radius = Number(labelsPath.getAttribute('d')!.match(/A ([\d.]+)/)![1]);
+      expect(Number(textPath.getAttribute('startOffset'))).toBeCloseTo(Math.PI * radius, 5);
     });
   });
 });

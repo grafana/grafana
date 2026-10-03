@@ -16368,6 +16368,10 @@
     "unmark-as-starred-with-title": "Unmark \"{{title}}\" as favorite"
   },
   "stat": {
+    "add-gauge-scale-option": {
+      "description-scale": "Logarithmic requires a min greater than 0. Otherwise, a linear scale is used.",
+      "name-scale": "Scale"
+    },
     "add-orientation-option": {
       "description-orientation": "Layout orientation",
       "name-orientation": "Orientation",
@@ -16405,6 +16409,10 @@
     },
     "description-graph-mode": "Stat panel graph / sparkline mode",
     "description-text-mode": "Control if name and value is displayed or just name",
+    "gauge-scale-editor": {
+      "label-linear": "Linear",
+      "label-log": "Logarithmic"
+    },
     "graph-mode": {
       "options": {
         "label-area": "Area",

@@ -4,7 +4,7 @@ import { type FieldDisplay } from '@grafana/data';
 
 import { getEndpointMarkerColors, getGuideDotColor } from './colors';
 import { type GradientStop, type RadialGaugeDimensions } from './types';
-import { toRad } from './utils';
+import { getValuePercentageForValue, toRad } from './utils';
 
 interface RadialArcPathEndpointMarksPropsBase {
   arcLengthDeg: number;
@@ -61,7 +61,7 @@ export const RadialArcPathEndpointMarks = memo(
     switch (endpointMarker) {
       case 'point': {
         const [pointColorStart, pointColorEnd] = isGradient
-          ? getEndpointMarkerColors(rest.gradient, fieldDisplay.display.percent)
+          ? getEndpointMarkerColors(rest.gradient, getValuePercentageForValue(fieldDisplay))
           : [getGuideDotColor(rest.color), getGuideDotColor(rest.color)];
 
         const dotRadius =
