@@ -404,4 +404,5 @@ export interface AuthSettings {
   disableLogin?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
   disableSignoutMenu?: boolean;
+  disableForgotPassword?: boolean;
 }
