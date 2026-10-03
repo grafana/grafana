@@ -155,7 +155,9 @@ describe('<SignalExplorer />', () => {
 
     expect(screen.getByTestId('signal-card-A')).toBeInTheDocument();
     expect(screen.getByTestId('signal-card-B')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Jump to query B (gdev-loki)' })).toBeInTheDocument();
   });
 
@@ -171,9 +173,13 @@ describe('<SignalExplorer />', () => {
     render(explorer([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]));
 
     // The list is async, so the first paint only has the ref's own fields to label the card with.
-    expect(screen.getByRole('button', { name: 'Jump to query A (prometheus)' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (prometheus)' })
+    ).toBeInTheDocument();
 
-    expect(await screen.findByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('takes a card logo from the plugin meta of the datasource type', async () => {
@@ -185,8 +191,9 @@ describe('<SignalExplorer />', () => {
   it('falls back to the pane datasource for queries without their own ref', async () => {
     await setup([{ refId: 'A' }], { uid: 'prom-uid', type: 'prometheus' } as DataSourceApi);
 
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('only makes Prometheus cards expandable', async () => {
@@ -195,21 +202,26 @@ describe('<SignalExplorer />', () => {
       { refId: 'B', datasource: { uid: 'loki-uid', type: 'loki' } },
     ]);
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Expand datasource explorer for query B' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Expand datasource explorer for query A/ })).toHaveAttribute(
+      'aria-expanded',
+      'false'
+    );
+    expect(screen.getByRole('button', { name: 'Jump to query B (gdev-loki)' })).not.toHaveAttribute('aria-expanded');
   });
 
   it('treats Prometheus flavors as expandable', async () => {
     await setup([{ refId: 'A', datasource: { uid: 'amp-uid', type: 'grafana-amazonprometheus-datasource' } }]);
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-amp)' })
+    ).toBeInTheDocument();
   });
 
   it('reveals the metrics explorer when a Prometheus card is expanded', async () => {
     const { user } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
 
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
   });
@@ -220,15 +232,21 @@ describe('<SignalExplorer />', () => {
       { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
     ]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(2);
 
-    await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+    await user.click(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    );
 
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(1);
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
+    ).toBeInTheDocument();
   });
 
   it('keeps multiple cards expanded independently', async () => {
@@ -237,8 +255,8 @@ describe('<SignalExplorer />', () => {
       { refId: 'B', datasource: { uid: 'prom-uid', type: 'prometheus' } },
     ]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
 
     expect(screen.getAllByPlaceholderText('Search metrics')).toHaveLength(2);
     expect(screen.getAllByRole('button', { expanded: true })).toHaveLength(2);
@@ -246,18 +264,19 @@ describe('<SignalExplorer />', () => {
 
   it('relabels a card when its query switches datasource', async () => {
     const { rerender } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
 
     rerender(explorer([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]));
 
-    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Expand datasource explorer for query A' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Jump to query A (gdev-loki)' })).not.toHaveAttribute('aria-expanded');
   });
 
   it('keeps an expanded card intact while its query is being edited', async () => {
     const { user, rerender } = await setup([promQuery('A')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
     await user.type(screen.getByPlaceholderText('Search metrics'), 'node_cpu');
 
     // Explore replaces the queries array on every keystroke in the query editor, which
@@ -265,7 +284,9 @@ describe('<SignalExplorer />', () => {
     rerender(explorer([promQuery('A', 'u')]));
     rerender(explorer([promQuery('A', 'up')]));
 
-    expect(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search metrics')).toHaveValue('node_cpu');
   });
 
@@ -280,34 +301,38 @@ describe('<SignalExplorer />', () => {
   it('forgets a deleted query, so a new one reusing its refId is not already expanded', async () => {
     const { user, rerender } = await setup([promQuery('A'), promQuery('B')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' }));
     expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
 
     rerender(explorer([promQuery('A')]));
     // Explore assigns the lowest unused refId, so the next query added is B again.
     rerender(explorer([promQuery('A'), promQuery('B')]));
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query B' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
   });
 
   it('forgets an expanded card when its query moves to a datasource with no explorer', async () => {
     const { user, rerender } = await setup([promQuery('A')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
 
     rerender(explorer([{ refId: 'A', datasource: { uid: 'loki-uid', type: 'loki' } }]));
     rerender(explorer([promQuery('A')]));
 
-    expect(screen.getByRole('button', { name: 'Expand datasource explorer for query A' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+    ).toBeInTheDocument();
     expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
   });
 
   it('keeps the remaining cards expanded when another query is deleted', async () => {
     const { user, rerender } = await setup([promQuery('A'), promQuery('B'), promQuery('C')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query C' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query C (gdev-prometheus)' }));
 
     rerender(explorer([promQuery('A'), promQuery('C')]));
 
@@ -325,12 +350,21 @@ describe('<SignalExplorer />', () => {
     expect(scrollerMock.scroll).not.toHaveBeenCalled();
   });
 
-  it('expanding a card does not also jump to its query, since the chevron does not bubble', async () => {
-    const { user } = await setup([{ refId: 'A', datasource: { uid: 'prom-uid', type: 'prometheus' } }]);
+  it('scrolls to the query row when a Prometheus card is expanded, but not when it collapses', async () => {
+    const { user } = await setup([promQuery('A')]);
 
-    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' }));
 
-    expect(scrollerMock.scroll).not.toHaveBeenCalled();
+    expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
+    expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
+    expect(scrollerMock.scroll).toHaveBeenCalledWith({ top: -10, behavior: 'smooth' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+    );
+
+    expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
+    expect(scrollerMock.scroll).toHaveBeenCalledTimes(1);
   });
 
   // One panel for the whole sidebar, so one metric at a time across every card.
@@ -340,7 +374,9 @@ describe('<SignalExplorer />', () => {
     const openCard = async (refId: string) => {
       useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
       const rendered = await setup([promQuery('A'), promQuery('B')]);
-      await rendered.user.click(screen.getByRole('button', { name: `Expand datasource explorer for query ${refId}` }));
+      await rendered.user.click(
+        screen.getByRole('button', { name: `Expand datasource explorer for query ${refId} (gdev-prometheus)` })
+      );
       return rendered;
     };
 
@@ -393,17 +429,23 @@ describe('<SignalExplorer />', () => {
       const { user } = await openCard('A');
       await selectUpIn(user, 'A');
 
-      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query A' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query A (gdev-prometheus)' })
+      );
 
       expect(screen.queryByTestId('metric-detail-panel')).not.toBeInTheDocument();
     });
 
     it('stays open when another card collapses', async () => {
       const { user } = await openCard('A');
-      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query B (gdev-prometheus)' })
+      );
       await selectUpIn(user, 'A');
 
-      await user.click(screen.getByRole('button', { name: 'Collapse datasource explorer for query B' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Collapse datasource explorer for query B (gdev-prometheus)' })
+      );
 
       expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
     });
@@ -437,7 +479,7 @@ describe('<SignalExplorer />', () => {
       const typeOnlyQuery = (type: string) => ({ refId: 'A', datasource: { type } }) as DataQuery;
 
       const { user, rerender } = await setup([typeOnlyQuery('prometheus')]);
-      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A (prometheus)' }));
       await selectUpIn(user, 'A');
       expect(screen.getByTestId('metric-detail-panel')).toBeInTheDocument();
 
@@ -508,7 +550,9 @@ describe('<SignalExplorer />', () => {
         mixedPane
       );
 
-      await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await user.click(
+        screen.getByRole('button', { name: 'Expand datasource explorer for query A (gdev-prometheus)' })
+      );
       await user.click(within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Expand up' }));
 
       expect(reportInteractionMock).toHaveBeenCalledWith('signal_explorer_metric_expanded', {

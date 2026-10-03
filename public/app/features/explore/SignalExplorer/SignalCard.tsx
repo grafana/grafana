@@ -22,8 +22,8 @@ interface Props {
 
 /**
  * A single query in the Datasource explorer sidebar, labelled with its refId and
- * datasource. Clicking it jumps to that query row; expanding it reveals the
- * datasource's explorer inline, pushing the cards below it down.
+ * datasource. Clicking it jumps to that query row. On an expandable card the click
+ * also toggles the datasource's explorer inline, pushing the cards below it down.
  */
 export function SignalCard({
   refId,
@@ -48,16 +48,35 @@ export function SignalCard({
   // The datasource name is not rendered inline (the logo covers the type and long query
   // names need the room), so name the card with it to disambiguate two instances of the
   // same datasource type in Mixed mode.
-  const jumpLabel = t('explore.signal-card.jump-to-query-label', 'Jump to query {{refId}} ({{datasourceName}})', {
-    refId,
-    datasourceName,
-  });
+  const label = !isExpandable
+    ? t('explore.signal-card.jump-to-query-label', 'Jump to query {{refId}} ({{datasourceName}})', {
+        refId,
+        datasourceName,
+      })
+    : expanded
+      ? t(
+          'explore.signal-card.collapse-aria-label',
+          'Collapse datasource explorer for query {{refId}} ({{datasourceName}})',
+          { refId, datasourceName }
+        )
+      : t(
+          'explore.signal-card.expand-aria-label',
+          'Expand datasource explorer for query {{refId}} ({{datasourceName}})',
+          { refId, datasourceName }
+        );
+
+  const onHeaderClick = () => {
+    // Only an opening jumps: scrolling the pane as the user closes the card would only disorient.
+    if (!expanded) {
+      onJumpToQuery();
+    }
+    if (isExpandable) {
+      onToggleExpanded();
+    }
+  };
 
   return (
     <div className={cx(styles.card, expanded && styles.cardExpanded)} data-testid={`signal-card-${refId}`}>
-      {/* Siblings rather than a jump target wrapping the chevron: WebKit treats the
-          content of a button as presentational, so a nested control is invisible to
-          VoiceOver, and nesting would make the two fight over clicks and keydowns. */}
       <div
         className={cx(
           styles.cardHeader,
@@ -65,35 +84,22 @@ export function SignalCard({
           expanded && styles.cardHeaderExpanded
         )}
       >
-        {isExpandable && (
-          <button
-            type="button"
-            className={styles.cardChevron}
-            aria-expanded={expanded}
-            aria-controls={expanded ? bodyId : undefined}
-            aria-label={
-              expanded
-                ? t('explore.signal-card.collapse-aria-label', 'Collapse datasource explorer for query {{refId}}', {
-                    refId,
-                  })
-                : t('explore.signal-card.expand-aria-label', 'Expand datasource explorer for query {{refId}}', {
-                    refId,
-                  })
-            }
-            onClick={onToggleExpanded}
-          >
-            <Icon name={expanded ? 'angle-down' : 'angle-right'} />
-          </button>
-        )}
         <button
           type="button"
-          className={styles.jumpButton}
+          className={styles.headerButton}
+          aria-expanded={isExpandable ? expanded : undefined}
+          aria-controls={expanded ? bodyId : undefined}
           // `title` only names an element that has no other name, and this one is named by
           // its refId text, so the label has to be explicit or the datasource name is lost.
-          aria-label={jumpLabel}
-          title={jumpLabel}
-          onClick={onJumpToQuery}
+          aria-label={label}
+          title={label}
+          onClick={onHeaderClick}
         >
+          {isExpandable && (
+            <span className={styles.cardChevron}>
+              <Icon name={expanded ? 'angle-down' : 'angle-right'} />
+            </span>
+          )}
           {logo ? (
             <img src={logo} alt="" className={styles.datasourceLogo} onError={() => setBrokenLogo(logo)} />
           ) : (
@@ -134,16 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     top: '50%',
     transform: 'translateY(-50%)',
     display: 'flex',
-    alignItems: 'center',
-    padding: 0,
-    background: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
     color: theme.colors.text.secondary,
     opacity: 0,
-    '&:hover': {
-      color: theme.colors.text.primary,
-    },
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: theme.transitions.create(['opacity'], {
         duration: theme.transitions.duration.shortest,
@@ -151,9 +149,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     },
   });
 
-  const jumpButton = css({
-    label: 'signal-card-jump-button',
-    // Fills the header so clicking anywhere outside the chevron jumps to the query.
+  const headerButton = css({
+    label: 'signal-card-header-button',
+    // Fills the header so the whole row, chevron included, is the hit target.
     flex: '1 1 auto',
     minWidth: 0,
     display: 'flex',
@@ -175,20 +173,20 @@ const getStyles = (theme: GrafanaTheme2) => {
     },
   });
 
-  // The hidden chevron still sits over the logo, so anything that makes it clickable has
-  // to shift the jump button's content clear of it in the same breath.
+  // The hidden chevron still sits over the logo, so anything that reveals it has to shift
+  // the header button's content clear of it in the same breath.
   const chevronRevealed = {
     [`.${cardChevron}`]: {
       opacity: 1,
     },
-    [`.${jumpButton}`]: {
+    [`.${headerButton}`]: {
       paddingLeft: chevronGutter,
     },
   };
 
   return {
     cardChevron,
-    jumpButton,
+    headerButton,
     card: css({
       label: 'signal-card',
       position: 'relative',
@@ -231,8 +229,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     // The chevron takes no layout space at rest so logos and query names sit flush
     // left; revealing it shifts the content right to make room. Keying the reveal
     // off :focus-visible rather than :focus-within stops it from staying open after a
-    // mouse click, and `:has` reveals it for whichever of the two controls has
-    // keyboard focus.
+    // mouse click.
     cardHeaderExpandable: css({
       label: 'signal-card-header-expandable',
       '&:hover, &:has(:focus-visible)': chevronRevealed,

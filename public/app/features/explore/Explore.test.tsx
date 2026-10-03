@@ -277,7 +277,7 @@ describe('Explore', () => {
 
       expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Expand datasource explorer for query A / }));
 
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
