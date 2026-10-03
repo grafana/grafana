@@ -13,6 +13,7 @@ import { type DisplayValue, type DisplayValueAlignmentFactors } from '../types/d
 import { type FieldConfigSource } from '../types/fieldOverrides';
 import { type InterpolateFunction } from '../types/panel';
 import { type TimeRange, type TimeZone } from '../types/time';
+import { anyToNumberOrUndefined } from '../utils/anyToNumber';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFieldDisplayName } from './fieldState';
@@ -448,8 +449,8 @@ function createNoValuesFieldDisplay(options: GetFieldDisplayValuesOptions): Fiel
     name: displayName,
     field: {
       ...defaults,
-      max: defaults.max ?? 0,
-      min: defaults.min ?? 0,
+      max: anyToNumberOrUndefined(defaults.max) ?? 0,
+      min: anyToNumberOrUndefined(defaults.min) ?? 0,
     },
     display: {
       text,

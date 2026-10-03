@@ -20,3 +20,18 @@ export function anyToNumber(value: unknown): number {
 
   return toNumber(value);
 }
+
+/**
+ * Will return any value as a number, or undefined when it is not a number
+ *
+ * @internal
+ * */
+export function anyToNumberOrUndefined(value: unknown): number | undefined {
+  // lodash turns whitespace-only strings into 0
+  if (typeof value === 'string' && value.trim() === '') {
+    return undefined;
+  }
+
+  const num = anyToNumber(value);
+  return isNaN(num) ? undefined : num;
+}
