@@ -15,6 +15,8 @@ export interface DataSourceListSnapshot {
   defaultUid?: string;
   /** Settings keyed by uid, when the source has them up front. Preloads the settings layer. */
   settings?: Record<string, DataSourceInstanceSettings>;
+  /** What the source fetched to build the list, for the fill measurement. */
+  stats?: { connections: number; droppedMissingPlugin: number };
 }
 
 /**

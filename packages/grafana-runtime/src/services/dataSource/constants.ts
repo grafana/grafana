@@ -9,3 +9,5 @@ export const SETTINGS_FETCH_FAILED = `DataSource: failed to load the settings fo
 export const SETTINGS_NOT_FOUND_STALE_LIST_WARNING = `DataSource: a data source in the list was not found by the MT settings API — the list is stale`;
 export const MISSING_PLUGIN_DROPPED_WARNING = `DataSource: dropped data sources whose plugin is not installed`;
 export const DIRECT_ACCESS_UNSUPPORTED_WARNING = `DataSource: direct (browser) access is not supported with MT data source settings — credentials are not available`;
+export const MT_PARITY_MISMATCH_WARNING = `DataSource: the MT data source list differs from boot data`;
+export const MT_SETTINGS_PARITY_MISMATCH_WARNING = `DataSource: MT data source settings differ from boot data`;

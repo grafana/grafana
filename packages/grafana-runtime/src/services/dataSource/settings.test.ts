@@ -129,6 +129,7 @@ const templateSrv: TemplateSrv = {
 
 const backendGet = jest.fn();
 const logWarning = jest.fn();
+const logMeasurement = jest.fn();
 
 beforeAll(() => {
   setTemplateSrv(templateSrv);
@@ -146,9 +147,10 @@ beforeEach(() => {
     logDebug: jest.fn(),
     logError: jest.fn(),
     logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
+    logMeasurement,
     logWarning,
   });
+  logMeasurement.mockClear();
   // No legacy srv by default — reloadDataSourceInstanceSettings() should use the fetch path.
   setDataSourceSrv(undefined as unknown as DataSourceSrv);
 });
@@ -1249,5 +1251,16 @@ describe('numeric id refs', () => {
 
     expect(result?.uid).toBe('uid-three');
     expect(numericIdWarnings()).toEqual([]);
+  });
+});
+
+describe('with boot data filling the cache', () => {
+  it('sends no fill measurement and no parity warning', async () => {
+    initDataSourceInstanceSettings(fixtures, 'Bravo');
+    await syncDataSourceInstanceSettings({ datasources: fixtures, defaultDatasource: 'Bravo' });
+
+    expect((await getDataSourceInstanceList()).length).toBeGreaterThan(0);
+    expect(logMeasurement).not.toHaveBeenCalled();
+    expect(logWarning).not.toHaveBeenCalled();
   });
 });
