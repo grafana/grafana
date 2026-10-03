@@ -1,22 +1,14 @@
 import { debounce } from 'lodash';
 
-import { dateTimeFormatTimeAgo } from '@grafana/data';
-import { featureEnabled, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
+import { featureEnabled, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { type FetchDataArgs } from '@grafana/ui';
-import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type LdapUser } from 'app/types/ldap';
 import { type ThunkResult } from 'app/types/store';
-import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
+import { type UserDTO, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
 import {
-  userAdminPageLoadedAction,
-  userProfileLoadedAction,
-  userOrgsLoadedAction,
-  userSessionsLoadedAction,
-  userAdminPageFailedAction,
   ldapConnectionInfoLoadedAction,
   ldapSyncStatusLoadedAction,
   userMappingInfoLoadedAction,
@@ -36,162 +28,6 @@ import {
   anonPageChanged,
   anonQueryChanged,
 } from './reducers';
-// UserAdminPage
-
-export function loadAdminUserPage(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    try {
-      dispatch(userAdminPageLoadedAction(false));
-      await dispatch(loadUserProfile(userUid));
-      await dispatch(loadUserOrgs(userUid));
-      await dispatch(loadUserSessions(userUid));
-      if (config.ldapEnabled && featureEnabled('ldapsync')) {
-        await dispatch(loadLdapSyncStatus());
-      }
-      dispatch(userAdminPageLoadedAction(true));
-    } catch (error) {
-      console.error(error);
-
-      if (isFetchError(error)) {
-        const userError = {
-          title: error.data.message,
-          body: error.data.error,
-        };
-
-        dispatch(userAdminPageFailedAction(userError));
-      }
-    }
-  };
-}
-
-function loadUserProfile(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const user = await getBackendSrv().get(`/api/users/${userUid}`, accessControlQueryParam());
-    dispatch(userProfileLoadedAction(user));
-  };
-}
-
-export function updateUser(user: UserDTO): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().put(`/api/users/${user.uid}`, user);
-    dispatch(loadAdminUserPage(user.uid));
-  };
-}
-
-export function setUserPassword(userUid: string, password: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const payload = { password };
-    await getBackendSrv().put(`/api/admin/users/${userUid}/password`, payload);
-    dispatch(loadAdminUserPage(userUid));
-  };
-}
-
-export function disableUser(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userUid}/disable`);
-    locationService.push('/admin/users');
-  };
-}
-
-export function enableUser(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userUid}/enable`);
-    dispatch(loadAdminUserPage(userUid));
-  };
-}
-
-export function deleteUser(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().delete(`/api/admin/users/${userUid}`);
-    locationService.push('/admin/users');
-  };
-}
-
-export function updateUserPermissions(userUid: string, isGrafanaAdmin: boolean): ThunkResult<void> {
-  return async (dispatch) => {
-    const payload = { isGrafanaAdmin };
-    await getBackendSrv().put(`/api/admin/users/${userUid}/permissions`, payload);
-    dispatch(loadAdminUserPage(userUid));
-  };
-}
-
-function loadUserOrgs(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const orgs = await getBackendSrv().get(`/api/users/${userUid}/orgs`);
-    dispatch(userOrgsLoadedAction(orgs));
-  };
-}
-
-export function addOrgUser(user: UserDTO, orgId: number, role: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const payload = {
-      loginOrEmail: user.login,
-      role: role,
-    };
-    await getBackendSrv().post(`/api/orgs/${orgId}/users/`, payload);
-    dispatch(loadAdminUserPage(user.uid));
-  };
-}
-
-export function updateOrgUserRole(userUid: string, orgId: number, role: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const payload = { role };
-    await getBackendSrv().patch(`/api/orgs/${orgId}/users/${userUid}`, payload);
-    dispatch(loadAdminUserPage(userUid));
-  };
-}
-
-export function deleteOrgUser(userUid: string, orgId: number): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().delete(`/api/orgs/${orgId}/users/${userUid}`);
-    dispatch(loadAdminUserPage(userUid));
-  };
-}
-
-function loadUserSessions(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    if (!contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList)) {
-      return;
-    }
-
-    const tokens = await getBackendSrv().get(`/api/admin/users/${userUid}/auth-tokens`);
-    tokens.reverse();
-
-    const sessions = tokens.map((session: UserSession) => {
-      return {
-        id: session.id,
-        isActive: session.isActive,
-        seenAt: dateTimeFormatTimeAgo(session.seenAt),
-        createdAt: session.createdAt,
-        clientIp: session.clientIp,
-        browser: session.browser,
-        browserVersion: session.browserVersion,
-        authModule: session.authModule,
-        os: session.os,
-        osVersion: session.osVersion,
-        device: session.device,
-      };
-    });
-
-    dispatch(userSessionsLoadedAction(sessions));
-  };
-}
-
-export function revokeSession(tokenId: number, userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    const payload = { authTokenId: tokenId };
-    await getBackendSrv().post(`/api/admin/users/${userUid}/revoke-auth-token`, payload);
-    dispatch(loadUserSessions(userUid));
-  };
-}
-
-export function revokeAllSessions(userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/users/${userUid}/logout`);
-    dispatch(loadUserSessions(userUid));
-  };
-}
-
 // LDAP user actions
 
 export function loadLdapSyncStatus(): ThunkResult<void> {
@@ -202,13 +38,6 @@ export function loadLdapSyncStatus(): ThunkResult<void> {
       const syncStatus = await getBackendSrv().get(`/api/admin/ldap-sync-status`);
       dispatch(ldapSyncStatusLoadedAction(syncStatus));
     }
-  };
-}
-
-export function syncLdapUser(userId: number, userUid: string): ThunkResult<void> {
-  return async (dispatch) => {
-    await getBackendSrv().post(`/api/admin/ldap/sync/${userId}`);
-    dispatch(loadAdminUserPage(userUid));
   };
 }
 
