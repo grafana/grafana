@@ -1,0 +1,9 @@
+---
+description: Conventions for SQL/Influx identifiers in this datasource
+alwaysApply: true
+---
+Treat dotted identifiers as a first-class case, not an edge case.
+Preserve correct quoting/escaping through parse -> plan -> query execution.
+Add or update a test when changing identifier handling.
+Never log credentials, tokens, or full connection strings.
+If a change could alter query semantics, say so explicitly before applying.
