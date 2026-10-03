@@ -62,7 +62,15 @@ func (rows *Rows) Next() bool {
 	if rows.lastError == nil && rows.rows != nil {
 		hasNext := rows.rows.Next()
 		if !hasNext {
-			rows.lastError = sql.ErrNoRows
+			// sql.Rows.Next returns false both on normal EOF and on a real
+			// driver error. Distinguish them via Err(): on EOF it returns nil
+			// (which we map to sql.ErrNoRows to preserve historical behavior),
+			// and on a real error we propagate that error instead of masking it.
+			if err := rows.rows.Err(); err != nil {
+				rows.lastError = err
+			} else {
+				rows.lastError = sql.ErrNoRows
+			}
 		}
 		return hasNext
 	}

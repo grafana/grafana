@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"database/sql"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -153,6 +154,9 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 			}
 			result = append(result, *rule)
 		}
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -279,6 +283,9 @@ func (st RuleStore) GetAlertRuleVersions(ctx context.Context, orgID int64, guid 
 			previousVersion = rule
 			alertRules = append(alertRules, &converted)
 		}
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -343,6 +350,9 @@ func (st RuleStore) ListDeletedRules(ctx context.Context, orgID int64) ([]*ngmod
 				continue
 			}
 			alertRules = append(alertRules, &converted)
+		}
+		if err := rows.Err(); err != nil && !errors.Is(err, sql.ErrNoRows) {
+			return err
 		}
 		return nil
 	})
