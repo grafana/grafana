@@ -275,6 +275,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 	// Register the raw datasource connection
 	ds := b.datasourceResourceInfo
 	storage[ds.StoragePath("query")] = &subQueryREST{builder: b}
+	storage[ds.StoragePath("access")] = &subAccessREST{builder: b}
 
 	if b.cfg.EnableResourceEndpoint {
 		storage[ds.StoragePath("resources")] = &subResourceREST{builder: b}
@@ -310,9 +311,6 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 			return err
 		}
 		storage[ds.StoragePath()] = b.store
-		storage[ds.StoragePath("access")] = &subAccessREST{
-			builder: b,
-		}
 	} else {
 		// Read only datasources
 		storage[ds.StoragePath()] = &connectionAccess{
