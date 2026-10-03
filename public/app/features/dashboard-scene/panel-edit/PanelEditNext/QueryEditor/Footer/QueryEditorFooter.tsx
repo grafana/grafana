@@ -174,19 +174,20 @@ function getStyles(theme: GrafanaTheme2) {
       padding: 0,
       flex: 1,
       minWidth: 0,
-      overflow: 'hidden',
+      // This list is the only part of the footer that gives way, so it absorbs every shortfall and
+      // can reach zero width. Scrolling keeps the options it holds reachable — clipping them left no
+      // way to get at them at all, which the fade already implied there was.
+      overflowX: 'auto',
+      overflowY: 'hidden',
       whiteSpace: 'nowrap',
-
-      '&::after': {
-        content: '""',
-        position: 'absolute',
-        right: 0,
-        top: 0,
-        bottom: 0,
-        width: theme.spacing(4),
-        background: `linear-gradient(to right, transparent, ${theme.colors.background.primary})`,
-        pointerEvents: 'none',
+      // Scrolled by dragging or the keyboard; a scrollbar inside a 32px footer would crowd it out.
+      scrollbarWidth: 'none',
+      '&::-webkit-scrollbar': {
+        display: 'none',
       },
+      // Fades the clipped edge. A mask tracks the scroll port, where an absolutely positioned
+      // overlay would scroll away with the content it is meant to be fading.
+      maskImage: `linear-gradient(to right, black calc(100% - ${theme.spacing(4)}), transparent)`,
     }),
     itemButton: css({
       // Override Button's default padding and add gap for children
