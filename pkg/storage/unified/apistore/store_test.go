@@ -32,6 +32,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -118,6 +119,239 @@ func TestCreateWithKeyExist(t *testing.T) {
 	defer destroyFunc()
 	assert.NoError(t, err)
 	storagetesting.RunTestCreateWithKeyExist(ctx, t, store)
+}
+
+func TestCreateOrReplaceCreatesWhenMissing(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/overwrite-missing"
+	obj := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "overwrite-missing",
+			Namespace:       "test-ns",
+			ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+	}
+
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	out := &example.Pod{}
+	err = store.Create(ctx, key, obj, out, 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, out.ResourceVersion, "a real resourceVersion must come back from a genuine create")
+}
+
+func TestCreateOrReplaceReplacesWhenFound(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/overwrite-existing"
+	first := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{Name: "overwrite-existing", Namespace: "test-ns"},
+		Spec:       example.PodSpec{NodeName: "first-node"},
+	}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	second := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "overwrite-existing",
+			Namespace:       "test-ns",
+			ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+		Spec: example.PodSpec{NodeName: "second-node"},
+	}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.NoError(t, err, "expected the sentinel to trigger a replace, not AlreadyExists")
+	require.Equal(t, "second-node", secondOut.Spec.NodeName)
+	require.Equal(t, firstOut.UID, secondOut.UID, "replace must preserve the original object's identity, proving this went through Update, not a second Create")
+	require.NotEqual(t, firstOut.ResourceVersion, secondOut.ResourceVersion, "a real write must bump the resourceVersion")
+}
+
+func TestCreateOrReplaceRequiresMarkerEvenWithSentinel(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/no-marker"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "no-marker", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	// Sentinel set, but no AnnoKeyOverwriteValidated - simulating a client that sent the
+	// sentinel directly without going through admission (or a GV admission never validated).
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "no-marker", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.True(t, storage.IsExist(err), "without the marker, a sentinel create against an existing object must still 409, exactly like a plain create would")
+}
+
+func TestCreateNonSentinelResourceVersionsUnchanged(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	t.Run("empty RV creates normally", func(t *testing.T) {
+		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "empty-rv", Namespace: "test-ns"}}
+		out := &example.Pod{}
+		err := store.Create(ctx, "pods/test-ns/empty-rv", obj, out, 0)
+		require.NoError(t, err)
+	})
+
+	t.Run("arbitrary non-empty, non-sentinel RV is rejected exactly as before", func(t *testing.T) {
+		obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+			Name: "bogus-rv", Namespace: "test-ns", ResourceVersion: "12345",
+		}}
+		out := &example.Pod{}
+		err := store.Create(ctx, "pods/test-ns/bogus-rv", obj, out, 0)
+		require.ErrorIs(t, err, storage.ErrResourceVersionSetOnCreate)
+	})
+}
+
+func TestCreateOrReplaceGetErrorPropagatesUnchanged(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	// An empty name produces a key the backend itself rejects when read - exercising
+	// GuaranteedUpdate's own internal read-error propagation (inside its retry loop),
+	// which createOrReplace now relies on directly having dropped its separate pre-Get.
+	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	out := &example.Pod{}
+	err = store.Create(ctx, "pods/test-ns/", obj, out, 0)
+	require.Error(t, err)
+	require.False(t, storage.IsNotFound(err), "expected a real error to propagate, not be treated as NotFound and silently proceed to create")
+}
+
+func TestCreateOrReplaceRejectsRepoManagedResource(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/repo-managed"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "repo-managed", Namespace: "test-ns"}}
+	firstMeta, err := utils.MetaAccessor(first)
+	require.NoError(t, err)
+	firstMeta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test-repo",
+	})
+	// Only the provisioning identity may create a repo-managed resource directly; the default
+	// test identity (a Grafana admin, not the provisioning service) would be rejected here too.
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(ctx, "default")
+	require.NoError(t, err)
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(provisioningCtx, key, first, firstOut, 0))
+
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "repo-managed", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetManagerProperties(utils.ManagerProperties{
+		Kind:     utils.ManagerKindRepo,
+		Identity: "test-repo",
+	})
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.Error(t, err, "the default test identity is not a provisioning service identity, so this must be rejected exactly like a normal Update to a repo-managed resource would be")
+	require.Contains(t, err.Error(), "managed by a repository")
+}
+
+func TestCreateOrReplaceRejectsWhenCallerLacksUpdateRights(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(claims.FixedAccessClient(false)))
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/no-update-rights"
+	obj := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "no-update-rights", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	out := &example.Pod{}
+	err = store.Create(ctx, key, obj, out, 0)
+	require.Error(t, err, "deny-everything AccessClient should block even the first Create attempt, confirming the harness genuinely enforces access control end to end")
+}
+
+type denyUpdateAccessClient struct{}
+
+func (denyUpdateAccessClient) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, _ string) (claims.CheckResponse, error) {
+	return claims.CheckResponse{Allowed: req.Verb != utils.VerbUpdate}, nil
+}
+
+func (denyUpdateAccessClient) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(_, _ string) bool { return true }, &claims.NoopZookie{}, nil
+}
+
+func (denyUpdateAccessClient) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	return claims.BatchCheckResponse{}, nil
+}
+
+func TestCreateOrReplaceRejectsUpdateWithoutUpdateRights(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t, withAccessClient(denyUpdateAccessClient{}))
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/create-only"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "create-only", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0), "every verb except update is allowed, so a genuine first create must still succeed")
+
+	second := &example.Pod{ObjectMeta: metav1.ObjectMeta{
+		Name: "create-only", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+	}}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	secondOut := &example.Pod{}
+	err = store.Create(ctx, key, second, secondOut, 0)
+	require.Error(t, err, "the object exists, so this must now require VerbUpdate, which this AccessClient denies")
+	require.True(t, apierrors.IsForbidden(err))
+}
+
+func TestCreateOrReplaceReplaceDoesNotMutateCallerObject(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	require.NoError(t, err)
+
+	key := "pods/test-ns/deepcopy-check"
+	first := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "deepcopy-check", Namespace: "test-ns"}}
+	firstOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, first, firstOut, 0))
+
+	second := &example.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "deepcopy-check", Namespace: "test-ns", ResourceVersion: apistore.OverwriteOnCreateResourceVersion,
+		},
+		Spec: example.PodSpec{NodeName: "replacement-node"},
+	}
+	secondMeta, err := utils.MetaAccessor(second)
+	require.NoError(t, err)
+	secondMeta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "true")
+
+	secondOut := &example.Pod{}
+	require.NoError(t, store.Create(ctx, key, second, secondOut, 0))
+
+	// The object passed in to Create must not have been mutated by the write it triggered -
+	// if createOrReplace's tryUpdate ever returns the caller's own obj pointer instead of a
+	// copy, storage-layer mutations (UID backfill, generation, etc.) leak back onto it.
+	require.Empty(t, second.UID, "the caller's original object must never be mutated by the write")
 }
 
 func TestValidUpdate(t *testing.T) {

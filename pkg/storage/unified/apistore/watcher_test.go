@@ -30,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
 
+	claims "github.com/grafana/authlib/types"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
@@ -67,6 +68,7 @@ type setupOptions struct {
 	resourcePrefix string
 	groupResource  schema.GroupResource
 	storageType    StorageType
+	accessClient   claims.AccessClient
 }
 
 type setupOption func(*setupOptions, testing.TB)
@@ -83,6 +85,11 @@ func withDefaults(options *setupOptions, t testing.TB) {
 func withStorageType(storageType StorageType) setupOption {
 	return func(options *setupOptions, t testing.TB) {
 		options.storageType = storageType
+	}
+}
+func withAccessClient(ac claims.AccessClient) setupOption {
+	return func(options *setupOptions, t testing.TB) {
+		options.accessClient = ac
 	}
 }
 
@@ -125,7 +132,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		require.NoError(t, err)
 
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:      backend,
+			AccessClient: setupOpts.accessClient,
 		})
 		require.NoError(t, err)
 

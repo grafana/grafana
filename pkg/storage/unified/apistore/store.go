@@ -71,6 +71,13 @@ const (
 	DeprecatedID_Optional
 )
 
+// OverwriteOnCreateResourceVersion is a reserved sentinel value for metadata.resourceVersion
+// on a Create request. A client that sets it is asking Create to behave as an upsert: if an
+// object of the same name already exists, replace it in full (not merged) instead of failing
+// with AlreadyExists. The RBAC (VerbUpdate) and provisioning-lock checks a normal Update
+// already enforces still apply, via GuaranteedUpdate below -- there is nothing new to bypass.
+const OverwriteOnCreateResourceVersion = "-1"
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	// GVK identifies the kind this storage serves, including the version.
@@ -330,6 +337,18 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return err
 	}
 
+	if meta.GetResourceVersion() == OverwriteOnCreateResourceVersion {
+		meta.SetResourceVersion("")
+		validated := meta.GetAnnotation(utils.AnnoKeyOverwriteValidated) == "true"
+		meta.SetAnnotation(utils.AnnoKeyOverwriteValidated, "")
+		if validated {
+			return s.createOrReplace(ctx, key, obj, out, ttl)
+		}
+		// Sentinel present but never validated by admission (no Getter registered for this
+		// GV, or the marker was stripped/never set) - fall through to a plain create, which
+		// 409s on an existing name exactly like it always has.
+	}
+
 	// Make sure we are looking at the correct namespace
 	if meta.GetNamespace() != rkey.Namespace {
 		if meta.GetNamespace() == "" {
@@ -387,6 +406,22 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	return v.finish(ctx, nil, s.opts.SecureValues)
+}
+
+// createOrReplace implements the upsert half of OverwriteOnCreateResourceVersion: if an
+// object of this name already exists, replace it via GuaranteedUpdate (full content, no
+// resourceVersion precondition) instead of letting Create fail with AlreadyExists.
+// Note: ttl is not honored on the create-because-missing path; GuaranteedUpdate's internal
+// upsert always calls Create with ttl=0, which is acceptable since current callers never use nonzero ttl.
+func (s *Storage) createOrReplace(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
+	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+		return obj.DeepCopyObject(), nil, nil
+	}
+	// ignoreNotFound: true means GuaranteedUpdate itself falls through to a plain Create
+	// (see the upsert-on-missing branch below) when the object doesn't exist, so there's
+	// no separate pre-Get here at all - removing both the extra round trip and the narrow
+	// delete-between-Get-and-Update race a separate Get would otherwise open up.
+	return s.GuaranteedUpdate(ctx, key, out, true, nil, tryUpdate, nil)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.

@@ -33,6 +33,13 @@ const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
 // AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
 const AnnoGrantPermissionsDefault = "default"
 
+// AnnoKeyOverwriteValidated marks an object, only transiently, as having already passed
+// real Update-flavored admission validation for a sentinel-triggered create-or-replace.
+// Only the admission layer may set it (never trust a client-supplied value) - it is stripped
+// before persisting either way, and apistore's createOrReplace requires it present before
+// treating a Create as an upsert.
+const AnnoKeyOverwriteValidated = "grafana.app/overwrite-validated"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 

@@ -9,11 +9,16 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/generic"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	apistore "github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -572,4 +577,44 @@ func TestInstallAPIsWithoutARESTOptionsGetter(t *testing.T) {
 	_, isForResource := installer.installedWith.(appsdkapiserver.RESTOptionsGetterForResource)
 	assert.False(t, isForResource,
 		"the noop getter serves no per-version options, so it must not claim to -- the app-sdk would ask it and get nothing")
+}
+
+// registerAdmissionFakeBuilder is local to this test file (not Task 3's builder.fakeBuilder -
+// appinstaller and builder are different packages, and this double is small enough not to be
+// worth exporting cross-package just to share it). Satisfies builder.APIGroupBuilder's real
+// methods (common.go:30-50), builder.APIGroupVersionProvider (GetGroupVersion), and
+// builder.APIGroupGetter (Get).
+type registerAdmissionFakeBuilder struct {
+	gv  schema.GroupVersion
+	obj runtime.Object
+}
+
+func (f *registerAdmissionFakeBuilder) InstallSchema(*runtime.Scheme) error { return nil }
+func (f *registerAdmissionFakeBuilder) UpdateAPIGroupInfo(*genericapiserver.APIGroupInfo, builder.APIGroupOptions) error {
+	return nil
+}
+func (f *registerAdmissionFakeBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
+	return nil
+}
+func (f *registerAdmissionFakeBuilder) AllowedV0Alpha1Resources() []string   { return nil }
+func (f *registerAdmissionFakeBuilder) GetGroupVersion() schema.GroupVersion { return f.gv }
+func (f *registerAdmissionFakeBuilder) Get(_ context.Context, _ schema.GroupVersionResource, _, _ string) (runtime.Object, error) {
+	return f.obj, nil
+}
+
+func TestRegisterAdmissionWrapsResultWithOverwriteAdmission(t *testing.T) {
+	existing := &recordingChain{} // from overwrite_admission_test.go, same package
+	fb := &registerAdmissionFakeBuilder{gv: testGV.GroupVersion(), obj: newUnstructuredWithRV("")}
+
+	result, err := RegisterAdmission(existing, nil, []builder.APIGroupBuilder{fb})
+	require.NoError(t, err)
+
+	// A sentinel-triggered request against the fake builder's GV must come out the other
+	// end as a real Update, proving RegisterAdmission's result is actually wrapped and not
+	// just the plain chain it was before this task.
+	obj := newUnstructuredWithRV(apistore.OverwriteOnCreateResourceVersion)
+	a := newAttrs(obj, admission.Create)
+	validator, ok := result.(admission.ValidationInterface)
+	require.True(t, ok)
+	require.NoError(t, validator.Validate(context.Background(), a, nil))
 }

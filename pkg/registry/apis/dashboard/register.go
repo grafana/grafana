@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -85,6 +86,7 @@ var (
 	_ builder.APIGroupMutation         = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupValidation       = (*DashboardsAPIBuilder)(nil)
 	_ builder.APIGroupAuditor          = (*DashboardsAPIBuilder)(nil)
+	_ builder.APIGroupGetter           = (*DashboardsAPIBuilder)(nil)
 )
 
 const (
@@ -347,6 +349,36 @@ func (b *DashboardsAPIBuilder) AllowedV0Alpha1Resources() []string {
 		dashv0.LIBRARY_PANEL_RESOURCE,
 		dashv0.SNAPSHOT_RESOURCE,
 	}
+}
+
+// Get implements builder.APIGroupGetter, letting the admission layer fetch an existing
+// dashboard to validate a sentinel-triggered create-or-replace against as a real update.
+// This builder's GroupVersion also serves library panels, variables and notebooks (see
+// Validate's switch below), so any resource other than dashboards is not applicable here -
+// return NotFound rather than silently fetching an unrelated dashboard with the same name.
+// Unified storage persists resources as plain JSON (see
+// pkg/storage/unified/apistore/serializer.go), so decoding into an unstructured.Unstructured
+// avoids needing a specific typed/versioned Go struct or codec here.
+func (b *DashboardsAPIBuilder) Get(ctx context.Context, gvr schema.GroupVersionResource, namespace, name string) (runtime.Object, error) {
+	if gvr.Resource != dashv0.DASHBOARD_RESOURCE {
+		return nil, apierrors.NewNotFound(gvr.GroupResource(), name)
+	}
+	rsp, err := b.unified.Read(ctx, &resourcepb.ReadRequest{
+		Key: &resourcepb.ResourceKey{
+			Group:     dashv0.GROUP,
+			Resource:  dashv0.DASHBOARD_RESOURCE,
+			Namespace: namespace,
+			Name:      name,
+		},
+	})
+	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		return nil, resource.GetError(resource.AsErrorResult(err))
+	}
+	obj := &unstructured.Unstructured{}
+	if err := json.Unmarshal(rsp.Value, &obj.Object); err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 // Validate validates dashboard operations for the apiserver

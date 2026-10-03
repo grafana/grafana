@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -592,6 +593,41 @@ func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.Resou
 }
 func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
 	return nil, nil
+}
+
+func TestDashboardsAPIBuilderGet(t *testing.T) {
+	mockClient := resource.NewMockResourceClient(t)
+	mockClient.On("Read", mock.Anything, mock.Anything).Return(&resourcepb.ReadResponse{
+		Value: []byte(`{"spec":{"title":"existing"}}`),
+	}, nil)
+
+	b := &DashboardsAPIBuilder{unified: mockClient}
+
+	gvr := schema.GroupVersionResource{Group: dashv0.GROUP, Version: "v0alpha1", Resource: dashv0.DASHBOARD_RESOURCE}
+	obj, err := b.Get(context.Background(), gvr, "ns", "existing-uid")
+	require.NoError(t, err)
+
+	u, ok := obj.(*unstructured.Unstructured)
+	require.True(t, ok)
+	spec, ok := u.Object["spec"].(map[string]any)
+	require.True(t, ok)
+	require.Equal(t, "existing", spec["title"])
+}
+
+// TestDashboardsAPIBuilderGet_UnsupportedResourceIsNotFound guards Finding 2: this builder's
+// GroupVersion also serves library panels, variables and notebooks, so Get must reject any
+// resource other than dashboards with NotFound instead of fetching an unrelated dashboard
+// that happens to share the requested name.
+func TestDashboardsAPIBuilderGet_UnsupportedResourceIsNotFound(t *testing.T) {
+	// No mock expectations are set on unified - if Get tried to call Read for a
+	// non-dashboard resource, the mock would fail the test for an unexpected call.
+	mockClient := resource.NewMockResourceClient(t)
+	b := &DashboardsAPIBuilder{unified: mockClient}
+
+	gvr := schema.GroupVersionResource{Group: dashv0.GROUP, Version: "v0alpha1", Resource: dashv2beta1.VariableResourceInfo.GroupVersionResource().Resource}
+	_, err := b.Get(context.Background(), gvr, "ns", "some-variable")
+	require.Error(t, err)
+	require.True(t, apierrors.IsNotFound(err), "expected a NotFound error for a resource this builder's Get doesn't serve")
 }
 
 // TestCodecPathResourcesRegisterOneVersionPerType guards apimachinery's LegacyCodec version-order
