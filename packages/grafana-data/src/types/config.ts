@@ -34,6 +34,8 @@ export interface AzureCloudInfo {
 }
 
 export type AppPluginConfig = {
+  /** App Platform API group whose fixed roles appear alongside this app's plugin roles. Omitted by default. */
+  appPlatformRoleGroup?: string;
   id: string;
   path: string;
   version: string;
@@ -45,9 +47,9 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
-  // Display and navigation fields, absent from the bootdata-sourced configs and
-  // populated only when these come from the plugins.grafana.app metas API
+  // Bootdata includes the name for apps that opt into role grouping.
   name?: string;
+  // Navigation fields populated by the plugins.grafana.app metas API.
   includes?: PluginInclude[];
   info?: {
     description?: string;

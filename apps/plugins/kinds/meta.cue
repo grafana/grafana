@@ -52,16 +52,18 @@ metaV0Alpha1: {
 	dependencies: #Dependencies
 
 	// Optional fields
-	alerting?:           bool
-	annotations?:        bool
-	autoEnabled?:        bool
-	backend?:            bool
-	buildMode?:          string
-	builtIn?:            bool
-	category?:           string
-	enterpriseFeatures?: #EnterpriseFeatures
-	executable?:         string
-	hideFromList?:       bool
+	// App Platform API group whose fixed roles appear alongside this app's plugin roles.
+	appPlatformRoleGroup?: string
+	alerting?:             bool
+	annotations?:          bool
+	autoEnabled?:          bool
+	backend?:              bool
+	buildMode?:            string
+	builtIn?:              bool
+	category?:             string
+	enterpriseFeatures?:   #EnterpriseFeatures
+	executable?:           string
+	hideFromList?:         bool
 	// +listType=atomic
 	includes?: [...#Include]
 	logs?:                      bool

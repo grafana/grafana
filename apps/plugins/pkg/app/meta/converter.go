@@ -25,6 +25,10 @@ func jsonDataToMetaJSONData(jsonData plugins.JSONData) pluginsv0alpha1.MetaJSOND
 		Name: jsonData.Name,
 	}
 
+	if jsonData.Type == plugins.TypeApp && jsonData.AppPlatformRoleGroup != "" {
+		meta.AppPlatformRoleGroup = &jsonData.AppPlatformRoleGroup
+	}
+
 	// Map plugin type
 	switch jsonData.Type {
 	case plugins.TypeApp:

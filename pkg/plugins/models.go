@@ -331,17 +331,19 @@ type PanelDTO struct {
 }
 
 type AppDTO struct {
-	ID              string            `json:"id"`
-	Path            string            `json:"path"`
-	Version         string            `json:"version"`
-	Preload         bool              `json:"preload"`
-	Angular         AngularMeta       `json:"angular"`
-	LoadingStrategy LoadingStrategy   `json:"loadingStrategy"`
-	Extensions      Extensions        `json:"extensions"`
-	Dependencies    Dependencies      `json:"dependencies"`
-	ModuleHash      string            `json:"moduleHash,omitempty"`
-	Translations    map[string]string `json:"translations,omitempty"`
-	BuildMode       string            `json:"buildMode,omitempty"`
+	Name                 string            `json:"name,omitempty"`
+	AppPlatformRoleGroup string            `json:"appPlatformRoleGroup,omitempty"`
+	ID                   string            `json:"id"`
+	Path                 string            `json:"path"`
+	Version              string            `json:"version"`
+	Preload              bool              `json:"preload"`
+	Angular              AngularMeta       `json:"angular"`
+	LoadingStrategy      LoadingStrategy   `json:"loadingStrategy"`
+	Extensions           Extensions        `json:"extensions"`
+	Dependencies         Dependencies      `json:"dependencies"`
+	ModuleHash           string            `json:"moduleHash,omitempty"`
+	Translations         map[string]string `json:"translations,omitempty"`
+	BuildMode            string            `json:"buildMode,omitempty"`
 }
 
 const (

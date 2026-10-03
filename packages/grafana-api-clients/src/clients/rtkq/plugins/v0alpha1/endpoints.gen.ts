@@ -843,9 +843,11 @@ export type MetaRoute = {
   }[];
 };
 export type MetaJsonData = {
-  /** Optional fields */
   alerting?: boolean;
   annotations?: boolean;
+  /** Optional fields
+    App Platform API group whose fixed roles appear alongside this app's plugin roles. */
+  appPlatformRoleGroup?: string;
   autoEnabled?: boolean;
   backend?: boolean;
   buildMode?: string;

@@ -17,16 +17,18 @@ type MetaJSONData struct {
 	// Dependency information
 	Dependencies MetaDependencies `json:"dependencies"`
 	// Optional fields
-	Alerting           *bool                   `json:"alerting,omitempty"`
-	Annotations        *bool                   `json:"annotations,omitempty"`
-	AutoEnabled        *bool                   `json:"autoEnabled,omitempty"`
-	Backend            *bool                   `json:"backend,omitempty"`
-	BuildMode          *string                 `json:"buildMode,omitempty"`
-	BuiltIn            *bool                   `json:"builtIn,omitempty"`
-	Category           *string                 `json:"category,omitempty"`
-	EnterpriseFeatures *MetaEnterpriseFeatures `json:"enterpriseFeatures,omitempty"`
-	Executable         *string                 `json:"executable,omitempty"`
-	HideFromList       *bool                   `json:"hideFromList,omitempty"`
+	// App Platform API group whose fixed roles appear alongside this app's plugin roles.
+	AppPlatformRoleGroup *string                 `json:"appPlatformRoleGroup,omitempty"`
+	Alerting             *bool                   `json:"alerting,omitempty"`
+	Annotations          *bool                   `json:"annotations,omitempty"`
+	AutoEnabled          *bool                   `json:"autoEnabled,omitempty"`
+	Backend              *bool                   `json:"backend,omitempty"`
+	BuildMode            *string                 `json:"buildMode,omitempty"`
+	BuiltIn              *bool                   `json:"builtIn,omitempty"`
+	Category             *string                 `json:"category,omitempty"`
+	EnterpriseFeatures   *MetaEnterpriseFeatures `json:"enterpriseFeatures,omitempty"`
+	Executable           *string                 `json:"executable,omitempty"`
+	HideFromList         *bool                   `json:"hideFromList,omitempty"`
 	// +listType=atomic
 	Includes                  []MetaInclude     `json:"includes,omitempty"`
 	Logs                      *bool             `json:"logs,omitempty"`

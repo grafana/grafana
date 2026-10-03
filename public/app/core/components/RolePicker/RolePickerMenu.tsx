@@ -1,22 +1,19 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useRef, useState, type JSX } from 'react';
+import { useEffect, useMemo, useRef, useState, type JSX } from 'react';
 
 import { type OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
+import { useAppPluginMetas } from '@grafana/runtime/internal';
 import { Button, ScrollContainer, Stack, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
+import { isNotDelegatable } from 'app/core/utils/roles';
 import { type Role } from 'app/types/accessControl';
 
 import { BuiltinRoleSelector } from './BuiltinRoleSelector';
 import { RoleMenuGroupsSection } from './RoleMenuGroupsSection';
 import { MENU_MAX_HEIGHT } from './constants';
+import { getRolePickerGroup, GroupType } from './roleGroups';
 import { getStyles } from './styles';
-
-enum GroupType {
-  fixed = 'fixed',
-  custom = 'custom',
-  plugin = 'plugin',
-}
 
 interface RoleGroupOption {
   name: string;
@@ -90,7 +87,8 @@ export const RolePickerMenu = ({
 }: RolePickerMenuProps): JSX.Element => {
   const [selectedOptions, setSelectedOptions] = useState<Role[]>(appliedRoles);
   const [selectedBuiltInRole, setSelectedBuiltInRole] = useState<OrgRole | undefined>(basicRole);
-  const [rolesCollection, setRolesCollection] = useState<{ [key: string]: RolesCollectionEntry }>({});
+  const { value: apps } = useAppPluginMetas();
+  const roleGroup = (role: Role) => getRolePickerGroup(role, apps);
   const subMenuNode = useRef<HTMLDivElement | null>(null);
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
@@ -107,44 +105,39 @@ export const RolePickerMenu = ({
     }
   }, [selectedBuiltInRole, onBasicRoleSelect]);
 
-  // Evaluate rolesCollection only if options changed, otherwise
-  // it triggers unnecessary re-rendering of <RoleMenuGroupsSection /> component
-  useEffect(() => {
-    const customRoles = options.filter(filterCustomRoles).sort(sortRolesByName);
-    const fixedRoles = options.filter(filterFixedRoles).sort(sortRolesByName);
-    const pluginRoles = options.filter(filterPluginsRoles).sort(sortRolesByName);
-    const optionGroups = {
-      fixed: convertRolesToGroupOptions(fixedRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
-      custom: convertRolesToGroupOptions(customRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
-      plugin: convertRolesToGroupOptions(pluginRoles).sort((a, b) => roleNameCollator.compare(a.name, b.name)),
+  const rolesCollection = useMemo<Record<GroupType, RolesCollectionEntry>>(() => {
+    const collections: Record<GroupType, RolesCollectionEntry> = {
+      fixed: { groupType: GroupType.fixed, optionGroup: [], renderedName: 'Fixed roles', roles: [] },
+      custom: { groupType: GroupType.custom, optionGroup: [], renderedName: 'Custom roles', roles: [] },
+      plugin: { groupType: GroupType.plugin, optionGroup: [], renderedName: 'Plugin roles', roles: [] },
     };
-
-    setRolesCollection({
-      fixed: {
-        groupType: GroupType.fixed,
-        optionGroup: optionGroups.fixed,
-        renderedName: `Fixed roles`,
-        roles: fixedRoles,
-      },
-      custom: {
-        groupType: GroupType.custom,
-        optionGroup: optionGroups.custom,
-        renderedName: `Custom roles`,
-        roles: customRoles,
-      },
-      plugin: {
-        groupType: GroupType.plugin,
-        optionGroup: optionGroups.plugin,
-        renderedName: `Plugin roles`,
-        roles: pluginRoles,
-      },
-    });
-  }, [options]);
+    for (const role of options) {
+      const group = getRolePickerGroup(role, apps);
+      const collection = collections[group.type];
+      collection.roles.push(role);
+      let optionGroup = collection.optionGroup.find((option) => option.value === group.value);
+      if (!optionGroup) {
+        optionGroup = {
+          name: fixedRoleGroupNames[group.value] || capitalize(group.name),
+          value: group.value,
+          options: [],
+        };
+        collection.optionGroup.push(optionGroup);
+      }
+      optionGroup.options.push(role);
+    }
+    for (const collection of Object.values(collections)) {
+      collection.roles.sort(sortRolesByName);
+      collection.optionGroup.sort((a, b) => roleNameCollator.compare(a.name, b.name));
+      collection.optionGroup.forEach((group) => group.options.sort(sortRolesByName));
+    }
+    return collections;
+  }, [options, apps]);
 
   const getSelectedGroupOptions = (group: string) => {
     const selectedGroupOptions = [];
     for (const role of selectedOptions) {
-      if (getRoleGroup(role) === group) {
+      if (roleGroup(role).value === group) {
         selectedGroupOptions.push(role);
       }
     }
@@ -188,20 +181,22 @@ export const RolePickerMenu = ({
     }
 
     if (groupSelected(groupType, value) || changeableGroupRolesSelected(groupType, value)) {
-      const mappedGroupOptions = selectedOptions.filter((option) =>
-        group.options.find((role) => role.uid === option.uid && option.mapped)
+      const preservedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && (option.mapped || isNotDelegatable(option)))
       );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-      setSelectedOptions([...restOptions, ...mappedGroupOptions]);
+      setSelectedOptions([...restOptions, ...preservedGroupOptions]);
     } else {
-      const mappedGroupOptions = selectedOptions.filter((option) =>
-        group.options.find((role) => role.uid === option.uid && role.delegatable)
+      const preservedGroupOptions = selectedOptions.filter((option) =>
+        group.options.find((role) => role.uid === option.uid && (option.mapped || isNotDelegatable(option)))
       );
       const groupOptions = group.options.filter(
-        (role) => role.delegatable && !selectedOptions.find((option) => role.uid === option.uid && option.mapped)
+        (role) =>
+          role.delegatable &&
+          !selectedOptions.find((option) => role.uid === option.uid && (option.mapped || isNotDelegatable(option)))
       );
       const restOptions = selectedOptions.filter((role) => !group.options.find((option) => role.uid === option.uid));
-      setSelectedOptions([...restOptions, ...groupOptions, ...mappedGroupOptions]);
+      setSelectedOptions([...restOptions, ...groupOptions, ...preservedGroupOptions]);
     }
   };
 
@@ -219,8 +214,7 @@ export const RolePickerMenu = ({
 
   const onClearSubMenu = (group: string) => {
     const options = selectedOptions.filter((role) => {
-      const roleGroup = getRoleGroup(role);
-      return roleGroup !== group || role.mapped;
+      return roleGroup(role).value !== group || role.mapped || isNotDelegatable(role);
     });
     setSelectedOptions(options);
   };
@@ -293,52 +287,6 @@ export const RolePickerMenu = ({
       <div ref={subMenuNode} />
     </div>
   );
-};
-
-const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
-const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
-const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
-
-interface GroupsMap {
-  [key: string]: { roles: Role[]; name: string };
-}
-
-const convertRolesToGroupOptions = (roles: Role[]) => {
-  const groupsMap: GroupsMap = {};
-  roles.forEach((role) => {
-    const groupId = getRoleGroup(role);
-    const groupName = getRoleGroupName(role);
-    if (!groupsMap[groupId]) {
-      groupsMap[groupId] = { name: groupName, roles: [] };
-    }
-    groupsMap[groupId].roles.push(role);
-  });
-  const groups = Object.entries(groupsMap).map(([groupId, groupEntry]) => {
-    return {
-      name: fixedRoleGroupNames[groupId] || capitalize(groupEntry.name),
-      value: groupId,
-      options: groupEntry.roles.sort(sortRolesByName),
-    };
-  });
-  return groups;
-};
-
-const getRoleGroup = (role: Role) => {
-  const prefix = getRolePrefix(role);
-  const name = getRoleGroupName(role);
-  return `${prefix}:${name}`;
-};
-
-const getRoleGroupName = (role: Role) => {
-  return role.group || 'Other';
-};
-
-const getRolePrefix = (role: Role) => {
-  const prefixEnd = role.name.indexOf(':');
-  if (prefixEnd < 0) {
-    return 'unknown';
-  }
-  return role.name.substring(0, prefixEnd);
 };
 
 const sortRolesByName = (a: Role, b: Role) => roleNameCollator.compare(a.name, b.name);

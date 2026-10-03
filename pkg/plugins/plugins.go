@@ -99,8 +99,10 @@ type JSONData struct {
 	Routes       []*Route     `json:"routes"`
 
 	// AccessControl settings
-	Roles      []RoleRegistration `json:"roles,omitempty"`
-	ActionSets []ActionSet        `json:"actionSets,omitempty"`
+	// AppPlatformRoleGroup opts an app into grouping its App Platform roles with its plugin roles in the picker.
+	AppPlatformRoleGroup string             `json:"appPlatformRoleGroup,omitempty"`
+	Roles                []RoleRegistration `json:"roles,omitempty"`
+	ActionSets           []ActionSet        `json:"actionSets,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`

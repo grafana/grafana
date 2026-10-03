@@ -97,3 +97,13 @@ describe('v0alpha1AppMapper', () => {
     logWarning.mockRestore();
   });
 });
+
+it('carries an app role grouping opt-in from plugin metadata', () => {
+  const response = structuredClone(v0alpha1Response);
+  const app = response.items.find((item) => item.spec.pluginJson.type === 'app')!;
+  app.spec.pluginJson.appPlatformRoleGroup = 'plugin.ext.grafana.app';
+  expect(v0alpha1AppMapper(response)[app.spec.pluginJson.id].appPlatformRoleGroup).toBe('plugin.ext.grafana.app');
+  delete app.spec.pluginJson.appPlatformRoleGroup;
+  expect(v0alpha1AppMapper(response)[app.spec.pluginJson.id].id).toBe(app.spec.pluginJson.id);
+  expect(v0alpha1AppMapper(response)[app.spec.pluginJson.id].appPlatformRoleGroup).toBeUndefined();
+});

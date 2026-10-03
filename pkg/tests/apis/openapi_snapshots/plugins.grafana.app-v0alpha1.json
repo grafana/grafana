@@ -1962,11 +1962,14 @@
         ],
         "properties": {
           "alerting": {
-            "description": "Optional fields",
             "type": "boolean"
           },
           "annotations": {
             "type": "boolean"
+          },
+          "appPlatformRoleGroup": {
+            "description": "Optional fields\nApp Platform API group whose fixed roles appear alongside this app's plugin roles.",
+            "type": "string"
           },
           "autoEnabled": {
             "type": "boolean"

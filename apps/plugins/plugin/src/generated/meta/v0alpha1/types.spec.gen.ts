@@ -16,6 +16,8 @@ export interface JSONData {
 	// Dependency information
 	dependencies: Dependencies;
 	// Optional fields
+	// App Platform API group whose fixed roles appear alongside this app's plugin roles.
+	appPlatformRoleGroup?: string;
 	alerting?: boolean;
 	annotations?: boolean;
 	autoEnabled?: boolean;
