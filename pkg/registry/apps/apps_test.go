@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rulepolicy"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
@@ -65,6 +66,7 @@ func TestProvideAppInstallers_Table(t *testing.T) {
 				quotasAppInstaller,
 				dashvalidatorAppInstaller,
 				&policy.AppInstaller{},
+				&rulepolicy.AppInstaller{},
 			)
 			if tt.expectRulesApp {
 				require.Contains(t, got, tt.rulesInst)

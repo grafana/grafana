@@ -1,0 +1,98 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: rulepolicies.rulepolicy.alerting.grafana.app
+spec:
+  group: rulepolicy.alerting.grafana.app
+  names:
+    kind: RulePolicy
+    plural: rulepolicies
+  scope: Namespaced
+  versions:
+  - name: v0alpha1
+    schema:
+      openAPIV3Schema:
+        properties:
+          spec:
+            description: |-
+              What alert rules in the namespace must and must not carry. A namespace may have several
+              RulePolicies; a rule must satisfy all of them.
+            properties:
+              enforcement:
+                enum:
+                - Deny
+                - Warn
+                type: string
+              forbiddenAnnotations:
+                description: Annotations that must not be present on any alert rule,
+                  even with an empty value.
+                items:
+                  type: string
+                type: array
+              forbiddenLabels:
+                description: Labels that must not be present on any alert rule, even
+                  with an empty value.
+                items:
+                  type: string
+                type: array
+              requiredAnnotations:
+                description: Annotations that must be present and non-empty on every
+                  alert rule.
+                items:
+                  type: string
+                type: array
+              requiredLabels:
+                description: Labels that must be present and non-empty on every alert
+                  rule.
+                items:
+                  type: string
+                type: array
+            required:
+            - enforcement
+            type: object
+          status:
+            properties:
+              additionalFields:
+                description: additionalFields is reserved for future use
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
+              operatorStates:
+                additionalProperties:
+                  properties:
+                    descriptiveState:
+                      description: descriptiveState is an optional more descriptive
+                        state field which has no requirements on format
+                      type: string
+                    details:
+                      description: details contains any extra information that is
+                        operator-specific
+                      type: object
+                      x-kubernetes-preserve-unknown-fields: true
+                    lastEvaluation:
+                      description: lastEvaluation is the ResourceVersion last evaluated
+                      type: string
+                    state:
+                      description: |-
+                        state describes the state of the lastEvaluation.
+                        It is limited to three possible states for machine evaluation.
+                      enum:
+                      - success
+                      - in_progress
+                      - failed
+                      type: string
+                  required:
+                  - lastEvaluation
+                  - state
+                  type: object
+                description: |-
+                  operatorStates is a map of operator ID to operator state evaluations.
+                  Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+                type: object
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

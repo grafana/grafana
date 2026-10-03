@@ -9,6 +9,7 @@ use (
 	./apps/alerting/alertenrichment
 	./apps/alerting/alertrulequality
 	./apps/alerting/notifications
+	./apps/alerting/rulepolicy
 	./apps/alerting/rules
 	./apps/annotation
 	./apps/collections

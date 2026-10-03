@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apps/advisor"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rulepolicy"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
@@ -51,6 +52,7 @@ func ProvideAppInstallers(
 	quotasAppInstaller *quotas.QuotasAppInstaller,
 	dashvalidatorAppInstaller *dashvalidator.DashValidatorAppInstaller,
 	policyAppInstaller *policy.AppInstaller,
+	rulePolicyAppInstaller *rulepolicy.AppInstaller,
 ) []appsdkapiserver.AppInstaller {
 	installers := []appsdkapiserver.AppInstaller{
 		playlistAppInstaller,
@@ -58,6 +60,7 @@ func ProvideAppInstallers(
 		exampleAppInstaller,
 		quotasAppInstaller,
 		policyAppInstaller,
+		rulePolicyAppInstaller,
 	}
 	installers = append(installers, shorturlAppInstaller)
 

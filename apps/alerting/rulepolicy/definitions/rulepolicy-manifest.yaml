@@ -1,0 +1,134 @@
+apiVersion: apps.grafana.app/v1alpha2
+kind: AppManifest
+metadata:
+  name: rulepolicy
+spec:
+  appDisplayName: rulepolicy
+  appName: rulepolicy
+  extraPermissions:
+    accessKinds:
+    - actions:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+      group: policy.grafana.app
+      resource: validationpolicies
+    - actions:
+      - get
+      - list
+      - watch
+      - create
+      - update
+      - delete
+      group: policy.grafana.app
+      resource: validationpolicybindings
+  group: rulepolicy.alerting.grafana.app
+  preferredVersion: v0alpha1
+  versions:
+  - kinds:
+    - admission:
+        validation:
+          operations:
+          - CREATE
+          - UPDATE
+      conversion: false
+      kind: RulePolicy
+      plural: RulePolicies
+      schemas:
+        Enforcement:
+          enum:
+          - Deny
+          - Warn
+          type: string
+        OperatorState:
+          additionalProperties: false
+          properties:
+            descriptiveState:
+              description: descriptiveState is an optional more descriptive state
+                field which has no requirements on format
+              type: string
+            details:
+              additionalProperties: true
+              description: details contains any extra information that is operator-specific
+              type: object
+            lastEvaluation:
+              description: lastEvaluation is the ResourceVersion last evaluated
+              type: string
+            state:
+              description: |-
+                state describes the state of the lastEvaluation.
+                It is limited to three possible states for machine evaluation.
+              enum:
+              - success
+              - in_progress
+              - failed
+              type: string
+          required:
+          - lastEvaluation
+          - state
+          type: object
+        RulePolicy:
+          properties:
+            spec:
+              $ref: '#/components/schemas/spec'
+            status:
+              $ref: '#/components/schemas/status'
+          required:
+          - spec
+        spec:
+          additionalProperties: false
+          properties:
+            enforcement:
+              $ref: '#/components/schemas/Enforcement'
+              description: |-
+                What happens when an alert rule write breaks the policy. Deny rejects the write. Warn admits
+                it with a warning, so a policy can be assessed before it is enforced.
+            forbiddenAnnotations:
+              description: Annotations that must not be present on any alert rule,
+                even with an empty value.
+              items:
+                type: string
+              type: array
+            forbiddenLabels:
+              description: Labels that must not be present on any alert rule, even
+                with an empty value.
+              items:
+                type: string
+              type: array
+            requiredAnnotations:
+              description: Annotations that must be present and non-empty on every
+                alert rule.
+              items:
+                type: string
+              type: array
+            requiredLabels:
+              description: Labels that must be present and non-empty on every alert
+                rule.
+              items:
+                type: string
+              type: array
+          required:
+          - enforcement
+          type: object
+        status:
+          additionalProperties: false
+          properties:
+            additionalFields:
+              additionalProperties: true
+              description: additionalFields is reserved for future use
+              type: object
+            operatorStates:
+              additionalProperties:
+                $ref: '#/components/schemas/OperatorState'
+              description: |-
+                operatorStates is a map of operator ID to operator state evaluations.
+                Any operator which consumes this kind SHOULD add its state evaluation information to this field.
+              type: object
+          type: object
+      scope: Namespaced
+      userReadable: false
+    name: v0alpha1
+    served: false

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/historian"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rulepolicy"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules"
 	"github.com/grafana/grafana/pkg/registry/apps/annotation"
 	"github.com/grafana/grafana/pkg/registry/apps/correlations"
@@ -36,4 +37,5 @@ var WireSet = wire.NewSet(
 	example.RegisterAppInstaller,
 	dashvalidator.RegisterAppInstaller,
 	policy.RegisterAppInstaller,
+	rulepolicy.RegisterAppInstaller,
 )
