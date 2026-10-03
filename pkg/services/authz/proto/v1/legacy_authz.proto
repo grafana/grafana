@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
+
+package authz.extention.v1;
+
+// LegacyAuthzService provides deprecated compatibility APIs used while moving
+// legacy AccessControl evaluation into centralized AuthZ.
+service LegacyAuthzService {
+  // Deprecated: transitional compatibility API for legacy RBAC checks.
+  rpc LegacyCheck(LegacyCheckRequest) returns (LegacyCheckResponse);
+}
+
+message LegacyCheckRequest {
+  string namespace = 1;
+  // Subject in authlib TypeID format, for example "user:1" or "service-account:uid".
+  string subject = 2;
+  // Legacy RBAC action, for example "dashboards:read".
+  string action = 3;
+  // Legacy RBAC scope, for example "dashboards:uid:abc123".
+  string scope = 4;
+  // Optional contextual team UIDs (used when external-group based team grants are in effect).
+  repeated string teams = 5;
+  // Bypass server-side caches when true.
+  bool skip_cache = 6;
+}
+
+message LegacyCheckResponse {
+  bool allowed = 1;
+  // Populated when evaluation failed. Failures always deny.
+  string error = 2;
+}
