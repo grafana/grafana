@@ -14,6 +14,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
+import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { consumeDashboardFetchTiming } from 'app/features/dashboard/services/DashboardFetchTiming';
@@ -267,6 +268,38 @@ describe('DashboardScenePageStateManager v1', () => {
       await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
 
       expect(mockFetchPredefinedVariables).not.toHaveBeenCalled();
+    });
+
+    describe('dashboard API version resolution', () => {
+      let resolveSpy: jest.SpyInstance;
+
+      beforeEach(() => {
+        resolveSpy = jest
+          .spyOn(dashboardAPIVersionResolver, 'resolve')
+          .mockResolvedValue({ v1: 'v1beta1', v2: 'v2beta1' });
+      });
+
+      afterEach(() => {
+        resolveSpy.mockRestore();
+      });
+
+      it('should resolve API versions for normal routes', async () => {
+        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+        expect(resolveSpy).toHaveBeenCalled();
+      });
+
+      it('should not resolve API versions for public dashboards', async () => {
+        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'access-token', route: DashboardRoutes.Public });
+
+        expect(resolveSpy).not.toHaveBeenCalled();
+      });
     });
 
     it('should register report render readiness observer for render-authenticated normal route', async () => {
