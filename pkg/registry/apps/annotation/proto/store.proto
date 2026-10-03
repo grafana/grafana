@@ -10,7 +10,17 @@ service AnnotationStore {
   // Get retrieves an annotation by namespace and name
   rpc Get(GetRequest) returns (GetResponse);
 
-  // List retrieves annotations based on filter criteria
+  // List retrieves annotations based on filter criteria.
+  //
+  // Results must be returned in a stable, deterministic order so that
+  // paging via the continue token works correctly. The specific ordering
+  // is up to the implementation.
+  //
+  // Grafana's own backends sort by effective end time (time_end if set,
+  // else time) descending, then time descending, then name ascending as
+  // the tiebreaker. Matching this exact order is not required for
+  // correctness, but is recommended so annotations appear in a consistent
+  // order regardless of which backend is serving them.
   rpc List(ListRequest) returns (ListResponse);
 
   // Create creates a new annotation
@@ -42,6 +52,10 @@ message Annotation {
 message AnnotationSpec {
   string text = 1;
   int64 time = 2;
+  // time_end is absent for a point-in-time annotation and set to a value
+  // >= time for a range. It should round-trip as absent through Create/Update
+  // and Get/List for consistency at the API layer, though a backend may normalize
+  // points to time_end == time internally for storage/indexing purposes.
   optional int64 time_end = 3;
   optional string dashboard_uid = 4;
   optional int64 panel_id = 5;
