@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -46,15 +47,27 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		return nil
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
+
 	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
 		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
 		// because this is an extra query on every delete and the only subscriber is behind the flag.
+		// With no routed database configured, this stays on the delete's own transaction (sess), so
+		// a concurrent folder move can't leave FolderKeys pointing at the wrong folder. A routed
+		// database may be a different connection, so it gets its own read instead.
 		var folderKeys []ngmodels.FolderKey
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
 			var err error
-			folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID)
+			if st.LegacyDatabaseProvider == nil {
+				folderKeys, err = deletedRuleFolderKeys(sess, orgID, ruleUID, "alert_rule")
+			} else {
+				var dbHelper *legacysql.LegacyDatabaseHelper
+				dbHelper, err = st.legacyDatabaseProvider(ctx)
+				if err == nil {
+					folderKeys, err = deletedRuleFolderKeysOnDB(ctx, dbHelper, orgID, ruleUID)
+				}
+			}
 			if err != nil {
 				return err
 			}
@@ -125,20 +138,32 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 }
 
 func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
+	conn := st.SQLStore
+	alertRuleVersionTable := "alert_rule_version"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
+		ctx = withoutAmbientSession(ctx)
+	}
+
 	var result []alertRuleVersion
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args, in := getINSubQueryArgs(ruleUIDs)
 		// take only the latest versions of each rule by GUID
 		rows, err := sess.SQL(fmt.Sprintf(`
-		SELECT v1.* FROM alert_rule_version AS v1
+		SELECT v1.* FROM %[1]s AS v1
 			INNER JOIN (
 			    SELECT rule_guid, MAX(id) AS id
-			    FROM alert_rule_version
+			    FROM %[1]s
 			    WHERE rule_org_id = ?
-			      AND rule_uid IN (%s)
+			      AND rule_uid IN (%[2]s)
 			    GROUP BY rule_guid
 			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
-		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
+		`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
 
 		if err != nil {
 			return err
@@ -420,9 +445,22 @@ func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmo
 //
 // Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
 func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
-	err = st.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		var dbHelper *legacysql.LegacyDatabaseHelper
+		dbHelper, err = st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
+	}
+
+	err = conn.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var uids []string
-		err := sess.Table(alertRule{}).Distinct("namespace_uid").
+		err := sess.Table(alertRuleTable).Distinct("namespace_uid").
 			Where("org_id = ?", orgID).Find(&uids)
 		if err != nil {
 			return err
@@ -475,13 +513,32 @@ func collectNamespaceUIDsByOrg(rules []*ngmodels.AlertRule) []orgNamespaces {
 	return result
 }
 
-// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules. It runs on the
-// caller's session so it must be invoked before the rules are deleted in the same transaction.
-func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
+// deletedRuleFolderKeys returns the deduplicated parent folders of the given rules, read on the
+// given session so it shares the delete's own transaction. It must be invoked before the rules
+// are deleted, since the rows carrying namespace_uid are gone afterwards.
+func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string, alertRuleTable string) ([]ngmodels.FolderKey, error) {
 	var uids []string
-	if err := sess.Table(alertRule{}).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
+	if err := sess.Table(alertRuleTable).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids); err != nil {
 		return nil, err
 	}
+	return dedupFolderKeys(orgID, uids), nil
+}
+
+// deletedRuleFolderKeysOnDB is deletedRuleFolderKeys for a routed database, which may live on a
+// different connection than the delete's own transaction, so it reads on its own session instead
+// of sharing one.
+func deletedRuleFolderKeysOnDB(ctx context.Context, dbHelper *legacysql.LegacyDatabaseHelper, orgID int64, ruleUIDs []string) ([]ngmodels.FolderKey, error) {
+	var uids []string
+	err := dbHelper.DB.WithDbSession(withoutAmbientSession(ctx), func(sess *db.Session) error {
+		return sess.Table(dbHelper.Table("alert_rule")).Distinct("namespace_uid").Where("org_id = ?", orgID).In("uid", ruleUIDs).Find(&uids)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dedupFolderKeys(orgID, uids), nil
+}
+
+func dedupFolderKeys(orgID int64, uids []string) []ngmodels.FolderKey {
 	seen := make(map[string]struct{}, len(uids))
 	keys := make([]ngmodels.FolderKey, 0, len(uids))
 	for _, uid := range uids {
@@ -494,7 +551,7 @@ func deletedRuleFolderKeys(sess *db.Session, orgID int64, ruleUIDs []string) ([]
 		seen[uid] = struct{}{}
 		keys = append(keys, ngmodels.FolderKey{OrgID: orgID, UID: uid})
 	}
-	return keys, nil
+	return keys
 }
 
 // fetchFolderFullpathsByOrg fetches folder fullpaths for all namespace UIDs grouped by org ID.
@@ -800,14 +857,27 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
+
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return 0, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
+	}
+
 	var count int64
 	var err error
-	err = st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args := make([]any, 0, len(folderUIDs))
 		for _, folderUID := range folderUIDs {
 			args = append(args, folderUID)
 		}
-		q := sess.Table("alert_rule").Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
+		q := sess.Table(alertRuleTable).Where("org_id = ?", orgID).Where(fmt.Sprintf("namespace_uid IN (%s)", strings.Repeat("?,", len(folderUIDs)-1)+"?"), args...)
 		count, err = q.Count()
 		return err
 	})
@@ -1757,19 +1827,9 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return folder.ErrAccessDenied
 		}
 
-		rules, err := st.ListAlertRules(ctx, &ngmodels.ListAlertRulesQuery{
-			OrgID:         orgID,
-			NamespaceUIDs: []string{folderUID},
-		})
+		uids, err := st.listAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err
-		}
-
-		uids := make([]string, 0, len(rules))
-		for _, tgt := range rules {
-			if tgt != nil {
-				uids = append(uids, tgt.UID)
-			}
 		}
 
 		if err := st.DeleteAlertRulesByUID(ctx, orgID, ngmodels.NewUserUID(user), false, uids...); err != nil {
@@ -1777,6 +1837,31 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 		}
 	}
 	return nil
+}
+
+// listAlertRuleUIDsInFolder is a narrow ListAlertRules substitute for the delete path, so only
+// this path needs to go through legacyDatabaseProvider, not ListAlertRules' other callers.
+func (st RuleStore) listAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
+	conn := st.SQLStore
+	alertRuleTable := "alert_rule"
+	if st.LegacyDatabaseProvider != nil {
+		dbHelper, err := st.legacyDatabaseProvider(ctx)
+		if err != nil {
+			return nil, err
+		}
+		conn = dbHelper.DB
+		alertRuleTable = dbHelper.Table("alert_rule")
+		ctx = withoutAmbientSession(ctx)
+	}
+
+	var uids []string
+	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table(alertRuleTable).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
+	})
+	if err != nil {
+		return nil, err
+	}
+	return uids, nil
 }
 
 // Kind returns the name of the alert rule type of entity.

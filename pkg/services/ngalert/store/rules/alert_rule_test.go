@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -914,6 +915,274 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 			return nil
 		})
 	})
+}
+
+func TestRuleStore_legacyDatabaseProvider(t *testing.T) {
+	t.Run("falls back to identity table names when LegacyDatabaseProvider is unset", func(t *testing.T) {
+		store := RuleStore{}
+		dbHelper, err := store.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "alert_rule", dbHelper.Table("alert_rule"))
+	})
+
+	t.Run("delegates to the configured provider when set", func(t *testing.T) {
+		store := RuleStore{
+			LegacyDatabaseProvider: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					Table: func(n string) string { return "hg_stack1." + n },
+				}, nil
+			},
+		}
+		dbHelper, err := store.legacyDatabaseProvider(context.Background())
+		require.NoError(t, err)
+		require.Equal(t, "hg_stack1.alert_rule", dbHelper.Table("alert_rule"))
+	})
+}
+
+// dbSpy wraps a db.DB and records whether WithDbSession was called on it, so a test can prove a
+// read went through this specific connection rather than through st.SQLStore directly.
+type dbSpy struct {
+	db.DB
+	withDbSessionCalled bool
+	lastSession         *db.Session
+}
+
+func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
+	s.withDbSessionCalled = true
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
+}
+
+// TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession is a regression test:
+// sqlstore.startSessionOrUseExisting reuses whatever session is on ctx regardless of which db.DB
+// created it, so a routed read must strip that session first or it silently runs on the wrong
+// connection when called from inside another db.DB's InTransaction (as provisioning's delete
+// path does).
+func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    spy,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.getLatestVersionOfRulesByUID(ctx, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession is the same regression
+// test as above, for the analogous folder-key read.
+func TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+
+	spy := &dbSpy{DB: sqlStore}
+	dbHelper := &legacysql.LegacyDatabaseHelper{
+		DB:    spy,
+		Table: func(n string) string { return n },
+	}
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := deletedRuleFolderKeysOnDB(ctx, dbHelper, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{},
+		featuremgmt.FlagAlertingFolderHasRulesLabel, featuremgmt.FlagAlertRuleRestore)
+
+	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: spy,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
+	require.NoError(t, err)
+
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.Contains(t, requestedTables, "alert_rule_version")
+	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+}
+
+// TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded asserts that a permanent
+// delete with FlagAlertingFolderHasRulesLabel off (so no folder-key or version lookup happens)
+// doesn't need LegacyDatabaseProvider to succeed, even if the provider itself would error.
+func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderNotNeeded(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return nil, errors.New("provider unavailable")
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, true, rule.UID)
+	require.NoError(t, err)
+}
+
+func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+	store.AccessControl = acmock.New().WithPermissions([]accesscontrol.Permission{
+		{Action: accesscontrol.ActionAlertingRuleDelete, Scope: folder.ScopeFoldersAll},
+	})
+
+	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: spy,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, nil)
+
+	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+}
+
+// TestIntegration_CountInFolders_LegacyDatabaseProvider is a regression test: the folder delete
+// preflight check (in folder_unifiedstorage.go) relies on this count to block deleting a
+// non-empty folder. If it read st.SQLStore instead of a routed database, it would see zero rules
+// and let the delete proceed, orphaning the routed database's alert rules.
+func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: spy,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, nil)
+
+	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	require.NoError(t, err)
+
+	assert.Equal(t, int64(1), count)
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.True(t, spy.withDbSessionCalled, "count should run on dbHelper.DB, not st.SQLStore directly")
+}
+
+// TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider is a regression test:
+// folderlabelsyncer.FullSync calls this alongside CountInFolders to decide which folders need a
+// has-rules label. If this read st.SQLStore instead of a routed database, a full sync would see
+// neither rules nor labels for a routed stack and queue no partial sync, leaving its folders
+// without the label indefinitely.
+func TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	var requestedTables []string
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB: spy,
+			Table: func(n string) string {
+				requestedTables = append(requestedTables, n) // record, but keep the query on the test DB
+				return n
+			},
+		}, nil
+	}
+
+	rule := createRule(t, store, nil)
+
+	got, err := store.GetAllFoldersWithRules(context.Background(), rule.OrgID)
+	require.NoError(t, err)
+
+	_, ok := got[rule.NamespaceUID]
+	assert.True(t, ok)
+	assert.Contains(t, requestedTables, "alert_rule")
+	assert.True(t, spy.withDbSessionCalled, "scan should run on dbHelper.DB, not st.SQLStore directly")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
