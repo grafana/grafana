@@ -584,7 +584,11 @@ func TestListWithSelectors(t *testing.T) {
 
 	t.Run("returns transport errors directly", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+		result := NewBadRequestError("invalid selector")
+		st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+		require.NoError(t, err)
 		for _, searchErr := range []error{
+			st.Err(),
 			errors.New("search unavailable"),
 			status.Error(codes.InvalidArgument, "invalid selector"),
 			status.Error(codes.Unavailable, "search unavailable"),
@@ -1024,6 +1028,9 @@ func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 			backend := &countingListBackend{fakeBackend: &fakeBackend{}}
 			s := createTestServer(searchClient, 1024)
 			s.backend = backend
+			s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
+				NewLowerGroupResource("advisor.grafana.app", "advisors"): {"spec.foo"},
+			}, nil, nil)
 
 			resp, err := s.List(ctx, &resourcepb.ListRequest{
 				Source: resourcepb.ListRequest_STORE,
@@ -1035,6 +1042,7 @@ func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
 			})
 			require.NoError(t, err)
 			require.Nil(t, resp.Error)
+			require.NotNil(t, searchClient.last, "search must be attempted before falling back to the store")
 			require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
 		})
 	}
