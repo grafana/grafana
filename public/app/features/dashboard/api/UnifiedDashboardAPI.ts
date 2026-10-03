@@ -94,7 +94,16 @@ export class UnifiedDashboardAPI
     const v1Response = await this.v1Client.listDashboardHistory(uid, { limit, continueToken: v1Token });
     const v1Valid = v1Response.items.filter((item) => !failedFromVersion(item, ['v2']));
 
-    if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0) {
+    // The "all v1 items are valid" fast path is only safe when v1 still has more
+    // pages to fetch OR v2 has no outstanding work. If v1 is exhausted (no continue)
+    // while v2 still has work to do (the incoming v2Token is set), returning early
+    // here would emit a composite continue of (undefined, v2Token). The next call
+    // would then re-query v1 with no continue token, restart v1 from its first
+    // page, and re-enter this same branch — looping forever and re-appending v1's
+    // first page on every "Show more" click. Fall through to query v2 in that
+    // case so the merge path can drain v2 to completion.
+    const v1HasMorePages = Boolean(v1Response.metadata.continue);
+    if (v1Valid.length === v1Response.items.length && v1Response.items.length > 0 && (v1HasMorePages || !v2Token)) {
       return {
         ...v1Response,
         metadata: {
