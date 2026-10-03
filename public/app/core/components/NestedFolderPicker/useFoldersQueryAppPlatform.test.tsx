@@ -58,12 +58,16 @@ describe('useFoldersQueryAppPlatform', () => {
     mockSelectorResult = {
       isLoading: false,
       responseByParent: {
-        general: {
-          status: QueryStatus.fulfilled,
-          data: {
-            hits: [{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders' }],
+        general: [
+          {
+            status: QueryStatus.fulfilled,
+            originalArgs: { offset: 0 },
+            data: {
+              totalHits: 1,
+              hits: [{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folders' }],
+            },
           },
-        },
+        ],
       },
     };
 
@@ -105,8 +109,22 @@ describe('useFoldersQueryAppPlatform', () => {
       result.current.requestNextPage(undefined);
     });
 
-    expect(mockInitiate).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
+    expect(mockInitiate).toHaveBeenCalledWith({
+      folder: 'general',
+      permission: 'edit',
+      offset: 0,
+      limit: 50,
+      type: 'folder',
+      sort: 'title',
+    });
     expect(dispatch).toHaveBeenCalledWith(subscription);
-    expect(mockSelect).toHaveBeenCalledWith({ folder: 'general', type: 'folder', permission: 'edit' });
+    expect(mockSelect).toHaveBeenCalledWith({
+      folder: 'general',
+      permission: 'edit',
+      offset: 0,
+      limit: 50,
+      type: 'folder',
+      sort: 'title',
+    });
   });
 });

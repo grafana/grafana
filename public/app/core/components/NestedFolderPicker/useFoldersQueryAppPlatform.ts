@@ -27,10 +27,19 @@ const rootFolderToken = 'general';
 const sharedWithMeFolderToken = 'sharedwithme';
 const collator = new Intl.Collator();
 
+function getPagesLoadStatus(pages: GetFolderChildrenQuery[]) {
+  const lastPage = pages.at(-1);
+  const offset = lastPage?.originalArgs?.offset ?? 0;
+  const data = lastPage?.data;
+  return {
+    isLoading: lastPage?.status === QueryStatus.pending,
+    nextOffset: offset + (data?.hits.length ?? 0),
+    fullyLoaded: Boolean(data && (data.hits.length === 0 || offset + data.hits.length >= data.totalHits)),
+  };
+}
+
 /**
- * Returns a loaded folder hierarchy as a flat list and a function to load folders.
- * This version uses the getFolderChildren API from the folder v1beta1 API. Compared to legacy API, the v1beta1 API
- * does not have pagination at the moment.
+ * Returns a loaded folder hierarchy as a flat list and a function to load more pages.
  */
 export function useFoldersQueryAppPlatform({
   isBrowsing,
@@ -64,7 +73,7 @@ export function useFoldersQueryAppPlatform({
       let isLoading = false;
       let error: unknown = undefined;
 
-      const responseByParent: Record<string, GetFolderChildrenQuery> = {};
+      const responseByParent: Record<string, GetFolderChildrenQuery[]> = {};
 
       for (const response of responses) {
         if (response.status === QueryStatus.pending) {
@@ -77,7 +86,13 @@ export function useFoldersQueryAppPlatform({
 
         const parentName = response.originalArgs?.folder;
         if (parentName) {
-          responseByParent[parentName] = response;
+          const pages = (responseByParent[parentName] ??= []);
+          const index = pages.findIndex((page) => page.originalArgs?.offset === response.originalArgs?.offset);
+          if (index === -1) {
+            pages.push(response);
+          } else {
+            pages[index] = response;
+          }
         }
       }
 
@@ -95,15 +110,22 @@ export function useFoldersQueryAppPlatform({
   const requestNextPage = useCallback(
     (parentUid: string | undefined) => {
       const finalParentUid = parentUid ?? rootFolderToken;
-      const response = state.responseByParent[finalParentUid];
-      const isLoading = response?.status === QueryStatus.pending;
+      const pages = state.responseByParent[finalParentUid] ?? [];
+      const { isLoading, fullyLoaded, nextOffset } = getPagesLoadStatus(pages);
 
       // If already loading, don't request again
-      if (isLoading) {
+      if (isLoading || fullyLoaded) {
         return;
       }
 
-      const args = { folder: finalParentUid, type: 'folder', permission } as const;
+      const args = {
+        folder: finalParentUid,
+        permission,
+        offset: nextOffset,
+        limit: PAGE_SIZE,
+        type: 'folder' as const,
+        sort: 'title',
+      };
 
       // Make a request
       const subscription = dispatch(dashboardAPIv0alpha1.endpoints.searchDashboardsAndFolders.initiate(args));
@@ -136,10 +158,10 @@ export function useFoldersQueryAppPlatform({
 
     function createFlatList(
       parentUid: string | undefined,
-      response: GetFolderChildrenQuery | undefined,
+      pages: GetFolderChildrenQuery[],
       level: number
     ): Array<DashboardsTreeItem<DashboardViewItemWithUIItems>> {
-      let folders = response?.data?.hits ? [...response.data.hits] : [];
+      let folders = pages.flatMap((page) => page.data?.hits ?? []);
       folders.sort((a, b) => collator.compare(a.title, b.title));
 
       // Add virtual "Shared with me" folder under the top-level "Dashboards" root.
@@ -173,7 +195,7 @@ export function useFoldersQueryAppPlatform({
         if (childResponse) {
           // If we finished loading and there are no children add folder to empty folders list so we don't show
           // the caret next to the folder anymore
-          if (isEmptyResponse(childResponse)) {
+          if (getPagesLoadStatus(childResponse).fullyLoaded && childResponse.every((page) => !page.data?.hits.length)) {
             addEmptyFolder(name);
           }
           const childFlatItems = createFlatList(name, childResponse, level + 1);
@@ -185,7 +207,7 @@ export function useFoldersQueryAppPlatform({
 
       // We could return early but we are adding the "shared with me" folder statically, so even if response is empty
       // there could be a folder to process
-      if (!response) {
+      if (!getPagesLoadStatus(pages).fullyLoaded) {
         // The pagination placeholders are what actually triggers the call to the next page. So if there is no response,
         // meaning to request for some children, we add these placeholders, and they will trigger the load.
         list.push(...getPaginationPlaceholders(PAGE_SIZE, parentUid, level));
@@ -194,7 +216,7 @@ export function useFoldersQueryAppPlatform({
     }
 
     const startingToken = rootFolderUID ?? rootFolderToken;
-    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken], 1);
+    const rootFlatTree = createFlatList(startingToken, state.responseByParent[startingToken] ?? [], 1);
     rootFlatTree.unshift(rootFolderItem || getRootFolderItem());
 
     return rootFlatTree;
@@ -216,8 +238,4 @@ function makeSharedWithMeFolder() {
     folder: rootFolderToken,
     resource: 'folder',
   };
-}
-
-function isEmptyResponse(response: { data?: { hits: unknown[] }; status: QueryStatus }) {
-  return response.data && response.status !== QueryStatus.pending && response.data.hits.length === 0;
 }
