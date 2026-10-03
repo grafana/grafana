@@ -1,4 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
+import { useLayoutEffect } from 'react';
 
 import { createDataFrame, type Field, FieldType, ReducerID } from '@grafana/data';
 import { type DataGridHandle } from '@grafana/react-data-grid';
@@ -19,11 +20,46 @@ import {
   useColWidths,
   useRowCompiler,
   useScrollShadows,
+  useScrollbarWidth,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);
+
+describe('useScrollbarWidth', () => {
+  it('measures the displaced width during layout without waiting for a timer or resize notification', () => {
+    jest.useFakeTimers();
+    try {
+      let layoutFinished = false;
+      const measurementPhases: boolean[] = [];
+      const element = document.createElement('div');
+      Object.defineProperties(element, {
+        offsetWidth: { value: 500 },
+        clientWidth: {
+          get: () => {
+            measurementPhases.push(layoutFinished);
+            return 485;
+          },
+        },
+      });
+      const ref = { current: { element } as DataGridHandle };
+      const { result, unmount } = renderHook(() => {
+        const width = useScrollbarWidth(ref, 300);
+        useLayoutEffect(() => {
+          layoutFinished = true;
+        }, []);
+        return width;
+      });
+
+      expect(measurementPhases[0]).toBe(false);
+      expect(result.current).toBe(15);
+      unmount();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
 
 describe('TableNG hooks', () => {
   function setupData() {

@@ -31,6 +31,8 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 // this the grid renders no rows at all.
 beforeAll(() => {
   mockClientSize({ width: 800, height: 600 });
+  // Keep outer and inner widths consistent now that scrollbar space is measured during layout.
+  jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(800);
 });
 
 // Shared helpers for test data frame construction
