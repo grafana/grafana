@@ -117,6 +117,26 @@ describe('PanelDataErrorView', () => {
     expect(icon).toBeInTheDocument();
   });
 
+  it('should show the query error instead of "No data" when the query fails with an empty frame', () => {
+    renderWithProps({
+      data: {
+        state: LoadingState.Error,
+        timeRange: getDefaultTimeRange(),
+        series: [
+          {
+            fields: [],
+            length: 0,
+          },
+        ],
+        errors: [{ refId: 'A', message: 'error querying the database: memory limit exceeded' }],
+        error: { refId: 'A', message: 'error querying the database: memory limit exceeded' },
+      },
+    });
+
+    expect(screen.getByText('error querying the database: memory limit exceeded')).toBeInTheDocument();
+    expect(screen.queryByText('No data')).not.toBeInTheDocument();
+  });
+
   it('should show "No data" message when not in panel editor', () => {
     mockUsePanelContext.mockReturnValue(panelContextRoot);
 
