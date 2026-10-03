@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
@@ -60,4 +61,19 @@ export function useDataSourcesWithValidRecordingTarget(): DataSourcesWithValidRe
   const { loading, error, value } = useAsync(getDataSourcesWithValidRecordingTarget, []);
 
   return { items: value ?? NO_ITEMS, isLoading: loading, error };
+}
+
+export interface DataSourcesWithValidRecordingTargetByUidResult {
+  byUid: Map<string, DataSourceInstanceListItem>;
+  isLoading: boolean;
+  error?: Error;
+}
+
+export function useDataSourcesWithValidRecordingTargetByUid(): DataSourcesWithValidRecordingTargetByUidResult {
+  const { items, isLoading, error } = useDataSourcesWithValidRecordingTarget();
+
+  return useMemo(
+    () => ({ byUid: new Map(items.map((ds) => [ds.uid, ds])), isLoading, error }),
+    [items, isLoading, error]
+  );
 }

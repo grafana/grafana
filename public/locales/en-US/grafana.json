@@ -2757,7 +2757,8 @@
     "recording-rules": {
       "description-target-data-source": "The Prometheus data source to store recording rules in",
       "label-target-data-source": "Target data source",
-      "target-data-source-required": "Please select a target data source"
+      "target-data-source-required": "Please select a target data source",
+      "target-data-sources-error": "Failed to load the list of data sources that can store recording rules"
     },
     "recording-rules-name-space-and-group-step": {
       "description-select-namespace-group-recording": "Select the Namespace and Group for your recording rule.",
