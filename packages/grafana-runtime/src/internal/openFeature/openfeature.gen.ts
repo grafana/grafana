@@ -162,6 +162,8 @@ export const FlagKeys = {
   GrafanaViewPanelPane: "grafana.viewPanelPane",
   /** Enables the new visual design refresh for the Grafana UI */
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
+  /** Register experimental APIs with the k8s API server, including all datasources */
+  GrafanaAPIServerWithExperimentalAPIs: "grafanaAPIServerWithExperimentalAPIs",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
   /** Enables team APIs in the app platform */
@@ -210,6 +212,10 @@ export const FlagKeys = {
   QueryHistoryRecentQueriesUI: "queryHistory.recentQueriesUI",
   /** Enables Saved queries (query library) feature */
   QueryLibrary: "queryLibrary",
+  /** Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query */
+  QueryService: "queryService",
+  /** Adds datasource connections to the query service */
+  QueryServiceWithConnections: "queryServiceWithConnections",
   /** Enables AI-assisted coauthoring in code query editors */
   QueryeditorCoauthoringUi: "queryeditor.coauthoringUi",
   /** Renders the raw Prometheus query results table using TableNG instead of the legacy Table */
@@ -1073,6 +1079,17 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
 };
 
 /**
+ * Register experimental APIs with the k8s API server, including all datasources
+ *
+ * **Details:**
+ * - flag key: `grafanaAPIServerWithExperimentalAPIs`
+ * - default value: `false`
+ */
+export const useFlagGrafanaAPIServerWithExperimentalAPIs = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafanaAPIServerWithExperimentalAPIs", false, options).value;
+};
+
+/**
  * Enables an inline version of Log Details that creates no new scrolls
  *
  * **Details:**
@@ -1334,6 +1351,28 @@ export const useFlagQueryHistoryRecentQueriesUI = (options?: ReactFlagEvaluation
  */
 export const useFlagQueryLibrary = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("queryLibrary", true, options).value;
+};
+
+/**
+ * Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query
+ *
+ * **Details:**
+ * - flag key: `queryService`
+ * - default value: `false`
+ */
+export const useFlagQueryService = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryService", false, options).value;
+};
+
+/**
+ * Adds datasource connections to the query service
+ *
+ * **Details:**
+ * - flag key: `queryServiceWithConnections`
+ * - default value: `false`
+ */
+export const useFlagQueryServiceWithConnections = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("queryServiceWithConnections", false, options).value;
 };
 
 /**
