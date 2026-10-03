@@ -67,7 +67,7 @@ func handleSQLSchemaQuery(
 	httpreq *http.Request,
 	connectLogger log.Logger,
 ) (query.SQLSchemas, error) {
-	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
+	ctx, pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		return nil, err
 	}

@@ -237,7 +237,7 @@ func prepareQuery(
 	b QueryAPIBuilder,
 	httpreq *http.Request,
 	connectLogger log.Logger,
-) (*preparedQuery, error) {
+) (context.Context, *preparedQuery, error) {
 	// Normalize DS refs and build []*simplejson.Json
 	jsonQueries := make([]*simplejson.Json, 0, len(raw.Queries))
 	for _, q := range raw.Queries {
@@ -274,12 +274,14 @@ func prepareQuery(
 	instance, err := b.instanceProvider.GetInstance(ctx, connectLogger, headers)
 	if err != nil {
 		connectLogger.Error("failed to get instance configuration settings", "err", err)
-		return nil, err
+		return nil, nil, err
 	}
 
 	instanceConfig := instance.GetSettings()
 
-	dsQuerierLoggerWithSlug := instance.GetLogger()
+	logLabels := instance.GetLogLabels()
+	ctx2 := log.WithContextualAttributes(ctx, logLabels)
+	dsQuerierLoggerWithSlug := connectLogger.New(logLabels...)
 
 	// Datasource client qsDsClientBuilder
 	qsDsClientBuilder := dsquerierclient.NewQsDatasourceClientBuilderWithInstance(
@@ -305,7 +307,7 @@ func prepareQuery(
 		qsDsClientBuilder,
 	)
 
-	return &preparedQuery{
+	return ctx2, &preparedQuery{
 		mReq:          mReq,
 		cache:         cache,
 		headers:       headers,
@@ -330,7 +332,7 @@ func handleQuery(
 	responder rest.Responder,
 	connectLogger log.Logger,
 ) (*backend.QueryDataResponse, error) {
-	pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
+	ctx, pq, err := prepareQuery(ctx, raw, b, httpreq, connectLogger)
 	if err != nil {
 		responder.Error(err)
 		return nil, err
