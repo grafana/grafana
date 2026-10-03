@@ -85,8 +85,45 @@ func NewCompleteRegistryStore(scheme *runtime.Scheme, resourceInfo utils.Resourc
 	return registryStore, nil
 }
 
-func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store) *StatusREST {
+// StatusStoreOptions configures the status strategy built by
+// NewRegistryStatusStore. Populated via StatusStoreOption funcs so new
+// options can be added without changing NewRegistryStatusStore's signature.
+type StatusStoreOptions struct {
+	AllowBundlingSpec   bool
+	AllowBundlingSecure bool
+}
+
+// StatusStoreOption mutates StatusStoreOptions; construct one with a With...
+// func below rather than setting fields directly.
+type StatusStoreOption func(*StatusStoreOptions)
+
+// WithAllowBundlingSpec allows a status-subresource update to also change
+// spec, skipping genericStatusStrategy's reset-to-old-value guard. Only for
+// kinds whose callers are already trusted to validate their own spec
+// changes: admission never sees or validates a spec change smuggled in
+// through /status, guard or not.
+func WithAllowBundlingSpec() StatusStoreOption {
+	return func(o *StatusStoreOptions) { o.AllowBundlingSpec = true }
+}
+
+// WithAllowBundlingSecure is the same, for secure values.
+func WithAllowBundlingSecure() StatusStoreOption {
+	return func(o *StatusStoreOptions) { o.AllowBundlingSecure = true }
+}
+
+func NewRegistryStatusStore(scheme *runtime.Scheme, specStore *registry.Store, opts ...StatusStoreOption) *StatusREST {
+	var options StatusStoreOptions
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	gv := specStore.New().GetObjectKind().GroupVersionKind().GroupVersion()
 	strategy := NewStatusStrategy(scheme, gv)
+	if options.AllowBundlingSpec {
+		strategy = strategy.WithAllowBundlingSpec()
+	}
+	if options.AllowBundlingSecure {
+		strategy = strategy.WithAllowBundlingSecure()
+	}
 	return NewStatusREST(specStore, strategy)
 }
