@@ -22,6 +22,11 @@ const init = createAction<GraphiteQueryEditorDependencies>('init');
 const timeRangeChanged = createAction<TimeRange | undefined>('time-range-changed');
 const queriesChanged = createAction<GraphiteQuery[] | undefined>('queries-changed');
 const queryChanged = createAction<GraphiteQuery>('query-changed');
+const editorPropsChanged = createAction<{
+  range: TimeRange | undefined;
+  queries: GraphiteQuery[] | undefined;
+  query: GraphiteQuery;
+}>('editor-props-changed');
 
 // Metrics & Tags
 const segmentValueChanged = createAction<{ segment: GraphiteSegment | string; index: number }>('segment-value-changed');
@@ -47,6 +52,7 @@ export const actions = {
   timeRangeChanged,
   queriesChanged,
   queryChanged,
+  editorPropsChanged,
   segmentValueChanged,
   tagChanged,
   addNewTag,
