@@ -44,7 +44,11 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
-  const isTopLevel = model.parent?.parent instanceof DashboardScene;
+  // Repeat clone rows are stored as children of their source row, placing them one
+  // level deeper in the scene graph — walk one extra parent for clones.
+  const isTopLevel = isClone
+    ? model.parent?.parent?.parent instanceof DashboardScene
+    : model.parent?.parent instanceof DashboardScene;
   const pointerDistance = usePointerDistance();
   const soloPanelContext = useSoloPanelContext();
   // OpenFeature is not initialized for anonymous users, so fall back to
