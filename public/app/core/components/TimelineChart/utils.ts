@@ -209,9 +209,10 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     ...xAxisConfig,
   });
 
-  const yCustomConfig = frame.fields[1].config.custom;
-  const yAxisWidth = yCustomConfig.axisWidth;
-  const yAxisHidden = yCustomConfig.axisPlacement === AxisPlacement.Hidden;
+  // fields[1] is absent when every value field is hidden from the viz
+  const yCustomConfig = frame.fields[1]?.config.custom;
+  const yAxisWidth = yCustomConfig?.axisWidth;
+  const yAxisHidden = yCustomConfig?.axisPlacement === AxisPlacement.Hidden;
 
   builder.addAxis({
     scaleKey: FIXED_UNIT, // y
