@@ -44,6 +44,8 @@ export const FlagKeys = {
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Business intelligence interactions on dashboards: clicking a bar chart selects values and filters the other panels instead of pinning the tooltip */
+  DashboardBiMode: "dashboard.biMode",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -421,6 +423,17 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Business intelligence interactions on dashboards: clicking a bar chart selects values and filters the other panels instead of pinning the tooltip
+ *
+ * **Details:**
+ * - flag key: `dashboard.biMode`
+ * - default value: `false`
+ */
+export const useFlagDashboardBiMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.biMode", false, options).value;
 };
 
 /**
