@@ -601,6 +601,8 @@ func (s *UserK8sService) GetSignedInUser(ctx context.Context, cmd *user.GetSigne
 	var found *iamv0alpha1.User
 	var lookupErr error
 	switch {
+	case cmd.UID != "":
+		found, lookupErr = s.getByUID(ctx, ctxLogger, client, cmd.UID, namespace)
 	case cmd.UserID > 0:
 		found, lookupErr = s.getByInternalID(ctx, ctxLogger, client, cmd.UserID, namespace)
 	case cmd.Login != "":
@@ -798,6 +800,18 @@ func (s *UserK8sService) getOrgID(ctx context.Context, logger log.Logger) (int64
 	}
 
 	return 0, errors.New("failed to get orgID: no requester or orgID in context")
+}
+
+func (s *UserK8sService) getByUID(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, uid, namespace string) (*iamv0alpha1.User, error) {
+	found, err := client.Get(ctx, resource.Identifier{Namespace: namespace, Name: uid})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, user.ErrUserNotFound
+		}
+		logger.Error("k8s user get by UID failed", "namespace", namespace, "userUID", uid, "err", err)
+		return nil, err
+	}
+	return found, nil
 }
 
 func (s *UserK8sService) getByInternalID(ctx context.Context, logger log.Logger, client *iamv0alpha1.UserClient, userID int64, namespace string) (*iamv0alpha1.User, error) {

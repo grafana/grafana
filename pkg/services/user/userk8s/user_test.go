@@ -1965,6 +1965,12 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(list)
 		}
 	}
+	makeUserGetResponse := func(u v0alpha1.User) func(http.ResponseWriter, *http.Request) {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(w).Encode(u)
+		}
+	}
 
 	tests := []struct {
 		name           string
@@ -1997,6 +2003,44 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 				EmailVerified:  true,
 				LastSeenAt:     time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
 			},
+		},
+		{
+			name:           "finds user by UID via a direct Get, not a search-index List",
+			requesterOrgID: 1,
+			cmd:            &user.GetSignedInUserQuery{UID: "some-uid", OrgID: 1},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				assert.Contains(t, r.URL.Path, "some-uid")
+				assert.Empty(t, r.URL.RawQuery, "a direct Get by UID must not be a List/search query")
+				makeUserGetResponse(newTestK8sUser("some-uid", "org-1", "jdoe", "jdoe@example.com"))(w, r)
+			},
+			expectUser: &user.SignedInUser{
+				UserUID:        "some-uid",
+				OrgID:          1,
+				OrgRole:        "Admin",
+				Login:          "jdoe",
+				Email:          "jdoe@example.com",
+				Name:           "John Doe",
+				IsGrafanaAdmin: true,
+				EmailVerified:  true,
+				LastSeenAt:     time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC),
+			},
+		},
+		{
+			name:           "returns ErrUserNotFound when UID does not resolve via Get",
+			requesterOrgID: 1,
+			cmd:            &user.GetSignedInUserQuery{UID: "missing-uid", OrgID: 1},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusNotFound)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonNotFound,
+					Code:     http.StatusNotFound,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserNotFound,
 		},
 		{
 			name:           "finds user by Login via field selector",
