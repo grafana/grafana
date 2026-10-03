@@ -1,7 +1,9 @@
+import { config } from '@grafana/runtime';
 import { ConstantVariable, CustomVariable, SceneVariableSet } from '@grafana/scenes';
 import {
   type ConstantVariableKind,
   type CustomVariableKind,
+  type GroupByVariableKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
@@ -49,6 +51,21 @@ const makeConstantVariableKind = (overrides: Partial<ConstantVariableKind['spec'
     label: 'Version',
     query: '1.0.0',
     current: { text: '1.0.0', value: '1.0.0' },
+    hide: 'dontHide',
+    skipUrlSync: false,
+    ...overrides,
+  },
+});
+
+const makeGroupByVariableKind = (overrides: Partial<GroupByVariableKind['spec']> = {}): GroupByVariableKind => ({
+  kind: 'GroupByVariable',
+  group: 'prometheus',
+  datasource: { name: 'prom' },
+  spec: {
+    name: 'groupby',
+    current: { text: '', value: '' },
+    options: [],
+    multi: true,
     hide: 'dontHide',
     skipUrlSync: false,
     ...overrides,
@@ -112,6 +129,23 @@ describe('createSectionVariables', () => {
     expect(result!.state.variables).toHaveLength(2);
     expect(result!.state.variables[0].state.name).toBe('env');
     expect(result!.state.variables[1].state.name).toBe('version');
+  });
+
+  it('should omit groupby variables when the feature toggle is off', () => {
+    const prev = config.featureToggles.groupByVariable;
+    config.featureToggles.groupByVariable = false;
+
+    try {
+      const variables: VariableKind[] = [makeCustomVariableKind(), makeGroupByVariableKind()];
+
+      const result = deserializeSectionVariables(variables);
+
+      expect(result).toBeDefined();
+      expect(result!.state.variables).toHaveLength(1);
+      expect(result!.state.variables[0].state.name).toBe('env');
+    } finally {
+      config.featureToggles.groupByVariable = prev;
+    }
   });
 });
 
