@@ -34,7 +34,12 @@ const UserCreatePage = () => {
 
   const onSubmit = useCallback(
     async (data: UserDTO) => {
-      const { uid } = await createUser(data);
+      const { uid } = await createUser({
+        ...data,
+        login: data.login?.trim(),
+        email: data.email?.trim(),
+        name: data.name?.trim(),
+      });
 
       navigate(`/admin/users/edit/${uid}`);
     },
