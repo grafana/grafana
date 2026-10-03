@@ -36,7 +36,7 @@ export const getMultiComboboxStyles = (
         alignItems: 'center',
         width: '100%',
         gap: theme.spacing(0.5),
-        padding: theme.spacing(0.5),
+        paddingLeft: theme.spacing(0.5),
         paddingRight: isClearable ? theme.spacing(5) : 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
