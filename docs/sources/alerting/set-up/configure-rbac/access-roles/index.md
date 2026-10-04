@@ -31,7 +31,7 @@ Details of the basic roles and the access they provide for Grafana Alerting are 
 | Admin         | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), alert enrichments, and provisioning.                                                        |
 | Editor        | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), alert enrichments, and provisioning.                                                        |
 | Viewer        | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and alert enrichments.                                                                       |
-| No basic role | A blank canvas to assign fixed or custom roles and craft permissions more precisely. For example, if you want to give a user the ability to see alert rules, but not notification settings, add No basic role and then the fixed role Rules reader. |
+| None | A blank canvas to assign fixed or custom roles and craft permissions more precisely. For example, if you want to give a user the ability to see alert rules, but not notification settings, add No basic role and then the fixed role Rules reader. |
 
 ## Fixed roles
 
