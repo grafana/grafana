@@ -33,7 +33,7 @@ The following table describes the access each role provides for Grafana Alerting
 | Admin  | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning, as well as assign roles. |
 | Editor | Write access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences), and provisioning.                          |
 | Viewer | Read access to alert rules, notification resources (notification API, contact points, templates, time intervals, notification policies, and silences).                                             |
-| None | No access to alert rules or notification resources. Limit access to only the required resources by assigning fixed or custom roles, or granting folder or contact point permissions.                                             |
+| None   | No access to alert rules or notification resources. Limit access to only the required resources by assigning fixed or custom roles, or granting folder or contact point permissions.               |
 
 ## Assign roles
 
