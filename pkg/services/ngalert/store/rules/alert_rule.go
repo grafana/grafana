@@ -1818,7 +1818,7 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
-	// Attach the requester to ctx: listAlertRuleUIDsInFolder has no requester parameter of its
+	// Attach the requester to ctx: ListAlertRuleUIDsInFolder has no requester parameter of its
 	// own, so a context-dependent LegacyDatabaseProvider can only resolve the target database
 	// from here.
 	ctx = identity.WithRequester(ctx, user)
@@ -1835,7 +1835,7 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 			return folder.ErrAccessDenied
 		}
 
-		uids, err := st.listAlertRuleUIDsInFolder(ctx, orgID, folderUID)
+		uids, err := st.ListAlertRuleUIDsInFolder(ctx, orgID, folderUID)
 		if err != nil {
 			return err
 		}
@@ -1847,9 +1847,10 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 	return nil
 }
 
-// listAlertRuleUIDsInFolder is a narrow ListAlertRules substitute for the delete path, so only
-// this path needs to go through legacyDatabaseProvider, not ListAlertRules' other callers.
-func (st RuleStore) listAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
+// ListAlertRuleUIDsInFolder is a narrow ListAlertRules substitute, routed through
+// LegacyDatabaseProvider, for callers that only need rule UIDs scoped to one folder (the delete
+// path here, and the folder reconciler) rather than ListAlertRules' many other callers.
+func (st RuleStore) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
 	conn := st.SQLStore
 	alertRuleTable := "alert_rule"
 	if st.LegacyDatabaseProvider != nil {
