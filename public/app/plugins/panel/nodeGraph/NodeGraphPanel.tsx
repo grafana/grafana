@@ -33,6 +33,7 @@ export const NodeGraphPanel = ({ width, height, data, options }: PanelProps<Node
         panelId={panelId}
         zoomMode={options.zoomMode}
         layoutAlgorithm={options.layoutAlgorithm}
+        fitToView={options.fitToView}
       />
     </div>
   );
