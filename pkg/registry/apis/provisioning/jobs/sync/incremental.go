@@ -114,7 +114,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetTotal(ctx, len(diff))
 	progress.SetMessage(ctx, "replicating versioned changes")
 	applyStart := time.Now()
-	affectedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
+	affectedFolders, claimedFolders, err := applyIncrementalChanges(ctx, diff, repositoryResources, progress, tracer, span, quotaTracker, folderMetadataEnabled, relocations, existingHashes)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseApply, time.Since(applyStart))
 	if err != nil {
 		return err
@@ -137,7 +137,12 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		foldersToDelete = append(foldersToDelete, folderDeletion{Path: r.Path, UID: r.OldUID, Reason: r.Reason})
 	}
 
-	foldersToDelete = deduplicateFolderDeletions(foldersToDelete)
+	for path, uids := range relocations {
+		for _, uid := range uids {
+			claimedFolders[uid] = path
+		}
+	}
+	foldersToDelete = skipClaimedFolderDeletions(ctx, deduplicateFolderDeletions(foldersToDelete), claimedFolders)
 	deleteFolders(ctx, foldersToDelete, repositoryResources, progress, tracer)
 	metrics.RecordIncrementalSyncPhase(jobs.IncrementalSyncPhaseCleanup, time.Since(cleanupStart))
 
@@ -165,21 +170,24 @@ func applyIncrementalChanges(
 	folderMetadataEnabled bool,
 	relocations map[string][]string,
 	existingHashes map[string]string,
-) (affectedFolders map[string]string, err error) {
+) (affectedFolders map[string]string, claimedFolders map[string]string, err error) {
 	// this will keep track of any folders that had resources deleted from it
 	// with key-value as path:grafana uid.
 	// after cleaning up all resources, we will look to see if the foldrs are
 	// now empty, and if so, delete them.
 	affectedFolders = make(map[string]string)
+	// claimedFolders maps folder UID to the path it was written at during this
+	// sync, so cleanup does not delete a folder that moved to a new path.
+	claimedFolders = make(map[string]string)
 
 	sortChangesByActionPriority(diff)
 
 	for _, change := range diff {
 		if ctx.Err() != nil {
-			return nil, ctx.Err()
+			return nil, nil, ctx.Err()
 		}
 		if err := progress.TooManyErrors(); err != nil {
-			return nil, tracing.Error(span, err)
+			return nil, nil, tracing.Error(span, err)
 		}
 
 		// Check if this resource is nested under a failed folder creation
@@ -207,7 +215,7 @@ func applyIncrementalChanges(
 				// Build the result before the operation so its recorded duration
 				// reflects the folder write rather than just the record call.
 				folderResultBuilder := jobs.NewFolderResult(change.Path)
-				_, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
+				folder, err := repositoryResources.EnsureFolderPathExist(ensureFolderCtx, safeSegment, change.Ref)
 				if err != nil {
 					ensureFolderSpan.RecordError(err)
 					ensureFolderSpan.End()
@@ -218,6 +226,7 @@ func applyIncrementalChanges(
 						Build())
 					continue
 				}
+				claimedFolders[folder] = safeSegment
 
 				progress.Record(ensureFolderCtx, folderResultBuilder.
 					WithPath(safeSegment).
@@ -252,6 +261,8 @@ func applyIncrementalChanges(
 				if fErr != nil {
 					folderSpan.RecordError(fErr)
 					folderResultBuilder.WithError(fmt.Errorf("re-parenting child folder at %s: %w", change.Path, fErr))
+				} else if folder != "" {
+					claimedFolders[folder] = change.Path
 				}
 				folderResultBuilder.WithName(folder)
 				folderSpan.End()
@@ -374,7 +385,7 @@ func applyIncrementalChanges(
 		progress.Record(ctx, resultBuilder.Build())
 	}
 
-	return affectedFolders, nil
+	return affectedFolders, claimedFolders, nil
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource
@@ -435,6 +446,25 @@ func deduplicateFolderDeletions(deletions []folderDeletion) []folderDeletion {
 			continue
 		}
 		seen[k] = true
+		result = append(result, d)
+	}
+	return result
+}
+
+// skipClaimedFolderDeletions drops deletions for folder UIDs that this sync
+// wrote at a different path. Deleting them would remove a folder that was
+// moved, not removed, and fail because it still holds the moved resources.
+func skipClaimedFolderDeletions(ctx context.Context, deletions []folderDeletion, claimedFolders map[string]string) []folderDeletion {
+	if len(claimedFolders) == 0 {
+		return deletions
+	}
+	logger := logging.FromContext(ctx)
+	result := make([]folderDeletion, 0, len(deletions))
+	for _, d := range deletions {
+		if claimedPath, ok := claimedFolders[d.UID]; ok && claimedPath != d.Path {
+			logger.Info("skipping folder deletion, uid is claimed at another path", "path", d.Path, "uid", d.UID, "claimedPath", claimedPath)
+			continue
+		}
 		result = append(result, d)
 	}
 	return result
