@@ -6113,9 +6113,6 @@
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "쿼리로 돌아가기"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6771,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL 표현식 추가",
       "sql-cta-description": "SQL을 선호하시나요? 대신 쿼리에 SQL 표현식을 추가하세요."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "모든 변환을 삭제하면 기본 선택 화면으로 돌아갑니다."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "다른 변환 추가"
-      },
-      "confirmText-delete-all": "전체 삭제",
-      "delete-all-transformations": "모든 변환 삭제",
-      "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?",
-      "tooltip-clear-search": "검색 초기화",
-      "tooltip-close-picker": "선택기 닫기"
     },
     "validation": {
       "invalid-dashboard-id": "유효한 Grafana.com ID를 찾지 못했습니다.",
