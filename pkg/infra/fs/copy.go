@@ -46,7 +46,7 @@ func CopyFile(src, dst string) (err error) {
 			return fmt.Errorf("non-regular destination file %s (%q)", dfi.Name(), dfi.Mode().String())
 		}
 		if os.SameFile(sfi, dfi) {
-			return copyPermissions(sfi.Name(), dfi.Name())
+			return nil
 		}
 	}
 
