@@ -267,7 +267,7 @@ func TestNew(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.True(t, s.NamespaceScoped())
@@ -297,7 +297,7 @@ func TestNew(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		stored := *scoped
@@ -312,14 +312,14 @@ func TestNew(t *testing.T) {
 		v1, v1Scoped := newStoreOpts(t, gvk)
 		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, admission, v1, nil)
+		}, admission, nil, v1, nil)
 		require.NoError(t, err)
 
 		v2gvk := schema.GroupVersionKind{Group: gvk.Group, Version: "v2alpha1", Kind: gvk.Kind}
 		v2, v2Scoped := newStoreOpts(t, v2gvk)
 		_, err = New(v2gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", FolderScoped: &falseValue,
-		}, admission, v2, nil)
+		}, admission, nil, v2, nil)
 		require.NoError(t, err)
 
 		require.True(t, v1Scoped.RequireFolder, "v1alpha1 declared the default folder scope")
@@ -334,7 +334,7 @@ func TestNew(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: ClusterScope,
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.False(t, s.NamespaceScoped())
@@ -353,7 +353,7 @@ func TestNew(t *testing.T) {
 		kind := manifest.Versions[1].Kinds[0] // v1alpha1 TestKind declares status
 
 		opts, _ := newStoreOpts(t, gvk)
-		s, err := New(gvk, kind, admission, opts, defs)
+		s, err := New(gvk, kind, admission, nil, opts, defs)
 		require.NoError(t, err)
 
 		require.NotNil(t, s.validator)
@@ -362,7 +362,7 @@ func TestNew(t *testing.T) {
 		// v0alpha1 has the same kind without a status property.
 		v0 := schema.GroupVersionKind{Group: "example-app", Version: "v0alpha1", Kind: "TestKind"}
 		opts, _ = newStoreOpts(t, v0)
-		s, err = New(v0, manifest.Versions[0].Kinds[0], admission, opts, defs)
+		s, err = New(v0, manifest.Versions[0].Kinds[0], admission, nil, opts, defs)
 		require.NoError(t, err)
 		require.NotNil(t, s.validator)
 		require.False(t, s.hasStatus)
@@ -371,7 +371,7 @@ func TestNew(t *testing.T) {
 	t.Run("a schema missing from the definitions is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		kind := testManifest(t).Versions[1].Kinds[0]
-		_, err := New(gvk, kind, admission, opts, map[string]common.OpenAPIDefinition{})
+		_, err := New(gvk, kind, admission, nil, opts, map[string]common.OpenAPIDefinition{})
 		require.ErrorContains(t, err, "missing expected schema key")
 	})
 
@@ -379,7 +379,7 @@ func TestNew(t *testing.T) {
 	// unreachable resource, so New rejects it up front.
 	t.Run("a kind without a plural is an error", func(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
-		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, opts, nil)
+		_, err := New(gvk, app.ManifestVersionKind{Kind: "TestKind"}, admission, nil, opts, nil)
 		require.ErrorContains(t, err, "missing a plural name")
 	})
 
@@ -390,7 +390,7 @@ func TestNew(t *testing.T) {
 		}
 		_, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.ErrorContains(t, err, "no storage configured")
 	})
 
@@ -400,7 +400,7 @@ func TestNew(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced",
-		}, admission, opts, nil)
+		}, admission, nil, opts, nil)
 		require.NoError(t, err)
 
 		require.Equal(t, gvk, s.New().GetObjectKind().GroupVersionKind())
