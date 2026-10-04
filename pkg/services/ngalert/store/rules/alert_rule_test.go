@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -1093,8 +1094,10 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	})
 
 	var requestedTables []string
+	var gotCtx context.Context
 	spy := &dbSpy{DB: sqlStore}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		gotCtx = ctx
 		return &legacysql.LegacyDatabaseHelper{
 			DB: spy,
 			Table: func(n string) string {
@@ -1106,11 +1109,17 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 
 	rule := createRule(t, store, nil)
 
-	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	requester := &user.SignedInUser{UserID: 42}
+	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
 	require.NoError(t, err)
 
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+
+	require.NotNil(t, gotCtx, "provider should have been called")
+	got, err := identity.GetRequester(gotCtx)
+	require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
+	assert.Same(t, requester, got)
 }
 
 // TestIntegration_CountInFolders_LegacyDatabaseProvider is a regression test: the folder delete
@@ -1127,8 +1136,10 @@ func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 
 	var requestedTables []string
+	var gotCtx context.Context
 	spy := &dbSpy{DB: sqlStore}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		gotCtx = ctx
 		return &legacysql.LegacyDatabaseHelper{
 			DB: spy,
 			Table: func(n string) string {
@@ -1140,12 +1151,18 @@ func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
 
 	rule := createRule(t, store, nil)
 
-	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+	requester := &user.SignedInUser{UserID: 42}
+	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(1), count)
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "count should run on dbHelper.DB, not st.SQLStore directly")
+
+	require.NotNil(t, gotCtx, "provider should have been called")
+	got, err := identity.GetRequester(gotCtx)
+	require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
+	assert.Same(t, requester, got)
 }
 
 // TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider is a regression test:

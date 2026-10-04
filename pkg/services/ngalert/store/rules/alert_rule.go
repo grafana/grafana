@@ -853,7 +853,7 @@ func newTitlesOverlapExisting(rules []ngmodels.UpdateRule) bool {
 
 // CountInFolder is a handler for retrieving the number of alert rules of
 // specific organisation associated with a given namespace (parent folder).
-func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, _ identity.Requester) (int64, error) {
+func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error) {
 	if len(folderUIDs) == 0 {
 		return 0, nil
 	}
@@ -861,6 +861,9 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 	conn := st.SQLStore
 	alertRuleTable := "alert_rule"
 	if st.LegacyDatabaseProvider != nil {
+		// A context-dependent LegacyDatabaseProvider resolves the target database from the
+		// requester on ctx, which this interface allows callers to pass separately instead.
+		ctx = identity.WithRequester(ctx, user)
 		dbHelper, err := st.legacyDatabaseProvider(ctx)
 		if err != nil {
 			return 0, err
@@ -1815,6 +1818,11 @@ func (st RuleStore) GetAlertRulesForScheduling(ctx context.Context, query *ngmod
 
 // DeleteInFolder deletes the rules contained in a given folder along with their associated data.
 func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) error {
+	// Attach the requester to ctx: listAlertRuleUIDsInFolder has no requester parameter of its
+	// own, so a context-dependent LegacyDatabaseProvider can only resolve the target database
+	// from here.
+	ctx = identity.WithRequester(ctx, user)
+
 	for _, folderUID := range folderUIDs {
 		evaluator := accesscontrol.EvalPermission(accesscontrol.ActionAlertingRuleDelete, folder.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canSave, err := st.AccessControl.Evaluate(ctx, user, evaluator)
