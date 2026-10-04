@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -83,6 +84,8 @@ type AppPluginRunnerOptions struct {
 
 	// Direct access to legacy access control (required for proxy)
 	AccessControl ac.AccessControl
+
+	RouteAccessChecker authlib.AccessChecker
 }
 
 // AppPluginAPIBuilder builds an apiserver for a single app plugin.
@@ -129,6 +132,9 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
+	if err := validateManifestRouteAuthorization(plugin.Manifest); err != nil {
+		return nil, fmt.Errorf("plugin %q: %w", plugin.JSONData.ID, err)
+	}
 	if plugin.Manifest != nil && !openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{}) {
 		client = nil
 		contextProvider = nil
@@ -162,6 +168,7 @@ func RegisterAPIService(
 	pluginSettings pluginsettings.Service,
 	acService ac.Service, // Required to declare roles from a manifest
 	accessControl ac.AccessControl,
+	accessClient authlib.AccessClient,
 	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
@@ -226,9 +233,10 @@ func RegisterAPIService(
 			unified, // search support
 			unified, // list-keys reads the resource store
 			AppPluginRunnerOptions{
-				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
-				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
-				AccessControl: accessControl,
+				RegisterProxy:      getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
+				LegacyStore:        NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
+				AccessControl:      accessControl,
+				RouteAccessChecker: accessClient,
 
 				DataProxyLogging:         cfg.DataProxyLogging,
 				SendUserHeader:           cfg.SendUserHeader,

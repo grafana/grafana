@@ -85,7 +85,7 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 					appPluginSettingsWildcard: {DualWriterMode: rest.Mode5},
 				}
 				_, err := RegisterAPIService(registrar, nil, nil, nil, sources, nil,
-					roles, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
+					roles, nil, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
 				if !tc.router && !tc.register {
 					require.NoError(t, err)
 					require.Empty(t, registrar.builders)
@@ -149,7 +149,7 @@ func TestRegisterAPIServiceHybridSearchConfiguration(t *testing.T) {
 				&fakePluginSource{bundles: []*plugins.FoundBundle{bundle("example-app", plugins.TypeApp)}},
 			}}
 			b, err := RegisterAPIService(&recordingAPIRegistrar{}, nil, nil, nil, sources, nil,
-				&recordingRoleService{}, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
+				&recordingRoleService{}, nil, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
 			require.NoError(t, err)
 			require.NotNil(t, b)
 			require.Equal(t, tc.want, b.opts.HybridAPIEnabled)

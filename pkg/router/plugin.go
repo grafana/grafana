@@ -46,6 +46,7 @@ type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
+	AccessClient       types.AccessClient
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 	MetricsRegister    prometheus.Registerer
@@ -66,7 +67,6 @@ type PluginLoaderDependencies struct {
 	ClientV3Loader v3.ClientV3Loader
 	PluginSources  sources.Registry
 	ACService      accesscontrol.Service
-	AccessClient   types.AccessClient
 }
 
 func ProvidePluginLoaderDependencies(
@@ -101,11 +101,11 @@ func ProvidePluginLoaderDependencies(
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
 		ACService:      acService,
-		AccessClient:   accessClient,
 		PluginDependencies: PluginDependencies{
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
+			AccessClient:       accessClient,
 			DualWrite:          dualWrite,
 			SecureValues:       secureValues,
 			MetricsRegister:    reg,
@@ -310,6 +310,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 			AccessControl:            b.deps.AccessControl,
+			RouteAccessChecker:       b.deps.AccessClient,
 			DataProxyLogging:         cfg.DataProxyLogging,
 			SendUserHeader:           cfg.SendUserHeader,
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,

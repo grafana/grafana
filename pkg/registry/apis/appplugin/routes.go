@@ -102,7 +102,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 			Path:    path,
 			Spec:    withPathParameters(props, nil, params...),
 			Schemas: version.Routes.Schemas,
-			Handler: b.routeHandler(gv, "", path),
+			Handler: b.withDeclaredRouteAuthorization(gv, "", path, props, b.routeHandler(gv, "", path)),
 		})
 	}
 	for path, props := range version.Routes.Cluster {
@@ -155,7 +155,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 				Path:    plural + "/{" + nameParameter + "}/" + path,
 				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
 				Schemas: version.Routes.Schemas,
-				Handler: b.routeHandler(gv, plural, path),
+				Handler: b.withDeclaredRouteAuthorization(gv, plural, path, props, b.routeHandler(gv, plural, path)),
 			})
 		}
 	}
