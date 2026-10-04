@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
+import { getTraceToLogsOptions, type TraceToLogsData, TraceToLogsSettings } from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
@@ -41,7 +41,25 @@ const lokiSettings = {
   type: 'loki',
   meta: { info: { logos: { small: '' } } },
 } as unknown as DataSourceInstanceSettings;
+describe('getTraceToLogsOptions legacy custom query migration', () => {
+  it('preserves a configured custom query from the legacy tracesToLogs shape', () => {
+    const data = {
+      tracesToLogs: {
+        datasourceUid: 'splunk_uid',
+        query: 'index=app trace_id="$traceId"',
+        customQuery: true,
+        filterByTraceID: true,
+      },
+    } as unknown as TraceToLogsData;
 
+    expect(getTraceToLogsOptions(data)).toMatchObject({
+      datasourceUid: 'splunk_uid',
+      query: 'index=app trace_id="$traceId"',
+      customQuery: true,
+      filterByTraceID: true,
+    });
+  });
+});
 describe('TraceToLogsSettings', () => {
   beforeAll(() => {
     setDataSourceSrv({
