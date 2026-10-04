@@ -367,6 +367,7 @@ func (s *service) start(ctx context.Context) error {
 	apiserverSection := s.cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	globalSearchAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyGlobalSearch).MustBool(false)
 	globalSearchGV := schema.GroupVersion{Group: searchv0.GROUP, Version: searchv0.VERSION}
 
@@ -444,6 +445,7 @@ func (s *service) start(ctx context.Context) error {
 	// and the served WebServices, or the endpoint works but is undiscoverable.
 	searchAndStorageRoutes := searchroutes.Build(
 		searchAPIEnabled, trashAPIEnabled, s.tracing, s.unified, builders, s.appInstallers,
+		searchroutes.Options{HybridEnabled: hybridAPIEnabled},
 	)
 	if globalSearchAPIEnabled {
 		searchAndStorageRoutes = append(searchAndStorageRoutes,
@@ -509,6 +511,7 @@ func (s *service) start(ctx context.Context) error {
 			RESTOptionsGetter:     serverConfig.RESTOptionsGetter,
 			StorageClient:         s.unified,
 			SearchAPIEnabled:      searchAPIEnabled,
+			HybridAPIEnabled:      hybridAPIEnabled,
 			AccessClient:          s.accessClient,
 			AuthorizerRegistry:    s.authorizer,
 			BuildHandlerChainFunc: s.buildHandlerChainFuncFromBuilders(s.builders, builder.ServerRegisterer(s.metrics, builder.ServerAPIExtensions)),

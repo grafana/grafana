@@ -49,12 +49,14 @@ type stubIndexClient struct {
 // found for path".
 func TestGetAPIRoutesRegistration(t *testing.T) {
 	manifest := testManifest(t)
+	hybrid := true
+	manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
 	b := &AppPluginAPIBuilder{
 		group:      manifest.Group,
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 		search:     stubIndexClient{},
-		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
+		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true, HybridAPIEnabled: true},
 	}
 
 	container := restful.NewContainer()
@@ -81,6 +83,7 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	// same resource name and is the route most likely to collide with it once it
 	// is wired up, which is what the duplicate check above is guarding.
 	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search")
+	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search/hybrid")
 	require.NotContains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/trash",
 		"trash is not wired up to search yet")
 }
@@ -623,6 +626,41 @@ func TestSearchRouteGates(t *testing.T) {
 
 	t.Run("the config toggle turns it off", func(t *testing.T) {
 		require.Empty(t, searchPaths(newBuilder(AppPluginRunnerOptions{})))
+	})
+
+	t.Run("hybrid requires manifest opt-in", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true, HybridAPIEnabled: true})
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(b))
+
+		hybrid := true
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search", "testkinds/search/hybrid"}, searchPaths(b))
+	})
+
+	t.Run("hybrid serves with lexical search and trash disabled", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid, endpoint := true, false
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search/hybrid"}, searchPaths(b))
+
+		b.opts.HybridAPIEnabled = false
+		require.Empty(t, searchPaths(b))
+	})
+
+	t.Run("hybrid follows the served group when it differs from the manifest", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid := true
+		b.manifest.Group = "other.ext.grafana.app"
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search/hybrid"}, searchPaths(b))
+	})
+
+	t.Run("hybrid is not served for cluster scoped kinds", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid := true
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		b.manifest.Versions[1].Kinds[0].Scope = kindstore.ClusterScope
+		require.Empty(t, searchPaths(b))
 	})
 
 	// Search over the fields every resource has works without declared fields,

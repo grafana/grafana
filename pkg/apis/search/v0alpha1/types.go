@@ -23,8 +23,9 @@ const (
 
 	// Here rather than beside the routes because the authorization chain needs
 	// them and cannot depend on the handler package.
-	SearchPathSegment = "search"
-	TrashPathSegment  = "trash"
+	SearchPathSegment       = "search"
+	TrashPathSegment        = "trash"
+	HybridSearchPathSegment = "hybrid"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;
