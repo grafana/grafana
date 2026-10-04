@@ -6113,9 +6113,6 @@
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "クエリに戻る"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6771,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL式を追加",
       "sql-cta-description": "SQLをご希望ですか？代わりにクエリにSQL式を追加してください。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "すべての変換を削除すると、メインの選択画面に戻ります。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "別の変換を追加"
-      },
-      "confirmText-delete-all": "すべて削除",
-      "delete-all-transformations": "すべての変換を削除",
-      "title-delete-all-transformations": "すべての変換を削除しますか？",
-      "tooltip-clear-search": "検索結果をクリア",
-      "tooltip-close-picker": "選択ツールを閉じる"
     },
     "validation": {
       "invalid-dashboard-id": "有効なGrafana.com IDが見つかりませんでした",
