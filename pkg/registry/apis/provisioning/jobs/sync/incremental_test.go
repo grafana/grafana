@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -1767,6 +1768,81 @@ func TestIncrementalSync_FolderUIDChange(t *testing.T) {
 
 		repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, "old-uid")
 	})
+}
+
+func TestIncrementalSync_FolderMovedWithSameMetadataUID(t *testing.T) {
+	repo := newCompositeRepoWithConfig(t)
+	repoResources := resources.NewMockRepositoryResources(t)
+	progress := jobs.NewMockJobProgressRecorder(t)
+
+	changes := []repository.VersionedFileChange{
+		{Action: repository.FileActionRenamed, Path: "Computations/_folder.json", PreviousPath: "audiences/_folder.json", Ref: "new-ref", PreviousRef: "old-ref"},
+		{Action: repository.FileActionRenamed, Path: "Computations/dash.json", PreviousPath: "audiences/dash.json", Ref: "new-ref", PreviousRef: "old-ref"},
+	}
+	repo.MockVersioned.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+
+	repoResources.On("List", mock.Anything).Return(&provisioning.ResourceList{
+		Items: []provisioning.ResourceListItem{
+			{Path: "audiences/", Group: resources.FolderResource.Group, Name: "bfpam5r26j8k2b"},
+			{Path: "audiences/dash.json", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1", Folder: "bfpam5r26j8k2b", Hash: "dash-hash"},
+		},
+	}, nil).Once()
+	var tree resources.FolderTree
+	repoResources.On("SetTree", mock.Anything).Run(func(args mock.Arguments) {
+		tree = args.Get(0).(resources.FolderTree)
+	}).Return().Once()
+
+	repo.MockReader.On("Read", mock.Anything, "Computations/_folder.json", mock.Anything).Return(&repository.FileInfo{
+		Data: folderJSON(t, "bfpam5r26j8k2b", "Computations"),
+		Hash: "h",
+	}, nil).Maybe()
+	repo.MockReader.On("Read", mock.Anything, mock.MatchedBy(func(p string) bool { return strings.HasPrefix(p, "audiences") }), mock.Anything).
+		Return(nil, repository.ErrFileNotFound).Maybe()
+	repo.MockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(&repository.FileInfo{}, nil).Maybe()
+
+	progress.On("SetTotal", mock.Anything, mock.Anything).Return()
+	progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+	progress.On("TooManyErrors").Return(nil)
+	progress.On("HasDirPathFailedCreation", mock.Anything).Return(false)
+	progress.On("HasDirPathFailedDeletion", mock.Anything).Return(false).Maybe()
+	progress.On("HasChildPathFailedCreation", mock.Anything).Return(false).Maybe()
+	progress.On("HasChildPathFailedUpdate", mock.Anything).Return(false).Maybe()
+
+	repoResources.On("EnsureFolderPathExist", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			tree.Add(resources.Folder{ID: "bfpam5r26j8k2b", Title: "Computations", Path: "Computations/"}, "")
+		}).Return("bfpam5r26j8k2b", nil).Maybe()
+	repoResources.On("RenameFolderPath", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			tree.Add(resources.Folder{ID: "bfpam5r26j8k2b", Title: "Computations", Path: "Computations/"}, "")
+		}).Return("bfpam5r26j8k2b", nil).Maybe()
+	repoResources.On("RenameResourceFile", mock.Anything, "audiences/dash.json", "old-ref", "Computations/dash.json", "new-ref", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			tree.Add(resources.Folder{ID: "bfpam5r26j8k2b", Title: "Computations", Path: "Computations/"}, "")
+		}).Return("dash1", "bfpam5r26j8k2b", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboard.grafana.app"}, 0, nil)
+
+	var skipped []jobs.JobResourceResult
+	progress.On("Record", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		r := args.Get(1).(jobs.JobResourceResult)
+		require.NoError(t, r.Error(), "unexpected error recorded for %s", r.Path())
+		if r.Path() == "audiences/" && r.Action() == repository.FileActionIgnored {
+			skipped = append(skipped, r)
+		}
+	}).Return()
+
+	repo.MockReader.On("ReadTree", mock.Anything, "new-ref").Return([]repository.FileTreeEntry{
+		{Path: "Computations", Blob: false},
+		{Path: "Computations/_folder.json", Blob: true},
+		{Path: "Computations/dash.json", Blob: true},
+	}, nil)
+
+	err := IncrementalSync(context.Background(), repo, "old-ref", "new-ref", repoResources, progress, tracing.NewNoopTracerService(), jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()), newPermissiveMockQuotaTracker(t), true)
+	require.NoError(t, err)
+
+	repoResources.AssertNotCalled(t, "RemoveFolder", mock.Anything, mock.Anything)
+	require.Len(t, skipped, 1)
+	require.Equal(t, "bfpam5r26j8k2b", skipped[0].Name())
+	require.Error(t, skipped[0].Warning())
 }
 
 func TestDeleteFolders(t *testing.T) {

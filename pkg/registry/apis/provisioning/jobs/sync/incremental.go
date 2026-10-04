@@ -66,6 +66,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	// prevents legacy resources from being rejected by rules introduced after
 	// they were first persisted.
 	existingHashes := make(map[string]string)
+	var folderTree resources.FolderTree
 	if folderMetadataEnabled {
 		readerRepo, ok := repo.(repository.Reader)
 		if !ok {
@@ -100,8 +101,8 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		// metadata handling needs the current managed path->UID state before apply:
 		// - invalid `_folder.json` falls back to the existing folder at that path
 		// - folders cannot overtake existing UIDs
-		tree := resources.NewFolderTreeFromResourceList(target)
-		repositoryResources.SetTree(tree)
+		folderTree = resources.NewFolderTreeFromResourceList(target)
+		repositoryResources.SetTree(folderTree)
 	}
 
 	// Temporarily raise the quota limit for net-zero folder replacements so
@@ -124,6 +125,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 
 	cleanupStart := time.Now()
 	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, tracer)
+	foldersToDelete = skipFoldersClaimedElsewhere(ctx, foldersToDelete, folderTree, progress)
 
 	for _, r := range replaced {
 		if progress.HasDirPathFailedCreation(r.Path) {
@@ -480,6 +482,34 @@ func findOrphanedFolders(
 	}
 
 	return orphaned
+}
+
+// skipFoldersClaimedElsewhere drops orphaned folders whose UID is now owned by
+// a different path in the folder tree. This happens when a directory is moved
+// while keeping the same `_folder.json` UID: the old path is gone, but deleting
+// the UID would target the folder that now lives at the new path.
+func skipFoldersClaimedElsewhere(ctx context.Context, orphaned []folderDeletion, tree resources.FolderTree, progress jobs.JobProgressRecorder) []folderDeletion {
+	if tree == nil || len(orphaned) == 0 {
+		return orphaned
+	}
+
+	logger := logging.FromContext(ctx)
+	result := make([]folderDeletion, 0, len(orphaned))
+	for _, entry := range orphaned {
+		existing, ok := tree.Get(entry.UID)
+		if !ok || existing.Path == "" || safepath.EnsureTrailingSlash(existing.Path) == safepath.EnsureTrailingSlash(entry.Path) {
+			result = append(result, entry)
+			continue
+		}
+
+		logger.Info("orphaned folder UID is claimed by another path, skipping deletion", "path", entry.Path, "uid", entry.UID, "claimedBy", existing.Path)
+		progress.Record(ctx, jobs.NewFolderResult(entry.Path).
+			WithAction(repository.FileActionIgnored).
+			WithName(entry.UID).
+			WithWarning(fmt.Errorf("folder %s not deleted because it is now located at %s", entry.UID, existing.Path)).
+			Build())
+	}
+	return result
 }
 
 // deleteFolders removes folder K8s objects, processing deepest paths first.
