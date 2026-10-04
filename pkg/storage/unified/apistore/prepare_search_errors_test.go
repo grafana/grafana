@@ -66,7 +66,7 @@ func TestPrepareObjectForStorageSearchErrors(t *testing.T) {
 
 			prepared, err := s.prepareObjectForStorage(ctx, dash)
 			require.Empty(t, prepared.raw)
-			if tc.err == transportErr {
+			if errors.Is(tc.err, transportErr) {
 				require.ErrorIs(t, err, transportErr)
 				return
 			}
