@@ -11,6 +11,7 @@ import { reportInteraction } from '@grafana/runtime';
 import {
   getObservablePluginComponents,
   getObservablePluginExtensions,
+  getObservablePluginFunctions,
   getObservablePluginLinks,
   getPluginExtensions,
 } from './getPluginExtensions';
@@ -57,6 +58,7 @@ async function createRegistries(
 ) {
   const addedLinksRegistry = new AddedLinksRegistry([]);
   const addedComponentsRegistry = new AddedComponentsRegistry([]);
+  const addedFunctionsRegistry = new AddedFunctionsRegistry([]);
 
   for (const { pluginId, addedLinkConfigs, addedComponentConfigs } of preloadResults) {
     addedLinksRegistry.register({
@@ -72,6 +74,7 @@ async function createRegistries(
   return {
     addedLinksRegistry: await addedLinksRegistry.getState(),
     addedComponentsRegistry: await addedComponentsRegistry.getState(),
+    addedFunctionsRegistry: await addedFunctionsRegistry.getState(),
   };
 }
 
@@ -873,5 +876,101 @@ describe('getObservablePluginComponents()', () => {
     const components = await firstValueFrom(observable);
 
     expect(components).toHaveLength(0);
+  });
+});
+
+describe('getObservablePluginFunctions()', () => {
+  const extensionPointId = 'grafana/dashboard/panel/menu/v1';
+  const pluginId = 'grafana-basic-app';
+  let addedLinksRegistry: AddedLinksRegistry;
+  let addedComponentsRegistry: AddedComponentsRegistry;
+  let addedFunctionsRegistry: AddedFunctionsRegistry;
+  let exposedComponentsRegistry: ExposedComponentsRegistry;
+
+  beforeEach(async () => {
+    addedLinksRegistry = new AddedLinksRegistry([]);
+    addedComponentsRegistry = new AddedComponentsRegistry([]);
+    addedFunctionsRegistry = new AddedFunctionsRegistry([]);
+    exposedComponentsRegistry = new ExposedComponentsRegistry([]);
+
+    const registries = {
+      addedComponentsRegistry,
+      addedFunctionsRegistry,
+      addedLinksRegistry,
+      exposedComponentsRegistry,
+    };
+
+    getPluginExtensionRegistriesMock.mockResolvedValue(registries);
+
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 1',
+          description: 'Function 1 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+  });
+
+  it('should only emit the functions', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+
+    await expect(observable).toEmitValuesWith((received) => {
+      const functions = received[0];
+      expect(functions).toHaveLength(1);
+      expect(functions[0].pluginId).toBe(pluginId);
+      expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    });
+  });
+
+  it('should be possible to get the last value from the observable', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(1);
+    expect(functions[0].pluginId).toBe(pluginId);
+    expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    expect(typeof functions[0].fn).toBe('function');
+  });
+
+  it('should be possible to receive the last state of the registry', async () => {
+    // Register a new function
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 2',
+          description: 'Function 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(2);
+    expect(functions[0].pluginId).toBe(pluginId);
+    expect(functions[0].type).toBe(PluginExtensionTypes.function);
+    expect(functions[1].pluginId).toBe(pluginId);
+    expect(functions[1].type).toBe(PluginExtensionTypes.function);
+  });
+
+  it('should receive an empty array if there are no functions', async () => {
+    getPluginExtensionRegistriesMock.mockResolvedValue({
+      addedLinksRegistry: new AddedLinksRegistry([]),
+      addedComponentsRegistry: new AddedComponentsRegistry([]),
+      addedFunctionsRegistry: new AddedFunctionsRegistry([]),
+      exposedComponentsRegistry: new ExposedComponentsRegistry([]),
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(first());
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(0);
   });
 });
