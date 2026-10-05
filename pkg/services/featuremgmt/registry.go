@@ -678,6 +678,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboard.biMode",
+			Description: "Business intelligence interactions on dashboards: clicking a bar chart selects values and filters the other panels instead of pinning the tooltip",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,
