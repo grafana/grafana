@@ -79,7 +79,7 @@ var appManifestData = app.ManifestData{
 							Name:         "health",
 							Path:         "status.health",
 							Type:         "string",
-							Capabilities: []string{"retrieve"},
+							Capabilities: []string{"filter", "retrieve"},
 							Description:  "The health of the rule",
 						},
 						{
@@ -107,7 +107,7 @@ var appManifestData = app.ManifestData{
 							Name:         "state",
 							Path:         "status.state",
 							Type:         "string",
-							Capabilities: []string{"retrieve"},
+							Capabilities: []string{"filter", "retrieve"},
 							Description:  "The state of the alert rule",
 						},
 						{
@@ -241,7 +241,7 @@ var appManifestData = app.ManifestData{
 							Name:         "health",
 							Path:         "status.health",
 							Type:         "string",
-							Capabilities: []string{"retrieve"},
+							Capabilities: []string{"filter", "retrieve"},
 							Description:  "The health of the rule",
 						},
 						{

@@ -65,6 +65,26 @@ func TestBuildManifestVersion(t *testing.T) {
 		responseRef(t, oas.Paths.Paths[root+"namespaces/{namespace}/testkinds/{name}"].Get))
 }
 
+func TestBuildManifestHybridRoute(t *testing.T) {
+	plugin := testPlugin(t)
+	hybrid, endpoint := true, false
+	plugin.Manifest.Versions[0].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
+	oas, err := Build(plugin, "v1alpha1", Options{})
+	require.NoError(t, err)
+
+	root := "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds"
+	require.NotContains(t, oas.Paths.Paths, root+"/search")
+	route, ok := oas.Paths.Paths[root+"/search/hybrid"]
+	require.True(t, ok)
+	require.NotNil(t, route.Post)
+	require.Contains(t, responseRef(t, route.Post), "HybridSearchResults")
+
+	raw, err := json.Marshal(oas)
+	require.NoError(t, err)
+	_, err = openapi3.NewLoader().LoadFromData(raw)
+	require.NoError(t, err, "hybrid request and response schemas must resolve")
+}
+
 // The compatibility flag preserves the legacy settings version.
 func TestBuildSettingsVersion(t *testing.T) {
 	keepManifestSettings(t)

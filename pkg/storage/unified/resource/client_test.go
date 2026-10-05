@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,40 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type retryTestResourceServer struct {
+	ResourceServer
+	failure  error
+	attempts int
+}
+
+func (s *retryTestResourceServer) Update(context.Context, *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	s.attempts++
+	if s.attempts == 1 {
+		return nil, s.failure
+	}
+	return &resourcepb.UpdateResponse{}, nil
+}
+
+func TestLocalResourceClientRetryCodes(t *testing.T) {
+	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
+		t.Run(code.String(), func(t *testing.T) {
+			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+			require.NoError(t, err)
+			srv := &retryTestResourceServer{failure: st.Err()}
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
+			if code == codes.Unavailable || code == codes.ResourceExhausted {
+				require.NoError(t, err)
+				require.Equal(t, 2, srv.attempts)
+			} else {
+				require.Equal(t, 1, srv.attempts)
+				require.Equal(t, st.Proto(), status.Convert(err).Proto())
+			}
+		})
+	}
+}
 
 type missingReadBackend struct{ mockStorageBackend }
 
@@ -72,6 +107,26 @@ func TestNewIDTokenExtractor(t *testing.T) {
 		return types.WithAuthInfo(context.Background(), info)
 	}
 	requireIdentity := func(context.Context) bool { return true }
+	oboOn := func(context.Context) bool { return true }
+	oboOff := func(context.Context) bool { return false }
+	cancelledCtx, cancel := context.WithCancel(withInfo(&identity.StaticRequester{Type: types.TypeUser}))
+	cancel()
+	expiredCtx, cancelExpired := context.WithDeadline(withInfo(&identity.StaticRequester{Type: types.TypeUser}), time.Now().Add(-time.Minute))
+	defer cancelExpired()
+	// Allows the fallback, but a done context must return before the policy reads its flag.
+	unreachablePolicy := func(context.Context) bool {
+		t.Error("RequireCallerIdentity was consulted for a done context")
+		return false
+	}
+
+	modes := []string{identityModeService, identityModeIDToken, identityModeOnBehalfOf, identityModeFallbackService, identityModeDenied, identityModeCancelled}
+	counts := func() map[string]float64 {
+		out := make(map[string]float64, len(modes))
+		for _, mode := range modes {
+			out[mode] = testutil.ToFloat64(clientIdentityTotal.WithLabelValues(mode))
+		}
+		return out
+	}
 
 	for _, tc := range []struct {
 		name      string
@@ -121,15 +176,64 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			wantMode: identityModeDenied,
 			wantCode: codes.PermissionDenied,
 		},
+		{
+			name:     "cancelled user request without an id token is neither a fallback nor a denial",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "cancelled user request is not counted as a fallback when the fallback is allowed",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "user request past its deadline is not counted as a fallback",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      expiredCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.DeadlineExceeded,
+		},
+		{
+			name:     "user carried inside the access token goes obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			// The exchanger carries the caller inside the exchanged token, so the ID token
+			// must stay home: pure obo.
+			name:     "obo takes priority over a present id token",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			name:      "obo policy off keeps the classic id token transport",
+			cfg:       RemoteResourceClientConfig{OnBehalfOf: oboOff},
+			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode:  identityModeIDToken,
+			wantToken: "id-token",
+		},
+		{
+			name:     "an access token that does not carry the user is not obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: func(context.Context) bool { return false }},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: serviceActorToken(t)}),
+			wantMode: identityModeFallbackService,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			before := testutil.ToFloat64(clientIdentityTotal.WithLabelValues(tc.wantMode))
+			want := counts()
+			want[tc.wantMode]++
 
 			token, err := newIDTokenExtractor(tc.cfg)(tc.ctx)
 
 			assert.Equal(t, tc.wantCode, status.Code(err))
 			assert.Equal(t, tc.wantToken, token)
-			assert.Equal(t, before+1, testutil.ToFloat64(clientIdentityTotal.WithLabelValues(tc.wantMode)))
+			assert.Equal(t, want, counts(), "only the %s counter should move", tc.wantMode)
 		})
 	}
 }

@@ -712,6 +712,10 @@ SceneGridRow.Component = SceneGridRowRenderer;
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
 
+  if (soloPanelContext?.renderRow) {
+    return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
+  }
+
   if (soloPanelContext) {
     return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
   }

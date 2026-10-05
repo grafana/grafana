@@ -132,6 +132,8 @@ export interface NotebookEditSessionEndedProperties extends EventProperty, Noteb
   redoCount: number;
   /** Whether the time range moved during the session, by any control. */
   timeRangeChanged: boolean;
+  /** Whether any cell's own time range override changed during the session. */
+  cellTimeRangeChanged: boolean;
   /** How the session ended. */
   endReason: NotebookEditSessionEndReason;
 }

@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "选择自定义命名空间",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "选择命名空间",
       "aria-label-select-query-type": "选择查询类型",
       "aria-label-select-region": "选择区域",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "选择资源组",
       "aria-label-select-subscription": "选择订阅",
       "label-custom-namespace": "自定义命名空间",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "命名空间",
       "label-query-type": "查询类型",
       "label-region": "区域",

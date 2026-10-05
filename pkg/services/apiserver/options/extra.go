@@ -31,6 +31,10 @@ type ExtraOptions struct {
 	// endpoint off without the other.
 	EnableTrashAPI bool
 
+	// EnableHybridAPI is the flag equivalent of [grafana-apiserver]
+	// enable_hybrid_api, independent of the search and trash endpoint settings.
+	EnableHybridAPI bool
+
 	// EnableKeysAPI is the flag equivalent of [grafana-apiserver]
 	// enable_keys_api. Defaults off, matching the ini default: search and trash
 	// have shipped long enough to default on, list-keys has not.
@@ -44,6 +48,7 @@ func NewExtraOptions() *ExtraOptions {
 		RequestTimeout:  10 * time.Minute,
 		EnableSearchAPI: true,
 		EnableTrashAPI:  true,
+		EnableHybridAPI: true,
 	}
 }
 
@@ -56,6 +61,8 @@ func (o *ExtraOptions) AddFlags(fs *pflag.FlagSet) {
 		"Serve the per-resource search endpoints")
 	fs.BoolVar(&o.EnableTrashAPI, "grafana-apiserver-enable-trash-api", o.EnableTrashAPI,
 		"Serve the per-resource trash endpoints")
+	fs.BoolVar(&o.EnableHybridAPI, "grafana-apiserver-enable-hybrid-api", o.EnableHybridAPI,
+		"Serve the per-resource hybrid search endpoints")
 	fs.BoolVar(&o.EnableKeysAPI, "grafana-apiserver-enable-keys-api", o.EnableKeysAPI,
 		"Serve the per-resource list-keys endpoints")
 }

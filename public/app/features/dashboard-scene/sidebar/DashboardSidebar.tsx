@@ -560,6 +560,40 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     }
   }
 
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane needs to be refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      this.setState({ previousState: undefined });
+      this.closePane();
+    }
+  }
+
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });
