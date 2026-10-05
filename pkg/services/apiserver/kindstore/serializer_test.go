@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -175,7 +178,7 @@ func TestConversionSerializerValidatesResponse(t *testing.T) {
 
 func TestConversionSerializerPreservesMetadata(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
-	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original","resourceVersion":"123","generation":3,"finalizers":["example-app/cleanup"],"creationTimestamp":"2026-10-01T00:00:00Z","deletionTimestamp":"2026-10-02T00:00:00Z","deletionGracePeriodSeconds":30,"ownerReferences":[{"apiVersion":"example-app/v1","kind":"Owner","name":"parent","uid":"parent-uid"}],"managedFields":[{"manager":"test","operation":"Update","apiVersion":"example-app/v1","fieldsType":"FieldsV1","fieldsV1":{"f:spec":{}}}],"labels":{"old":"label"},"annotations":{"old":"annotation"}},"spec":{"old":"value"}}`)
+	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original","resourceVersion":"123","generation":3,"finalizers":["example-app/cleanup"],"creationTimestamp":"2026-10-01T00:00:00Z","deletionTimestamp":"2026-10-02T00:00:00Z","deletionGracePeriodSeconds":30,"ownerReferences":[{"apiVersion":"example-app/v1","kind":"Owner","name":"parent","uid":"parent-uid"}],"labels":{"old":"label"},"annotations":{"old":"annotation","grafana.app/managedBy":"repo","grafana.app/managerId":"repository","grafana.app/folder":"folder"}},"spec":{"old":"value"}}`)
 	for _, mode := range []string{"altered", "removed", "empty", "null", "invalid", "null labels and annotations", "invalid labels and annotations"} {
 		t.Run(mode, func(t *testing.T) {
 			var original unstructured.Unstructured
@@ -231,4 +234,288 @@ func TestConversionSerializerPreservesMetadata(t *testing.T) {
 			}
 		})
 	}
+}
+
+func conversionTestSerializer(t *testing.T, converted *unstructured.Unstructured) *conversionSerializer {
+	t.Helper()
+	payload, err := converted.MarshalJSON()
+	require.NoError(t, err)
+	return &conversionSerializer{
+		gvk: converted.GroupVersionKind(),
+		client: conversionClientFunc(func(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+			return pluginv3.ConvertObjectsResponse_builder{Converted: []*pluginv3.ConvertObjectsResponse_Object{
+				pluginv3.ConvertObjectsResponse_Object_builder{Raw: payload, Warnings: []string{"converted"}}.Build(),
+			}}.Build(), nil
+		}),
+	}
+}
+
+func conversionTestObject(t *testing.T) *unstructured.Unstructured {
+	t.Helper()
+	obj := &unstructured.Unstructured{}
+	require.NoError(t, obj.UnmarshalJSON([]byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original","managedFields":[{"manager":"first","operation":"Apply","apiVersion":"example-app/v1","time":"2026-10-01T00:00:00Z","fieldsType":"FieldsV1","fieldsV1":{"f:spec":{"f:old":{}}}}]},"spec":{"old":"value"}}`)))
+	return obj
+}
+
+func TestConversionSerializerConvertsManagedFields(t *testing.T) {
+	original := conversionTestObject(t)
+	stored := original.GetManagedFields()[0]
+	for _, duplicateVersion := range []bool{false, true} {
+		t.Run(fmt.Sprintf("multiple stored versions=%t", duplicateVersion), func(t *testing.T) {
+			input := original.DeepCopy()
+			if duplicateVersion {
+				first := stored
+				first.Operation = metav1.ManagedFieldsOperationUpdate
+				second := first
+				second.APIVersion = "example-app/v0"
+				second.Time = nil
+				input.SetManagedFields([]metav1.ManagedFieldsEntry{first, second})
+			}
+			converted := input.DeepCopy()
+			converted.SetAPIVersion("example-app/v2")
+			converted.Object["spec"] = map[string]any{"new": "value"}
+			entry := input.GetManagedFields()[0]
+			entry.APIVersion = converted.GetAPIVersion()
+			entry.FieldsV1 = &metav1.FieldsV1{}
+			require.NoError(t, entry.FieldsV1.UnmarshalJSON([]byte(`{"f:spec":{"f:new":{}}}`)))
+			entry.Time = nil
+			converted.SetManagedFields([]metav1.ManagedFieldsEntry{entry})
+			converted.SetName("changed")
+			raw, err := input.MarshalJSON()
+			require.NoError(t, err)
+			serializer := conversionTestSerializer(t, converted)
+			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{}} {
+				result, err := serializer.Decode(t.Context(), raw, into)
+				require.NoError(t, err)
+				obj := result.(*unstructured.Unstructured)
+				require.Equal(t, input.GetName(), obj.GetName())
+				require.Equal(t, converted.Object["spec"], obj.Object["spec"])
+				fields := obj.GetManagedFields()
+				require.Len(t, fields, 1)
+				require.Equal(t, "example-app/v2", fields[0].APIVersion)
+				require.Equal(t, stored.Time, fields[0].Time)
+				require.Equal(t, entry.FieldsV1, fields[0].FieldsV1)
+				require.NotContains(t, obj.Object["metadata"], "fieldManager")
+				if into != nil {
+					require.Same(t, into, obj)
+				}
+			}
+		})
+	}
+}
+
+func TestConversionSerializerCleansInvalidManagedFields(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		mutate func(*unstructured.Unstructured)
+	}{
+		{"omitted", func(o *unstructured.Unstructured) {
+			unstructured.RemoveNestedField(o.Object, "metadata", "managedFields")
+		}},
+		{"empty", func(o *unstructured.Unstructured) { o.SetManagedFields([]metav1.ManagedFieldsEntry{}) }},
+		{"null", func(o *unstructured.Unstructured) { o.Object["metadata"].(map[string]any)["managedFields"] = nil }},
+		{"map instead of list", func(o *unstructured.Unstructured) {
+			o.Object["metadata"].(map[string]any)["managedFields"] = map[string]any{}
+		}},
+		{"invalid entry", func(o *unstructured.Unstructured) {
+			o.Object["metadata"].(map[string]any)["managedFields"] = []any{"invalid"}
+		}},
+		{"wrong version", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			fields[0].APIVersion = "example-app/v1"
+			o.SetManagedFields(fields)
+		}},
+		{"different manager", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			fields[0].Manager = "other"
+			o.SetManagedFields(fields)
+		}},
+		{"different operation", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			fields[0].Operation = metav1.ManagedFieldsOperationUpdate
+			o.SetManagedFields(fields)
+		}},
+		{"different subresource", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			fields[0].Subresource = "status"
+			o.SetManagedFields(fields)
+		}},
+		{"missing field set", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			fields[0].FieldsV1 = nil
+			o.SetManagedFields(fields)
+		}},
+		{"invalid field set", func(o *unstructured.Unstructured) {
+			entry := o.Object["metadata"].(map[string]any)["managedFields"].([]any)[0].(map[string]any)
+			entry["fieldsV1"] = map[string]any{"f:spec": "invalid"}
+		}},
+		{"duplicates", func(o *unstructured.Unstructured) {
+			fields := o.GetManagedFields()
+			o.SetManagedFields(append(fields, fields[0]))
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			original := conversionTestObject(t)
+			raw, err := original.MarshalJSON()
+			require.NoError(t, err)
+			converted := original.DeepCopy()
+			converted.SetAPIVersion("example-app/v2")
+			fields := converted.GetManagedFields()
+			fields[0].APIVersion = converted.GetAPIVersion()
+			converted.SetManagedFields(fields)
+			tc.mutate(converted)
+			serializer := conversionTestSerializer(t, converted)
+			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{Object: map[string]any{"untouched": true}}} {
+				recorder := &warningRecorder{}
+				obj, err := serializer.Decode(warning.WithWarningRecorder(t.Context(), recorder), raw, into)
+				require.NoError(t, err)
+				result := obj.(*unstructured.Unstructured)
+				require.Empty(t, result.GetManagedFields())
+				require.NotContains(t, result.Object["metadata"], "managedFields")
+				require.Equal(t, original.GetName(), result.GetName())
+				require.Equal(t, converted.Object["spec"], result.Object["spec"])
+				require.Equal(t, converted.GroupVersionKind(), result.GroupVersionKind())
+				if into != nil {
+					require.Same(t, into, obj)
+				}
+				require.Equal(t, []string{"converted"}, recorder.warnings)
+			}
+		})
+	}
+}
+
+func TestConversionSerializerDoesNotInventMetadata(t *testing.T) {
+	for _, metadata := range []string{"", `,"metadata":{}`, `,"metadata":null`} {
+		t.Run(metadata, func(t *testing.T) {
+			raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind"` + metadata + `}`)
+			converted := conversionTestObject(t)
+			converted.SetAPIVersion("example-app/v2")
+			converted.Object["metadata"].(map[string]any)["fieldManager"] = map[string]any{"manager": "unexpected"}
+			obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+			require.NoError(t, err)
+			result := obj.(*unstructured.Unstructured)
+			require.Empty(t, result.GetName())
+			require.Empty(t, result.GetManagedFields())
+			value, _, err := unstructured.NestedFieldNoCopy(result.Object, "metadata", "fieldManager")
+			require.NoError(t, err)
+			require.Nil(t, value)
+		})
+	}
+}
+
+func TestConversionSerializerPreservesApplyConflicts(t *testing.T) {
+	for _, versions := range [][2]string{{"v1", "v2"}, {"v2", "v1"}} {
+		t.Run(versions[0]+" to "+versions[1], func(t *testing.T) {
+			sourceGVK := schema.GroupVersionKind{Group: "example-app", Version: versions[0], Kind: "TestKind"}
+			targetGVK := sourceGVK
+			targetGVK.Version = versions[1]
+			manager, err := newFieldManager(sourceGVK, nil)
+			require.NoError(t, err)
+			live := &unstructured.Unstructured{}
+			live.SetGroupVersionKind(sourceGVK)
+			desired := conversionTestObject(t)
+			desired.SetGroupVersionKind(sourceGVK)
+			desired.SetManagedFields(nil)
+			owned, err := manager.Apply(live, desired, "first", false)
+			require.NoError(t, err)
+			raw, err := json.Marshal(owned)
+			require.NoError(t, err)
+			converted := owned.(*unstructured.Unstructured).DeepCopy()
+			converted.SetGroupVersionKind(targetGVK)
+			converted.Object["spec"] = map[string]any{"new": "value"}
+			fields := converted.GetManagedFields()
+			require.Len(t, fields, 1)
+			fields[0].APIVersion = targetGVK.GroupVersion().String()
+			var paths map[string]any
+			require.NoError(t, json.Unmarshal(fields[0].FieldsV1.GetRawBytes(), &paths))
+			paths["f:spec"] = map[string]any{"f:new": map[string]any{}}
+			pathsJSON, err := json.Marshal(paths)
+			require.NoError(t, err)
+			require.NoError(t, fields[0].FieldsV1.UnmarshalJSON(pathsJSON))
+			converted.SetManagedFields(fields)
+			decoded, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+			require.NoError(t, err)
+			targetManager, err := newFieldManager(targetGVK, nil)
+			require.NoError(t, err)
+			patch := converted.DeepCopy()
+			patch.SetManagedFields(nil)
+			patch.Object["spec"] = map[string]any{"new": "changed"}
+			_, err = targetManager.Apply(decoded.DeepCopyObject(), patch, "second", false)
+			require.True(t, apierrors.IsConflict(err), "expected an ownership conflict, got %v", err)
+			require.ErrorContains(t, err, ".spec.new")
+			_, err = targetManager.Apply(decoded.DeepCopyObject(), patch, "first", false)
+			require.NoError(t, err, "the original manager can still edit the converted field")
+			_, err = targetManager.Apply(decoded.DeepCopyObject(), patch, "second", true)
+			require.NoError(t, err, "force apply explicitly transfers ownership")
+		})
+	}
+
+}
+
+func TestConversionSerializerPreservesDistinctOwners(t *testing.T) {
+	original := conversionTestObject(t)
+	first := original.GetManagedFields()[0]
+	updater := *first.DeepCopy()
+	updater.Operation = metav1.ManagedFieldsOperationUpdate
+	status := *updater.DeepCopy()
+	status.Subresource = "status"
+	require.NoError(t, status.FieldsV1.UnmarshalJSON([]byte(`{"f:status":{"f:state":{}}}`)))
+	original.SetManagedFields([]metav1.ManagedFieldsEntry{first, updater, status})
+	raw, err := original.MarshalJSON()
+	require.NoError(t, err)
+	converted := original.DeepCopy()
+	converted.SetAPIVersion("example-app/v2")
+	fields := converted.GetManagedFields()
+	for i := range fields {
+		fields[i].APIVersion = converted.GetAPIVersion()
+	}
+	fields[0], fields[2] = fields[2], fields[0]
+	converted.SetManagedFields(fields)
+	obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+	require.NoError(t, err)
+	require.Equal(t, fields, obj.(*unstructured.Unstructured).GetManagedFields())
+
+	converted.SetManagedFields(fields[:2])
+	obj, err = conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+	require.NoError(t, err)
+	require.Equal(t, fields[:2], obj.(*unstructured.Unstructured).GetManagedFields())
+}
+
+func TestConversionSerializerKeepsValidOwnersDuringCleanup(t *testing.T) {
+	for _, corruptStored := range []bool{false, true} {
+		t.Run(fmt.Sprintf("invalid stored ownership=%t", corruptStored), func(t *testing.T) {
+			original := conversionTestObject(t)
+			converted := original.DeepCopy()
+			converted.SetAPIVersion("example-app/v2")
+			fields := converted.GetManagedFields()
+			fields[0].APIVersion = converted.GetAPIVersion()
+			converted.SetManagedFields(fields)
+			bad := converted
+			if corruptStored {
+				bad = original
+			}
+			entries := bad.Object["metadata"].(map[string]any)["managedFields"].([]any)
+			bad.Object["metadata"].(map[string]any)["managedFields"] = append(entries, "invalid", map[string]any{"manager": "broken"})
+			raw, err := original.MarshalJSON()
+			require.NoError(t, err)
+			obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+			require.NoError(t, err)
+			require.Equal(t, fields, obj.(*unstructured.Unstructured).GetManagedFields())
+		})
+	}
+}
+
+func TestConversionSerializerClearsMalformedStoredOwnership(t *testing.T) {
+	original := conversionTestObject(t)
+	converted := original.DeepCopy()
+	converted.SetAPIVersion("example-app/v2")
+	original.Object["metadata"].(map[string]any)["managedFields"] = "invalid"
+	raw, err := original.MarshalJSON()
+	require.NoError(t, err)
+	obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+	require.NoError(t, err)
+	result := obj.(*unstructured.Unstructured)
+	require.NotContains(t, result.Object["metadata"], "managedFields")
+	require.Equal(t, original.GetName(), result.GetName())
+	require.Equal(t, converted.Object["spec"], result.Object["spec"])
 }

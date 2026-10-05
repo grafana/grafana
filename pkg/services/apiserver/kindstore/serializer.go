@@ -5,10 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/managedfields"
 	"k8s.io/apimachinery/pkg/util/uuid"
 	"k8s.io/apiserver/pkg/warning"
 
@@ -88,16 +91,104 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 		return nil, fmt.Errorf("conversion to %s returned unexpected GVK %s", s.gvk, got)
 	}
 
-	// Report conversion warnings
+	metadata, found := original.Object["metadata"]
+	if metadata != nil {
+		if _, ok := metadata.(map[string]any); !ok {
+			return nil, fmt.Errorf("invalid stored metadata: expected an object, found %T", metadata)
+		}
+	}
+	fields := convertedManagedFields(&original, &result, s.gvk.GroupVersion().String())
+
+	// List selectors and repository checks use stored metadata before decoding.
+	// Only field ownership may change with the converted payload.
+	if found {
+		result.Object["metadata"] = runtime.DeepCopyJSONValue(metadata)
+	} else {
+		delete(result.Object, "metadata")
+	}
+	result.SetManagedFields(fields)
 	for _, w := range converted[0].GetWarnings() {
 		warning.AddWarning(ctx, "", w)
 	}
 
-	// Metadata may not change in the conversion hook, only the spec++
-	// This is more strict than CRDs, but avoids issues where search/list are based on the saved metadata
-	result.Object["metadata"] = original.Object["metadata"]
-
 	// Return the new or "into" object
 	*target = result
 	return target, nil
+}
+
+// Retain only ownership that can be interpreted in the served version. Stale
+// paths cannot be translated by merely stamping another GVK, but should not
+// prevent reading an otherwise valid converted object.
+func convertedManagedFields(original, converted *unstructured.Unstructured, apiVersion string) []metav1.ManagedFieldsEntry {
+	stored := readManagedFields(original)
+	fields := readManagedFields(converted)
+	type owner struct {
+		manager     string
+		operation   metav1.ManagedFieldsOperationType
+		subresource string
+	}
+	key := func(entry metav1.ManagedFieldsEntry) owner {
+		return owner{entry.Manager, entry.Operation, entry.Subresource}
+	}
+	owners := make(map[owner]metav1.ManagedFieldsEntry, len(stored))
+	for _, entry := range stored {
+		id := key(entry)
+		previous, found := owners[id]
+		if !found || (entry.Time != nil && (previous.Time == nil || previous.Time.Before(entry.Time))) {
+			owners[id] = entry
+		}
+	}
+	var cleaned []metav1.ManagedFieldsEntry
+	seen := make(map[owner]bool, len(fields))
+	duplicates := make(map[owner]bool)
+	for _, entry := range fields {
+		id := key(entry)
+		previous, found := owners[id]
+		if !found || entry.APIVersion != apiVersion {
+			continue
+		}
+		if seen[id] {
+			duplicates[id] = true
+			continue
+		}
+		seen[id] = true
+		entry.Time = previous.Time
+		cleaned = append(cleaned, entry)
+	}
+	// Duplicate entries would silently overwrite each other's ownership on apply.
+	cleaned = slices.DeleteFunc(cleaned, func(entry metav1.ManagedFieldsEntry) bool { return duplicates[key(entry)] })
+	if len(cleaned) == 0 {
+		return nil
+	}
+	return cleaned
+}
+
+func readManagedFields(obj *unstructured.Unstructured) []metav1.ManagedFieldsEntry {
+	value, _, err := unstructured.NestedFieldNoCopy(obj.Object, "metadata", "managedFields")
+	if err != nil {
+		return nil
+	}
+	items, ok := value.([]any)
+	if !ok {
+		return nil
+	}
+	var entries []metav1.ManagedFieldsEntry
+	for _, item := range items {
+		raw, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		var entry metav1.ManagedFieldsEntry
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(raw, &entry); err != nil {
+			continue
+		}
+		if entry.FieldsV1 == nil {
+			continue
+		}
+		if err := managedfields.ValidateManagedFields([]metav1.ManagedFieldsEntry{entry}); err != nil {
+			continue
+		}
+		entries = append(entries, entry)
+	}
+	return entries
 }
