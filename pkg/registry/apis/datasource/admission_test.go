@@ -50,7 +50,9 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 				return
 			}
 			require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
-			status := err.(*apierrors.StatusError).ErrStatus
+			var statusErr *apierrors.StatusError
+			require.ErrorAs(t, err, &statusErr)
+			status := statusErr.ErrStatus
 			require.Equal(t, tt.wantField, status.Details.Causes[0].Field)
 			require.Contains(t, err.Error(), "TeamLBACRule")
 			require.NotContains(t, err.Error(), "sensitive-value")
