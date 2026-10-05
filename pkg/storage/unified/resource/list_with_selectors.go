@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"path"
 	"slices"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -433,7 +435,26 @@ type SearchBackedListConfig struct {
 }
 
 func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return c.AllowedResources[group+"/"+resource]
+	return resourceAllowed(c.AllowedResources, group, resource)
+}
+
+func resourceAllowed(allowed map[string]bool, group, resource string) bool {
+	if enabled, ok := allowed[group+"/"+resource]; ok {
+		return enabled
+	}
+	if enabled, ok := allowed[group]; ok {
+		return enabled
+	}
+	for pattern, enabled := range allowed {
+		if !enabled || strings.Contains(pattern, "/") {
+			continue
+		}
+		matched, err := path.Match(pattern, group)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {

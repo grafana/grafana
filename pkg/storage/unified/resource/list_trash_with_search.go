@@ -138,9 +138,20 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 	return rsp, nil
 }
 
+var trashSearchAllowlist = map[string]bool{
+	"dashboard.grafana.app/dashboards": true,
+}
+
+// TrashSearchAllowed reports whether a kind's authorization model has been
+// approved for search-backed trash.
+func TrashSearchAllowed(group, resource string) bool {
+	return resourceAllowed(trashSearchAllowlist, group, resource)
+}
+
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
 		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
+		!TrashSearchAllowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||
 		req.KeysOnly || req.Options.Key.Namespace == "" || req.Options.Key.Name != "" ||
