@@ -35,7 +35,7 @@ func TestGenerateDeterministicUID(t *testing.T) {
 
 	t.Run("output is a valid, fixed-length short UID", func(t *testing.T) {
 		uid := GenerateDeterministicUID("org-1", "alice@example.com", "alice")
-		assert.Len(t, uid, 16)
+		assert.Len(t, uid, 25)
 		assert.True(t, util.IsValidShortUID(uid))
 		assert.False(t, util.IsShortUIDTooLong(uid))
 	})

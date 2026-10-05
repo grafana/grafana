@@ -15,7 +15,7 @@ import (
 func GenerateDeterministicUID(namespace, email, login string) string {
 	input := namespace + "\x00" + strings.ToLower(email) + "\x00" + strings.ToLower(login)
 	h := sha256.Sum256([]byte(input))
-	n := new(big.Int).SetBytes(h[:10]) // first 80 bits
+	n := new(big.Int).SetBytes(h[:16]) // first 128 bits
 
-	return fmt.Sprintf("%016s", n.Text(36))
+	return fmt.Sprintf("%025s", n.Text(36))
 }
