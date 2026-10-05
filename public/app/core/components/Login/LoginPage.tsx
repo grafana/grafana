@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagGrafanaPreserveLoginTabTitle } from '@grafana/runtime/internal';
 import { Alert, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import { getLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 
@@ -21,7 +22,8 @@ import { UserSignup } from './UserSignup';
 const LoginPage = () => {
   const styles = useStyles2(getStyles);
 
-  const sectionTitle = getLoginSectionTitle();
+  const preserveLoginTabTitle = useFlagGrafanaPreserveLoginTabTitle();
+  const sectionTitle = preserveLoginTabTitle ? getLoginSectionTitle() : undefined;
   const pageNav = useMemo(
     () => (sectionTitle ? { text: `${sectionTitle} - ${t('login.title.sign-in', 'Sign in')}` } : undefined),
     [sectionTitle]

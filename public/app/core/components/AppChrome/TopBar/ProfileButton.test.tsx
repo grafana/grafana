@@ -1,8 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { RedirectToUrlKey } from 'app/core/services/context_srv';
 import { getLoginSectionTitle, rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
 import { createComponentWithMeta, usePluginComponents } from 'app/features/plugins/extensions/usePluginComponents';
@@ -73,8 +75,7 @@ describe('ProfileButton', () => {
   });
 
   it('forgets the section when signing out', async () => {
-    const originalToggle = config.featureToggles.useSessionStorageForRedirection;
-    config.featureToggles.useSessionStorageForRedirection = true;
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
     try {
       rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/abc/test');
       sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/abc/test'));
@@ -87,7 +88,7 @@ describe('ProfileButton', () => {
       expect(getLoginSectionTitle()).toBeUndefined();
     } finally {
       sessionStorage.clear();
-      config.featureToggles.useSessionStorageForRedirection = originalToggle;
+      act(() => setTestFlags({}));
     }
   });
 

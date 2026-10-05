@@ -1,11 +1,13 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse } from 'msw';
 import { render } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { customLoginHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { RedirectToUrlKey } from 'app/core/services/context_srv';
 import { rememberLoginSectionTitle } from 'app/core/services/loginSectionTitle';
@@ -158,16 +160,14 @@ describe('Login Page', () => {
 });
 
 describe('section login title', () => {
-  const originalToggle = config.featureToggles.useSessionStorageForRedirection;
-
   beforeEach(() => {
     sessionStorage.clear();
-    config.featureToggles.useSessionStorageForRedirection = true;
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
   });
 
   afterEach(() => {
     sessionStorage.clear();
-    config.featureToggles.useSessionStorageForRedirection = originalToggle;
+    act(() => setTestFlags({}));
   });
 
   it('keeps the section name through login-page rerenders', async () => {
@@ -178,6 +178,16 @@ describe('section login title', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'test');
     rerender(<LoginPage />);
     expect(document.title).toBe('Dashboards - Sign in - Grafana');
+  });
+
+  it('returns to the normal title when the flag is disabled while on the login page', async () => {
+    rememberLoginSectionTitle({ id: 'explore', text: 'Explore' }, '/explore');
+    sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/explore'));
+    render(<LoginPage />);
+    expect(document.title).toBe('Explore - Sign in - Grafana');
+
+    await act(async () => setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false }));
+    expect(document.title).toBe('Grafana');
   });
 
   it('uses the normal title without a matching destination', () => {

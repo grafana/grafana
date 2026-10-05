@@ -4,6 +4,8 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { type NavModelItem, PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { contextSrv, RedirectToUrlKey } from 'app/core/services/context_srv';
 import { getLoginSectionTitle } from 'app/core/services/loginSectionTitle';
@@ -87,10 +89,9 @@ describe('Render', () => {
 
 it('retains the section label instead of a sensitive page title for login', () => {
   const originalSignedIn = contextSrv.user.isSignedIn;
-  const originalToggle = config.featureToggles.useSessionStorageForRedirection;
   const originalLocation = locationService.getLocation();
   contextSrv.user.isSignedIn = true;
-  config.featureToggles.useSessionStorageForRedirection = true;
+  setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
   locationService.replace('/d/abc/test');
   sessionStorage.clear();
   try {
@@ -102,7 +103,7 @@ it('retains the section label instead of a sensitive page title for login', () =
     expect(getLoginSectionTitle()).toBe('Dashboards');
   } finally {
     contextSrv.user.isSignedIn = originalSignedIn;
-    config.featureToggles.useSessionStorageForRedirection = originalToggle;
+    setTestFlags({});
     sessionStorage.clear();
     locationService.replace(originalLocation);
   }
