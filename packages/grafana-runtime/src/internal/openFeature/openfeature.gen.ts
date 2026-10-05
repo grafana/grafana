@@ -439,10 +439,10 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
+  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
 };
 
 /**

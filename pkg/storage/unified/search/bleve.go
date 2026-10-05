@@ -869,7 +869,7 @@ type preparedBuildIndex struct {
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and lastImportTime
-// check passes (if the index was built before lastImportTime, it will be rebuilt).
+// check passes (the index must be built after lastImportTime to be reused).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
 // maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
@@ -1220,8 +1220,8 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
 	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
-	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
-		reason = "index was built before the last import"
+	} else if !lastImportTime.IsZero() && !indexBuildTime.After(lastImportTime) {
+		reason = "index was not built after the last import"
 	}
 	if reason == "" {
 		return idx, name, rv, nil
@@ -2327,7 +2327,9 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 		}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
+		Error: b.verifyKey(req.Options.Key),
+		// For a global index this is the version it was built at: it replays no
+		// events, so its resource version does not move after the build.
 		ResourceVersion: b.resourceVersion.Load(),
 		ResultFormat:    resultFormat,
 	}

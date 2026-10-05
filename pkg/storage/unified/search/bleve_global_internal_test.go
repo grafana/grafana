@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -413,4 +414,20 @@ func TestImportTimesSurviveReopening(t *testing.T) {
 	times, err := idx.ImportTimes()
 	require.NoError(t, err)
 	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: importMonday}, times)
+}
+
+// Notifications write to a global index outside its updater, so an index closed
+// under them, as one evicted or replaced, must refuse the write rather than
+// panic.
+func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(t.TempDir()))
+	key := resource.GlobalSearchKey("ns")
+	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	backend.Stop()
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 }

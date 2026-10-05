@@ -537,8 +537,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err != nil {
-		return fmt.Errorf("check library panel connections: %w", err)
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+		return err
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(

@@ -6113,9 +6113,6 @@
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Kembali ke Kueri"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6771,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Tambahkan ekspresi SQL",
       "sql-cta-description": "Lebih suka SQL? Tambahkan ekspresi SQL ke kueri Anda."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Dengan menghapus semua transformasi, Anda akan kembali ke layar pilihan utama."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Tambah transformasi lain"
-      },
-      "confirmText-delete-all": "Hapus semua",
-      "delete-all-transformations": "Hapus semua transformasi",
-      "title-delete-all-transformations": "Hapus semua transformasi?",
-      "tooltip-clear-search": "Hapus pencarian",
-      "tooltip-close-picker": "Tutup pemilih"
     },
     "validation": {
       "invalid-dashboard-id": "Tidak dapat menemukan ID Grafana.com yang valid",

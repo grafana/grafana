@@ -263,12 +263,6 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 	if err != nil || len(stale) == 0 {
 		return err
 	}
-	// The rebuild does not move the index's checkpoint, and a checkpoint from
-	// before the import would replay changes the import undid, such as a delete
-	// of an object it restored. Updating first moves it past the import.
-	if _, err := idx.UpdateIndex(ctx); err != nil {
-		return err
-	}
 	for _, p := range stale {
 		if ctx.Err() != nil {
 			return ctx.Err()
@@ -299,6 +293,12 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 	return nil
 }
 
+// queueReconcile queues a reconcile of one global index, whatever its slot.
+func (s *searchServer) queueReconcile(key NamespacedResource) {
+	s.rebuildQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
+	s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+}
+
 // queueDueReconciles queues a reconcile of each global index among keys that
 // this instance owns and that has not been compared with storage since its last
 // slot. The rebuild workers run them, so they are bounded and never overlap a
@@ -320,8 +320,7 @@ func (s *searchServer) queueDueReconciles(keys []NamespacedResource, now time.Ti
 		if !reconciledAt.Before(lastReconcileSlot(key, now)) {
 			continue
 		}
-		s.rebuildQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
-		s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+		s.queueReconcile(key)
 	}
 }
 
@@ -343,30 +342,21 @@ func lastReconcileSlot(key NamespacedResource, now time.Time) time.Time {
 // reconcileGlobalIndex compares every covered type of a global index with
 // storage, and repairs what differs.
 //
-// Notifications and the background update replay the event log from the index's
-// checkpoint, which reaches every change only while the log still holds them.
-// Three cases escape it:
-//
-//   - The log was trimmed. The KV backend keeps events for an hour by default,
-//     and an update does not learn that events are missing, so an index
-//     reopened after a longer gap, or whose updates kept failing, never sees
-//     what it missed.
-//   - A document that failed to build during an update is not retried once the
-//     checkpoint has moved past it.
-//   - A write committed late, below the checkpoint minus the lookback window,
-//     because resource versions only increase per object, not across storage.
-//
-// Comparing with storage instead of replaying events repairs all three.
+// A global index replays no events: notifications re-read the objects they
+// name. Reconcile repairs what notifications miss: a dropped notification, a
+// read or write that failed, a document that failed to build, and whatever
+// changed while the index was closed. Comparing the index with storage finds
+// all of them, however they happened.
 //
 // The time is recorded only when every type was compared, so one that failed
 // is compared again at the next scan rather than an hour later.
-func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedResource) error {
+func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedResource) (repairResult, error) {
+	var total repairResult
 	idx := s.search.GetIndex(key)
 	if idx == nil {
-		return nil
+		return total, nil
 	}
 	startedAt := time.Now()
-	var reindexed, removed, failed int
 	var errs []error
 	defer func() {
 		result := "success"
@@ -376,35 +366,32 @@ func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedR
 		elapsed := time.Since(startedAt)
 		s.indexMetrics.GlobalReconcileDuration.WithLabelValues(result).Observe(elapsed.Seconds())
 		s.log.Info("Reconciled global search index", "namespace", key.Namespace, "result", result, "duration", elapsed,
-			"reindexed", reindexed, "removed", removed, "failed", failed)
+			"reindexed", total.Reindexed, "removed", total.Removed, "failed", total.Failed)
 	}()
 	for _, src := range indexSources(key) {
 		if ctx.Err() != nil {
 			errs = append(errs, ctx.Err())
-			return ctx.Err()
+			return total, ctx.Err()
 		}
 		res, err := s.reconcileResourceType(ctx, idx, key, src)
+		total.Reindexed += res.Reindexed
+		total.Removed += res.Removed
+		total.Failed += res.Failed
 		if err != nil {
 			// The other types are still worth repairing.
 			errs = append(errs, fmt.Errorf("reconciling %s: %w", src.GroupResource(), err))
 			continue
 		}
-		reindexed += res.Reindexed
-		removed += res.Removed
-		failed += res.Failed
 		if res.Reindexed > 0 || res.Removed > 0 || res.Failed > 0 {
 			s.log.Info("reconciled a resource type of the global search index", "namespace", key.Namespace, "resource", src.GroupResource(),
 				"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
 		}
 	}
 	if len(errs) > 0 {
-		return errors.Join(errs...)
+		return total, errors.Join(errs...)
 	}
-	return idx.RecordReconciledAt(startedAt)
+	return total, idx.RecordReconciledAt(startedAt)
 }
-
-// reconcileReadChunkSize bounds how many drifted objects are read at once.
-const reconcileReadChunkSize = 50
 
 // reconcileResourceType repairs one resource type in a global index by comparing it
 // with storage, rather than replaying changes, so it fixes drift however it
@@ -685,7 +672,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
-	for chunk := range slices.Chunk(names, reconcileReadChunkSize) {
+	for chunk := range slices.Chunk(names, readChunkSize) {
 		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
 		for _, name := range chunk {
 			requests = append(requests, &resourcepb.ReadRequest{
@@ -693,7 +680,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 			})
 		}
 
-		for response := range readResourcesInChunks(ctx, s.storage, requests, reconcileReadChunkSize) {
+		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
@@ -730,22 +717,16 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 const watchRetryDelay = 5 * time.Second
 
 // maxWatchBatch is how many notifications are taken at once. Notifications
-// arrive one at a time, so a busy instance would otherwise update once per
-// changed object.
+// arrive one at a time, so a busy instance would otherwise read and write once
+// per changed object.
 const maxWatchBatch = 100
 
-// runGlobalIndexWatch updates a global index when a write notification for it
-// arrives. Searches on a global index do not wait for an update, so without this
-// a change would appear only at the next background update.
+// runGlobalIndexWatch applies write notifications to the global indexes as they
+// arrive. A global index replays no events, so this is how it learns of changes.
 //
-// A notification only says that an index is behind; the update reads the change
-// from storage, as every other update does. Writing the notification into the
-// index instead would race with those updates, and a late notification could
-// overwrite a newer document.
-//
-// Notifications are the fast path, not the reliable one: a dropped or missed
-// one is picked up by the background update, so a failure here is logged and
-// the stream is reopened rather than escalated.
+// It is the fast path, not the reliable one: whatever a dropped notification or
+// a failed write misses is repaired by the next reconcile, so a failure here is
+// logged and the stream is reopened rather than escalated.
 func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 	for ctx.Err() == nil {
 		events, err := s.storage.WatchWriteEvents(ctx)
@@ -810,40 +791,111 @@ func nextWriteEventBatch(ctx context.Context, events <-chan *WrittenEvent) ([]*W
 	return batch, true
 }
 
-// applyWriteEvents updates each global index a batch of notifications is for,
-// once however many of them it got. Notifications for types the index does not
-// cover, and for indexes this instance does not own or has not opened, are
-// ignored: an index that is not open is brought up to date when it is opened.
+// applyWriteEvents re-reads the objects a batch of notifications names and writes
+// their current state to the global indexes they belong to. Notifications for
+// types the index does not cover, and for indexes this instance does not own or
+// has not opened, are ignored: an index that is not open catches up when it is
+// opened.
+//
+// Only the key of a notification is used, not its body or version. A late or
+// repeated notification then just reads the current state again, so it cannot
+// put back an older version or a deleted object. That relies on a read after a
+// notification seeing the write it announces, which holds while storage reads
+// from the database the writes go to.
 func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEvent) {
-	var keys []NamespacedResource
+	changed := map[NamespacedResource][]string{}
+	var sources []NamespacedResource
 	for _, event := range batch {
 		if event == nil || event.Key == nil {
 			continue
 		}
-		if !GlobalIndexCoversType(schema.GroupResource{Group: event.Key.Group, Resource: event.Key.Resource}) {
+		src := NamespacedResource{Namespace: event.Key.Namespace, Group: event.Key.Group, Resource: event.Key.Resource}
+		if !GlobalIndexCoversType(groupResourceOf(src)) {
 			continue
 		}
-		if key := GlobalSearchKey(event.Key.Namespace); !slices.Contains(keys, key) {
-			keys = append(keys, key)
+		names, seen := changed[src]
+		if !seen {
+			sources = append(sources, src)
+		}
+		if !slices.Contains(names, event.Key.Name) {
+			changed[src] = append(names, event.Key.Name)
 		}
 	}
 
-	for _, key := range keys {
+	for _, src := range sources {
 		if ctx.Err() != nil {
 			return
 		}
+		key := GlobalSearchKey(src.Namespace)
 		if !s.ownsGlobalIndex(key) {
 			continue
 		}
+		// Looked up for each batch, so a replaced index is not written to.
 		idx := s.search.GetIndex(key)
 		if idx == nil {
 			continue
 		}
-		if _, err := idx.UpdateIndex(ctx); err != nil {
-			// The background update picks up whatever this missed.
-			s.log.Warn("failed to update the global search index for write notifications", "namespace", key.Namespace, "error", err)
+		if err := s.writeCurrentState(ctx, idx, src, changed[src]); err != nil {
+			// The next reconcile repairs whatever this missed.
+			s.log.Warn("failed to apply write notifications to the global search index",
+				"namespace", src.Namespace, "resource", src.GroupResource(), "error", err)
 		}
 	}
+}
+
+// writeCurrentState reads the named objects of one type from storage and writes
+// what it finds: the object's document if it exists, a removal if it does not.
+// An object that cannot be built is removed too, the same as in a type rebuild,
+// so a reconcile sees it missing and tries again. An object whose read fails for
+// another reason is left as it is, for a reconcile to repair.
+func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) error {
+	builder, err := s.builders.get(ctx, src)
+	if err != nil {
+		return err
+	}
+	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
+
+	requests := make([]*resourcepb.ReadRequest, 0, len(names))
+	for _, name := range names {
+		requests = append(requests, &resourcepb.ReadRequest{
+			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
+		})
+	}
+
+	items := make([]*BulkIndexItem, 0, len(names))
+	// Storage answers one response per request, in order, but the reader can add
+	// an error of its own after the last one.
+	i := 0
+	for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if i >= len(requests) {
+			logger.Warn("storage answered more reads than were asked for", "error", response.Error.GetMessage())
+			break
+		}
+		key := requests[i].Key
+		i++
+		if response.Error != nil {
+			if response.Error.Code == http.StatusNotFound {
+				items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
+				continue
+			}
+			logger.Warn("failed to read an object named in a write notification", "key", SearchID(key), "error", response.Error.Message)
+			continue
+		}
+		doc, err := builder.BuildDocument(ctx, key, response.ResourceVersion, response.Value)
+		if err != nil {
+			logger.Warn("failed to build a document for a write notification", "key", SearchID(key), "error", err)
+			items = append(items, &BulkIndexItem{Action: ActionDelete, Key: key})
+			continue
+		}
+		items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	return index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate})
 }
 
 // ownsGlobalIndex reports whether this instance owns a global index. The

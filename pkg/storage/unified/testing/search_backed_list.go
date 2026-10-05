@@ -25,8 +25,10 @@ import (
 // The test selects on labels only, which any group may do, so the group here is
 // just a realistic one.
 const (
-	searchBackedListGroup    = "playlist.grafana.app"
-	searchBackedListResource = "playlists"
+	searchBackedListGroup     = "playlist.grafana.app"
+	searchBackedListResource  = "playlists"
+	searchBackedTrashGroup    = "dashboard.grafana.app"
+	searchBackedTrashResource = "dashboards"
 )
 
 // SearchBackedListOptions tunes assertions that only hold for some backends.
@@ -64,10 +66,16 @@ func (labelFolderBuilder) BuildDocument(_ context.Context, key *resourcepb.Resou
 type labelFolderBuilderSupplier struct{}
 
 func (labelFolderBuilderSupplier) GetDocumentBuilders(_ *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
-	return []resource.DocumentBuilderInfo{{
-		GroupResource: schema.GroupResource{Group: searchBackedListGroup, Resource: searchBackedListResource},
-		Builder:       labelFolderBuilder{},
-	}}, nil
+	return []resource.DocumentBuilderInfo{
+		{
+			GroupResource: schema.GroupResource{Group: searchBackedListGroup, Resource: searchBackedListResource},
+			Builder:       labelFolderBuilder{},
+		},
+		{
+			GroupResource: schema.GroupResource{Group: searchBackedTrashGroup, Resource: searchBackedTrashResource},
+			Builder:       labelFolderBuilder{},
+		},
+	}, nil
 }
 
 // countingBackend counts the read paths a search-backed LIST takes so a test can
@@ -326,8 +334,8 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 
 	writeObject := func(name, folder, deletedBy string, provisioned, deleted bool) int64 {
 		obj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": searchBackedListGroup + "/v0alpha1",
-			"kind":       "Playlist",
+			"apiVersion": searchBackedTrashGroup + "/v0alpha1",
+			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":      name,
 				"namespace": ns,
@@ -342,7 +350,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		}
 		value, err := obj.MarshalJSON()
 		require.NoError(t, err)
-		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: ns, Name: name}
+		key := &resourcepb.ResourceKey{Group: searchBackedTrashGroup, Resource: searchBackedTrashResource, Namespace: ns, Name: name}
 		rv, err := backend.WriteEvent(ctx, resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    key,
@@ -385,7 +393,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		config := resource.SearchBackedListConfig{}
 		searchOptions := resource.SearchOptions{}
 		if allowSearch {
-			config.AllowedResources = map[string]bool{searchBackedListGroup + "/" + searchBackedListResource: true}
+			config.AllowedResources = map[string]bool{searchBackedTrashGroup + "/" + searchBackedTrashResource: true}
 			searchOptions = resource.SearchOptions{
 				Backend:   searchBackend,
 				Resources: labelFolderBuilderSupplier{},
@@ -415,8 +423,8 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 			NextPageToken: token,
 			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 				Namespace: ns,
-				Group:     searchBackedListGroup,
-				Resource:  searchBackedListResource,
+				Group:     searchBackedTrashGroup,
+				Resource:  searchBackedTrashResource,
 			}},
 		}
 	}

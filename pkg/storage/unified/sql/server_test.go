@@ -241,3 +241,29 @@ func TestWithBackendSharesWatchExpiry(t *testing.T) {
 	}, resourceOpts))
 	require.Same(t, expiry, resourceOpts.WatchExpiry)
 }
+
+func TestWithBlobConfigUsesBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+
+	t.Run("uses the blob backend when no blob url is set", func(t *testing.T) {
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: setting.NewCfg(), BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Same(t, blob, opts.Blob.Backend)
+	})
+
+	t.Run("prefers the blob url over the blob backend", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section("grafana-apiserver").Key("blob_url").SetValue("mem://")
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Nil(t, opts.Blob.Backend)
+		require.Equal(t, "mem://", opts.Blob.URL)
+	})
+}
+
+func TestWithBlobBackendSetsServiceBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+	s := &service{}
+	WithBlobBackend(blob)(s)
+	require.Same(t, blob, s.blobBackend)
+}

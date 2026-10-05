@@ -6257,9 +6257,6 @@
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Zpět na dotazy"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6918,19 +6915,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Přidat SQL výraz",
       "sql-cta-description": "Dáváte přednost SQL? Přidejte místo toho do svých dotazů SQL výraz."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Odstraněním všech transformací se vrátíte na hlavní obrazovku výběru."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Přidejte další transformaci"
-      },
-      "confirmText-delete-all": "Odstranit vše",
-      "delete-all-transformations": "Odstranit všechny transformace",
-      "title-delete-all-transformations": "Odstranit všechny transformace?",
-      "tooltip-clear-search": "Vymazat vyhledávání",
-      "tooltip-close-picker": "Zavřít volič"
     },
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",

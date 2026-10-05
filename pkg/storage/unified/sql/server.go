@@ -39,6 +39,7 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
+	BlobBackend      resource.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -188,6 +189,9 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
+	}
+	if resourceOpts.Blob.URL == "" {
+		resourceOpts.Blob.Backend = opts.BlobBackend
 	}
 	// Support local file blob
 	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {

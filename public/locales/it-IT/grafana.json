@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Torna alle Query"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Aggiungi espressione SQL",
       "sql-cta-description": "Preferisci SQL? Aggiungi invece un'espressione SQL alle tue query."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Aggiungi un'altra trasformazione"
-      },
-      "confirmText-delete-all": "Elimina tutto",
-      "delete-all-transformations": "Elimina tutte le trasformazioni",
-      "title-delete-all-transformations": "Eliminare tutte le trasformazioni?",
-      "tooltip-clear-search": "Azzera ricerca",
-      "tooltip-close-picker": "Chiudi il selettore"
     },
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
