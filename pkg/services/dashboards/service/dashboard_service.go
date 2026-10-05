@@ -56,6 +56,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -1246,6 +1247,15 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}...)
 
 	svc := dr.getPermissionsService(key.Resource == "folders")
+	if apistore.KeepExistingPermissions(ctx) {
+		permissions, err = withoutExistingAssignees(ctx, svc, user, obj.GetName(), permissions)
+		if err != nil {
+			return err
+		}
+		if len(permissions) == 0 {
+			return nil
+		}
+	}
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
 		logger.Error("Could not set default permissions", "error", err)
 		return err
@@ -1258,6 +1268,38 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 
 	return nil
+}
+
+// withoutExistingAssignees drops the commands for users and basic roles that already have a
+// permission on the resource, because SetPermissions would replace their current level.
+func withoutExistingAssignees(ctx context.Context, svc accesscontrol.PermissionsService, user identity.Requester, uid string, permissions []accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.SetResourcePermissionCommand, error) {
+	existing, err := svc.GetPermissions(ctx, user, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := map[int64]bool{}
+	builtInRoles := map[string]bool{}
+	for _, p := range existing {
+		if !p.IsManaged {
+			continue
+		}
+		if p.UserID != 0 {
+			userIDs[p.UserID] = true
+		}
+		if p.BuiltInRole != "" {
+			builtInRoles[p.BuiltInRole] = true
+		}
+	}
+
+	missing := make([]accesscontrol.SetResourcePermissionCommand, 0, len(permissions))
+	for _, p := range permissions {
+		if (p.UserID != 0 && userIDs[p.UserID]) || (p.BuiltinRole != "" && builtInRoles[p.BuiltinRole]) {
+			continue
+		}
+		missing = append(missing, p)
+	}
+	return missing, nil
 }
 
 func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {

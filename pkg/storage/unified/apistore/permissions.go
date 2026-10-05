@@ -15,6 +15,35 @@ import (
 
 type permissionCreatorFunc = func(ctx context.Context) error
 
+type keepExistingPermissionsKey struct{}
+
+// KeepExistingPermissions reports whether a DefaultPermissionSetter runs for a resource that already
+// existed, for example one moved to the root folder. Such a resource can already have permissions,
+// so the setter must only add missing default grants and must not remove or lower existing ones.
+func KeepExistingPermissions(ctx context.Context) bool {
+	keep, _ := ctx.Value(keepExistingPermissionsKey{}).(bool)
+	return keep
+}
+
+func WithKeepExistingPermissions(ctx context.Context) context.Context {
+	return context.WithValue(ctx, keepExistingPermissionsKey{}, true)
+}
+
+func afterMoveToRootPermissionCreator(ctx context.Context,
+	key *resourcepb.ResourceKey,
+	grantPermisions string,
+	obj runtime.Object,
+	setter DefaultPermissionSetter,
+) (permissionCreatorFunc, error) {
+	creator, err := afterCreatePermissionCreator(ctx, key, grantPermisions, obj, setter)
+	if creator == nil || err != nil {
+		return creator, err
+	}
+	return func(ctx context.Context) error {
+		return creator(WithKeepExistingPermissions(ctx))
+	}, nil
+}
+
 func afterCreatePermissionCreator(ctx context.Context,
 	key *resourcepb.ResourceKey,
 	grantPermisions string,

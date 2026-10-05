@@ -1264,7 +1264,10 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+	if existing, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		if apistore.KeepExistingPermissions(ctx) {
+			return addMissingDashboardPermissions(ctx, client, existing, permissions)
+		}
 		_, err := client.Update(ctx, &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]any{
@@ -1310,6 +1313,43 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return fmt.Errorf("create dashboard permissions: %w", err)
 	}
 
+	return nil
+}
+
+// addMissingDashboardPermissions adds the default permissions whose user, team or role has no
+// permission yet. It keeps all existing permissions, so it never removes or lowers access.
+func addMissingDashboardPermissions(ctx context.Context, client dynamic.ResourceInterface, existing *unstructured.Unstructured, defaults []map[string]any) error {
+	current, _, err := unstructured.NestedSlice(existing.Object, "spec", "permissions")
+	if err != nil {
+		return fmt.Errorf("read dashboard permissions: %w", err)
+	}
+
+	assigned := make(map[[2]string]bool, len(current))
+	for _, p := range current {
+		if m, ok := p.(map[string]any); ok {
+			assigned[[2]string{fmt.Sprint(m["kind"]), fmt.Sprint(m["name"])}] = true
+		}
+	}
+
+	changed := false
+	for _, p := range defaults {
+		if assigned[[2]string{fmt.Sprint(p["kind"]), fmt.Sprint(p["name"])}] {
+			continue
+		}
+		current = append(current, p)
+		changed = true
+	}
+	if !changed {
+		return nil
+	}
+
+	if err := unstructured.SetNestedSlice(existing.Object, current, "spec", "permissions"); err != nil {
+		return fmt.Errorf("set dashboard permissions: %w", err)
+	}
+	if _, err := client.Update(ctx, existing, metav1.UpdateOptions{}); err != nil {
+		logging.FromContext(ctx).Error("failed to update dashboard permissions", "error", err)
+		return fmt.Errorf("update dashboard permissions: %w", err)
+	}
 	return nil
 }
 

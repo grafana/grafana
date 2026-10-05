@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -44,5 +45,34 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, creator)
 		require.Contains(t, err.Error(), "missing auth info")
+	})
+}
+
+func TestKeepExistingPermissions(t *testing.T) {
+	var keepExisting bool
+	setter := func(ctx context.Context, key *resourcepb.ResourceKey, auth authtypes.AuthInfo, val utils.GrafanaMetaAccessor) error {
+		keepExisting = KeepExistingPermissions(ctx)
+		return nil
+	}
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, Type: authtypes.TypeUser})
+
+	t.Run("create does not ask to keep existing permissions", func(t *testing.T) {
+		creator, err := afterCreatePermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, &v0alpha1.Dashboard{}, setter)
+		require.NoError(t, err)
+		require.NoError(t, creator(ctx))
+		require.False(t, keepExisting)
+	})
+
+	t.Run("move to root keeps existing permissions", func(t *testing.T) {
+		creator, err := afterMoveToRootPermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, &v0alpha1.Dashboard{}, setter)
+		require.NoError(t, err)
+		require.NoError(t, creator(ctx))
+		require.True(t, keepExisting)
+	})
+
+	t.Run("move to root without grant does nothing", func(t *testing.T) {
+		creator, err := afterMoveToRootPermissionCreator(ctx, nil, "", &v0alpha1.Dashboard{}, setter)
+		require.NoError(t, err)
+		require.Nil(t, creator)
 	})
 }

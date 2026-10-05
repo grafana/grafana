@@ -9,14 +9,21 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	dynamicfake "k8s.io/client-go/dynamic/fake"
+
+	authlib "github.com/grafana/authlib/types"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -222,4 +229,47 @@ func (m *mockK8sHandler) GetStats(_ context.Context, _ int64) (*resourcepb.Resou
 }
 func (m *mockK8sHandler) GetUsersFromMeta(_ context.Context, _ []string) (map[string]*user.User, error) {
 	return nil, nil
+}
+
+func TestSetDefaultDashboardPermissionsKeepsExistingPermissions(t *testing.T) {
+	gvr := iamv0alpha1.ResourcePermissionInfo.GroupVersionResource()
+	permissionName := "dashboard.grafana.app-dashboards-dash"
+	existing := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": gvr.GroupVersion().String(),
+		"kind":       "ResourcePermission",
+		"metadata": map[string]any{
+			"name":      permissionName,
+			"namespace": "default",
+		},
+		"spec": map[string]any{
+			"resource": map[string]any{"apiGroup": "dashboard.grafana.app", "resource": "dashboards", "name": "dash"},
+			"permissions": []any{
+				map[string]any{"kind": "Team", "name": "team-a", "verb": "edit"},
+				map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "edit"},
+			},
+		},
+	}}
+
+	dyn := dynamicfake.NewSimpleDynamicClientWithCustomListKinds(runtime.NewScheme(),
+		map[schema.GroupVersionResource]string{gvr: "ResourcePermissionList"}, existing)
+	client := dyn.Resource(gvr)
+	b := &DashboardsAPIBuilder{resourcePermissionsSvc: &client}
+
+	dash := &dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash", Namespace: "default"}}
+	meta, err := utils.MetaAccessor(dash)
+	require.NoError(t, err)
+
+	ctx := apistore.WithKeepExistingPermissions(context.Background())
+	key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash", Namespace: "default"}
+	require.NoError(t, b.setDefaultDashboardPermissions(ctx, key, &identity.StaticRequester{Type: authlib.TypeAccessPolicy}, meta))
+
+	stored, err := client.Namespace("default").Get(context.Background(), permissionName, metav1.GetOptions{})
+	require.NoError(t, err)
+	permissions, _, err := unstructured.NestedSlice(stored.Object, "spec", "permissions")
+	require.NoError(t, err)
+	require.Equal(t, []any{
+		map[string]any{"kind": "Team", "name": "team-a", "verb": "edit"},
+		map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "edit"},
+		map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "edit"},
+	}, permissions)
 }
