@@ -3,7 +3,7 @@ import { lastValueFrom } from 'rxjs';
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { getFrameIdentity, getRowIdentity } from '../frameIdentity';
+import { getRowIdentity } from '../frameIdentity';
 import { type RangeValueMatcherOptions } from '../matchers/valueMatchers/types';
 import { transformDataFrame } from '../transformDataFrame';
 
@@ -49,7 +49,7 @@ const range = (options: RangeValueMatcherOptions<number>, fieldName = 'Value') =
 it('restores serialized filterByValue configs through the standard registry and isolates duplicate frames', async () => {
   const frames = [frame(), frame()];
   const filter = config({ fieldName: 'Value', config: { id: 'inSet', options: { values: [10, 3] } } });
-  filter.options.target = { frameKey: getFrameIdentity(frames, 1) };
+  filter.options.target = { frameKey: '["A",1,1]', frameIndex: 1, refId: 'A' };
   const output = await lastValueFrom(transformDataFrame(JSON.parse(JSON.stringify([filter])), frames));
   expect(output[0].fields[1].values).toEqual([10, 2, 3, -1, null]);
   expect(output[1].fields[1].values).toEqual([10, 3]);
@@ -65,7 +65,7 @@ it('scopes child filters to a parent and ignores stale parent identities after r
   });
   const filter = config({ fieldName: 'Value', config: { id: 'inSet', options: { values: [10, 3] } } });
   filter.options.target = {
-    frameKey: getFrameIdentity([parent], 0),
+    frameKey: '[null,0,1]',
     parentIndex: 0,
     parentKey: getRowIdentity(parent, 0),
   };
@@ -81,6 +81,14 @@ it('scopes child filters to a parent and ignores stale parent identities after r
   expect(next.fields[1].values[0][0].fields[1].values).toEqual([10, 2, 3, -1, null]);
 });
 
+it('ignores a frame target when the query at that position changes', async () => {
+  const filter = range({ from: 3, includeMissing: false });
+  filter.options.target = { frameKey: '["A",0,1]', frameIndex: 0, refId: 'A' };
+  const data = { ...frame(), refId: 'B' };
+  const [output] = await lastValueFrom(transformDataFrame([filter], [data]));
+  expect(output.fields[1].values).toEqual([10, 2, 3, -1, null]);
+});
+
 it('applies child filters before removing parent rows', async () => {
   const parent = toDataFrame({
     fields: [
@@ -88,7 +96,7 @@ it('applies child filters before removing parent rows', async () => {
       { name: 'Children', type: FieldType.nestedFrames, values: [[frame()], [frame()]] },
     ],
   });
-  const frameKey = getFrameIdentity([parent], 0);
+  const frameKey = '[null,0,1]';
   const child = range({ from: 3, includeMissing: false });
   child.options.target = { frameKey, parentIndex: 1, parentKey: getRowIdentity(parent, 1) };
   const parents = config({ fieldName: 'Parent', config: { id: 'inSet', options: { values: ['two'] } } }, { frameKey });

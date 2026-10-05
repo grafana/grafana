@@ -10,7 +10,6 @@ import {
   type MatcherConfig,
 } from '@grafana/data';
 import {
-  getFrameIdentity,
   getRowIdentity,
   FilterByValueType,
   FilterByValueMatch,
@@ -31,6 +30,7 @@ export interface TableRowTransformations {
   api: VizPanelRuntimeTransformations;
   owner: string;
   frameKey: string;
+  frameIndex?: number;
 }
 interface ViewContext {
   filters: readonly FilterByValueConfig[];
@@ -110,7 +110,15 @@ function activeFilters(
 export function TableViewProvider({ props, children }: { props: TableNGProps; children: React.ReactNode }) {
   const { api, owner = '' } = props.rowTransformations ?? {};
   const source = props.data;
-  const frameKey = props.rowTransformations?.frameKey ?? getFrameIdentity([source], 0);
+  const frameIndex = props.rowTransformations?.frameIndex ?? 0;
+  const frameKey =
+    props.rowTransformations?.frameKey ??
+    JSON.stringify([
+      source.refId,
+      source.name,
+      props.structureRev,
+      source.fields.map((field) => [field.name, field.type, field.labels]),
+    ]);
   const stage = useSyncExternalStore(
     useCallback((listener) => api?.subscribe(owner, listener) ?? (() => {}), [api, owner]),
     useCallback(() => api?.get(owner) ?? EMPTY_STAGE, [api, owner])
@@ -164,6 +172,8 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
                 missingField: 'ignore',
                 target: {
                   frameKey,
+                  frameIndex,
+                  refId: source.refId,
                   parentIndex,
                   parentKey: parentIndex == null ? undefined : getRowIdentity(source, parentIndex),
                 },
@@ -189,7 +199,7 @@ export function TableViewProvider({ props, children }: { props: TableNGProps; ch
         return [...stage.slice(0, index), next, ...stage.slice(index)];
       });
     },
-    [update, frameKey, source]
+    [update, frameKey, frameIndex, source]
   );
   const clearFilter = useCallback(
     (field: Field, parentIndex?: number) =>

@@ -1,26 +1,7 @@
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { FieldType } from '../types/dataFrame';
 
-import { getFrameIdentity, getRowIdentity } from './frameIdentity';
-
-it('distinguishes duplicate frames by occurrence while ignoring refreshed values', () => {
-  const first = toDataFrame({ refId: 'A', fields: [{ name: 'Value', type: FieldType.number, values: [1] }] });
-  const second = toDataFrame({ refId: 'A', fields: [{ name: 'Value', type: FieldType.number, values: [2] }] });
-  const frames = [first, second];
-  expect(getFrameIdentity(frames, 0)).toBe('["A",null,[["Value","number",null]]]:0');
-  expect(getFrameIdentity(frames, 1)).toBe('["A",null,[["Value","number",null]]]:1');
-  second.fields[0].values[0] = 3;
-  expect(getFrameIdentity(frames, 1)).toBe('["A",null,[["Value","number",null]]]:1');
-  expect(getFrameIdentity(frames, 2)).toBe('');
-});
-
-it('includes field labels in frame identity', () => {
-  const frame = toDataFrame({
-    refId: 'A',
-    fields: [{ name: 'Value', type: FieldType.number, labels: { region: 'west' }, values: [1] }],
-  });
-  expect(getFrameIdentity([frame], 0)).toBe('["A",null,[["Value","number",{"region":"west"}]]]:0');
-});
+import { getRowIdentity } from './frameIdentity';
 
 it('identifies parent rows by their values without including nested frames', () => {
   const frame = toDataFrame({
