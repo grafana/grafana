@@ -50,7 +50,7 @@ const (
 )
 
 // classifyWarning returns the warning reason for err and whether it is a warning.
-func classifyWarning(err error) (string, bool) {
+func classifyWarning(err error) (provisioning.SyncIssueReason, bool) {
 	if err == nil {
 		return "", false
 	}
@@ -132,11 +132,12 @@ type JobResourceResult struct {
 	path         string
 	previousPath string
 	action       repository.FileAction
-	reason       string // explicit reason, takes precedence over classifyWarning
-	err          error
-	warning      error
-	startedAt    time.Time // stamped when the builder is created; used to derive the operation duration at record time
-	bytes        int       // size in bytes of the resource content written; 0 when unknown or not a content write
+	// explicit reason that caused this result, takes precedence over classifyWarning. Can be used to describe the action that caused the job result (success, warning, or error)
+	reason    provisioning.SyncIssueReason
+	err       error
+	warning   error
+	startedAt time.Time // stamped when the builder is created; used to derive the operation duration at record time
+	bytes     int       // size in bytes of the resource content written; 0 when unknown or not a content write
 }
 
 // jobResourceResultBuilder is a builder for creating JobResourceResult instances using a fluent API.
@@ -256,7 +257,7 @@ func (b *jobResourceResultBuilder) WithBytes(n int) *jobResourceResultBuilder {
 // WithReason sets an explicit reason on the result. This takes precedence over
 // the reason derived from classifyWarning and can be used on success results
 // to explain why an operation happened (e.g., UID migration).
-func (b *jobResourceResultBuilder) WithReason(reason string) *jobResourceResultBuilder {
+func (b *jobResourceResultBuilder) WithReason(reason provisioning.SyncIssueReason) *jobResourceResultBuilder {
 	b.result.reason = reason
 	return b
 }
@@ -358,16 +359,32 @@ func (r JobResourceResult) Warning() error {
 }
 
 // Reason returns the explicit reason set via WithReason, or "" if none.
-func (r JobResourceResult) Reason() string {
+func (r JobResourceResult) Reason() provisioning.SyncIssueReason {
 	return r.reason
 }
 
 // WarningReason returns the warning reason derived from classifyWarning,
 // or the explicit reason if set via WithReason.
-func (r JobResourceResult) WarningReason() string {
+func (r JobResourceResult) WarningReason() provisioning.SyncIssueReason {
 	if r.reason != "" {
 		return r.reason
 	}
 	reason, _ := classifyWarning(r.warning)
+	return reason
+}
+
+// ErrorReason returns a reason for the result's error, or "" if the error
+// doesn't match any known category. It reuses classifyWarning's classifier:
+// the underlying error taxonomy (quota exceeded, resource invalid, folder
+// conflicts, etc.) is the same regardless of whether a given result ends up
+// downgraded to a warning or surfaced as a hard error.
+//
+// Unlike WarningReason, it ignores r.reason: that field explains why an
+// operation happened on a result that otherwise succeeded (e.g. a folder
+// delete triggered by a UID migration), not why the error occurred, and a
+// result can carry both an explanatory reason and an unrelated error (e.g.
+// the migration-triggered delete itself failing).
+func (r JobResourceResult) ErrorReason() provisioning.SyncIssueReason {
+	reason, _ := classifyWarning(r.err)
 	return reason
 }

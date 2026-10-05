@@ -194,7 +194,7 @@ func testQuotaBlockedCreateDoesNotAccessResource(t *testing.T, syncType string) 
 	result := results["second.json"]
 	require.NoError(t, result.Error())
 	require.Equal(t, repository.FileActionIgnored, result.Action())
-	require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+	require.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	repoResources.AssertNotCalled(t, "WriteResourceFromFile", mock.Anything, "second.json", mock.Anything)
 	require.False(t, tracker.TryAcquire(), "skipping a blocked file must not release another file's reservation")
 }

@@ -419,7 +419,7 @@ func actionPriority(action repository.FileAction) int {
 type folderDeletion struct {
 	Path   string
 	UID    string
-	Reason string // explicit reason for the deletion (e.g. ReasonFolderMetadataUpdated)
+	Reason provisioning.SyncIssueReason // explicit reason for the deletion (e.g. ReasonFolderMetadataUpdated)
 }
 
 // deduplicateFolderDeletions removes duplicate (Path, UID) pairs from the

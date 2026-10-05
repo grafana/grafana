@@ -357,7 +357,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithError(quotaErr).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("wrapped QuotaExceededError returns ReasonQuotaExceeded", func(t *testing.T) {
@@ -365,7 +365,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		wrapped := fmt.Errorf("sync failed: %w", quotaErr)
 		result := NewResourceResult().WithError(wrapped).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceValidationError returns ReasonResourceInvalid", func(t *testing.T) {
@@ -387,12 +387,12 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 
 	t.Run("nil warning returns empty reason", func(t *testing.T) {
 		result := NewResourceResult().Build()
-		assert.Empty(t, result.WarningReason())
+		assert.Empty(t, string(result.WarningReason()))
 	})
 
 	t.Run("regular error returns empty reason", func(t *testing.T) {
 		result := NewResourceResult().WithError(errors.New("not a warning")).Build()
-		assert.Empty(t, result.WarningReason())
+		assert.Empty(t, string(result.WarningReason()))
 	})
 
 	t.Run("ResourceUnmanagedConflictError returns ReasonResourceInvalid", func(t *testing.T) {
@@ -441,7 +441,7 @@ func TestJobResourceResult_WarningReason(t *testing.T) {
 		quotaErr := quotas.NewQuotaExceededError(errors.New("over quota"))
 		result := NewResourceResult().WithWarning(quotaErr).Build()
 
-		assert.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+		assert.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 	})
 
 	t.Run("MissingFolderMetadata classifies as ReasonMissingFolderMetadata", func(t *testing.T) {

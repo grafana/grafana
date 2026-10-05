@@ -191,7 +191,7 @@ func (r *jobProgressRecorder) record(ctx context.Context, result JobResourceResu
 		}
 
 		if reason := result.WarningReason(); reason != "" {
-			r.resultReasons[reason] = struct{}{}
+			r.resultReasons[string(reason)] = struct{}{}
 		}
 
 		shouldLogWarning = true
@@ -335,10 +335,20 @@ func (r *jobProgressRecorder) updateSummary(result JobResourceResult) {
 	if result.Error() != nil {
 		errorMsg := fmt.Sprintf("%s %s", result.Error().Error(), fileInfo)
 		summary.Errors = append(summary.Errors, errorMsg)
+		summary.ResourceErrors = append(summary.ResourceErrors, provisioning.ResourceSyncIssue{
+			Reason:  result.ErrorReason(),
+			Message: result.Error().Error(),
+			Path:    result.Path(),
+		})
 		summary.Error++
 	} else if result.Warning() != nil {
 		warningMsg := fmt.Sprintf("%s %s", result.Warning().Error(), fileInfo)
 		summary.Warnings = append(summary.Warnings, warningMsg)
+		summary.ResourceWarnings = append(summary.ResourceWarnings, provisioning.ResourceSyncIssue{
+			Reason:  result.WarningReason(),
+			Message: result.Warning().Error(),
+			Path:    result.Path(),
+		})
 		summary.Warning++
 	} else {
 		switch result.Action() {

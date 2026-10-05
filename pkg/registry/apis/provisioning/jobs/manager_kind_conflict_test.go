@@ -131,7 +131,7 @@ func TestJobProcessor_ManagerKindConflict(t *testing.T) {
 				require.Equal(t, []string{tt.resourceError.Error()}, completed.Status.Errors)
 			}
 			require.Equal(t, 1.0, testutil.ToFloat64(metrics.processedTotal.WithLabelValues("pull", string(tt.wantState))))
-			require.Equal(t, 1.0, testutil.ToFloat64(metrics.resourceOpsTotal.WithLabelValues("pull", "created", "warning", provisioning.ReasonResourceInvalid, "dashboard.grafana.app", "Dashboard")))
+			require.Equal(t, 1.0, testutil.ToFloat64(metrics.resourceOpsTotal.WithLabelValues("pull", "created", "warning", string(provisioning.ReasonResourceInvalid), "dashboard.grafana.app", "Dashboard")))
 			warningLogs := logger.GetWarnLogs()
 			require.NotEmpty(t, warningLogs)
 			require.Equal(t, "job resource operation completed with warning", warningLogs[0].msg)

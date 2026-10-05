@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
@@ -582,7 +583,7 @@ func cleanupOrphanFolders(
 	type orphanFolder struct {
 		Path         string
 		UID          string
-		Reason       string
+		Reason       provisioning.SyncIssueReason
 		ErrorContext string
 	}
 

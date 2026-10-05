@@ -2292,7 +2292,7 @@ func TestFullSync_QuotaBlockedCreatesDoNotAccessResources(t *testing.T) {
 		} else {
 			skipped++
 			require.Equal(t, repository.FileActionIgnored, result.Action())
-			require.Equal(t, provisioning.ReasonQuotaExceeded, result.WarningReason())
+			require.Equal(t, provisioning.ReasonQuotaExceeded, string(result.WarningReason()))
 		}
 	}
 	require.Equal(t, limit, created)
