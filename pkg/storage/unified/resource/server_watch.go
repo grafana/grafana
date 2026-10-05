@@ -14,24 +14,6 @@ type seededWatchBackend interface {
 type watchStartup struct {
 	stopped     chan struct{}
 	broadcaster *broadcaster[*WrittenEvent]
-
-	mu          sync.Mutex
-	captureDone <-chan struct{}
-}
-
-func (w *watchStartup) setCaptureDone(done <-chan struct{}) {
-	w.mu.Lock()
-	w.captureDone = done
-	w.mu.Unlock()
-}
-
-func (w *watchStartup) waitForCapture() {
-	w.mu.Lock()
-	done := w.captureDone
-	w.mu.Unlock()
-	if done != nil {
-		<-done
-	}
 }
 
 func (s *server) initSeededWatcher(backend seededWatchBackend) {
@@ -42,6 +24,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 		metrics = s.storageMetrics.Broadcaster
 	}
 
+	var capture sync.WaitGroup
 	initialize := func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
 		seed, events, err := backend.watchWriteEventsWithSeed(ctx)
 		if err != nil {
@@ -49,10 +32,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 			return cacheSeed[*WrittenEvent]{}, err
 		}
 		s.mostRecentRV.Store(seed.highestRV)
-		captureDone := make(chan struct{})
-		startup.setCaptureDone(captureDone)
-		go func() {
-			defer close(captureDone)
+		capture.Go(func() {
 			defer close(out)
 			defer func() {
 				for range events {
@@ -77,7 +57,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 					}
 				}
 			}
-		}()
+		})
 		return cacheSeed[*WrittenEvent]{
 			items: seed.events, initialCacheFloor: seed.initialCacheFloor,
 		}, nil
@@ -94,7 +74,7 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 	s.broadcaster, s.watchStartup = b, startup
 	go func() {
 		<-b.terminated
-		startup.waitForCapture()
+		capture.Wait()
 		close(startup.stopped)
 	}()
 }
