@@ -1720,6 +1720,14 @@ func (s *searchServer) runPeriodicGlobalIndexUpdate(ctx context.Context) {
 // date. An index that is not open is left alone: it is brought up to date when it
 // is next opened.
 func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
+	start := time.Now()
+	updated := 0
+	defer func() {
+		elapsed := time.Since(start)
+		s.indexMetrics.GlobalUpdateRoundDuration.Observe(elapsed.Seconds())
+		s.indexMetrics.GlobalUpdateRoundIndexes.Set(float64(updated))
+		s.log.Debug("Updated global search indexes", "indexes", updated, "duration", elapsed)
+	}()
 	for _, key := range s.search.GetOpenIndexes() {
 		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
 			continue
@@ -1731,6 +1739,7 @@ func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
 		if idx == nil {
 			continue
 		}
+		updated++
 		if _, err := idx.UpdateIndex(ctx); err != nil {
 			// Logged and left for the next tick: the index keeps serving what it has.
 			s.log.Warn("failed to update global search index", "namespace", key.Namespace, "error", err)
@@ -2326,6 +2335,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 		// indexSource indexes every live object of one resource type, and returns
 		// the resource version the listing was taken at, even when it fails.
+		// How many documents each type contributed, logged once the build is done,
+		// so the cost of a build can be read against the size of what it built.
+		indexedDocs := map[string]int{}
+
 		indexSource := func(src NamespacedResource) (int64, error) {
 			builder, err := getBuilder(ctx, src)
 			if err != nil {
@@ -2391,6 +2404,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 						return err
 					}
+					indexedDocs[src.GroupResource()]++
 				}
 
 				if err := batch.flush(); err != nil {
@@ -2437,6 +2451,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				}
 			}
 		}
+
+		logger.Info("Listed documents for index", "documents", indexedDocs)
 
 		// A namespace-wide index holds only live documents, so it has no trash to
 		// restore.

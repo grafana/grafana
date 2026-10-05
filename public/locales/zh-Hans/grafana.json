@@ -6113,9 +6113,6 @@
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "返回查询"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6771,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "添加 SQL 表达式",
       "sql-cta-description": "如果您更习惯使用 SQL，也可以改为直接在查询中添加 SQL 表达式。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "删除所有转换后，您将返回主选择屏幕。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "添加其他转换"
-      },
-      "confirmText-delete-all": "删除全部",
-      "delete-all-transformations": "删除所有转换",
-      "title-delete-all-transformations": "删除所有转换？",
-      "tooltip-clear-search": "清除搜索",
-      "tooltip-close-picker": "关闭选取器"
     },
     "validation": {
       "invalid-dashboard-id": "找不到有效的 Grafana.com ID",

@@ -19,9 +19,10 @@ import (
 // Trash has its own key rather than sharing ConfigKey, because a deployment may
 // want search on for live search alone.
 const (
-	ConfigSection  = "grafana-apiserver"
-	ConfigKey      = "enable_search_api"
-	ConfigKeyTrash = "enable_trash_api"
+	ConfigSection   = "grafana-apiserver"
+	ConfigKey       = "enable_search_api"
+	ConfigKeyTrash  = "enable_trash_api"
+	ConfigKeyHybrid = "enable_hybrid_api"
 	// ConfigKeyGlobalSearch turns on the search that spans resource types. Off by
 	// default, and useless without the global index it reads
 	// (global_search_index_enabled), which is also off by default.
@@ -98,7 +99,7 @@ func (h *Handler) TrashRoute(group, version, resourceName, kindName string) Rout
 func (h *HybridHandler) HybridSearchRoute(group, version, resourceName, kindName string) Route {
 	kind := kindRef{group: group, version: version, resource: resourceName, kind: kindName}
 	return Route{
-		Path:    resourceName + "/" + searchPathSegment + "/hybrid",
+		Path:    resourceName + "/" + searchPathSegment + "/" + searchv0.HybridSearchPathSegment,
 		Spec:    hybridSearchRouteSpec(kindName, version),
 		Handler: h.HybridSearchFor(kind),
 		Schemas: envelopeSchemas(hybridSearchQueryGoName, hybridSearchResultsGoName),

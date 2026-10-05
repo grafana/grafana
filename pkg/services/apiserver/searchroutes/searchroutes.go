@@ -34,11 +34,15 @@ var trashAllowlist = map[string]bool{
 	"dashboard.grafana.app/dashboards": true,
 }
 
-// Build returns the search and trash routes to mount, or nil when both are off or
+type Options struct {
+	HybridEnabled bool
+}
+
+// Build returns the search, trash and hybrid routes to mount, or nil when all are off or
 // there is no client to serve them with.
 //
-// The two are switched separately because trash grants access differently from
-// search. See trashAllowlist and searchapi.ConfigKeyTrash.
+// Each endpoint has its own switch. Trash also has a separate allowlist because
+// it grants access differently from search.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -49,25 +53,17 @@ func Build(
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
+	opts Options,
 ) []builder.GroupVersionRoutes {
-	// Search fields come from the compiled-in app manifests, the same
-	// declarations the index mapping is built from.
-	manifests := slices.Concat(resource.AppManifests(), builder.ManifestsFromBuilders(builders))
-	routes, err := BuildForServedGroupVersions(
-		manifests, builder.ServedGroupVersions(builders, installers),
-		searchEnabled, trashEnabled, tracer, index,
-	)
-	if err != nil {
-		panic(err.Error())
-	}
-	return routes
+	return BuildFromManifests(resource.AppManifests(), searchEnabled, trashEnabled, tracer, index, builders, installers, opts)
 }
 
 // BuildFromManifests is Build with the kind declarations supplied by the caller.
 //
 // A host that learns about apps after it starts can pass those manifests here,
 // merged with the compiled-in set, and their kinds are mounted like any other.
-// Build is the same call with only the compiled-in set.
+// Build supplies the compiled-in set. Both add builder manifests, and installer
+// manifests for hybrid routes only.
 //
 // The provider is built from the manifests passed in, so a route can only ever
 // validate against the declarations it was mounted from.
@@ -81,18 +77,47 @@ func BuildFromManifests(
 	index resourcepb.ResourceIndexClient,
 	builders []builder.APIGroupBuilder,
 	installers []appsdkapiserver.AppInstaller,
+	opts Options,
 ) []builder.GroupVersionRoutes {
-	manifests = slices.Concat(manifests, builder.ManifestsFromBuilders(builders))
+	builderManifests := builder.ManifestsFromBuilders(builders)
+	served := builder.ServedGroupVersions(builders, installers)
 	routes, err := BuildForServedGroupVersions(
-		manifests,
-		builder.ServedGroupVersions(builders, installers),
+		slices.Concat(manifests, builderManifests),
+		served,
 		searchEnabled,
 		trashEnabled,
 		tracer,
 		index,
+		Options{},
 	)
 	if err != nil {
 		panic(err.Error())
+	}
+	if !opts.HybridEnabled {
+		return routes
+	}
+
+	// Installer manifests enable hybrid opt-in without exposing new lexical or
+	// trash routes, which default to enabled when a declaration is omitted.
+	manifests = slices.Clone(manifests)
+	for _, installer := range installers {
+		manifests = append(manifests, installer.ManifestData())
+	}
+	hybridRoutes, err := BuildForServedGroupVersions(
+		append(manifests, builderManifests...), served, false, false, tracer, index, opts,
+	)
+	if err != nil {
+		panic(err.Error())
+	}
+	for _, hybrid := range hybridRoutes {
+		i := slices.IndexFunc(routes, func(r builder.GroupVersionRoutes) bool {
+			return r.GroupVersion == hybrid.GroupVersion
+		})
+		if i < 0 {
+			routes = append(routes, hybrid)
+		} else {
+			routes[i].Routes.Namespace = append(routes[i].Routes.Namespace, hybrid.Routes.Namespace...)
+		}
 	}
 	return routes
 }
@@ -110,19 +135,24 @@ func BuildForServedGroupVersions(
 	trashEnabled bool,
 	tracer tracing.Tracer,
 	index resourcepb.ResourceIndexClient,
+	opts Options,
 ) ([]builder.GroupVersionRoutes, error) {
 	// Whether an endpoint is on is read by the caller, because the two servers
 	// that mount them are configured differently: one from an ini file, one from
 	// flags.
-	if (!searchEnabled && !trashEnabled) || index == nil {
+	if (!searchEnabled && !trashEnabled && !opts.HybridEnabled) || index == nil {
 		return nil, nil
 	}
 
-	provider, err := resource.ManifestBackedProvider(manifests...)
-	if err != nil {
-		return nil, err
+	var handler *searchapi.Handler
+	if searchEnabled || trashEnabled {
+		provider, err := resource.ManifestBackedProvider(manifests...)
+		if err != nil {
+			return nil, err
+		}
+		handler = searchapi.NewHandler(index, provider, tracer)
 	}
-	handler := searchapi.NewHandler(index, provider, tracer)
+	hybridHandler := searchapi.NewHybridHandler(index, tracer)
 
 	byGroupVersion := map[schema.GroupVersion][]searchapi.Route{}
 	mounted := map[schema.GroupVersionResource]bool{}
@@ -149,8 +179,7 @@ func BuildForServedGroupVersions(
 					continue
 				}
 				mounted[gvr] = true
-				// Answered separately so a kind can opt out of one endpoint
-				// without the other.
+				// A kind can opt out of each endpoint independently.
 				if searchEnabled && kind.HasSearchEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
@@ -158,6 +187,10 @@ func BuildForServedGroupVersions(
 				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
+				}
+				if opts.HybridEnabled && kind.HasHybridEndpoint() {
+					byGroupVersion[gv] = append(byGroupVersion[gv],
+						hybridHandler.HybridSearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
 			}
 		}

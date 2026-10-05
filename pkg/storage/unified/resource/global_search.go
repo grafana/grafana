@@ -366,9 +366,21 @@ func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedR
 		return nil
 	}
 	startedAt := time.Now()
+	var reindexed, removed, failed int
 	var errs []error
+	defer func() {
+		result := "success"
+		if len(errs) > 0 {
+			result = "failure"
+		}
+		elapsed := time.Since(startedAt)
+		s.indexMetrics.GlobalReconcileDuration.WithLabelValues(result).Observe(elapsed.Seconds())
+		s.log.Info("Reconciled global search index", "namespace", key.Namespace, "result", result, "duration", elapsed,
+			"reindexed", reindexed, "removed", removed, "failed", failed)
+	}()
 	for _, src := range indexSources(key) {
 		if ctx.Err() != nil {
+			errs = append(errs, ctx.Err())
 			return ctx.Err()
 		}
 		res, err := s.reconcileResourceType(ctx, idx, key, src)
@@ -377,6 +389,9 @@ func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedR
 			errs = append(errs, fmt.Errorf("reconciling %s: %w", src.GroupResource(), err))
 			continue
 		}
+		reindexed += res.Reindexed
+		removed += res.Removed
+		failed += res.Failed
 		if res.Reindexed > 0 || res.Removed > 0 || res.Failed > 0 {
 			s.log.Info("reconciled a resource type of the global search index", "namespace", key.Namespace, "resource", src.GroupResource(),
 				"reindexed", res.Reindexed, "removed", res.Removed, "failed", res.Failed)
@@ -688,7 +703,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				// Anything else is a storage failure, returned so the caller does
 				// not think the type is repaired.
 				if response.Error.Code != http.StatusNotFound {
-					return result, GetError(response.Error)
+					return result, StatusError(response.Error)
 				}
 				logger.Debug("object deleted since the listing, skipping it", "error", response.Error.Message)
 				continue

@@ -20,6 +20,10 @@ type BleveIndexMetrics struct {
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
+	GlobalUpdateRoundDuration prometheus.Histogram
+	GlobalUpdateRoundIndexes  prometheus.Gauge
+	GlobalReconcileDuration   *prometheus.HistogramVec
+
 	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
@@ -135,6 +139,24 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
+		GlobalUpdateRoundDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_global_update_round_duration_seconds",
+			Help:                            "Time to update every open global search index once in the background. A round close to the update interval means the indexes fall behind.",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		GlobalUpdateRoundIndexes: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_global_update_round_indexes",
+			Help: "Number of global search indexes the last background update round covered",
+		}),
+		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
+			Help:                            "Time to compare one global search index with storage and repair what differs",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"result"}),
 		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",

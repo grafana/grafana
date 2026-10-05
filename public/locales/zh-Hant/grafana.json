@@ -6113,9 +6113,6 @@
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "返回查詢"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6771,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "新增 SQL 運算式",
       "sql-cta-description": "偏好 SQL 嗎？請改為將 SQL 運算式新增至您的查詢。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "刪除所有轉換後，您將返回主選擇畫面。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "新增另一個轉換"
-      },
-      "confirmText-delete-all": "全部刪除",
-      "delete-all-transformations": "刪除所有轉換",
-      "title-delete-all-transformations": "是否要刪除所有轉換？",
-      "tooltip-clear-search": "清除搜尋",
-      "tooltip-close-picker": "關閉選擇器"
     },
     "validation": {
       "invalid-dashboard-id": "沒有找到有效的 Grafana.com ID",

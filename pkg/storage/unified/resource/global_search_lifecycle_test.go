@@ -1357,7 +1357,7 @@ func TestUpdateGlobalIndexes(t *testing.T) {
 			dashboards: dashboardsIdx,
 		},
 	}
-	s := &searchServer{search: backend, log: log.NewNopLogger(), ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
+	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: ProvideIndexMetrics(nil), ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
 
 	s.updateGlobalIndexes(t.Context())
 
@@ -1681,4 +1681,35 @@ func TestFailedReconcileIsNotRecorded(t *testing.T) {
 
 	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
 	assert.Zero(t, idx.reconciledAt)
+}
+
+// A round reports how many indexes it covered, so a pod falling behind shows
+// up as rounds that take as long as the interval.
+func TestUpdateRoundReportsItsIndexes(t *testing.T) {
+	backend := &mockSearchBackend{
+		openIndexes: []NamespacedResource{GlobalSearchKey("a"), GlobalSearchKey("b"), dashboardType("a")},
+		cache: map[NamespacedResource]ResourceIndex{
+			GlobalSearchKey("a"): &MockResourceIndex{},
+			GlobalSearchKey("b"): &MockResourceIndex{},
+			dashboardType("a"):   &MockResourceIndex{},
+		},
+	}
+	metrics := ProvideIndexMetrics(nil)
+	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: metrics, ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
+
+	s.updateGlobalIndexes(t.Context())
+
+	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.GlobalUpdateRoundIndexes))
+	assert.Equal(t, 1, testutil.CollectAndCount(metrics.GlobalUpdateRoundDuration))
+}
+
+// Every reconcile is timed, by whether it compared every type.
+func TestReconcileIsTimedByResult(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+
+	require.NoError(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	idx.documentRefsErr = errors.New("index unavailable")
+	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+
+	assert.Equal(t, 2, testutil.CollectAndCount(server.indexMetrics.GlobalReconcileDuration), "one series for success, one for failure")
 }

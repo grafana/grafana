@@ -315,6 +315,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
 			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
+			HybridAPIEnabled:         apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),
 			KeysAPIEnabled:           apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		},
 		Tracer:          b.deps.Tracer,
