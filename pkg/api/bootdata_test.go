@@ -567,6 +567,108 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 }
 
+func TestIntegrationHTTPServer_GetFrontendSettings_datasourceExtensions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type settings struct {
+		Datasources map[string]plugins.DataSourceDTO `json:"datasources"`
+	}
+
+	extensionPoints := []plugins.ExtensionPoint{
+		{Id: "test-app/configure-extension-point/v1", Title: "Configure", Description: "Lets other plugins extend the config page"},
+	}
+
+	t.Run("configured datasource instance", func(t *testing.T) {
+		pluginStore := &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{
+					Module: fmt.Sprintf("/%s/module.js", "test-app"),
+					JSONData: plugins.JSONData{
+						ID:   "test-app",
+						Info: plugins.Info{Version: "0.5.0"},
+						Type: plugins.TypeDataSource,
+						Extensions: plugins.Extensions{
+							ExtensionPoints: extensionPoints,
+						},
+					},
+					FS:              &pluginfakes.FakePluginFS{},
+					LoadingStrategy: plugins.LoadingStrategyScript,
+				},
+			},
+		}
+
+		cfg := setting.NewCfg()
+		m, hs := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, nil, nil)
+
+		_, err := hs.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			Name:  "test-app",
+			Type:  "test-app",
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+
+		signedInUser := &user.SignedInUser{OrgID: 1}
+		m.UseMiddleware(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				ctx := r.Context()
+				reqContext := &contextmodel.ReqContext{
+					Context:      web.FromContext(ctx),
+					SignedInUser: signedInUser,
+				}
+				ctx = context.WithValue(ctx, ctxkey.Key{}, reqContext)
+				*reqContext.Req = *reqContext.Req.WithContext(ctx)
+				next.ServeHTTP(w, r.WithContext(ctx))
+			})
+		})
+
+		req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+		recorder := httptest.NewRecorder()
+		m.ServeHTTP(recorder, req)
+
+		var got settings
+		err = json.Unmarshal(recorder.Body.Bytes(), &got)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, recorder.Code)
+
+		require.Contains(t, got.Datasources, "test-app")
+		require.Equal(t, extensionPoints, got.Datasources["test-app"].PluginMeta.Extensions.ExtensionPoints)
+	})
+
+	t.Run("built-in datasource", func(t *testing.T) {
+		pluginStore := &pluginstore.FakePluginStore{
+			PluginList: []pluginstore.Plugin{
+				{
+					Module: fmt.Sprintf("/%s/module.js", "test-builtin-app"),
+					JSONData: plugins.JSONData{
+						ID:      "test-builtin-app",
+						Name:    "test-builtin-app",
+						Info:    plugins.Info{Version: "0.5.0"},
+						Type:    plugins.TypeDataSource,
+						BuiltIn: true,
+						Extensions: plugins.Extensions{
+							ExtensionPoints: extensionPoints,
+						},
+					},
+				},
+			},
+		}
+
+		cfg := setting.NewCfg()
+		m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, nil, nil)
+		req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+		recorder := httptest.NewRecorder()
+		m.ServeHTTP(recorder, req)
+
+		var got settings
+		err := json.Unmarshal(recorder.Body.Bytes(), &got)
+		require.NoError(t, err)
+		require.Equal(t, http.StatusOK, recorder.Code)
+
+		require.Contains(t, got.Datasources, "test-builtin-app")
+		require.Equal(t, extensionPoints, got.Datasources["test-builtin-app"].PluginMeta.Extensions.ExtensionPoints)
+	})
+}
+
 func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 	return map[string]*pluginsettings.DTO{
 		id: {
