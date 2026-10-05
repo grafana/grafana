@@ -7,6 +7,12 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/grafana/dskit/middleware"
 	grpcMiddleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
@@ -17,13 +23,6 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
-
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
-	authlib "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/middleware"
 
 	"github.com/grafana/grafana/pkg/clientauth"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -46,8 +45,28 @@ import (
 // AuthzServiceAudience is the audience for the authz service.
 const AuthzServiceAudience = "authzService"
 
-// ProvideAuthZClient provides an AuthZ client and creates the AuthZ service.
-func ProvideAuthZClient(
+// AuthZClients exposes the authorization capabilities that may use different concrete clients.
+type AuthZClients struct {
+	accessClient          authlib.AccessClient
+	userPermissionsClient authlib.UserPermissionsClient
+}
+
+func newAuthZClients(accessClient authlib.AccessClient, userPermissionsClient authlib.UserPermissionsClient) *AuthZClients {
+	return &AuthZClients{accessClient: accessClient, userPermissionsClient: userPermissionsClient}
+}
+
+// ProvideAuthZAccessClient returns the client used for authorization checks.
+func ProvideAuthZAccessClient(clients *AuthZClients) authlib.AccessClient {
+	return clients.accessClient
+}
+
+// ProvideAuthZUserPermissionsClient returns the RBAC client that implements GetUserPermissions.
+func ProvideAuthZUserPermissionsClient(clients *AuthZClients) authlib.UserPermissionsClient {
+	return clients.userPermissionsClient
+}
+
+// ProvideAuthZClients provides AuthZ clients and creates the AuthZ service.
+func ProvideAuthZClients(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	grpcServer grpcserver.Provider,
@@ -58,7 +77,7 @@ func ProvideAuthZClient(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
-) (authlib.AccessClient, error) {
+) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
 	//nolint:staticcheck // not yet migrated to OpenFeature
@@ -81,13 +100,16 @@ func ProvideAuthZClient(
 			return nil, err
 		}
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		var accessClient authlib.AccessClient = rbacClient
 		if zanzanaNoLegacy {
-			return zanzanaClient, nil
+			accessClient = zanzanaClient
+		} else if zanzanaEnabled {
+			accessClient, err = newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if zanzanaEnabled {
-			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
-		}
-		return rbacClient, nil
+		return newAuthZClients(accessClient, rbacClient), nil
 	default:
 		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
 		if !ok {
@@ -161,14 +183,16 @@ func ProvideAuthZClient(
 		)
 
 		configureUserPermissionsClient(acService, rbacClient, cfg.IDUseExternalGroupsForGroupsClaim)
+		var accessClient authlib.AccessClient = rbacClient
 		if zanzanaNoLegacy {
-			return zanzanaClient, nil
+			accessClient = zanzanaClient
+		} else if zanzanaEnabled {
+			accessClient, err = newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
+			if err != nil {
+				return nil, err
+			}
 		}
-		if zanzanaEnabled {
-			return newZanzanaAwareClient(cfg, rbacClient, zanzanaClient, reg)
-		}
-
-		return rbacClient, nil
+		return newAuthZClients(accessClient, rbacClient), nil
 	}
 }
 
@@ -411,8 +435,8 @@ func (lc *NoopCache) Delete(ctx context.Context, key string) error {
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }

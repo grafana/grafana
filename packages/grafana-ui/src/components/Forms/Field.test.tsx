@@ -394,14 +394,14 @@ describe('Field', () => {
   });
 
   describe('FileDropzone', () => {
-    it('associates with the field label correctly when no id is set', () => {
+    it('associates with the field label correctly when no id is set', async () => {
       render(
         <Field label="My label">
           <FileDropzone />
         </Field>
       );
 
-      expect(screen.getByLabelText('My label')).toBeInTheDocument();
+      expect(await screen.findByLabelText('My label')).toBeInTheDocument();
     });
   });
 

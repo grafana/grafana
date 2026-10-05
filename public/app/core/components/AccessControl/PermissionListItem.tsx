@@ -78,11 +78,7 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
                 : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
             }
           >
-            <Button
-              size="sm"
-              icon="lock"
-              aria-label={t('access-control.permission-list-item.locked-aria-label', 'Locked permission indicator')}
-            />
+            <Icon name="lock" />
           </Tooltip>
         )}
       </td>

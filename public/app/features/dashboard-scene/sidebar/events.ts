@@ -6,6 +6,7 @@ export interface DashboardEditActionEventPayload {
   removedObject?: SceneObject;
   addedObject?: SceneObject;
   movedObject?: SceneObject;
+  selectOnMove?: boolean;
   source: SceneObject;
   description?: string;
   perform: () => void;
@@ -14,6 +15,19 @@ export interface DashboardEditActionEventPayload {
 
 export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
   static type = 'dashboard-edit-action';
+}
+
+export interface DashboardBatchEditActionEventPayload {
+  source: SceneObject;
+  description?: string;
+}
+
+export class DashboardBatchEditActionStartEvent extends BusEventWithPayload<DashboardBatchEditActionEventPayload> {
+  static type = 'dashboard-batch-edit-action-start';
+}
+
+export class DashboardBatchEditActionEndEvent extends BusEventBase {
+  static type = 'dashboard-batch-edit-action-end';
 }
 
 /**

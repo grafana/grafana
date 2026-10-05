@@ -24,7 +24,7 @@ type PolicyRuleEvaluator = audit.PolicyRuleEvaluator
 // DefaultGrafanaPolicyRuleEvaluator provides a sane default configuration for audit logging for API group+versions.
 type defaultGrafanaPolicyRuleEvaluator struct{}
 
-var _ PolicyRuleEvaluator = &defaultGrafanaPolicyRuleEvaluator{}
+var _ PolicyRuleEvaluator = (*defaultGrafanaPolicyRuleEvaluator)(nil)
 
 func NewDefaultGrafanaPolicyRuleEvaluator() audit.PolicyRuleEvaluator {
 	return defaultGrafanaPolicyRuleEvaluator{}

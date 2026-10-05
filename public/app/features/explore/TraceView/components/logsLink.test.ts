@@ -19,8 +19,8 @@ const defaultOptions: TraceToLogsOptionsV2 = {
 };
 
 const TRACE_SPAN_FIELD_VARIANTS = [
-  { trace: 'traceID', span: 'spanID' },
   { trace: 'trace_id', span: 'span_id' },
+  { trace: 'traceID', span: 'spanID' },
   { trace: 'traceId', span: 'spanId' },
   { trace: 'TraceID', span: 'SpanID' },
   { trace: 'TraceId', span: 'SpanId' },
@@ -130,10 +130,10 @@ describe('getTraceToLogsQuery loki alternatives', () => {
 
     expect(queries).toHaveLength(13);
     expect(queries[0]).toEqual({
-      expr: '{cluster="cluster1", service_name="api"} | logfmt | json | drop __error__ | traceID="7946b05c2e2e4e5a"',
-      refId: 't2l:default:traceID',
+      expr: '{cluster="cluster1", service_name="api"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"',
+      refId: 't2l:default:trace_id',
     });
-    expect(queries[1].refId).toBe('t2l:job:traceID');
+    expect(queries[1].refId).toBe('t2l:job:trace_id');
     expect(queries[12]).toEqual({
       expr: '{cluster="cluster1", service_name="api"} |= "7946b05c2e2e4e5a"',
       refId: 't2l:line-contains',
@@ -175,8 +175,8 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     // 6 default variants + line-contains
     expect(queries).toHaveLength(7);
     expect(queries.map((q) => q.refId)).toEqual([
-      't2l:default:traceID',
       't2l:default:trace_id',
+      't2l:default:traceID',
       't2l:default:traceId',
       't2l:default:TraceID',
       't2l:default:TraceId',
@@ -239,10 +239,13 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     const { query } = getTraceToLogsTraceQuery(trace, lokiSettings, defaultOptions);
     const queries = query as LokiQuery[];
 
-    expect(queries[0].expr).toContain('traceID="7946b05c2e2e4e5a"');
-    expect(queries[0].expr).not.toContain('spanID=');
-    expect(queries[0].refId).toBe('t2l:default:traceID');
-    expect(queries.find((q) => q.refId === 't2l:job:traceID')?.expr).toContain('(checkout|payments)');
+    expect(queries[0].expr).toBe(
+      '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
+    );
+    expect(queries[0].refId).toBe('t2l:default:trace_id');
+    expect(queries.find((q) => q.refId === 't2l:job:trace_id')?.expr).toBe(
+      '{job=~"(.*/)?(checkout|payments)"} | logfmt | json | drop __error__ | trace_id="7946b05c2e2e4e5a"'
+    );
     expect(queries.at(-1)).toEqual({
       expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |= "7946b05c2e2e4e5a"',
       refId: 't2l:line-contains',

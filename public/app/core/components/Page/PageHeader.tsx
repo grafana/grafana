@@ -5,6 +5,7 @@ import { type NavModelItem, type GrafanaTheme2 } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Icon, useStyles2 } from '@grafana/ui';
 
+import { AccentBoxBadge } from '../AccentBoxBadge/AccentBoxBadge';
 import { PageInfo } from '../PageInfo/PageInfo';
 
 import { EditableTitle } from './EditableTitle';
@@ -31,9 +32,9 @@ export function PageHeader({ navItem, renderTitle, actions, info, subTitle, onEd
           <div className={styles.title}>
             {navItem.img && <img className={styles.img} src={navItem.img} alt={`logo for ${navItem.text}`} />}
             {navItem.icon && !navItem.img && visualRefreshEnabled && (
-              <div className={styles.icon}>
-                <Icon name={navItem.icon} size="lg" />
-              </div>
+              <AccentBoxBadge>
+                <Icon size="lg" name={navItem.icon} />
+              </AccentBoxBadge>
             )}
             {onEditTitle ? (
               <EditableTitle value={navItem.text} onEdit={onEditTitle} />
@@ -63,10 +64,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       h1: {
         marginBottom: 0,
       },
+      gap: theme.spacing(1.5),
     }),
     actions: css({
       display: 'flex',
       flexDirection: 'row',
+      alignSelf: 'flex-start',
+      alignItems: 'center',
       gap: theme.spacing(1),
     }),
     titleSubtitleContainer: css({
@@ -100,19 +104,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     img: css({
       width: '32px',
       height: '32px',
-      marginRight: theme.spacing(2),
-    }),
-    icon: css({
-      marginRight: theme.spacing(1.5),
-      color: theme.colors.accent.text,
-      backgroundColor: theme.colors.accent.background,
-      borderRadius: theme.shape.radius.default,
-      padding: theme.spacing(1),
-      width: theme.spacing(4.5),
-      height: theme.spacing(4.5),
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
     }),
   };
 };

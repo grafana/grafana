@@ -117,8 +117,8 @@ func TestManifestWatcher_PollConvertsManifests(t *testing.T) {
 	require.Len(t, got, 2)
 	groups := map[string]bool{}
 	for _, m := range got {
-		require.NotNil(t, m.ManifestData)
-		groups[m.ManifestData.Group] = true
+		require.NotNil(t, m)
+		groups[m.Group] = true
 	}
 	require.True(t, groups["dashboard.grafana.app"])
 	require.True(t, groups["folder.grafana.app"])
@@ -130,8 +130,8 @@ func TestManifestWatcher_OnChangeFiresOnlyWhenChanged(t *testing.T) {
 	)
 
 	var calls int
-	var last []app.Manifest
-	w := newManifestWatcher(client, 0, func(m []app.Manifest) {
+	var last []*app.ManifestData
+	w := newManifestWatcher(client, 0, func(m []*app.ManifestData) {
 		calls++
 		last = m
 	}, nil)
@@ -211,7 +211,7 @@ func TestManifestWatcher_PicksUpChangesOnNextPoll(t *testing.T) {
 		testAppManifestObj("m-dashboards", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(client, 0, func([]app.Manifest) { calls++ }, nil)
+	w := newManifestWatcher(client, 0, func([]*app.ManifestData) { calls++ }, nil)
 
 	w.runPollCycle(t.Context())
 	require.Len(t, w.Manifests(), 1)
@@ -248,7 +248,7 @@ func TestManifestWatcher_KeepsPreviousManifestOnParseFailure(t *testing.T) {
 
 	got := w.Manifests()
 	require.Len(t, got, 1)
-	require.Equal(t, "dashboard.grafana.app", got[0].ManifestData.Group)
+	require.Equal(t, "dashboard.grafana.app", got[0].Group)
 }
 
 func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
@@ -256,7 +256,7 @@ func TestManifestWatcher_KeepPreviousSurvivesRename(t *testing.T) {
 		testAppManifestObj("A", "dashboards", "dashboard.grafana.app", "Dashboard", "title"),
 	)
 	var calls int
-	w := newManifestWatcher(client, 0, func([]app.Manifest) { calls++ }, nil)
+	w := newManifestWatcher(client, 0, func([]*app.ManifestData) { calls++ }, nil)
 	w.runPollCycle(t.Context())
 	require.Equal(t, 1, calls)
 
@@ -298,7 +298,44 @@ func TestManifestWatcher_SkipsManifestThatFailsToConvert(t *testing.T) {
 
 	got := w.Manifests()
 	require.Len(t, got, 1)
-	require.Equal(t, "dashboard.grafana.app", got[0].ManifestData.Group)
+	require.Equal(t, "dashboard.grafana.app", got[0].Group)
+}
+
+func TestManifestFromUnstructured_PreservesEmbeddingVersions(t *testing.T) {
+	obj := testAppManifestObj("m-foos", "foos", "foo.grafana.app", "Foo")
+	spec := obj.Object["spec"].(map[string]interface{})
+	spec["embed"] = map[string]interface{}{"foos": map[string]interface{}{"reembedVersion": int64(3)}}
+	spec["versions"] = []interface{}{
+		map[string]interface{}{
+			"name": "v2", "served": true,
+			"kinds": []interface{}{map[string]interface{}{
+				"kind": "Foo", "embed": map[string]interface{}{"fields": []interface{}{
+					map[string]interface{}{"name": "title", "path": "spec.title"},
+					map[string]interface{}{"name": "description", "path": "spec.description"},
+				}},
+			}},
+		},
+		map[string]interface{}{
+			"name": "v1", "served": false,
+			"kinds": []interface{}{map[string]interface{}{
+				"kind": "Foo", "embed": map[string]interface{}{"fields": []interface{}{
+					map[string]interface{}{"name": "title", "path": "spec.oldTitle"},
+				}},
+			}},
+		},
+	}
+	before := obj.DeepCopy()
+
+	data, err := ManifestFromUnstructured(obj)
+	require.NoError(t, err)
+	require.Equal(t, map[string]app.ManifestResourceEmbed{"foos": {ReembedVersion: 3}}, data.Embed)
+	require.Len(t, data.Versions, 2)
+	require.Equal(t, "v2", data.Versions[0].Name)
+	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.title"}, {Name: "description", Path: "spec.description"}}, data.Versions[0].Kinds[0].Embed.Fields)
+	require.Equal(t, "v1", data.Versions[1].Name)
+	require.False(t, data.Versions[1].Served)
+	require.Equal(t, []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.oldTitle"}}, data.Versions[1].Kinds[0].Embed.Fields)
+	require.Equal(t, before, obj)
 }
 
 func TestNewManifestWatcherConfig(t *testing.T) {

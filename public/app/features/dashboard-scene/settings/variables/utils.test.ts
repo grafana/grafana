@@ -19,6 +19,7 @@ import { SHARED_DASHBOARD_QUERY, DASHBOARD_DATASOURCE_PLUGIN_ID } from 'app/plug
 
 import { toControlSourceRef } from '../../utils/predefinedVariables';
 
+import { getEditableVariables, getVariableEditor } from './editableVariablesRegistry';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor/CustomVariableEditor';
@@ -30,10 +31,8 @@ import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 import {
   isEditableVariableType,
   EDITABLE_VARIABLES_SELECT_ORDER,
-  getEditableVariables,
   getVariableTypeLabel,
   getVariableTypeSelectOptions,
-  getVariableEditor,
   getVariableScene,
   hasVariableOptions,
   type EditableVariableType,
@@ -348,6 +347,26 @@ describe('getVariableScene', () => {
     expect(sceneVariable).toBeInstanceOf(ConstantVariable);
     expect(sceneVariable.state.name).toBe(initialState.name);
     expect(sceneVariable.state.hide).toBe(VariableHide.hideVariable);
+  });
+
+  describe('adhoc enableGroupBy default', () => {
+    afterEach(() => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = false;
+    });
+
+    it('enables group by on new adhoc variables when dashboardUnifiedDrilldownControls is on', async () => {
+      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+
+      const variable = await getVariableScene('adhoc', { name: 'filter0' });
+
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
+    });
+
+    it('does not enable group by on new adhoc variables when dashboardUnifiedDrilldownControls is off', async () => {
+      const variable = await getVariableScene('adhoc', { name: 'filter0' });
+
+      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBeUndefined();
+    });
   });
 });
 

@@ -42,14 +42,12 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	}
 
 	// Check if it's already a validation error
-	var validationErr *ResourceValidationError
-	if errors.As(err, &validationErr) {
+	if _, ok := errors.AsType[*ResourceValidationError](err); ok {
 		return err
 	}
 
 	// Check if it's a field validation error (e.g., missing name)
-	var fieldErr *field.Error
-	if errors.As(err, &fieldErr) {
+	if _, ok := errors.AsType[*field.Error](err); ok {
 		return NewResourceValidationError(err)
 	}
 
@@ -64,8 +62,7 @@ func wrapAsValidationErrorIfNeeded(err error) error {
 	}
 
 	// Check if it's a dashboard validation error (wrap all dashboard errors as validation errors)
-	var dashboardErr dashboardaccess.DashboardErr
-	if errors.As(err, &dashboardErr) {
+	if _, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		return NewResourceValidationError(err)
 	}
 
@@ -231,6 +228,16 @@ func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj 
 	return fileName, len(body), nil
 }
 
+func shouldSkipStrictValidation(oldHash, newHash string) bool {
+	return oldHash != "" && oldHash == newHash
+}
+
+// BeforeCreate is called right before RenameResourceFile creates a resource that
+// does not exist yet. It can refuse the create by returning an error, and returns
+// a function that undoes what it reserved, which RenameResourceFile calls when the
+// write does not end up creating the resource.
+type BeforeCreate func(ctx context.Context, path string) (undo func(), err error)
+
 // WriteResourceOption configures optional behavior for resource write operations.
 type WriteResourceOption func(*writeResourceConfig)
 
@@ -281,7 +288,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	// file, the spec is unchanged — only metadata (path, folder) differs. Skip
 	// strict validation so the unchanged spec is not rejected by rules introduced
 	// after the resource was first persisted (e.g. legacy dashboards).
-	if cfg.existingHash != "" && cfg.existingHash == fileInfo.Hash {
+	if shouldSkipStrictValidation(cfg.existingHash, fileInfo.Hash) {
 		parsed.SkipStrictValidation = true
 	}
 
@@ -436,17 +443,17 @@ func (r *ResourcesManager) deleteOldResource(ctx context.Context, sourcePath, ol
 	return nil
 }
 
-// RenameResourceFile moves the resource at previousPath to newPath. The returned
-// size is the number of bytes of the new file content written at newPath.
-func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
+// RenameResourceFile moves the resource at previousPath to newPath. beforeCreate
+// (may be nil) is called only at the point a net-new resource is about to be
+// created -- an in-place update never calls it -- and its undo function is called
+// if the write ends up not needing it after all (failure, or an update found on
+// retry).
+func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath, previousRef, newPath, newRef string, beforeCreate BeforeCreate, folderOpts ...EnsurePathOption) (string, string, schema.GroupVersionKind, int, error) {
 	oldInfo, err := r.repo.Read(ctx, previousPath, previousRef)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to read previous file: %w", err)
 	}
-	oldParsed, err := r.parser.Parse(ctx, oldInfo)
-	if err != nil {
-		return "", "", schema.GroupVersionKind{}, 0, fmt.Errorf("failed to parse previous file: %w", err)
-	}
+	oldParsed, oldParseErr := r.parser.Parse(ctx, oldInfo)
 
 	newInfo, err := r.repo.Read(ctx, newPath, newRef)
 	if err != nil {
@@ -456,6 +463,64 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 	newParsed, err := r.parser.Parse(ctx, newInfo)
 	if err != nil {
 		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse new file: %w", err)
+	}
+
+	if oldParseErr != nil {
+		if pathErr := IsPathSupported(previousPath); pathErr != nil {
+			// Bad path, not a content problem: proceed with the new write;
+			// other parse failures fall through to the fatal return below.
+			// One Get (regardless of hash) decides whether this is a create, so
+			// beforeCreate runs at most once; a hash match additionally lets an
+			// existing object skip strict validation, since the content it
+			// already accepted is unchanged.
+			unchangedContent := shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash)
+			// Same identity Run() writes with -- a mismatch can read as
+			// NotFound and wrongly choose ForceCreate.
+			identityCtx, _, err := identity.WithProvisioningIdentity(ctx, newParsed.Obj.GetNamespace())
+			if err != nil {
+				return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("set provisioning identity: %w", err)
+			}
+			existing, getErr := newParsed.Client.Get(identityCtx, newParsed.Obj.GetName(), metav1.GetOptions{})
+			var undoCreate func()
+			switch {
+			case getErr == nil:
+				newParsed.Existing = existing
+				if unchangedContent {
+					newParsed.SkipStrictValidation = true
+				}
+			case apierrors.IsNotFound(getErr):
+				if beforeCreate != nil {
+					undo, err := beforeCreate(ctx, newPath)
+					if err != nil {
+						return "", "", schema.GroupVersionKind{}, size, err
+					}
+					undoCreate = undo
+				}
+				newParsed.ForceCreate = true
+			default:
+				// Neither found nor not-found -- stays fatal rather than
+				// falling through with neither branch's decision made.
+				return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("check existing resource before rename recovery: %w", getErr)
+			}
+			newName, gvk, err := r.writeResourceFromParsed(ctx, newPath, newRef, newParsed, folderOpts...)
+			if err != nil {
+				if undoCreate != nil {
+					undoCreate()
+				}
+				return "", "", gvk, size, fmt.Errorf("failed to write resource: %w", err)
+			}
+			// A create with no matching delete is the one outcome that adds a
+			// resource; a fallback to update (e.g. Create raced into
+			// AlreadyExists) needs what beforeCreate reserved given back.
+			if undoCreate != nil && newParsed.Action != provisioning.ResourceActionCreate {
+				undoCreate()
+			}
+			// The old path is unsupported, so the parser rejected it and no resource
+			// was ever created from that file: there is nothing to clean up, and the
+			// write above succeeded whether or not the content changed.
+			return newName, "", gvk, size, nil
+		}
+		return "", "", schema.GroupVersionKind{}, size, fmt.Errorf("failed to parse previous file: %w", oldParseErr)
 	}
 
 	// Delete the old resource when the identity changed (name or resource kind).
@@ -481,7 +546,7 @@ func (r *ResourcesManager) RenameResourceFile(ctx context.Context, previousPath,
 		// Rename-with-edits (different hashes) keeps strict validation: the
 		// new content is a real change and any validation failure must be
 		// surfaced rather than silently admitted.
-		if oldInfo.Hash != "" && oldInfo.Hash == newInfo.Hash {
+		if shouldSkipStrictValidation(oldInfo.Hash, newInfo.Hash) {
 			newParsed.SkipStrictValidation = true
 		}
 	}

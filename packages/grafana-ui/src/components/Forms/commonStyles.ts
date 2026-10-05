@@ -30,6 +30,7 @@ export const sharedInputStyle = (theme: GrafanaTheme2, invalid = false) => {
     css({
       background,
       lineHeight: theme.typography.body.lineHeight,
+      minHeight: theme.spacing(theme.components.height.md),
       fontSize: theme.typography.size.md,
       color: textColor,
       border: `1px solid ${borderColor}`,

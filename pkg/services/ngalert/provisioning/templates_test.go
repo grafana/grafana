@@ -1545,7 +1545,7 @@ func TestTemplateService_LimitsValidation(t *testing.T) {
 
 	revision := func(existingCount int) *legacy_storage.ConfigRevision {
 		templates := make(map[v1.ResourceUID]v1.TemplateGroup, existingCount)
-		for i := 0; i < existingCount; i++ {
+		for i := range existingCount {
 			tmpl := v1.NewTemplateGroup("", fmt.Sprintf("existing-%d", i), "content", v1.TemplateKindGrafana, models.ProvenanceNone)
 			templates[tmpl.UID] = tmpl
 		}

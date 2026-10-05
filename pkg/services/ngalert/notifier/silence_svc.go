@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote/client"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 // LimitsProvider provides access to alertmanager limits for validation.
@@ -26,7 +27,7 @@ type SilenceService struct {
 	xact           transactionManager
 	log            log.Logger
 	store          SilenceStore
-	ruleStore      RuleStore
+	ruleStore      rulestore.RuleLister
 	ruleAuthz      RuleAccessControlService
 	limitsProvider LimitsProvider
 }
@@ -54,16 +55,12 @@ type SilenceStore interface {
 	DeleteSilence(ctx context.Context, orgID int64, id string) error
 }
 
-type RuleStore interface {
-	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) (models.RulesGroup, error)
-}
-
 func NewSilenceService(
 	authz SilenceAccessControlService,
 	xact transactionManager,
 	log log.Logger,
 	store SilenceStore,
-	ruleStore RuleStore,
+	ruleStore rulestore.RuleLister,
 	ruleAuthz RuleAccessControlService,
 	limitsProvider LimitsProvider,
 ) *SilenceService {

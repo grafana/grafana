@@ -45,7 +45,7 @@ const selectComboboxOptionInTest = async (
 };
 
 const setup = async () => {
-  const view = render(<SharedPreferences resourceUri="user" preferenceType="user" />);
+  const view = render(<SharedPreferences resourceUri="user" preferenceType="user" legend="Preferences" />);
   const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
   await waitFor(() => expect(themeSelect).not.toBeDisabled());
   return view;
@@ -211,7 +211,7 @@ describe('SharedPreferences', () => {
     server.use(
       preferencesHandlers.listPreferencesHandler(HttpResponse.json({ message: 'Server error' }, { status: 500 }))
     );
-    render(<SharedPreferences resourceUri="user" preferenceType="user" />);
+    render(<SharedPreferences resourceUri="user" preferenceType="user" legend="Preferences" />);
     expect(await screen.findByText('Error loading preferences')).toBeInTheDocument();
   });
   it('shows an error alert when saving preferences fails', async () => {
@@ -227,7 +227,7 @@ describe('SharedPreferences', () => {
     const onConfirm = jest.fn().mockResolvedValue(false);
     const capture = captureRequests((r) => r.url.includes('/preferences') && r.method === 'PATCH');
 
-    render(<SharedPreferences resourceUri="user" preferenceType="user" onConfirm={onConfirm} />);
+    render(<SharedPreferences resourceUri="user" preferenceType="user" onConfirm={onConfirm} legend="Preferences" />);
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).not.toBeDisabled());
 
@@ -239,7 +239,7 @@ describe('SharedPreferences', () => {
     expect(mockReload).not.toHaveBeenCalled();
   });
   it('renders all form fields as disabled when disabled prop is true', async () => {
-    render(<SharedPreferences resourceUri="user" preferenceType="user" disabled />);
+    render(<SharedPreferences resourceUri="user" preferenceType="user" disabled legend="Preferences" />);
     const themeSelect = await screen.findByRole('combobox', { name: /Interface theme/ });
     await waitFor(() => expect(themeSelect).toBeDisabled());
 

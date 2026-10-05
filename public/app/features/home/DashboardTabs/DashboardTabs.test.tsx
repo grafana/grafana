@@ -1,12 +1,12 @@
 import { useEffect, type ReactNode } from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
+import { setMockStarredDashboards, setTestFlags } from '@grafana/test-utils/unstable';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -69,6 +69,14 @@ beforeEach(() => {
   window.localStorage.removeItem(impressionKey);
   setMockStarredDashboards([]);
   config.licenseInfo.enabledFeatures = {};
+});
+
+afterEach(async () => {
+  // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
+  await act(async () => {
+    setTestFlags({});
+  });
+  jest.restoreAllMocks();
 });
 
 const createDashboardTabsExtensionComponent = (
@@ -149,6 +157,22 @@ describe('DashboardTabs', () => {
     render(<DashboardTabs extensionComponents={[]} />);
 
     expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
+  });
+
+  it('renders the compact empty Recent tab with its create CTA on the redesigned homepage', async () => {
+    await act(async () => {
+      setTestFlags({ 'grafana.growthHomepage': true });
+    });
+    jest
+      .spyOn(contextSrv, 'hasPermission')
+      .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
+
+    render(<DashboardTabs extensionComponents={[]} />);
+
+    expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /create your first dashboard/i })).toBeInTheDocument();
+    // The description paragraph is what makes the full EmptyState overflow the shorter card.
+    expect(screen.queryByText(/After you've connected data/)).not.toBeInTheDocument();
   });
 
   it('shows empty state when no starred dashboards', async () => {

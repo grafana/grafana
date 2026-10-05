@@ -13,7 +13,9 @@ import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
+import { contextSrv } from 'app/core/services/context_srv';
 import { dispatch } from 'app/store/store';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { VariableEditorView } from './VariableEditorView';
 import {
@@ -77,7 +79,7 @@ export default function VariablesManagementPage() {
   );
   const folderCanEdit = useFolderCanEdit(selectedFolderUids);
   // Disable Move/Delete when any selected variable is outside scopes the user can manage
-  // (global without Editor, or a folder without CanEdit). Reuses the same folder-access map.
+  // (global without Admin, or a folder without CanEdit). Reuses the same folder-access map.
   const canMutateSelection =
     selectedVariables.length > 0 &&
     selectedVariables.every((variable) => {
@@ -88,6 +90,12 @@ export default function VariablesManagementPage() {
         allowGlobalScope
       );
     });
+
+  const canCreate = contextSrv.hasPermission(AccessControlAction.VariablesCreate);
+  const canWrite = contextSrv.hasPermission(AccessControlAction.VariablesWrite);
+  const canDelete = contextSrv.hasPermission(AccessControlAction.VariablesDelete);
+  // Move is create-then-delete under the hood (see bulkMoveVariables).
+  const canMove = canCreate && canDelete;
 
   const onToggleFolder = (folderUid: string) => {
     setExpandedFolders((prev) => {
@@ -244,7 +252,8 @@ export default function VariablesManagementPage() {
     <Page
       navId="dashboards/variables"
       actions={
-        !isEmpty && (
+        !isEmpty &&
+        canCreate && (
           <Button icon="plus" onClick={() => locationService.push(`${LIST_URL}/new`)}>
             <Trans i18nKey="variables-management.page.new-variable">New variable</Trans>
           </Button>
@@ -255,24 +264,24 @@ export default function VariablesManagementPage() {
         {isError ? (
           <LoadVariablesError error={error} />
         ) : isEmpty ? (
-          <div className={styles.content}>
-            <EmptyState
-              variant="call-to-action"
-              message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
-              button={
+          <EmptyState
+            variant={canCreate ? 'call-to-action' : 'not-found'}
+            message={t('variables-management.page.empty-title', "You haven't created any variables yet")}
+            button={
+              canCreate ? (
                 <Button icon="plus" size="lg" onClick={() => locationService.push(`${LIST_URL}/new`)}>
                   <Trans i18nKey="variables-management.page.empty-cta">New variable</Trans>
                 </Button>
-              }
-            >
-              <Trans i18nKey="variables-management.page.empty-body">
-                Variables created here can be shared across dashboards, either globally or scoped to a folder.
-              </Trans>
-            </EmptyState>
-          </div>
+              ) : undefined
+            }
+          >
+            <Trans i18nKey="variables-management.page.empty-body">
+              Variables created here can be shared across dashboards, either globally or scoped to a folder.
+            </Trans>
+          </EmptyState>
         ) : (
           <div className={styles.content}>
-            {selected.size > 0 && (
+            {selected.size > 0 && canDelete && (
               <Stack gap={1} alignItems="center">
                 <Text color="secondary">
                   {t('variables-management.page.selected-count', '', {
@@ -281,13 +290,15 @@ export default function VariablesManagementPage() {
                     defaultValue_other: '{{count}} selected',
                   })}
                 </Text>
-                <Button
-                  variant="secondary"
-                  onClick={() => setPendingAction('move')}
-                  disabled={isProcessing || !canMutateSelection}
-                >
-                  <Trans i18nKey="variables-management.page.move">Move</Trans>
-                </Button>
+                {canMove && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => setPendingAction('move')}
+                    disabled={isProcessing || !canMutateSelection}
+                  >
+                    <Trans i18nKey="variables-management.page.move">Move</Trans>
+                  </Button>
+                )}
                 <Button
                   variant="destructive"
                   onClick={() => setPendingAction('delete')}
@@ -303,7 +314,8 @@ export default function VariablesManagementPage() {
               onToggleFolder={onToggleFolder}
               selected={selected}
               onSetSelected={onSetSelected}
-              onEdit={onEdit}
+              onEdit={canWrite ? onEdit : undefined}
+              selectable={canDelete}
             />
           </div>
         )}

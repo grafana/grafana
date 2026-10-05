@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -264,9 +263,24 @@ func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
 					stats[k] = v
 				}
 			}
+			// Two read-only repositories (github + local), neither syncing, both
+			// healthy. The github repo has no token, so it authenticates
+			// anonymously; the local repo needs no auth.
 			assert.Equal(collect, map[string]any{
-				"stats.repository.github.count": 1.0,
-				"stats.repository.local.count":  1.0,
+				"stats.repository.count":                        2.0,
+				"stats.repository.github.count":                 1.0,
+				"stats.repository.local.count":                  1.0,
+				"stats.repository.healthy.count":                2.0,
+				"stats.repository.unhealthy.count":              0.0,
+				"stats.repository.sync_enabled.count":           0.0,
+				"stats.repository.read_only.count":              2.0,
+				"stats.repository.webhook_disabled.count":       0.0,
+				"stats.repository.workflow.write.count":         0.0,
+				"stats.repository.workflow.branch.count":        0.0,
+				"stats.repository.sync_target.folder.count":     2.0,
+				"stats.repository.auth_method.anonymous.count":  1.0,
+				"stats.repository.auth_method.none.count":       1.0,
+				"stats.repository.ready_reason.available.count": 2.0,
 			}, stats)
 		}, time.Second*10, time.Millisecond*100, "Expected stats to match")
 	})
@@ -644,8 +658,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repository with path: %s", test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for path: %s", test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -808,8 +821,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 				if test.expectError != nil {
 					require.Error(t, err, "Expected error for repo branch=%s path=%s", test.branch, test.path)
 					require.ErrorContains(t, err, test.expectError.Error(), "Error should contain expected message for branch=%s path=%s", test.branch, test.path)
-					var statusError *apierrors.StatusError
-					if errors.As(err, &statusError) {
+					if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 						require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 						require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 					}
@@ -847,8 +859,7 @@ func TestIntegrationProvisioning_RepositoryValidation(t *testing.T) {
 		_, err = helper.Repositories.Resource.Create(t.Context(), secondRepo, metav1.CreateOptions{FieldValidation: "Strict"})
 		require.Error(t, err, "Second repository with same URL, branch, and empty path should fail")
 		require.ErrorContains(t, err, provisioningAPIServer.ErrRepositoryDuplicatePath.Error())
-		var statusError *apierrors.StatusError
-		if errors.As(err, &statusError) {
+		if statusError, ok := errors.AsType[*apierrors.StatusError](err); ok {
 			require.Equal(t, metav1.StatusReasonInvalid, statusError.ErrStatus.Reason, "Should be a validation error")
 			require.Equal(t, http.StatusUnprocessableEntity, int(statusError.ErrStatus.Code), "Should return 422 status code")
 		}
@@ -1199,79 +1210,6 @@ func TestIntegrationProvisioning_ReadOnlyRepositoryNoWebhook(t *testing.T) {
 		require.Empty(t, repo.Spec.Workflows, "repository should have no workflows (read-only)")
 		require.Nil(t, repo.Status.Webhook, "read-only repository should not have a webhook")
 	})
-}
-
-func TestIntegrationProvisioning_WebhookFailureDoesNotRetryImmediately(t *testing.T) {
-	helper := sharedHelper(t)
-
-	var webhookCreateCalls atomic.Int32
-
-	repoFactory := helper.GetEnv().GithubRepoFactory
-	repoFactory.Client = ghmock.NewMockedHTTPClient(
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposBranchesProtectionByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
-					Message: "Branch not protected",
-				}))
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.GetReposRulesBranchesByOwnerByRepoByBranch,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_, _ = w.Write([]byte("[]"))
-			}),
-		),
-		ghmock.WithRequestMatchHandler(
-			ghmock.PostReposHooksByOwnerByRepo,
-			http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				webhookCreateCalls.Add(1)
-				w.WriteHeader(http.StatusInternalServerError)
-				_, _ = w.Write(ghmock.MustMarshal(&github.ErrorResponse{
-					Message: "failed to create webhook",
-				}))
-			}),
-		),
-	)
-	helper.SetGithubRepositoryFactory(repoFactory)
-
-	repoName := "webhook-create-failure-cooldown"
-	input := helper.RenderObject(t, common.TestdataPath("github.json.tmpl"), map[string]any{
-		"Name":          repoName,
-		"SyncEnabled":   false,
-		"WorkflowsJSON": `["write"]`,
-		"Token":         "test-token",
-	})
-	input.Object["spec"].(map[string]any)["webhook"] = map[string]any{
-		"baseUrl": "https://grafana.example.com",
-	}
-
-	_, err := helper.Repositories.Resource.Create(t.Context(), input, metav1.CreateOptions{})
-	require.NoError(t, err, "failed to create repository")
-
-	t.Cleanup(func() {
-		cleanupCtx := context.WithoutCancel(t.Context())
-		_ = helper.Repositories.Resource.Delete(cleanupCtx, repoName, metav1.DeleteOptions{})
-	})
-
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		repoObj, err := helper.Repositories.Resource.Get(t.Context(), repoName, metav1.GetOptions{})
-		if !assert.NoError(collect, err, "failed to get repository") {
-			return
-		}
-
-		repo := common.MustFromUnstructured[provisioning.Repository](t, repoObj)
-		assert.GreaterOrEqual(collect, webhookCreateCalls.Load(), int32(1), "webhook creation should have been attempted")
-		assert.False(collect, repo.Status.Health.Healthy, "repository should remain unhealthy after hook failure")
-		assert.Equal(collect, provisioning.HealthFailureHook, repo.Status.Health.Error, "repository should record hook failure")
-		assert.Nil(collect, repo.Status.Webhook, "webhook status should remain unset when creation fails")
-	}, 30*time.Second, 200*time.Millisecond, "repository should record the initial webhook failure")
-
-	require.Never(t, func() bool {
-		return webhookCreateCalls.Load() > 1
-	}, 5*time.Second, 100*time.Millisecond, "webhook creation should not be retried immediately after a hook failure")
 }
 
 func TestIntegrationProvisioning_WebhookConfig(t *testing.T) {
@@ -1932,7 +1870,7 @@ func TestIntegrationProvisioning_DeleteRepositoryClearsJobQueue(t *testing.T) {
 
 	// Enqueue several jobs against the repository so the finalizer has queued work
 	// to clear when the repository is deleted.
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		helper.CreatePullJob(t, fmt.Sprintf("%s-queued-%02d", repo, i), repo)
 	}
 

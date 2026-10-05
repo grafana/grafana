@@ -1,4 +1,4 @@
-import { createTheme, toDataFrame } from '@grafana/data';
+import { createTheme, FieldType, toDataFrame } from '@grafana/data';
 
 import { prepareCandlestickFields } from './fields';
 import { type Options, VizDisplayMode } from './panelcfg.gen';
@@ -18,6 +18,24 @@ describe('Candlestick data', () => {
             ['A', 2, 3],
             ['B', 4, 5],
             ['C', 6, 7],
+          ],
+        }),
+      ],
+      options,
+      theme
+    );
+    expect(info).toBeNull();
+  });
+
+  it('returns null when the time field has null values (#130379)', () => {
+    const info = prepareCandlestickFields(
+      [
+        toDataFrame({
+          refId: 'A',
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1, null, 3] },
+            { name: 'open', type: FieldType.number, values: [4, 5, 6] },
+            { name: 'close', type: FieldType.number, values: [7, 8, 9] },
           ],
         }),
       ],
