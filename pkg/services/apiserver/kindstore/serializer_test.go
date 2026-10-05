@@ -449,7 +449,6 @@ func TestConversionSerializerPreservesApplyConflicts(t *testing.T) {
 			require.NoError(t, err, "force apply explicitly transfers ownership")
 		})
 	}
-
 }
 
 func TestConversionSerializerPreservesDistinctOwners(t *testing.T) {
