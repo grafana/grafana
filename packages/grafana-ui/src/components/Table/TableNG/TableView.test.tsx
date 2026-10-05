@@ -16,7 +16,6 @@ import {
 import {
   FilterByValueType,
   FilterByValueMatch,
-  getFrameIdentity,
   filterByValueTransformer,
   organizeFieldsTransformer,
 } from '@grafana/data/internal';
@@ -249,7 +248,7 @@ it.each([false, true])(
       height: 600,
       rowTransformationsEnabled: true,
       sortBy: savedSort ? [{ displayName: 'Value', desc: false }] : undefined,
-      rowTransformations: { api, owner: 'table', frameKey: getFrameIdentity([source], 0) },
+      rowTransformations: { api, owner: 'table', frameKey: '[null,0,1]', frameIndex: 0 },
     };
     const { unmount } = render(<TableNG {...props} />);
     const user = userEvent.setup();
@@ -283,7 +282,7 @@ it.each([false, true])(
 );
 it('keeps header sorting out of the ad-hoc stage', async () => {
   const data = makeFrame();
-  const frameKey = getFrameIdentity([data], 0);
+  const frameKey = '[null,0,1]';
   let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
   const listeners = new Set<() => void>();
   const api: VizPanelRuntimeTransformations = {
