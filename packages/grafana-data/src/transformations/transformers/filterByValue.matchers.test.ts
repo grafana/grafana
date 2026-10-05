@@ -4,6 +4,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { MappingType } from '../../types/valueMapping';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { type RangeValueMatcherOptions } from '../matchers/valueMatchers/types';
 import { transformDataFrame } from '../transformDataFrame';
 
 import {
@@ -38,8 +39,8 @@ function config(predicate: FilterByValueConfig['options']['filters'][number]): F
     },
   };
 }
-const range = (options: { min?: number; max?: number; includeMissing: boolean }, fieldName = 'Value') =>
-  config({ fieldName, config: { id: 'numericRange', options } });
+const range = (options: RangeValueMatcherOptions<number>, fieldName = 'Value') =>
+  config({ fieldName, config: { id: 'between', options: { ...options, inclusive: true, allowOpenBounds: true } } });
 
 it('matches mapped display values with a raw field identity despite display name overrides', () => {
   expect(
@@ -140,7 +141,7 @@ it('preserves timezone formatting in serialized display membership', async () =>
 });
 
 it('keeps values and nanoseconds aligned after filtering', () => {
-  const filter = range({ min: 3, includeMissing: false });
+  const filter = range({ from: 3, includeMissing: false });
   const output = filterByValueTransformer.transformer(filter.options, { interpolate: (s) => s })([frame()])[0];
   expect(output.fields[1].values).toEqual([10, 3]);
   expect(output.fields[2].nanos).toEqual([3, 2]);
