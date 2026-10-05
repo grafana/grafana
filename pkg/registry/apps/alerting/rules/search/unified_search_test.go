@@ -58,7 +58,9 @@ func TestUnifiedBackendErrorResultCompatibility(t *testing.T) {
 	}
 	grpcStatus, err := status.New(codes.Unknown, "transport message").WithDetails(result)
 	require.NoError(t, err)
-	want := resource.StatusError(result).(*apierrors.StatusError).Status()
+	var statusErr *apierrors.StatusError
+	require.ErrorAs(t, resource.StatusError(result), &statusErr)
+	want := statusErr.Status()
 	for name, index := range map[string]*fakeIndex{
 		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
 		"grpc details": {err: grpcStatus.Err()},
@@ -99,7 +101,7 @@ func TestUnifiedBackendTransportErrors(t *testing.T) {
 			err := WithAPIStatusErrorResponse(h.SearchAlertRules)(t.Context(), rec, &app.CustomRouteRequest{
 				ResourceIdentifier: sdkresource.FullIdentifier{Namespace: "default"}, Body: readCloser(validBody),
 			})
-			if tc.err == ordinaryErr {
+			if errors.Is(tc.err, ordinaryErr) {
 				require.Same(t, ordinaryErr, err)
 			} else {
 				require.Implements(t, (*apierrors.APIStatus)(nil), err)

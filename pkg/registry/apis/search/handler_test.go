@@ -144,7 +144,9 @@ func TestHandler_PropagatesBackendErrorResult(t *testing.T) {
 	}
 	grpcStatus, err := status.New(codes.Unknown, "transport message").WithDetails(result)
 	require.NoError(t, err)
-	want := resource.StatusError(result).(*apierrors.StatusError).Status()
+	var statusErr *apierrors.StatusError
+	require.ErrorAs(t, resource.StatusError(result), &statusErr)
+	want := statusErr.Status()
 	for name, client := range map[string]*fakeIndexClient{
 		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
 		"grpc details": {err: grpcStatus.Err()},
