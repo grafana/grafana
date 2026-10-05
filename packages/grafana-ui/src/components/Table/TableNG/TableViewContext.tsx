@@ -77,11 +77,19 @@ export function useIsFieldFiltered() {
 
 export function editableTableFilter(config: FilterByValueConfig) {
   const predicate = config.options.filters[0];
+  const options = predicate?.config.options;
+  // The range editor cannot preserve exclusive bounds or legacy value coercion.
+  const editableRange =
+    predicate?.config.id === 'between' &&
+    options?.inclusive === true &&
+    options.allowOpenBounds === true &&
+    typeof options.includeMissing === 'boolean' &&
+    (options.from === undefined || Number.isFinite(options.from)) &&
+    (options.to === undefined || Number.isFinite(options.to));
   return (
     config.options.type === FilterByValueType.include &&
     config.options.filters.length === 1 &&
-    (predicate.config.id === 'numericRange' ||
-      (predicate.config.id === 'inSet' && predicate.config.options.mode === 'display'))
+    (editableRange || (predicate.config.id === 'inSet' && predicate.config.options.mode === 'display'))
   );
 }
 

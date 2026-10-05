@@ -10,6 +10,7 @@ import {
   toDataFrame,
   transformDataFrame,
   type DataTransformerConfig,
+  type RangeValueMatcherOptions,
   standardTransformersRegistry,
 } from '@grafana/data';
 import {
@@ -23,7 +24,7 @@ import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 import { mockClientSize } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
-import { transformTableFilters, tableFilterKey } from './TableViewContext';
+import { editableTableFilter, transformTableFilters, tableFilterKey } from './TableViewContext';
 import { compileFrameToRecords } from './utils';
 
 standardTransformersRegistry.setInit(() =>
@@ -39,6 +40,47 @@ standardTransformersRegistry.setInit(() =>
 );
 
 beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+
+it.each<{ name: string; options: RangeValueMatcherOptions; editable: boolean }>([
+  { name: 'legacy exclusive range', options: { from: 10, to: 30 }, editable: false },
+  {
+    name: 'inclusive range with legacy coercion',
+    options: { from: 10, to: 30, inclusive: true, allowOpenBounds: true },
+    editable: false,
+  },
+  {
+    name: 'exclusive range with strict values',
+    options: { from: 10, to: 30, allowOpenBounds: true, includeMissing: false },
+    editable: false,
+  },
+  { name: 'closed-only range', options: { from: 10, to: 30, inclusive: true, includeMissing: false }, editable: false },
+  {
+    name: 'string bounds',
+    options: { from: '10.9', to: '30', inclusive: true, allowOpenBounds: true, includeMissing: false },
+    editable: false,
+  },
+  {
+    name: 'inclusive numeric range',
+    options: { from: 10, to: 30, inclusive: true, allowOpenBounds: true, includeMissing: false },
+    editable: true,
+  },
+  {
+    name: 'open range including missing values',
+    options: { from: 10, inclusive: true, allowOpenBounds: true, includeMissing: true },
+    editable: true,
+  },
+])('allows editing without changing semantics: $name', ({ options, editable }) => {
+  expect(
+    editableTableFilter({
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [{ fieldName: 'Value', config: { id: 'between', options } }],
+      },
+    })
+  ).toBe(editable);
+});
 
 function makeFrame(values = [30, 10, 20, 100]) {
   return applyFieldOverrides({
@@ -105,7 +147,13 @@ it('computes each distribution using all other filters, independent of insertion
         type: FilterByValueType.include,
         match: FilterByValueMatch.all,
         filters: [
-          { fieldName: 'Value', config: { id: 'numericRange', options: { min: 15, max: 35, includeMissing: false } } },
+          {
+            fieldName: 'Value',
+            config: {
+              id: 'between',
+              options: { from: 15, to: 35, inclusive: true, allowOpenBounds: true, includeMissing: false },
+            },
+          },
         ],
       },
     },
@@ -157,7 +205,13 @@ it('keeps standalone tables scoped to their supplied data even when it came from
             type: FilterByValueType.include,
             match: FilterByValueMatch.all,
             filters: [
-              { fieldName: 'Value', config: { id: 'numericRange', options: { min: 25, includeMissing: false } } },
+              {
+                fieldName: 'Value',
+                config: {
+                  id: 'between',
+                  options: { from: 25, inclusive: true, allowOpenBounds: true, includeMissing: false },
+                },
+              },
             ],
           },
         },
@@ -208,7 +262,10 @@ it.each([false, true])(
       {
         fieldName: 'Value',
         field: { name: 'Value' },
-        config: { id: 'numericRange', options: { min: 15, max: 35, includeMissing: false } },
+        config: {
+          id: 'between',
+          options: { from: 15, to: 35, inclusive: true, allowOpenBounds: true, includeMissing: false },
+        },
       },
     ]);
     const serialized = JSON.stringify(configs);
