@@ -1,5 +1,4 @@
-import { customAlphabet } from 'nanoid';
-
+import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -10,6 +9,7 @@ import { dispatch } from 'app/store/store';
 import { NotebookAnalytics } from '../analytics/main';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -25,14 +25,15 @@ export interface NotebookLoadError {
 }
 
 /**
- * Names a new notebook something you can tell apart from the last one, because autosave creates them
- * without asking for a name and a library of identical titles is unreadable.
+ * Names a new notebook after the moment it was created, because autosave creates them without asking
+ * for a name and a library of identical titles is unreadable.
  *
- * The token is invented here and is not the notebook's uid. It cannot be: the title is part of the
- * spec that creates the notebook, and the apiserver does not pick a name until it has created it.
- * Alphabet and length copied from the provisioning drawer, which already needed a short readable one.
+ * The format is pinned rather than left to the user's date settings so that sorting the list by title
+ * still puts these in the order they were made. Minute precision, so two notebooks created in the same
+ * minute do share a title — titles are not unique (the uid comes from the apiserver's generateName),
+ * and the seconds are noise the rest of the time.
  */
-const generateTitleToken = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
+const NEW_TITLE_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -46,8 +47,22 @@ export interface NotebookPageState {
  * dashboard analytics (DashboardView meta-analytics, dashboardInitialized, the dashboard_view
  * query profile) and forced the notebook through the dashboard envelope/transform.
  */
+/**
+ * Scenes by uid, shared across every manager instance rather than held per instance.
+ *
+ * A notebook can be on screen more than once — the route plus an embed of the same notebook in a
+ * host that is not the route. Each consumer gets its own manager, so its own loading and error
+ * state, but they must resolve the SAME scene: a scene owns its autosave, and two scenes for one
+ * notebook means two autosaves writing the whole spec over each other, the later one silently
+ * undoing edits made through the other. Scene activation is reference counted, so one scene safely
+ * serves several consumers and tears down when the last releases it.
+ */
+const sceneCache = new Map<string, { generation?: number; scene: NotebookScene }>();
+
 export class NotebookPageStateManager extends StateManagerBase<NotebookPageState> {
-  private cache = new Map<string, { generation?: number; scene: NotebookScene }>();
+  private get cache() {
+    return sceneCache;
+  }
 
   // Identifies the load the page currently wants. `await` does not cancel, so a load started for an
   // earlier request still resumes and would write over a newer one — the page renders whatever is in
@@ -114,7 +129,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+      this.cacheScene(uid, notebook.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
@@ -153,7 +168,9 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
+      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+        date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+      }),
     };
 
     // Held so the page can keep this exact scene once its first save gives it a uid.
@@ -178,7 +195,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.unsavedScene = undefined;
     // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
     // it from a fetch. The generation is the one its create returned.
-    this.cache.set(uid, { generation: scene.autosave.state.savedGeneration, scene });
+    this.cacheScene(uid, scene.autosave.state.savedGeneration, scene);
     this.setState({ scene, isLoading: false, loadError: undefined });
 
     return true;
@@ -189,11 +206,33 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     return seq !== this.requestSeq;
   }
 
+  /** Caches a scene by uid and wires it to evict itself once deleted. */
+  private cacheScene(uid: string, generation: number | undefined, scene: NotebookScene): void {
+    this.cache.set(uid, { generation, scene });
+    scene.subscribeToEvent(NotebookDeletedEvent, () => this.removeSceneCache(uid));
+  }
+
   public clearState(): void {
     // Bumping the counter discards anything in flight: without it a load that resolves after the page
     // is gone repopulates the singleton, and the next notebook opened flashes the previous one first.
     this.requestSeq++;
     this.setState({ scene: undefined, isLoading: false, loadError: undefined });
+  }
+
+  /**
+   * @internal -- test seam.
+   *
+   * Deliberately goes through `this.cache`, the same accessor `loadNotebook` reads, rather than the
+   * module map directly: reaching for the module map would make the sharing test pass even if the
+   * cache went back to being per instance, which is the regression it exists to catch.
+   */
+  public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
+    this.cacheScene(uid, undefined, scene);
+  }
+
+  /** @internal -- test seam, as above. */
+  public getCachedSceneForTests(uid: string): NotebookScene | undefined {
+    return this.cache.get(uid)?.scene;
   }
 
   public removeSceneCache(uid: string): void {

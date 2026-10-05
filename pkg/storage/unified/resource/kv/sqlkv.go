@@ -10,9 +10,9 @@ import (
 	"iter"
 	"strings"
 	"time"
+	"uuid"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 
@@ -50,7 +50,7 @@ var validSaveSections = map[string]bool{
 	VersionPolicySection:          true,
 }
 
-var _ KV = &SqlKV{}
+var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
 type DataImportRow struct {
@@ -233,10 +233,7 @@ func (k *SqlKV) InsertDataImportBatch(ctx context.Context, rows []DataImportRow)
 	statementCount := dataImportBatchStatementCount(len(rows), maxRows)
 	payloadBytes := dataImportBatchPayloadBytes(rows)
 	for start := 0; start < len(rows); start += maxRows {
-		end := start + maxRows
-		if end > len(rows) {
-			end = len(rows)
-		}
+		end := min(start+maxRows, len(rows))
 
 		query, args, err := qb.buildInsertDatastoreBatchQuery(rows[start:end])
 		if err != nil {
@@ -487,7 +484,7 @@ func (w *sqlWriteCloser) Close() error {
 		// This can be simplified once resource_history columns are dropped
 		_, err := w.kv.Get(w.ctx, w.section, w.key)
 		if errors.Is(err, ErrNotFound) {
-			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.New().String())
+			query, args := qb.buildInsertDatastoreQuery(keyPath, value, uuid.NewV4().String())
 			_, err := w.kv.conn(w.ctx).ExecContext(w.ctx, query, args...)
 			if err != nil {
 				return fmt.Errorf("failed to insert to datastore: %w", err)

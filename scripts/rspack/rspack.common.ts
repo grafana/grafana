@@ -6,15 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
-import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-// The ini parser also returns booleans, which EnvironmentPlugin types as strings but
-// JSON.stringifies the same way.
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const envConfig = getEnvConfig(grafanaRoot) as Record<string, string>;
+const envConfig = getEnvConfig(grafanaRoot);
 
 export type Env = Record<string, string | true | undefined>;
 
@@ -43,8 +39,8 @@ export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   };
 }
 
-export const sassRule: RuleSetRule = {
-  test: /\.(sa|sc|c)ss$/,
+export const cssRule: RuleSetRule = {
+  test: /\.css$/,
   use: [
     {
       loader: rspack.CssExtractRspackPlugin.loader,
@@ -55,29 +51,8 @@ export const sassRule: RuleSetRule = {
     {
       loader: 'css-loader',
       options: {
-        importLoaders: 2,
         url: true,
         sourceMap: false,
-      },
-    },
-    {
-      loader: 'postcss-loader',
-      options: {
-        sourceMap: false,
-        postcssOptions: {
-          // postcss.config.js is shared with the webpack build and lives next to it
-          config: path.resolve(import.meta.dirname, '../webpack'),
-        },
-      },
-    },
-    {
-      loader: 'sass-loader',
-      options: {
-        sourceMap: false,
-        sassOptions: {
-          // silencing these warnings since we're planning to remove sass when angular is gone
-          silenceDeprecations: ['import', 'global-builtin'],
-        },
       },
     },
   ],
@@ -106,32 +81,30 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
 
     entry: {
       app: './public/app/index.ts',
-      boot: {
-        import: './public/boot/index.ts',
-        runtime: false,
-      },
-      dark: './public/sass/grafana.dark.scss',
-      light: './public/sass/grafana.light.scss',
+      dark: './public/sass/grafana.dark.css',
+      light: './public/sass/grafana.light.css',
     },
     experiments: {
       // Required to load WASM modules.
       asyncWebAssembly: true,
     },
     output: {
-      clean: true,
+      // rspack.boot.ts writes boot.js into the build directory from its own compilation.
+      // As the two compile concurrently we need to guarantee that boot.js doesn't get deleted.
+      clean: { keep: 'boot.js' },
       // keep `path` and `publicPath` aligned otherwise 404s will occur.
       path: path.resolve(import.meta.dirname, '../..', PUBLIC_PATH),
-      filename: (pathData) => {
-        // boot.js is referenced by name from the Go template, so it never carries a hash.
-        if (pathData.chunk?.name === 'boot') {
-          return '[name].js';
-        }
-        return `[name]${contentHash}.js`;
-      },
+      filename: `[name]${contentHash}.js`,
       chunkFilename: `[name]${contentHash}.js`,
-      publicPath: PUBLIC_PATH,
+      publicPath: 'auto',
       // Dynamic imports can run before Grafana's default Trusted Types policy is initialized.
       trustedTypes: { policyName: 'grafana#rspack' },
+      // Enable es module output
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+      workerChunkLoading: 'import',
+      crossOriginLoading: 'anonymous',
     },
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],
@@ -148,6 +121,15 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         // source code and miss out in updates
         '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
           '@locker/near-membrane-dom/custom-devtools-formatter.js'
+        ),
+        // TODO: Remove once Rspack replaces Webpack.
+        // Rspack emits worker chunks as ES modules (workerChunkLoading: 'import' below), which
+        // resolve to module-worker variants instead of the importScripts based originals used by
+        // the webpack build.
+        'app/core/utils/CorsWorker$': path.resolve(grafanaRoot, 'public/app/core/utils/CorsWorker.rspack.ts'),
+        'app/core/utils/CorsSharedWorker$': path.resolve(
+          grafanaRoot,
+          'public/app/core/utils/CorsSharedWorker.rspack.ts'
         ),
       },
       modules: [
@@ -178,7 +160,6 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         /@kusto[\\/]language-service[\\/]bridge\.min\.js/.test(warning.module.readableIdentifier()),
     ],
     plugins: [
-      new CorsWorkerPlugin(),
       new E2ESelectorsPlugin(),
       new rspack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
@@ -207,7 +188,7 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
       },
       rules: [
         createSwcRule({ reactRefresh: hmr }),
-        sassRule,
+        cssRule,
         {
           test: require.resolve('jquery'),
           loader: 'expose-loader',

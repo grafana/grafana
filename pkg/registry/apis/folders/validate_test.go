@@ -3,6 +3,7 @@ package folders
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -1108,11 +1110,13 @@ func TestValidateDelete(t *testing.T) {
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
 				Error: &resourcepb.ErrorResult{
-					Reason: "error",
+					Reason:  string(metav1.StatusReasonInternalError),
+					Code:    http.StatusInternalServerError,
+					Message: "stats unavailable",
 				},
 			},
 		},
-		expectedErr: "could not verify if folder is empty",
+		expectedErr: "stats unavailable",
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{
@@ -1474,6 +1478,8 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, children, 2)
 		require.True(t, hasMore)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searcher.lastSearchRequest.ResultFormat)
+		require.Equal(t, []string{resource.SEARCH_FIELD_NAME}, searcher.lastSearchRequest.Fields)
 	})
 
 	t.Run("hasMore false on the final page", func(t *testing.T) {
@@ -1534,7 +1540,7 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 }
 
 var (
-	_ = resourcepb.ResourceIndexClient(&mockSearchClient{})
+	_ resourcepb.ResourceIndexClient = (*mockSearchClient)(nil)
 )
 
 type mockSearchClient struct {
@@ -1548,7 +1554,8 @@ type mockSearchClient struct {
 	useNextPageToken bool
 	dropTotalHits    bool
 
-	searchCalls int
+	searchCalls       int
+	lastSearchRequest *resourcepb.ResourceSearchRequest
 }
 
 // GetStats implements resourcepb.ResourceIndexClient.
@@ -1559,6 +1566,7 @@ func (m *mockSearchClient) GetStats(ctx context.Context, in *resourcepb.Resource
 // Search implements resourcepb.ResourceIndexClient.
 func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, opts ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	m.searchCalls++
+	m.lastSearchRequest = req
 
 	// get the list of parents from the search request
 	parentSet := make(map[string]bool)
@@ -1594,13 +1602,7 @@ func (m *mockSearchClient) Search(ctx context.Context, req *resourcepb.ResourceS
 	}
 
 	total := int64(len(rows))
-	offset := req.Offset
-	if offset < 0 {
-		offset = 0
-	}
-	if offset > total {
-		offset = total
-	}
+	offset := min(max(req.Offset, 0), total)
 	end := total
 	if req.Limit > 0 && offset+req.Limit < end {
 		end = offset + req.Limit
@@ -1692,6 +1694,41 @@ func TestCheckMoveAccess(t *testing.T) {
 			newParent: folder.GeneralFolderUID,
 			oldParent: oldParentUID,
 			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.GeneralFolderUID)},
+		},
+		{
+			// Empty root parent passes through as-is; RBAC applies create-time
+			// empty->general itself, so the create probe matches the empty folder.
+			name:      "move to empty root: destination-create checked at empty parent",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows:    []allow{allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID)}, //nolint:staticcheck
+		},
+		{
+			name:      "move to empty root detects Editor to Admin escalation",
+			newParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			oldParent: oldParentUID,
+			allows: []allow{
+				allowFolder(utils.VerbCreate, "", folder.LegacyRootFolderUID), //nolint:staticcheck
+				canUpdateOnSourceUnderOld,
+				allowFolder(utils.VerbUpdate, sourceUID, folder.LegacyRootFolderUID),         //nolint:staticcheck
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.LegacyRootFolderUID), //nolint:staticcheck
+			},
+			expectedErr: "folders.accessEscalation",
+		},
+		{
+			// Regression: a general-scoped setperms grant must NOT inflate the tier
+			// of an empty-parent root folder. Old tier is None, so gaining Editor
+			// (update) under the new parent is a real None->Editor escalation. The
+			// old empty->general normalization masked this as Admin.
+			name:      "move from empty root: general grant does not inflate old tier",
+			newParent: newParentUID,
+			oldParent: folder.LegacyRootFolderUID, //nolint:staticcheck // exercising the deprecated legacy empty-string root parent is intentional
+			allows: []allow{
+				canCreateFolderInNew,
+				allowFolder(utils.VerbSetPermissions, sourceUID, folder.GeneralFolderUID), // scoped to general: intentionally ignored for an empty-parent root folder
+				canUpdateOnSourceUnderNew,
+			},
+			expectedErr: "folders.accessEscalation",
 		},
 		{
 			name:        "move to root denied without create at root",

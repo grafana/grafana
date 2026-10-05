@@ -25,3 +25,4 @@ The following guides help you get started using Terraform to manage your Grafana
 - [Manage Knowledge Graph in Grafana Cloud using Terraform](terraform-knowledge-graph/): Learn how to create and manage notification alerts, suppressed assertions, custom model rules, log, trace, and profile configurations, threshold configurations, and Prometheus rules in Grafana Cloud Knowledge Graph using Terraform.
 - [Install plugins in Grafana Cloud using Terraform](terraform-plugins): Learn how to install plugins in Grafana Cloud using Terraform.
 - [Manage saved queries using Terraform](manage-saved-queries/): Learn how to create and import saved queries, also known as the query library, using Terraform.
+- [Use Terraform to provision secure values](terraform-secrets-management/): Learn how to create, rotate, and manage secure values in Grafana Secrets Management using Terraform.

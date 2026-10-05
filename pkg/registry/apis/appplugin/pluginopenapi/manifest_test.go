@@ -22,8 +22,8 @@ func TestLoadManifestStandalone(t *testing.T) {
 
 	versions, err := Versions(plugin, Options{})
 	require.NoError(t, err)
-	require.Equal(t, []string{"v1alpha1", "v0alpha1"}, versions,
-		"the unserved manifest version is left out, and the settings version is served last")
+	require.Equal(t, []string{"v1alpha1"}, versions,
+		"only served manifest versions are exposed by default")
 
 	oas, err := Build(plugin, "v1alpha1", Options{})
 	require.NoError(t, err)

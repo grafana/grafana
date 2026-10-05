@@ -145,6 +145,14 @@ func (s *RBACSync) fetchPermissions(ctx context.Context, ident *authn.Identity) 
 		return permissions, nil
 	}
 
+	// Access policy subjects derive permissions entirely from their token claims.
+	// When the token carried no permissions, the identity simply has none —
+	// falling through to GetUserPermissions would fail because access policies
+	// have no corresponding Grafana user in the database.
+	if ident.IsIdentityType(claims.TypeAccessPolicy) {
+		return permissions, nil
+	}
+
 	permissions, err := s.ac.GetUserPermissions(ctx, ident, accesscontrol.Options{ReloadCache: false})
 	if err != nil {
 		s.log.FromContext(ctx).Error("Failed to fetch permissions from db", "error", err, "id", ident.ID)
@@ -345,7 +353,7 @@ func (s *RBACSync) ClearUserPermissionCacheHook(ctx context.Context, ident *auth
 	ctx, span := s.tracer.Start(ctx, "rbac.sync.ClearUserPermissionCacheHook")
 	defer span.End()
 
-	if err != nil {
+	if err != nil || ident == nil {
 		return
 	}
 

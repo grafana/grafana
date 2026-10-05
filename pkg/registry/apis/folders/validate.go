@@ -284,14 +284,37 @@ func validateOnUpdate(ctx context.Context,
 	return checkSubtreeDepth(ctx, searcher, obj.Namespace, obj.Name, allowedDepth, maxDepth)
 }
 
-// folderTier (declared in sub_access.go) is the Viewer/Editor/Admin level used
-// by the /access subresource. Comparing tiers across the move catches
-// role-level escalations without firing on per-verb churn.
+// folderTier is the Viewer/Editor/Admin level a user holds on a folder.
+// Comparing tiers across the move catches role-level escalations without
+// firing on per-verb churn.
 //
 // Only the folder tier is compared. Built-in roles bundle dashboard, library
 // panel, alert, and annotation actions with the folder tier, so a folder-tier
 // jump catches them transitively. Custom roles that grant sub-resource
 // actions directly at folder scope without folder access are not caught here.
+type folderTier int
+
+const (
+	tierNone folderTier = iota
+	tierViewer
+	tierEditor
+	tierAdmin
+)
+
+// resolveTier picks the highest tier the user qualifies for. Highest match
+// wins: setPermissions → Admin; create/update/delete → Editor; get → Viewer.
+func resolveTier(allowed map[string]bool) folderTier {
+	switch {
+	case allowed["setperms"]:
+		return tierAdmin
+	case allowed["create"] || allowed["update"] || allowed["delete"]:
+		return tierEditor
+	case allowed["get"]:
+		return tierViewer
+	default:
+		return tierNone
+	}
+}
 
 // tierProbes are the verbs we ask Zanzana about to resolve a tier. setperms
 // signals Admin, the Editor verbs (create/update/delete) collectively signal
@@ -477,7 +500,7 @@ func checkSubtreeDepthBatched(ctx context.Context, searcher resourcepb.ResourceI
 		var children []string
 		children, hasMore, err = getChildrenBatch(ctx, searcher, namespace, parentUIDs, pageSize, offset)
 		if err != nil {
-			return fmt.Errorf("failed to get children: %w", err)
+			return err
 		}
 
 		if len(children) == 0 {
@@ -522,27 +545,32 @@ func getChildrenBatch(ctx context.Context, searcher resourcepb.ResourceIndexClie
 				Values:   parentUIDs,
 			}},
 		},
-		Limit:  limit,
-		Offset: offset,
+		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Limit:        limit,
+		Offset:       offset,
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
-		return nil, false, fmt.Errorf("failed to search folders: %w", err)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Failed to search folders", "namespace", namespace, "parents", parentUIDs, "error", err)
+		return nil, false, err
 	}
 
-	if resp.Results == nil || len(resp.Results.Rows) == 0 {
+	rows, err := decodeSearchRows(resp)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to decode folder search results: %w", err)
+	}
+	if len(rows) == 0 {
 		return nil, false, nil
 	}
 
-	children := make([]string, 0, len(resp.Results.Rows))
-	for _, row := range resp.Results.Rows {
-		if row.Key != nil {
-			children = append(children, row.Key.Name)
-		}
+	children := make([]string, 0, len(rows))
+	for _, row := range rows {
+		children = append(children, row.key.Name)
 	}
 
 	// The bleve Search path populates TotalHits but not Results.NextPageToken, so
 	// pagination must be driven off TotalHits + offset rather than the token.
-	hasMore := resp.Results.NextPageToken != "" || offset+int64(len(resp.Results.Rows)) < resp.TotalHits
+	hasMore := resp.GetResults().GetNextPageToken() != "" || offset+int64(len(rows)) < resp.TotalHits
 	return children, hasMore, nil
 }
 
@@ -565,8 +593,9 @@ func validateOnDelete(ctx context.Context,
 	}
 
 	resp, err := searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{Namespace: f.Namespace, Kinds: countedKinds, Folder: []string{f.Name}})
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
-		return fmt.Errorf("could not verify if folder is empty: %w", err)
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		logging.FromContext(ctx).Error("Could not verify if folder is empty", "namespace", f.Namespace, "folder", f.Name, "error", err)
+		return err
 	}
 
 	if resp.Stats == nil {

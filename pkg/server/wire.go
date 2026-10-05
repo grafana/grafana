@@ -64,10 +64,15 @@ func InitializeAPIServerFactory() (standalone.APIServerFactory, error) {
 	return &standalone.NoOpAPIServerFactory{}, nil // Wire will replace this with a real interface
 }
 
-// Initialize the standalone router factory
-func InitializeRouterFactory() (router.RouterFactory, error) {
-	wire.Build(wireExtsRouterFactorySet)
-	return &router.NoOpRouterFactory{}, nil // Wire will replace this with a real interface
+// InitializeRoutesLoader selects the edition-specific routes loader using the
+// clients configured by the router module.
+func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients) (router.RoutesLoader, error) {
+	wire.Build(wireExtsRoutesLoaderSet)
+	return nil, nil
+}
+
+func provideRoutesLoaderContext() context.Context {
+	return context.Background()
 }
 
 // InitializeZanzanaReconcilerState builds the MT reconciler's state store for

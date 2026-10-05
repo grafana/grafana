@@ -103,6 +103,19 @@ describe('useNavModel', () => {
 
     const alertingTab = result.current?.children?.find((c) => c.id === getAlertingTabID(folder.uid));
     expect(alertingTab?.tabCounter).toBe(3);
+
+    const variablesTab = result.current?.children?.find((c) => c.id === getVariablesTabID(folder.uid));
+    expect(variablesTab?.tabCounter).toBe(0);
+  });
+
+  it('populates the variables tab counter from the folder counts query', async () => {
+    server.use(folderHandlers.mockFolderCountsHandler(1, 0, 0, 4));
+    const { result } = renderUseNavModel(folder, 'variables');
+
+    await waitFor(() => {
+      const variablesTab = result.current?.children?.find((c) => c.id === getVariablesTabID(folder.uid));
+      expect(variablesTab?.tabCounter).toBe(4);
+    });
   });
 
   it('sums alert rules and recording rules into the alerting tab counter', async () => {
@@ -128,7 +141,9 @@ describe('useNavModel', () => {
 
     const panelsTab = result.current?.children?.find((c) => c.id === getLibraryPanelsTabID(folder.uid));
     const alertingTab = result.current?.children?.find((c) => c.id === getAlertingTabID(folder.uid));
+    const variablesTab = result.current?.children?.find((c) => c.id === getVariablesTabID(folder.uid));
     expect(panelsTab?.tabCounter).toBeUndefined();
     expect(alertingTab?.tabCounter).toBeUndefined();
+    expect(variablesTab?.tabCounter).toBeUndefined();
   });
 });

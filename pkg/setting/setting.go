@@ -259,6 +259,7 @@ type Cfg struct {
 	AllowEmbedding                       bool
 	XSSProtectionHeader                  bool
 	ContentTypeProtectionHeader          bool
+	AssetSriChecksEnabled                bool
 	StrictTransportSecurity              bool
 	StrictTransportSecurityMaxAge        int
 	StrictTransportSecurityPreload       bool
@@ -335,7 +336,6 @@ type Cfg struct {
 	PanelSeriesLimit                 int
 	DashboardDefaultPreload          bool
 	DashboardSchemaMigrationCacheTTL time.Duration
-	ReportRenderQueryGracePeriod     time.Duration
 
 	// Auth
 	LoginCookieName                   string
@@ -376,11 +376,12 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                       bool
-	OAuthLoginErrorMessage               string
-	OAuthCookieMaxAge                    int
-	OAuthAllowInsecureEmailLookup        bool
-	OAuthRefreshTokenServerLockMinWaitMs int64
+	OAuthAutoLogin                          bool
+	OAuthLoginErrorMessage                  string
+	OAuthCookieMaxAge                       int
+	OAuthAllowInsecureEmailLookup           bool
+	OAuthRefreshTokenServerLockMinWaitMs    int64
+	OAuthRefreshTokenServerLockWaitBudgetMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -503,7 +504,7 @@ type Cfg struct {
 	RudderstackV3SDKURL                 string
 	RudderstackConfigURL                string
 	RudderstackIntegrationsURL          string
-	IntercomSecret                      string
+	RudderstackBatchInterval            int
 	PostHogToken                        string
 	PostHogHost                         string
 	FrontendAnalyticsConsoleReporting   bool
@@ -703,9 +704,11 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage                      map[string]UnifiedStorageConfig
-	UnifiedStorageAuthzExemptionEnabled bool
-	UnifiedStorageAuthzExemptResources  []string
+	UnifiedStorage                        map[string]UnifiedStorageConfig
+	UnifiedStorageClusterSlug             string
+	UnifiedStorageAuthzExemptionEnabled   bool
+	UnifiedStorageAuthzExemptResources    []string
+	UnifiedStorageGRPCErrorResultToStatus bool
 	// DisableLegacyTableRename will skip renaming legacy tables (e.g., playlist → playlist_legacy) after migration
 	DisableLegacyTableRename bool
 	// MigrationCacheSizeKB sets SQLite PRAGMA cache_size during data migrations (in KB).
@@ -723,8 +726,9 @@ type Cfg struct {
 	MigrationChunkMaxBytes int64
 	// RenameWaitDeadline is the maximum time to wait for MySQL RENAME TABLE
 	// statements to appear in the processlist. Default: 1 minute.
-	RenameWaitDeadline time.Duration
-	MaxPageSizeBytes   int
+	RenameWaitDeadline          time.Duration
+	MaxPageSizeBytes            int
+	AuthorizeBeforeFetchEnabled bool
 	// IndexPath the directory where index files are stored.
 	// Note: Bleve locks index files, so mounts cannot be shared between multiple instances.
 	IndexPath                                  string
@@ -736,14 +740,12 @@ type Cfg struct {
 	IndexCacheTTL                              time.Duration
 	IndexMinUpdateInterval                     time.Duration // Don't update index if it was updated less than this interval ago.
 	IndexModificationCacheTTL                  time.Duration // TTL for dedup cache used in ListModifiedSince. 0 disables the cache.
-	IndexDeletedDocuments                      bool          // Keep deleted objects in the search index, so trash searches can find them.
+	GlobalSearchIndexEnabled                   bool          // Build one index per namespace covering several resource types, alongside the per-resource indexes.
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
-	IndexSnapshotBucketURL                     string        // Go CDK bucket URL for snapshot storage (s3://, gs://, azblob://, mem://, file:///)
-	IndexSnapshotStorageKV                     bool          // Store snapshots in the same KV used by the storage backend instead of an object-storage bucket. Mutually exclusive with index_snapshot_bucket_url; requires enable_kv_leases.
-	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial. Used only when index_snapshot_storage_kv is true.
-	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB. Used only when index_snapshot_storage_kv is true.
+	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial.
+	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
 	IndexSnapshotMaxAge                        time.Duration // Max snapshot age before deletion (must be >= MaxFileIndexAge, default: 7d)
 	IndexSnapshotCleanupGracePeriod            time.Duration // Time a new snapshot must exist before its predecessor in the same Grafana-version group is eligible for cleanup (default: 30m)
@@ -806,7 +808,8 @@ type Cfg struct {
 	VectorDBUser                 string
 	VectorDBPassword             string
 	VectorDBSSLMode              string
-	VectorIndexingEnabled        bool          // run the embedding backfiller and reconciler
+	VectorIndexingEnabled        bool // run the embedding backfiller and reconciler
+	VectorBackfillPageSize       int
 	VectorReconcilerInterval     time.Duration // reconciler tick interval; default 60s
 	VectorEmbeddingCountInterval time.Duration // stored-embedding gauge sample interval; 0 disables
 	VectorPromotionThreshold     int           // row count per tenant to trigger promotion
@@ -853,6 +856,7 @@ type Cfg struct {
 	OverridesFilePath             string
 	OverridesReloadInterval       time.Duration
 	EnforcedQuotaResources        []string
+	SearchBackedListResources     []string
 	QuotasErrorMessageSupportInfo string
 
 	EnableSQLKVBackend           bool
@@ -863,9 +867,8 @@ type Cfg struct {
 	// removing the sqlkv backwards-compatibility layer.
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
-	EnableKVLeases                    bool
 	KVLeaseTTL                        time.Duration
-	KVLeaseAutoRenew                  bool
+	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -1008,6 +1011,7 @@ func RedactedValue(key, value string) string {
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
+		"EXCHANGE_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword
@@ -1643,7 +1647,6 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.PanelSeriesLimit = dashboards.Key("panel_series_limit").MustInt(0)
 	cfg.DashboardDefaultPreload = dashboards.Key("default_preload").MustBool(false)
 	cfg.DashboardSchemaMigrationCacheTTL = dashboards.Key("schema_migration_cache_ttl").MustDuration(time.Minute)
-	cfg.ReportRenderQueryGracePeriod = dashboards.Key("report_render_query_grace_period").MustDuration(3 * time.Second)
 
 	if err := readUserSettings(iniFile, cfg); err != nil {
 		return err
@@ -1686,7 +1689,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.RudderstackV3SDKURL = analytics.Key("rudderstack_v3_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
 	cfg.RudderstackIntegrationsURL = analytics.Key("rudderstack_integrations_url").String()
-	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
+	cfg.RudderstackBatchInterval = analytics.Key("rudderstack_batch_interval").MustInt(0)
 	cfg.PostHogToken = analytics.Key("posthog_token").String()
 	cfg.PostHogHost = analytics.Key("posthog_host").String()
 	cfg.FrontendAnalyticsConsoleReporting = analytics.Key("browser_console_reporter").MustBool(false)
@@ -1707,7 +1710,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	// parse reporting static context string of key=value, key=value pairs into an object
 	cfg.ReportingStaticContext = make(map[string]string)
-	for _, pair := range strings.Split(analytics.Key("reporting_static_context").String(), ",") {
+	for pair := range strings.SplitSeq(analytics.Key("reporting_static_context").String(), ",") {
 		kv := strings.Split(pair, "=")
 		if len(kv) == 2 {
 			cfg.ReportingStaticContext[strings.TrimSpace("_static_context_"+kv[0])] = strings.TrimSpace(kv[1])
@@ -1907,7 +1910,7 @@ func (cfg *Cfg) handleAWSConfig() {
 	cfg.AWSAssumeRoleEnabled = awsPluginSec.Key("assume_role_enabled").MustBool(true)
 	cfg.AWSPerDatasourceHTTPProxyEnabled = awsPluginSec.Key("per_datasource_http_proxy_enabled").MustBool(false)
 	allowedAuthProviders := awsPluginSec.Key("allowed_auth_providers").MustString("default,keys,credentials")
-	for _, authProvider := range strings.Split(allowedAuthProviders, ",") {
+	for authProvider := range strings.SplitSeq(allowedAuthProviders, ",") {
 		authProvider = strings.TrimSpace(authProvider)
 		if authProvider != "" {
 			cfg.AWSAllowedAuthProviders = append(cfg.AWSAllowedAuthProviders, authProvider)
@@ -2028,6 +2031,15 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 	return key
 }
 
+// HasKey reports whether k is set either in the ini file or via its environment variable override.
+func (s *DynamicSection) HasKey(k string) bool {
+	envKey := EnvKey(s.section.Name(), k)
+	if len(s.env.Getenv(envKey)) > 0 {
+		return true
+	}
+	return s.section.HasKey(k)
+}
+
 func (s *DynamicSection) KeysHash() map[string]string {
 	hash := s.section.KeysHash()
 	for k := range hash {
@@ -2070,9 +2082,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	copyCookieSecuritySettingsToGlobals(cfg)
 
 	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	cfg.AssetSriChecksEnabled = security.Key("asset_sri_checks_enabled").MustBool(false)
 
 	cfg.ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	if cfg.XSSProtectionHeader {
+		cfg.Logger.Warn("Deprecation Notice: The [security]x_xss_protection setting is enabled, but it will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using [security]content_security_policy instead.")
+	}
+
 	cfg.ActionsAllowPostURL = security.Key("actions_allow_post_url").MustString("")
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
@@ -2085,7 +2103,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.FormActionAdditionalHosts = security.Key("form_action_additional_hosts").Strings(" ")
 
 	enableFrontendSandboxForPlugins := security.Key("enable_frontend_sandbox_for_plugins").MustString("")
-	for _, plug := range strings.Split(enableFrontendSandboxForPlugins, ",") {
+	for plug := range strings.SplitSeq(enableFrontendSandboxForPlugins, ",") {
 		plug = strings.TrimSpace(plug)
 		cfg.EnableFrontendSandboxForPlugins = append(cfg.EnableFrontendSandboxForPlugins, plug)
 	}
@@ -2261,7 +2279,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	cfg.HiddenUsers = make(map[string]struct{})
 	hiddenUsers := users.Key("hidden_users").MustString("")
-	for _, user := range strings.Split(hiddenUsers, ",") {
+	for user := range strings.SplitSeq(hiddenUsers, ",") {
 		user = strings.TrimSpace(user)
 		if user != "" {
 			cfg.HiddenUsers[user] = struct{}{}

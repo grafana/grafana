@@ -266,6 +266,7 @@ export const LogsTable = ({
       logDetailsWidth: options.logDetailsWidth ? options.logDetailsWidth : getDefaultLogDetailsWidth(),
       ...options,
       wrapText,
+      hoverOverflow: options.hoverOverflow ?? false,
     }),
     [options, timeFieldName, wrapText]
   );

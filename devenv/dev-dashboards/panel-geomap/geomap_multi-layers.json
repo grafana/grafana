@@ -53,7 +53,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",
@@ -364,7 +364,7 @@
                   "spec": {
                     "query": {
                       "kind": "DataQuery",
-                      "group": "",
+                      "group": "grafana-testdata-datasource",
                       "version": "v0",
                       "spec": {
                         "csvFileName": "flight_info_by_state.csv",

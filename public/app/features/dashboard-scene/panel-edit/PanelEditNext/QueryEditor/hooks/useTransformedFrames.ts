@@ -8,6 +8,8 @@ import {
   type DataFrame,
   type DataTransformContext,
   type DataTransformerConfig,
+  type FrameMatcher,
+  getFrameMatchers,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -79,6 +81,33 @@ function interpolateConfigs(configs: TransformationConfigs): TransformationConfi
  */
 export function isInterpolatable(config: TransformationConfigs[number]): config is DataTransformerConfig {
   return typeof config === 'object' && !('operator' in config);
+}
+
+/**
+ * The matcher for a filter as the pipeline applies it, or nothing if that filter cannot be built
+ * into one.
+ *
+ * Pass an interpolated config — {@link FrameReplay.configs} or {@link useInterpolatedConfigs} —
+ * rather than the stored one: a `$var` in the filter resolves before the replay sees it, so a
+ * matcher built from the original narrows on the literal.
+ *
+ * `getFrameMatchers` throws on a matcher id it does not know, and `byName` runs its option through
+ * `stringToJsRegex`, which throws on a `/`-prefixed string that is not a complete `/pattern/flags` —
+ * a variable resolving to a path is enough. The pipeline's own call sits behind the replay's error
+ * handling; this one runs during render, where a throw would take the surrounding editor down with
+ * it, so a filter that cannot be built is treated as no filter at all.
+ */
+export function frameMatcherFor(config: TransformationConfigs[number] | undefined): FrameMatcher | undefined {
+  if (config === undefined || !isInterpolatable(config) || !config.filter?.options) {
+    return undefined;
+  }
+
+  try {
+    return getFrameMatchers(config.filter);
+  } catch (err) {
+    console.error('Failed to build a transformation filter for the panel editor', err);
+    return undefined;
+  }
 }
 
 /**

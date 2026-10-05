@@ -3,10 +3,9 @@ import path from 'node:path';
 import { RspackManifestPlugin } from 'rspack-manifest-plugin';
 import WebpackBar from 'webpackbar';
 
-import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import FeatureFlaggedSRIPlugin from './plugins/FeatureFlaggedSriPlugin.ts';
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
-import { createSwcRule, sassRule, type Env } from './rspack.common.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createSwcRule, cssRule, type Env } from './rspack.common.ts';
 
 export default (env: Env = {}): Configuration => {
   const config: Configuration = {
@@ -38,7 +37,12 @@ export default (env: Env = {}): Configuration => {
       },
       rules: [
         createSwcRule(),
-        sassRule,
+        cssRule,
+        {
+          // codemirror-json-schema publishes extensionless imports in its ESM build.
+          test: /node_modules[\\/]codemirror-json-schema[\\/].*\.js$/,
+          resolve: { fullySpecified: false },
+        },
         {
           test: /\.(svg)(\?.*)?$/,
           type: 'asset/resource',
@@ -59,18 +63,22 @@ export default (env: Env = {}): Configuration => {
     output: {
       clean: true,
       path: path.resolve(import.meta.dirname, '../../public/build-swagger'),
-      publicPath: 'public/build-swagger/',
+      publicPath: 'auto',
       crossOriginLoading: 'anonymous',
       filename: env.develop ? '[name].js' : '[name].[contenthash].js',
+      // Enable es module output
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+      workerChunkLoading: 'import',
     },
     plugins: [
-      new CorsWorkerPlugin(),
       new rspack.CssExtractRspackPlugin({
         filename: env.develop ? '[name].css' : '[name].[contenthash].css',
       }),
       new rspack.SubresourceIntegrityPlugin(),
       new FeatureFlaggedSRIPlugin(),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions('public/build-swagger/')),
     ],
     resolve: {
       conditionNames: ['@grafana-app/source', '...'],

@@ -26,7 +26,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                          | Description                                                                                                                         | Enabled by default |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `featureHighlights`                          | Highlight Grafana Enterprise features                                                                                               |                    |
 | `cloudWatchCrossAccountQuerying`             | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
@@ -39,6 +38,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
+| `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |
 | `playlistsRBAC`                              | Enables RBAC for playlists                                                                                                          |                    |
@@ -49,7 +49,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginProxyPreserveTrailingSlash`           | Preserve plugin proxy trailing slash.                                                                                               |                    |
 | `azureMonitorPrometheusExemplars`            | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                        | Yes                |
 | `cloudWatchRoundUpEndTime`                   | Round up end time for metric queries to the next minute to avoid missing data                                                       | Yes                |
-| `alertingQueryAndExpressionsStepMode`        | Enables step mode for alerting queries and expressions                                                                              | Yes                |
 | `useSessionStorageForRedirection`            | Use session storage for handling the redirection after login                                                                        | Yes                |
 | `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                |                    |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
@@ -59,22 +58,20 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                    | Yes                |
-| `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                            | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
 | `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
-| `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                            | Yes                |
 | `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
 | `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
 | `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                     | Yes                |
 | `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                        | Yes                |
-| `react19`                                    | Whether to use the new React 19 runtime                                                                                             | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
+| `grafana.thresholdsInterpolation`            | Enables using dashboard variables in panel threshold values                                                                         |                    |
 | `grafana.unifiedDataSourcePicker`            | Render the core Grafana data source picker behind the DataSourcePicker that @grafana/runtime exposes to plugins                     | Yes                |
 | `grafana.dashboardAutoGridDefault`           | Uses auto grid as the default layout for new dashboards                                                                             | Yes                |
 
@@ -111,6 +108,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles

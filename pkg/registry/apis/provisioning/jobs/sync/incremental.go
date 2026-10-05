@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -195,6 +196,14 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
+			// Files that are not resources (README.md, .keep, hidden files) and deletes
+			// of unsupported paths are not reported.
+			if change.Action != repository.FileActionDeleted &&
+				!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
+				progress.Record(ctx, applyUnsupportedPath(ctx, change, err, repositoryResources, quotaTracker, affectedFolders))
+				continue
+			}
+
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
@@ -274,6 +283,9 @@ func applyIncrementalChanges(
 			writeCtx, writeSpan := tracer.Start(ctx, "provisioning.sync.incremental.write_resource_from_file")
 			name, gvk, size, err := repositoryResources.WriteResourceFromFile(writeCtx, change.Path, change.Ref)
 			if err != nil {
+				if utils.IsForbiddenManagerKindChangeError(err) {
+					quotaTracker.Release()
+				}
 				writeSpan.RecordError(err)
 				resultBuilder.WithError(fmt.Errorf("writing resource from file %s: %w", change.Path, err))
 			}
@@ -351,7 +363,7 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
-				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
+				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, reserveQuota(quotaTracker), renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
@@ -371,6 +383,53 @@ func applyIncrementalChanges(
 	}
 
 	return affectedFolders, nil
+}
+
+// applyUnsupportedPath handles a change whose destination path cannot be synced and
+// returns the one result to record for it. A resource renamed onto such a path is
+// removed, since its file is gone from the old path, with a warning about the new
+// path; in any other case there is nothing to remove and the result is the warning.
+func applyUnsupportedPath(
+	ctx context.Context,
+	change repository.VersionedFileChange,
+	pathErr error,
+	repositoryResources resources.RepositoryResources,
+	quotaTracker quotas.QuotaTracker,
+	affectedFolders map[string]string,
+) jobs.JobResourceResult {
+	result := jobs.NewPathOnlyResult(change.Path).
+		WithAction(change.Action).
+		WithPreviousPath(change.PreviousPath)
+	unsupported := &resources.UnsupportedPathError{Path: change.Path, Err: pathErr}
+
+	removable := change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
+		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
+	if !removable {
+		return result.WithWarning(unsupported).Build()
+	}
+
+	name, folderName, gvk, size, err := repositoryResources.RemoveResourceFromFile(ctx, change.PreviousPath, change.PreviousRef)
+	result.WithName(name).WithGVK(gvk).WithBytes(size)
+	if err != nil {
+		return result.WithError(fmt.Errorf("removing resource from file %s: %w", change.PreviousPath, err)).Build()
+	}
+	quotaTracker.Release()
+	if folderName != "" {
+		affectedFolders[safepath.Dir(change.PreviousPath)] = folderName
+	}
+	return result.WithWarning(unsupported).Build()
+}
+
+// reserveQuota is the hook RenameResourceFile calls before it creates a resource
+// that is not in Grafana yet: it takes a slot from the tracker, or refuses with a
+// quota error, and returns the function that gives the slot back.
+func reserveQuota(tracker quotas.QuotaTracker) resources.BeforeCreate {
+	return func(_ context.Context, path string) (func(), error) {
+		if !tracker.TryAcquire() {
+			return nil, quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", path))
+		}
+		return tracker.Release, nil
+	}
 }
 
 // sortChangesByActionPriority reorders changes so deletions are processed before creations.
@@ -499,7 +558,7 @@ func deleteFolders(
 		if entry.Reason != "" {
 			resultBuilder.WithReason(entry.Reason)
 		}
-		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
+		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}

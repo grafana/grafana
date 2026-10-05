@@ -21,9 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -114,10 +116,15 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	// the rest of its API still works, so this drops search rather than the group.
 	searchHandlers, err := b.searchRoutes(gv)
 	if err != nil {
-		logging.DefaultLogger.Error("invalid manifest search declarations; search and trash routes are not served",
+		logging.DefaultLogger.Error("invalid manifest search declarations; search, trash and hybrid routes are not served",
 			"group", gv.Group, "version", gv.Version, "error", err)
 	}
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
+
+	if keys := b.keysRoutes(gv); keys != nil {
+		routes.Root = append(routes.Root, keys.Root...)
+		routes.Namespace = append(routes.Namespace, keys.Namespace...)
+	}
 
 	for _, kind := range version.Kinds {
 		plural := strings.ToLower(kind.Plural)
@@ -156,7 +163,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	return routes
 }
 
-// searchRoutes builds the generic search and trash endpoints for the kinds this
+// searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
 // version serves.
 //
 // Delegated to searchroutes rather than mounted per kind here, because which
@@ -183,6 +190,7 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 		b.opts.TrashAPIEnabled,
 		b.tracer,
 		b.search,
+		searchroutes.Options{HybridEnabled: b.opts.HybridAPIEnabled},
 	)
 	if err != nil {
 		return nil, err
@@ -196,6 +204,42 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 		handlers = append(handlers, gvRoutes.Routes.Namespace...)
 	}
 	return handlers, nil
+}
+
+// keysRoutes builds the generic list-keys endpoints for the kinds this version
+// serves, at both scopes.
+//
+// Delegated to keysroutes for the same reason as searchRoutes: which kinds get
+// the endpoint is not a decision this builder should be making on its own, so the
+// config toggle and the namespaced-kind rule are applied in one place and a
+// plugin-served manifest agrees with the same manifest served as a custom
+// resource definition.
+func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+	if b.store == nil {
+		return nil
+	}
+
+	// keysroutes matches manifests to served versions by the manifest's own
+	// group, which is not always the group the plugin is served under. See
+	// apiGroupForPlugin.
+	manifest := *b.manifest
+	manifest.Group = b.group
+
+	built := keysroutes.BuildForServedGroupVersions(
+		[]*app.ManifestData{&manifest},
+		map[schema.GroupVersion]bool{gv: true},
+		b.opts.KeysAPIEnabled,
+		b.tracer,
+		b.store,
+	)
+
+	// One manifest and one served version in, so at most one entry matches.
+	for _, gvRoutes := range built {
+		if gvRoutes.GroupVersion == gv {
+			return gvRoutes.Routes
+		}
+	}
+	return nil
 }
 
 // routeHandler forwards a manifest route to the plugin's v3 route service.
@@ -243,13 +287,22 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
+				sv, err := b.decrypter.get(ctx, m)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
+				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
-		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+		// The caller's identity reaches the plugin only as the access token the
+		// v3 client exchanges for it, never as an ID token in the HTTP headers.
+		req.Header.Del(proxyutil.IDHeaderName)
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }

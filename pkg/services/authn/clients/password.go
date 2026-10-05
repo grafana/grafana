@@ -19,7 +19,7 @@ var (
 	errPasswordClientTooManyLoginAttempts = errutil.Unauthorized("login-attempt.blocked", errutil.WithPublicMessage("Login temporarily blocked"))
 )
 
-var _ authn.PasswordClient = new(Password)
+var _ authn.PasswordClient = (*Password)(nil)
 
 func ProvidePassword(loginAttempts loginattempt.Service, tracer trace.Tracer, clients ...authn.PasswordClient) *Password {
 	return &Password{loginAttempts, clients, log.New("authn.password"), tracer}

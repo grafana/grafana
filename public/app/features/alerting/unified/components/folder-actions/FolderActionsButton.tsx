@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
+import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
 import { useDispatch } from 'app/types/store';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
@@ -13,6 +15,7 @@ import { FolderBulkAction, RuleAction } from '../../hooks/abilities/types';
 import { useFolder } from '../../hooks/useFolder';
 import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getFolderActionResultMessage } from '../../utils/folderActionMessages';
 import { createRelativeUrl } from '../../utils/url';
 import MoreButton from '../MoreButton';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
@@ -49,7 +52,9 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   }
 
   const onConfirmDelete = async () => {
-    await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
+    const result = await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
+    const message = getFolderActionResultMessage('delete', { affected: result.deleted, skipped: result.skipped });
+    appEvents.emit(AppEvents.alertSuccess, [message]);
     await redirectToListView();
   };
 
@@ -157,7 +162,12 @@ function BulkActions({
             folderUID={folderUID}
             action="pause"
             executeAction={async (folderUID) => {
-              await pauseFolder({ namespace: folderUID }).unwrap();
+              const result = await pauseFolder({ namespace: folderUID }).unwrap();
+              const message = getFolderActionResultMessage('pause', {
+                affected: result.updated,
+                skipped: result.skipped,
+              });
+              appEvents.emit(AppEvents.alertSuccess, [message]);
               await redirectToListView();
             }}
             isLoading={updateState.isLoading}
@@ -166,7 +176,12 @@ function BulkActions({
             folderUID={folderUID}
             action="unpause"
             executeAction={async (folderUID) => {
-              await unpauseFolder({ namespace: folderUID }).unwrap();
+              const result = await unpauseFolder({ namespace: folderUID }).unwrap();
+              const message = getFolderActionResultMessage('resume', {
+                affected: result.updated,
+                skipped: result.skipped,
+              });
+              appEvents.emit(AppEvents.alertSuccess, [message]);
               await redirectToListView();
             }}
             isLoading={unpauseState.isLoading}

@@ -24,6 +24,7 @@ var callerSuppliedFields = map[string]string{
 	"UseChannelNotifier":       "derived from high-availability detection, not from a single setting",
 	"RvManager":                "built by the caller from a live database connection",
 	"EventPublisher":           "NATS publisher injected by the caller",
+	"WatchInvalidator":         "shared watch invalidation injected by the caller",
 	"EventSubscriber":          "NATS subscriber injected by the caller",
 	"EnableNatsNotifier":       "set together with EventSubscriber by the caller",
 	"EnableNatsNotifierShadow": "set together with EventSubscriber by the caller",
@@ -32,13 +33,6 @@ var callerSuppliedFields = map[string]string{
 	// process that runs everything, so the non-zero walk cannot check it.
 	// TestNewKVBackendOptionsDisableStorageServices covers it instead.
 	"DisableStorageServices": "derived from cfg.Target, and false when this process runs the storage server",
-
-	// The lease options are set together, and the holder comes from
-	// sql.ResolveLeaseHolder, which this package cannot import.
-	"EnableKVLeases": "set together with Holder, which the caller resolves",
-	"Holder":         "resolved by sql.ResolveLeaseHolder, which this package cannot call",
-	"LeaseTTL":       "set together with Holder, which the caller resolves",
-	"LeaseAutoRenew": "set together with Holder, which the caller resolves",
 
 	"WatchOptions.BufferSize": "no setting; defaulted in WatchOptions.normalize",
 	"WatchOptions.MinBackoff": "no setting; defaulted in WatchOptions.normalize",
@@ -141,6 +135,7 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	cfg.GarbageCollectionBatchWait = 7 * time.Minute
 	cfg.GarbageCollectionMaxAge = 8 * time.Minute
 	cfg.DashboardsGarbageCollectionMaxAge = 9 * time.Minute
+	cfg.KVLeaseTTL = 9 * time.Minute
 
 	opts := NewKVBackendOptions(cfg)
 
@@ -150,6 +145,8 @@ func TestNewKVBackendOptionsValues(t *testing.T) {
 	require.Equal(t, 4*time.Minute, opts.SearchLookback)
 	require.Equal(t, WatchOptions{SettleDelay: 5 * time.Minute}, opts.WatchOptions)
 	require.Equal(t, 7, opts.DashboardVersionsToKeep)
+	require.NotEmpty(t, opts.Holder)
+	require.Equal(t, 9*time.Minute, opts.LeaseTTL)
 	require.Equal(t, GarbageCollectionConfig{
 		Enabled:          true,
 		DryRun:           true,

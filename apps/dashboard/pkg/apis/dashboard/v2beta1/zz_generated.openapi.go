@@ -425,8 +425,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAction(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardActionVariable{}.OpenAPIModelName()),
+										Ref: ref(DashboardActionVariable{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -514,9 +513,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdHocFilterWithLabels(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -534,9 +532,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdHocFilterWithLabels(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -596,9 +593,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableKind(ref common.Ref
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -644,8 +640,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
+										Ref: ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -657,8 +652,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
+										Ref: ref(DashboardAdHocFilterWithLabels{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -670,8 +664,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAdhocVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardMetricFindValue{}.OpenAPIModelName()),
+										Ref: ref(DashboardMetricFindValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -785,9 +778,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationPanelFilter(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: 0,
-										Type:    []string{"number"},
-										Format:  "double",
+										Type:   []string{"number"},
+										Format: "double",
 									},
 								},
 							},
@@ -894,8 +886,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAnnotationQuerySpec(ref common.R
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAnnotationEventFieldMapping{}.OpenAPIModelName()),
+										Ref: ref(DashboardAnnotationEventFieldMapping{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1062,8 +1053,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardAutoGridLayoutSpec(ref common.Re
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAutoGridLayoutItemKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardAutoGridLayoutItemKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1582,8 +1572,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardCustomVariableSpec(ref common.Re
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1715,9 +1704,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDashboardLink(ref common.Referen
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1844,9 +1832,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataQueryKind(ref common.Referen
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1892,6 +1879,13 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDataTransformerConfig(ref common
 						SchemaProps: spec.SchemaProps{
 							Description: "Unique identifier of transformer",
 							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -2037,8 +2031,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardDatasourceVariableSpec(ref commo
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2201,9 +2194,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref common.Referenc
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2222,9 +2214,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFetchOptions(ref common.Referenc
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2406,8 +2397,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfig(ref common.Reference
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAction{}.OpenAPIModelName()),
+										Ref: ref(DashboardAction{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2478,8 +2468,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardFieldConfigSource(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()),
+										Ref: ref(DashboardV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2685,8 +2674,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGridLayoutSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardGridLayoutItemKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardGridLayoutItemKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2729,9 +2717,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableKind(ref common.R
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -2788,8 +2775,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardGroupByVariableSpec(ref common.R
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -2879,9 +2865,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref common.Refer
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2907,9 +2892,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardInfinityOptions(ref common.Refer
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -2987,8 +2971,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardIntervalVariableSpec(ref common.
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3200,8 +3183,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardList(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Dashboard{}.OpenAPIModelName()),
+										Ref: ref(Dashboard{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3324,7 +3306,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelKindOrLibraryPanelKind(ref 
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{
@@ -3447,8 +3430,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardPanelSpec(ref common.ReferenceCa
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDataLink{}.OpenAPIModelName()),
+										Ref: ref(DashboardDataLink{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3521,8 +3503,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardPanelQueryKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardPanelQueryKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3534,8 +3515,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryGroupSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTransformationKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardTransformationKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3801,8 +3781,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -3847,8 +3826,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardQueryVariableSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardVariableOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardVariableOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4134,8 +4112,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardRowsLayoutSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardRowsLayoutRowKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardRowsLayoutRowKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4162,8 +4139,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardAnnotationQueryKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4216,8 +4192,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDashboardLink{}.OpenAPIModelName()),
+										Ref: ref(DashboardDashboardLink{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4252,9 +4227,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardSpec(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4363,9 +4337,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardStringOrArrayOfString(ref common
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4570,8 +4543,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTabsLayoutSpec(ref common.Refere
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTabsLayoutTabKind{}.OpenAPIModelName()),
+										Ref: ref(DashboardTabsLayoutTabKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4811,8 +4783,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardThresholdsConfig(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardThreshold{}.OpenAPIModelName()),
+										Ref: ref(DashboardThreshold{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -4906,9 +4877,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTimeSettingsSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -4921,8 +4891,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardTimeSettingsSpec(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardTimeRangeOption{}.OpenAPIModelName()),
+										Ref: ref(DashboardTimeRangeOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5075,8 +5044,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardV2beta1FieldConfigSourceOverride
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardDynamicConfigValue{}.OpenAPIModelName()),
+										Ref: ref(DashboardDynamicConfigValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5227,8 +5195,7 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardValueMap(ref common.ReferenceCal
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardValueMappingResult{}.OpenAPIModelName()),
+										Ref: ref(DashboardValueMappingResult{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5352,9 +5319,8 @@ func schema_pkg_apis_dashboard_v2beta1_DashboardVariableOption(ref common.Refere
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -5593,8 +5559,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookAction(ref common.ReferenceCallba
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookActionVariable{}.OpenAPIModelName()),
+										Ref: ref(NotebookActionVariable{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -5681,7 +5646,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCellKindOrV2PanelKindOrLibraryPan
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "A notebook element is a narrative cell, a panel, or a library panel. Unlike the dashboard Element union, this one includes CellKind — and it is referenced ONLY by NotebookSpec. CellKind is listed first so it is the generated default (a notebook is narrative-first).",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"CellKind": {
 						SchemaProps: spec.SchemaProps{
@@ -5800,9 +5766,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookCodeCellContentSpec(ref common.Re
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: 0,
-										Type:    []string{"integer"},
-										Format:  "int64",
+										Type:   []string{"integer"},
+										Format: "int64",
 									},
 								},
 							},
@@ -5888,9 +5853,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookDataQueryKind(ref common.Referenc
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -6015,9 +5979,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFetchOptions(ref common.Reference
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -6036,9 +5999,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFetchOptions(ref common.Reference
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -6220,8 +6182,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfig(ref common.ReferenceC
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookAction{}.OpenAPIModelName()),
+										Ref: ref(NotebookAction{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -6292,8 +6253,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookFieldConfigSource(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()),
+										Ref: ref(NotebookV2beta1FieldConfigSourceOverrides{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -6345,9 +6305,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookInfinityOptions(ref common.Refere
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -6373,9 +6332,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookInfinityOptions(ref common.Refere
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
 												SchemaProps: spec.SchemaProps{
-													Default: "",
-													Type:    []string{"string"},
-													Format:  "",
+													Type:   []string{"string"},
+													Format: "",
 												},
 											},
 										},
@@ -6529,8 +6487,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Notebook{}.OpenAPIModelName()),
+										Ref: ref(Notebook{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -6577,7 +6534,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookMarkdownCellContentKindOrCodeCell
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Pluggable cell content discriminated by `kind`. New content types are added by extending this union with another <Name>CellContentKind member.",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"MarkdownCellContentKind": {
 						SchemaProps: spec.SchemaProps{
@@ -6756,8 +6714,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookNotebookLayoutSpec(ref common.Ref
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookNotebookLayoutItemKind{}.OpenAPIModelName()),
+										Ref: ref(NotebookNotebookLayoutItemKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -6986,9 +6943,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookSpec(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -7110,8 +7066,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookThresholdsConfig(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookThreshold{}.OpenAPIModelName()),
+										Ref: ref(NotebookThreshold{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7205,9 +7160,8 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -7220,8 +7174,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookTimeSettingsSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookTimeRangeOption{}.OpenAPIModelName()),
+										Ref: ref(NotebookTimeRangeOption{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7335,8 +7288,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2PanelSpec(ref common.ReferenceC
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookDataLink{}.OpenAPIModelName()),
+										Ref: ref(NotebookDataLink{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7409,8 +7361,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookPanelQueryKind{}.OpenAPIModelName()),
+										Ref: ref(NotebookPanelQueryKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7422,8 +7373,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2QueryGroupSpec(ref common.Refer
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookV2TransformationKind{}.OpenAPIModelName()),
+										Ref: ref(NotebookV2TransformationKind{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7488,6 +7438,13 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2TransformationSpec(ref common.R
 				Description: "Dashboard v2 shape: no `id`, it is carried by the parent's `group`.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",
@@ -7585,8 +7542,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookV2beta1FieldConfigSourceOverrides
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookDynamicConfigValue{}.OpenAPIModelName()),
+										Ref: ref(NotebookDynamicConfigValue{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7719,8 +7675,7 @@ func schema_pkg_apis_dashboard_v2beta1_NotebookValueMap(ref common.ReferenceCall
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(NotebookValueMappingResult{}.OpenAPIModelName()),
+										Ref: ref(NotebookValueMappingResult{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -7993,8 +7948,7 @@ func schema_pkg_apis_dashboard_v2beta1_VariableList(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Variable{}.OpenAPIModelName()),
+										Ref: ref(Variable{}.OpenAPIModelName()),
 									},
 								},
 							},

@@ -4,10 +4,15 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, type FetchError } from '@grafana/runtime';
 import { ConstantVariable, sceneGraph, SceneRefreshPicker } from '@grafana/scenes';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeyManagerKind, AnnoKeyUseCrossDashboardVariables, ManagerKind } from 'app/features/apiserver/types';
+import {
+  AnnoKeyManagerKind,
+  AnnoKeyUseCrossDashboardVariables,
+  ManagerKind,
+  type MetaStatus,
+} from 'app/features/apiserver/types';
 import {
   type DashboardRepositoryView,
   useDashboardRepositoryView,
@@ -79,7 +84,7 @@ const ui = {
 describe('SaveDashboardDrawer', () => {
   describe('Given an already saved dashboard', () => {
     it('should render save drawer with only message textarea', async () => {
-      setup().openAndRender();
+      await setup().openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).not.toBeInTheDocument();
@@ -88,7 +93,7 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('When there are no changes', async () => {
-      setup().openAndRender();
+      await setup().openAndRender();
       expect(screen.getByText('No changes to save')).toBeInTheDocument();
     });
 
@@ -97,7 +102,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
@@ -110,7 +115,7 @@ describe('SaveDashboardDrawer', () => {
         .getVariables(dashboard)
         .setState({ variables: [new ConstantVariable({ name: 'constant', type: 'constant', value: 'new value' })] });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(ui.saveVariablesCheckbox.get()).toBeInTheDocument();
@@ -135,7 +140,7 @@ describe('SaveDashboardDrawer', () => {
         ],
       });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(ui.saveVariablesCheckbox.get()).toBeInTheDocument();
@@ -155,7 +160,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveTimerange)).toBeInTheDocument();
@@ -171,7 +176,7 @@ describe('SaveDashboardDrawer', () => {
 
       sceneGraph.getTimeRange(dashboard).setState({ from: 'now-1h', to: 'now' });
 
-      openAndRender();
+      await openAndRender();
 
       await userEvent.click(screen.getByTestId(selectors.pages.SaveDashboardModal.saveTimerange));
       const message = await screen.findByLabelText('message');
@@ -193,7 +198,7 @@ describe('SaveDashboardDrawer', () => {
         refreshPicker.setState({ refresh: '5s' });
       }
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
@@ -207,7 +212,7 @@ describe('SaveDashboardDrawer', () => {
         refreshPicker.setState({ refresh: '5s' });
       }
 
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.getByTestId(selectors.pages.SaveDashboardModal.saveRefresh)).toBeInTheDocument();
@@ -223,7 +228,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       await userEvent.click(await screen.findByRole('tab', { name: /Changes/ }));
 
@@ -235,7 +240,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       mockSaveDashboard();
 
@@ -253,7 +258,7 @@ describe('SaveDashboardDrawer', () => {
 
       dashboard.setState({ title: 'New title' });
 
-      openAndRender();
+      await openAndRender();
 
       mockSaveDashboard({ saveError: 'version-mismatch' });
 
@@ -267,6 +272,112 @@ describe('SaveDashboardDrawer', () => {
 
       const dataSent = saveDashboardMutationMock.mock.calls[1][0];
       expect(dataSent.overwrite).toEqual(true);
+    });
+
+    it('Does not offer overwrite when the apiserver rejects the save with reason Conflict', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, {
+          reason: 'Conflict',
+          message: 'deprecatedInternalID=5 is already in use',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      // Overwrite would resend the identical request, so the user gets the server's reason and a
+      // plain retry instead of a misleading "someone else edited this" prompt.
+      expect(await screen.findByText('deprecatedInternalID=5 is already in use')).toBeInTheDocument();
+      expect(screen.queryByText('Someone else has updated this dashboard')).not.toBeInTheDocument();
+      expect(screen.queryByText('Save and overwrite')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+    });
+
+    it('Keeps Save and Cancel available when the apiserver rejects the save with reason AlreadyExists', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      await openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, { reason: 'AlreadyExists', message: 'the resource already exists' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      // This form has no title or folder field, so the "pick a different name or folder" alert
+      // would strand the user with no way to retry.
+      expect(await screen.findByText('the resource already exists')).toBeInTheDocument();
+      expect(screen.queryByText('Dashboard name already exists')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+
+    it('Lists each field level cause when the apiserver rejects the save as Invalid', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(422, {
+          reason: 'Invalid',
+          message: 'Dashboard.dashboard.grafana.app "my-uid" is invalid',
+          details: {
+            causes: [
+              { field: 'spec.title', message: 'title cannot be empty' },
+              { field: 'spec.panels[0].id', message: 'must be unique' },
+            ],
+          },
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('spec.title: title cannot be empty')).toBeInTheDocument();
+      expect(await screen.findByText('spec.panels[0].id: must be unique')).toBeInTheDocument();
+    });
+
+    it('Shows the server message rather than a blank alert for an unrecognised apiserver error', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(500, {
+          reason: 'InternalError',
+          message: 'failed to write to unified storage',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('Failed to save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('failed to write to unified storage')).toBeInTheDocument();
+    });
+
+    it('Explains the failure when the apiserver denies permission to save', async () => {
+      const { dashboard, openAndRender } = setup();
+
+      dashboard.setState({ title: 'New title' });
+      openAndRender();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(403, {
+          reason: 'Forbidden',
+          message: 'dashboards.dashboard.grafana.app is forbidden',
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('You do not have permission to save this dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('dashboards.dashboard.grafana.app is forbidden')).toBeInTheDocument();
     });
   });
 
@@ -293,7 +404,7 @@ describe('SaveDashboardDrawer', () => {
       // just changing the title here, in real case scenario changes are reflected through migrations
       // eg. panel version - same for other manager tests below
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(screen.queryByRole('tab', { name: /Changes/ })).toBeInTheDocument();
     });
@@ -304,7 +415,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -316,7 +427,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -330,7 +441,7 @@ describe('SaveDashboardDrawer', () => {
       });
 
       dashboard.setState({ title: 'updated title' });
-      openAndRender();
+      await openAndRender();
 
       expect(await ui.saveDashbordText.find()).toBeInTheDocument();
       expect(screen.queryByRole('tab', { name: /Changes/ })).not.toBeInTheDocument();
@@ -340,7 +451,7 @@ describe('SaveDashboardDrawer', () => {
   describe('Save as copy', () => {
     it('Should show save as form', async () => {
       const { openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
 
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
@@ -353,13 +464,93 @@ describe('SaveDashboardDrawer', () => {
       expect(dataSent.k8s).toBeUndefined();
     });
 
+    it('Shows the server message rather than a blank alert when the copy cannot be saved', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(429, { reason: 'TooManyRequests', message: 'dashboard quota reached' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('Failed to save dashboard')).toBeInTheDocument();
+      expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
+    });
+
+    it('Shows the server message for an apiserver AlreadyExists rather than the title-collision alert', async () => {
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(409, { reason: 'AlreadyExists', message: 'the resource already exists' }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      // AlreadyExists is a uid collision, so advising a different name or folder is wrong even
+      // though this form has both fields, and that alert replaces the footer.
+      expect(await screen.findByText('the resource already exists')).toBeInTheDocument();
+      expect(screen.queryByText('Dashboard name already exists')).not.toBeInTheDocument();
+      expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+
+    it('Shows save failures when the copy title has surrounding whitespace', async () => {
+      const { openAndRender } = setup();
+      await openAndRender({ saveAsCopy: true });
+      const titleInput = await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput);
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, ' Copy title ');
+      await userEvent.tab();
+      mockSaveDashboard({
+        rawError: k8sStatusError(429, { reason: 'TooManyRequests', message: 'dashboard quota reached' }),
+      });
+
+      const saveButton = screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton);
+      await waitFor(() => expect(saveButton).toHaveAttribute('aria-disabled', 'false'));
+      await userEvent.click(saveButton);
+
+      expect(saveDashboardMutationMock).toHaveBeenCalledTimes(1);
+      expect(await screen.findByText('dashboard quota reached')).toBeInTheDocument();
+
+      await userEvent.clear(titleInput);
+      await userEvent.type(titleInput, 'Different title');
+
+      expect(titleInput).toHaveValue('Different title');
+      expect(screen.queryByText('dashboard quota reached')).not.toBeInTheDocument();
+    });
+
+    it('Lists each field level cause when the apiserver rejects the copy as Invalid', async () => {
+      const { openAndRender } = setup();
+      openAndRender({ saveAsCopy: true });
+
+      expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
+
+      mockSaveDashboard({
+        rawError: k8sStatusError(422, {
+          reason: 'Invalid',
+          message: 'Dashboard.dashboard.grafana.app "hello-copy" is invalid',
+          details: { causes: [{ field: 'metadata.name', message: 'uid too long, max 40 characters' }] },
+        }),
+      });
+
+      await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+
+      expect(await screen.findByText('metadata.name: uid too long, max 40 characters')).toBeInTheDocument();
+    });
+
     it('restores meta on cancel after a Save As folder change', async () => {
       const { dashboard, openAndRender } = setup({
         meta: { folderUid: 'original-folder', folderTitle: 'Original' },
       });
       const initialFolderUid = dashboard.getInitialState()?.meta.folderUid;
 
-      const drawer = openAndRender({ saveAsCopy: true });
+      const drawer = await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       act(() => {
@@ -397,7 +588,7 @@ describe('SaveDashboardDrawer', () => {
         },
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       mockSaveDashboard();
@@ -426,6 +617,7 @@ describe('SaveDashboardDrawer', () => {
         status,
         isNewSave: true,
         isProvisioned: false,
+        canChooseTarget: false,
         isInstanceManaged: false,
         isReadOnlyRepo: false,
         isMissingRepo: false,
@@ -447,7 +639,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
 
       // Mounting a form here would swap it out once the repository resolves, dropping typed input
       expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
@@ -471,7 +663,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(
         await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
       ).toBeInTheDocument();
@@ -489,7 +681,7 @@ describe('SaveDashboardDrawer', () => {
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByTestId('provisioned-form')).toHaveAttribute('data-held', 'false');
 
       repoState = view({
@@ -509,11 +701,11 @@ describe('SaveDashboardDrawer', () => {
     it('offers the database save only at the root of a folderless repository', async () => {
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -529,7 +721,7 @@ describe('SaveDashboardDrawer', () => {
       // Inside a folder the folder decides, so there is nothing to choose
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, folderUid: 'f1' }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: false }));
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta, folderUid: 'f1' } });
       });
@@ -543,7 +735,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /instead$/ })).not.toBeInTheDocument();
@@ -555,7 +747,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
 
       // The picked folder is annotated with a repository that no longer exists
@@ -589,12 +781,12 @@ describe('SaveDashboardDrawer', () => {
     });
 
     it('keeps the database form up while a folder picked in it resolves', async () => {
-      let repoState = view({ isProvisioned: true, repository: folderlessRepo });
+      let repoState = view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true });
       jest.mocked(useDashboardRepositoryView).mockImplementation(() => repoState);
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(await screen.findByTestId('provisioned-form')).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -606,6 +798,7 @@ describe('SaveDashboardDrawer', () => {
       repoState = view({
         isProvisioned: true,
         repository: folderlessRepo,
+        canChooseTarget: true,
         isHeld: true,
         lookup: { status: RepoViewStatus.Loading },
       });
@@ -624,7 +817,7 @@ describe('SaveDashboardDrawer', () => {
       expect(saveDashboardMutationMock).not.toHaveBeenCalled();
       expect(screen.getByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)).toHaveValue('Typed');
 
-      repoState = view({ isProvisioned: false, folderUid: 'f1' });
+      repoState = view({ isProvisioned: false, canChooseTarget: false });
       act(() => {
         dashboard.setState({ meta: { ...dashboard.state.meta } });
       });
@@ -645,7 +838,7 @@ describe('SaveDashboardDrawer', () => {
 
       const { dashboard, openAndRender } = setup();
       dashboard.setState({ uid: '', version: 0 });
-      openAndRender();
+      await openAndRender();
 
       expect(
         await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveAsTitleInput)
@@ -660,17 +853,17 @@ describe('SaveDashboardDrawer', () => {
         .mockReturnValue(view({ isNewSave: false, isProvisioned: true, repository: folderlessRepo }));
 
       const stored = setup();
-      stored.openAndRender();
+      await stored.openAndRender();
       expect(await screen.findByRole('heading', { name: 'Provisioned dashboard' })).toBeInTheDocument();
       cleanup();
 
       jest
         .mocked(useDashboardRepositoryView)
-        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo }));
+        .mockReturnValue(view({ isProvisioned: true, repository: folderlessRepo, canChooseTarget: true }));
 
       const fresh = setup();
       fresh.dashboard.setState({ uid: '', version: 0 });
-      fresh.openAndRender();
+      await fresh.openAndRender();
       expect(await screen.findByRole('heading', { name: 'Save dashboard' })).toBeInTheDocument();
 
       await userEvent.click(screen.getByRole('button', { name: 'Save to Grafana database instead' }));
@@ -686,7 +879,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ uid: '', version: 0, tags: ['my-tag'] });
       });
 
-      openAndRender();
+      await openAndRender();
       expect(await screen.findByText('Save dashboard')).toBeInTheDocument();
       expect(screen.queryByLabelText('Copy tags')).not.toBeInTheDocument();
 
@@ -704,7 +897,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ tags: ['my-tag'] });
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       mockSaveDashboard();
@@ -721,7 +914,7 @@ describe('SaveDashboardDrawer', () => {
         dashboard.setState({ tags: ['my-tag'] });
       });
 
-      openAndRender({ saveAsCopy: true });
+      await openAndRender({ saveAsCopy: true });
       expect(await screen.findByText('Save dashboard copy')).toBeInTheDocument();
 
       await userEvent.click(screen.getByLabelText('Copy tags'));
@@ -747,7 +940,7 @@ describe('SaveDashboardDrawer', () => {
       registerSaveAsTemplateForm(StubForm);
 
       const { openAndRender } = setup();
-      openAndRender({ saveAsDashboardTemplate: true });
+      await openAndRender({ saveAsDashboardTemplate: true });
 
       expect(await screen.findByTestId('stub-save-as-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save as template')).toBeInTheDocument();
@@ -761,7 +954,7 @@ describe('SaveDashboardDrawer', () => {
       registerSaveDashboardTemplateForm(StubForm);
 
       const { openAndRender } = setup();
-      openAndRender({ saveDashboardTemplate: true });
+      await openAndRender({ saveDashboardTemplate: true });
 
       expect(await screen.findByTestId('stub-update-template-form')).toBeInTheDocument();
       expect(await screen.findByText('Save template')).toBeInTheDocument();
@@ -770,7 +963,7 @@ describe('SaveDashboardDrawer', () => {
 
     it('falls back to the standard save form when saveAsDashboardTemplate is true but no form is registered', async () => {
       const { openAndRender } = setup();
-      openAndRender({ saveAsDashboardTemplate: true });
+      await openAndRender({ saveAsDashboardTemplate: true });
 
       // No crash, drawer still mounts with the save-as-template title even without the extension form
       expect(await screen.findByText('Save as template')).toBeInTheDocument();
@@ -782,10 +975,35 @@ describe('SaveDashboardDrawer', () => {
 
 interface MockBackendApiOptions {
   saveError: 'version-mismatch' | 'name-exists' | 'plugin-dashboard';
+  /** A verbatim rejection, so tests can use the real apiserver Status shape. */
+  rawError: FetchError;
+}
+
+/** Mirrors what the apiserver actually rejects a failed write with. */
+function k8sStatusError(status: number, overrides: Partial<MetaStatus>): FetchError<MetaStatus> {
+  return {
+    status,
+    statusText: 'Error',
+    config: { url: '/apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/my-uid' },
+    data: {
+      kind: 'Status',
+      apiVersion: 'v1',
+      status: 'Failure',
+      code: status,
+      message: '',
+      ...overrides,
+    },
+  };
 }
 
 function mockSaveDashboard(options: Partial<MockBackendApiOptions> = {}) {
   saveDashboardMutationMock.mockClear();
+
+  if (options.rawError) {
+    saveDashboardMutationMock.mockResolvedValue({ error: options.rawError });
+
+    return;
+  }
 
   if (options.saveError) {
     saveDashboardMutationMock.mockResolvedValue({
@@ -843,10 +1061,10 @@ function setup(overrides?: Partial<DashboardSceneState>) {
 
   dashboard.onEnterEditMode();
 
-  const openAndRender = (
+  const openAndRender = async (
     opts: { saveAsCopy?: boolean; saveAsDashboardTemplate?: boolean; saveDashboardTemplate?: boolean } = {}
   ) => {
-    dashboard.openSaveDrawer(opts);
+    await dashboard.openSaveDrawer(opts);
     const drawer = dashboard.state.overlay as SaveDashboardDrawer;
     render(
       <TestProvider>

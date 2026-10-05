@@ -362,10 +362,7 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			return err
 		}
 
-		foundLength := len(foundFiles)
-		if foundLength > pageSize {
-			foundLength = pageSize
-		}
+		foundLength := min(len(foundFiles), pageSize)
 
 		pathToHash := make(map[string]string)
 		hashes := make([]string, 0)

@@ -974,7 +974,7 @@ func parseConfigIdentifierHeader(c *contextmodel.ReqContext) (string, error) {
 func convertPrometheusResponse(c *contextmodel.ReqContext, status int, body interface{}) *response.NormalResponse {
 	acceptHeader := c.Req.Header.Get("Accept")
 
-	for _, accept := range strings.Split(acceptHeader, ",") {
+	for accept := range strings.SplitSeq(acceptHeader, ",") {
 		mediaType, _, err := mime.ParseMediaType(accept)
 		if err != nil {
 			continue

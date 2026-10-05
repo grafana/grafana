@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -55,7 +57,8 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
-	natsSubscriber        nats.Subscriber
+	provisioningRESTCfg   *rest.Config
+	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
 	tokenExchangeClient   *authn.TokenExchangeClient
@@ -126,8 +129,8 @@ func setupFromConfig(cfg *setting.Cfg, registry prometheus.Registerer) (*Control
 		registry: registry,
 		Settings: cfg,
 		// Operators run against an external NATS (no embedded server), so a nil
-		// server yields a config that dials the configured client URLs. The
-		// subscriber connects lazily and is a no-op transport when NATS is disabled.
+		// server yields a config that dials the configured client URLs. Each
+		// consuming controller owns the subscriber service lifecycle.
 		natsSubscriber: nats.ProvideSubscriber(nats.ProvideNATSConfig(cfg, nil), registry),
 		resyncInterval: operatorSec.Key("resync_interval").MustDuration(60 * time.Second),
 		workerCount:    operatorSec.Key("worker_count").MustInt(1),
@@ -343,8 +346,25 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	}
 
 	c.provisioningClient = provisioningClient
+	// Kept for callers that need a route the typed clientset has no method for,
+	// such as the keys-only re-list.
+	c.provisioningRESTCfg = config
 
 	return provisioningClient, nil
+}
+
+// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// for endpoints outside the typed clientset. It shares the clientset's config, so
+// building the clientset first is what supplies it.
+func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+
+	cfg := rest.CopyConfig(c.provisioningRESTCfg)
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioning.GROUP, Version: provisioning.VERSION}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	return rest.RESTClientFor(cfg)
 }
 
 // wrapWithTracing wraps the rest config transport with otelhttp so outbound
@@ -588,10 +608,10 @@ func (c *ControllerConfig) URLProvider() (func(ctx context.Context, namespace st
 }
 
 func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
-	// Folder metadata read metrics are a process-global singleton recorded by
-	// resources.ReadFolderMetadata rather than threaded through the returned
-	// extras, so they must be registered regardless of which extras path is taken
-	// below — including the custom RepositoryExtrasFunc path, which returns early.
+	// Folder metadata read metrics are a process-global singleton recorded by the
+	// code that uses them rather than threaded through the returned extras, so they
+	// must be registered regardless of which extras path is taken below — including
+	// the custom RepositoryExtrasFunc path, which returns early.
 	resources.RegisterFolderMetadataMetrics(c.Registry())
 
 	if c.repositoryExtras != nil {
@@ -614,6 +634,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	}
 	decrypter := repository.ProvideDecrypter(decryptSvc, repository.RegisterDecryptMetrics(c.Registry()))
 	operationMetrics := repository.RegisterOperationMetrics(c.Registry())
+	clientMetrics := gitrepo.RegisterClientMetrics(c.Registry())
 
 	operatorSec := c.Settings.SectionWithEnvOverrides("operator")
 	provisioningSec := c.Settings.SectionWithEnvOverrides("provisioning")
@@ -630,7 +651,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 	for _, t := range repoTypes {
 		switch provisioning.RepositoryType(t) {
 		case provisioning.GitRepositoryType:
-			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics))
+			extras = append(extras, gitrepo.Extra(decrypter, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.GitHubRepositoryType:
 			var webhook *webhooks.WebhookExtraBuilder
 			provisioningAppURL := operatorSec.Key("provisioning_server_public_url").String()
@@ -644,7 +665,7 @@ func (c *ControllerConfig) RepositoryExtras() ([]repository.Extra, error) {
 					),
 				)
 			}
-			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics))
+			extras = append(extras, githubrepo.Extra(decrypter, githubrepo.ProvideFactory(), webhook, allowInsecure, operationMetrics, clientMetrics))
 		case provisioning.LocalRepositoryType:
 			homePath := operatorSec.Key("home_path").String()
 			if homePath == "" {

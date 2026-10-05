@@ -114,7 +114,11 @@ There are many possible types of metrics that can be tracked. One popular method
 
 ### Naming conventions
 
-Use the namespace `grafana` to prefix any defined metric names with `grafana_`. This prefix makes it clear for operators that any metric named `grafana_*` belongs to Grafana.
+Metric names are exposed with a `grafana_` prefix, so operators can tell that any `grafana_*` metric belongs to Grafana. You do not have to add the prefix yourself: the gatherer adds it when metrics are scraped, to every name that does not already start with `grafana_` or `go_` (see `addPrefixWrapper` in [pkg/infra/metrics/service.go](/pkg/infra/metrics/service.go)). A metric declared as `index_build_duration_seconds` is therefore scraped as `grafana_index_build_duration_seconds`.
+
+Even so, write the whole name out in the `Name` field, prefix included, rather than relying on the gatherer or splitting the name across `Namespace` and `Subsystem`. The prefix is not added twice, and a name written in one piece is one you can search the code base for after reading it on a dashboard. Metrics that do it the other way still work and do not need renaming.
+
+Don't add a prefix to a registerer with `prometheus.WrapRegistererWithPrefix`. A metric should have the same name no matter which process or component exposes it. When the same code is registered with different prefixes, or with a prefix in one process and none in another, one measurement ends up under several names: dashboards must query all of them, and none of those names can be found in the code. To tell copies apart, use a label instead, as described in [Duplicate registration](#duplicate-registration). Renaming an existing prefixed metric changes what dashboards and alerts must query, so check those before removing a prefix.
 
 Use snake_case style when naming metrics; for example, `http_request_duration_seconds` instead of `httpRequestDurationSeconds`.
 
@@ -155,8 +159,8 @@ Duplicate registration usually means either that the same component was wired tw
 Do not resolve a production collision by catching and ignoring the error, reusing another component's collector, passing a nil registerer, or otherwise skipping registration. Every production component must report its metrics. Consider these options:
 
 - **Build the collectors once and pass them down.** If several callers intentionally contribute to the same measurements, construct the collectors in one place and hand them to each caller.
-- **Use a const label per component.** If separate components expose the same measurements, apply the same stable, bounded label name, such as `component`, to every collector in the metric family and give each component a different value. This keeps a shared metric name for dashboards while allowing each component to report separately. Registering the same component twice still fails, which is what you want.
-- **Use distinct metric names for different measurements.** If components expose different concepts that should not be queried together, give their metrics distinct names. `prometheus.WrapRegistererWithPrefix("mycomponent_", reg)` can apply a prefix to everything registered by a component.
+- **Use a const label per component.** If separate components expose the same measurements, apply the same stable, bounded label name, such as `component`, to every collector in the metric family and give each component a different value. This keeps a shared metric name for dashboards while allowing each component to report separately. Registering the same component twice still fails, which is what you want. `prometheus.WrapRegistererWith(prometheus.Labels{"component": "mycomponent"}, reg)` applies the label to everything a component registers, including metrics from libraries such as dskit whose names you can't change.
+- **Use distinct metric names for different measurements.** If components expose different concepts that should not be queried together, give their metrics distinct names, and write each name out in full in its `Name` field.
 
 ### How to collect and visualize metrics locally
 

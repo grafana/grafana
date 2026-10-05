@@ -16,10 +16,24 @@ export interface NavEntryBuilder {
   build: () => NavModelItem | undefined;
 }
 
+/**
+ * Builds the visible items from a list of entries. A gate or builder that
+ * throws costs its own item and nothing else: these run while the redux store
+ * is being created, so an uncaught error would abort the whole tree — and with
+ * it navIndex — leaving every page rendering a not-found header. Entries come
+ * from enterprise and plugin code as well as core, so one bad config read
+ * should not be able to do that.
+ */
 export const buildEntries = (entries: NavEntryBuilder[]): NavModelItem[] =>
   entries
-    .filter((entry) => entry.when?.() ?? true)
-    .map((entry) => entry.build())
+    .map((entry) => {
+      try {
+        return (entry.when?.() ?? true) ? entry.build() : undefined;
+      } catch (error) {
+        console.error('[navtree] nav entry failed to build', error);
+        return undefined;
+      }
+    })
     .filter((item) => !!item);
 
 // Admin subsections that exist as attachment targets for plugin pages and
@@ -43,6 +57,43 @@ export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | u
     }
   }
   return undefined;
+}
+
+/** Returns a new tree with the matching node (at any depth) replaced by update(node) */
+function updateNavById(
+  nodes: NavModelItem[],
+  id: string,
+  update: (node: NavModelItem) => NavModelItem
+): NavModelItem[] {
+  return nodes.map((node) => {
+    if (node.id === id) {
+      return update(node);
+    }
+    return node.children ? { ...node, children: updateNavById(node.children, id, update) } : node;
+  });
+}
+
+/**
+ * Appends items into the children of the section with this id, or at the top
+ * level for NavID.root. Returns undefined when no such section exists, so the
+ * caller decides what that means — the registry skips the item, while the
+ * plugin nav builds the section from its shell. Returns a new tree.
+ */
+export function appendIntoSection(
+  tree: NavModelItem[],
+  parentId: string,
+  items: NavModelItem[]
+): NavModelItem[] | undefined {
+  if (parentId === NavID.root) {
+    return [...tree, ...items];
+  }
+  if (!findNavById(tree, parentId)) {
+    return undefined;
+  }
+  return updateNavById(tree, parentId, (parent) => ({
+    ...parent,
+    children: [...(parent.children ?? []), ...items],
+  }));
 }
 
 /**

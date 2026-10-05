@@ -4,8 +4,7 @@ import { type DataFrame } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-import { frameMatcherFor } from './frameMatcher';
-import { NO_CONFIGS, isInterpolatable, precedingTransformations, useFrameReplay } from './useTransformedFrames';
+import { NO_CONFIGS, frameMatcherFor, precedingTransformations, useFrameReplay } from './useTransformedFrames';
 
 interface UseTransformationDebugDataOptions {
   selectedTransformation: Transformation | null;
@@ -68,10 +67,8 @@ export function useTransformationDebugData({
     }
 
     // The debugged transformation only sees the frames its own filter admits. `transformDataFrame`
-    // applies that filter itself, so only the displayed input is narrowed here — and by the filter
-    // the replay ran, not the one the config holds: a `$var` in it resolves before either sees it.
-    const [ranConfig] = ranConfigs;
-    const matcher = frameMatcherFor(isInterpolatable(ranConfig) ? ranConfig : undefined);
+    // applies that filter itself, so only the displayed input is narrowed here.
+    const matcher = frameMatcherFor(ranConfigs[0]);
 
     return {
       input: matcher ? inputFrames.filter((frame) => matcher(frame)) : inputFrames,

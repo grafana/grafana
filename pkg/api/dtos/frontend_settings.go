@@ -7,30 +7,6 @@ import (
 )
 
 type FrontendSettingsAuthDTO struct {
-	AuthProxyEnableLoginToken bool `json:"AuthProxyEnableLoginToken"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OAuthSkipOrgRoleUpdateSync bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	SAMLSkipOrgRoleSync bool `json:"SAMLSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	LDAPSkipOrgRoleSync bool `json:"LDAPSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GoogleSkipOrgRoleSync bool `json:"GoogleSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	JWTAuthSkipOrgRoleSync bool `json:"JWTAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GrafanaComSkipOrgRoleSync bool `json:"GrafanaComSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	AzureADSkipOrgRoleSync bool `json:"AzureADSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GithubSkipOrgRoleSync bool `json:"GithubSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GitLabSkipOrgRoleSync bool `json:"GitLabSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
-
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
@@ -208,6 +184,7 @@ type FrontendSettingsDTO struct {
 	RudderstackV3SdkUrl        string `json:"rudderstackV3SdkUrl"`
 	RudderstackConfigUrl       string `json:"rudderstackConfigUrl"`
 	RudderstackIntegrationsUrl string `json:"rudderstackIntegrationsUrl"`
+	RudderstackBatchInterval   int    `json:"rudderstackBatchInterval"`
 
 	PostHogToken string `json:"postHogToken"`
 	PostHogHost  string `json:"postHogHost"`
@@ -215,10 +192,9 @@ type FrontendSettingsDTO struct {
 	AnalyticsConsoleReporting     bool     `json:"analyticsConsoleReporting"`
 	PluginImportTelemetryPackages []string `json:"pluginImportTelemetryPackages"`
 
-	DashboardPerformanceMetrics  []string `json:"dashboardPerformanceMetrics"`
-	PanelSeriesLimit             int      `json:"panelSeriesLimit"`
-	DashboardDefaultPreload      bool     `json:"dashboardDefaultPreload"`
-	ReportRenderQueryGracePeriod int      `json:"reportRenderQueryGracePeriodMs"`
+	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
+	DashboardDefaultPreload     bool     `json:"dashboardDefaultPreload"`
 
 	FeedbackLinksEnabled                 bool                `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString  string              `json:"applicationInsightsConnectionString"`

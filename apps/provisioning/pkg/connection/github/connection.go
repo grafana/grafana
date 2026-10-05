@@ -405,7 +405,9 @@ func (c *Connection) GenerateConnectionToken(_ context.Context) (*connection.Exp
 
 	token, expiresAt, err := GenerateJWTToken(c.cfg.AppID(), c.secrets.PrivateKey)
 	if err != nil {
-		return nil, err
+		// A malformed or unparseable configured private key is a configuration
+		// problem the user must fix (re-upload the key), not a transient failure.
+		return nil, fmt.Errorf("%w: %w", connection.ErrAuthentication, err)
 	}
 
 	return &connection.ExpirableSecureValue{Token: token, ExpiresAt: expiresAt}, nil

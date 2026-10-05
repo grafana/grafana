@@ -48,6 +48,8 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
+
+	UnsupportedFork bool
 }
 
 func (c changeInfo) GrafanaHost() string {

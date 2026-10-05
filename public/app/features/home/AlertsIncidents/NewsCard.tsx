@@ -39,6 +39,7 @@ export function NewsCard() {
             showImage
             data={state.value}
             index={index}
+            headingLevel={3}
             className={styles.post}
             onClick={() => ctaClicked({ surface: 'news_card', action: 'news_detail', placement: 'list' })}
           />

@@ -139,15 +139,6 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 								Schema:      spec.StringProperty(),
 							},
 						},
-						{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "plugin",
-								In:          "query",
-								Description: "plugin identifier",
-								Required:    false,
-								Schema:      spec.StringProperty(),
-							},
-						},
 					},
 					Responses: &spec3.Responses{
 						ResponsesProps: spec3.ResponsesProps{
@@ -188,7 +179,6 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 			list, err := b.connections.ListConnections(ctx, queryV1.DataSourceConnectionQuery{
 				Namespace: namespace,
 				Name:      query.Get("name"),
-				Plugin:    query.Get("plugin"),
 			})
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)

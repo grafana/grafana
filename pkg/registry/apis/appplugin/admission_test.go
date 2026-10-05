@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -28,7 +28,7 @@ type countingReviewClient struct {
 	call int
 }
 
-func (c *countingReviewClient) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (c *countingReviewClient) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	c.call++
 	rsp := &pluginv3.AdmissionReviewResponse{}
 	rsp.SetAllowed(true)
@@ -64,9 +64,10 @@ func TestBuilderAdmissionDispatch(t *testing.T) {
 			Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 		},
 	}, client, kindstore.Options{
-		Scheme:              scheme,
-		OptsGetter:          apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
-		StorageOptsRegister: func(schema.GroupResource, apistore.StorageOptions) {},
+		StorageOptsGetter: builder.APIGroupOptions{
+			Scheme:     scheme,
+			OptsGetter: apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		}.StorageOptsGetter,
 	}, nil)
 	require.NoError(t, err)
 

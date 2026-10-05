@@ -56,6 +56,19 @@ local_resource(
   labels=["local"]
 )
 
+# boot.js has its own rspack config, so the watch that 'yarn start' runs no longer rebuilds
+# it. The image copies boot.js and live_update syncs it, so without this an edit to
+# public/boot would never reach the container.
+if use_rspack:
+  local_resource(
+    'rspack boot',
+    cmd='yarn build:rspack:boot --env develop',
+    deps=['../../public/boot'],
+    resource_deps=['yarn install'],
+    allow_parallel=True,
+    labels=["local"]
+  )
+
 local_resource(
   'backend-build',
   "bash ./build-grafana.sh",

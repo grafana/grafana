@@ -34,11 +34,9 @@ export function generateAssetsManifest(
   _seed: unknown,
   files: FileDescriptor[],
   entries: Record<string, string[]>,
+  publicPath: string,
   { compilation }: { compilation: Compilation }
 ) {
-  const rawPublicPath = compilation.outputOptions.publicPath;
-  const publicPath = typeof rawPublicPath === 'string' && rawPublicPath !== 'auto' ? rawPublicPath : '';
-
   const entrypoints: ManifestEntrypoints = {};
   for (const [name, entryFiles] of Object.entries(entries)) {
     entrypoints[name] = { assets: {} };
@@ -62,12 +60,19 @@ export function generateAssetsManifest(
   }
 
   return {
-    entrypoints,
+    entrypoints: {
+      ...entrypoints,
+      // Rspack outputs es modules. webassets.go uses this to set the type attribute. <script type="text/javascript | module">.
+      esModule: compilation.outputOptions.module === true,
+    },
     ...manifestAssets,
   };
 }
 
-export const assetsManifestOptions: ManifestPluginOptions = {
-  fileName: ASSETS_MANIFEST_FILE,
-  generate: generateAssetsManifest,
-};
+export function createAssetsManifestOptions(publicPath: string): ManifestPluginOptions {
+  return {
+    fileName: ASSETS_MANIFEST_FILE,
+    publicPath,
+    generate: (seed, files, entries, options) => generateAssetsManifest(seed, files, entries, publicPath, options),
+  };
+}

@@ -32,6 +32,12 @@ type FlameGraphPaneProps = {
   setFocusedItemIndexes?: (itemIndexes: number[] | undefined) => void;
   sharedSandwichItem?: string;
   setSharedSandwichItem?: (item: string | undefined) => void;
+  useTableNG?: boolean;
+  // Feature-toggle values for the top table's TableNG, passed in by the host. See FlameGraphContainer's props.
+  tableRefreshEnabled?: boolean;
+  contentAwareWidthsEnabled?: boolean;
+  // Set when the host bounds our height, so the table sizes to the pane instead of a fixed height.
+  fillHeight?: boolean;
 };
 
 const FlameGraphPane = ({
@@ -54,6 +60,10 @@ const FlameGraphPane = ({
   setFocusedItemIndexes,
   sharedSandwichItem,
   setSharedSandwichItem,
+  useTableNG,
+  tableRefreshEnabled,
+  contentAwareWidthsEnabled,
+  fillHeight,
 }: FlameGraphPaneProps) => {
   const [focusedItemData, setFocusedItemData] = useState<ClickedItemData>();
   const [rangeMin, setRangeMin] = useState(0);
@@ -76,7 +86,7 @@ const FlameGraphPane = ({
   const [collapsedMap, setCollapsedMap] = useState(() => dataContainer.getCollapsedMap());
   const [colorScheme, setColorScheme] = useColorScheme(dataContainer);
 
-  const styles = getStyles();
+  const styles = getStyles(Boolean(fillHeight));
 
   useLayoutEffect(() => {
     setCollapsedMap(dataContainer.getCollapsedMap());
@@ -240,6 +250,9 @@ const FlameGraphPane = ({
             onSearch={onTopTableSearch}
             onTableSort={onTableSort}
             colorScheme={colorScheme}
+            useTableNG={useTableNG}
+            tableRefreshEnabled={tableRefreshEnabled}
+            contentAwareWidthsEnabled={contentAwareWidthsEnabled}
           />
         </div>
       );
@@ -311,16 +324,19 @@ const FlameGraphPane = ({
   return <div className={styles.paneWrapper}>{content}</div>;
 };
 
-function getStyles() {
+function getStyles(fillHeight: boolean) {
   return {
     paneWrapper: css({
       width: '100%',
       height: '100%',
     }),
+    // The table does its own internal scrolling, so it just needs a definite height to measure against: the
+    // pane's real share of a bounded host, or the fixed fallback when the host doesn't bound us at all.
+    // See the `fillHeight` prop on FlameGraphContainer.
     tableContainer: css({
-      height: FLAMEGRAPH_CONTAINER_HEIGHT,
       minWidth: 0,
       overflow: 'hidden',
+      ...(fillHeight ? { height: '100%', minHeight: 0 } : { height: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
   };
 }

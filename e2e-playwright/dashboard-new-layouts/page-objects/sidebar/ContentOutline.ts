@@ -10,10 +10,15 @@ export class ContentOutline extends PageObject {
     return this.getByGrafanaSelector(this.selectors.components.Sidebar.container).getByRole('tree');
   }
 
+  /** Returns the outline item for the given name */
+  getItem(itemName: string): Locator {
+    return this.getByGrafanaSelector(this.selectors.components.PanelEditor.Outline.item(itemName));
+  }
+
   /** Clicks an outline item to select the corresponding dashboard element */
   async clickItem(itemName: string) {
     await test.step(`Click outline item "${itemName}"`, async () => {
-      await this.getByGrafanaSelector(this.selectors.components.PanelEditor.Outline.item(itemName)).click();
+      await this.getItem(itemName).click();
     });
   }
 
