@@ -276,7 +276,7 @@ const LogLineOTelDetailsField = ({
             <div className={styles.actionIcons}>
               {onClickFilterLabel && fieldSupportsFilters && (
                 <AsyncIconButton
-                  name="search-plus"
+                  name="filter-plus"
                   size="sm"
                   onClick={filterLabel}
                   // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
@@ -286,7 +286,7 @@ const LogLineOTelDetailsField = ({
               )}
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
-                  name="search-minus"
+                  name="filter-minus"
                   size="sm"
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
