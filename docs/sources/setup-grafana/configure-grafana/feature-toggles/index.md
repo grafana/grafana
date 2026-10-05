@@ -103,6 +103,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `datasources.azureMonitorBatchAPI` | Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request |
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
+| `grafana.newTextPanel`             | Enables the new text panel                                                                                                     |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
 | `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
