@@ -82,11 +82,19 @@ func ViceroyContainer(
 	goURL := golang.DownloadURL(goVersion, "amd64")
 	container := d.Container(containerOpts).From(fmt.Sprintf("rfratto/viceroy:%s", viceroyVersion))
 
-	// Install Go manually, and install make, git, and curl from the package manager.
+	// rfratto/viceroy is unmaintained (last published 2023) and pinned to Debian bullseye.
+	// bullseye-security has since dropped out of deb.debian.org's live/CDN-fronted mirror
+	// rotation: its Packages index still lists old point-release builds, but the actual .deb
+	// files 404. archive.debian.org is Debian's permanent archive and keeps every release's
+	// files forever, so repointing sources.list there (and disabling the Valid-Until check,
+	// which archived Release files normally fail) makes this install deterministic again.
+	// Verified against the actual image before landing this.
 	container = container.
 		WithExec([]string{"dpkg", "--remove-architecture", "ppc64el"}).
 		WithExec([]string{"dpkg", "--remove-architecture", "s390x"}).
 		WithExec([]string{"dpkg", "--remove-architecture", "armel"}).
+		WithExec([]string{"/bin/sh", "-c", `echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until`}).
+		WithExec([]string{"/bin/sh", "-c", `printf 'deb http://archive.debian.org/debian bullseye main\ndeb http://archive.debian.org/debian-security bullseye-security main\ndeb http://archive.debian.org/debian bullseye-updates main\n' > /etc/apt/sources.list`}).
 		WithExec([]string{"apt-get", "update", "-yq"}).
 		WithExec([]string{"apt-get", "install", "-yq", "curl", "make", "git"}).
 		WithExec([]string{"/bin/sh", "-c", fmt.Sprintf("curl -L %s | tar -C /usr/local -xzf -", goURL)}).
