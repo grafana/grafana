@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { type GrafanaTheme2, store } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaSectionSidebar, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ErrorBoundaryAlert, floatingUtils, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { SplashScreenModal } from 'app/core/components/SplashScreenModal/SplashScreenModal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -26,8 +26,11 @@ import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/Fullscreen
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
 import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
 import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { MegaMenuRail, MENU_RAIL_WIDTH, useIsMegaMenuRail } from './MegaMenu/MegaMenuRail';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
+import { SectionSidebar } from './SectionSidebar/SectionSidebar';
+import { getSectionSidebarOffsets, useActiveSectionSidebar } from './SectionSidebar/utils';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
 
@@ -80,8 +83,27 @@ export function AppChrome({ children }: Props) {
     !state.chromeless && scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
 
+  // Only rendered by the default chrome; the fullscreen workspace has no section sidebar
+  const activeSectionSidebar = useActiveSectionSidebar(state);
+  // The rail is part of the section sidebar experiment and replaces docking the full menu
+  const isMenuRail = useIsMegaMenuRail(state);
+  const hasDockedMenu = isMenuRail || menuDockedAndOpen;
+  const dockedMenuWidth = isMenuRail ? MENU_RAIL_WIDTH : MENU_WIDTH;
+  const sectionSidebarOffsets = getSectionSidebarOffsets({
+    menuWidth: parseInt(dockedMenuWidth, 10),
+    scopesWidth: parseInt(MENU_WIDTH, 10),
+    menuDocked: hasDockedMenu,
+    scopesOpen: isScopesDashboardsOpen,
+  });
+
   const headerLevels = useChromeHeaderLevels();
-  const styles = useStyles2(getStyles, headerLevels, getChromeHeaderLevelHeight(), visualRefreshEnabled);
+  const styles = useStyles2(
+    getStyles,
+    headerLevels,
+    getChromeHeaderLevelHeight(),
+    visualRefreshEnabled,
+    dockedMenuWidth
+  );
   const contentSizeStyles = useStyles2(getContentSizeStyles, extensionSidebarWidth);
   const dragStyles = useStyles2(getDragStyles);
   const isSmallScreen = !useMediaQueryMinWidth('sm');
@@ -158,10 +180,11 @@ export function AppChrome({ children }: Props) {
           >
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
-          {menuDockedAndOpen && (
+          {isMenuRail && <MegaMenuRail className={styles.menuRail} />}
+          {!isMenuRail && menuDockedAndOpen && (
             <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
-          <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
+          <header className={cx(styles.topNav, hasDockedMenu && styles.topNavMenuDocked)}>
             <SingleTopBar
               sectionNav={state.sectionNav.node}
               pageNav={state.pageNav}
@@ -180,7 +203,7 @@ export function AppChrome({ children }: Props) {
           {!state.chromeless && (
             <div
               className={cx(styles.scopesDashboardsContainer, {
-                [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
+                [styles.scopesDashboardsContainerDocked]: hasDockedMenu,
               })}
             >
               <ErrorBoundaryAlert boundaryName="scopes-dashboards">
@@ -188,10 +211,27 @@ export function AppChrome({ children }: Props) {
               </ErrorBoundaryAlert>
             </div>
           )}
+          {activeSectionSidebar && (
+            <div
+              className={styles.sectionSidebarContainer}
+              style={{ left: sectionSidebarOffsets.left, width: sectionSidebarOffsets.width }}
+              data-testid="section-sidebar"
+            >
+              <ErrorBoundaryAlert boundaryName="section-sidebar">
+                <SectionSidebar
+                  // Sections supply their own hooks, so remount when switching between them
+                  key={activeSectionSidebar.definition.id}
+                  definition={activeSectionSidebar.definition}
+                  context={activeSectionSidebar.context}
+                />
+              </ErrorBoundaryAlert>
+            </div>
+          )}
           <main
+            style={{
+              paddingLeft: activeSectionSidebar ? sectionSidebarOffsets.contentPaddingLeft : sectionSidebarOffsets.left,
+            }}
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
             })}
@@ -259,8 +299,21 @@ export function AppChrome({ children }: Props) {
 function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
   const dockedMenuLocalStorageState = store.getBool(DOCKED_LOCAL_STORAGE_KEY, true);
   const isLargeScreen = useMediaQueryMinWidth('xl');
+  const railEnabled = useFlagGrafanaSectionSidebar();
 
   useEffect(() => {
+    // With the rail, large screens are always docked: open shows the full menu, closed shows the rail
+    if (railEnabled) {
+      const state = chrome.state.getValue();
+      if (isLargeScreen && !state.megaMenuDocked) {
+        chrome.setMegaMenuDocked(true, false);
+      } else if (!isLargeScreen && state.megaMenuDocked) {
+        chrome.setMegaMenuDocked(false, false);
+        chrome.setMegaMenuOpen(false, false);
+      }
+      return;
+    }
+
     // if undocked we do not need to do anything
     if (!dockedMenuLocalStorageState) {
       return;
@@ -274,10 +327,16 @@ function useResponsiveDockedMegaMenu(chrome: AppChromeService) {
       chrome.setMegaMenuDocked(false, false);
       chrome.setMegaMenuOpen(false);
     }
-  }, [isLargeScreen, chrome, dockedMenuLocalStorageState]);
+  }, [isLargeScreen, chrome, dockedMenuLocalStorageState, railEnabled]);
 }
 
-const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: number, visualRefreshEnabled: boolean) => {
+const getStyles = (
+  theme: GrafanaTheme2,
+  headerLevels: number,
+  headerHeight: number,
+  visualRefreshEnabled: boolean,
+  dockedMenuWidth: string
+) => {
   return {
     content: css({
       label: 'page-content',
@@ -294,6 +353,13 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     contentChromeless: css({
       paddingTop: 0,
     }),
+    menuRail: css({
+      display: 'flex',
+      height: '100%',
+      position: 'fixed',
+      top: 0,
+      zIndex: 2,
+    }),
     dockedMegaMenu: css({
       background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
       borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
@@ -301,7 +367,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       height: '100%',
       position: 'fixed',
       top: 0,
-      width: MENU_WIDTH,
+      width: dockedMenuWidth,
       zIndex: 2,
 
       [theme.breakpoints.up('xl')]: {
@@ -316,12 +382,27 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
     }),
     scopesDashboardsContainerDocked: css(
       {
-        left: MENU_WIDTH,
+        left: dockedMenuWidth,
       },
       visualRefreshEnabled && {
-        left: `calc(${MENU_WIDTH} + ${theme.spacing(0.5)})`,
+        left: `calc(${dockedMenuWidth} + ${theme.spacing(0.5)})`,
       }
     ),
+    // The background matches the docked mega menu, so the two read as one navigation area
+    sectionSidebarContainer: css({
+      background: visualRefreshEnabled ? theme.colors.background.canvas : theme.colors.background.primary,
+      borderRight: visualRefreshEnabled ? undefined : `1px solid ${theme.colors.border.weak}`,
+      bottom: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'fixed',
+      top: headerLevels * headerHeight,
+      zIndex: 1,
+      '& > nav': {
+        flex: 1,
+        minHeight: 0,
+      },
+    }),
     topNav: css({
       display: 'flex',
       position: 'fixed',
@@ -332,7 +413,7 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       flexDirection: 'column',
     }),
     topNavMenuDocked: css({
-      left: MENU_WIDTH,
+      left: dockedMenuWidth,
     }),
     panes: css({
       display: 'flex',
@@ -344,12 +425,6 @@ const getStyles = (theme: GrafanaTheme2, headerLevels: number, headerHeight: num
       height: '100%',
       overflow: 'hidden',
       position: 'relative',
-    }),
-    pageContainerMenuDocked: css({
-      paddingLeft: MENU_WIDTH,
-    }),
-    pageContainerMenuDockedScopes: css({
-      paddingLeft: `calc(${MENU_WIDTH} * 2)`,
     }),
     pageContainer: css({
       label: 'page-container',

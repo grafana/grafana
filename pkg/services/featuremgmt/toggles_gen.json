@@ -2908,6 +2908,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.sectionSidebar",
+        "resourceVersion": "1790602858784",
+        "creationTimestamp": "2026-09-28T13:40:58Z"
+      },
+      "spec": {
+        "description": "Enables a section sidebar next to the mega menu, first adopted by the dashboards section",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.ssoSettingsToMTSettings",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

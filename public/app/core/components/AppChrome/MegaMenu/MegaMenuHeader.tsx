@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaSectionSidebar, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { Box, IconButton, Stack, useStyles2, Text } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useHomeNav } from 'app/core/hooks/useHomeNav';
@@ -24,7 +24,8 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
   const homeNav = useHomeNav();
-  const styles = useStyles2(getStyles, visualRefreshEnabled);
+  const railEnabled = useFlagGrafanaSectionSidebar();
+  const styles = useStyles2(getStyles, visualRefreshEnabled, railEnabled);
 
   // When undocked we do not show a header, but just the org switcher (which only renders when there are multiple orgs)
   if (!state.megaMenuDocked) {
@@ -61,7 +62,7 @@ export function MegaMenuHeader({ handleDockedMenu, onClose }: Props) {
 
 MegaMenuHeader.displayName = 'MegaMenuHeader';
 
-const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
+const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean, railEnabled: boolean) => ({
   dockMenuButton: css({
     display: 'none',
 
@@ -75,7 +76,8 @@ const getStyles = (theme: GrafanaTheme2, visualRefreshEnabled: boolean) => ({
     display: 'flex',
     gap: theme.spacing(1),
     justifyContent: 'space-between',
-    padding: theme.spacing(0, 1, 0, 1),
+    // With the rail, the docked menu's logo sits where the rail centres its own
+    padding: railEnabled ? theme.spacing(0, 1, 0, 1.5) : theme.spacing(0, 1, 0, 1),
     height: getChromeHeaderLevelHeight(),
     flexShrink: 0,
   }),

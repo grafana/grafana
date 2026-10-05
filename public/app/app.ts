@@ -99,6 +99,7 @@ import { KeybindingSrv } from './core/services/keybindingSrv';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
+import { initDashboardsSectionSidebar } from './features/browse-dashboards/sectionSidebar/dashboardsSectionSidebar';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { EmbeddedDashboardLazy } from './features/dashboard-scene/embedding/EmbeddedDashboardLazy';
 import { DashboardLevelTimeMacro } from './features/dashboard-scene/scene/DashboardLevelTimeMacro';
@@ -266,6 +267,8 @@ export class GrafanaApp {
       initExtensions();
 
       initAlerting();
+
+      initDashboardsSectionSidebar();
 
       standardEditorsRegistry.setInit(getAllOptionEditors);
       standardFieldConfigEditorRegistry.setInit(getAllStandardFieldConfigs);
