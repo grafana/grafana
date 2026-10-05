@@ -1958,38 +1958,49 @@ describe('TableNG utils', () => {
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
     });
 
-    it('sizes numeric/date columns by numericCharWidth under table.refresh, so tabular-nums digits are not under-measured', () => {
-      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
-      const widthWith = (numericCharWidth: number) => {
-        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
-        typographyCtx.numericCharWidth = numericCharWidth;
-        // availWidth 1 => no leftover, so the column is sized purely to its content.
-        return computeContentAwareColWidths([numberField], 1, {
-          typographyCtx,
-          headerTypographyCtx: makeTypographyCtx(),
-          showTypeIcons: false,
-          tableRefreshEnabled: true,
-        })[0];
-      };
-      // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
-      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
-    });
+    it.each([false, true])(
+      'sizes numeric columns by tabular digit width with table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // availWidth 1 => no leftover, so the column is sized purely to its content.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: true } },
+          })[0];
+        };
+        // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
+        expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+      }
+    );
 
-    it('ignores numericCharWidth without table.refresh, sizing numeric columns by the prose average', () => {
-      const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
-      const widthWith = (numericCharWidth: number) => {
-        const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
-        typographyCtx.numericCharWidth = numericCharWidth;
-        // tableRefreshEnabled defaults to false: tabular-nums is off, so numeric falls back to avgCharWidth.
-        return computeContentAwareColWidths([numberField], 1, {
-          typographyCtx,
-          headerTypographyCtx: makeTypographyCtx(),
-          showTypeIcons: false,
-        })[0];
-      };
-      // Widening the (unused) tabular advance must not change the width when the toggle is off.
-      expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
-    });
+    it.each([false, true])(
+      'uses proportional digit widths when tabularNums is off and table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // With tabular-nums off, numeric columns fall back to avgCharWidth.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: false } },
+          })[0];
+        };
+        // Widening the (unused) tabular advance must not change the width when the toggle is off.
+        expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
+      }
+    );
 
     it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
       const jsonField: Field = {

@@ -150,10 +150,8 @@ export const getGridStyles = memoize(
 
         border: 'none',
 
-        // The beta.61 grid roots `font-variant-numeric: tabular-nums`, which widens digits (and the
-        // auto column widths that size them). That's part of the refreshed experience, so keep it off
-        // until `table.refresh` ships to avoid changing number rendering for everyone mid-rollout.
-        ...(tableRefreshEnabled ? {} : { fontVariantNumeric: 'normal' }),
+        // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
+        ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),
 
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,

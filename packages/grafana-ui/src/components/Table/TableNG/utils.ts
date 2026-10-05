@@ -1536,12 +1536,6 @@ interface ColWidthMeasureCtx {
   /** Bound `(field, rowIdx) => actions`, used to size Actions columns; absent when not wired. */
   getActions?: GetActionsFunctionLocal;
   theme?: GrafanaTheme2;
-  /**
-   * `table.refresh`: the beta.61 grid renders tabular data with `font-variant-numeric: tabular-nums`,
-   * which widens digits. Gated on the toggle so numeric/date columns are only sized for the wider
-   * tabular advance while the refreshed experience is enabled (see the grid style that mirrors this).
-   */
-  tableRefreshEnabled: boolean;
 }
 
 /**
@@ -1606,12 +1600,12 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
 // columns stay tight on purpose.
 const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
 
-const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, tableRefreshEnabled }) => {
+const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, theme }) => {
   // Numeric and date/time columns are digit-dominated and render with tabular-nums under
-  // `table.refresh`, so estimate them with the (wider, uniform) tabular digit width rather than the
+  // `dataviz.tabularNums`, so estimate them with the (wider, uniform) tabular digit width rather than the
   // prose average. Without the toggle the grid keeps proportional digits, so fall back to the prose
   // average and the original wiggle rule (string and time both get slack).
-  if (!tableRefreshEnabled) {
+  if (!theme?.flags.tabularNums) {
     const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
     const isText = field.type === FieldType.string || field.type === FieldType.time;
     return isText ? width + TEXT_WIDTH_WIGGLE : width;
@@ -1809,7 +1803,7 @@ export function computeContentAwareColWidths(
   // can't give width back, or that are already sitting at their bound.
   const shrinkFloors = new Map<number, number>();
 
-  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme, tableRefreshEnabled };
+  const measureCtx: ColWidthMeasureCtx = { typographyCtx, getActions, theme };
   // Filter entries are keyed per parent on nested tables, so match on the display name they carry
   // rather than the key: nested columns share one width, so any active filter widens the column.
   const filteredKeys = new Set(
