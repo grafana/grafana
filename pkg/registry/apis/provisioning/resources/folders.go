@@ -355,8 +355,6 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 	if parent != "" {
 		meta.SetFolder(parent)
-	} else {
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 	meta.SetManagerProperties(utils.ManagerProperties{
 		Kind:     utils.ManagerKindRepo,

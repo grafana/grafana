@@ -8,7 +8,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
@@ -28,12 +27,11 @@ import (
 	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	foldersv1beta1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/defaultpermissions"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -41,7 +39,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -325,7 +322,11 @@ func (b *FolderAPIBuilder) folderStorageOpts() apistore.StorageOptions {
 		Index:                b.searcher,
 		EnableFolderSupport:  true,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
-		Permissions:          b.setDefaultFolderPermissions,
+		Permissions: defaultpermissions.NewSetter(defaultpermissions.Config{
+			GVR:           foldersv1.FolderResourceInfo.GroupVersionResource(),
+			Client:        b.resourcePermissionsClient,
+			BuildDefaults: buildDefaultFolderPermissions,
+		}),
 	}
 }
 
@@ -422,90 +423,6 @@ func (b *FolderAPIBuilder) resourcePermissionsClient(ctx context.Context) (*dyna
 	client := dyn.Resource(iamv0alpha1.ResourcePermissionInfo.GroupVersionResource())
 	b.resourcePermissionsSvc = &client
 	return b.resourcePermissionsSvc, nil
-}
-
-func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		return err
-	}
-	if resourcePermissionsSvc == nil {
-		return nil
-	}
-
-	// only set default permissions for root folders
-	if !folder.IsRootFolderUID(obj.GetFolder()) {
-		return nil
-	}
-
-	log := logging.FromContext(ctx)
-	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
-
-	// Setting the default permissions is a system operation triggered by the creation of the
-	// folder, not an action the requester performs directly. The creator does not yet have
-	// permission to manage permissions on the brand-new folder, so we use a service identity to
-	// write them through the ResourcePermission API.
-	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	// The creator gets admin on their folder, in addition to the default basic-role permissions.
-	// Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultFolderPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	// the resource permission will likely already exist with admin can admin, so we will need to update it
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			logger.Error("failed to update root permissions", "error", err)
-			return fmt.Errorf("update root permissions: %w", err)
-		}
-
-		return nil
-	}
-
-	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": obj.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"resource": map[string]any{
-					"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-					"name":     obj.GetName(),
-				},
-				"permissions": permissions,
-			},
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		logger.Error("failed to create root permissions", "error", err)
-		return fmt.Errorf("create root permissions: %w", err)
-	}
-
-	return nil
 }
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {

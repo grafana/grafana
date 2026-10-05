@@ -171,6 +171,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	v.grantPermissions = obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
 	if v.grantPermissions != "" {
 		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
+	} else if s.opts.Permissions != nil && s.opts.EnableFolderSupport && folder.IsRootFolderUID(obj.GetFolder()) {
+		// A resource created at the root of the folder tree has no parent to inherit access
+		// from. Every kind that supports folders and has registered a default-permission
+		// setter gets one automatically here -- callers no longer need to request it per
+		// write via the annotation above (kept only for explicit/legacy callers).
+		v.grantPermissions = utils.AnnoGrantPermissionsDefault
 	}
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
 		return v, err
@@ -319,7 +325,20 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
 	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
-	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // the annotation itself is not supported on update
+
+	// A resource moved to the root loses the folder it inherited access from, exactly like a
+	// resource created there. This mirrors the create-path grant above and intentionally
+	// applies to any caller, not just a particular service identity: moving a resource
+	// already requires write access to it, and the setter this triggers only ever adds
+	// missing baseline entries to the existing ResourcePermission (see
+	// defaultpermissions.NewSetter) -- it never removes or replaces anything, so granting it
+	// unconditionally on arrival at root cannot be used to escalate beyond that baseline.
+	// Staying at root (or moving between two non-root folders) is not a trigger.
+	if s.opts.Permissions != nil && s.opts.EnableFolderSupport &&
+		!folder.IsRootFolderUID(previous.GetFolder()) && folder.IsRootFolderUID(obj.GetFolder()) {
+		v.grantPermissions = utils.AnnoGrantPermissionsDefault
+	}
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck

@@ -1848,18 +1848,6 @@ func (dr *DashboardServiceImpl) saveDashboardThroughK8s(ctx context.Context, cmd
 	}
 	dashboard.SetPluginIDMeta(obj, cmd.PluginID)
 
-	// Request default permissions for new root dashboards via the App Platform path; the dashboard
-	// API server's permission setter acts on this annotation. Root-only (nested inherit from the
-	// parent), dashboards only (folders have their own setter), and ignored on update, so it's safe
-	// before the create-or-update below.
-	if !cmd.IsFolder && cmd.FolderUID == "" && dr.iamFeatures.ResourcePermissionsAPI {
-		meta, err := utils.MetaAccessor(obj)
-		if err != nil {
-			return nil, err
-		}
-		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
-	}
-
 	out, err := dr.k8sclient.Update(ctx, obj, orgID, v1.UpdateOptions{
 		FieldValidation: v1.FieldValidationIgnore,
 	})

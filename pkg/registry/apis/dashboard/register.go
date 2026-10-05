@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/defaultpermissions"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -1047,9 +1048,13 @@ func (b *DashboardsAPIBuilder) dashboardStorageOpts() apistore.StorageOptions {
 		EnableFolderSupport:  true,
 	}
 
-	// Standalone, or embedded with the flag on, uses the App Platform setter; else the legacy one.
+	// Standalone, or embedded with the flag on, uses the shared App Platform setter; else the legacy one.
 	if b.isStandalone || b.iamFeatures.ResourcePermissionsAPI {
-		storageOpts.Permissions = b.setDefaultDashboardPermissions
+		storageOpts.Permissions = defaultpermissions.NewSetter(defaultpermissions.Config{
+			GVR:           dashv1.DashboardResourceInfo.GroupVersionResource(),
+			Client:        b.resourcePermissionsClient,
+			BuildDefaults: buildDefaultDashboardPermissions,
+		})
 	} else {
 		storageOpts.Permissions = b.dashboardPermissions.SetDefaultPermissionsAfterCreate
 	}
@@ -1491,88 +1496,6 @@ func buildDefaultDashboardPermissions(id authlib.AuthInfo) []map[string]any {
 		"verb": "admin",
 	})
 	return append(permissions, defaultDashboardPermissions...)
-}
-
-func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Context, key *resourcepb.ResourceKey, id authlib.AuthInfo, obj utils.GrafanaMetaAccessor) error {
-	resourcePermissionsSvc, err := b.resourcePermissionsClient(ctx)
-	if err != nil {
-		return err
-	}
-	if resourcePermissionsSvc == nil {
-		return nil
-	}
-
-	if obj.GetFolder() != "" {
-		return nil
-	}
-
-	log := logging.FromContext(ctx)
-	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
-
-	// Setting the default permissions is a system operation triggered by the creation
-	// of the dashboard, not an action the requester performs directly. The creator does
-	// not yet have permission to manage permissions on the brand-new dashboard, so we use
-	// a service identity to write them through the ResourcePermission API.
-	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
-	if err != nil {
-		return fmt.Errorf("parse namespace: %w", err)
-	}
-	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
-
-	// The creator gets admin on their dashboard, in addition to the default basic-role
-	// permissions. Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultDashboardPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			log.Error("failed to update dashboard permissions", "error", err)
-			return fmt.Errorf("update dashboard permissions: %w", err)
-		}
-
-		return nil
-	}
-
-	_, err = client.Create(ctx, &unstructured.Unstructured{
-		Object: map[string]interface{}{
-			"metadata": map[string]any{
-				"name":      name,
-				"namespace": obj.GetNamespace(),
-			},
-			"spec": map[string]any{
-				"resource": map[string]any{
-					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-					"name":     obj.GetName(),
-				},
-				"permissions": permissions,
-			},
-		},
-	}, metav1.CreateOptions{})
-	if err != nil {
-		log.Error("failed to create dashboard permissions", "error", err)
-		return fmt.Errorf("create dashboard permissions: %w", err)
-	}
-
-	return nil
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

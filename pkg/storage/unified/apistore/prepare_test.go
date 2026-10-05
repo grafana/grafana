@@ -338,6 +338,50 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, v.grantPermissions, "default")
 	})
 
+	t.Run("Should implicitly grant permissions for a root create when a setter is registered", func(t *testing.T) {
+		withSetter := *s
+		withSetter.opts.Permissions = func(context.Context, *resourcepb.ResourceKey, authlib.AuthInfo, utils.GrafanaMetaAccessor) error {
+			return nil
+		}
+
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "root-dashboard"
+		obj := dashboard.DeepCopyObject()
+
+		v, err := withSetter.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		require.Equal(t, utils.AnnoGrantPermissionsDefault, v.grantPermissions)
+	})
+
+	t.Run("Should not implicitly grant permissions when no setter is registered", func(t *testing.T) {
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "root-dashboard-no-setter"
+		obj := dashboard.DeepCopyObject()
+
+		// s (the outer suite storage) has EnableFolderSupport but no Permissions setter.
+		v, err := s.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
+	t.Run("Should not implicitly grant permissions for a non-root create", func(t *testing.T) {
+		withSetter := *s
+		withSetter.opts.Permissions = func(context.Context, *resourcepb.ResourceKey, authlib.AuthInfo, utils.GrafanaMetaAccessor) error {
+			return nil
+		}
+
+		dashboard := dashv1.Dashboard{}
+		dashboard.Name = "nested-dashboard"
+		obj := dashboard.DeepCopyObject()
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetFolder("some-folder")
+
+		v, err := withSetter.prepareObjectForStorage(ctx, obj)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
 	t.Run("calculate generation", func(t *testing.T) {
 		dash := &dashv1.Dashboard{
 			ObjectMeta: v1.ObjectMeta{
@@ -457,6 +501,106 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 
 func failingDynClient(err error) func(context.Context) (dynamic.Interface, error) {
 	return func(context.Context) (dynamic.Interface, error) { return nil, err }
+}
+
+func TestPrepareObjectForUpdate_DefaultPermissions(t *testing.T) {
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+	ctx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
+	)
+
+	newStorage := func(withSetter bool) *Storage {
+		s := &Storage{
+			gr:         dashv1.DashboardResourceInfo.GroupResource(),
+			serializer: &jsonSerializer{},
+			snowflake:  node,
+			opts: StorageOptions{
+				GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+				EnableFolderSupport: true,
+				MaximumNameLength:   100,
+			},
+		}
+		if withSetter {
+			s.opts.Permissions = func(context.Context, *resourcepb.ResourceKey, authlib.AuthInfo, utils.GrafanaMetaAccessor) error {
+				return nil
+			}
+		}
+		return s
+	}
+
+	dashboardIn := func(folderUID string) *dashv1.Dashboard {
+		d := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name", UID: "XXX"}}
+		meta, err := utils.MetaAccessor(d)
+		require.NoError(t, err)
+		if folderUID != "" {
+			meta.SetFolder(folderUID)
+		}
+		return d
+	}
+
+	t.Run("Should implicitly grant permissions when a resource moves into the root folder", func(t *testing.T) {
+		s := newStorage(true)
+		previous := dashboardIn("some-folder")
+		updated := dashboardIn("")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Equal(t, utils.AnnoGrantPermissionsDefault, v.grantPermissions)
+	})
+
+	t.Run("Should not grant permissions when no setter is registered", func(t *testing.T) {
+		s := newStorage(false)
+		previous := dashboardIn("some-folder")
+		updated := dashboardIn("")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
+	t.Run("Should not grant permissions when staying at root", func(t *testing.T) {
+		s := newStorage(true)
+		previous := dashboardIn("")
+		updated := dashboardIn("")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
+	t.Run("Should not grant permissions when moving between two non-root folders", func(t *testing.T) {
+		s := newStorage(true)
+		previous := dashboardIn("folder-a")
+		updated := dashboardIn("folder-b")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
+	t.Run("Should not grant permissions when moving out of the root folder", func(t *testing.T) {
+		s := newStorage(true)
+		previous := dashboardIn("")
+		updated := dashboardIn("folder-a")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
+
+	t.Run("Explicit annotation on update is still ignored", func(t *testing.T) {
+		s := newStorage(true)
+		previous := dashboardIn("some-folder")
+		updated := dashboardIn("some-folder")
+		meta, err := utils.MetaAccessor(updated)
+		require.NoError(t, err)
+		meta.SetAnnotation(utils.AnnoKeyGrantPermissions, "default")
+
+		v, err := s.prepareObjectForUpdate(ctx, updated, previous)
+		require.NoError(t, err)
+		require.Empty(t, v.grantPermissions)
+	})
 }
 
 func TestEnsureRepoManagedByParentFolder(t *testing.T) {
