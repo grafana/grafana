@@ -226,7 +226,7 @@ export function findRoutesMatchingPredicate(
   return matchingRouteIdsWithPath;
 }
 
-export function parseNotificationPolicyMatchers(query: string): ObjectMatcher[] {
+function parseNotificationPolicyMatchers(query: string): ObjectMatcher[] {
   try {
     return parsePromQLStyleMatcherLoose(query, { trimValue: true }).map(matcherToObjectMatcher);
   } catch {
