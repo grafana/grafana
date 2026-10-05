@@ -1720,6 +1720,14 @@ func (s *searchServer) runPeriodicGlobalIndexUpdate(ctx context.Context) {
 // date. An index that is not open is left alone: it is brought up to date when it
 // is next opened.
 func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
+	start := time.Now()
+	updated := 0
+	defer func() {
+		elapsed := time.Since(start)
+		s.indexMetrics.GlobalUpdateRoundDuration.Observe(elapsed.Seconds())
+		s.indexMetrics.GlobalUpdateRoundIndexes.Set(float64(updated))
+		s.log.Debug("Updated global search indexes", "indexes", updated, "duration", elapsed)
+	}()
 	for _, key := range s.search.GetOpenIndexes() {
 		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
 			continue
@@ -1731,6 +1739,7 @@ func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
 		if idx == nil {
 			continue
 		}
+		updated++
 		if _, err := idx.UpdateIndex(ctx); err != nil {
 			// Logged and left for the next tick: the index keeps serving what it has.
 			s.log.Warn("failed to update global search index", "namespace", key.Namespace, "error", err)
@@ -2017,9 +2026,9 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 
 	// This is technically the same as minBuildTime, but we want to log a different message to make the rebuild reason clear.
 	if !lastImportTime.IsZero() {
-		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(lastImportTime) {
+		if !buildInfo.BuildTime.After(lastImportTime) {
 			if rebuildLogger != nil {
-				rebuildLogger.Info("index build time is before lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
+				rebuildLogger.Info("index build time is not after lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
 			}
 			return true
 		}
@@ -2104,7 +2113,7 @@ type rebuildRequest struct {
 	NamespacedResource
 
 	minBuildTime             time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime           time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	lastImportTime           time.Time       // if not zero, rebuild index unless it was built after this timestamp.
 	minBuildVersion          *semver.Version // if not nil, rebuild index with build version older than this.
 	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
 	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
@@ -2326,6 +2335,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 
 		// indexSource indexes every live object of one resource type, and returns
 		// the resource version the listing was taken at, even when it fails.
+		// How many documents each type contributed, logged once the build is done,
+		// so the cost of a build can be read against the size of what it built.
+		indexedDocs := map[string]int{}
+
 		indexSource := func(src NamespacedResource) (int64, error) {
 			builder, err := getBuilder(ctx, src)
 			if err != nil {
@@ -2391,6 +2404,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 					if err := batch.add(&BulkIndexItem{Action: ActionIndex, Doc: doc}); err != nil {
 						return err
 					}
+					indexedDocs[src.GroupResource()]++
 				}
 
 				if err := batch.flush(); err != nil {
@@ -2437,6 +2451,8 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 				}
 			}
 		}
+
+		logger.Info("Listed documents for index", "documents", indexedDocs)
 
 		// A namespace-wide index holds only live documents, so it has no trash to
 		// restore.

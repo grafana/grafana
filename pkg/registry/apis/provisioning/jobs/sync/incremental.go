@@ -196,6 +196,14 @@ func applyIncrementalChanges(
 		}
 
 		if err := resources.IsPathSupported(change.Path); err != nil {
+			// Files that are not resources (README.md, .keep, hidden files) and deletes
+			// of unsupported paths are not reported.
+			if change.Action != repository.FileActionDeleted &&
+				!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path) {
+				progress.Record(ctx, applyUnsupportedPath(ctx, change, err, repositoryResources, quotaTracker, affectedFolders))
+				continue
+			}
+
 			ensureFolderCtx, ensureFolderSpan := tracer.Start(ctx, "provisioning.sync.incremental.ensure_folder_path_exist")
 			// Maintain the safe segment for empty folders
 			safeSegment := safepath.SafeSegment(change.Path)
@@ -375,6 +383,41 @@ func applyIncrementalChanges(
 	}
 
 	return affectedFolders, nil
+}
+
+// applyUnsupportedPath handles a change whose destination path cannot be synced and
+// returns the one result to record for it. A resource renamed onto such a path is
+// removed, since its file is gone from the old path, with a warning about the new
+// path; in any other case there is nothing to remove and the result is the warning.
+func applyUnsupportedPath(
+	ctx context.Context,
+	change repository.VersionedFileChange,
+	pathErr error,
+	repositoryResources resources.RepositoryResources,
+	quotaTracker quotas.QuotaTracker,
+	affectedFolders map[string]string,
+) jobs.JobResourceResult {
+	result := jobs.NewPathOnlyResult(change.Path).
+		WithAction(change.Action).
+		WithPreviousPath(change.PreviousPath)
+	unsupported := &resources.UnsupportedPathError{Path: change.Path, Err: pathErr}
+
+	removable := change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
+		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
+	if !removable {
+		return result.WithWarning(unsupported).Build()
+	}
+
+	name, folderName, gvk, size, err := repositoryResources.RemoveResourceFromFile(ctx, change.PreviousPath, change.PreviousRef)
+	result.WithName(name).WithGVK(gvk).WithBytes(size)
+	if err != nil {
+		return result.WithError(fmt.Errorf("removing resource from file %s: %w", change.PreviousPath, err)).Build()
+	}
+	quotaTracker.Release()
+	if folderName != "" {
+		affectedFolders[safepath.Dir(change.PreviousPath)] = folderName
+	}
+	return result.WithWarning(unsupported).Build()
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource
