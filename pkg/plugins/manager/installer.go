@@ -211,8 +211,7 @@ func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) 
 }
 
 // unloadAndDelete unloads the plugin and its nested children and deletes its files, returning the
-// IDs of the unloaded children. It leaves the plugin's RBAC data and external service in place:
-// an update goes through here too, and role assignments deleted during an update are never restored.
+// IDs of the unloaded children.
 func (m *PluginInstaller) unloadAndDelete(ctx context.Context, pluginID, version string) ([]string, error) {
 	plugin, exists := m.plugin(ctx, pluginID, version)
 	if !exists {
