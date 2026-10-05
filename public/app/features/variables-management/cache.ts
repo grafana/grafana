@@ -1,4 +1,5 @@
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
+import { clearDashboardScenesCache, clearPredefinedVariablesCache } from 'app/features/dashboard-scene/utils/cache';
 import { dispatch } from 'app/store/store';
 
 export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
@@ -8,13 +9,8 @@ export const variableListTag = { type: 'Variable' as const, id: 'LIST' };
  * Owned by variables-management (mutation sites), not the API client veneer.
  */
 export function invalidatePredefinedVariableCaches() {
-  void Promise.all([
-    import('app/features/dashboard-scene/utils/predefinedVariables'),
-    import('app/features/dashboard-scene/pages/DashboardScenePageStateManager'),
-  ]).then(([{ clearPredefinedVariablesCache }, { getDashboardScenePageStateManager }]) => {
-    clearPredefinedVariablesCache();
-    getDashboardScenePageStateManager().clearSceneCache();
-  });
+  clearPredefinedVariablesCache();
+  clearDashboardScenesCache();
 }
 
 export function invalidateAfterVariableMutation() {
