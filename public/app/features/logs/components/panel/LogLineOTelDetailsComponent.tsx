@@ -18,6 +18,7 @@ import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
 import { LogLineOTelDetailsError } from './LogLineOTelDetailsError';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
+import { LogLineOTelDetailsSummary } from './LogLineOTelDetailsSummary';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
@@ -103,49 +104,46 @@ const LogLineDetailsOTelComponentBody = ({
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
-  if (!groupedFields.length && !groupedLabels.length) {
-    return (
-      <div className={styles.componentWrapper}>
+  return (
+    <div className={styles.componentWrapper}>
+      <LogLineOTelDetailsSummary log={log} />
+      {!groupedFields.length && !groupedLabels.length ? (
         <Box marginTop={1} paddingLeft={0.5}>
           <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>
         </Box>
-      </div>
-    );
-  }
-
-  return (
-    <div className={styles.componentWrapper}>
-      <div className={styles.container}>
-        <LogLineOTelDetailsError fields={fields} labels={labels} />
-        <div className={styles.categories}>
-          {groupedFields.length > 0 &&
-            groupedFields.map(({ category, items }) => (
-              <OTelCategory<FieldDef>
-                key={category.id}
-                category={category}
-                items={items}
-                filter={filterFields}
-                log={log}
-                logs={logs}
-                search={search}
-                RenderFields={LogLineOTelDetailsFields}
-              />
-            ))}
-          {groupedLabels.length > 0 &&
-            groupedLabels.map(({ category, items }) => (
-              <OTelCategory<LabelWithLinks>
-                key={category.id}
-                category={category}
-                items={items}
-                filter={filterLabels}
-                log={log}
-                logs={logs}
-                search={search}
-                RenderFields={LogLineOTelDetailsLabelFields}
-              />
-            ))}
+      ) : (
+        <div className={styles.container}>
+          <LogLineOTelDetailsError fields={fields} labels={labels} />
+          <div className={styles.categories}>
+            {groupedFields.length > 0 &&
+              groupedFields.map(({ category, items }) => (
+                <OTelCategory<FieldDef>
+                  key={category.id}
+                  category={category}
+                  items={items}
+                  filter={filterFields}
+                  log={log}
+                  logs={logs}
+                  search={search}
+                  RenderFields={LogLineOTelDetailsFields}
+                />
+              ))}
+            {groupedLabels.length > 0 &&
+              groupedLabels.map(({ category, items }) => (
+                <OTelCategory<LabelWithLinks>
+                  key={category.id}
+                  category={category}
+                  items={items}
+                  filter={filterLabels}
+                  log={log}
+                  logs={logs}
+                  search={search}
+                  RenderFields={LogLineOTelDetailsLabelFields}
+                />
+              ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
