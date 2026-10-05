@@ -171,6 +171,7 @@ type ModuleServer struct {
 	kvStore          resourcekv.KV
 	experimentalKV   *resource.ExperimentalKVOptions
 	watchExpiry      resource.WatchExpiry
+	blobBackend      resource.BlobSupport
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -460,6 +461,9 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 			if err != nil {
 				return nil, err
 			}
+			if s.cfg.EnableSQLKVBackend && kvStore != nil {
+				s.blobBackend = resource.NewKVBlobSupport(kvStore)
+			}
 		}
 		if backendService, ok := s.storageBackend.(services.Service); ok {
 			return backendService, nil
@@ -493,7 +497,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
+	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry), sql.WithBlobBackend(s.blobBackend))
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
