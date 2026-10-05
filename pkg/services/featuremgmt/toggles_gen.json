@@ -1737,6 +1737,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.queryGatewaySlimAudit",
+        "resourceVersion": "1790805819665",
+        "creationTimestamp": "2026-09-30T22:03:39Z"
+      },
+      "spec": {
+        "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.queryTypes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -1892,6 +1906,23 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.tabularNums",
+        "resourceVersion": "1790951488017",
+        "creationTimestamp": "2026-10-02T09:33:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-02 14:31:28.017202 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables tabular numerals for visualization legend values",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },

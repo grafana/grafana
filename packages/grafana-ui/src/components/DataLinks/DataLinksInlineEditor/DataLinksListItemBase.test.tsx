@@ -84,6 +84,12 @@ describe('DataLinksListItemBase', () => {
     expect(onRemove).toHaveBeenCalled();
   });
 
+  it('gives the drag handle an accessible name', async () => {
+    await setup();
+
+    expect(screen.getByRole('button', { name: 'Reorder data link My link' })).toBeInTheDocument();
+  });
+
   it('shows one-click badge when oneClick is true', async () => {
     await setup({ item: { title: 'Link', url: '/url', oneClick: true } });
 

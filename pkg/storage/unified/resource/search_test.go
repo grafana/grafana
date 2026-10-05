@@ -51,10 +51,19 @@ type MockResourceIndex struct {
 	documentRefs    map[schema.GroupResource][]DocumentRef
 	documentRefsErr error
 
+	// Types recorded as written, as the real index records them in BulkIndex
+	// and forgets them in ForgetType.
+	documentTypes map[schema.GroupResource]struct{}
+
+	// When the index was last compared with storage, through RecordReconciledAt.
+	reconciledAt time.Time
+
 	// Items passed to BulkIndex, and how many writes carried them, guarded by
 	// updateIndexMu.
 	bulkItems []*BulkIndexItem
 	bulkCalls int
+	// Fails BulkIndex from this call on, counting from 1, when not zero.
+	failBulkFromCall int
 
 	// Optional configured results for the managed-object RPCs. When nil the
 	// methods return an error, matching the default "not expected" behaviour.
@@ -77,7 +86,18 @@ func (m *MockResourceIndex) BulkIndex(req *BulkIndexRequest) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
 	m.bulkCalls++
+	if m.failBulkFromCall > 0 && m.bulkCalls >= m.failBulkFromCall {
+		return fmt.Errorf("bulk index failed")
+	}
 	m.bulkItems = append(m.bulkItems, req.Items...)
+	for _, item := range req.Items {
+		if item.Action == ActionIndex && item.Doc != nil && item.Doc.Key != nil {
+			if m.documentTypes == nil {
+				m.documentTypes = map[schema.GroupResource]struct{}{}
+			}
+			m.documentTypes[schema.GroupResource{Group: item.Doc.Key.Group, Resource: item.Doc.Key.Resource}] = struct{}{}
+		}
+	}
 	return nil
 }
 
@@ -119,6 +139,47 @@ func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Tim
 		m.importTimes = map[schema.GroupResource]time.Time{}
 	}
 	m.importTimes[gr] = t
+	return nil
+}
+
+// DocumentTypes answers with the types recorded as written, and the types a
+// test set up documentRefs for, which stand for documents written before it.
+func (m *MockResourceIndex) DocumentTypes() ([]schema.GroupResource, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	types := maps.Clone(m.documentTypes)
+	if types == nil {
+		types = map[schema.GroupResource]struct{}{}
+	}
+	for gr, refs := range m.documentRefs {
+		if len(refs) > 0 {
+			types[gr] = struct{}{}
+		}
+	}
+	return slices.Collect(maps.Keys(types)), nil
+}
+
+func (m *MockResourceIndex) ReconciledAt() (time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	return m.reconciledAt, nil
+}
+
+func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	m.reconciledAt = t
+	return nil
+}
+
+// ForgetType forgets both records, and the documents a test set up, which the
+// caller has removed by now.
+func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	delete(m.importTimes, gr)
+	delete(m.documentTypes, gr)
+	delete(m.documentRefs, gr)
 	return nil
 }
 
@@ -866,6 +927,16 @@ func TestShouldRebuildIndex(t *testing.T) {
 		"build time before last import time": {
 			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
 			lastImportTime:  now,
+			expectedRebuild: true,
+		},
+		"build time equal to last import time": {
+			buildInfo:       IndexBuildInfo{BuildTime: now},
+			lastImportTime:  now,
+			expectedRebuild: true,
+		},
+		"build and import in the same second": {
+			buildInfo:       IndexBuildInfo{BuildTime: now.Truncate(time.Second)},
+			lastImportTime:  now.Truncate(time.Second).Add(500 * time.Millisecond),
 			expectedRebuild: true,
 		},
 		"build time after last import time": {

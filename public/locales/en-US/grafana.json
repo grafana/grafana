@@ -4647,6 +4647,8 @@
       "error-saving": "An error occurred while creating folder.",
       "folder-name-input-placeholder-enter-folder-name": "Enter folder name",
       "label-folder-name": "Folder name",
+      "text-destination-path": "Will be created in {{repository}} under {{path}}",
+      "text-destination-root": "Will be created at the root of {{repository}}",
       "text-pull-request-created": "A pull request has been created with changes to this folder:",
       "title-pull-request-created": "Pull request created",
       "title-this-repository-is-read-only": "This repository is read only"
@@ -6161,9 +6163,6 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Go back to Queries"
-    },
     "plan-placeholder-badge": {
       "text": "Sample data",
       "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."
@@ -6820,19 +6819,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Add SQL expression",
       "sql-cta-description": "Prefer SQL? Add a SQL expression to your queries instead."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "By deleting all transformations, you will go back to the main selection screen."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Add another transformation"
-      },
-      "confirmText-delete-all": "Delete all",
-      "delete-all-transformations": "Delete all transformations",
-      "title-delete-all-transformations": "Delete all transformations?",
-      "tooltip-clear-search": "Clear search",
-      "tooltip-close-picker": "Close picker"
     },
     "validation": {
       "invalid-dashboard-id": "Could not find a valid Grafana.com ID",
@@ -11519,6 +11505,15 @@
         "open-explore": "Open in Explore",
         "set-up": "Set up"
       },
+      "filter": {
+        "badge-ignored": "Filters not applied",
+        "cancel": "Cancel",
+        "clear": "Clear filters",
+        "edit": "Edit filters ({{summary}})",
+        "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "save": "Save",
+        "save-failed": "Could not save to browser storage. Try again."
+      },
       "kubernetes": {
         "alerts-firing_one": "{{value}} alert firing",
         "alerts-firing_other": "{{value}} alerts firing",
@@ -11530,19 +11525,12 @@
           "all-clusters": "All clusters",
           "all-namespaces": "All namespaces",
           "all-nodes": "All nodes",
-          "badge-ignored": "Filters not applied",
-          "cancel": "Cancel",
-          "clear": "Clear filters",
           "cluster": "Cluster",
-          "edit": "Edit filters ({{summary}})",
-          "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
           "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
-          "save": "Save",
-          "save-failed": "Could not save to browser storage. Try again.",
           "summary-cluster": "Cluster: {{cluster}}",
           "summary-namespaces": "Namespaces: {{namespaces}}",
           "summary-nodes": "Nodes: {{nodes}}",
@@ -11575,6 +11563,22 @@
         "disk-hosts_one": "{{count}} host above 90% disk",
         "disk-hosts_other": "{{count}} hosts above 90% disk",
         "disk-worst": "{{host}} at {{percent}}%",
+        "filter": {
+          "exclude-add": "Add exclusion",
+          "exclude-label": "Label",
+          "exclude-pattern": "Pattern",
+          "exclude-pattern-placeholder": "cache-.*",
+          "exclude-remove": "Remove exclusion",
+          "excludes": "Exclude",
+          "excludes-description": "Matching filesystems are left out of the alert and the host count",
+          "invalid-label": "Label names may only contain letters, digits and underscores",
+          "invalid-pattern": "Pattern is not a valid regular expression",
+          "label-required": "Choose a label",
+          "open": "Exclude hosts or filesystems from the disk alert",
+          "pattern-required": "Enter a pattern",
+          "summary-excludes": "Excluding {{matchers}}",
+          "title": "Customize the disk alert"
+        },
         "investigate-disk": "Investigate disk usage in Explore",
         "names_one": "{{value}} metric",
         "names_other": "{{value}} metrics",
@@ -13137,6 +13141,17 @@
     "arc-options-editor": {
       "add-arc": "Add arc",
       "title-remove-arc": "Remove arc"
+    },
+    "data-error": {
+      "edge-example": "Edge “{{edgeId}}”: {{missingEndpoints}}",
+      "ensure-matching-nodes": "Ensure every edge source and target has a matching node after transformations.",
+      "missing-endpoint": "{{side}} “{{id}}” is absent from the node data.",
+      "missing-endpoints_one": "Cannot visualize graph data: {{count}} edge references a missing node.",
+      "missing-endpoints_other": "Cannot visualize graph data: {{count}} edges reference missing nodes.",
+      "missing-field": "Cannot visualize graph data: the {{field}} field is required in the {{frame}} data frame.",
+      "omitted-edges_one": "{{count}} more affected edge not shown.",
+      "omitted-edges_other": "{{count}} more affected edges not shown.",
+      "title": "Cannot visualize graph data"
     },
     "edge": {
       "aria-label-from-to": "Edge from: {{from}} to: {{to}}"
@@ -15009,6 +15024,10 @@
       "error-saving": "Failed to save changes",
       "missing-info": "Missing required fields for saving",
       "read-only-message": "To edit this resource, please update it in your repository directly."
+    },
+    "save-target-switch": {
+      "create-in-database": "Create in Grafana database instead",
+      "create-in-git": "Create in Git repository instead"
     },
     "setup-modal": {
       "done": "Done",
