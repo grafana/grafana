@@ -47,7 +47,7 @@ data/grafana-apiserver
 
 ## Enable aggregation
 
-See [aggregator/README.md](./aggregator/README.md) for more information.
+See [aggregatorrunner](./aggregatorrunner/) for more information.
 
 ### `kubectl` access
 
