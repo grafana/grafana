@@ -303,7 +303,7 @@ Git Sync operations run as jobs, but not all job actions are gated the same way:
 Move and delete permission checks work the same way regardless of which branch the job targets, including a feature branch under the repository's branch workflow. The one exception is the destination folder for a move: it's resolved from the repository's configured branch, so moving into a folder that only exists on a not-yet-merged branch isn't supported yet - the destination folder must already exist on the configured branch.
 {{< /admonition >}}
 
-Opening a pull request isn't a permission of its own. Git Sync commits to a branch and links out to your Git provider to open the pull request there, so whoever can make a change can get it reviewed: a folder-scoped `Viewer` who can save, move, or delete in a folder can do so on a feature branch and open a pull request from it, without `provisioning.jobs:create`.
+Pushing changes to Git isn't a permission of its own. Saving a dashboard, moving it, or deleting it all push changes to Git - on the configured branch, or on a feature branch to raise a pull request from - and each follows the folder and dashboard permissions above. `provisioning.jobs:create` only ever covered the export (`push`) job, so a folder-scoped `Viewer` can get changes into Git, and reviewed, without an `Editor` role.
 
 | Job action                          | Required permission                                                                                           | Who can run it                                            |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
@@ -321,7 +321,7 @@ The repository API exposes several subresources. The following table shows the p
 
 The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
 
-- **Editors exporting resources**: When an editor exports resources to a target branch, Grafana needs the branch list. This is authorized with `provisioning.jobs:create`.
+- **Editors picking a target branch**: When an editor saves changes to a branch or exports resources to one, Grafana needs the branch list. This is authorized with `provisioning.jobs:create`.
 - **Admins configuring a repository**: When an admin or repository owner sets up or edits a repository and picks a target branch, Grafana updates the `Repository` resource info. This is authorized with `provisioning.repositories:write`.
 
 Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
