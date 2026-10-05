@@ -41,20 +41,24 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	}
 
 	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
-	if err != nil {
-		return nil, err
-	}
 	if errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
-	if searchErr := page.response.GetError(); searchErr != nil {
-		err := ErrorFromResponse(searchErr, nil)
+	searchErr := err
+	if searchErr == nil {
+		searchErr = ErrorFromResponse(page.response.GetError(), nil)
+	}
+	if searchErr != nil {
+		result := AsErrorResult(searchErr)
 		// A later page carries a position in search results that the store cannot resume from.
-		if IsSelectableFieldNotIndexed(searchErr) && req.NextPageToken == "" {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
+		if IsSelectableFieldNotIndexed(result) && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, searchErr)
 		}
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		if err != nil {
+			return nil, err
+		}
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
+		return &resourcepb.ListResponse{Error: result}, nil
 	}
 
 	rsp := &resourcepb.ListResponse{
