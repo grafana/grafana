@@ -44,9 +44,9 @@ export const LogLineDetailsOTelComponent = ({
     () =>
       log.dataFrame.meta?.type === DataFrameType.LogLines
         ? // for LogLines frames (dataplane) we don't want to show any additional fields besides already extracted labels and links
-        []
+          []
         : // for other frames, do not show the log message unless there is a link attached
-        log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
+          log.fields.filter((f) => f.links?.length === 0 && f.fieldIndex !== log.entryFieldIndex).sort(),
     [log.dataFrame.meta?.type, log.entryFieldIndex, log.fields]
   );
 
@@ -192,7 +192,7 @@ function OTelCategory<T>({
   }, [category.id, expanded, logOptionsStorageKey]);
 
   const label = t(category.labelKey, category.defaultLabel);
-  const filteredItems = useMemo(() => search !== undefined ? filter(items, search) : items, [filter, items, search]);
+  const filteredItems = useMemo(() => (search !== undefined ? filter(items, search) : items), [filter, items, search]);
 
   if (!items.length) {
     return null;
@@ -235,19 +235,16 @@ function OTelCategory<T>({
 }
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
-  const sectionPaddingX = theme.spacing(0.5);
   const categoryIndent = theme.spacing(0.5);
   const iconGap = theme.spacing(0.5);
   const categoryIconSize = theme.spacing(2);
 
   return {
     componentWrapper: css({
-      padding: theme.spacing(0, 1, 1, 1),
       background: theme.colors.background.primary,
     }),
     container: css({
       textOverflow: 'ellipsis',
-      padding: `0 ${sectionPaddingX}`,
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,
@@ -284,7 +281,7 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
       minWidth: 0,
     }),
     categoryContent: css({
-      padding: 0,
+      padding: theme.spacing(0, 1, 0, 1),
     }),
     chevronIcon: css({
       display: 'inline-flex',
