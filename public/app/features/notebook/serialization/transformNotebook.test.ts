@@ -149,6 +149,30 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
   });
 
+  it("seeds autosave's savedResourceVersion from the resource this scene was loaded from", () => {
+    const resource = notebookResource();
+    resource.metadata.resourceVersion = '1755';
+    resource.metadata.generation = 4;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(scene.autosave.state.savedResourceVersion).toBe('1755');
+    expect(scene.autosave.state.savedGeneration).toBe(4);
+  });
+
+  // A blank/draft notebook has no resource yet, so there is nothing to protect before its first
+  // create lands — seeding `undefined` here is correct, not an oversight. Mirrors what
+  // notebookResourceFor(undefined, spec) actually produces: a metadata with no resourceVersion at all.
+  it('leaves savedResourceVersion unset for a notebook with no resourceVersion yet', () => {
+    const resource = notebookResource();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- exercising metadata that genuinely lacks resourceVersion, same shape notebookResourceFor(undefined, spec) builds
+    const draft = { ...resource, metadata: { name: resource.metadata.name } } as Resource<NotebookSpec>;
+
+    const scene = transformNotebookToScene(draft);
+
+    expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
+  });
+
   // V2PanelSpec.subtitle is deliberately absent from the fixture: neither buildVizPanelState nor
   // vizPanelToSchemaV2 handles it, so it would not survive. Add it here once they do.
   it('round-trips cells, order, source, panel config, timeSettings and metadata', () => {

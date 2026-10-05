@@ -96,6 +96,16 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.data).toEqual({ applied: true, spec: next });
   });
 
+  it("echoes the save's resourceVersion, so a caller does not need a follow-up read to learn the new revision", async () => {
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 2, resourceVersion: '1756' });
+    const client = new NotebookMutationClient(notebookScene());
+    const next = notebookSpec({ title: 'Echoed' });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.data).toEqual({ applied: true, spec: next, resourceVersion: '1756' });
+  });
+
   it('warns about a cell it silently dropped', async () => {
     const client = new NotebookMutationClient(notebookScene());
 
