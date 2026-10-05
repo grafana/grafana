@@ -433,7 +433,7 @@ export const browseDashboardsAPI = createApi({
         } finally {
           if (deletedCount > 0) {
             deletedDashboardsCache.clear();
-            await clearDashboardsPageCache(deletedDashboardUIDs);
+            clearDashboardsPageCache(deletedDashboardUIDs);
 
             // Show notification with button to Recently Deleted
             const title =
