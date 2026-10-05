@@ -29,7 +29,6 @@ import { KnownProvenance } from '../../types/knownProvenance';
 import { DataSourceType } from '../../utils/datasource';
 import { K8sAnnotations } from '../../utils/k8s/constants';
 
-import { countPolicies } from './PoliciesList';
 import * as analytics from './notificationPolicyAnalytics';
 
 jest.mock('../../useRouteGroupsMatcher');
@@ -200,10 +199,6 @@ describe('PoliciesList', () => {
         if (isProvisioned) {
           expect(routeEl).toHaveTextContent(/Provisioned/i);
         }
-
-        // Check subpolicies exist in the tree data
-        const size = countPolicies(route.spec);
-        expect(size).toBeGreaterThanOrEqual(0);
       }
     );
   });
