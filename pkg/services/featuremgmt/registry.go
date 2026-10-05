@@ -2546,10 +2546,10 @@ var (
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
 			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 			Generate:     Generate{React: true},
 		},
 		{
