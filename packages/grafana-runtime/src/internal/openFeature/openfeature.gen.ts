@@ -56,6 +56,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Enable development diagnostics for untracked dashboard edits */
+  DashboardUndoRedoIntegrityCheck: "dashboardUndoRedoIntegrityCheck",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -485,6 +487,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Enable development diagnostics for untracked dashboard edits
+ *
+ * **Details:**
+ * - flag key: `dashboardUndoRedoIntegrityCheck`
+ * - default value: `false`
+ */
+export const useFlagDashboardUndoRedoIntegrityCheck = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardUndoRedoIntegrityCheck", false, options).value;
 };
 
 /**
