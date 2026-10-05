@@ -260,12 +260,8 @@ func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptio
 	return s.Store.List(s.readContext(ctx), options)
 }
 
-func (s *Store) Watch(ctx context.Context, options *metainternalversion.ListOptions) (watch.Interface, error) {
-	return s.Store.Watch(s.readContext(ctx), options)
-}
-
 // readContext serves a user's read of a userReadable cluster-scoped kind as the
-// service identity. The appplugin authorizer only lets users get, list and watch
+// service identity. The appplugin authorizer only lets users get & list
 // these kinds, so this never widens what a user can do.
 func (s *Store) readContext(ctx context.Context) context.Context {
 	if !s.userReadable {
