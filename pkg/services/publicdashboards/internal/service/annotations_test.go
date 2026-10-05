@@ -52,6 +52,48 @@ func TestUnmarshalDashboardAnnotations(t *testing.T) {
 		}
 	})
 
+	t.Run("v2 built-in annotation without a datasource reference resolves to the grafana datasource", func(t *testing.T) {
+		sj, err := simplejson.NewJson([]byte(`{"elements": {}, "annotations": [
+			{"kind": "AnnotationQuery", "spec": {"name": "built-in", "enable": true, "iconColor": "red", "builtIn": true,
+				"query": {"kind": "DataQuery", "group": "grafana", "spec": {"limit": 7, "type": "dashboard"}}}}
+		]}`))
+		require.NoError(t, err)
+
+		dto, err := UnmarshalDashboardAnnotations(sj)
+		require.NoError(t, err)
+		require.Len(t, dto.Annotations.List, 1)
+		anno := dto.Annotations.List[0]
+		assert.Equal(t, "grafana", *anno.Datasource.Uid)
+		assert.Equal(t, "grafana", *anno.Datasource.Type)
+		require.NotNil(t, anno.Target)
+		assert.Equal(t, int64(7), anno.Target.Limit)
+	})
+
+	t.Run("v2 grafana annotation with an invalid query is skipped and the rest are kept", func(t *testing.T) {
+		sj, err := simplejson.NewJson([]byte(`{"elements": {}, "annotations": [
+			{"kind": "AnnotationQuery", "spec": {"name": "bad", "enable": true, "iconColor": "red",
+				"query": {"kind": "DataQuery", "group": "grafana", "datasource": {"name": "grafana"}, "spec": {"limit": "ten", "tags": "x"}}}},
+			{"kind": "AnnotationQuery", "spec": {"name": "good", "enable": true, "iconColor": "red",
+				"query": {"kind": "DataQuery", "group": "grafana", "datasource": {"name": "grafana"}, "spec": {"limit": 10, "type": "tags", "tags": ["a"]}}}}
+		]}`))
+		require.NoError(t, err)
+
+		dto, err := UnmarshalDashboardAnnotations(sj)
+		require.NoError(t, err)
+		require.Len(t, dto.Annotations.List, 1)
+		assert.Equal(t, "good", dto.Annotations.List[0].Name)
+		assert.Equal(t, []string{"a"}, dto.Annotations.List[0].Target.Tags)
+	})
+
+	t.Run("dashboard without an annotations key yields an empty list", func(t *testing.T) {
+		sj, err := simplejson.NewJson([]byte(`{"title": "no annotations", "panels": []}`))
+		require.NoError(t, err)
+
+		dto, err := UnmarshalDashboardAnnotations(sj)
+		require.NoError(t, err)
+		assert.Empty(t, dto.Annotations.List)
+	})
+
 	t.Run("v2 dashboard without annotations yields an empty list", func(t *testing.T) {
 		sj, err := simplejson.NewJson([]byte(`{"elements": {}, "annotations": []}`))
 		require.NoError(t, err)

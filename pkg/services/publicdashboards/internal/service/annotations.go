@@ -4,31 +4,37 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
+var annotationsLogger = log.New("publicdashboards.annotations")
+
 // UnmarshalDashboardAnnotations reads the annotation queries of a dashboard in either schema. A v1
 // dashboard keeps them under annotations.list; a v2 dashboard stores a list of AnnotationQuery kinds
 // under annotations, which is mapped onto the v1 shape so callers handle one type.
 func UnmarshalDashboardAnnotations(sj *simplejson.Json) (*models.AnnotationsDto, error) {
-	bytes, err := sj.MarshalJSON()
+	annotations := sj.Get("annotations")
+	payload, err := annotations.MarshalJSON()
 	if err != nil {
 		return nil, err
-	}
-
-	if _, isV2 := sj.Get("annotations").Interface().([]any); isV2 {
-		return unmarshalV2DashboardAnnotations(bytes)
 	}
 
 	dto := &models.AnnotationsDto{}
-	err = json.Unmarshal(bytes, dto)
-	if err != nil {
-		return nil, err
+	if _, isV2 := annotations.Interface().([]any); isV2 {
+		dto.Annotations.List, err = unmarshalV2DashboardAnnotations(payload)
+		if err != nil {
+			return nil, err
+		}
+		return dto, nil
 	}
 
-	return dto, err
+	if err := json.Unmarshal(payload, &dto.Annotations); err != nil {
+		return nil, err
+	}
+	return dto, nil
 }
 
 // v2AnnotationQuery covers the fields FindAnnotations needs from a v2 annotation. v2beta1 and later keep
@@ -57,17 +63,14 @@ type v2AnnotationQuery struct {
 	} `json:"spec"`
 }
 
-func unmarshalV2DashboardAnnotations(payload []byte) (*models.AnnotationsDto, error) {
-	var dash struct {
-		Annotations []v2AnnotationQuery `json:"annotations"`
-	}
-	if err := json.Unmarshal(payload, &dash); err != nil {
+func unmarshalV2DashboardAnnotations(payload []byte) ([]models.DashAnnotation, error) {
+	var annotations []v2AnnotationQuery
+	if err := json.Unmarshal(payload, &annotations); err != nil {
 		return nil, err
 	}
 
-	dto := &models.AnnotationsDto{}
-	dto.Annotations.List = make([]models.DashAnnotation, 0, len(dash.Annotations))
-	for _, a := range dash.Annotations {
+	list := make([]models.DashAnnotation, 0, len(annotations))
+	for _, a := range annotations {
 		anno := models.DashAnnotation{
 			Name:      a.Spec.Name,
 			Enable:    a.Spec.Enable,
@@ -98,22 +101,32 @@ func unmarshalV2DashboardAnnotations(payload []byte) (*models.AnnotationsDto, er
 					anno.Datasource.Type = &kind
 				}
 			}
-			// The target shape (limit, matchAny, tags, type) only exists for the grafana datasource, which is
-			// the only one FindAnnotations queries. Other datasources keep their own query fields there.
-			if isGrafanaAnnotationDatasource(anno.Datasource.Uid) && len(a.Spec.Query.Spec) > 0 {
-				target, err := annotationTargetFromSpec(a.Spec.Query.Spec)
-				if err != nil {
-					return nil, err
-				}
-				anno.Target = target
-			}
+		}
+		// The frontend omits the datasource reference when the dashboard never named one explicitly, so a
+		// built-in annotation may carry only the grafana group. Give it the uid FindAnnotations matches on.
+		if anno.Datasource.Uid == nil && anno.Datasource.Type != nil && *anno.Datasource.Type == grafanaAnnotationDatasourceType {
+			anno.Datasource.Uid = new(grafanads.DatasourceUID)
 		}
 
-		dto.Annotations.List = append(dto.Annotations.List, anno)
+		// The target shape (limit, matchAny, tags, type) only exists for the grafana datasource, which is
+		// the only one FindAnnotations queries. Other datasources keep their own query fields there.
+		if isGrafanaAnnotationDatasource(anno.Datasource.Uid) && a.Spec.Query != nil && len(a.Spec.Query.Spec) > 0 {
+			target, err := annotationTargetFromSpec(a.Spec.Query.Spec)
+			if err != nil {
+				annotationsLogger.Warn("Skipping public dashboard annotation with an invalid query", "annotation", a.Spec.Name, "error", err)
+				continue
+			}
+			anno.Target = target
+		}
+
+		list = append(list, anno)
 	}
 
-	return dto, nil
+	return list, nil
 }
+
+// grafanaAnnotationDatasourceType is the plugin type of the built-in grafana datasource.
+const grafanaAnnotationDatasourceType = "grafana"
 
 func isGrafanaAnnotationDatasource(uid *string) bool {
 	return uid != nil && (*uid == grafanads.DatasourceUID || *uid == grafanads.DatasourceName)

@@ -1807,14 +1807,15 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, query *dashboards.GetDashboardQuery, out *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	failed, storedVersion, _ := dashboardclient.GetConversionStatus(out)
 	gv, _ := schema.ParseGroupVersion(out.GetAPIVersion())
-	if failed || storedVersion == "" || storedVersion == gv.Version || !isV2OrLaterAPIVersion(storedVersion) {
+	if failed || storedVersion == "" || storedVersion == gv.Version || !dashboards.IsV2OrLaterAPIVersion(storedVersion) {
 		return out, nil
 	}
 
-	// When the stored version cannot be read, the client retries the default version and returns that
-	// result, so the caller gets the converted payload back instead of an error. An error here means
-	// both reads failed.
-	stored, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, storedVersion, "")
+	// Pin the revision the first read returned so a save between the two reads cannot hand back a
+	// different dashboard. When the stored version cannot be read, the client retries the default
+	// version and returns that result, so the caller gets the converted payload back instead of an
+	// error. An error here means both reads failed.
+	stored, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{ResourceVersion: out.GetResourceVersion()}, storedVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to load dashboard %q in stored API version %q: %w", query.UID, storedVersion, err)
 	}
@@ -1825,12 +1826,6 @@ func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, qu
 		dr.log.Warn("Dashboard could not be read in its stored API version, returning the converted payload", "uid", query.UID, "orgId", query.OrgID, "storedVersion", storedVersion, "returnedVersion", storedGV.Version)
 	}
 	return stored, nil
-}
-
-// isV2OrLaterAPIVersion reports whether a dashboard API version (e.g. v2beta1) uses the v2 schema.
-// v0 and v1 versions use the panels schema.
-func isV2OrLaterAPIVersion(version string) bool {
-	return version != "" && !strings.HasPrefix(version, "v0") && !strings.HasPrefix(version, "v1")
 }
 
 func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning, unprovision bool) (*dashboards.Dashboard, error) {

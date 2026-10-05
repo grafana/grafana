@@ -2602,11 +2602,13 @@ func TestGetDashboardsByLibraryPanelUIDWithFieldValueResponse(t *testing.T) {
 // The shared MockK8sHandler drops that argument, and these tests need to assert on it.
 type versionRecordingK8sHandler struct {
 	*client.MockK8sHandler
-	versions []string
+	versions         []string
+	resourceVersions []string
 }
 
 func (h *versionRecordingK8sHandler) GetWithPreferredAPIVersion(ctx context.Context, name string, orgID int64, options metav1.GetOptions, preferredVersion string, subresource ...string) (*unstructured.Unstructured, error) {
 	h.versions = append(h.versions, preferredVersion)
+	h.resourceVersions = append(h.resourceVersions, options.ResourceVersion)
 	return h.Get(ctx, name, orgID, options, subresource...)
 }
 
@@ -2617,7 +2619,7 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 		obj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": "dashboard.grafana.app/" + apiVersion,
 			"kind":       "Dashboard",
-			"metadata":   map[string]any{"name": uid, "generation": int64(1)},
+			"metadata":   map[string]any{"name": uid, "generation": int64(1), "resourceVersion": "42"},
 			"spec":       map[string]any{"title": "converted", "panels": []any{}},
 		}}
 		if conversion != nil {
@@ -2740,6 +2742,12 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 			require.NotNil(t, dashboard)
 
 			assert.Equal(t, tt.wantVersions, handler.versions)
+			// the second read pins the revision the first read returned
+			wantResourceVersions := []string{""}
+			if len(tt.wantVersions) == 2 {
+				wantResourceVersions = append(wantResourceVersions, "42")
+			}
+			assert.Equal(t, wantResourceVersions, handler.resourceVersions)
 			assert.Equal(t, tt.wantAPIVersion, dashboard.APIVersion)
 			assert.Equal(t, tt.wantTitle, dashboard.Data.Get("title").MustString())
 			k8sCliMock.AssertExpectations(t)

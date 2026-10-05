@@ -112,6 +112,7 @@ func (pd *PublicDashboardServiceImpl) GetPublicDashboardForView(ctx context.Cont
 		PublicDashboardEnabled: pubdash.IsEnabled,
 	}
 	if isDashboardV2(dash) {
+		dash.Data.SetPath([]string{"timeSettings", "hideTimepicker"}, !pubdash.TimeSelectionEnabled)
 		sanitizeDataV2(dash.Data)
 	} else {
 		dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
@@ -140,19 +141,29 @@ func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*mo
 	return pubdash, nil
 }
 
-// FindDashboard Gets a dashboard by Uid
+// FindDashboard Gets a dashboard by Uid in the schema it was saved with: a v2 dashboard read in the
+// default (v1) version is down-converted and loses layouts such as tabs.
 func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
+	return pd.findDashboard(ctx, orgId, dashboardUid, true)
+}
+
+// dashboardExists checks that a dashboard exists. It reads the default version only, since the
+// payload is discarded and a v2 dashboard would otherwise cost a second read.
+func (pd *PublicDashboardServiceImpl) dashboardExists(ctx context.Context, orgId int64, dashboardUid string) error {
+	_, err := pd.findDashboard(ctx, orgId, dashboardUid, false)
+	return err
+}
+
+func (pd *PublicDashboardServiceImpl) findDashboard(ctx context.Context, orgId int64, dashboardUid string, useStoredAPIVersion bool) (*dashboards.Dashboard, error) {
 	ctx, span := tracer.Start(ctx, "publicdashboards.FindDashboard")
 	defer span.End()
 
 	// We don't have a signed in user for public dashboards. We are using Grafana's Identity to query the dashboard.
 	dash, err := identity.WithServiceIdentityFn(ctx, orgId, func(ctx context.Context) (*dashboards.Dashboard, error) {
-		// Keep the schema the dashboard was saved with: a v2 dashboard read in the default (v1) version is
-		// down-converted and loses layouts such as tabs.
 		return pd.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
 			UID:                    dashboardUid,
 			OrgID:                  orgId,
-			K8sUseStoredAPIVersion: true,
+			K8sUseStoredAPIVersion: useStoredAPIVersion,
 		})
 	})
 	if err != nil {
@@ -236,8 +247,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	// ensure dashboard exists
-	_, err = pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
-	if err != nil {
+	if err = pd.dashboardExists(ctx, u.OrgID, dto.DashboardUid); err != nil {
 		return nil, err
 	}
 
@@ -295,8 +305,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// validate dashboard exists
-	_, err = pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
-	if err != nil {
+	if err = pd.dashboardExists(ctx, u.OrgID, dto.DashboardUid); err != nil {
 		return nil, err
 	}
 

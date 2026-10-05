@@ -1758,6 +1758,32 @@ func TestIntegrationFindDashboardRequestsStoredAPIVersion(t *testing.T) {
 	fakeDashboardService.AssertExpectations(t)
 }
 
+func TestIntegrationCreateAndUpdateReadDefaultAPIVersion(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// create and update only check that the dashboard exists, so they must not pay for the stored-version read
+	fakeDashboardService := &dashboards.FakeDashboardService{}
+	dashboard := createTestDashboard(t, "exists", 1, "", true, []map[string]any{}, nil)
+	fakeDashboardService.On("GetDashboard", mock.Anything, mock.MatchedBy(func(q *dashboards.GetDashboardQuery) bool {
+		return q.UID == dashboard.UID && !q.K8sUseStoredAPIVersion
+	})).Return(dashboard, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, nil, fakeDashboardService, nil)
+
+	isEnabled := true
+	dto := &models.SavePublicDashboardDTO{
+		DashboardUid:    dashboard.UID,
+		UserId:          7,
+		PublicDashboard: &models.PublicDashboardDTO{IsEnabled: &isEnabled},
+	}
+	created, err := service.Create(context.Background(), SignedInUser, dto)
+	require.NoError(t, err)
+
+	dto.Uid = created.Uid
+	_, err = service.Update(context.Background(), SignedInUser, dto)
+	require.NoError(t, err)
+	fakeDashboardService.AssertExpectations(t)
+}
+
 func TestIntegrationGetPublicDashboardForViewKeepsStoredSchema(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -1844,6 +1870,7 @@ func TestIntegrationGetPublicDashboardForViewKeepsStoredSchema(t *testing.T) {
 			}
 
 			assert.Nil(t, result.Dashboard.Get("panels").Interface(), "v2 payload must not be down-converted to panels")
+			assert.True(t, result.Dashboard.Get("timeSettings").Get("hideTimepicker").MustBool(), "time selection disabled must hide the v2 time picker")
 			assert.Equal(t, "TabsLayout", result.Dashboard.Get("layout").Get("kind").MustString())
 			tabs := result.Dashboard.Get("layout").Get("spec").Get("tabs").MustArray()
 			require.Len(t, tabs, len(tt.wantTabs))

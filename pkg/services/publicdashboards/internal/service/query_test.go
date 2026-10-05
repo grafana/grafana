@@ -1552,7 +1552,9 @@ func TestIntegrationFindAnnotationsV2(t *testing.T) {
 		{"kind": "AnnotationQuery", "spec": {"name": "prometheus", "enable": true, "iconColor": "red",
 			"query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "prom"}, "spec": {"expr": "up", "limit": "not-a-number", "tags": "not-a-list"}}}},
 		{"kind": "AnnotationQuery", "spec": {"name": "no datasource", "enable": true, "iconColor": "red",
-			"query": {"kind": "DataQuery", "spec": {}}}}
+			"query": {"kind": "DataQuery", "spec": {}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "group only", "enable": true, "iconColor": "black", "builtIn": true,
+			"query": {"kind": "DataQuery", "group": "grafana", "spec": {"limit": 7, "type": "dashboard"}}}}
 	]`
 
 	newV2Dashboard := func(t *testing.T, annotations string) *dashboards.Dashboard {
@@ -1586,11 +1588,15 @@ func TestIntegrationFindAnnotationsV2(t *testing.T) {
 		annotationsRepo.On("Find", mock.Anything, mock.MatchedBy(func(q *annotations.ItemQuery) bool {
 			return q.DashboardUID == "" && q.Limit == 5 && len(q.Tags) == 1 && q.Tags[0] == "tag2"
 		})).Return([]*annotations.ItemDTO{{ID: 3, DashboardID: 1, PanelID: 7, Time: 4, TimeEnd: 4, Text: "alpha"}}, nil).Once()
+		// a built-in annotation saved without an explicit datasource reference carries only the grafana group
+		annotationsRepo.On("Find", mock.Anything, mock.MatchedBy(func(q *annotations.ItemQuery) bool {
+			return q.DashboardUID == "v2dash" && q.Limit == 7 && len(q.Tags) == 0
+		})).Return([]*annotations.ItemDTO{{ID: 4, DashboardID: 1, PanelID: 9, Time: 5, TimeEnd: 5, Text: "group only"}}, nil).Once()
 
 		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{From: 1, To: 2}, "abc123")
 		require.NoError(t, err)
 		annotationsRepo.AssertExpectations(t)
-		require.Len(t, items, 3)
+		require.Len(t, items, 4)
 
 		byID := map[int64]models.AnnotationEvent{}
 		for _, item := range items {
@@ -1610,6 +1616,9 @@ func TestIntegrationFindAnnotationsV2(t *testing.T) {
 		assert.Equal(t, int64(0), byID[3].PanelId)
 		assert.Equal(t, "grafana", *byID[3].Source.Datasource.Uid)
 		assert.Equal(t, "grafana", *byID[3].Source.Datasource.Type)
+		assert.Equal(t, int64(9), byID[4].PanelId)
+		assert.Equal(t, "black", byID[4].Color)
+		assert.Equal(t, "grafana", *byID[4].Source.Datasource.Uid)
 	})
 
 	t.Run("returns no events for a v2 dashboard without annotations", func(t *testing.T) {
