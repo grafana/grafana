@@ -1278,22 +1278,22 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Name:      "nnn",
 		}
 
-		// PutBlob must 404 before the parent exists (see blob.proto).
 		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
 			ContentType: "plain/text",
-			Value:       []byte("rejected"),
+			Value:       []byte("before parent"),
+			Folder:      "fff",
 		})
 		require.NoError(t, err)
-		require.NotNil(t, preExisting.Error)
-		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+		require.Nil(t, preExisting.Error)
 
 		initial := &unstructured.Unstructured{}
 		initialMeta, err := utils.MetaAccessor(initial)
 		require.NoError(t, err)
 		initialMeta.SetName(key.Name)
 		initialMeta.SetNamespace(key.Namespace)
+		initialMeta.SetFolder("fff")
 		initial.SetAPIVersion(key.Group + "/v1")
 		initial.SetKind("Test")
 		initialVal, err := initial.MarshalJSON()
@@ -1301,6 +1301,10 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
 		require.NoError(t, err)
 		require.Nil(t, created.Error)
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: preExisting.Uid}, true)
+		require.NoError(t, err)
+		require.Contains(t, string(found.Value), "before parent")
 
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
@@ -1323,7 +1327,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
 		// Check that we can still access both values
-		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 11111")
 
@@ -1337,6 +1341,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
 		meta.SetName(key.Name)
 		meta.SetNamespace(key.Namespace)
+		meta.SetFolder("fff")
 		obj.SetAPIVersion(key.Group + "/v1")
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
@@ -1357,6 +1362,70 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
+	})
+
+	t.Run("replace a blob referenced by the blobs field", func(t *testing.T) {
+		key := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "replace"}
+		putBlob := func(value string) *resourcepb.PutBlobResponse {
+			rsp, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+				Resource:    key,
+				Method:      resourcepb.PutBlobRequest_GRPC,
+				ContentType: "plain/text",
+				Value:       []byte(value),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp
+		}
+		withBlob := func(uid string) []byte {
+			obj := &unstructured.Unstructured{}
+			obj.SetAPIVersion(key.Group + "/v1")
+			obj.SetKind("Test")
+			obj.SetName(key.Name)
+			obj.SetNamespace(key.Namespace)
+			obj.Object[resource.BlobsField] = map[string]any{"logo": map[string]any{"uid": uid}}
+			val, err := obj.MarshalJSON()
+			require.NoError(t, err)
+			return val
+		}
+		getBlob := func(uid string, rv int64) *resourcepb.GetBlobResponse {
+			rsp, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: uid, ResourceVersion: rv})
+			require.NoError(t, err)
+			return rsp
+		}
+
+		v1 := putBlob("logo v1")
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withBlob(v1.Uid)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
+		v2 := putBlob("logo v2")
+		require.NotEqual(t, v1.Uid, v2.Uid)
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: withBlob(v2.Uid), ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(v2.Uid, 0)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v2", string(rsp.Value))
+
+		rsp = getBlob(v1.Uid, 0)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(v1.Uid, created.ResourceVersion)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v1", string(rsp.Value))
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: v1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, "logo v1", string(found.Value))
+
+		otherKey := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "nnn"}
+		rsp, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: otherKey, Uid: v2.Uid})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
 	})
 }
 

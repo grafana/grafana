@@ -2026,9 +2026,9 @@ func shouldRebuildIndex(buildInfo IndexBuildInfo, minBuildVersion, maxBuildVersi
 
 	// This is technically the same as minBuildTime, but we want to log a different message to make the rebuild reason clear.
 	if !lastImportTime.IsZero() {
-		if buildInfo.BuildTime.IsZero() || buildInfo.BuildTime.Before(lastImportTime) {
+		if !buildInfo.BuildTime.After(lastImportTime) {
 			if rebuildLogger != nil {
-				rebuildLogger.Info("index build time is before lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
+				rebuildLogger.Info("index build time is not after lastImportTime, rebuilding the index", "indexBuildTime", buildInfo.BuildTime, "lastImportTime", lastImportTime)
 			}
 			return true
 		}
@@ -2113,7 +2113,7 @@ type rebuildRequest struct {
 	NamespacedResource
 
 	minBuildTime             time.Time       // if not zero, rebuild index if it has been built before this timestamp
-	lastImportTime           time.Time       // if not zero, rebuild index if it has been built before this timestamp.
+	lastImportTime           time.Time       // if not zero, rebuild index unless it was built after this timestamp.
 	minBuildVersion          *semver.Version // if not nil, rebuild index with build version older than this.
 	selectableFields         []string        // rebuild index which is missing some of these selectable fields.
 	expectedSearchFieldsHash string          // if non-empty, rebuild index whose stored SearchFieldsHash differs from this value.
