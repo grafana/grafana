@@ -453,7 +453,7 @@ func TestRandomSkew(t *testing.T) {
 	const skew = ttl / 4
 	var different bool
 	var previous time.Duration
-	for i := 0; i < runs; i++ {
+	for i := range runs {
 		v := svc.randomSkew(skew)
 		require.True(t, v >= 0 && v <= skew, "returned skew must be within ttl and +ttl/4")
 		if i == 0 {
@@ -655,12 +655,10 @@ func (s *backgroundServiceScenario) run(ctx context.Context) {
 	s.ctxCancFunc = canc
 
 	// Start background service
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
+	s.wg.Go(func() {
 		err := s.svc.Run(ctx)
 		if err != nil && !errors.Is(err, context.Canceled) {
 			panic(err)
 		}
-	}()
+	})
 }

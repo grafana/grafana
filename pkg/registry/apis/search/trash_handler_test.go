@@ -49,6 +49,7 @@ func TestTrashHandler_RequestsDeletedResources(t *testing.T) {
 	assert.Equal(t, testKind.group, client.got.Options.Key.Group)
 	assert.Equal(t, testKind.resource, client.got.Options.Key.Resource)
 	assert.Equal(t, int64(25), client.got.Limit)
+	assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.got.ResultFormat)
 
 	// Federating trash is refused by the backend, so the endpoint must not ask.
 	assert.Empty(t, client.got.Federated)

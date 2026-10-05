@@ -20,6 +20,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/inhibition_rules"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/routes"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/folderlabelsyncer"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
+	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/remote"
 	remoteClient "github.com/grafana/grafana/pkg/services/ngalert/remote/client"
@@ -65,7 +69,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -93,7 +96,9 @@ func ProvideService(
 	annotationsRepo annotations.Repository,
 	pluginsStore pluginstore.Store,
 	tracer tracing.Tracer,
-	ruleStore *store.DBstore,
+	alertingStore *store.DBstore,
+	ruleStore *rules.RuleStore,
+	provenanceStore *provenance.ProvenanceStore,
 	httpClientProvider httpclient.Provider,
 	pluginContextProvider *plugincontext.Provider,
 	resourcePermissions accesscontrol.ReceiverPermissionsService,
@@ -128,7 +133,9 @@ func ProvideService(
 		annotationsRepo:           annotationsRepo,
 		pluginsStore:              pluginsStore,
 		tracer:                    tracer,
-		store:                     ruleStore,
+		store:                     alertingStore,
+		ruleStore:                 ruleStore,
+		provenanceStore:           provenanceStore,
 		httpClientProvider:        httpClientProvider,
 		pluginContextProvider:     pluginContextProvider,
 		clientGenerator:           clientGenerator,
@@ -192,6 +199,8 @@ type AlertNG struct {
 	FolderResourcePermissions accesscontrol.FolderPermissionsService
 	annotationsRepo           annotations.Repository
 	store                     *store.DBstore
+	ruleStore                 *rules.RuleStore
+	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
 
@@ -199,6 +208,8 @@ type AlertNG struct {
 	pluginsStore    pluginstore.Store
 	tracer          tracing.Tracer
 	clientGenerator resource.ClientGenerator
+
+	folderLabelSyncer *folderlabelsyncer.Service
 
 	evaluationCoordinator EvaluationCoordinator
 	schedCfg              schedule.SchedulerCfg
@@ -211,7 +222,19 @@ func (ng *AlertNG) newRuleSequenceStore() schedule.RuleSequenceStore {
 	if ng.clientGenerator == nil {
 		return nil
 	}
-	return schedule.NewK8sRuleSequenceStore(ng.clientGenerator, log.New("ngalert.rulesequence.store"))
+	return schedule.NewK8sRuleSequenceStore(
+		ng.clientGenerator,
+		schedule.RuleSequenceNamespace(ng.Cfg),
+		log.New("ngalert.rulesequence.store"),
+	)
+}
+
+func (ng *AlertNG) alertmanagerStore() notifier.AlertingStore {
+	return notifier.CompositeAlertingStore{
+		AlertingStore:             ng.store,
+		ImageStore:                ng.store,
+		ContactPointRoutingReader: ng.ruleStore,
+	}
 }
 
 func (ng *AlertNG) init() error {
@@ -307,18 +330,14 @@ func (ng *AlertNG) init() error {
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
 	multiOrgMetrics := ng.Metrics.GetMultiOrgAlertmanagerMetrics()
-	// Reuse the validator wired into the user-driven datasource proxy so the sync
-	// worker honours the same allow/deny rules. Tests construct ngalert without a
-	// DataProxy — fall back to the no-op OSS validator so they don't NPE.
-	var dsRequestValidator validations.DataSourceRequestValidator = &validations.OSSDataSourceRequestValidator{}
-	if ng.DataProxy != nil && ng.DataProxy.DataSourceRequestValidator != nil {
-		dsRequestValidator = ng.DataProxy.DataSourceRequestValidator
-	}
 
+	// Routes the config GET through the datasource proxy service (same
+	// transport, auth and egress validation as the user-driven proxy and the
+	// external ruler sync worker) — the syncer no longer owns its own transport
+	// or request validator.
 	externalAMSyncer := notifier.NewExternalAMSyncer(
 		ng.DataSourceService,
-		ng.httpClientProvider,
-		dsRequestValidator,
+		ng.DataProxy,
 		ng.Cfg,
 		multiOrgMetrics,
 		moaLogger,
@@ -329,10 +348,10 @@ func (ng *AlertNG) init() error {
 
 	moa, err := notifier.NewMultiOrgAlertmanager(
 		ng.Cfg,
-		ng.store,
+		ng.alertmanagerStore(),
 		ng.store,
 		ng.KVStore,
-		ng.store,
+		ng.provenanceStore,
 		decryptFn,
 		multiOrgMetrics,
 		ng.NotificationService,
@@ -404,7 +423,7 @@ func (ng *AlertNG) init() error {
 		JitterEvaluations:    schedule.JitterStrategyFrom(ng.Cfg.UnifiedAlerting, ng.FeatureToggles),
 		AppURL:               appUrl,
 		EvaluatorFactory:     evalFactory,
-		RuleStore:            ng.store,
+		RuleStore:            ng.ruleStore,
 		RuleSequenceStore:    ng.newRuleSequenceStore(),
 		RecordingRulesCfg:    ng.Cfg.UnifiedAlerting.RecordingRules,
 		Metrics:              ng.Metrics.GetSchedulerMetrics(),
@@ -421,7 +440,7 @@ func (ng *AlertNG) init() error {
 		ng.Cfg.AnnotationMaximumTagsLength,
 		ng.annotationsRepo,
 		ng.dashboardService,
-		ng.store,
+		ng.ruleStore,
 		ng.Metrics.GetHistorianMetrics(),
 		ng.Log,
 		ng.tracer,
@@ -492,18 +511,18 @@ func (ng *AlertNG) init() error {
 
 	configStore := legacy_storage.NewAlertmanagerConfigStore(ng.store, notifier.NewExtraConfigsCrypto(ng.SecretsService), ng.FeatureToggles)
 
-	routeAccess := ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
-	routeService := routes.NewService(configStore, ng.store, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
+	routeAccess := ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, false)
+	routeService := routes.NewService(configStore, ng.provenanceStore, ng.store, ng.Cfg.UnifiedAlerting, ng.FeatureToggles, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol), ng.tracer, routeAccess)
 	provisionRouteService := routes.NewService(
 		configStore,
-		ng.store,
+		ng.provenanceStore,
 		ng.store,
 		ng.Cfg.UnifiedAlerting,
 		ng.FeatureToggles,
 		ng.Log,
 		validation.NewPermissionAwareValidator(ng.accesscontrol),
 		ng.tracer,
-		ac.NewRouteAccess[*legacy_storage.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
+		ac.NewRouteAccess[*v1.ManagedRoute](ng.accesscontrol, ng.RouteResourcePermissions, true),
 	)
 
 	emailValidator := notifier.NewEmailValidator(ng.orgService, ng.Cfg.UnifiedAlerting.LimitEmailToOrgMembers)
@@ -512,8 +531,8 @@ func (ng *AlertNG) init() error {
 	receiverService := notifier.NewReceiverService(
 		receiverAccess,
 		configStore,
-		ng.store,
-		ng.store,
+		ng.provenanceStore,
+		ng.ruleStore,
 		routeService,
 		ng.SecretsService,
 		ng.store,
@@ -525,6 +544,7 @@ func (ng *AlertNG) init() error {
 		ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingImportAlertmanagerAPI),
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 	receiverTestService := notifier.NewReceiverTestingService(
 		receiverService,
@@ -539,8 +559,8 @@ func (ng *AlertNG) init() error {
 	provisioningReceiverService := notifier.NewReceiverService(
 		provisioningReceiverAuthz,
 		configStore,
-		ng.store,
-		ng.store,
+		ng.provenanceStore,
+		ng.ruleStore,
 		routeService,
 		ng.SecretsService,
 		ng.store,
@@ -551,6 +571,7 @@ func (ng *AlertNG) init() error {
 		false, // imported resources are not exposed via provisioning APIs
 		ng.Cfg.UnifiedAlerting.AllowedIntegrations,
 		emailValidator,
+		ng.MultiOrgAlertmanager,
 	)
 
 	// Create limits provider based on alertmanager mode.
@@ -586,13 +607,13 @@ func (ng *AlertNG) init() error {
 	}
 
 	// Provisioning
-	policyService := provisioning.NewNotificationPolicyService(configStore, ng.store, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.store, ng.store, provisioningReceiverService, ng.Log, ng.store, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
-	templateService := provisioning.NewTemplateService(configStore, ng.store, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	policyService := provisioning.NewNotificationPolicyService(configStore, ng.provenanceStore, ng.store, provisionRouteService, ng.Cfg.UnifiedAlerting, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	contactPointService := provisioning.NewContactPointService(provisioningReceiverAuthz, configStore, ng.SecretsService, ng.provenanceStore, ng.store, provisioningReceiverService, ng.Log, ng.ruleStore, ng.ResourcePermissions, ng.Cfg.UnifiedAlerting.AllowedIntegrations, emailValidator)
+	templateService := provisioning.NewTemplateService(configStore, ng.provenanceStore, ng.store, ng.Log, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	templateServiceWithLimits := templateService.WithLimitsProvider(limitsProvider)
-	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.store, ng.store, ng.Log, ng.store, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
+	muteTimingService := provisioning.NewMuteTimingService(configStore, ng.provenanceStore, ng.store, ng.Log, ng.ruleStore, provisionRouteService, validation.NewPermissionAwareValidator(ng.accesscontrol))
 	inhibitionRuleService := inhibition_rules.NewService(configStore, ng.Log, ng.FeatureToggles, validation.NewPermissionAwareValidator(ng.accesscontrol))
-	alertRuleService := provisioning.NewAlertRuleService(ng.store, ng.store, ng.folderService, ng.QuotaService, ng.store,
+	alertRuleService := provisioning.NewAlertRuleService(ng.ruleStore, ng.provenanceStore, ng.folderService, ng.QuotaService, ng.store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()),
 		ng.Cfg.UnifiedAlerting.RulesPerRuleGroupLimit, ng.Log, notifier.NewNotificationSettingsValidationService(ng.store),
@@ -600,8 +621,10 @@ func (ng *AlertNG) init() error {
 
 	// External Mimir ruler sync worker. Routes the ruler config GET through
 	// the datasource proxy service (same transport, auth and egress validation as
-	// the user-driven proxy). It only runs when the operator has set the
-	// external_ruler_uid setting (the enable signal; no separate feature flag).
+	// the user-driven proxy). Runs operator-wide via the external_ruler_uid
+	// setting and/or per-org via the rules Config resource; neither path needs
+	// a feature flag — setting the ini value or the resource's
+	// spec.externalRulerSync.datasourceUid is itself the enable signal.
 	ng.externalRulerSyncer = rulesync.NewExternalRulerSyncer(
 		&ng.Cfg.UnifiedAlerting,
 		log.New("ngalert.rulesync"),
@@ -609,9 +632,11 @@ func (ng *AlertNG) init() error {
 		ng.DataSourceService,
 		ng.DataProxy,
 		alertRuleService,
-		ng.store,
+		ng.ruleStore,
 		ng.store,
 		ng.FolderResourcePermissions,
+		ng.clientGenerator,
+		request.GetNamespaceMapper(ng.Cfg),
 	)
 
 	ng.Api = &api.API{
@@ -622,10 +647,10 @@ func (ng *AlertNG) init() error {
 		DataProxy:             ng.DataProxy,
 		QuotaService:          ng.QuotaService,
 		TransactionManager:    ng.store,
-		RuleStore:             ng.store,
+		RuleStore:             ng.ruleStore,
 		AlertingStore:         ng.store,
 		AdminConfigStore:      ng.store,
-		ProvenanceStore:       ng.store,
+		ProvenanceStore:       ng.provenanceStore,
 		MultiOrgAlertmanager:  ng.MultiOrgAlertmanager,
 		StateManager:          apiStateManager,
 		RuleMutator:           ruleMutator,
@@ -653,7 +678,7 @@ func (ng *AlertNG) init() error {
 	}
 	ng.Api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
-	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.store); err != nil {
+	if err := RegisterQuotas(ng.Cfg, ng.QuotaService, ng.ruleStore); err != nil {
 		return err
 	}
 
@@ -664,6 +689,12 @@ func (ng *AlertNG) init() error {
 		}
 		return key.LogContext(), true
 	})
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
+		ng.folderLabelSyncer = folderlabelsyncer.NewService(ng.Cfg, ng.bus, ng.ruleStore, ng.store, ng.clientGenerator,
+			ng.Metrics.GetFolderLabelSyncerMetrics())
+	}
 
 	return ac.DeclareFixedRoles(ng.AccesscontrolService)
 }
@@ -734,7 +765,7 @@ func (ng *AlertNG) BackfillFolderFullpaths(ctx context.Context) error {
 		ng.Log.Info("Backfilling folder fullpaths", "org_id", orgID, "folder_count", len(folderUIDs))
 
 		// Use the existing sync method to populate fullpaths
-		if err := ng.store.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
+		if err := ng.ruleStore.UpdateFolderFullpathsForFolders(ctx, orgID, folderUIDs); err != nil {
 			ng.Log.Error("Failed to backfill folder fullpaths", "org_id", orgID, "error", err)
 			// Continue with next org instead of failing completely
 		}
@@ -759,6 +790,13 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 		}
 		return nil
 	})
+
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	if ng.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) && ng.folderLabelSyncer != nil {
+		children.Go(func() error {
+			return ng.folderLabelSyncer.Run(subCtx)
+		})
+	}
 
 	children.Go(func() error {
 		return ng.MultiOrgAlertmanager.Run(subCtx)

@@ -17,7 +17,6 @@ import {
 } from '@grafana/ui';
 import { type FacetedData, type TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
-import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
 
 import { getXAxisConfig } from '../../../core/components/TimeSeries/utils';
 import { AnnotationsPlugin } from '../timeseries/plugins/AnnotationsPlugin';
@@ -25,7 +24,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getXAnnotationFrames } from '../timeseries/plugins/utils';
 
 import { HeatmapTooltip } from './HeatmapTooltip';
-import { type HeatmapData, prepareHeatmapData } from './fields';
+import { getExemplarYValues, type HeatmapData, prepareHeatmapData } from './fields';
 import { quantizeScheme } from './palettes';
 import { type Options } from './panelcfg.gen';
 import { calculateYSizeDivisor, prepConfig } from './utils';
@@ -104,27 +103,9 @@ const HeatmapPanelViz = ({
     let exemplarsXFacet: number[] | undefined = []; // "Time" field
     let exemplarsYFacet: Array<number | undefined> = [];
 
-    const meta = readHeatmapRowsCustomMeta(info.heatmap);
-
     if (info.exemplars?.length) {
-      exemplarsXFacet = info.exemplars?.fields[0].values;
-
-      // render by match on ordinal y label
-      if (meta.yMatchWithLabel) {
-        // ordinal/labeled heatmap-buckets?
-        const hasLabeledY = meta.yOrdinalDisplay != null;
-
-        if (hasLabeledY) {
-          let matchExemplarsBy = info.exemplars?.fields.find((field) => field.name === meta.yMatchWithLabel)!.values;
-          exemplarsYFacet = matchExemplarsBy.map((label) => meta.yOrdinalLabel?.indexOf(label));
-        } else {
-          exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
-        }
-      }
-      // render by raw value
-      else {
-        exemplarsYFacet = info.exemplars?.fields[1].values; // "Value" field
-      }
+      exemplarsXFacet = info.exemplars.fields[0].values;
+      exemplarsYFacet = getExemplarYValues(info.heatmap, info.exemplars);
     }
 
     return [null, info.heatmap.fields.map((f) => f.values), [exemplarsXFacet, exemplarsYFacet]];

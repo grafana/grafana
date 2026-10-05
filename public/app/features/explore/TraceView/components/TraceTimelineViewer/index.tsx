@@ -108,7 +108,7 @@ export type TProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSpanIdForSearch: string;
+  focusedSpanForSearch?: { spanID: string };
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement | null>;
@@ -119,7 +119,7 @@ export type TProps = {
   redrawListView: {};
   setRedrawListView: (redraw: {}) => void;
   timeRange: TimeRange;
-  app: CoreApp;
+  app: CoreApp | string;
 };
 
 const NUM_TICKS = 5;
@@ -138,7 +138,6 @@ const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(pr
     viewRange,
     traceTimeline,
     topOfViewRef,
-    focusedSpanIdForSearch,
     ...rest
   } = props;
 
@@ -229,7 +228,6 @@ const UnthemedTraceTimelineViewer = memo(function UnthemedTraceTimelineViewer(pr
         setSpanNameColumnWidth={setSpanNameColumnWidth}
         currentViewRangeTime={viewRange.time.current}
         topOfViewRef={topOfViewRef}
-        focusedSpanIdForSearch={focusedSpanIdForSearch}
         datasourceType={datasourceType}
         datasourceUid={datasourceUid}
       />

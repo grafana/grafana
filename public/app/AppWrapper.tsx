@@ -24,7 +24,7 @@ import { ThemeProvider } from './core/utils/ConfigProvider';
 import { getCommandPaletteInputMode } from './features/commandPalette/inputMode';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
-import { getPluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
+import { getPluginExtensionRegistries, initRegistries } from './features/plugins/extensions/registry/setup';
 import { type PluginExtensionRegistries } from './features/plugins/extensions/registry/types';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
 import { RouterWrapper } from './routes/RoutesWrapper';
@@ -62,13 +62,15 @@ const iconCacheID = `grafana-icon-cache-${config.buildInfo.commit}`;
 
 export function AppWrapper({ context }: AppWrapperProps) {
   const [ready, setReady] = useState(false);
-  const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(undefined);
+  const [registries, setRegistries] = useState<PluginExtensionRegistries | undefined>(initRegistries([]));
 
   useEffect(() => {
     async function init() {
-      const regs = await getPluginExtensionRegistries();
+      if (contextSrv.user.orgRole !== '') {
+        const regs = await getPluginExtensionRegistries();
+        setRegistries(regs);
+      }
       setReady(true);
-      setRegistries(regs);
       removePreloader();
 
       // clear any old icon caches

@@ -5,6 +5,12 @@ starsV1alpha1: {
 	pluralName: "Stars"
 	scope:      "Namespaced"
 
+	// Generic read routes cannot apply the caller filtering used by normal list reads.
+	listKeys: false
+	search: {
+		endpoint: false
+	}
+
 	validation: {
 		operations: [
 			"CREATE",

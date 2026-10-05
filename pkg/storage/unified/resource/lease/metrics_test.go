@@ -17,7 +17,7 @@ import (
 )
 
 func TestMetricsAcquireRelease(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-ar", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-ar", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -43,7 +43,7 @@ func TestMetricsAcquireRelease(t *testing.T) {
 }
 
 func TestMetricsAcquireErrorOutcome(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-err", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-err", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -59,7 +59,7 @@ func TestMetricsAcquireErrorOutcome(t *testing.T) {
 }
 
 func TestMetricsAcquireAlreadyHeldOutcome(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-already-held", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-already-held", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -81,7 +81,7 @@ func TestMetricsAcquireAlreadyHeldOutcome(t *testing.T) {
 func TestMetricsReleaseLostOutcome(t *testing.T) {
 	const ttl = 50 * time.Millisecond
 
-	m := lease.NewManager(newMapKV(), "holder-release-lost", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-release-lost", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 	)
@@ -107,7 +107,7 @@ func TestMetricsReleaseLostOutcome(t *testing.T) {
 
 func TestMetricsAcquireRetries(t *testing.T) {
 	failing := &retryKV{KV: newMapKV()}
-	m := lease.NewManager(failing, "holder-retry", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(failing, "holder-retry", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -125,7 +125,7 @@ func TestMetricsAcquireRetries(t *testing.T) {
 func TestMetricsLossOnExpiry(t *testing.T) {
 	const ttl = 50 * time.Millisecond
 
-	m := lease.NewManager(newMapKV(), "holder-loss", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-loss", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 	)
@@ -148,7 +148,7 @@ func TestMetricsLossOnExpiry(t *testing.T) {
 func TestMetricsRenewalSuccess(t *testing.T) {
 	const ttl = 100 * time.Millisecond
 
-	m := lease.NewManager(newMapKV(), "holder-renew", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-renew", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 	)
@@ -171,7 +171,7 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 	const ttl = 100 * time.Millisecond
 
 	store := newMapKV()
-	a := lease.NewManager(store, "holder-a", prometheus.NewPedanticRegistry(),
+	a := lease.NewManager(store, "holder-a", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 	)
@@ -185,7 +185,7 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 	// a's renewal goroutine ticks it tries to create the same generation key
 	// and fails with ErrLeaseLost.
 	future := func() time.Time { return time.Now().Add(time.Hour) }
-	b := lease.NewManager(store, "holder-b", nil,
+	b := lease.NewManager(store, "holder-b", "test", nil,
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(ttl),
 		lease.WithInternalNowFunc(future),
@@ -205,7 +205,7 @@ func TestMetricsRenewalFailureLost(t *testing.T) {
 }
 
 func TestMetricsGCExecuted(t *testing.T) {
-	m := lease.NewManager(newMapKV(), "holder-gc-exec", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(newMapKV(), "holder-gc-exec", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -223,7 +223,7 @@ func TestMetricsGCSkipped(t *testing.T) {
 	// Simulate another GC instance currently holding the internal key.
 	writeGCInternalKey(t, store, time.Now().Add(time.Minute))
 
-	m := lease.NewManager(store, "holder-gc-skip", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(store, "holder-gc-skip", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 	)
 	metrics := m.Metrics()
@@ -245,7 +245,7 @@ func TestMetricsGCScannedAndDeleted(t *testing.T) {
 	now := base
 	nowFunc := func() time.Time { return now }
 
-	m := lease.NewManager(store, "holder-gc-counts", prometheus.NewPedanticRegistry(),
+	m := lease.NewManager(store, "holder-gc-counts", "test", prometheus.NewPedanticRegistry(),
 		lease.WithGarbageCollectionDisabled,
 		lease.WithInternalMinTTL(shortTTL),
 		lease.WithInternalNowFunc(nowFunc),

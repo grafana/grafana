@@ -94,6 +94,7 @@ func TestIntegrationDatasourceProxy(t *testing.T) {
 		EnableFeatureToggles: []string{
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, // start the datasource api servers
 			featuremgmt.FlagDatasourceUseNewCRUDAPIs,             // register the datasource api groups
+			featuremgmt.FlagDatasourcesApiServerEnableProxyEndpoint,
 		},
 	}
 	grafanaDir, cfgPath := testinfra.CreateGrafDir(t, grafanaOpts)

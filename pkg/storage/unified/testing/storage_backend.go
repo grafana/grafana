@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -43,7 +43,7 @@ const (
 	TestListTrash                 = "list trash"
 	TestCreateNewResource         = "create new resource"
 	TestGetResourceLastImportTime = "get resource last import time"
-	TestOptimisticLocking         = "optimistic locking on concurrent writes"
+	TestConcurrentWriteConflicts  = "concurrent write conflicts"
 	TestClusterScopedResources    = "cluster scoped resources"
 	TestErrorResponses            = "error responses"
 	TestReadAtRVBeforeDelete      = "read at RV edge cases"
@@ -63,7 +63,7 @@ type TestOptions struct {
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation
 func GenerateRandomNSPrefix() string {
-	uid := uuid.New().String()[:10]
+	uid := uuid.NewV4().String()[:10]
 	return fmt.Sprintf("test-%s", uid)
 }
 
@@ -95,7 +95,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
-		{TestOptimisticLocking, runTestIntegrationBackendOptimisticLocking},
+		{TestConcurrentWriteConflicts, runTestIntegrationBackendConcurrentWriteConflicts},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
 		{TestReadAtRVBeforeDelete, runTestIntegrationBackendReadAtRVEdgeCases},
@@ -1044,7 +1044,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			Name:      "paged-item",
 		}
 
-		var resourceVersions []int64
+		resourceVersions := make([]int64, 0, 10)
 
 		// First create the initial resource
 		initialRV, err := WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_ADDED, WithNamespace(ns2))
@@ -1053,7 +1053,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 
 		// Create 9 more versions with modifications
 		rv := initialRV
-		for i := 0; i < 9; i++ {
+		for range 9 {
 			rv, err = WriteEvent(ctx, backend, "paged-item", resourcepb.WatchEvent_MODIFIED, WithNamespaceAndRV(ns2, rv))
 			require.NoError(t, err)
 			resourceVersions = append(resourceVersions, rv)
@@ -1278,22 +1278,22 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Name:      "nnn",
 		}
 
-		// PutBlob must 404 before the parent exists (see blob.proto).
 		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
 			ContentType: "plain/text",
-			Value:       []byte("rejected"),
+			Value:       []byte("before parent"),
+			Folder:      "fff",
 		})
 		require.NoError(t, err)
-		require.NotNil(t, preExisting.Error)
-		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+		require.Nil(t, preExisting.Error)
 
 		initial := &unstructured.Unstructured{}
 		initialMeta, err := utils.MetaAccessor(initial)
 		require.NoError(t, err)
 		initialMeta.SetName(key.Name)
 		initialMeta.SetNamespace(key.Namespace)
+		initialMeta.SetFolder("fff")
 		initial.SetAPIVersion(key.Group + "/v1")
 		initial.SetKind("Test")
 		initialVal, err := initial.MarshalJSON()
@@ -1301,6 +1301,10 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
 		require.NoError(t, err)
 		require.Nil(t, created.Error)
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: preExisting.Uid}, true)
+		require.NoError(t, err)
+		require.Contains(t, string(found.Value), "before parent")
 
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
@@ -1323,7 +1327,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
 		// Check that we can still access both values
-		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 11111")
 
@@ -1337,6 +1341,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
 		meta.SetName(key.Name)
 		meta.SetNamespace(key.Namespace)
+		meta.SetFolder("fff")
 		obj.SetAPIVersion(key.Group + "/v1")
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
@@ -1357,6 +1362,70 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
+	})
+
+	t.Run("replace a blob referenced by the blobs field", func(t *testing.T) {
+		key := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "replace"}
+		putBlob := func(value string) *resourcepb.PutBlobResponse {
+			rsp, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+				Resource:    key,
+				Method:      resourcepb.PutBlobRequest_GRPC,
+				ContentType: "plain/text",
+				Value:       []byte(value),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp
+		}
+		withBlob := func(uid string) []byte {
+			obj := &unstructured.Unstructured{}
+			obj.SetAPIVersion(key.Group + "/v1")
+			obj.SetKind("Test")
+			obj.SetName(key.Name)
+			obj.SetNamespace(key.Namespace)
+			obj.Object[resource.BlobsField] = map[string]any{"logo": map[string]any{"uid": uid}}
+			val, err := obj.MarshalJSON()
+			require.NoError(t, err)
+			return val
+		}
+		getBlob := func(uid string, rv int64) *resourcepb.GetBlobResponse {
+			rsp, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: uid, ResourceVersion: rv})
+			require.NoError(t, err)
+			return rsp
+		}
+
+		v1 := putBlob("logo v1")
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withBlob(v1.Uid)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
+		v2 := putBlob("logo v2")
+		require.NotEqual(t, v1.Uid, v2.Uid)
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: withBlob(v2.Uid), ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(v2.Uid, 0)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v2", string(rsp.Value))
+
+		rsp = getBlob(v1.Uid, 0)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(v1.Uid, created.ResourceVersion)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v1", string(rsp.Value))
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: v1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, "logo v1", string(found.Value))
+
+		otherKey := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "nnn"}
+		rsp, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: otherKey, Uid: v2.Uid})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
 	})
 }
 
@@ -1513,7 +1582,7 @@ func WriteEvent(ctx context.Context, store resource.StorageBackend, name string,
 	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,
@@ -1635,7 +1704,7 @@ func runTestIntegrationBackendTrash(t *testing.T, backend resource.StorageBacken
 			require.Nil(t, res.Error)
 			expectedItemCount := len(tc.expectedVersions)
 			require.Len(t, res.Items, expectedItemCount)
-			for i := 0; i < expectedItemCount; i++ {
+			for i := range expectedItemCount {
 				require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
 				require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
 			}
@@ -1655,8 +1724,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
 	t.Run("no imported times by default", func(t *testing.T) {
-		res := collectLastImportedTimes(t, backend, ctx)
-		require.Empty(t, res)
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, resource.NamespacedResource{
+			Namespace: nsPrefix + "-not-imported",
+			Group:     "dashboards",
+			Resource:  "dashboard",
+		})
+		require.NoError(t, err)
+		require.True(t, lastImportTime.IsZero())
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1689,7 +1763,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.Rejected)
 
-		result := collectLastImportedTimes(t, backend, ctx)
+		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
 
 		now := time.Now()
@@ -1730,7 +1804,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
-		result1 := collectLastImportedTimes(t, backend, ctx)
+		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
@@ -1762,7 +1836,10 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		secondImport := time.Now()
 
 		// Verify that last imported times are combination of both bulk imports
-		result2 := collectLastImportedTimes(t, backend, ctx)
+		allCollections := make([]*resourcepb.ResourceKey, 0, len(collections1)+len(collections2))
+		allCollections = append(allCollections, collections1...)
+		allCollections = append(allCollections, collections2...)
+		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1778,11 +1855,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 	})
 }
 
-func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context) map[resource.NamespacedResource]time.Time {
-	result := map[resource.NamespacedResource]time.Time{}
-	for lm, err := range backend.GetResourceLastImportTimes(ctx) {
+func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context, keys []*resourcepb.ResourceKey) map[resource.NamespacedResource]time.Time {
+	result := make(map[resource.NamespacedResource]time.Time, len(keys))
+	for _, key := range keys {
+		nsr := resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, nsr)
 		require.NoError(t, err)
-		result[lm.NamespacedResource] = lm.LastImportTime
+		result[nsr] = lastImportTime
 	}
 	return result
 }
@@ -1815,9 +1894,9 @@ func (s *sliceBulkRequestIterator) RollbackRequested() bool {
 	return false
 }
 
-func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+func runTestIntegrationBackendConcurrentWriteConflicts(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
-	ns := nsPrefix + "-optimis-lock" // optimistic-locking. need to cut down on characters to not exceed namespace character limit (40)
+	ns := nsPrefix + "-write-conf" // Keep the suffix short enough not to exceed the 40-character namespace limit.
 
 	t.Run("concurrent updates with same RV - only one succeeds", func(t *testing.T) {
 		// Create initial resource with rv0 (no previous RV)
@@ -1836,7 +1915,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(updateNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-item", resourcepb.WatchEvent_MODIFIED,
@@ -1907,7 +1986,7 @@ func runTestIntegrationBackendOptimisticLocking(t *testing.T, backend resource.S
 		// Start all goroutines concurrently
 		var wg sync.WaitGroup
 		wg.Add(numConcurrent)
-		for i := 0; i < numConcurrent; i++ {
+		for i := range numConcurrent {
 			go func(createNum int) {
 				defer wg.Done()
 				rv, err := WriteEvent(ctx, backend, "concurrent-create-item", resourcepb.WatchEvent_ADDED,
@@ -2122,7 +2201,7 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	makeValue := func(name string) []byte {
 		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
-			group, kind, name, ns, uuid.New().String(),
+			group, kind, name, ns, uuid.NewV4().String(),
 		)
 	}
 

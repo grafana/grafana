@@ -160,6 +160,31 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(saveModel).toEqual(spec);
   });
 
+  it("round-trips a panel cell's own time range via queryOptions.timeFrom/.timeTo", () => {
+    const resource = notebookResource();
+    const panelElement = resource.spec.elements['latency-panel'];
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
+
+    const scene = transformNotebookToScene(resource);
+    const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!;
+
+    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    // Confirms timeFrom/timeTo were stripped before buildVizPanelState ran: otherwise it would have
+    // auto-attached its own PanelTimeRange here, which would shadow this cell-level override via
+    // sceneGraph.getTimeRange's check-self-before-parent resolution order.
+    expect(cell.state.body?.state.$timeRange).toBeUndefined();
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+    const savedElement = saveModel.elements['latency-panel'];
+    expect(savedElement.kind === 'Panel' && savedElement.spec.data.spec.queryOptions).toEqual({
+      timeFrom: 'now-24h',
+      timeTo: 'now',
+    });
+  });
+
   // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both
   // optional args are omitted: a dsReferencesMapping routes it through getElementIdentifierForVizPanel
   // -> getDashboardSceneFor, which throws for a NotebookScene root. Nothing in the signature says so,
@@ -171,6 +196,34 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
 
     expect(() => getDashboardSceneFor(panel)).toThrow();
     expect(() => transformNotebookSceneToSaveModel(scene)).not.toThrow();
+  });
+
+  // The block the editor keeps at the bottom is dropped from the layout, so its element has to go too
+  // or `elements` keeps an entry that no layout item points at.
+  it('leaves no orphan element behind when the trailing empty block is dropped', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const trailing = scene.state.body.appendSystemCell(scene.state.body.state.cells.length)!;
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[trailing.state.elementName]).toBeUndefined();
+    expect(saveModel.layout.spec.cells.map((cell) => cell.spec.element.name)).not.toContain(trailing.state.elementName);
+    // Everything else is untouched, so this drops one cell rather than changing the document.
+    expect(saveModel.layout.spec.cells).toHaveLength(4);
+  });
+
+  // The element survives being referenced twice even when one of the two references is the dropped
+  // trailing cell, because elements are keyed off the cells that stay.
+  it('keeps an element that the dropped block shares with a cell that stays', () => {
+    const scene = transformNotebookToScene(notebookResource());
+    const cells = scene.state.body.state.cells;
+    const shared = cells[0].state.elementName;
+    const trailing = scene.state.body.appendSystemCell(cells.length)!;
+    trailing.setState({ elementName: shared });
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+
+    expect(saveModel.elements[shared]).toBeDefined();
   });
 
   // Two layout items referencing one element is legal, and the deserializer gives each its own cell.

@@ -112,6 +112,7 @@ export const TemplateDashboardModal = () => {
 };
 
 function getStyles(theme: GrafanaTheme2) {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     modal: css({
       width: '1200px',
@@ -120,7 +121,7 @@ function getStyles(theme: GrafanaTheme2) {
       position: 'sticky',
       top: 0,
       zIndex: 2,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.primary,
       paddingTop: theme.spacing(1),
       paddingBottom: theme.spacing(2),
     }),

@@ -2,14 +2,90 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type retryTestResourceServer struct {
+	ResourceServer
+	failure  error
+	attempts int
+}
+
+func (s *retryTestResourceServer) Update(context.Context, *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	s.attempts++
+	if s.attempts == 1 {
+		return nil, s.failure
+	}
+	return &resourcepb.UpdateResponse{}, nil
+}
+
+func TestLocalResourceClientRetryCodes(t *testing.T) {
+	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
+		t.Run(code.String(), func(t *testing.T) {
+			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+			require.NoError(t, err)
+			srv := &retryTestResourceServer{failure: st.Err()}
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
+			if code == codes.Unavailable || code == codes.ResourceExhausted {
+				require.NoError(t, err)
+				require.Equal(t, 2, srv.attempts)
+			} else {
+				require.Equal(t, 1, srv.attempts)
+				require.Equal(t, st.Proto(), status.Convert(err).Proto())
+			}
+		})
+	}
+}
+
+type missingReadBackend struct{ mockStorageBackend }
+
+func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
+	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
+}
+
+func TestLocalResourceClientErrorConversion(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv, err := NewResourceServer(ResourceServerOptions{
+				Backend: &missingReadBackend{}, GRPCErrorResultToStatus: enabled,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			resp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
+			}})
+			if !enabled {
+				require.NoError(t, err)
+				require.Equal(t, int32(http.StatusNotFound), resp.GetError().GetCode())
+				return
+			}
+			require.Equal(t, codes.NotFound, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
+		})
+	}
+}
 
 func TestIDTokenExtractor(t *testing.T) {
 	t.Run("should return an error when no claims found", func(t *testing.T) {
@@ -23,6 +99,166 @@ func TestIDTokenExtractor(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, token)
 	})
+}
+
+func TestNewIDTokenExtractor(t *testing.T) {
+	serviceCtx, _ := identity.WithServiceIdentity(context.Background(), 0)
+	withInfo := func(info *identity.StaticRequester) context.Context {
+		return types.WithAuthInfo(context.Background(), info)
+	}
+	requireIdentity := func(context.Context) bool { return true }
+	oboOn := func(context.Context) bool { return true }
+	oboOff := func(context.Context) bool { return false }
+	cancelledCtx, cancel := context.WithCancel(withInfo(&identity.StaticRequester{Type: types.TypeUser}))
+	cancel()
+	expiredCtx, cancelExpired := context.WithDeadline(withInfo(&identity.StaticRequester{Type: types.TypeUser}), time.Now().Add(-time.Minute))
+	defer cancelExpired()
+	// Allows the fallback, but a done context must return before the policy reads its flag.
+	unreachablePolicy := func(context.Context) bool {
+		t.Error("RequireCallerIdentity was consulted for a done context")
+		return false
+	}
+
+	modes := []string{identityModeService, identityModeIDToken, identityModeOnBehalfOf, identityModeFallbackService, identityModeDenied, identityModeCancelled}
+	counts := func() map[string]float64 {
+		out := make(map[string]float64, len(modes))
+		for _, mode := range modes {
+			out[mode] = testutil.ToFloat64(clientIdentityTotal.WithLabelValues(mode))
+		}
+		return out
+	}
+
+	for _, tc := range []struct {
+		name      string
+		cfg       RemoteResourceClientConfig
+		ctx       context.Context
+		wantMode  string
+		wantToken string
+		wantCode  codes.Code
+	}{
+		{
+			name:     "internal service identity",
+			ctx:      serviceCtx,
+			wantMode: identityModeService,
+		},
+		{
+			name:     "access policy calling on its own behalf",
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeAccessPolicy}),
+			wantMode: identityModeService,
+		},
+		{
+			name:      "user with an id token",
+			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, IDToken: "id-token"}),
+			wantMode:  identityModeIDToken,
+			wantToken: "id-token",
+		},
+		{
+			name:     "user on a client whose exchanger carries the caller",
+			cfg:      RemoteResourceClientConfig{CarriesCallerIdentity: true, RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			name:     "user with nothing to forward falls back to the service",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: func(context.Context) bool { return false }},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
+			wantMode: identityModeFallbackService,
+		},
+		{
+			name:     "an unset policy defers to the flag, which defaults off",
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
+			wantMode: identityModeFallbackService,
+		},
+		{
+			name:     "user with nothing to forward is denied when the fallback is off",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser}),
+			wantMode: identityModeDenied,
+			wantCode: codes.PermissionDenied,
+		},
+		{
+			name:     "cancelled user request without an id token is neither a fallback nor a denial",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "cancelled user request is not counted as a fallback when the fallback is allowed",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "user request past its deadline is not counted as a fallback",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      expiredCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.DeadlineExceeded,
+		},
+		{
+			name:     "user carried inside the access token goes obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			// The exchanger carries the caller inside the exchanged token, so the ID token
+			// must stay home: pure obo.
+			name:     "obo takes priority over a present id token",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode: identityModeOnBehalfOf,
+		},
+		{
+			name:      "obo policy off keeps the classic id token transport",
+			cfg:       RemoteResourceClientConfig{OnBehalfOf: oboOff},
+			ctx:       withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t), IDToken: "id-token"}),
+			wantMode:  identityModeIDToken,
+			wantToken: "id-token",
+		},
+		{
+			name:     "an access token that does not carry the user is not obo",
+			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: func(context.Context) bool { return false }},
+			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: serviceActorToken(t)}),
+			wantMode: identityModeFallbackService,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			want := counts()
+			want[tc.wantMode]++
+
+			token, err := newIDTokenExtractor(tc.cfg)(tc.ctx)
+
+			assert.Equal(t, tc.wantCode, status.Code(err))
+			assert.Equal(t, tc.wantToken, token)
+			assert.Equal(t, want, counts(), "only the %s counter should move", tc.wantMode)
+		})
+	}
+}
+
+// The deny decision is only useful if authlib propagates it, so check the whole interceptor.
+// The call must fail with `codes.PermissionDenied` and never reach the server.
+func TestRemoteClientDeniesRequestsWithoutCallerIdentity(t *testing.T) {
+	interceptor, err := NewAuthnGrpcClientInterceptor(noop.NewTracerProvider().Tracer(""), RemoteResourceClientConfig{
+		Namespace:             "stacks-1",
+		Audiences:             []string{"resourceStore"},
+		TokenExchanger:        ProvideInProcExchanger(),
+		RequireCallerIdentity: func(context.Context) bool { return true },
+	})
+	require.NoError(t, err)
+
+	ctx := types.WithAuthInfo(context.Background(), &identity.StaticRequester{Type: types.TypeUser})
+	invoked := false
+	err = interceptor.UnaryClientInterceptor(ctx, "/resource.ResourceStore/List", nil, nil, nil,
+		func(context.Context, string, any, any, *grpc.ClientConn, ...grpc.CallOption) error {
+			invoked = true
+			return nil
+		})
+
+	assert.Equal(t, codes.PermissionDenied, status.Code(err))
+	assert.False(t, invoked, "the request must not reach storage")
 }
 
 func TestNewAuthnGrpcClientInterceptor(t *testing.T) {

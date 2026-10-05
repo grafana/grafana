@@ -23,9 +23,11 @@ import {
   type DataSourceInstanceSettings,
   type DataSourceJsonData,
   getDefaultTimeRange,
+  getTimeZone,
   type GrafanaTheme2,
   type LinkModel,
   locationUtil,
+  PluginExtensionPoints,
   serializeStateToUrlParam,
   store,
   type TimeRange,
@@ -33,15 +35,17 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { locationService, reportInteraction } from '@grafana/runtime';
+import { reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
 } from '@grafana/runtime/unstable';
-import { useStyles2, DataLinkButton, Menu } from '@grafana/ui';
+import { usePanelContext, useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
+
+const LOGS_DRILLDOWN_APP_ID = 'grafana-lokiexplore-app';
 
 /** Persists which Loki query variation found logs for a given trace + logs datasource pair. */
 const LOKI_QUERY_MATCH_STORAGE_KEY_PREFIX = 'grafana.explore.traceToLogs.lokiQueryMatch';
@@ -138,6 +142,14 @@ type LogsCheckResult = {
 };
 
 /**
+ * Assume Drilldown when the app is unknown (Traces Drilldown and other plugins).
+ * For other contexts, app will be defined (CoreApp value) or undefined (Explore).
+ */
+export function isDrilldownContext(app?: CoreApp | string): boolean {
+  return app === CoreApp.Unknown;
+}
+
+/**
  * Runs the link's query against its datasource to determine whether
  * any logs exist for the span, so the button can be disabled when there is nothing to link to.
  *
@@ -151,8 +163,10 @@ function useHasLogs(
   traceDatasourceUid?: string
 ): { presence: LogsPresence; resolvedLinkModel: LinkModel } {
   const dynamicTraceToLogsEnabled = useFlagGrafanaDynamicTraceToLogs();
+  const { app } = usePanelContext();
+  const inDrilldown = isDrilldownContext(app);
   const [presence, setPresence] = useState<LogsPresence>('loading');
-  const [resolvedLinkModel, setResolvedLinkModel] = useState(linkModel);
+  const [match, setMatch] = useState<LogsCheckMatch | undefined>();
 
   const { query, alternativeQueries, timeRange } = linkModel.interpolatedParams ?? {};
 
@@ -175,10 +189,11 @@ function useHasLogs(
     const queries = Array.isArray(alternativeQueries) ? alternativeQueries : [query];
 
     setPresence('loading');
+    setMatch(undefined);
     const subscription = checkForLogsInQueries(queries, effectiveTimeRange, dsList, traceDatasourceUid).subscribe({
       next: (result) => {
         if (result.hasLogs && result.match) {
-          setResolvedLinkModel(rewriteLinkForMatch(linkModel, result.match));
+          setMatch(result.match);
           setPresence('present');
           reportPresence('present', result.match.refId);
           return;
@@ -195,7 +210,7 @@ function useHasLogs(
     // The trace view re-renders a lot on every event, including mouse over.
     // `query`/`timeRange` are intentionally omitted; their content is captured by the serialized keys.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid]);
+  }, [queryKey, timeRangeKey, isLoadingDsList, dsList, traceDatasourceUid, dynamicTraceToLogsEnabled]);
 
   useEffect(() => {
     if (presence !== 'absent' || !dynamicTraceToLogsEnabled) {
@@ -203,6 +218,34 @@ function useHasLogs(
     }
     reportPresence('absent');
   }, [dynamicTraceToLogsEnabled, presence]);
+
+  const extensionContext = useMemo(() => {
+    if (!inDrilldown || !match) {
+      return undefined;
+    }
+    return {
+      targets: remapQueriesToDatasource([match.query], match.datasourceUid),
+      timeRange: (timeRange ?? getDefaultTimeRange()).raw,
+      timeZone: getTimeZone(),
+    };
+  }, [inDrilldown, match, timeRange]);
+
+  const { links: pluginLinks } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.ExploreToolbarAction,
+    context: extensionContext,
+    limitPerPlugin: 1,
+  });
+
+  const resolvedLinkModel = useMemo(() => {
+    if (!match) {
+      return linkModel;
+    }
+    const drilldownPath =
+      inDrilldown && dynamicTraceToLogsEnabled
+        ? pluginLinks.find((link) => link.pluginId === LOGS_DRILLDOWN_APP_ID)?.path
+        : undefined;
+    return rewriteLinkForMatch(linkModel, match, drilldownPath);
+  }, [dynamicTraceToLogsEnabled, inDrilldown, linkModel, match, pluginLinks]);
 
   return { presence, resolvedLinkModel };
 }
@@ -297,10 +340,12 @@ function getLokiDatasourcesToTry(
 
 /**
  * Checks whether logs exist for any of the given queries.
- * When a prior successful Loki variation/datasource is stored, only that option is re-checked —
- * discovery already ran, so empty results mean logs are absent rather than that we should probe again.
- * Otherwise each variation is probed in order; the first match is stored for future checks.
- * If the configured Loki datasource has no logs, other Loki datasources are tried.
+ * When a prior successful Loki datasource is stored, only that datasource is re-checked —
+ * discovery already ran, so empty results mean logs are absent rather than that we should probe
+ * other datasources again. Within that datasource, a prior successful query variation is tried
+ * first but falls through to the other naming conventions (see probeForMatchingQuery), since
+ * different services behind the same datasource pair can log under different field names.
+ * The first match (of either a fresh probe or a fallback) is stored for future checks.
  */
 function checkForLogsInQueries(
   queries: DataQuery[],
@@ -354,8 +399,10 @@ function checkForLogsInQueries(
 
 /**
  * Probes query variations against a single datasource.
- * When a stored refId exists for that datasource, only that variation is checked —
- * discovery already identified the working query, so empty results mean no logs for this span/trace.
+ * When a stored refId exists for that datasource, that variation (plus its no-span-id fallback)
+ * is tried first — but different services behind the same datasource pair can log under a
+ * different field-naming convention, so an empty result falls through to the remaining variations
+ * rather than being taken as proof that this span/trace has no logs.
  */
 function probeForMatchingQuery(
   queries: DataQuery[],
@@ -365,8 +412,10 @@ function probeForMatchingQuery(
 ): Observable<DataQuery | undefined> {
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
-  // Prefer the known match exclusively; do not fall through to other naming conventions.
-  const queriesToProbe = storedQuery ? addNoSpanIdFallback(storedQuery) : queries;
+
+  const queriesToProbe = storedQuery
+    ? [...addNoSpanIdFallback(storedQuery), ...queries.filter((q) => q !== storedQuery)]
+    : queries;
 
   return from(queriesToProbe).pipe(
     concatMap((query) =>
@@ -382,28 +431,24 @@ function probeForMatchingQuery(
   );
 }
 
-function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch): LinkModel {
-  // Narrow Explore to the successful query variation (and datasource, when it differs from config).
+function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilldownPath?: string): LinkModel {
+  // Narrow the destination to the successful query variation (and datasource, when it differs from config).
   const matchedQueries = remapQueriesToDatasource([match.query], match.datasourceUid);
-  const href = rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
+  const href = drilldownPath
+    ? locationUtil.assureBaseUrl(drilldownPath)
+    : rebuildExploreHref(linkModel, matchedQueries, match.datasourceUid);
+
+  // Mutate the original interpolatedParams object so Explore split onClick
+  // (closed over that reference) uses the matched query and datasource.
+  if (linkModel.interpolatedParams) {
+    linkModel.interpolatedParams.query = matchedQueries[0];
+    linkModel.href = href;
+  }
 
   return {
     ...linkModel,
     href,
-    interpolatedParams: {
-      ...linkModel.interpolatedParams,
-      query: matchedQueries[0],
-    },
-    // Original onClick closes over the configured datasource/queries; replace it so navigation
-    // uses the matched datasource and successful query variation.
-    onClick: linkModel.onClick
-      ? (event) => {
-          if (event?.preventDefault) {
-            event.preventDefault();
-          }
-          locationService.push(href);
-        }
-      : undefined,
+    target: '_blank',
   };
 }
 
@@ -425,26 +470,28 @@ function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasour
 }
 
 /**
- * Adds a fallback query for environments where there is a trace_id filter but no span_id filters.
+ * Adds a fallback query for environments where there is a trace_id filter but no span_id filter.
+ *
+ * getQueryForLoki produces two shapes that can carry a span_id constraint:
+ * - line-contains: two line filters, `|= "<traceId>" |= "<spanId>"` — the span_id one is always last.
+ * - structured (default/job): a single field filter, `| <field>="<spanId>"`.
  */
 export function addNoSpanIdFallback(query: DataQuery) {
   if ('expr' in query === false || typeof query.expr !== 'string') {
     return [query];
   }
-  if (!query.expr.toLowerCase().includes('span')) {
+  const lineFilterCount = query.expr.match(/\|=/g)?.length ?? 0;
+  if (lineFilterCount < 2 && !query.expr.toLowerCase().includes('span')) {
     return [query];
   }
-  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*=\s*"(?:\\.|[^"\\])*"/gi;
 
-  // Add fallback without span_id filter
-  const fallbackQuery = {
-    ...query,
-    expr: query.expr.includes('!=')
-      ? query.expr.substring(0, query.expr.lastIndexOf('|=') - 1)
-      : query.expr.replace(spanIdFilter, ''),
-  };
+  const fallbackExpr =
+    lineFilterCount >= 2
+      ? query.expr.slice(0, query.expr.lastIndexOf('|=')).trimEnd()
+      : query.expr.replace(spanIdFilter, '');
 
-  return [query, fallbackQuery];
+  return [query, { ...query, expr: fallbackExpr }];
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {

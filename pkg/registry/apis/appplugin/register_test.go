@@ -2,9 +2,13 @@ package appplugin
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"runtime"
 	"testing"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -12,10 +16,166 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+// TestNewAppPluginAPIBuilderStartsNoGoroutines prevents goroutine leaks in the
+// router, which builds a builder for every plugin on each poll.
+func TestNewAppPluginAPIBuilderStartsNoGoroutines(t *testing.T) {
+	plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "test-app"}}
+	baseline := runtime.NumGoroutine()
+
+	for range 100 {
+		_, err := NewAppPluginAPIBuilder(plugin, nil, nil, nil, nil, nil, nil, nil, AppPluginRunnerOptions{}, nil, nil)
+		require.NoError(t, err)
+	}
+
+	leaked := runtime.NumGoroutine() - baseline
+	require.Zero(t, leaked, "constructing builders must not start goroutines")
+}
+
+func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
+	for _, tc := range []struct {
+		router   bool
+		register bool
+		manifest bool
+	}{
+		{false, false, false}, {false, false, true},
+		{false, true, false}, {false, true, true},
+		{true, false, false}, {true, false, true},
+		{true, true, false}, {true, true, true},
+	} {
+		for _, roleErr := range []error{nil, errors.New("role registration failed")} {
+			t.Run(fmt.Sprintf("router=%t/register=%t/manifest=%t/error=%v", tc.router, tc.register, tc.manifest, roleErr), func(t *testing.T) {
+				flags := map[string]memprovider.InMemoryFlag{}
+				for flag, enabled := range map[string]bool{
+					featuremgmt.FlagApppluginsRegisterAPIServer: tc.register,
+					featuremgmt.FlagApppluginsLoadAppManifest:   tc.manifest,
+					featuremgmt.FlagGrafanaUseRouterMiddleware:  tc.router,
+				} {
+					flags[flag] = memprovider.InMemoryFlag{
+						Key: flag, DefaultVariant: "default", Variants: map[string]any{"default": enabled},
+					}
+				}
+				require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(flags)))
+				t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+				plugin := bundle("example-app", plugins.TypeApp)
+				plugin.Primary.FS = plugins.NewInMemoryFS(map[string][]byte{
+					"app-sdk-manifest.json": []byte(`{
+						"apiVersion": "apps.grafana.app/v1alpha2",
+						"kind": "AppManifest",
+						"spec": {
+							"appName": "example", "group": "example.ext.grafana.app",
+							"versions": [{"name": "v1alpha1", "served": true,
+								"kinds": [{"kind": "TestKind", "plural": "testkinds", "scope": "Namespaced"}]}]
+						}
+					}`),
+				})
+				sources := &fakeSourceRegistry{sources: []plugins.PluginSource{
+					&fakePluginSource{bundles: []*plugins.FoundBundle{plugin, bundle("legacy-app", plugins.TypeApp)}},
+				}}
+				registrar := &recordingAPIRegistrar{}
+				roles := &recordingRoleService{err: roleErr}
+				cfg := setting.NewCfg()
+				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+					appPluginSettingsWildcard: {DualWriterMode: rest.Mode5},
+				}
+				_, err := RegisterAPIService(registrar, nil, nil, nil, sources, nil,
+					roles, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
+				if !tc.router && !tc.register {
+					require.NoError(t, err)
+					require.Empty(t, registrar.builders)
+					require.Empty(t, roles.roles)
+					return
+				}
+				withManifest := tc.router || tc.manifest
+				if roleErr != nil && withManifest {
+					require.ErrorIs(t, err, roleErr)
+					require.Empty(t, registrar.builders)
+					return
+				}
+				require.NoError(t, err)
+				group := "example-app"
+				if withManifest {
+					group = "example.ext.grafana.app"
+					registeredRoles := byName(t, roles.roles)
+					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:reader")
+					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:writer")
+				} else {
+					require.Empty(t, roles.roles)
+				}
+				groups := make([]string, 0, len(registrar.builders))
+				for _, b := range registrar.builders {
+					groups = append(groups, builder.GetGroupVersions(b)[0].Group)
+				}
+				if tc.router {
+					require.Empty(t, groups)
+					for _, group := range []string{"example.ext.grafana.app", "legacy-app"} {
+						require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app."+group].DualWriterMode,
+							"the shared dual-write service must see the resolved settings configuration for %s", group)
+					}
+				} else {
+					require.Equal(t, []string{group, "legacy-app"}, groups)
+				}
+			})
+		}
+	}
+}
+
+func TestRegisterAPIServiceHybridSearchConfiguration(t *testing.T) {
+	flag := featuremgmt.FlagApppluginsRegisterAPIServer
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	for _, tc := range []struct {
+		name string
+		ini  string
+		want bool
+	}{
+		{name: "default", want: true},
+		{name: "disabled", ini: "enable_hybrid_api = false"},
+		{name: "hybrid only", ini: "enable_search_api = false\nenable_trash_api = false", want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := setting.NewCfgFromBytes([]byte("[grafana-apiserver]\n" + tc.ini))
+			require.NoError(t, err)
+			sources := &fakeSourceRegistry{sources: []plugins.PluginSource{
+				&fakePluginSource{bundles: []*plugins.FoundBundle{bundle("example-app", plugins.TypeApp)}},
+			}}
+			b, err := RegisterAPIService(&recordingAPIRegistrar{}, nil, nil, nil, sources, nil,
+				&recordingRoleService{}, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
+			require.NoError(t, err)
+			require.NotNil(t, b)
+			require.Equal(t, tc.want, b.opts.HybridAPIEnabled)
+		})
+	}
+}
+
+type recordingAPIRegistrar struct {
+	builder.APIRegistrar
+	builders []builder.APIGroupBuilder
+}
+
+func (r *recordingAPIRegistrar) RegisterAPI(b builder.APIGroupBuilder) {
+	r.builders = append(r.builders, b)
+}
+
+type recordingRoleService struct {
+	accesscontrol.Service
+	roles []accesscontrol.RoleRegistration
+	err   error
+}
+
+func (r *recordingRoleService) DeclareFixedRoles(roles ...accesscontrol.RoleRegistration) error {
+	r.roles = append(r.roles, roles...)
+	return r.err
+}
 
 func TestGetAppPlugins(t *testing.T) {
 	tests := []struct {

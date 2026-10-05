@@ -130,10 +130,7 @@ In conjunction with **Group by**, you can set a positive number in the **Limit**
 
 #### Exemplars
 
-When the `profilesExemplars` feature is enabled, an **Exemplars** toggle appears in the **Options** section.
-Exemplars link individual profile samples to points on a metrics graph, so you can jump from a spike in a time series to the specific profile that produced it.
-
-The `profilesExemplars` feature is generally available and enabled by default.
+The **Exemplars** toggle in the **Options** section links individual profile samples to points on a metrics graph, so you can jump from a spike in a time series to the specific profile that produced it.
 
 #### Heatmap
 

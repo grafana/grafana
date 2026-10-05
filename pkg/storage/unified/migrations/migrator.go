@@ -274,13 +274,9 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 		Namespace: opts.NamespaceInfo.Value,
 		Keys:      keys,
 	})
-	if err != nil {
-		return fmt.Errorf("error rebuilding index: %w", err)
-	}
-
-	if response.Error != nil {
-		m.log.Error("error rebuilding index for resource", "error", response.Error.Message, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
-		return fmt.Errorf("rebuild index error: %s", response.Error.Message)
+	if err := resource.ErrorFromResponse(response.GetError(), err); err != nil {
+		m.log.Error("error rebuilding index for resource", "error", err, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID, "resources", opts.Resources)
+		return fmt.Errorf("rebuild index error: %w", err)
 	}
 
 	if opts.UsingDistributor {
@@ -297,6 +293,8 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
+		// RebuildIndexes checks freshness against the import time before reporting build times.
+		// Accept the finish second: build times are only reported at second precision.
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
 		// Only validate resources that have a build time reported.

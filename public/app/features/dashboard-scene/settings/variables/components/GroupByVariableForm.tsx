@@ -5,10 +5,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { EditorField } from '@grafana/plugin-ui';
 import { type DataSourceRef } from '@grafana/schema';
-import { Alert, Stack, CodeEditor, Field, Switch, FieldSet } from '@grafana/ui';
+import { Alert, Stack, Field, Switch, FieldSet } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { DefaultGroupByValueEditor } from './DefaultGroupByValueEditor';
+import { StaticOptionsEditor } from './StaticOptionsEditor';
 import { VariableCheckboxField } from './VariableCheckboxField';
 import { VariableLegend } from './VariableLegend';
 
@@ -125,15 +126,7 @@ export function GroupByVariableForm({
             </Field>
 
             {defaultOptions !== undefined && (
-              <CodeEditor
-                height={300}
-                language="csv"
-                value={defaultOptions.map((o) => `${o.text},${o.value}`).join('\n')}
-                onBlur={updateDefaultOptions}
-                onSave={updateDefaultOptions}
-                showMiniMap={false}
-                showLineNumbers={true}
-              />
+              <StaticOptionsEditor options={defaultOptions} onCommit={updateDefaultOptions} />
             )}
           </>
         )}

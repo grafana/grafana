@@ -152,7 +152,7 @@ next:
 		require.NoError(t, err)
 
 		// Find first grafana-managed receiver config with secure settings with given key, and extract it.
-		for _, receiver := range postableUserConfig.AlertmanagerConfig.Receivers {
+		for _, receiver := range postableUserConfig.Receivers {
 			for _, gmr := range receiver.GrafanaManagedReceivers {
 				v := gmr.SecureSettings[secureSettingKey]
 				if v == "" {

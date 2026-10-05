@@ -3,15 +3,20 @@ import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/r
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type VizPanel } from '@grafana/scenes';
-import { floatingUtils, Portal, useStyles2 } from '@grafana/ui';
+import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 // A lone VizPanel fills its parent, so the parent needs a resolved height (not just
 // min-height) or PanelChrome measures 0 and nothing shows.
@@ -28,8 +33,10 @@ interface NarrativeCellFocusProps {
   autoFocus?: boolean;
   focusRequestId?: number;
   caretOffset?: number;
+  scrollAlign?: ScrollLogicalPosition;
   onAdvance?: (remainder: string, marker?: string) => void;
   onFocusRequest?: () => void;
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 // A notebook cell is one of two things: a panel (a chart) or narrative content (a markdown or
@@ -41,17 +48,22 @@ export function NotebookCellRenderer({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: { cell: NotebookCellItem } & NarrativeCellFocusProps) {
   const { body: panel, content: narrative, collapsed, elementName } = cell.useState();
 
+  // Panel and Collapsed cells have no caret of their own to detect an ArrowUp/Down boundary with —
+  // NotebookCellFrame's own frame wrapper already handles that case, so `onNavigate` isn't threaded
+  // any further down for either of them.
   if (collapsed) {
     return <CollapsedCell name={elementName} />;
   }
 
   if (panel) {
-    return <PanelCell panel={panel} />;
+    return <PanelCell cell={cell} panel={panel} isEditing={isEditing} autoFocus={autoFocus} />;
   }
 
   if (narrative) {
@@ -63,8 +75,10 @@ export function NotebookCellRenderer({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         onAdvance={onAdvance}
         onFocusRequest={onFocusRequest}
+        onNavigate={onNavigate}
       />
     );
   }
@@ -72,15 +86,53 @@ export function NotebookCellRenderer({
   return null;
 }
 
-// A chart cell: delegates to its VizPanel, which brings its own PanelChrome (title, menu, legend).
-function PanelCell({ panel }: { panel: VizPanel }) {
+function PanelCell({
+  cell,
+  panel,
+  isEditing,
+  autoFocus,
+}: {
+  cell: NotebookCellItem;
+  panel: VizPanel;
+  isEditing: boolean;
+  autoFocus?: boolean;
+}) {
   const styles = useStyles2(getStyles);
+  // NotebookCellItem has no static Component and is never otherwise activated, so a $timeRange
+  // assigned to it would never get its own activate() call without this.
+  const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
+
+  // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
+  // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
+  // where there is no query editor to be inline with.
+  const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
   return (
-    <div className={styles.panel}>
-      <panel.Component model={panel} />
-    </div>
+    <Stack direction="column" gap={1}>
+      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
+      {showStandaloneClock && (
+        <Box display="flex" justifyContent="flex-end">
+          <NotebookCellTimeRangeControl cell={cell} />
+        </Box>
+      )}
+      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
+        <panel.Component model={panel} />
+      </div>
+    </Stack>
   );
+}
+
+// Excludes panels with transformations: this lightweight editor only touches raw queries, not what a
+// transformation turns them into. Also excludes library panels: vizPanelToSchemaV2 serializes them
+// only as a reference to the shared library panel, so any query edit made here would be silently
+// discarded on the next save/reload.
+export function isEditableQueryPanel(panel: VizPanel): boolean {
+  const queryRunner = getQueryRunnerFor(panel);
+  if (!queryRunner || isLibraryPanel(panel)) {
+    return false;
+  }
+
+  return !(panel.state.$data instanceof SceneDataTransformer && panel.state.$data.state.transformations.length > 0);
 }
 
 // A narrative cell: markdown or code, rendered by the component registered for its content kind.
@@ -100,8 +152,10 @@ function NarrativeCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: { cell: NotebookCellItem; content: CellContentKind } & NarrativeCellFocusProps) {
   const styles = useStyles2(getStyles);
 
@@ -115,8 +169,10 @@ function NarrativeCell({
           autoFocus={autoFocus}
           focusRequestId={focusRequestId}
           caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
           onAdvance={onAdvance}
           onFocusRequest={onFocusRequest}
+          onNavigate={onNavigate}
         />
       </div>
     );
@@ -135,7 +191,12 @@ function NarrativeCell({
           content={content}
           isEditing={isEditing}
           autoFocus={autoFocus}
+          focusRequestId={focusRequestId}
+          caretOffset={caretOffset}
+          scrollAlign={scrollAlign}
+          cell={cell}
           onChange={(updated) => cell.onContentChange(updated)}
+          onNavigate={onNavigate}
         />
       </Suspense>
     </div>
@@ -144,7 +205,7 @@ function NarrativeCell({
 
 /**
  * The markdown-only behaviors no other cell needs:
- * - Placeholder text and the "/" block-type menu (the same one NotebookAddBlockDivider uses) — keyed
+ * - Placeholder text and the "/" block-type menu (the same one NotebookCellAddButton uses) — keyed
  *   off whether *this cell's own content* is currently empty, not its position in the document. Any
  *   empty markdown cell gets these, and loses them again the moment it has real content — including a
  *   cell the reader typed into, then deleted everything from. The placeholder itself needs no extra
@@ -163,8 +224,10 @@ function SpecialMarkdownCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onAdvance,
   onFocusRequest,
+  onNavigate,
 }: {
   cell: NotebookCellItem;
   content: Extract<CellContentKind, { kind: 'Markdown' }>;
@@ -238,9 +301,14 @@ function SpecialMarkdownCell({
         autoFocus={autoFocus}
         focusRequestId={focusRequestId}
         caretOffset={caretOffset}
+        scrollAlign={scrollAlign}
         placeholder={t('notebook.add-block.prompt', 'Type to start writing — press / for blocks')}
         onChange={handleChange}
         onSubmit={onAdvance}
+        // The "/" menu is a click-only typeahead popover with no arrow-key handling of its own, and
+        // "/" is always this cell's only line — without this guard, ArrowUp/Down would immediately
+        // read as "at the boundary" and jump to a different cell out from under the open menu.
+        onNavigate={menuOpen ? undefined : onNavigate}
       />
       {menuOpen && (
         <Portal>
@@ -264,6 +332,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',
+    // Inert on screen: only a print/PDF layout reads it, where a split panel is a chart cut in half.
+    breakInside: 'avoid',
+    pageBreakInside: 'avoid',
   }),
   content: css({
     padding: theme.spacing(1, 0),

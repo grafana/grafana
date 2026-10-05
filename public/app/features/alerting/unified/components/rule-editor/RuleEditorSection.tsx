@@ -6,6 +6,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
+import { AccentBoxBadge } from 'app/core/components/AccentBoxBadge/AccentBoxBadge';
 
 export interface RuleEditorSectionProps {
   title: string;
@@ -35,9 +36,13 @@ export const RuleEditorSection = ({
         className={cx(fullWidth && styles.fullWidth)}
         label={
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Text variant="h3">
-              {stepNo}. {title}
-            </Text>
+            <Stack direction="row" alignItems="flex-start" gap={1.5}>
+              <AccentBoxBadge>{stepNo}</AccentBoxBadge>
+              <Stack direction="column" gap={0.5}>
+                <Text variant="h4">{title}</Text>
+                {description}
+              </Stack>
+            </Stack>
             {switchMode && (
               <Text variant="bodySmall">
                 <InlineSwitch
@@ -56,10 +61,7 @@ export const RuleEditorSection = ({
           </Stack>
         }
       >
-        <Stack direction="column">
-          {description && <div className={styles.description}>{description}</div>}
-          {children}
-        </Stack>
+        <div className={styles.sectionContent}>{children}</div>
       </FieldSet>
     </div>
   );
@@ -69,19 +71,21 @@ const getStyles = (theme: GrafanaTheme2) => ({
   parent: css({
     display: 'flex',
     flexDirection: 'row',
-    background: theme.colors.background.primary,
-    border: `solid 1px ${theme.colors.border.weak}`,
-    borderRadius: theme.shape.radius.lg,
-    padding: `${theme.spacing(2)} ${theme.spacing(3)}`,
-  }),
-  description: css({
-    marginTop: `-${theme.spacing(2)}`,
   }),
   fullWidth: css({
     width: '100%',
+    flexGrow: 1,
   }),
   reverse: css({
     flexDirection: 'row-reverse',
     gap: theme.spacing(1),
+  }),
+  sectionContent: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(1),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    paddingBottom: theme.spacing(3),
+    marginLeft: theme.spacing(6),
   }),
 });

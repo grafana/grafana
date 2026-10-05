@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 import { useState } from 'react';
-import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { config, setBackendSrv } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
@@ -191,10 +191,8 @@ describe('useSyncStarredItemsInNav', () => {
   });
 
   describe('when starredFolders is enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
       // Provide a starred section in the nav tree so the reducer has a target
       config.bootData.navTree = [
         { id: 'home', text: 'Home', url: '/' },
@@ -202,8 +200,10 @@ describe('useSyncStarredItemsInNav', () => {
       ];
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('syncs both a starred dashboard and folder, each with its per-kind icon', async () => {
@@ -329,8 +329,8 @@ describe('useSyncStarredItemsInNav', () => {
 });
 
 describe('useStarItem', () => {
-  // The folder gates (grafana.starredFolders flag, foldersAppPlatformAPI) stay off, so kind Folder
-  // must never surface in the nav Starred section.
+  // grafana.starredFolders stays off, so starredFoldersEnabled() is false and kind Folder must
+  // never surface in the nav Starred section.
   describe('with starred folders disabled', () => {
     beforeEach(() => {
       // Provide a starred section in the nav tree so the reducer has a target
@@ -361,10 +361,8 @@ describe('useStarItem', () => {
 
   // Folder gates on: a successful star would land in the nav, so a rejected one must not.
   describe('with starred folders enabled', () => {
-    testWithFeatureToggles({ enable: ['foldersAppPlatformAPI'] });
-
     beforeEach(() => {
-      setTestFlags({ 'grafana.starredFolders': true });
+      setTestFlags({ 'grafana.starredFolders': true, foldersAppPlatformAPI: true });
       // Provide a starred section in the nav tree so the reducer has a target
       config.bootData.navTree = [
         { id: 'home', text: 'Home', url: '/' },
@@ -372,8 +370,10 @@ describe('useStarItem', () => {
       ];
     });
 
-    afterEach(() => {
-      setTestFlags({});
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
     });
 
     it('leaves the nav starred section untouched when the server rejects the star', async () => {

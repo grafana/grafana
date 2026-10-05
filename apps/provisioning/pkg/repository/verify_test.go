@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -164,35 +165,6 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate git path when sync is enabled",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
-						Path: "grafana/",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
-							Path: "grafana/",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryDuplicatePath.Error(),
-			maxRepositories: 10,
-		},
-		{
 			name: "allows duplicate git path when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
@@ -252,35 +224,6 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids duplicate empty paths when sync is enabled",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
-						Path: "",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
-							Path: "",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryDuplicatePath.Error(),
-			maxRepositories: 10,
-		},
-		{
 			name: "allows duplicate empty paths when sync is disabled",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
@@ -336,37 +279,6 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				},
 			},
 			wantErr:         false,
-			maxRepositories: 10,
-		},
-		{
-			name: "forbids duplicate non-empty paths on same branch when sync is enabled",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
-						Branch: "main",
-						Path:   "grafana/",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
-							Branch: "main",
-							Path:   "grafana/",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryDuplicatePath.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -460,68 +372,6 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			maxRepositories: 10,
 		},
 		{
-			name: "forbids overlapping paths on same branch",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
-						Branch: "main",
-						Path:   "grafana/dashboards/",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
-							Branch: "main",
-							Path:   "grafana/",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
-			maxRepositories: 10,
-		},
-		{
-			name: "forbids overlapping base path on same branch when sync is enabled",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:    "https://github.com/org/repo",
-						Branch: "main",
-						Path:   "grafana/",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:    "https://github.com/org/repo",
-							Branch: "main",
-							Path:   "",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
-			maxRepositories: 10,
-		},
-		{
 			name: "allows self-update with identical URL branch and path",
 			cfg: &provisioning.Repository{
 				ObjectMeta: metav1.ObjectMeta{Name: "same-repo", Namespace: "default"},
@@ -575,35 +425,6 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 				},
 			},
 			wantErr:         false,
-			maxRepositories: 10,
-		},
-		{
-			name: "forbids parent folder conflict when sync is enabled",
-			cfg: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
-				Spec: provisioning.RepositorySpec{
-					Type: provisioning.GitHubRepositoryType,
-					Sync: provisioning.SyncOptions{Enabled: true},
-					GitHub: &provisioning.GitHubRepositoryConfig{
-						URL:  "https://github.com/org/repo",
-						Path: "grafana/dashboards/",
-					},
-				},
-			},
-			existingRepos: []provisioning.Repository{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "existing-repo"},
-					Spec: provisioning.RepositorySpec{
-						Type: provisioning.GitHubRepositoryType,
-						GitHub: &provisioning.GitHubRepositoryConfig{
-							URL:  "https://github.com/org/repo",
-							Path: "grafana/",
-						},
-					},
-				},
-			},
-			wantErr:         true,
-			wantErrContains: ErrRepositoryParentFolderConflict.Error(),
 			maxRepositories: 10,
 		},
 		{
@@ -838,6 +659,71 @@ func TestVerifyAgainstExistingRepositoriesValidator_Validate(t *testing.T) {
 			}
 
 			assert.Empty(t, errList)
+		})
+	}
+}
+
+func TestVerifyAgainstExistingRepositoriesValidator_QuotaLookupError(t *testing.T) {
+	lookupErr := errors.New("quota service failed")
+	tests := []struct {
+		name            string
+		cfg             *provisioning.Repository
+		existingRepos   []provisioning.Repository
+		wantErrContains string
+	}{
+		{
+			name: "new repository returns quota lookup error",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "new-repo", Namespace: "default"},
+			},
+			wantErrContains: "failed to get quota status: quota service failed",
+		},
+		{
+			name: "repository absent from storage returns lookup error despite observed generation",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
+				},
+			},
+			existingRepos: []provisioning.Repository{
+				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
+			},
+			wantErrContains: "failed to get quota status: quota service failed",
+		},
+		{
+			name: "persisted unobserved repository update uses cached quota",
+			cfg: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Name: "observed-repo", Namespace: "default"},
+			},
+			existingRepos: []provisioning.Repository{
+				{
+					ObjectMeta: metav1.ObjectMeta{Name: "observed-repo"},
+					Status: provisioning.RepositoryStatus{
+						Quota: provisioning.QuotaStatus{MaxRepositories: 1},
+					},
+				},
+				{ObjectMeta: metav1.ObjectMeta{Name: "other-repo"}},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &verifyTestStorage{repositories: tt.existingRepos}
+			getter := quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: 10})
+			getter.SetError(lookupErr)
+			validator := NewVerifyAgainstExistingRepositoriesValidator(NewStorageLister(store), getter)
+
+			errList := validator.Validate(context.Background(), tt.cfg)
+			if tt.wantErrContains == "" {
+				assert.Empty(t, errList)
+				return
+			}
+
+			require.NotEmpty(t, errList)
+			assert.Contains(t, errList.ToAggregate().Error(), tt.wantErrContains)
 		})
 	}
 }

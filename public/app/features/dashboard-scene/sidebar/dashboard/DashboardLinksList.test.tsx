@@ -1,10 +1,14 @@
-import { fireEvent, render, within } from '@testing-library/react';
+import { fireEvent, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { type DashboardLink, type DashboardLinkPlacement } from '@grafana/schema';
+import { appEvents } from 'app/core/app_events';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { createDefaultLink, openEditLinkPane } from '../../settings/links/LinkAddEditableElement';
+import { createDefaultLink } from '../../settings/links/LinkAddEditableElement';
+import { openEditLinkPane } from '../../settings/links/LinkEdit';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksList';
@@ -12,6 +16,10 @@ import { DashboardLinksList, partitionLinksByPlacement } from './DashboardLinksL
 jest.mock('../../settings/links/LinkAddEditableElement', () => ({
   ...jest.requireActual('../../settings/links/LinkAddEditableElement'),
   openAddLinkPane: jest.fn(),
+}));
+
+jest.mock('../../settings/links/LinkEdit', () => ({
+  ...jest.requireActual('../../settings/links/LinkEdit'),
   openEditLinkPane: jest.fn(),
 }));
 
@@ -73,10 +81,18 @@ function buildLinks() {
   };
 }
 
+afterEach(() => {
+  jest.restoreAllMocks();
+});
+
 describe('<DashboardLinksList />', () => {
-  test('renders 2 sections (one per link display type)', () => {
+  test('renders 2 sections (one per link display type)', async () => {
     const { visibleLink1, visibleLink2, controlsMenuLink1 } = buildLinks();
-    const { getByRole, elements } = renderLinksList([controlsMenuLink1, visibleLink2, visibleLink1]);
+    const { container, getByRole, elements } = renderLinksList([controlsMenuLink1, visibleLink2, visibleLink1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(3);
+    });
 
     [/above dashboard/i, /controls menu/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -89,9 +105,13 @@ describe('<DashboardLinksList />', () => {
     expect(controlsMenuNames).toEqual(['controlsMenuLink1']);
   });
 
-  test('always renders the 2 section titles even if one is empty', () => {
+  test('always renders the 2 section titles even if one is empty', async () => {
     const { controlsMenuLink1 } = buildLinks();
-    const { getByRole } = renderLinksList([controlsMenuLink1]);
+    const { container, getByRole } = renderLinksList([controlsMenuLink1]);
+
+    await waitFor(() => {
+      expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]')).toHaveLength(1);
+    });
 
     [/above dashboard/i, /controls menu/i].forEach((name) => {
       expect(getByRole('heading', { name })).toBeInTheDocument();
@@ -99,14 +119,39 @@ describe('<DashboardLinksList />', () => {
   });
 
   describe('User interactions', () => {
-    describe('when a link title is clicked', () => {
-      test('selects the link in the pane', async () => {
-        const { visibleLink1 } = buildLinks();
-        const { user, getByText, elements } = renderLinksList([visibleLink1]);
+    describe('link list interactions', () => {
+      const key = '0';
 
-        await user.click(getByText(visibleLink1.title));
+      test('clicking on edit button selects the link in the pane', async () => {
+        const { visibleLink1 } = buildLinks();
+        const { user, getByText, getByTestId, elements } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.editButton(key)));
 
         expect(openEditLinkPane).toHaveBeenCalledWith(elements.dashboardScene, 0);
+      });
+      test('clicking on delete button triggers confirmation modal', async () => {
+        const publishSpy = jest.spyOn(appEvents, 'publish');
+        const { visibleLink1 } = buildLinks();
+        const { user, getByText, getByTestId } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.deleteButton(key)));
+
+        expect(publishSpy).toHaveBeenCalledWith(expect.any(ShowConfirmModalEvent));
+      });
+      test('clicking on duplicate button creates a duplicate link', async () => {
+        const { visibleLink1 } = buildLinks();
+        const { user, getByText, getByTestId, elements } = renderLinksList([visibleLink1]);
+
+        await user.hover(getByText(visibleLink1.title));
+        await user.click(
+          getByTestId(selectors.components.PanelEditor.ElementEditPane.List.ListItem.duplicateButton(key))
+        );
+
+        expect(elements.dashboardScene.state.links).toHaveLength(2);
+        expect(elements.dashboardScene.state.links?.[1].title).toBe(`${visibleLink1.title} - Copy`);
       });
     });
 
@@ -118,6 +163,9 @@ describe('<DashboardLinksList />', () => {
         direction: 'up' | 'down',
         positions = 1
       ) {
+        await waitFor(() => {
+          expect(container.querySelectorAll('[data-rfd-drag-handle-draggable-id]').length).toBeGreaterThan(itemIndex);
+        });
         const dragHandles = container.querySelectorAll('[data-rfd-drag-handle-draggable-id]');
         const handle = dragHandles[itemIndex] as HTMLElement;
         handle.focus();

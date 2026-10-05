@@ -1,15 +1,19 @@
 import { screen, within } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { PROVISIONING_API_BASE as PROVISIONING_BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
-import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -17,9 +21,7 @@ import { mockFolderDTO } from '../fixtures/folder.fixture';
 
 import CreateNewButton from './CreateNewButton';
 
-jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
-  useIsProvisionedInstance: jest.fn(),
-}));
+setupProvisioningMswServer();
 
 jest.mock(
   'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
@@ -41,23 +43,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
 
-jest.mock('app/features/dashboard-prompt/useDashboardGenerationAvailable', () => ({
-  useDashboardGenerationAvailable: jest.fn(),
-}));
-
-// Stub the lazy-loaded modal: this suite covers the menu wiring, not the prompt itself.
-jest.mock('app/features/dashboard-prompt/GenerateDashboardModal', () => ({
-  GenerateDashboardModal: ({ onDismiss }: { onDismiss: () => void }) => (
-    <div data-testid="generate-dashboard-modal">
-      <button onClick={onDismiss}>Close prompt</button>
-    </div>
-  ),
-}));
-
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
-const mockUseDashboardGenerationAvailable = jest.mocked(useDashboardGenerationAvailable);
-
-const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
 
 const mockParentFolder = mockFolderDTO();
 
@@ -70,10 +56,6 @@ async function renderAndOpen(folder?: FolderDTO) {
 }
 
 describe('NewActionsButton', () => {
-  beforeEach(() => {
-    mockUseIsProvisionedInstance.mockReturnValue(false);
-    mockUseDashboardGenerationAvailable.mockReturnValue(false);
-  });
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
 
@@ -155,24 +137,55 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should show Import dashboard button when entire instance is provisioned', async () => {
-    mockUseIsProvisionedInstance.mockReturnValue(true);
-    const regularFolder = mockFolderDTO(1, { managedBy: undefined });
-    await renderAndOpen(regularFolder);
+  describe('creating a folder with Git Sync configured', () => {
+    let originalProvisioning: boolean;
 
-    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
-  });
+    beforeEach(() => {
+      originalProvisioning = config.provisioningEnabled;
+      config.provisioningEnabled = true;
+      server.use(
+        http.get(`${PROVISIONING_BASE}/settings`, () =>
+          HttpResponse.json({
+            items: [
+              {
+                name: 'folderless-repo',
+                title: 'Folderless Repo',
+                type: 'github',
+                target: 'folderless',
+                workflows: ['write', 'branch'],
+              } satisfies RepositoryView,
+            ],
+          })
+        )
+      );
+    });
 
-  it('should show Import dashboard button when both instance and folder are provisioned', async () => {
-    mockUseIsProvisionedInstance.mockReturnValue(true);
-    const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
-    await renderAndOpen(provisionedFolder);
+    afterEach(() => {
+      config.provisioningEnabled = originalProvisioning;
+    });
 
-    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
+    // The drawer body owns the Git/database choice, so every close path has to drop it. Held here it
+    // would survive, and the next open would skip the choice.
+    it('forgets the choice when the drawer is closed and reopened', async () => {
+      const { user } = render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} />);
+      await user.click(screen.getByText('New'));
+      await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
+
+      /** The Git form is the only one of the two with a commit comment field. */
+      const findGitForm = () => screen.findByRole('textbox', { name: /comment/i });
+      const queryDatabaseForm = () => screen.queryByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form);
+
+      await findGitForm();
+      await user.click(screen.getByRole('button', { name: 'Create in Grafana database instead' }));
+      expect(queryDatabaseForm()).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      await user.click(screen.getByText('New'));
+      await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
+
+      expect(await findGitForm()).toBeInTheDocument();
+      expect(queryDatabaseForm()).not.toBeInTheDocument();
+    });
   });
 
   describe('Dashboard from template button', () => {
@@ -220,46 +233,6 @@ describe('NewActionsButton', () => {
       await renderAndOpen();
       const link = screen.getByRole('menuitem', { name: 'Use template' });
       expect(link).toHaveAttribute('href', '/dashboards?templateDashboards=true&source=createNewButton');
-    });
-  });
-
-  describe('Generate dashboard item', () => {
-    beforeEach(() => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(true);
-    });
-
-    it('shows the item directly after `New dashboard`, matching the QuickAdd menu', async () => {
-      await renderAndOpen();
-
-      const dashboardGroup = screen.getByRole('group', { name: 'Dashboard' });
-      const items = within(dashboardGroup)
-        .getAllByRole('menuitem')
-        .map((item) => item.textContent);
-      expect(items.slice(0, 2)).toEqual(['New dashboard', 'Generate dashboard']);
-    });
-
-    it('opens the prompt on click, and closes it again on dismiss', async () => {
-      const { user } = render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} />);
-      await user.click(screen.getByText('New'));
-      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
-
-      await user.click(screen.getByRole('menuitem', { name: 'Generate dashboard' }));
-      expect(await screen.findByTestId('generate-dashboard-modal')).toBeInTheDocument();
-
-      await user.click(screen.getByRole('button', { name: 'Close prompt' }));
-      expect(screen.queryByTestId('generate-dashboard-modal')).not.toBeInTheDocument();
-    });
-
-    it('does not show the item when generation is unavailable', async () => {
-      mockUseDashboardGenerationAvailable.mockReturnValue(false);
-      await renderAndOpen();
-      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
-    });
-
-    it('does not show the item when the user cannot create dashboards', async () => {
-      const { user } = render(<CreateNewButton canCreateDashboard={false} canCreateFolder isReadOnlyRepo={false} />);
-      await user.click(screen.getByText('New'));
-      expect(screen.queryByRole('menuitem', { name: 'Generate dashboard' })).not.toBeInTheDocument();
     });
   });
 });

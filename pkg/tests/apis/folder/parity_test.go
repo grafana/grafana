@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -68,9 +69,27 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 		t.Run("admin on root", func(t *testing.T) {
 			assertAccessParity(t, f, f.helper.Org1.Admin, "parityA")
 		})
+		t.Run("editor on root", func(t *testing.T) {
+			assertAccessParity(t, f, f.helper.Org1.Editor, "parityA")
+		})
+		t.Run("viewer on root", func(t *testing.T) {
+			assertAccessParity(t, f, f.helper.Org1.Viewer, "parityA")
+		})
 		t.Run("editor with inherited permission (KNOWN GAP)", func(t *testing.T) {
 			t.Skip("sub_access.go does not walk parents; un-skip when fix lands")
 			assertAccessParity(t, f, f.rbacEditorOnA, "parityA1a")
+		})
+		// Custom roles granting sub-resource actions at folder scope used to be
+		// flattened into a View/Edit/Admin bundle, which dropped the actions below
+		// (and invented ones the user never held).
+		t.Run("custom role with dashboard actions but no folders:write", func(t *testing.T) {
+			assertAccessParity(t, f, f.dashCreatorOnB, "parityB")
+		})
+		t.Run("custom role with dashboard actions, inherited by a child", func(t *testing.T) {
+			assertAccessParity(t, f, f.dashCreatorOnB, "parityB1")
+		})
+		t.Run("custom role with folders:write but no dashboard actions", func(t *testing.T) {
+			assertAccessParity(t, f, f.folderWriterOnB1, "parityB1")
 		})
 	})
 
@@ -78,9 +97,31 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 		t.Run("admin to accessible parent", func(t *testing.T) {
 			assertMoveParity(t, f, f.helper.Org1.Admin, "parityB1", "parityA", http.StatusOK)
 		})
-		t.Run("editor without dest permission is forbidden (KNOWN GAP)", func(t *testing.T) {
-			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
+		t.Run("editor without destination permission is forbidden", func(t *testing.T) {
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
+		})
+		t.Run("editor cannot gain admin by moving a folder under an administered parent", func(t *testing.T) {
+			target := FolderDefinition{
+				Name:    "parity-move-target",
+				Creator: f.helper.Org1.Admin,
+				Permissions: []FolderPermission{{
+					Permission: "Edit",
+					User:       f.helper.Org1.Editor,
+				}},
+			}
+			target.CreateWithLegacyAPI(t, f.helper, "")
+			attacker := FolderDefinition{
+				Name:    "parity-move-attacker",
+				Creator: f.helper.Org1.Editor,
+			}
+			attacker.CreateWithLegacyAPI(t, f.helper, "")
+
+			targetPermissionsStatus, _ := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-target/permissions", nil)
+			require.Equal(t, http.StatusForbidden, targetPermissionsStatus)
+			attackerPermissionsStatus, body := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-attacker/permissions", nil)
+			require.Equal(t, http.StatusOK, attackerPermissionsStatus, string(body))
+
+			assertMoveParity(t, f, f.helper.Org1.Editor, "parity-move-target", "parity-move-attacker", http.StatusForbidden)
 		})
 		t.Run("k6 source folder is rejected", func(t *testing.T) {
 			assertK6SourceMoveParity(t, f, "parityA", http.StatusBadRequest)
@@ -112,9 +153,11 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 //	└── parityB
 //	    ├── parityB1 … parityB5
 type parityFixture struct {
-	helper        *apis.K8sTestHelper
-	adminK8s      *apis.K8sResourceClient
-	rbacEditorOnA apis.User
+	helper           *apis.K8sTestHelper
+	adminK8s         *apis.K8sResourceClient
+	rbacEditorOnA    apis.User
+	dashCreatorOnB   apis.User
+	folderWriterOnB1 apis.User
 }
 
 func newParityFixture(t *testing.T) *parityFixture {
@@ -159,9 +202,11 @@ func newParityFixture(t *testing.T) *parityFixture {
 	}
 	create(accesscontrol.K6FolderUID, "")
 
+	// Keep the basic role at None so the scoped grant is the user's only access;
+	// RoleEditor would also grant access to the unrestricted parityB destination.
 	rbacEditorOnA := helper.CreateUser(
 		"parity-elevated-A", apis.Org1,
-		org.RoleEditor,
+		org.RoleNone,
 		[]resourcepermissions.SetResourcePermissionCommand{{
 			Actions:           []string{folder.ActionFoldersRead, folder.ActionFoldersWrite},
 			Resource:          "folders",
@@ -170,10 +215,46 @@ func newParityFixture(t *testing.T) *parityFixture {
 		}},
 	)
 
+	// Mirrors the custom roles that surfaced this gap: sub-resource actions granted
+	// directly at folder scope, deliberately without folders:write. Basic role None
+	// so the grant below is the only source of permissions.
+	dashCreatorBName := "parity-dash-creator-B"
+	dashCreatorOnB := helper.CreateUser(
+		dashCreatorBName, apis.Org1,
+		org.RoleNone,
+		[]resourcepermissions.SetResourcePermissionCommand{{
+			Actions: []string{
+				folder.ActionFoldersRead,
+				dashboards.ActionDashboardsRead,
+				dashboards.ActionDashboardsCreate,
+				dashboards.ActionDashboardsWrite,
+				dashboards.ActionDashboardsDelete,
+			},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "parityB",
+		}},
+	)
+
+	// The inverse shape: folder edit rights without any dashboard actions.
+	folderWriterB1Name := "parity-folder-writer-B1"
+	folderWriterOnB1 := helper.CreateUser(
+		folderWriterB1Name, apis.Org1,
+		org.RoleNone,
+		[]resourcepermissions.SetResourcePermissionCommand{{
+			Actions:           []string{folder.ActionFoldersRead, folder.ActionFoldersWrite},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "parityB1",
+		}},
+	)
+
 	return &parityFixture{
-		helper:        helper,
-		adminK8s:      adminK8s,
-		rbacEditorOnA: rbacEditorOnA,
+		helper:           helper,
+		adminK8s:         adminK8s,
+		rbacEditorOnA:    rbacEditorOnA,
+		dashCreatorOnB:   dashCreatorOnB,
+		folderWriterOnB1: folderWriterOnB1,
 	}
 }
 
@@ -242,6 +323,10 @@ type accessProjection struct {
 	CanEdit   bool
 	CanAdmin  bool
 	CanDelete bool
+	// Actions is the accessControl map the UI reads to gate buttons. Comparing it
+	// is the point of this assertion: the booleans above stayed correct while the
+	// action map silently lost entries for custom roles.
+	Actions []string
 }
 
 func projectLegacyAccess(f *dtos.Folder) accessProjection {
@@ -250,6 +335,7 @@ func projectLegacyAccess(f *dtos.Folder) accessProjection {
 		CanEdit:   f.CanEdit,
 		CanAdmin:  f.CanAdmin,
 		CanDelete: f.CanDelete,
+		Actions:   sortedActions(f.AccessControl),
 	}
 }
 
@@ -259,7 +345,19 @@ func projectK8sAccess(a *foldersV1.FolderAccessInfo) accessProjection {
 		CanEdit:   a.CanEdit,
 		CanAdmin:  a.CanAdmin,
 		CanDelete: a.CanDelete,
+		Actions:   sortedActions(a.AccessControl),
 	}
+}
+
+func sortedActions(m map[string]bool) []string {
+	actions := make([]string, 0, len(m))
+	for action, allowed := range m {
+		if allowed {
+			actions = append(actions, action)
+		}
+	}
+	sort.Strings(actions)
+	return actions
 }
 
 // ---------------------------------------------------------------------------

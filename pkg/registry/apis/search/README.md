@@ -26,7 +26,16 @@ IAM shows how this catches people out: its own search falls back to legacy SQL w
 
 ## 1. Getting the endpoint
 
-Declare at least one search field in the kind's own `.cue` file, the file where you already declare `schema` and `selectableFields`, not `manifest.cue`. Then run `make gen-apps`.
+Every namespaced kind in a manifest gets `/search` unless it opts out. Nothing has to be declared to get it.
+
+Two conditions:
+
+- The kind must be namespaced. A cluster-scoped kind has no namespace to search within, so it gets no endpoint (`pkg/services/apiserver/searchroutes/searchroutes.go`).
+- The group version has to be one this process actually serves.
+
+Search fields are separate: they control **what callers can query and retrieve**, not whether the endpoint exists. A kind with only the standard fields (name, title, folder, labels, timestamps) works fine.
+
+Declare fields in the kind's own `.cue` file, the file where you already declare `schema` and `selectableFields`, not `manifest.cue`. Then run `make gen-apps`.
 
 Example, from `apps/iam/kinds/user.cue`:
 
@@ -41,22 +50,6 @@ searchFields: [
 	},
 ]
 ```
-
-Two conditions besides the fields:
-
-- The kind must be namespaced. A cluster-scoped kind has no namespace to search within, so it gets no endpoint (`pkg/services/apiserver/searchroutes/searchroutes.go`).
-- The group version has to be one this process actually serves.
-
-### The field requirement is temporary
-
-Declaring a field is not what makes search work. This requirement is temporary, until we review kinds before enrolling them automatically. A kind with only the standard fields works fine. Folders are the live example, kept working by an allowlist in `searchroutes.go`.
-
-The plan is to drop the requirement. After that, **every kind in a manifest gets the endpoint unless it opts out**. So:
-
-- If you want your kind searchable, it will be, whether or not you declare fields. Declaring them now just gets you there sooner.
-- If you do not want your kind searchable, declaring no fields will not stop it. Write the opt-out down (next section).
-
-At that point `searchFields` only controls **what callers can query and retrieve**, not whether the endpoint exists.
 
 ## 2. Opting out
 
@@ -78,8 +71,6 @@ Kind-level, and note the colon: `search: { ... }`. Brace shorthand is not valid 
 
 `endpoint: false` turns off `/search`, `trash: false` turns off `/trash`. They are separate because trash decides access from a different rule, and only some kinds are allowed to serve it (see [Other things worth knowing](#other-things-worth-knowing)).
 
-The opt-out works today and keeps working after the field requirement is dropped.
-
 Opting out should be rare, though. Search exposes nothing that listing your kind did not already expose (see [Authorization](#7-authorization)), so there is usually nothing to protect by opting out. If you are unsure, leave the default alone.
 
 ## 3. Declaring fields
@@ -98,7 +89,7 @@ Capabilities:
 
 | Capability | What it allows |
 | --- | --- |
-| `filter` | Exact matching on a value or set of values: `In` and `NotIn`. |
+| `filter` | Exact matching on a value or set of values: `In`, `NotIn` and `All`. `In` matches **any** of the values, `All` requires **every** one (see [Requiring every value](#requiring-every-value)). |
 | `text` | Free-text search over the field's tokens. |
 | `partial` | Substring matching. Requires `text`. Costs index size. |
 | `sort` | The field may be named in `sort`. |
@@ -185,10 +176,44 @@ In practice that means when your kind graduates from `v1beta1` to `v1`, the URL 
 **`where`** is a predicate tree. Today it accepts either a single leaf, or a single `and` of leaves. Leaf types:
 
 - `text`: the free-text query, the thing a user types into a search box. `value` is required. `text.fields` says which fields to match it against, defaulting to `title`, and each field named there needs the `text` capability. At most one text leaf. Omitting `text` is fine and common: the query then matches on the other leaves alone, results come back ordered by `name` rather than by relevance, and no `score` is returned.
-- `filter`: `field`, `operator` (`In` or `NotIn`), `values`. Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. `*` in a value is rejected.
+- `filter`: `field`, `operator` (`In`, `NotIn` or `All`), `values`. `In` matches **any** of the values, `NotIn` excludes all of them, and `All` requires the field to hold **every** value, see [Requiring every value](#requiring-every-value). Values are always strings, whatever the field's type: a boolean field takes `"true"` or `"false"`, a number is written out. `*` in a value is rejected.
 - `range`: numeric fields only, and the field must declare `filter`. There is no separate range capability, so a field you cannot filter is also a field you cannot range over. `gt`/`gte`/`lt`/`lte`, at least one bound, and you cannot combine `gt` with `gte` or `lt` with `lte`. On an `int64` field bounds must be whole numbers.
+- `regex`: `field`, `pattern`, and optional `negate`, matching how a single Prometheus matcher works (`negate` is `!~`). String fields declaring `filter` only. The match is against the whole indexed term and case-sensitive, so it only works on keyword fields that keep their original case; a field indexed lowercased (such as `title`) is rejected. `pattern` is a portable RE2 subset (literals, character classes, grouping, alternation, greedy repetition); the backend rejects unsupported syntax, case-losing fields, and patterns that expand to too many terms (10,000 inspected or matched) with a 400. An empty pattern is rejected, because it would match only the empty string and quietly return nothing.
+
+To exclude empty values, prefer a `filter` leaf over a regex: `NotIn` with a single `""` value is a single-term negation, where the regex `.+` scans the whole field (so `.+` only works under 10,000 distinct values). Note `NotIn` also matches documents missing the field, so it means "value is not empty" rather than "present and non-empty"; use `.+` (and `negate` it for empty-or-missing) only when you need that stricter sense.
 
 Omitting `where` matches everything of that kind in the namespace, subject to authorization.
+
+#### Requiring every value
+
+`In` with several values is an OR: this returns dashboards tagged `prod`, or `eu-west`, or both.
+
+```json
+{ "filter": { "field": "tags", "operator": "In", "values": ["prod", "eu-west"] } }
+```
+
+`All` requires **both**:
+
+```json
+{ "filter": { "field": "tags", "operator": "All", "values": ["prod", "eu-west"] } }
+```
+
+One filter leaf per value inside an `and` means the same thing and stays valid:
+
+```json
+{
+  "where": {
+    "and": [
+      { "filter": { "field": "tags", "operator": "In", "values": ["prod"] } },
+      { "filter": { "field": "tags", "operator": "In", "values": ["eu-west"] } }
+    ]
+  }
+}
+```
+
+`All` only means something on a field that holds a list of values, such as `tags` or `ownerReferences`. On a field holding a single value, such as `folder`, `All` with more than one value can never match, so it is rejected with 422 rather than returning an empty result. With exactly one value `All` and `In` mean the same thing, on any field.
+
+`In` is the shape people get wrong, because dashboard live search behaves the other way round: the old `/api/search` path sends its `tag` parameters as a single requirement that the backend combines with AND (`pkg/registry/apis/dashboard/search.go`). So a UI tag filter ported from live search to this endpoint keeps the same request shape and quietly changes meaning, from "has all these tags" to "has any of them".
 
 `or`, `not` and `exists` are in the schema for later and rejected today.
 
@@ -245,9 +270,9 @@ The sampled path already exists: when per-item authorization runs after ranking,
 
 ## 6. Errors
 
-- **422 Unprocessable Entity**: the request parsed but is not valid. A field your kind does not declare, a field missing the capability the request needs, an unsupported operator, a `not`/`or`/`exists` node, a second text leaf. The response body names the offending field path.
+- **422 Unprocessable Entity**: the request parsed but is not valid. A field your kind does not declare, a field missing the capability the request needs, an unsupported operator, `All` with several values on a field holding a single value, a `not`/`or`/`exists` node, a second text leaf. The response body names the offending field path.
 - **400 Bad Request**: the request could not be understood. Malformed JSON, an unknown top-level key, an empty body, more than one JSON object, a missing namespace, or `namespace=*`. Searching across namespaces is not supported.
-- **405 Method Not Allowed**: the kind is served, but has no search endpoint. It declares no search fields, it opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
+- **405 Method Not Allowed**: the kind is served, but has no search endpoint. It opted out, or it is cluster-scoped. No route is mounted, so the router answers before any search code runs.
 - **404 Not Found**: the resource itself is not served by this apiserver.
 - **503 Service Unavailable** (`/trash` only): the index does not keep deleted documents because indexing them is disabled, or because the index still needs to be rebuilt after indexing was enabled.
 
@@ -264,14 +289,252 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so declaring search fields gets you `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
+- **Trash is limited to dashboards today.** `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
+## Hybrid search
+
+Hybrid search combines lexical matches with semantic matches from embeddings.
+To make your resource embeddable, declare its embedding inputs with `embed.fields`
+in CUE and enroll the resource in the deployment. Your resource's
+data must already be in unified storage, as described in the prerequisite above.
+
+### Expose the endpoint
+
+Hybrid routes require an explicit opt-in on each namespaced kind version. In the
+kind's CUE definition, set:
+
+```cue
+search: {
+	hybrid: true
+}
+```
+
+Run `make gen-apps` to regenerate the manifest artifacts. Only versions served by
+the API process get `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+The route is absent when `search.hybrid` is omitted or false, or the kind is
+cluster-scoped. The same rules apply to core APIs, app plugins and manifest-backed
+custom resource definitions.
+
+`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these
+routes deployment-wide. Standalone API servers expose the equivalent flag
+`--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's
+`search.hybrid` setting are independent of lexical search and trash: hybrid can
+remain available when `enable_search_api`, `enable_trash_api` or
+`search.endpoint` is false.
+
+Route availability does not enroll a resource for embeddings. The `embed.fields`
+declaration and `vector_allowed_internal_collections` setting below control that
+separately. A hybrid request on a storage version that does not implement the RPC
+returns `501 Not Implemented`.
+
+### 1. Declare the fields to embed
+
+Add `embed.fields` to the kind's CUE definition. Each entry identifies a field
+whose value is included in the text sent to the embedding provider. Folders
+include `spec.title` and `spec.description`; the `foldersV1` definition in
+`apps/folder/kinds/folder.cue` contains:
+
+```cue
+embed: {
+	fields: [
+		{name: "title", path: "spec.title"},
+		{name: "description", path: "spec.description"},
+	]
+}
+```
+
+`path` selects a string or string array from the stored object. `name` labels
+that value in the text sent to the embedding provider. For example:
+
+```text
+title: Production infrastructure
+description: Dashboards for production services
+```
+
+The generic builder produces one embedding document per resource, joining
+fields in declaration order. It omits missing or empty values and caps the
+combined document at 4 KiB, so put the most useful information first.
+
+These fields supply embedding text only. They do not make the fields available
+as filters, and they are independent of `searchFields`.
+
+### 2. Declare fields for each stored API version
+
+The builder selects fields using the object's stored `apiVersion`. Declare
+them for every version whose objects you want embedded, including older
+versions still present in storage. The version in a search request does not
+change which declaration is used to embed an object.
+
+If versions share a schema, they can share the declaration: folders define
+`foldersV1beta1: foldersV1`, so both `v1` and `v1beta1` have the fields above.
+If their schemas differ, give each version the paths that match its schema.
+An object with no matching version declaration is skipped; the builder does
+not fall back to another version's fields.
+
+### 3. Set the resource's re-embedding version
+
+Inside the `manifest` object in `apps/folder/kinds/manifest.cue`, declare:
+
+```cue
+embed: {
+	folders: {
+		reembedVersion: 1
+	}
+}
+```
+
+The key is the plural resource name (`folders`). `reembedVersion` is a positive
+integer shared by all API versions of that resource. It is independent of API
+versions such as `v1` and `v1beta1`.
+
+Increase it when you change the embedding inputs and need existing resources
+reprocessed, for example when adding another descriptive field. Changing
+`embed.fields` does not automatically increase this version: future writes use
+the new fields, while a version bump requests a backfill of existing resources.
+Keep it increasing; do not reset it when adding a new API version.
+
+### 4. Generate, deploy, and enroll the resource
+
+Generate the app artifacts after editing the CUE. From the repository root,
+for folders:
+
+```bash
+make gen-apps app=folder
+```
+
+Commit the generated artifacts with the CUE changes and deploy the updated
+manifest to the services that generate and query embeddings. In a split
+deployment, updating the Grafana API process alone does not update the storage
+and search services. Deploy the declarations before adding the resource to the
+allowlist: startup validation rejects an enrolled resource with no declaration
+or custom builder.
+
+Ask the deployment owner to add your `group/resource` to
+`[unified_storage] vector_allowed_internal_collections`. For folders alongside
+dashboards:
+
+```ini
+[unified_storage]
+vector_allowed_internal_collections = dashboard.grafana.app/dashboards,folder.grafana.app/folders
+```
+
+Set the list on both storage-api and search-api. Storage-api uses it to select
+resources for embedding generation and backfill; search-api uses it to allow
+queries against those embeddings. The configured list replaces the default,
+so retain dashboards and any other resources already enrolled. An unset or
+empty setting defaults to dashboards only.
+
+The deployment also needs an embedding provider and vector database configured,
+with `vector_backend = true` on both services and `vector_indexing_enabled = true`
+on storage-api. Search-api does not need indexing enabled. In a single-process
+deployment, these settings belong to the same Grafana process.
+
+After rollout, create or update a resource. The first write event processed by
+the reconciler initializes its vector collection and schedules a backfill of
+existing resources. Later writes keep embeddings up to date. Check generation
+and backfill metrics for your group/resource; an increase in
+`vector_storage_embed_skipped_versions_total` indicates that stored objects
+lack a matching API-version declaration.
+
+### Custom embedding builders
+
+Use a registered Go `embed.Builder` when a resource needs custom extraction or
+multiple chunks. Dashboards, for example, produce a chunk per panel. The builder
+supplies its text through `Extract` and its re-embedding version through
+`Version()`; omit the CUE `embed.fields` and resource-level `reembedVersion` for
+that resource. A custom builder takes precedence over manifest declarations.
+It still needs enrollment in `vector_allowed_internal_collections`.
+
+### Query the resource
+
+Embedding generation and HTTP route availability are configured separately.
+On a deployment that exposes your resource's hybrid endpoint, send a POST to
+`/apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+For folders, the path is
+`/apis/folder.grafana.app/v1/namespaces/{namespace}/folders/search/hybrid`.
+
+Storage combines lexical and semantic results when both an embedding provider
+and vector backend are configured. If either is missing, storage versions with
+lexical-only support search the regular resource index instead. Reranking remains
+available in this mode. Failures from a configured semantic search still return
+errors; they do not trigger lexical-only results.
+
+The request uses the same envelope group as lexical search:
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchQuery",
+  "query": "production",
+  "semanticQuery": "Folders containing production infrastructure dashboards",
+  "filters": [{ "field": "folder", "values": [""] }],
+  "limit": 10
+}
+```
+
+`query` is required and feeds the lexical search. It also supplies the text for
+semantic search and reranking unless `semanticQuery` is supplied. In lexical-only
+mode, `semanticQuery` can still be used for reranking. Each query is limited to
+1,000 bytes. `limit` defaults to 50, is capped at 200, and cannot be negative.
+
+Filters are exact matches: values within a filter are ORed, and different filters
+are ANDed. Filter values containing `*` are rejected.
+Each field may appear once, each values list must be nonempty, and the
+combined value count cannot exceed 1,000. All resources support `uid` (resource
+name) and `folder` (containing folder, not recursive). `""` and `"general"` both
+select the root folder. Dashboards additionally support `datasource_uid` and
+`language` (`promql`, `logql`, `traceql`, `sql`). Language filtering preserves the
+dashboard endpoint's behavior: its lexical leg approximates language using
+datasource types. Declaring `embed.fields` supplies
+embedding text only; it grants no filtering capability. Lexical search field
+declarations do not extend the hybrid filter set either.
+
+`minRelevance` accepts `lowest`, `low`, `medium`, `high` or `highest`; omitting it
+keeps every result. It is best-effort: if no reranker is configured or reranking
+fails, results are returned without this threshold. `skipRerank: true` skips
+reranking and cannot be combined with `minRelevance`.
+
+```json
+{
+  "apiVersion": "search.grafana.app/v0alpha1",
+  "kind": "HybridSearchResults",
+  "items": [{
+    "resource": { "group": "folder.grafana.app", "resource": "folders", "kind": "Folder", "name": "production" },
+    "score": 0.032,
+    "title": "Production infrastructure",
+    "folder": "",
+    "chunks": [{ "subresource": "", "content": "Production infrastructure dashboards" }]
+  }]
+}
+```
+
+This is a top-k result set, without totals, pagination, sorting or facets. Scores
+are opaque and meaningful only for ordering within one response. Matching chunks
+are returned best first; an empty subresource means the whole resource or a
+synthesized title chunk for a lexical-only hit. Results can also include
+best-effort `folderTitle` and `managedBy` (`kind` and `id`) display data. No matches
+returns `"items": []`.
+
+Malformed JSON and unknown fields receive 400; invalid envelopes and options
+receive 422 with field paths. When semantic search is configured, a resource not
+enrolled through `vector_allowed_internal_collections`, not provisioned, or
+without an active builder receives 404. These enrollment checks do not apply in
+lexical-only mode. An unavailable backend receives 503. Storage without the RPC
+or a configured search index receives 501; older storage versions may also return
+501 when embedding configuration is missing. The HTTP handler preserves these
+errors instead of implementing a separate fallback.
+
+The storage service authorizes individual results in both modes. Its embedding
+query rate limit applies only when semantic search is enabled (429 when exceeded).
+
 ## Where to look
 
-- `pkg/apis/search/v0alpha1/types.go`: the only authority on the public request and response shape
+- `pkg/apis/search/v0alpha1/types.go` and `hybrid.go`: public request and response shapes
 - `route.go`, `handler.go`, `translate.go` in this package: validation and error codes
+- `apps/folder/kinds/folder.cue` and `manifest.cue`: a complete example of declarative embedding inputs and their re-embedding version
+- `pkg/storage/unified/search/embed/generic/builder.go`: how declared fields become embedding text
 - `pkg/storage/unified/resource/search_field.go`: field definitions, capabilities, the index-affecting hash
 - `pkg/storage/unified/resource/standard_search_fields.go`: the standard fields
 - `pkg/services/apiserver/searchroutes/searchroutes.go`: how routes are mounted, including the temporary field requirement

@@ -101,6 +101,67 @@ func TestComputeFullPath(t *testing.T) {
 	}
 }
 
+func TestToFolderLegacyCounts(t *testing.T) {
+	counts := func(stats ...map[string]interface{}) *unstructured.Unstructured {
+		items := make([]interface{}, 0, len(stats))
+		for _, s := range stats {
+			items = append(items, s)
+		}
+		return &unstructured.Unstructured{Object: map[string]interface{}{"counts": items}}
+	}
+	stat := func(group, res string, count int64) map[string]interface{} {
+		return map[string]interface{}{"group": group, "resource": res, "count": count}
+	}
+
+	testCases := []struct {
+		name  string
+		input *unstructured.Unstructured
+		want  folder.DescendantCounts
+	}{
+		{
+			name: "resources still living in the single-tenant tables are counted",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "unified storage counts win over the single-tenant tables",
+			input: counts(
+				stat("rules.alerting.grafana.app", "alertrules", 5),
+				stat("sql-fallback", "alertrules", 3),
+			),
+			want: folder.DescendantCounts{"alertrules": 5},
+		},
+		{
+			name: "order of the entries does not matter",
+			input: counts(
+				stat("sql-fallback", "alertrules", 3),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"alertrules": 3},
+		},
+		{
+			name: "empty folder stays empty",
+			input: counts(
+				stat("dashboard.grafana.app", "dashboards", 0),
+				stat("rules.alerting.grafana.app", "alertrules", 0),
+				stat("sql-fallback", "alertrules", 0),
+			),
+			want: folder.DescendantCounts{"dashboards": 0, "alertrules": 0},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := toFolderLegacyCounts(tc.input)
+			require.NoError(t, err)
+			require.Equal(t, tc.want, *got)
+		})
+	}
+}
+
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	tracer := noop.NewTracerProvider().Tracer("TestGetParents")
@@ -213,6 +274,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -230,19 +292,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // q.Limit defaults to folderSearchLimit
 			Offset: 0,                 // q.Limit * (q.Page - 1) with defaulted Page=1
 		}).Return(&resourcepb.ResourceSearchResponse{
-			Results: &resourcepb.ResourceTable{
-				Columns: []*resourcepb.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Fields: []*resourcepb.ResourceSearchField{
+				{Name: resource.SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+			},
+			Rows: []*resourcepb.ResourceSearchRow{
+				{
+					Key:    &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
 				},
-				Rows: []*resourcepb.ResourceTableRow{
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
-					{
-						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
-						Cells: [][]byte{[]byte("folder1")},
-					},
+				{
+					Key:    &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
+					Values: []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{"folder1"}}},
 				},
 			},
 			TotalHits: 1,
@@ -276,6 +337,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -321,6 +383,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -454,6 +517,7 @@ func TestGetChildren(t *testing.T) {
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 			Options: &resourcepb.ListOptions{
 				Fields: []*resourcepb.Requirement{
 					{
@@ -1541,16 +1605,18 @@ func TestGetFoldersMetadata(t *testing.T) {
 
 	expectSearchAll := func(mockCli *client.MockK8sHandler) {
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{},
-			Limit:   searchPageSize,
-			Offset:  0,
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       0,
 		}).Return(searchResponse, nil).Once()
 		// searchAllFolders pages until an empty page, so it issues a trailing
 		// Search past the last hit (offset = number of hits returned above).
 		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
-			Options: &resourcepb.ListOptions{},
-			Limit:   searchPageSize,
-			Offset:  int64(len(searchResponse.Results.Rows)),
+			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+			Options:      &resourcepb.ListOptions{},
+			Limit:        searchPageSize,
+			Offset:       int64(len(searchResponse.Results.Rows)),
 		}).Return(emptyResponse, nil).Once()
 	}
 

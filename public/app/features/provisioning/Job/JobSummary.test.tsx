@@ -9,37 +9,37 @@ function setup(summary: JobResourceSummary[]) {
 }
 
 function rowFor(label: string) {
-  return screen.getByRole('row', { name: new RegExp(label) });
+  return screen.findByRole('row', { name: new RegExp(label) });
 }
 
 describe('JobSummary', () => {
-  it('renders a row per resource kind with its name and an icon', () => {
+  it('renders a row per resource kind with its name and an icon', async () => {
     setup([
       { group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2, update: 3, noop: 1 },
       { group: 'folder.grafana.app', kind: 'Folder', delete: 1 },
     ]);
 
-    const dashboardRow = rowFor('Dashboard');
+    const dashboardRow = await rowFor('Dashboard');
     expect(within(dashboardRow).getByText('Dashboard')).toBeInTheDocument();
     // The kind icon is rendered alongside the name.
     expect(dashboardRow.querySelector('svg')).toBeInTheDocument();
 
-    expect(rowFor('Folder')).toBeInTheDocument();
+    expect(await rowFor('Folder')).toBeInTheDocument();
   });
 
-  it('computes the total from the action counts', () => {
+  it('computes the total from the action counts', async () => {
     setup([{ group: 'dashboard.grafana.app', kind: 'Dashboard', create: 2, update: 3, noop: 1, error: 1 }]);
 
-    const row = rowFor('Dashboard');
+    const row = await rowFor('Dashboard');
     const cells = within(row).getAllByRole('cell');
     // Last column is Total: 2 (create) + 3 (update) + 1 (noop) + 1 (error) = 7.
     expect(cells[cells.length - 1]).toHaveTextContent('7');
   });
 
-  it('falls back to an Unknown label and a dash for rows missing a kind or counts', () => {
+  it('falls back to an Unknown label and a dash for rows missing a kind or counts', async () => {
     setup([{ group: '', kind: '' }]);
 
-    const row = rowFor('Unknown');
+    const row = await rowFor('Unknown');
     expect(within(row).getByText('Unknown')).toBeInTheDocument();
     // The fallback icon still renders.
     expect(row.querySelector('svg')).toBeInTheDocument();

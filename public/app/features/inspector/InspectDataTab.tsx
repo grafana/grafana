@@ -18,10 +18,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config, getTemplateSrv, reportInteraction } from '@grafana/runtime';
 import { Button, Spinner, Table } from '@grafana/ui';
-import { TableNG } from '@grafana/ui/unstable';
 import { type GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
 import { dataFrameToLogsModel } from '../logs/logsModel';
+import { CommonTableNG } from '../table/CommonTableNG';
 
 import { InspectDataOptions } from './InspectDataOptions';
 import { getPanelInspectorStyles } from './styles';
@@ -46,10 +46,10 @@ interface Props {
 
 interface State {
   /** The string is joinByField transformation. Otherwise it is a dataframe index */
-  selectedDataFrame: number | DataTransformerID;
+  selectedDataFrame: number | DataTransformerID.joinByField;
   transformId: DataTransformerID;
   dataFrameIndex: number;
-  transformationOptions: Array<SelectableValue<DataTransformerID>>;
+  transformationOptions: Array<SelectableValue<DataTransformerID.joinByField>>;
   transformedData: DataFrame[];
   excelCompatibilityMode: boolean;
 }
@@ -161,7 +161,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     downloadAsJson(data, dataName);
   };
 
-  onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
+  onDataFrameChange = (item: SelectableValue<DataTransformerID.joinByField | number>) => {
     this.setState({
       transformId:
         item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop,
@@ -313,7 +313,13 @@ export class InspectDataTab extends PureComponent<Props, State> {
                 // so it needs an explicitly-sized wrapper here (unlike the legacy Table).
                 return (
                   <div style={{ width, height }}>
-                    <TableNG width={width} height={height} data={dataFrame} showTypeIcons={true} />
+                    <CommonTableNG
+                      width={width}
+                      height={height}
+                      data={dataFrame}
+                      showTypeIcons={true}
+                      transparent={config.theme2.flags.visualDesignRefresh}
+                    />
                   </div>
                 );
               }
@@ -336,7 +342,7 @@ function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
 }
 
 function buildTransformationOptions() {
-  const transformations: Array<SelectableValue<DataTransformerID>> = [
+  const transformations: Array<SelectableValue<DataTransformerID.joinByField>> = [
     {
       value: DataTransformerID.joinByField,
       label: t('dashboard.inspect-data.transformation', 'Series joined by time'),
