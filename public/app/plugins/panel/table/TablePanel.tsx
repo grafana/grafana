@@ -9,7 +9,6 @@ import {
   type PanelProps,
   type SelectableValue,
 } from '@grafana/data';
-import { getFrameIdentity } from '@grafana/data/internal';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
@@ -22,6 +21,7 @@ import {
   useCellActions,
   useCommonTableProps,
   useTableRefreshNewFeatures,
+  useTableFrameScope,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
@@ -67,9 +67,11 @@ export function TablePanel(props: Props) {
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
   const outputMain = frames[currentIndex];
-  const sourceMain = tableRefreshNewFeaturesEnabled
-    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)[currentIndex]
+  const sourceSeries = tableRefreshNewFeaturesEnabled
+    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
+  const sourceMain = sourceSeries?.[currentIndex];
+  const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
   // Rebuild display processors and link closures against original rows, before ad-hoc selection.
   const rawMain = useMemo(
     () =>
@@ -88,11 +90,8 @@ export function TablePanel(props: Props) {
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
   const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
   const main = useMemo(
-    () =>
-      tableRefreshNewFeaturesEnabled && rawMain
-        ? withRefreshedTableCapabilities(rawMain, Boolean(adHocColumns))
-        : rawMain,
-    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
+    () => (tableRefreshNewFeaturesEnabled && rawMain ? withRefreshedTableCapabilities(rawMain) : rawMain),
+    [rawMain, tableRefreshNewFeaturesEnabled]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -123,15 +122,11 @@ export function TablePanel(props: Props) {
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: getFrameIdentity(
-                panelContext.adHocTransformations.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER),
-                currentIndex
-              ),
+              frameKey: getFrameScope(currentIndex),
             }
           : undefined
       }
       timeZone={props.timeZone}
-      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
