@@ -4,6 +4,7 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { type DataFrame, FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { getFrameIdentity, getRowIdentity } from '../frameIdentity';
+import { type RangeValueMatcherOptions } from '../matchers/valueMatchers/types';
 import { transformDataFrame } from '../transformDataFrame';
 
 import {
@@ -42,8 +43,8 @@ function config(
     },
   };
 }
-const range = (options: { min?: number; max?: number; includeMissing: boolean }, fieldName = 'Value') =>
-  config({ fieldName, config: { id: 'numericRange', options } });
+const range = (options: RangeValueMatcherOptions<number>, fieldName = 'Value') =>
+  config({ fieldName, config: { id: 'between', options: { ...options, inclusive: true, allowOpenBounds: true } } });
 
 it('restores serialized filterByValue configs through the standard registry and isolates duplicate frames', async () => {
   const frames = [frame(), frame()];
@@ -88,7 +89,7 @@ it('applies child filters before removing parent rows', async () => {
     ],
   });
   const frameKey = getFrameIdentity([parent], 0);
-  const child = range({ min: 3, includeMissing: false });
+  const child = range({ from: 3, includeMissing: false });
   child.options.target = { frameKey, parentIndex: 1, parentKey: getRowIdentity(parent, 1) };
   const parents = config({ fieldName: 'Parent', config: { id: 'inSet', options: { values: ['two'] } } }, { frameKey });
   const [output] = await lastValueFrom(transformDataFrame([child, parents], [parent]));

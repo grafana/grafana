@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
-import { type Field, type SelectableValue } from '@grafana/data';
-import { type ValueSetOptions, type NumericRangeOptions } from '@grafana/data/internal';
+import { type Field, type RangeValueMatcherOptions, type SelectableValue } from '@grafana/data';
+import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { editableTableFilter, tableFilterKey, useTableView } from '../TableViewContext';
 import { FilterOperator, type FilterType, type TableRow } from '../types';
@@ -55,7 +55,8 @@ export function useFilterPopupState({
   const predicate = selected[0]?.options.filters[0]?.config;
   const unsupported = selected.length > 1 || selected.some((config) => !editableTableFilter(config));
   const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
-  const range: NumericRangeOptions | undefined = predicate?.id === 'numericRange' ? predicate.options : undefined;
+  const range: RangeValueMatcherOptions<number> | undefined =
+    predicate?.id === 'between' ? predicate.options : undefined;
   const filterKey = view && field ? tableFilterKey(field, parentIndex) : legacyKey;
   const filterValue = view
     ? selection?.values.map((value) => ({ value, label: String(value) }))
@@ -120,11 +121,25 @@ export function useFilterPopupState({
           : undefined,
       onApplyRange:
         view && field
-          ? (range) => view.applyFilter(field, { id: 'numericRange', options: range }, parentIndex)
+          ? ({ min, max, includeMissing }) =>
+              view.applyFilter(
+                field,
+                {
+                  id: 'between',
+                  options: {
+                    from: min,
+                    to: max,
+                    inclusive: true,
+                    allowOpenBounds: true,
+                    includeMissing,
+                  } satisfies RangeValueMatcherOptions<number>,
+                },
+                parentIndex
+              )
           : undefined,
       onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
       timeZone: view?.timeZone,
-      range,
+      range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       name,
       rows: rowsForPopup,
       filterValue,

@@ -19,7 +19,15 @@ function range(min?: number, max?: number, parentIndex?: number): FilterByValueC
       type: FilterByValueType.include,
       match: FilterByValueMatch.all,
       missingField: 'ignore',
-      filters: [{ fieldName: 'Value', config: { id: 'numericRange', options: { min, max, includeMissing: false } } }],
+      filters: [
+        {
+          fieldName: 'Value',
+          config: {
+            id: 'between',
+            options: { from: min, to: max, inclusive: true, allowOpenBounds: true, includeMissing: false },
+          },
+        },
+      ],
       target: { frameKey: 'already-selected-frame', parentIndex },
     },
   };
