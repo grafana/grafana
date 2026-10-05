@@ -3,6 +3,7 @@ import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { type BiSelectionUrlSync } from '../../bi/BiSelectionUrlSync';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
@@ -78,6 +79,8 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   sidebar: DashboardSidebarLike;
   /** Manages dragging/dropping of layout items */
   layoutOrchestrator: DashboardLayoutOrchestrator;
+  /** Keeps BI selection ownership in the URL; only present while BI mode is on */
+  biSelectionUrlSync?: BiSelectionUrlSync;
   /** True while default variables from datasources are being loaded */
   defaultVariablesLoading?: boolean;
   /** True while default links from datasources are being loaded */

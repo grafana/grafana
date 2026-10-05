@@ -1,9 +1,9 @@
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 /**
- * Marks an ad hoc filter as a BI selection written by a panel click (session-only, stripped on save and
- * absent from the URL). `values` is a copy of what was written, so a later edit of the filter's value
- * invalidates the stamp and the filter becomes an ordinary filter.
+ * Marks an ad hoc filter as a BI selection written by a panel click. It is stripped on save; the URL carries only
+ * the owner and key (see BiSelectionUrlSync). `values` is a copy of what was written, so a later edit of the filter's
+ * value invalidates the stamp and the filter becomes an ordinary filter.
  */
 export interface BiSelectionStamp {
   sourcePanel: string;
@@ -32,6 +32,21 @@ export function getValidBiSelection(filter: AdHocFilterWithLabels): BiSelectionS
 
   const matches = current.length === stamp.values.length && current.every((value, i) => value === stamp.values[i]);
   return matches ? stamp : undefined;
+}
+
+/**
+ * Whether a filter can hold a BI selection: an editable `=` or `=|` filter that was not injected.
+ */
+export function isBiSelectable(filter: AdHocFilterWithLabels): boolean {
+  return (filter.operator === '=' || filter.operator === '=|') && !filter.origin && !filter.readOnly;
+}
+
+/**
+ * Returns a copy of a selectable filter stamped as owned by `sourcePanel` with its current values.
+ */
+export function stampBiSelection(filter: AdHocFilterWithLabels, sourcePanel: string): AdHocFilterWithLabels {
+  const values = filter.operator === '=|' ? [...(filter.values ?? [])] : [filter.value];
+  return { ...filter, meta: { ...getMeta(filter), biSelection: { sourcePanel, key: filter.key, values } } };
 }
 
 /**
