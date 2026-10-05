@@ -1,7 +1,15 @@
 import uPlot from 'uplot';
 
-import { createDataFrame, createTheme, type DataFrame, FieldType, type GrafanaTheme2 } from '@grafana/data';
+import {
+  colorManipulator,
+  createDataFrame,
+  createTheme,
+  type DataFrame,
+  FieldType,
+  type GrafanaTheme2,
+} from '@grafana/data';
 import { ScaleDirection, ScaleOrientation, StackingMode, VisibilityMode } from '@grafana/schema';
+import { measureText } from '@grafana/ui';
 
 import { type BarsOptions, getConfig } from './bars';
 
@@ -1006,6 +1014,163 @@ describe('bars.getConfig', () => {
       // only the two non-null values (indices 0 and 2) are colored
       expect(getColor).toHaveBeenCalledTimes(2);
       expect(getColor.mock.calls.map((call) => call[1])).toEqual([0, 2]);
+    });
+  });
+
+  describe('selection veil', () => {
+    function createVeilU(data?: [unknown[], ...Array<Array<number | null>>]) {
+      const base = createMockU(data);
+      const ctx = { ...base.ctx, beginPath: jest.fn(), rect: jest.fn(), clip: jest.fn(), fill: jest.fn() };
+      return { u: asUPlot({ ...base, ctx }), ctx, seriesCount: base.data.length - 1 };
+    }
+
+    function drawWithSelection(
+      getSelection: BarsOptions['getSelection'],
+      overrides?: Partial<BarsOptions>,
+      data?: [unknown[], ...Array<Array<number | null>>]
+    ) {
+      const config = getConfig(createMinimalBarsOptions({ getSelection, ...overrides }), theme);
+      const { u, ctx, seriesCount } = createVeilU(data);
+
+      config.drawClear(u);
+      for (let sidx = 1; sidx <= seriesCount; sidx++) {
+        config.barsBuilder(u, sidx, 0, 2);
+      }
+      config.draw(u);
+
+      return ctx;
+    }
+
+    /** Veil rects, skipping the plot-area clip rect */
+    const veilRects = (ctx: { rect: jest.Mock }) => ctx.rect.mock.calls.slice(1);
+
+    it('paints nothing when there is no selection', () => {
+      const ctx = drawWithSelection(() => null);
+
+      expect(ctx.fill).not.toHaveBeenCalled();
+    });
+
+    it('veils every unselected bar with one fill in the translucent panel background colour', () => {
+      const ctx = drawWithSelection(() => new Set([1]), { showValue: VisibilityMode.Never });
+
+      // mock bars: canvas lft = bbox.left + 10 + i * 30, wid 25; pad of 1 device px on each side
+      expect(veilRects(ctx)).toEqual([
+        [50 + 10 - 1, 20 + 60 - 1, 27, 22],
+        [50 + 70 - 1, 20 + 60 - 1, 27, 62],
+      ]);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
+      expect(ctx.fillStyle).toBe(colorManipulator.alpha(theme.colors.background.primary, 0.7));
+      expect(ctx.clip).toHaveBeenCalled();
+    });
+
+    it('limits the pad along the category axis to half the gap to a neighbour', () => {
+      const uPlotMock = uPlot as unknown as { pxRatio: number };
+      uPlotMock.pxRatio = 10;
+
+      try {
+        const ctx = drawWithSelection(() => new Set([1]), { showValue: VisibilityMode.Never });
+
+        // gaps between mock bars are 5px, so the pad towards a neighbour is 2.5 instead of 10
+        expect(veilRects(ctx)).toEqual([
+          [50 + 10 - 10, 20 + 60 - 10, 25 + 10 + 2.5, 20 + 20],
+          [50 + 70 - 2.5, 20 + 60 - 10, 25 + 2.5 + 10, 60 + 20],
+        ]);
+      } finally {
+        uPlotMock.pxRatio = 1;
+      }
+    });
+
+    it('merges stacked segments into one box per category', () => {
+      const ctx = drawWithSelection(
+        () => new Set([1]),
+        { showValue: VisibilityMode.Never, stacking: StackingMode.Normal },
+        [
+          ['a', 'b', 'c'],
+          [10, 20, 30],
+          [1, 2, 3],
+        ]
+      );
+
+      expect(veilRects(ctx)).toHaveLength(2);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
+    });
+
+    it('veils the drawn bar, not the expanded fullHighlight hover rect', () => {
+      const ctx = drawWithSelection(() => new Set([0, 2]), { fullHighlight: true, showValue: VisibilityMode.Never });
+
+      expect(veilRects(ctx)).toEqual([[50 + 40 - 1, 20 + 60 - 1, 27, 42]]);
+    });
+
+    describe.each([
+      ['horizontal x axis', ScaleOrientation.Horizontal],
+      ['vertical x axis', ScaleOrientation.Vertical],
+    ])('value labels with a %s', (_name, xOri) => {
+      beforeEach(() => {
+        // labels much wider and taller than the 25px mock bars
+        jest.mocked(measureText).mockReturnValue({
+          width: 120,
+          actualBoundingBoxAscent: 40,
+          actualBoundingBoxDescent: 10,
+        } as TextMetrics);
+      });
+
+      afterEach(() => {
+        jest.mocked(measureText).mockReturnValue(defaultTextMetrics as TextMetrics);
+      });
+
+      it('fades every label of an unselected category, keeps the veil to the bars, and paints labels last', () => {
+        const config = getConfig(
+          createMinimalBarsOptions({ xOri, text: { valueSize: 14 }, getSelection: () => new Set([1]) }),
+          theme
+        );
+        const { u, ctx } = createVeilU();
+        const alphaByText: Record<string, number> = {};
+        ctx.fillText.mockImplementation((text: string) => {
+          alphaByText[text] = (ctx as { globalAlpha?: number }).globalAlpha ?? 1;
+        });
+
+        config.drawClear(u);
+        config.barsBuilder(u, 1, 0, 2);
+        config.draw(u);
+
+        // rawValue gives 10, 20, 30 for categories 0, 1, 2
+        expect(alphaByText).toEqual({ '10': expect.closeTo(0.3), '20': 1, '30': expect.closeTo(0.3) });
+        // veil boxes are the padded bars only: the same as with no labels at all
+        const withoutLabels = drawWithSelection(() => new Set([1]), { xOri, showValue: VisibilityMode.Never });
+        expect(veilRects(ctx)).toHaveLength(2);
+        expect(veilRects(ctx)).toEqual(veilRects(withoutLabels));
+        expect(ctx.fill.mock.invocationCallOrder[0]).toBeLessThan(ctx.fillText.mock.invocationCallOrder[0]);
+      });
+    });
+
+    it('draws labels at full opacity without a selection', () => {
+      const config = getConfig(createMinimalBarsOptions({ text: { valueSize: 14 }, getSelection: () => null }), theme);
+      const { u, ctx } = createVeilU();
+      const alphas: number[] = [];
+      ctx.fillText.mockImplementation(() => alphas.push((ctx as { globalAlpha?: number }).globalAlpha ?? 1));
+
+      config.drawClear(u);
+      config.barsBuilder(u, 1, 0, 2);
+      config.draw(u);
+
+      expect(alphas).toEqual([1, 1, 1]);
+    });
+
+    it('reads the selection on every draw', () => {
+      let selection: Set<number> | null = null;
+      const config = getConfig(createMinimalBarsOptions({ getSelection: () => selection }), theme);
+      const { u, ctx } = createVeilU();
+
+      config.drawClear(u);
+      config.barsBuilder(u, 1, 0, 2);
+      config.draw(u);
+      expect(ctx.fill).not.toHaveBeenCalled();
+
+      selection = new Set([0, 1]);
+      config.drawClear(u);
+      config.barsBuilder(u, 1, 0, 2);
+      config.draw(u);
+      expect(ctx.fill).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -67,7 +67,17 @@ export interface BarsOptions {
   xTimeAuto?: boolean;
   negY?: boolean[];
   fullHighlight?: boolean;
+  /**
+   * Data indices of selected bars, or null when nothing is selected.
+   * Unselected bars are de-emphasised with a veil; read on every draw so a selection change needs only a redraw.
+   */
+  getSelection?: () => Set<number> | null;
 }
+
+// opacity of the background-coloured veil painted over unselected bars
+const UNSELECTED_VEIL_ALPHA = 0.7;
+// opacity of value labels of unselected bars, matching how much the veil lets through
+const UNSELECTED_LABEL_ALPHA = 1 - UNSELECTED_VEIL_ALPHA;
 
 /**
  * @internal
@@ -136,6 +146,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     xSpacing = 0,
     hoverMulti = false,
     timeZone = 'browser',
+    getSelection,
   } = opts;
   const isXHorizontal = xOri === ScaleOrientation.Horizontal;
   const hasAutoValueSize = !Boolean(opts.text?.valueSize);
@@ -152,6 +163,8 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const numSeries = 30; // !!
   const hovered: Array<Rect | null> = Array(numSeries).fill(null);
   let hRect: Rect | null;
+  // drawn bar geometry (before fullHighlight expansion), in plotting-area canvas pixels
+  let barRects: Rect[] = [];
 
   // for distr: 2 scales, the splits array should contain indices into data[0] rather than values
   const xSplits: Axis.Splits | undefined = (u) => Array.from(u.data[0].map((v, i) => i));
@@ -336,6 +349,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
       }
 
       let barRect = { x: lft, y: top, w: wid, h: hgt, sidx: seriesIdx, didx: dataIdx };
+
+      if (getSelection != null) {
+        barRects.push({ ...barRect });
+      }
 
       if (!isStacked && opts.fullHighlight) {
         if (opts.xOri === ScaleOrientation.Horizontal) {
@@ -524,6 +541,7 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
   const drawClear = (u: uPlot) => {
     qt = qt || new Quadtree(0, 0, u.bbox.width, u.bbox.height);
     qt.clear();
+    barRects = [];
 
     // clear the path cache to force drawBars() to rebuild new quadtree
     u.series.forEach((s) => {
@@ -564,8 +582,78 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     vSpace = hSpace = Infinity;
   };
 
-  // uPlot hook to draw the labels on the bar chart.
+  const veilColor = colorManipulator.alpha(theme.colors.background.primary, UNSELECTED_VEIL_ALPHA);
+
+  // paints a veil in the panel background colour over the bars of every unselected category
+  const drawSelectionVeil = (u: uPlot) => {
+    const selection = getSelection?.();
+
+    if (selection == null) {
+      return;
+    }
+
+    // one box per category (a stack or a group of bars), in plotting-area canvas pixels
+    const boxes = new Map<number, { x0: number; y0: number; x1: number; y1: number }>();
+
+    for (const r of barRects) {
+      const box = boxes.get(r.didx);
+
+      if (box == null) {
+        boxes.set(r.didx, { x0: r.x, y0: r.y, x1: r.x + r.w, y1: r.y + r.h });
+      } else {
+        box.x0 = Math.min(box.x0, r.x);
+        box.y0 = Math.min(box.y0, r.y);
+        box.x1 = Math.max(box.x1, r.x + r.w);
+        box.y1 = Math.max(box.y1, r.y + r.h);
+      }
+    }
+
+    // pad to cover anti-aliased edges and strokes, but along the category axis never past halfway to a neighbour
+    const pad = uPlot.pxRatio;
+    const catStart = isXHorizontal ? 'x0' : 'y0';
+    const catEnd = isXHorizontal ? 'x1' : 'y1';
+    const sorted = [...boxes.entries()].sort((a, b) => a[1][catStart] - b[1][catStart]);
+
+    u.ctx.save();
+    u.ctx.beginPath();
+    u.ctx.rect(u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
+    u.ctx.clip();
+
+    // a single path filled once, so overlapping boxes do not darken where they meet
+    u.ctx.beginPath();
+
+    sorted.forEach(([didx, box], i) => {
+      if (selection.has(didx)) {
+        return;
+      }
+
+      const prev = sorted[i - 1]?.[1];
+      const next = sorted[i + 1]?.[1];
+      const padStart = prev == null ? pad : Math.max(0, Math.min(pad, (box[catStart] - prev[catEnd]) / 2));
+      const padEnd = next == null ? pad : Math.max(0, Math.min(pad, (next[catStart] - box[catEnd]) / 2));
+
+      const x0 = box.x0 - (isXHorizontal ? padStart : pad);
+      const x1 = box.x1 + (isXHorizontal ? padEnd : pad);
+      const y0 = box.y0 - (isXHorizontal ? pad : padStart);
+      const y1 = box.y1 + (isXHorizontal ? pad : padEnd);
+
+      u.ctx.rect(u.bbox.left + x0, u.bbox.top + y0, x1 - x0, y1 - y0);
+    });
+
+    u.ctx.fillStyle = veilColor;
+    u.ctx.fill();
+    u.ctx.restore();
+  };
+
+  // uPlot hook to draw the selection veil and the labels on the bar chart.
   const draw = (u: uPlot) => {
+    drawSelectionVeil(u);
+    // labels fade with their own opacity rather than the veil, so a label wider than its bar or reaching outside
+    // the plotting area fades entirely
+    drawLabels(u, getSelection?.() ?? null);
+  };
+
+  const drawLabels = (u: uPlot, selection: Set<number> | null) => {
     if (showValue === VisibilityMode.Never || fontSize < VALUE_MIN_FONT_SIZE) {
       return;
     }
@@ -580,6 +668,10 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     for (const didx in labels) {
       // exclude first label from overlap testing
       let first = true;
+
+      if (selection != null) {
+        u.ctx.globalAlpha = selection.has(Number(didx)) ? 1 : UNSELECTED_LABEL_ALPHA;
+      }
 
       for (const sidx in labels[didx]) {
         const label = labels[didx][sidx];
