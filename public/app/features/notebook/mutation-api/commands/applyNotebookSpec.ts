@@ -148,9 +148,13 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         }
       }
 
-      const { transformNotebookToScene } = await import(
-        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
-      );
+      // Both are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
+      const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+        import(/* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'),
+        import(
+          /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+        ),
+      ]);
 
       // Panel cells in the incoming spec are built synchronously by the transform below.
       await getPanelPluginMetasMap();
@@ -184,10 +188,6 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         perform: () => scene.setState({ ...newState, uid: scene.state.uid }),
         undo: () => scene.setState({ ...previousState, uid: scene.state.uid }),
       });
-
-      const { transformNotebookSceneToSaveModel } = await import(
-        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
-      );
 
       let appliedNotebook: NotebookSpec | undefined;
       try {
