@@ -175,6 +175,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,datasources.teamHttpHeadersFromAppPlatformST,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
+2026-10-02,datasources.teamHttpHeadersWriteGuard,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false

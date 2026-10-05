@@ -1517,6 +1517,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "datasources.teamHttpHeadersWriteGuard",
+			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "teamLBACApiReadFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
