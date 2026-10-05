@@ -53,12 +53,23 @@ test.describe('Dashboard BI cross filtering (flag on)', { tag: ['@dashboards'] }
     const filtered = await detailRows(details);
     expect(filtered.every((r) => r.includes('Widget') && (r.includes('North') || r.includes('South')))).toBe(true);
     expect(filtersParam()).toContain('product');
+    expect(new URL(page.url()).searchParams.getAll('biSelection').length, 'owners are in the URL').toBe(2);
 
-    // Removing the region filter via its pill updates the table: all regions, Widget only.
+    // Reloading the same URL (as a refresh or a shared link would) restores which chart owns each selection.
+    // If ownership were lost, the product chart would be filtered to Widget only and this click would miss.
+    await page.reload();
+    await expect(details.locator('[role="row"]'), 'reload keeps the filtered table').toHaveCount(3);
+    await clickBar(page, byProduct, 1, PRODUCTS.length);
+    // The row count is unchanged (2 regions x 1 product), so wait for the rows themselves to switch to Gadget.
+    await expect(details.locator('[role="row"]').nth(1), 'Gadget replaced Widget').toContainText('Gadget');
+    await expect(details.locator('[role="row"]'), '2 regions x Gadget plus header').toHaveCount(3);
+    expect((await detailRows(details)).every((r) => r.includes('Gadget'))).toBe(true);
+
+    // Removing the region filter via its pill updates the table: all regions, Gadget only.
     // Both pills sit in one filter-bar item, so target the region pill's own remove button.
     await filterBar.getByLabel(/Remove filter with key region/).click();
     await page.click('body', { position: { x: 0, y: 0 } });
-    await expect(details.locator('[role="row"]'), '4 regions x Widget plus header').toHaveCount(5);
+    await expect(details.locator('[role="row"]'), '4 regions x Gadget plus header').toHaveCount(5);
     expect(filtersParam()).not.toContain('region');
   });
 });
