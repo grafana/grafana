@@ -229,7 +229,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
                     <NotebookTagsField
                       value={picker.tagFilter}
                       onChange={picker.setTagFilter}
-                      fallbackTags={picker.loadedTags}
                       disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
                     />
