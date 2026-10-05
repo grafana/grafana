@@ -142,6 +142,7 @@ interface RendererProps extends Omit<Props, 'renderError'> {
 }
 
 export function NodeGraph(props: Props) {
+  const styles = useStyles2(getNodeGraphStyles);
   const { dataFrames, renderError } = props;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
   const firstNodesDataFrame = nodesDataFrames[0];
@@ -158,9 +159,11 @@ export function NodeGraph(props: Props) {
     }
 
     return (
-      <Alert title={t('nodeGraph.data-error.title', 'Cannot visualize graph data')} severity="error">
-        {errorMessage}
-      </Alert>
+      <div className={styles.errorWrapper}>
+        <Alert title={t('nodeGraph.data-error.title', 'Cannot visualize graph data')} severity="error">
+          {errorMessage}
+        </Alert>
+      </div>
     );
   }
 
@@ -178,6 +181,12 @@ export function NodeGraph(props: Props) {
     />
   );
 }
+
+const getNodeGraphStyles = () => ({
+  errorWrapper: css({
+    whiteSpace: 'pre-line',
+  }),
+});
 
 function NodeGraphRenderer({
   getLinks,
