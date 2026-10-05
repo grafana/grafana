@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .citools/Variables.mk
 
 GO = go
-GO_VERSION = 1.26.6
+GO_VERSION = 1.27.1
 GO_HOST_OS := $(shell $(GO) env GOHOSTOS)
 GO_HOST_ARCH := $(shell $(GO) env GOHOSTARCH)
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
@@ -271,8 +271,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire ./pkg/server
 
 .PHONY: gen-app-manifests-unistore
 gen-app-manifests-unistore: ## Generate unified storage app manifests list
@@ -794,6 +793,7 @@ protobuf: ## Compile protobuf definitions
 protobuf-breaking: ## Check protobuf definitions for breaking changes against main
 	bash scripts/protobuf-check.sh
 	buf breaking pkg/registry/apps/annotation/proto --against '.git#branch=main,subdir=pkg/registry/apps/annotation/proto'
+	buf breaking pkg/storage/unified/proto --against '.git#branch=main,subdir=pkg/storage/unified/proto'
 
 .PHONY: clean
 clean: ## Clean up intermediate build artifacts.

@@ -184,20 +184,50 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
   );
 }
 
-function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
+export function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
   const { hideHeader: isHeaderHidden = false } = row.useState();
 
-  return <Switch id={id} value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
+  return (
+    <Switch
+      id={id}
+      value={isHeaderHidden}
+      onChange={() =>
+        edit({
+          description: isHeaderHidden
+            ? t('dashboard.edit-actions.row-show-header', 'Show row header')
+            : t('dashboard.edit-actions.row-hide-header', 'Hide row header'),
+          source: row,
+          perform: () => row.onHeaderHiddenToggle(!isHeaderHidden),
+          undo: () => row.onHeaderHiddenToggle(isHeaderHidden),
+        })
+      }
+    />
+  );
 }
 
-function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
-  const { fillScreen } = row.useState();
+export function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
+  const { fillScreen = false } = row.useState();
 
-  return <Switch id={id} value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
+  return (
+    <Switch
+      id={id}
+      value={fillScreen}
+      onChange={() =>
+        edit({
+          description: fillScreen
+            ? t('dashboard.edit-actions.row-fill-screen-disable', 'Disable row fill screen')
+            : t('dashboard.edit-actions.row-fill-screen-enable', 'Enable row fill screen'),
+          source: row,
+          perform: () => row.onChangeFillScreen(!fillScreen),
+          undo: () => row.onChangeFillScreen(fillScreen),
+        })
+      }
+    />
+  );
 }
 
-function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
-  const { layout } = row.useState();
+export function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
+  const { layout, repeatByVariable } = row.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -213,8 +243,22 @@ function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
       <RepeatRowSelect2
         id={id}
         sceneContext={row}
-        repeat={row.state.repeatByVariable}
-        onChange={(repeat) => row.onChangeRepeat(repeat)}
+        repeat={repeatByVariable}
+        onChange={(repeat) => {
+          // The select reports "Disable repeating" as an empty string
+          const nextRepeat = repeat || undefined;
+
+          if (nextRepeat === repeatByVariable) {
+            return;
+          }
+
+          edit({
+            description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
+            source: row,
+            perform: () => row.onChangeRepeat(nextRepeat),
+            undo: () => row.onChangeRepeat(repeatByVariable),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert

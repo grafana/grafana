@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton } from '@grafana/ui';
@@ -84,6 +85,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        flushPendingChanges={() => scene.autosave.awaitPendingSave()}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
       />
       <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
@@ -106,7 +108,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       {!isEmbedded && (
         <ToolbarButton
           variant="canvas"
-          icon="link"
+          icon="share-alt"
           tooltip={t('notebooks.view.copy-link', 'Copy link')}
           onClick={onCopyLink}
         />
@@ -123,6 +125,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
             aria-haspopup="menu"
             // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
             tooltip={t('notebooks.view.more-actions', 'More actions')}
+            data-testid={selectors.pages.Notebooks.Item.toolbarKebabButton}
           />
         </Dropdown>
       )}
@@ -164,7 +167,7 @@ function UnavailableActions({ scene }: { scene: NotebookScene }) {
         <Button
           variant="secondary"
           size="md"
-          icon="link"
+          icon="share-alt"
           disabled
           tooltip={reason}
           aria-label={t('notebooks.view.copy-link', 'Copy link')}

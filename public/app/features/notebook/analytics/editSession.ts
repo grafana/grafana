@@ -13,6 +13,7 @@ export interface NotebookEditSessionTotals {
   undoCount: number;
   redoCount: number;
   timeRangeChanged: boolean;
+  cellTimeRangeChanged: boolean;
 }
 
 /**
@@ -35,6 +36,7 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
   private undoCount = 0;
   private redoCount = 0;
   private timeRangeChanged = false;
+  private cellTimeRangeChanged = false;
 
   public start(): void {
     this.startedAt = Date.now();
@@ -45,6 +47,7 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
     this.undoCount = 0;
     this.redoCount = 0;
     this.timeRangeChanged = false;
+    this.cellTimeRangeChanged = false;
   }
 
   /** Reads the totals and clears them, so the next session starts from nothing. */
@@ -58,6 +61,7 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
       undoCount: this.undoCount,
       redoCount: this.redoCount,
       timeRangeChanged: this.timeRangeChanged,
+      cellTimeRangeChanged: this.cellTimeRangeChanged,
     };
 
     this.start();
@@ -71,6 +75,11 @@ export class NotebookEditSession implements NotebookEditHistoryObserver {
    */
   public onTimeRangeChanged(): void {
     this.timeRangeChanged = true;
+  }
+
+  /** As `onTimeRangeChanged`, but for a cell's own time range rather than the notebook's. */
+  public onCellTimeRangeChanged(): void {
+    this.cellTimeRangeChanged = true;
   }
 
   public onRecord(kind: NotebookEditKind): void {

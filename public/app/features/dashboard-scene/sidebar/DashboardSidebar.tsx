@@ -13,6 +13,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -60,6 +61,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.cancelPaneRequest();
     const controller = new AbortController();
     this._paneRequest = controller;
+    this.setState({ isLoading: true });
     if (!this.isActive) {
       this.cancelPaneRequest();
     }
@@ -67,10 +69,27 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return controller.signal;
   }
 
-  private cancelPaneRequest() {
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
+  public cancelPaneRequest() {
     const request = this._paneRequest;
     this._paneRequest = undefined;
     request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
@@ -85,8 +104,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public clone(withState: Partial<DashboardSidebarState>): this {
-    // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
   }
 
   private onActivate() {
@@ -94,12 +113,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this._subs.add(
       dashboard.subscribeToState((state, previous) => {
-        if (
-          state.isEditing !== previous.isEditing ||
-          state.editview !== previous.editview ||
-          state.editPanel !== previous.editPanel ||
-          state.viewPanel !== previous.viewPanel
-        ) {
+        if (dashboardViewChanged(state, previous)) {
           this.cancelPaneRequest();
         }
       })
@@ -543,6 +557,40 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
       // UrlSyncManager subscribes to this and removes the pane url state from url
       this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+    }
+  }
+
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane needs to be refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      this.setState({ previousState: undefined });
+      this.closePane();
     }
   }
 

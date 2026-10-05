@@ -33,7 +33,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ConnectionWebhookConfig{}.OpenAPIModelName():               schema_pkg_apis_provisioning_v0alpha1_ConnectionWebhookConfig(ref),
 		DeleteJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_DeleteJobOptions(ref),
 		DeletionStatus{}.OpenAPIModelName():                        schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref),
-		ErrorDetails{}.OpenAPIModelName():                          schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref),
+		ErrorDetails{}.OpenAPIModelName():                          ErrorDetails{}.OpenAPIDefinition(),
 		ExportJobOptions{}.OpenAPIModelName():                      schema_pkg_apis_provisioning_v0alpha1_ExportJobOptions(ref),
 		ExternalRepository{}.OpenAPIModelName():                    schema_pkg_apis_provisioning_v0alpha1_ExternalRepository(ref),
 		ExternalRepositoryList{}.OpenAPIModelName():                schema_pkg_apis_provisioning_v0alpha1_ExternalRepositoryList(ref),
@@ -836,55 +836,15 @@ func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
-				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_provisioning_v0alpha1_ErrorDetails(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "ErrorDetails describes an individual field error intended to help users identify and fix issues in resource specifications. This type is modeled after Kubernetes' StatusCause and serves the same purpose: to deliver actionable feedback about fields in the spec that require attention. Errors may relate to invalid formats, missing or invalid values, or cases where a referenced value does not exist in an external system (not strictly format or syntax errors). Use ErrorDetails to communicate validation or external reference errors that users can resolve by editing spec fields.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"type": {
+					"cause": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Type is a machine-readable description of the cause of the error. This is intended for programmatic handling and matches Kubernetes' CauseType values.",
-							Default:     "",
+							Description: "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
 							Type:        []string{"string"},
 							Format:      "",
-						},
-					},
-					"field": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Field is the path to the field or JSON pointer that caused the error. This helps users and tools identify exactly where to correct the problem. This field is optional and may be empty if not applicable.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"detail": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Detail provides a human-readable explanation of what went wrong. This message may be shown directly to users and should be actionable.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"origin": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Origin indicates where the error originated in validation, or the name of the external service that reported the error. This can be useful for tooling or debugging, and may reference a specific rule, function, or service. This field is optional and may be empty.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"badValue": {
-						SchemaProps: spec.SchemaProps{
-							Description: "BadValue is the value of the field that was determined to be invalid, if applicable. This can be any type. This field is optional and may be omitted if not relevant.",
+							Enum:        []interface{}{"system", "user"},
 						},
 					},
 				},
-				Required: []string{"type"},
 			},
 		},
 	}

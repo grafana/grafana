@@ -8,9 +8,9 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"github.com/google/uuid"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
@@ -50,7 +50,7 @@ func setupBadgerKV(t *testing.T) resource.StorageBackend {
 		KvStore: resource.NewBadgerKV(db),
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},
-		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewString()),
+		Holder:       fmt.Sprintf("badger-holder-%s", uuid.NewV4().String()),
 	}
 	backend, err := resource.NewKVStorageBackend(kvOpts)
 	require.NoError(t, err)

@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Seleziona uno spazio dei nomi personalizzato",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Seleziona spazio di nomi",
       "aria-label-select-query-type": "Seleziona il tipo di query",
       "aria-label-select-region": "Seleziona la regione",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Seleziona un gruppo di risorse",
       "aria-label-select-subscription": "Seleziona l'abbonamento",
       "label-custom-namespace": "Spazio dei nomi personalizzato",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Namespace",
       "label-query-type": "Tipo di query",
       "label-region": "Regione",

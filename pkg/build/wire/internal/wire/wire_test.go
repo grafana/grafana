@@ -19,7 +19,10 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"go/ast"
 	"go/build"
+	"go/parser"
+	"go/token"
 	"go/types"
 	"io/ioutil"
 	"os"
@@ -27,6 +30,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -34,6 +38,263 @@ import (
 )
 
 var record = flag.Bool("record", false, "whether to run tests against cloud resources and record the interactions")
+
+func TestParseFile(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		imports string
+	}{
+		{"dependency", ""},
+		{"local Wire", `import "github.com/grafana/grafana/pkg/build/wire"`},
+		{"aliased Wire", "import di `github.com/google/wire`"},
+		{"escaped Wire", `import . "\x67ithub.com/google/wire"`},
+		{"vendored Wire", `import "example.com/vendor/github.com/google/wire"`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			src := "//go:build go1.24\n\npackage foo\n" + test.imports + "\n// Injector documentation.\n//line original.go:40\nfunc inject() {}\n"
+			fset := token.NewFileSet()
+			file, err := parseFile(fset, "wire.go", []byte(src))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if file.GoVersion != "go1.24" {
+				t.Errorf("Go version = %q, want go1.24", file.GoVersion)
+			}
+			fn := file.Decls[len(file.Decls)-1].(*ast.FuncDecl)
+			if pos := fset.Position(fn.Pos()); pos.Line != 40 || filepath.Base(pos.Filename) != "original.go" {
+				t.Errorf("injector position = %s, want original.go:40", pos)
+			}
+			if test.imports != "" && (fn.Doc == nil || !strings.Contains(fn.Doc.Text(), "Injector documentation.")) {
+				t.Error("injector documentation was discarded")
+			}
+		})
+	}
+}
+
+func TestGenerateResultCommit(t *testing.T) {
+	oldTime := time.Unix(1234567890, 0)
+	for _, test := range []struct {
+		name     string
+		existing string
+		content  string
+		changed  bool
+	}{
+		{"unchanged", "package main\n", "package main\n", false},
+		{"changed", "package old\n", "package main\n", true},
+		{"new", "", "package main\n", true},
+		{"empty generation", "package old\n", "", false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "wire_gen.go")
+			if test.existing != "" {
+				if err := os.WriteFile(path, []byte(test.existing), 0666); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Chtimes(path, oldTime, oldTime); err != nil {
+					t.Fatal(err)
+				}
+			}
+			gen := GenerateResult{OutputPath: path, Content: []byte(test.content)}
+			if err := gen.Commit(); err != nil {
+				t.Fatal(err)
+			}
+			content, err := os.ReadFile(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := test.content
+			if want == "" {
+				want = test.existing
+			}
+			if string(content) != want {
+				t.Errorf("content = %q, want %q", content, want)
+			}
+			info, err := os.Stat(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if changed := !info.ModTime().Equal(oldTime); changed != test.changed {
+				t.Errorf("modification time changed = %t, want %t", changed, test.changed)
+			}
+		})
+	}
+	t.Run("write error", func(t *testing.T) {
+		gen := GenerateResult{OutputPath: t.TempDir(), Content: []byte("package main\n")}
+		if err := gen.Commit(); err == nil {
+			t.Fatal("writing a directory succeeded")
+		}
+	})
+}
+
+func BenchmarkParseFile(b *testing.B) {
+	src, err := os.ReadFile("parse.go")
+	if err != nil {
+		b.Fatal(err)
+	}
+	for _, test := range []struct {
+		name string
+		mode parser.Mode
+	}{
+		{"object resolution", parser.AllErrors | parser.ParseComments},
+		{"skip object resolution", parser.AllErrors | parser.ParseComments | parser.SkipObjectResolution},
+	} {
+		b.Run(test.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(src)))
+			for b.Loop() {
+				if _, err := parser.ParseFile(token.NewFileSet(), "parse.go", src, test.mode); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
+func BenchmarkGenerateServer(b *testing.B) {
+	wd, err := filepath.Abs("../../../../..")
+	if err != nil {
+		b.Fatal(err)
+	}
+	opts := &GenerateOptions{Tags: "oss", GenTags: "(!enterprise && !pro)"}
+	patterns := []string{"./pkg/server/bootstrap/wire", "./pkg/server"}
+	for b.Loop() {
+		results, errs := Generate(b.Context(), wd, os.Environ(), patterns, opts)
+		if len(errs) > 0 {
+			b.Fatal(errs)
+		}
+		if len(results) != len(patterns) {
+			b.Fatalf("generated %d packages, want %d", len(results), len(patterns))
+		}
+		for _, result := range results {
+			if len(result.Errs) > 0 {
+				b.Fatal(result.Errs)
+			}
+			if len(result.Content) == 0 {
+				b.Fatalf("no generated content for %s", result.PkgPath)
+			}
+		}
+	}
+}
+
+func TestGenerateCachedDependencies(t *testing.T) {
+	gopath := t.TempDir()
+	wd := filepath.Join(gopath, "src", "example.com")
+	env := append(os.Environ(), "GO111MODULE=off", "GOWORK=off", "GOPATH="+gopath)
+	write := func(path, src string) {
+		t.Helper()
+		path = filepath.Join(gopath, "src", path)
+		if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(path, []byte(src), 0666); err != nil {
+			t.Fatal(err)
+		}
+	}
+	wireSrc, err := os.ReadFile(filepath.Join("..", "..", "wire.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	write("github.com/google/wire/wire.go", string(wireSrc))
+	const libSrc = `package lib
+type Runner interface { Run() }
+type Foo struct{}
+func (*Foo) Run() {}
+func Provide() *Foo { return new(Foo) }
+var Alias = Provide
+`
+	write("example.com/lib/lib.go", libSrc)
+	write("example.com/providers/set.go", `package providers
+import (
+    "github.com/google/wire"
+    "example.com/lib"
+)
+var Set = wire.NewSet(lib.Provide, wire.Bind(new(lib.Runner), new(*lib.Foo)))
+`)
+	write("example.com/forward/set.go", `package forward
+import "example.com/providers"
+var Set = providers.Set
+`)
+	const injectorSrc = `//go:build wireinject
+
+package app
+import (
+    "github.com/google/wire"
+    "example.com/lib"
+)
+func Initialize() lib.Runner {
+    wire.Build(lib.Provide, wire.Bind(new(lib.Runner), new(*lib.Foo)))
+    return nil
+}
+`
+	write("example.com/app/wire.go", injectorSrc)
+	write("example.com/other/wire.go", `//go:build wireinject
+
+package other
+import (
+    "github.com/google/wire"
+    "example.com/lib"
+    "example.com/forward"
+)
+func Initialize() lib.Runner {
+    wire.Build(forward.Set)
+    return nil
+}
+`)
+	goTest := func(t *testing.T, patterns ...string) {
+		t.Helper()
+		args := append([]string{"test", "-run", "^$"}, patterns...)
+		cmd := exec.CommandContext(t.Context(), filepath.Join(build.Default.GOROOT, "bin", "go"), args...)
+		cmd.Dir, cmd.Env = wd, env
+		if output, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("go test: %v\n%s", err, output)
+		}
+	}
+	// Warm both provider exports and Wire's private binding-version constant.
+	goTest(t, "./lib", "./forward")
+	patterns := []string{"./app", "./other"}
+	generate := func(t *testing.T, loadEnv []string) {
+		t.Helper()
+		results, errs := Generate(t.Context(), wd, loadEnv, patterns, nil)
+		if len(errs) > 0 {
+			t.Fatal(errs)
+		}
+		if len(results) != len(patterns) {
+			t.Fatalf("generated %d packages, want %d", len(results), len(patterns))
+		}
+		for i, result := range results {
+			if result.PkgPath != "example.com/"+strings.TrimPrefix(patterns[i], "./") {
+				t.Errorf("unexpected result package %q", result.PkgPath)
+			}
+			if len(result.Errs) > 0 || len(result.Content) == 0 {
+				t.Fatalf("generation failed for %s: %v", result.PkgPath, result.Errs)
+			}
+			if err := result.Commit(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		goTest(t, patterns...)
+	}
+	t.Run("warm bindings and forwarded sets", func(t *testing.T) {
+		generate(t, env)
+	})
+	t.Run("cached function alias", func(t *testing.T) {
+		write("example.com/app/wire.go", strings.ReplaceAll(injectorSrc, "lib.Provide", "lib.Alias"))
+		generate(t, env)
+	})
+	t.Run("empty cache", func(t *testing.T) {
+		generate(t, append(env, "GOCACHE="+t.TempDir()))
+	})
+	t.Run("changed provider signature", func(t *testing.T) {
+		write("example.com/lib/lib.go", strings.ReplaceAll(libSrc, "func Provide()", "func Provide(string)"))
+		results, errs := Generate(t.Context(), wd, env, patterns, nil)
+		for _, result := range results {
+			errs = append(errs, result.Errs...)
+		}
+		if !strings.Contains(fmt.Sprint(errs), "no provider found for string") {
+			t.Fatalf("changed provider signature was not detected: %v", errs)
+		}
+	})
+}
 
 func TestWire(t *testing.T) {
 	const testRoot = "testdata"

@@ -91,17 +91,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'legend',
     background: theme.colors.background.secondary,
     boxShadow: theme.shadows.z1,
-    paddingBottom: '5px',
-    marginRight: '10px',
+    borderRadius: theme.shape.radius.lg,
+    paddingBottom: theme.spacing(0.5),
+    marginRight: theme.spacing(1),
   }),
   viewControlsWrapper: css({
     marginLeft: 'auto',
   }),
   alert: css({
     label: 'alert',
-    padding: '5px 8px',
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
     fontSize: '10px',
-    textShadow: '0 1px 0 rgba(0, 0, 0, 0.2)',
     borderRadius: theme.shape.radius.default,
     alignItems: 'center',
     position: 'absolute',
@@ -451,6 +451,7 @@ interface NodesProps {
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   hoveringIds?: string[];
 }
+
 const Nodes = memo(function Nodes(props: NodesProps) {
   return (
     <>
@@ -478,6 +479,7 @@ interface MarkersProps {
   markers: NodesMarker[];
   onClick: (event: MouseEvent<SVGElement>, marker: NodesMarker) => void;
 }
+
 const Markers = memo(function Nodes(props: MarkersProps) {
   return (
     <>
@@ -499,6 +501,7 @@ interface EdgesProps {
   processedNodesLength: number;
   processedEdgesLength: number;
 }
+
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
@@ -528,6 +531,7 @@ interface EdgeLabelsProps {
   nodeHoveringId?: string;
   edgeHoveringId?: string;
 }
+
 const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>
