@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type UserK8sService struct {
@@ -116,18 +115,18 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 		return nil, err
 	}
 
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+
 	uid := cmd.UID
 	if uid == "" {
-		uid = util.GenerateShortUID()
+		uid = user.GenerateDeterministicUID(namespace, cmd.Email, cmd.Login)
 	}
 
 	role := cmd.DefaultOrgRole
 	if role == "" && s.config != nil {
 		role = s.config.AutoAssignOrgRole
-	}
-
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
 	}
 
 	k8sUser := &iamv0alpha1.User{
