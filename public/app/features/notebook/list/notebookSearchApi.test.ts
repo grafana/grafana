@@ -8,7 +8,6 @@ import { configureStore } from 'app/store/configureStore';
 import { dispatch } from 'app/types/store';
 
 import { searchNotebookTitles } from './notebookSearchApi';
-import { __resetSearchAvailabilityForTests, markNotebookSearchUnavailable } from './notebookSearchAvailability';
 
 const NOTEBOOKS_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks';
 const NOTEBOOKS_SEARCH_URL = `${NOTEBOOKS_URL}/search`;
@@ -33,26 +32,10 @@ function captureSearches(respond: () => Response) {
   return bodies;
 }
 
-/** Fails the test if the full-notebook LIST endpoint is reached — the fallback must stay unused. */
-function failOnNotebookList() {
-  const listed: string[] = [];
-  server.use(
-    http.get(NOTEBOOKS_URL, ({ request }) => {
-      listed.push(request.url);
-      return HttpResponse.json({ items: [] });
-    })
-  );
-  return listed;
-}
-
 describe('searchNotebookTitles', () => {
   // A fresh store per case, so one case's cached entries cannot answer the next case's search.
   beforeEach(() => {
     configureStore();
-  });
-
-  afterEach(() => {
-    __resetSearchAvailabilityForTests();
   });
 
   it('asks the search endpoint for title matches, projected down to the title', async () => {
@@ -68,25 +51,6 @@ describe('searchNotebookTitles', () => {
         limit: 10,
       },
     ]);
-  });
-
-  it.each([404, 405])('skips later searches without fetching full notebooks after a %i', async (status) => {
-    const bodies = captureSearches(() => HttpResponse.json({}, { status }));
-    const listed = failOnNotebookList();
-
-    await expect(searchNotebookTitles('incident', 10)).resolves.toEqual([]);
-    await expect(searchNotebookTitles('another', 10)).resolves.toEqual([]);
-
-    expect(bodies).toHaveLength(1);
-    expect(listed).toHaveLength(0);
-  });
-
-  it('skips search when the notebook list already found the route missing', async () => {
-    markNotebookSearchUnavailable({ status: 404, data: {} });
-    const bodies = captureSearches(() => HttpResponse.json({ items: [hit] }));
-
-    await expect(searchNotebookTitles('incident', 10)).resolves.toEqual([]);
-    expect(bodies).toHaveLength(0);
   });
 
   // Results are cached per query string, so a notebook deleted between two identical searches would
@@ -110,16 +74,11 @@ describe('searchNotebookTitles', () => {
     expect(bodies).toHaveLength(2);
   });
 
-  it('does not read a 404 as absence once search has answered', async () => {
-    let status = 200;
-    const bodies = captureSearches(() =>
-      status === 200 ? HttpResponse.json({ items: [] }) : HttpResponse.json({}, { status })
-    );
+  // The palette's caller catches and logs; nothing is swallowed here, so a broken search stays
+  // distinguishable from one that matched nothing.
+  it('rejects when the endpoint fails', async () => {
+    captureSearches(() => HttpResponse.json({}, { status: 500 }));
 
-    await expect(searchNotebookTitles('incident', 10)).resolves.toEqual([]);
-    status = 404;
-
-    await expect(searchNotebookTitles('another', 10)).rejects.toEqual(expect.objectContaining({ status: 404 }));
-    expect(bodies).toHaveLength(2);
+    await expect(searchNotebookTitles('incident', 10)).rejects.toEqual(expect.objectContaining({ status: 500 }));
   });
 });
