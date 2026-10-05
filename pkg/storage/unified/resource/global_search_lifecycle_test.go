@@ -335,6 +335,8 @@ type reconcileStorage struct {
 	readErr error
 	// Answers one more batch read than was asked for, as a misbehaving reader would.
 	extraBatchResponse bool
+	// Titles of stored objects, by name, where a test needs to tell versions apart.
+	titles map[string]string
 }
 
 func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
@@ -381,7 +383,11 @@ func (m *reconcileStorage) readOne(request *resourcepb.ReadRequest) *BackendRead
 	if rv == 0 {
 		return &BackendReadResponse{Error: &resourcepb.ErrorResult{Message: "not found", Code: 404}}
 	}
-	value := testObjectJSON(key.GetName(), key.GetName())
+	title := key.GetName()
+	if t, ok := m.titles[key.GetName()]; ok {
+		title = t
+	}
+	value := testObjectJSON(key.GetName(), title)
 	if m.broken[key.GetName()] {
 		value = []byte("not an object")
 	}
@@ -1620,4 +1626,26 @@ func TestWatchWritesToAReplacedIndex(t *testing.T) {
 
 	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, old))
 	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-b"}}, indexedNames(t, replacement))
+}
+
+// An import can restore an object at an older version than the index holds. A
+// notification still writes what storage holds, not the newer-looking version
+// it carries.
+func TestWatchWritesWhatAnImportRestored(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
+	}}
+	storage.titles = map[string]string{"dash-a": "From the backup"}
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
+	})
+	late := writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 60)
+	late.Value = testObjectJSON("dash-a", "Edited after the backup")
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{late})
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, "From the backup", items[0].Doc.Title)
 }

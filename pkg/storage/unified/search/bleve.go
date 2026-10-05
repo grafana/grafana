@@ -2327,7 +2327,9 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 		}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
+		Error: b.verifyKey(req.Options.Key),
+		// For a global index this is the version it was built at: it replays no
+		// events, so its resource version does not move after the build.
 		ResourceVersion: b.resourceVersion.Load(),
 		ResultFormat:    resultFormat,
 	}
