@@ -46,7 +46,7 @@ func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
 
 func (c *unifiedClient) Search(ctx context.Context, query *Query) (*Result, error) {
 	resp, err := c.client.Search(ctx, buildUnifiedRequest(query))
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, err
 	}
 	hits, err := c.decodeHits(ctx, query, resp)

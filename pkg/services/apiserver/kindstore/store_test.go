@@ -19,7 +19,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -481,4 +483,38 @@ func TestStatusStrategyResetFields(t *testing.T) {
 
 	// Inherited from the kind, so a status write is schema checked like any other.
 	require.Equal(t, base.NamespaceScoped(), s.NamespaceScoped())
+}
+
+func TestStoreReadContext(t *testing.T) {
+	user := &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgID: 1, Namespace: "default"}
+	service := &identity.StaticRequester{Type: claims.TypeAccessPolicy, OrgID: 1, Namespace: "*"}
+
+	readAs := func(s *Store, requester identity.Requester) identity.Requester {
+		r, err := identity.GetRequester(s.readContext(identity.WithRequester(context.Background(), requester)))
+		require.NoError(t, err)
+		return r
+	}
+
+	t.Run("a user reads a userReadable cluster-scoped kind as the service", func(t *testing.T) {
+		s := testStore(true, false)
+		s.userReadable = true
+		r := readAs(s, user)
+		require.True(t, r.IsIdentityType(claims.TypeAccessPolicy))
+		require.Equal(t, "*", r.GetNamespace())
+		require.Equal(t, int64(1), r.GetOrgID())
+	})
+
+	t.Run("an access policy keeps its own identity", func(t *testing.T) {
+		s := testStore(true, false)
+		s.userReadable = true
+		require.Same(t, service, readAs(s, service))
+	})
+
+	t.Run("a kind that is not userReadable keeps the user", func(t *testing.T) {
+		require.Same(t, user, readAs(testStore(true, false), user))
+	})
+
+	t.Run("a namespaced kind keeps the user", func(t *testing.T) {
+		require.Same(t, user, readAs(testStore(false, false), user))
+	})
 }

@@ -10,6 +10,8 @@ import {
   type NotebookAddFailedProperties,
   type NotebookAddFailedReason,
   type NotebookAddTarget,
+  type NotebookAutosaveConflictResolution,
+  type NotebookAutosaveConflictResolvedProperties,
   type NotebookAutosaveFailedProperties,
   type NotebookAutosaveFailedReason,
   type NotebookCellAddedFromAddToNotebookProperties,
@@ -68,6 +70,10 @@ const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAd
 
 /** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
 const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
+
+/** Fired once the user answers the save-conflict prompt, whichever way: this is the choice, not the conflict. */
+const createAutosaveConflictResolvedEvent =
+  createNotebookEvent<NotebookAutosaveConflictResolvedProperties>('autosave_conflict_resolved');
 
 /** Fired once an export action actually completed: a copy that landed, or a download. */
 const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exported');
@@ -154,6 +160,10 @@ export const NotebookAnalytics = {
 
   autosaveFailed(notebookUid: string, reason: NotebookAutosaveFailedReason, attempt: number): void {
     createAutosaveFailedEvent({ notebookUid, reason, attempt });
+  },
+
+  autosaveConflictResolved(notebookUid: string, resolution: NotebookAutosaveConflictResolution): void {
+    createAutosaveConflictResolvedEvent({ notebookUid, resolution });
   },
 
   exported(notebookUid: string, destination: NotebookExportDestination, source: NotebookExportSource): void {

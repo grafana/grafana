@@ -289,7 +289,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today.** `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
+- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be accepted by `resource.TrashSearchAllowed`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
@@ -434,9 +434,34 @@ deployment, these settings belong to the same Grafana process.
 After rollout, create or update a resource. The first write event processed by
 the reconciler initializes its vector collection and schedules a backfill of
 existing resources. Later writes keep embeddings up to date. Check generation
-and backfill metrics for your group/resource; an increase in
-`vector_storage_embed_skipped_versions_total` indicates that stored objects
-lack a matching API-version declaration.
+and backfill metrics as described below.
+
+### Monitor backfills
+
+Use the existing storage-api metric to see resource processing attempts per second
+by outcome. Scope the query to your deployment and select your group/resource:
+
+```promql
+sum by (status) (
+  rate(grafana_vector_storage_backfill_item_duration_seconds_count{group="folder.grafana.app", resource="folders"}[5m])
+)
+```
+
+`embedded` shows successful processing; `error` shows failed attempts. Check
+`skipped_*` outcomes for objects that were skipped. When activity stops, check
+storage-api logs for `backfill: job complete` or `backfill: job failed`.
+
+For example, in the **Grafana Logging Dev** Loki datasource:
+
+```logql
+{cluster="dev-us-central-0", namespace="unified-storage-dev-002", container="storage-api"} |= "backfill: job complete"
+```
+
+Adjust the cluster and namespace for your deployment and use a time range covering
+your backfill. Each entry includes `job_id` and `model`.
+
+An increase in `grafana_vector_storage_embed_skipped_versions_total` indicates
+missing API-version declarations; filter by `group`, `resource`, and `version`.
 
 ### Custom embedding builders
 
