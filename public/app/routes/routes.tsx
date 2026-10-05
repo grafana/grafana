@@ -15,7 +15,7 @@ import { getRoutes as getDataConnectionsRoutes } from 'app/features/connections/
 import { DASHBOARD_LIBRARY_ROUTES } from 'app/features/dashboard/dashgrid/types';
 import { DATASOURCES_ROUTES } from 'app/features/datasources/constants';
 import { getGrotLoadingGameRoutes } from 'app/features/grot-loading-game/routes';
-import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL } from 'app/features/notebook/urls';
+import { NOTEBOOK_NEW_URL, NOTEBOOKS_BASE_URL, notebookRenderUrl } from 'app/features/notebook/urls';
 import { getRoutes as getPluginCatalogRoutes } from 'app/features/plugins/admin/routes';
 import { getAppPluginRoutes } from 'app/features/plugins/routes';
 import { getProfileRoutes } from 'app/features/profile/routes';
@@ -91,6 +91,15 @@ export function getAppRoutes(): RouteDescriptor[] {
       pageClass: 'page-dashboard',
       routeName: DashboardRoutes.Notebook,
       component: NotebookPageComponent,
+    },
+    {
+      path: notebookRenderUrl(':uid'),
+      roles: () => contextSrv.evaluatePermission([AccessControlAction.NotebooksRead]),
+      routeName: DashboardRoutes.Notebook,
+      chromeless: true,
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "NotebookRenderPage" */ '../features/notebook/pages/NotebookRenderPage')
+      ),
     },
     {
       // notebooks:read to read one, notebooks:create for the blank route above. The feature flag is

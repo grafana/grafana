@@ -39,13 +39,13 @@ func TestSingleTenantBreakersIsolateGroupsOnSameHost(t *testing.T) {
 						backends = append(backends, &fallbackBackend{group: metav1.APIGroup{Name: group}, key: group, st: st})
 					}
 				}
-				router := NewGrafanaRouter(staticLoader{backends: backends})
+				router := NewGrafanaRouter(staticLoader{backends: backends}, nil)
 				router.unregisteredGroupHandler = st
 				require.NoError(t, router.reconcile(t.Context()))
 				request := func(group, version string) int {
 					recorder := httptest.NewRecorder()
 					path := "/apis/" + group + "/" + version + "/namespaces/stacks-123/widgets"
-					router.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, path, nil), http.NotFoundHandler())
+					router.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, path, nil), http.NotFoundHandler())
 					return recorder.Code
 				}
 				for range 6 {
@@ -120,12 +120,13 @@ func TestSingleTenantBreakersIsolateDestinations(t *testing.T) {
 				}
 				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
 			})
-			router := NewGrafanaRouter(st)
+			router := NewGrafanaRouter(st, nil)
+			pollDiscovery(t, st)
 			require.NoError(t, router.reconcile(t.Context()))
 			discoveryFailed = true
 			request := func(path string) int {
 				recorder := httptest.NewRecorder()
-				req := httptest.NewRequest(http.MethodGet, path, nil)
+				req := newAuthenticatedRequest(http.MethodGet, path, nil)
 				if path == "/apis" {
 					req.Header.Set("Accept", aggregatedDiscoveryJSON)
 				}

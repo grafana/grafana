@@ -53,6 +53,16 @@ func NewTrashAuthorizer(
 	}
 }
 
+func (s *server) newTrashAuthorizer(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) *TrashAuthorizer {
+	return NewTrashAuthorizer(s.access, user, key, func(err error) {
+		s.degraded(ctx, "folder_admin_check", classifyAuthError(err), NamespacedResource{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+		}, err)
+	})
+}
+
 // k6FolderUID is hidden from anyone but a service account. The single check in
 // authlib denies it outright, and BatchCheck has no such rule, so batching a
 // decision for it would answer differently from every other path.

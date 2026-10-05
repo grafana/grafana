@@ -49,7 +49,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 					defer func() { require.NoError(t, services.StopAndAwaitTerminated(context.Background(), cloud)) }()
 					loader = cloud
 				}
-				router := NewGrafanaRouter(loader)
+				router := NewGrafanaRouter(loader, nil)
 				require.NoError(t, router.Run(ctx))
 				synctest.Wait()
 				require.Error(t, router.Ready(ctx))
@@ -57,7 +57,7 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 				require.Equal(t, 1, calls)
 				mu.Unlock()
 				refresh := func() {
-					time.Sleep(defaultAggregatePollInterval)
+					time.Sleep(singleTenantDiscoveryInterval)
 					synctest.Wait()
 				}
 				mu.Lock()
@@ -85,8 +85,10 @@ func TestSingleTenantDiscoveryRefreshesWithoutOtherSources(t *testing.T) {
 				mu.Unlock()
 				refresh()
 				require.False(t, router.KnownGroup("second"))
+				// 0s (fail), 5s, 10m5s, then seven failed polls backing off from
+				// 20m5s to 25m20s, and the recovery at 30m20s.
 				mu.Lock()
-				require.Equal(t, 5, calls)
+				require.Equal(t, 11, calls)
 				mu.Unlock()
 			})
 		})
@@ -112,14 +114,14 @@ func TestSingleTenantDiscoveryDoesNotHandleResources(t *testing.T) {
 	} {
 		t.Run(path, func(t *testing.T) {
 			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+			st.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
 			require.Equal(t, http.StatusNotFound, recorder.Code)
 		})
 	}
 	for _, method := range []string{http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 		for _, path := range []string{"/apis", "/apis/example/v1", "/openapi/v3/apis/example/v1"} {
 			recorder := httptest.NewRecorder()
-			st.ServeHTTP(recorder, httptest.NewRequest(method, path, nil))
+			st.ServeHTTP(recorder, newAuthenticatedRequest(method, path, nil))
 			require.Equal(t, http.StatusNotFound, recorder.Code)
 		}
 	}
@@ -129,25 +131,50 @@ func TestSingleTenantDiscoveryNotificationsCoalesceAndStop(t *testing.T) {
 	for _, configured := range []bool{false, true} {
 		synctest.Test(t, func(t *testing.T) {
 			st := newTestSingleTenantFallback(t)
+			var mu sync.Mutex
+			body := `{"groups":[{"name":"first"}]}`
+			calls := 0
 			if configured {
 				st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+				st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
+					mu.Lock()
+					defer mu.Unlock()
+					calls++
+					return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+				})
 			}
 			ctx, cancel := context.WithCancel(t.Context())
 			defer cancel()
 			dirty, err := st.Notify(ctx)
 			require.NoError(t, err)
 			synctest.Wait()
-			require.Empty(t, dirty)
-			time.Sleep(3 * defaultAggregatePollInterval)
-			synctest.Wait()
 			if configured {
+				// The first successful poll always wakes the router.
 				require.Len(t, dirty, 1)
 				<-dirty
 			} else {
 				require.Empty(t, dirty)
 			}
+
+			// Unchanged discovery polls on schedule but never wakes the router.
+			time.Sleep(3 * singleTenantDiscoveryInterval)
+			synctest.Wait()
+			require.Empty(t, dirty)
+
+			if configured {
+				mu.Lock()
+				require.Equal(t, 4, calls)
+				body = `{"groups":[{"name":"second"}]}`
+				mu.Unlock()
+				time.Sleep(singleTenantDiscoveryInterval)
+				synctest.Wait()
+				require.Len(t, dirty, 1)
+			}
+
 			cancel()
 			synctest.Wait()
+			for range dirty {
+			}
 			_, open := <-dirty
 			require.False(t, open)
 		})

@@ -317,7 +317,7 @@ var (
 		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -325,7 +325,7 @@ var (
 		{
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -657,7 +657,7 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
@@ -990,6 +990,14 @@ var (
 			Owner:       grafanaSharingSquad,
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "true",                                                      // enabled by default
+		},
+		{
+			Name:        "grafana.savedQueriesSearch",
+			Description: "Enables unified search for saved queries",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSharingSquad,
+			Generate:    Generate{Go: true},
+			Expression:  "false",
 		},
 		{
 			Name:        "grafana.savedQueriesPage",
@@ -1641,14 +1649,6 @@ var (
 		{
 			Name:        "alertingMigrationUI",
 			Description: "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
-			Name:        "alertingImportYAMLUI",
-			Description: "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
 			Generate:    Generate{LegacyFrontend: true},
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
@@ -2546,10 +2546,10 @@ var (
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
 			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2949,30 +2949,6 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
-			Name:        "dashboard.searchFieldValueResults",
-			Description: "Uses field-value results for dashboard search requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "dashboard.apiSearchFieldValueResults",
-			Description: "Uses field-value results for requests from the /api/search endpoint",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
-			Name:        "search.apiFieldValueResults",
-			Description: "Uses field-value results for generic resource search API requests",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaSearchAndStorageSquad,
-			Expression:  "false",
-			Generate:    Generate{Go: true},
-		},
-		{
 			Name:        "dashboard.vectorSearch",
 			Description: "Exposes the semantic (vector) search endpoint for dashboards under the dashboard API",
 			Stage:       FeatureStageExperimental,
@@ -3074,6 +3050,14 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{React: true},
+		},
+		{
+			Name:        "dataviz.tabularNums",
+			Description: "Enables tabular numerals for visualization legend values",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
 		},
 		{
 			Name:         "datetime.useLuxon",
@@ -3383,6 +3367,15 @@ var (
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
 		},
+		{
+			Name:         "datasources.queryGatewaySlimAudit",
+			Description:  "Only attach query payloads to query gateway audit events when a guardrail fires",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
 		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{
 			Name:         "alerting.folderHasRulesLabel",
@@ -3396,6 +3389,15 @@ var (
 		{
 			Name:         "unifiedStorageClient.requireCallerIdentity",
 			Description:  "Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "unifiedStorageClient.onBehalfOf",
+			Description:  "Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,

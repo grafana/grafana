@@ -202,6 +202,52 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			// Regression for folder-move escalation masking: a general grant must
+			// not gate write on an empty-parent root folder, else the move-escalation
+			// probe reads an inflated old tier and masks a privilege increase.
+			name: "should not treat general as parent of root folders on update",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: false,
+		},
+		{
+			// Same as above for the Admin-tier setpermissions verb.
+			name: "should not treat general as parent of root folders on setpermissions",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders.permissions:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders.permissions:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: false,
+		},
+		{
 			name: "should check general folder scope for root variable get with empty parent",
 			permissions: []accesscontrol.Permission{
 				{

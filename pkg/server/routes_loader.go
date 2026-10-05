@@ -40,6 +40,7 @@ func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (res
 	// watcher, so its backend must not have storage services disabled.
 	resourceServer, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:        s.storageBackend,
+		WatchExpiry:    s.watchExpiry,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
 		Reranker:       s.reranker,

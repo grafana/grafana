@@ -81,7 +81,7 @@ type watchResponseWriter struct {
 	tracker *firstByteTracker
 }
 
-var _ responsewriter.UserProvidedDecorator = &watchResponseWriter{}
+var _ responsewriter.UserProvidedDecorator = (*watchResponseWriter)(nil)
 
 func (w *watchResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
