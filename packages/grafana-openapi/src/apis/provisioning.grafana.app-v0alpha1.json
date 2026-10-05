@@ -4347,6 +4347,11 @@
         "description": "DeletionStatus reports the progress of an in-progress deletion and the problem blocking it. It is populated while the repository is Terminating and its finalizers run, so a client can explain the holdup and force-remove the blocking finalizer.",
         "type": "object",
         "properties": {
+          "cause": {
+            "description": "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
+            "type": "string",
+            "enum": ["system", "user"]
+          },
           "finalizer": {
             "description": "Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer.",
             "type": "string"
@@ -6640,13 +6645,13 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }

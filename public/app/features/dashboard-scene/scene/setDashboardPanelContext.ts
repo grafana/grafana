@@ -17,7 +17,7 @@ import {
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { getAssistantChatIdToContinue } from 'app/core/components/AssistantTooltip/assistantSidebarState';
+import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 

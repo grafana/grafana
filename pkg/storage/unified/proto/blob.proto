@@ -18,9 +18,9 @@ message PutBlobRequest {
     HTTP = 1;
   }
 
-  // The resource this blob attaches to. The resource MUST already exist;
-  // the caller must be authorized to update it. PutBlob is not a staging
-  // primitive -- create the resource first, then attach a blob to it.
+  // The resource this blob attaches to. When the resource exists, the caller
+  // must be authorized to update it. When it does not exist yet, the caller
+  // must be authorized to create it in `folder`.
   ResourceKey resource = 1;
 
   // How to upload
@@ -32,6 +32,8 @@ message PutBlobRequest {
   // Raw value to write
   // Not valid when method == HTTP
   bytes value = 4;
+
+  string folder = 5;
 }
 
 message PutBlobResponse {

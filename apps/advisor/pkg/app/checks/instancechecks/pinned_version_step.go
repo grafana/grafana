@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 )
 
-var _ checks.Step = &pinnedVersionStep{}
+var _ checks.Step = (*pinnedVersionStep)(nil)
 
 const (
 	pinnedVersion = "pinned_version"

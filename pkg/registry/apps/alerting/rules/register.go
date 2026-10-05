@@ -83,10 +83,10 @@ func RegisterAppInstaller(
 	// Search routes through a dual-writer-aware client per kind: the legacy
 	// backend (provisioning service) serves modes 0-3, the unified client 4+.
 	legacySearch := search.NewLegacyClient(*ng.Api.AlertRules)
-	searchAdapter := dualwrite.NewSearchAdapter(dual)
+	unifiedSearch := search.NewUnifiedClient(unifiedClient)
 	searchHandler := search.NewHandler(
-		unifiedresource.NewSearchClient(searchAdapter, alertrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
-		unifiedresource.NewSearchClient(searchAdapter, recordingrule.ResourceInfo.GroupResource(), unifiedClient, legacySearch),
+		dualwrite.NewSelector[search.Backend](dual, alertrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
+		dualwrite.NewSelector[search.Backend](dual, recordingrule.ResourceInfo.GroupResource(), legacySearch, unifiedSearch),
 	)
 
 	appSpecificConfig := rulesAppConfig.RuntimeConfig{
@@ -97,7 +97,6 @@ func RegisterAppInstaller(
 		MembershipResolver:               membershipIndex,
 		NotificationSettingsValidator:    newNotificationSettingsValidator(ng),
 		WatchNamespace:                   watchNamespace(cfg),
-		SearchRulesHandler:               search.WithAPIStatusErrorResponse(searchHandler.SearchRules),
 		SearchAlertRulesHandler:          search.WithAPIStatusErrorResponse(searchHandler.SearchAlertRules),
 		SearchRecordingRulesHandler:      search.WithAPIStatusErrorResponse(searchHandler.SearchRecordingRules),
 		CheckExternalRulerSyncDatasource: newExternalRulerSyncDatasourceChecker(cfg, ng.DataSourceService, ng.Api.AccessControl),
@@ -290,8 +289,6 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				return alertrule.Authorize(ctx, authz, attr)
 			case rulesequence.ResourceInfo.GroupResource().Resource:
 				return rulesequence.Authorize(ctx, authz, attr)
-			case search.RouteResource:
-				return search.Authorize(ctx, authz, attr)
 			case config.ResourceInfo.GroupResource().Resource:
 				return config.Authorize(ctx, authz, attr)
 			}
@@ -306,7 +303,7 @@ func (a *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 func ruleSearchReadAttributes(attr authorizer.Attributes) authorizer.Attributes {
 	resourceName := attr.GetResource()
 	isRule := resourceName == alertrule.ResourceInfo.GroupResource().Resource || resourceName == recordingrule.ResourceInfo.GroupResource().Resource
-	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == search.RouteResource && attr.GetSubresource() == "" {
+	if isRule && attr.IsResourceRequest() && attr.GetVerb() == "create" && attr.GetName() == rulesApp.SearchRulesPathSegment && attr.GetSubresource() == "" {
 		return searchauthorizer.AsReadAttributes(attr)
 	}
 	return attr

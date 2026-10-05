@@ -15,7 +15,7 @@ interface VariableSelectFieldProps<T> {
   description?: React.ReactNode;
 }
 
-export function VariableSelectField({
+export function VariableSelectField<T>({
   name,
   description,
   value,
@@ -23,7 +23,7 @@ export function VariableSelectField({
   onChange,
   testId,
   width,
-}: PropsWithChildren<VariableSelectFieldProps<any>>) {
+}: PropsWithChildren<VariableSelectFieldProps<T>>) {
   const styles = useStyles2(getStyles);
   const uniqueId = useId();
   const inputId = `variable-select-input-${name}-${uniqueId}`;
