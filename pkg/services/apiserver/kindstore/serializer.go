@@ -39,7 +39,7 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 		target = &unstructured.Unstructured{}
 	} else {
 		if target, ok = into.(*unstructured.Unstructured); !ok {
-			return nil, fmt.Errorf("expected *unstructured.Unstructured, got %T", into)
+			return nil, fmt.Errorf("expected *unstructured.Unstructured, found %T", into)
 		}
 	}
 
@@ -87,46 +87,17 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 	if got := result.GroupVersionKind(); got != s.gvk {
 		return nil, fmt.Errorf("conversion to %s returned unexpected GVK %s", s.gvk, got)
 	}
-	for _, field := range []string{"name", "namespace", "uid"} {
-		before, _, err := unstructured.NestedString(original.Object, "metadata", field)
-		if err != nil {
-			return nil, err
-		}
-		after, _, err := unstructured.NestedString(result.Object, "metadata", field)
-		if err != nil {
-			return nil, err
-		}
-		if before != after {
-			return nil, fmt.Errorf("conversion to %s changed metadata.%s from %q to %q", s.gvk, field, before, after)
-		}
-	}
-	metadata, _, err := unstructured.NestedMap(original.Object, "metadata")
-	if err != nil {
-		return nil, err
-	}
-	if metadata == nil {
-		metadata = map[string]any{}
-	}
-	// Like CRD conversion, only labels and annotations may change; restore all
-	// other metadata so conversion cannot remove finalizers or alter storage state.
-	for _, field := range []string{"labels", "annotations"} {
-		value, _, err := unstructured.NestedFieldNoCopy(result.Object, "metadata", field)
-		if err != nil {
-			return nil, err
-		}
-		delete(metadata, field)
-		if value == nil {
-			continue
-		}
-		if _, _, err := unstructured.NestedStringMap(result.Object, "metadata", field); err != nil {
-			return nil, err
-		}
-		metadata[field] = value
-	}
-	result.Object["metadata"] = metadata
+
+	// Report conversion warnings
 	for _, w := range converted[0].GetWarnings() {
 		warning.AddWarning(ctx, "", w)
 	}
+
+	// Metadata may not change in the conversion hook, only the spec++
+	// This is more strict than CRDs, but avoids issues where search/list are based on the saved metadata
+	result.Object["metadata"] = original.Object["metadata"]
+
+	// Return the new or "into" object
 	*target = result
 	return target, nil
 }

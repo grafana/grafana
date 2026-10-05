@@ -139,16 +139,6 @@ func TestConversionSerializerValidatesResponse(t *testing.T) {
 		{name: "missing version", path: []string{"apiVersion"}, want: "unexpected GVK"},
 		{name: "wrong kind", path: []string{"kind"}, value: "OtherKind", want: "unexpected GVK"},
 		{name: "missing kind", path: []string{"kind"}, want: "invalid object"},
-		{name: "changed name", path: []string{"metadata", "name"}, value: "other", want: "changed metadata.name"},
-		{name: "missing name", path: []string{"metadata", "name"}, want: "changed metadata.name"},
-		{name: "changed namespace", path: []string{"metadata", "namespace"}, value: "other", want: "changed metadata.namespace"},
-		{name: "missing namespace", path: []string{"metadata", "namespace"}, want: "changed metadata.namespace"},
-		{name: "changed UID", path: []string{"metadata", "uid"}, value: "other", want: "changed metadata.uid"},
-		{name: "missing UID", path: []string{"metadata", "uid"}, want: "changed metadata.uid"},
-		{name: "missing metadata", path: []string{"metadata"}, want: "changed metadata.name"},
-		{name: "invalid identity", path: []string{"metadata", "name"}, value: int64(1), want: "expected string"},
-		{name: "invalid labels", path: []string{"metadata", "labels"}, value: map[string]any{"label": int64(1)}, want: "expected string"},
-		{name: "invalid annotations", path: []string{"metadata", "annotations"}, value: map[string]any{"annotation": int64(1)}, want: "expected string"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			var converted unstructured.Unstructured
@@ -186,30 +176,37 @@ func TestConversionSerializerValidatesResponse(t *testing.T) {
 func TestConversionSerializerPreservesMetadata(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
 	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original","resourceVersion":"123","generation":3,"finalizers":["example-app/cleanup"],"creationTimestamp":"2026-10-01T00:00:00Z","deletionTimestamp":"2026-10-02T00:00:00Z","deletionGracePeriodSeconds":30,"ownerReferences":[{"apiVersion":"example-app/v1","kind":"Owner","name":"parent","uid":"parent-uid"}],"managedFields":[{"manager":"test","operation":"Update","apiVersion":"example-app/v1","fieldsType":"FieldsV1","fieldsV1":{"f:spec":{}}}],"labels":{"old":"label"},"annotations":{"old":"annotation"}},"spec":{"old":"value"}}`)
-	for _, mode := range []string{"altered", "removed", "null labels and annotations"} {
+	for _, mode := range []string{"altered", "removed", "empty", "null", "invalid", "null labels and annotations", "invalid labels and annotations"} {
 		t.Run(mode, func(t *testing.T) {
 			var original unstructured.Unstructured
 			require.NoError(t, json.Unmarshal(raw, &original))
 			converted := original.DeepCopy()
 			converted.SetGroupVersionKind(gvk)
 			metadata := converted.Object["metadata"].(map[string]any)
-			for key := range metadata {
-				if key != "name" && key != "namespace" && key != "uid" {
-					if mode != "altered" {
-						delete(metadata, key)
-					} else {
-						metadata[key] = "altered"
-					}
+			switch mode {
+			case "altered":
+				for key := range metadata {
+					metadata[key] = "altered"
 				}
-			}
-			if mode == "altered" {
 				converted.SetLabels(map[string]string{"new": "label"})
 				converted.SetAnnotations(map[string]string{"new": "annotation"})
-			} else if mode == "null labels and annotations" {
+			case "removed":
+				delete(converted.Object, "metadata")
+			case "empty":
+				converted.Object["metadata"] = map[string]any{}
+			case "null":
+				converted.Object["metadata"] = nil
+			case "invalid":
+				converted.Object["metadata"] = "invalid"
+			case "null labels and annotations":
 				metadata["labels"] = nil
 				metadata["annotations"] = nil
+			case "invalid labels and annotations":
+				metadata["labels"] = map[string]any{"label": int64(1)}
+				metadata["annotations"] = map[string]any{"annotation": int64(1)}
 			}
 			converted.Object["spec"] = map[string]any{"new": "value"}
+			converted.Object["status"] = map[string]any{"state": "converted"}
 			payload, err := json.Marshal(converted)
 			require.NoError(t, err)
 			serializer := &conversionSerializer{
@@ -222,10 +219,9 @@ func TestConversionSerializerPreservesMetadata(t *testing.T) {
 			}
 			expected := original.DeepCopy()
 			expected.SetGroupVersionKind(gvk)
-			expected.SetLabels(converted.GetLabels())
-			expected.SetAnnotations(converted.GetAnnotations())
-			expected.Object["spec"] = converted.Object["spec"]
-			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{}} {
+			expected.Object["spec"] = map[string]any{"new": "value"}
+			expected.Object["status"] = map[string]any{"state": "converted"}
+			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{Object: map[string]any{"stale": true}}} {
 				obj, err := serializer.Decode(context.Background(), raw, into)
 				require.NoError(t, err)
 				require.Equal(t, expected, obj)
