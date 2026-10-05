@@ -2742,12 +2742,10 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 			require.NotNil(t, dashboard)
 
 			assert.Equal(t, tt.wantVersions, handler.versions)
-			// the second read pins the revision the first read returned
-			wantResourceVersions := []string{""}
-			if len(tt.wantVersions) == 2 {
-				wantResourceVersions = append(wantResourceVersions, "42")
+			// reads are never pinned to a resource version: pinned reads come from history, which is pruned
+			for _, rv := range handler.resourceVersions {
+				assert.Empty(t, rv)
 			}
-			assert.Equal(t, wantResourceVersions, handler.resourceVersions)
 			assert.Equal(t, tt.wantAPIVersion, dashboard.APIVersion)
 			assert.Equal(t, tt.wantTitle, dashboard.Data.Get("title").MustString())
 			k8sCliMock.AssertExpectations(t)

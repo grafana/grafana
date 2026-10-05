@@ -1811,11 +1811,13 @@ func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, qu
 		return out, nil
 	}
 
-	// Pin the revision the first read returned so a save between the two reads cannot hand back a
-	// different dashboard. When the stored version cannot be read, the client retries the default
-	// version and returns that result, so the caller gets the converted payload back instead of an
-	// error. An error here means both reads failed.
-	stored, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{ResourceVersion: out.GetResourceVersion()}, storedVersion, "")
+	// The re-read is deliberately not pinned to the first read's resource version: a pinned read is
+	// served from history, which is pruned, so it can fail for a dashboard the first read just
+	// returned. A save between the two reads only yields a converted payload for this one request.
+	// When the stored version cannot be read, the client retries the default version and returns
+	// that result, so the caller gets the converted payload back instead of an error. An error here
+	// means both reads failed.
+	stored, err := dr.k8sclient.GetWithPreferredAPIVersion(ctx, query.UID, query.OrgID, v1.GetOptions{}, storedVersion, "")
 	if err != nil && !apierrors.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to load dashboard %q in stored API version %q: %w", query.UID, storedVersion, err)
 	}
