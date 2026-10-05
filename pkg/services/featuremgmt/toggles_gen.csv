@@ -294,7 +294,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
-2026-09-16,dashboard.recentlyDeletedViaTrash,experimental,@grafana/search-and-storage,false,false,true
+2026-09-16,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-09-16,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
