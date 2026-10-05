@@ -9000,6 +9000,7 @@
       "attribute-category": {
         "other": "Other"
       },
+      "error-indicator": "Span has an error",
       "exception-message": "Message:",
       "exception-stacktrace": "Stacktrace",
       "exception-title": "Exception",
