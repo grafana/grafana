@@ -67,7 +67,7 @@ Full-instance migrations have different cleanup behavior and can delete unmanage
 
 After a migration you'll have your original folder (holding any alerts and library panels) alongside the new Git Sync folder of the same name. To avoid confusion, rename your original folders or move them under a single top-level **Alerts & Library Panels** folder. This keeps the unsupported resources intact and clearly separated from the provisioned dashboards.
 
-If you need links to your original folders to keep working, refer to [Preserve links to the original folders](#preserve-links-to-the-original-folders).
+If you need links to your original folders to keep working, refer to [Preserve links to the original folders](#preserve-links-to-the-original-folders) for details.
 
 ## Step 1: Export the resources to your repository
 
