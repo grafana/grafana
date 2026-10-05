@@ -3059,6 +3059,7 @@
         "results-with-cancellation": "Vyhledávání zrušeno – nalezená pravidla: {{numberOfRules}}",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Importy nejsou k dispozici, dokud je aktivní automatická synchronizace správce výstrah Mimir"
       },
@@ -3083,7 +3084,15 @@
         "use-new-experience": "Použít nové prostředí",
         "view-previous-experience": "Vrátit se k předchozímu prostředí"
       },
-      "unknown-rule-type": "Neznámý typ pravidla"
+      "unknown-rule-type": "Neznámý typ pravidla",
+      "checking-data-sources_one": "",
+      "checking-data-sources_few": "",
+      "checking-data-sources_many": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_few": "",
+      "hidden-empty-data-sources_many": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Chyby při načítání pravidel",
@@ -3245,7 +3254,10 @@
       "view-as": "Zobrazit jako"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Vymazat filtry"
+      "clear-filters": "Vymazat filtry",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Odstraňování",
@@ -6245,9 +6257,6 @@
       "placeholder-search-options": "Možnosti hledání",
       "visualization-button-tooltip": "Možnosti hledání"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Zpět na dotazy"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6906,19 +6915,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Přidat SQL výraz",
       "sql-cta-description": "Dáváte přednost SQL? Přidejte místo toho do svých dotazů SQL výraz."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Odstraněním všech transformací se vrátíte na hlavní obrazovku výběru."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Přidejte další transformaci"
-      },
-      "confirmText-delete-all": "Odstranit vše",
-      "delete-all-transformations": "Odstranit všechny transformace",
-      "title-delete-all-transformations": "Odstranit všechny transformace?",
-      "tooltip-clear-search": "Vymazat vyhledávání",
-      "tooltip-close-picker": "Zavřít volič"
     },
     "validation": {
       "invalid-dashboard-id": "Nelze najít platné ID na Grafana.com",
@@ -11647,6 +11643,15 @@
         "open-explore": "Otevřít v Prozkoumat",
         "set-up": "Nastavit"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU clusteru · posledních 24 hodin",
         "description": "Prohlédněte si stav klastru, náklady a úspory z optimalizace velikosti v jednom zobrazení.",
@@ -11654,19 +11659,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11711,6 +11709,22 @@
         "data-points-per-minute": "{{value}} datové body/min",
         "description": "Připojte metriky kompatibilní se systémem Prometheus a prozkoumejte zdraví a trendy infrastruktury.",
         "disk-worst": "{{host}} na {{percent}} %",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Prozkoumat využití disku v Prozkoumat",
         "series-trend": "Aktivní řady · posledních 24 hodin",
         "setup-hint": "připojit zdroj metrik",

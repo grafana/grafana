@@ -376,11 +376,12 @@ type Cfg struct {
 	AuthProxy AuthProxySettings
 
 	// OAuth
-	OAuthAutoLogin                       bool
-	OAuthLoginErrorMessage               string
-	OAuthCookieMaxAge                    int
-	OAuthAllowInsecureEmailLookup        bool
-	OAuthRefreshTokenServerLockMinWaitMs int64
+	OAuthAutoLogin                          bool
+	OAuthLoginErrorMessage                  string
+	OAuthCookieMaxAge                       int
+	OAuthAllowInsecureEmailLookup           bool
+	OAuthRefreshTokenServerLockMinWaitMs    int64
+	OAuthRefreshTokenServerLockWaitBudgetMs int64
 
 	JWTAuth    AuthJWTSettings
 	ExtJWTAuth ExtJWTSettings
@@ -743,7 +744,6 @@ type Cfg struct {
 	MaxFileIndexAge                            time.Duration // Max age of file-based indexes. Index older than this will be rebuilt asynchronously.
 	MinFileIndexBuildVersion                   string        // Minimum version of Grafana that built the file-based index. If index was built with older Grafana, it will be rebuilt asynchronously.
 	IndexSnapshotEnabled                       bool          // Enable remote index snapshots
-	IndexSnapshotStorageKV                     bool          // Deprecated: always true, snapshots are always stored in the storage KV. Kept until grafana-enterprise stops reading it.
 	IndexSnapshotKVChunkConcurrency            int           // Per-file chunk I/O fan-out for KV-backed snapshots. 0 / 1 = serial.
 	IndexSnapshotKVChunkSizeMiB                int           // Size in MiB of a single KV value used to store snapshot file data. Files larger than this are split into chunks. 0 = use built-in default. Valid range: 1..1024 MiB.
 	IndexSnapshotThreshold                     int           // Min doc count to use remote snapshots (must be >= IndexFileThreshold, default: 5000)
@@ -868,6 +868,7 @@ type Cfg struct {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
 	KVLeaseTTL                        time.Duration
+	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -1010,6 +1011,7 @@ func RedactedValue(key, value string) string {
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
+		"EXCHANGE_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword

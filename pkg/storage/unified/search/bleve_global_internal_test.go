@@ -369,6 +369,22 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 	assert.Empty(t, times, "forgotten from both records")
 }
 
+// Zero until recorded, then kept to the nanosecond.
+func TestReconciledAtIsRecorded(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	at, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Zero(t, at)
+
+	require.NoError(t, idx.RecordReconciledAt(importMonday))
+	at, err = idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, importMonday, at)
+}
+
 // Kept inside the index, so a restarted server does not redo an import it has
 // already caught up with.
 func TestImportTimesSurviveReopening(t *testing.T) {

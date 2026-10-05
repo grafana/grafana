@@ -75,6 +75,7 @@ type AppPluginRunnerOptions struct {
 
 	SearchAPIEnabled bool
 	TrashAPIEnabled  bool
+	HybridAPIEnabled bool
 	KeysAPIEnabled   bool
 
 	// When this exists, dual write settings will be used
@@ -179,6 +180,7 @@ func RegisterAPIService(
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 
 	// Find all local plugins
@@ -234,6 +236,7 @@ func RegisterAPIService(
 
 				SearchAPIEnabled: searchAPIEnabled,
 				TrashAPIEnabled:  trashAPIEnabled,
+				HybridAPIEnabled: hybridAPIEnabled,
 				KeysAPIEnabled:   keysAPIEnabled,
 			},
 			tracer,

@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "検索がキャンセルされました – {{numberOfRules}}件のルールが見つかりました",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanagerの自動同期が有効な間は、インポートを利用できません"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "新しいエクスペリエンスを使用",
         "view-previous-experience": "前のエクスペリエンスに戻す"
       },
-      "unknown-rule-type": "不明なルールタイプ"
+      "unknown-rule-type": "不明なルールタイプ",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "ルールの読み込みエラー",
@@ -3167,7 +3170,10 @@
       "view-as": "表示形式"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "フィルターをクリア"
+      "clear-filters": "フィルターをクリア",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "削除しています",
@@ -6107,9 +6113,6 @@
       "placeholder-search-options": "検索オプション",
       "visualization-button-tooltip": "検索オプション"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "クエリに戻る"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6765,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL式を追加",
       "sql-cta-description": "SQLをご希望ですか？代わりにクエリにSQL式を追加してください。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "すべての変換を削除すると、メインの選択画面に戻ります。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "別の変換を追加"
-      },
-      "confirmText-delete-all": "すべて削除",
-      "delete-all-transformations": "すべての変換を削除",
-      "title-delete-all-transformations": "すべての変換を削除しますか？",
-      "tooltip-clear-search": "検索結果をクリア",
-      "tooltip-close-picker": "選択ツールを閉じる"
     },
     "validation": {
       "invalid-dashboard-id": "有効なGrafana.com IDが見つかりませんでした",
@@ -11443,6 +11433,15 @@
         "open-explore": "Exploreで開く",
         "set-up": "セットアップ"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "クラスターCPU · 過去24時間",
         "description": "クラスターの健全性、コスト、サイズの見直しによる削減額を1つのビューで確認できます。",
@@ -11450,19 +11449,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11489,6 +11481,22 @@
         "data-points-per-minute": "{{value}}データポイント/分",
         "description": "Prometheus互換のメトリクスを接続して、インフラストラクチャの健全性と傾向を探索します。",
         "disk-worst": "{{host}}：{{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Exploreでディスク使用状況を調査",
         "series-trend": "アクティブな系列 · 過去24時間",
         "setup-hint": "メトリクスソースを接続",

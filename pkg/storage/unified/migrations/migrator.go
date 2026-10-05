@@ -293,6 +293,8 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
+		// RebuildIndexes checks freshness against the import time before reporting build times.
+		// Accept the finish second: build times are only reported at second precision.
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
 		// Only validate resources that have a build time reported.

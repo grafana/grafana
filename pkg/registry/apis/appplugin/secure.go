@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/golang-lru/v2/expirable"
 	"k8s.io/apimachinery/pkg/types"
+	utilcache "k8s.io/apimachinery/pkg/util/cache"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -20,13 +20,14 @@ type secureValueCacheKey struct {
 
 type secureValueLookup struct {
 	decrypter decrypt.DecryptService
-	cache     *expirable.LRU[secureValueCacheKey, map[string]string]
+	cache     *utilcache.LRUExpireCache
+	ttl       time.Duration
 }
 
 func newSecureValueLookup(decrypter decrypt.DecryptService) *secureValueLookup {
 	// Secrets can rotate without changing the parent object's resource version.
-	cache := expirable.NewLRU[secureValueCacheKey, map[string]string](100, nil, time.Minute)
-	return &secureValueLookup{decrypter: decrypter, cache: cache}
+	cache := utilcache.NewLRUExpireCache(100)
+	return &secureValueLookup{decrypter: decrypter, cache: cache, ttl: time.Minute}
 }
 
 func (b *secureValueLookup) get(ctx context.Context, obj utils.GrafanaMetaAccessor) (map[string]string, error) {
@@ -46,20 +47,21 @@ func (b *secureValueLookup) get(ctx context.Context, obj utils.GrafanaMetaAccess
 		return nil, fmt.Errorf("missing rv")
 	}
 
-	v, ok := b.cache.Get(key)
-	if ok {
-		return v, nil
+	if cached, ok := b.cache.Get(key); ok {
+		if v, ok := cached.(map[string]string); ok {
+			return v, nil
+		}
 	}
 
 	loader, err := b.loader(ctx, obj)
 	if err != nil {
 		return nil, err
 	}
-	v, err = loader(ctx)
+	v, err := loader(ctx)
 	if err != nil {
 		return nil, err
 	}
-	_ = b.cache.Add(key, v)
+	b.cache.Add(key, v, b.ttl)
 	return v, err
 }
 

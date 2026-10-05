@@ -55,6 +55,7 @@ const (
 	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
 	internalImportTimesKey           = "import_times"            // Encoded as JSON of "group/resource" to unix nanoseconds, 0 for no import
 	internalDocumentTypesKey         = "document_types"          // Encoded as JSON list of "group/resource"
+	internalReconciledAtKey          = "reconciled_at"           // Encoded as big-endian int64 unix nanoseconds
 	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
 )
 
@@ -868,7 +869,7 @@ type preparedBuildIndex struct {
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and lastImportTime
-// check passes (if the index was built before lastImportTime, it will be rebuilt).
+// check passes (the index must be built after lastImportTime to be reused).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
 // maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
@@ -1219,8 +1220,8 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
 	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
-	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
-		reason = "index was built before the last import"
+	} else if !lastImportTime.IsZero() && !indexBuildTime.After(lastImportTime) {
+		reason = "index was not built after the last import"
 	}
 	if reason == "" {
 		return idx, name, rv, nil
@@ -2678,6 +2679,22 @@ func (b *bleveIndex) writeDocumentTypesLocked(types map[schema.GroupResource]str
 	}
 	b.documentTypes = types
 	return nil
+}
+
+// ReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) ReconciledAt() (time.Time, error) {
+	raw, err := b.index.GetInternal([]byte(internalReconciledAtKey))
+	if err != nil || len(raw) < 8 {
+		return time.Time{}, err
+	}
+	return time.Unix(0, int64(binary.BigEndian.Uint64(raw))).UTC(), nil
+}
+
+// RecordReconciledAt implements resource.ResourceIndex.
+func (b *bleveIndex) RecordReconciledAt(t time.Time) error {
+	buf := make([]byte, 8)
+	binary.BigEndian.PutUint64(buf, uint64(t.UnixNano()))
+	return b.index.SetInternal([]byte(internalReconciledAtKey), buf)
 }
 
 // ImportTimes implements resource.ResourceIndex.
