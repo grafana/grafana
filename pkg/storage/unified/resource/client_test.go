@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
@@ -108,6 +109,24 @@ func TestNewIDTokenExtractor(t *testing.T) {
 	requireIdentity := func(context.Context) bool { return true }
 	oboOn := func(context.Context) bool { return true }
 	oboOff := func(context.Context) bool { return false }
+	cancelledCtx, cancel := context.WithCancel(withInfo(&identity.StaticRequester{Type: types.TypeUser}))
+	cancel()
+	expiredCtx, cancelExpired := context.WithDeadline(withInfo(&identity.StaticRequester{Type: types.TypeUser}), time.Now().Add(-time.Minute))
+	defer cancelExpired()
+	// Allows the fallback, but a done context must return before the policy reads its flag.
+	unreachablePolicy := func(context.Context) bool {
+		t.Error("RequireCallerIdentity was consulted for a done context")
+		return false
+	}
+
+	modes := []string{identityModeService, identityModeIDToken, identityModeOnBehalfOf, identityModeFallbackService, identityModeDenied, identityModeCancelled}
+	counts := func() map[string]float64 {
+		out := make(map[string]float64, len(modes))
+		for _, mode := range modes {
+			out[mode] = testutil.ToFloat64(clientIdentityTotal.WithLabelValues(mode))
+		}
+		return out
+	}
 
 	for _, tc := range []struct {
 		name      string
@@ -158,6 +177,27 @@ func TestNewIDTokenExtractor(t *testing.T) {
 			wantCode: codes.PermissionDenied,
 		},
 		{
+			name:     "cancelled user request without an id token is neither a fallback nor a denial",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: requireIdentity},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "cancelled user request is not counted as a fallback when the fallback is allowed",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      cancelledCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.Canceled,
+		},
+		{
+			name:     "user request past its deadline is not counted as a fallback",
+			cfg:      RemoteResourceClientConfig{RequireCallerIdentity: unreachablePolicy},
+			ctx:      expiredCtx,
+			wantMode: identityModeCancelled,
+			wantCode: codes.DeadlineExceeded,
+		},
+		{
 			name:     "user carried inside the access token goes obo",
 			cfg:      RemoteResourceClientConfig{OnBehalfOf: oboOn, RequireCallerIdentity: requireIdentity},
 			ctx:      withInfo(&identity.StaticRequester{Type: types.TypeUser, AccessToken: userActorToken(t)}),
@@ -186,13 +226,14 @@ func TestNewIDTokenExtractor(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			before := testutil.ToFloat64(clientIdentityTotal.WithLabelValues(tc.wantMode))
+			want := counts()
+			want[tc.wantMode]++
 
 			token, err := newIDTokenExtractor(tc.cfg)(tc.ctx)
 
 			assert.Equal(t, tc.wantCode, status.Code(err))
 			assert.Equal(t, tc.wantToken, token)
-			assert.Equal(t, before+1, testutil.ToFloat64(clientIdentityTotal.WithLabelValues(tc.wantMode)))
+			assert.Equal(t, want, counts(), "only the %s counter should move", tc.wantMode)
 		})
 	}
 }

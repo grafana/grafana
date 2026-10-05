@@ -2579,10 +2579,10 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				if event.PreviousRV > 0 {
 					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err != nil {
+					if err = ErrorFromResponse(prevObj.GetError(), err); err != nil {
 						// This scenario should never happen, but if it does, we should log it and continue
 						// sending the event without the previous object. The client will decide what to do.
-						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", prevObj.Error)
+						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
 					} else {
 						if prevObj.ResourceVersion != event.PreviousRV {
 							s.log.Error("resource version mismatch", "key", event.Key, "resource_version", event.PreviousRV, "actual", prevObj.ResourceVersion)
@@ -2736,11 +2736,8 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
-	if req.Resource == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "missing resource key",
-			Code:    http.StatusBadRequest,
-		}}, nil
+	if r := verifyRequestKey(req.Resource); r != nil {
+		return &resourcepb.PutBlobResponse{Error: r}, nil
 	}
 	if s.blob == nil {
 		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2757,28 +2754,32 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 		}}, nil
 	}
 
-	// Load the parent both to enforce existence (see proto) and to get its
-	// folder for access.Check.
+	// Load the parent to pick create vs update and to get its folder for
+	// access.Check.
 	parent := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: req.Resource})
+	verb := utils.VerbUpdate
+	name := req.Resource.Name
+	folder := ""
 	switch {
-	case parent == nil:
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "parent resource not found",
-			Code:    http.StatusNotFound,
-		}}, nil
+	case parent.Error != nil && parent.Error.Code == http.StatusNotFound:
+		verb = utils.VerbCreate
+		name = ""
+		folder = req.Folder
 	case parent.Error != nil:
 		// Surface backend status as-is; collapsing to 404 would hide
 		// transient 5xx as "not found".
 		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+	default:
+		folder = parent.Folder
 	}
 
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
-		Verb:      utils.VerbUpdate,
+		Verb:      verb,
 		Group:     req.Resource.Group,
 		Resource:  req.Resource.Resource,
 		Namespace: req.Resource.Namespace,
-		Name:      req.Resource.Name,
-	}, parent.Folder)
+		Name:      name,
+	}, folder)
 	if err != nil {
 		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -2860,13 +2861,13 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 // Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 	if req.Resource == nil {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "missing resource key",
-			Code:    http.StatusBadRequest,
-		}}, nil
+		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing resource key")}, nil
 	}
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
 		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+	}
+	if r := verifyRequestKey(req.Resource); r != nil {
+		return &resourcepb.GetBlobResponse{Error: r}, nil
 	}
 	if s.blob == nil {
 		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
@@ -2891,6 +2892,16 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 			}}, nil
 		}
 	} else {
+		refs, hasBlobs, err := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
+		if err != nil {
+			return &resourcepb.GetBlobResponse{Error: err}, nil
+		}
+		if hasBlobs && !refs[req.Uid] {
+			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+				Message: "blob is not referenced by the resource",
+				Code:    http.StatusNotFound,
+			}}, nil
+		}
 		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
@@ -2899,6 +2910,52 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		rsp.Error = AsErrorResult(err)
 	}
 	return rsp, nil
+}
+
+const BlobsField = "blobs"
+
+type BlobReference struct {
+	UID         string `json:"uid"`
+	Size        int64  `json:"size,omitempty"`
+	Hash        string `json:"hash,omitempty"`
+	ContentType string `json:"contentType,omitempty"`
+}
+
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, bool, *resourcepb.ErrorResult) {
+	if r := verifyRequestKey(key); r != nil {
+		return nil, false, r
+	}
+
+	rsp := s.backend.ReadResource(ctx, &resourcepb.ReadRequest{
+		Key:             key,
+		ResourceVersion: rv,
+	})
+	if rsp.Error != nil {
+		return nil, false, rsp.Error
+	}
+
+	var obj struct {
+		Metadata struct {
+			Annotations map[string]string `json:"annotations"`
+		} `json:"metadata"`
+		Blobs map[string]BlobReference `json:"blobs"`
+	}
+	if err := json.Unmarshal(rsp.Value, &obj); err != nil {
+		return nil, false, AsErrorResult(err)
+	}
+	if obj.Blobs == nil {
+		return nil, false, nil
+	}
+	refs := make(map[string]bool, len(obj.Blobs)+1)
+	for _, ref := range obj.Blobs {
+		if ref.UID != "" {
+			refs[ref.UID] = true
+		}
+	}
+	if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
+		refs[info.UID] = true
+	}
+	return refs, true, nil
 }
 
 func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(ctx context.Context)) error {

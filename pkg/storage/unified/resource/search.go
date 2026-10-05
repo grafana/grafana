@@ -245,7 +245,12 @@ var knownIndexFeatures = []IndexFeature{
 //
 // Without the trash features the writers drop deleted documents, so trash comes
 // back empty, which reads as "nothing was deleted".
-var requiredIndexFeatures = TrashIndexFeatures()
+//
+// IndexFeatureHoldsDeletedDocuments is required for the same reason, one step later: an
+// index built before deleted documents were kept maps the trash fields but holds nothing
+// in them, and a file-based index is reused across an upgrade, so trash would stay
+// unavailable until some unrelated change triggered a rebuild.
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -1450,6 +1455,12 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		if err != nil {
 			s.log.Warn("failed to get build info for index", "key", key, "error", err)
 			continue
+		}
+		if lastImportTime := importTimes[key]; !lastImportTime.IsZero() && !bi.BuildTime.After(lastImportTime) {
+			return &resourcepb.RebuildIndexesResponse{
+				RebuildCount: int64(rebuildCount),
+				Error:        AsErrorResult(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime)),
+			}, nil
 		}
 		if !bi.BuildTime.IsZero() {
 			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{

@@ -19,6 +19,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel"
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -533,9 +535,12 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	ctx, cancelWatch := context.WithCancel(ctx)
 	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
-		// if the context was canceled, just return a new empty watch
+		// if the context was canceled, just return a new empty watch.
+		// gRPC clients report a done context as a status code, not the context error.
 		cancelWatch()
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
+		code := grpcStatus.Code(err)
+		if code == grpcCodes.Canceled || code == grpcCodes.DeadlineExceeded ||
+			errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
 

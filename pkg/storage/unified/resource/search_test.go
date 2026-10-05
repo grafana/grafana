@@ -864,7 +864,7 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 
 	// An index built before the stored facet mapping is reused with the option
 	// off, and rebuilt once it is on.
-	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
+	buildInfo := IndexBuildInfo{Features: slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})}
 	require.Empty(t, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 	require.Equal(t, []IndexFeature{IndexFeatureStoredFacets}, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(true)))
 }
@@ -873,9 +873,19 @@ func TestRequiredIndexFeaturesStoredFacets(t *testing.T) {
 // trash, whatever the facet option is set to.
 func TestTrashIndexFeaturesAreRequired(t *testing.T) {
 	buildInfo := IndexBuildInfo{Features: []IndexFeature{IndexFeatureStoredFacets}}
+	want := slices.Sorted(slices.Values(slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})))
 	for _, postRankAuthz := range []bool{false, true} {
-		require.Equal(t, TrashIndexFeatures(), MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
+		require.Equal(t, want, MissingIndexFeatures(buildInfo, RequiredIndexFeatures(postRankAuthz)))
 	}
+}
+
+// An index that maps the trash fields but was built before deleted documents were kept
+// holds none, so it has to rebuild rather than report an empty trash.
+func TestHoldingDeletedDocumentsIsRequired(t *testing.T) {
+	buildInfo := IndexBuildInfo{Features: TrashIndexFeatures()}
+	require.Equal(t,
+		[]IndexFeature{IndexFeatureHoldsDeletedDocuments},
+		MissingIndexFeatures(buildInfo, RequiredIndexFeatures(false)))
 }
 
 func TestShouldRebuildIndex(t *testing.T) {
@@ -1416,6 +1426,47 @@ func checkRebuildIndex(t *testing.T, support *searchServer, req rebuildRequest, 
 	} else {
 		require.Nil(t, idxAfter, "index should not exist after rebuildIndex")
 	}
+}
+
+type failingRebuildSearchBackend struct {
+	mockSearchBackend
+	buildCalls atomic.Int32
+}
+
+func (m *failingRebuildSearchBackend) BuildIndex(context.Context, NamespacedResource, int64, string, BuildFn, UpdateFn, bool, time.Time, time.Duration) (ResourceIndex, error) {
+	m.buildCalls.Add(1)
+	return nil, fmt.Errorf("index rebuild failed")
+}
+
+func TestRebuildIndexesRejectsStaleIndexAfterFailedRebuild(t *testing.T) {
+	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	importTime := time.Unix(1_700_000_000, 0)
+	storage := &mockStorageBackend{
+		lastImportTimes: []ResourceLastImportTime{{NamespacedResource: key, LastImportTime: importTime}},
+	}
+	search := &failingRebuildSearchBackend{mockSearchBackend: mockSearchBackend{
+		cache: map[NamespacedResource]ResourceIndex{
+			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime}},
+		},
+	}}
+	support, err := newSearchServer(SearchOptions{
+		Backend:   search,
+		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+	}, storage, nil, nil, nil, nil, nil, nil, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, support.init(t.Context()))
+	defer support.stop()
+
+	request := &resourcepb.RebuildIndexesRequest{
+		Namespace: key.Namespace,
+		Keys:      []*resourcepb.ResourceKey{{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}},
+	}
+	rsp, err := support.RebuildIndexes(t.Context(), request)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), rsp.RebuildCount)
+	require.Equal(t, int32(1), search.buildCalls.Load())
+	require.Empty(t, rsp.BuildTimes)
+	require.ErrorContains(t, ErrorFromResponse(rsp.GetError(), nil), "not built after last import")
 }
 
 func TestRebuildIndexesForResource(t *testing.T) {
