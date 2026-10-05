@@ -389,6 +389,7 @@ func (hs *HTTPServer) getFSPanels(c *contextmodel.ReqContext, availablePanels ma
 			Angular:         panel.Angular,
 			LoadingStrategy: panel.LoadingStrategy,
 			Translations:    panel.Translations,
+			Dependencies:    plugins.PanelDependencies{Extensions: panel.Dependencies.Extensions},
 		}
 	}
 
