@@ -11,6 +11,7 @@ beforeAll(() => mockClientSize({ width: 800, height: 600 }));
 
 function Harness({ revision = 0 }: { revision?: number }) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());
+  const [columnOrder, setColumnOrder] = useState<string[]>();
   const source = createDataFrame({
     fields: ['A', 'B', 'C'].map((name) => ({
       name,
@@ -34,6 +35,8 @@ function Harness({ revision = 0 }: { revision?: number }) {
       tableRefreshEnabled
       showColumnsSidebar
       hiddenColumns={hiddenColumns}
+      columnOrder={columnOrder}
+      onColumnOrderChange={setColumnOrder}
       onHiddenColumnsChange={setHiddenColumns}
       columnCatalog={['A', 'B', 'C']}
       structureRev={revision}
@@ -60,4 +63,17 @@ it('restores hidden source columns after refresh and protects the last visible c
   await user.click(screen.getByRole('button', { name: 'Column options for A' }));
   await user.click(await screen.findByText('Manage columns'));
   expect(within(screen.getByRole('group', { name: 'Column visibility' })).getByText('B')).toBeVisible();
+});
+
+it('keeps reordered hidden columns in position when restored after refresh', async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<Harness />);
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  await user.click(screen.getByRole('checkbox', { name: 'Hide B' }));
+  rerender(<Harness revision={1} />);
+  await user.click(screen.getByRole('checkbox', { name: 'Show B' }));
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  expect(screen.getByRole('gridcell', { name: 'B1' })).toBeVisible();
 });

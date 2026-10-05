@@ -71,8 +71,7 @@ export function ColumnVisibilitySidePanel({
         />
       </div>
       <div className={styles.columnList}>
-        {columns.map(({ name: displayName, hideable }) => {
-          const reorderable = false;
+        {columns.map(({ name: displayName, reorderable, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;
 
@@ -108,6 +107,17 @@ export function ColumnVisibilitySidePanel({
                   onDragStart={(ev) => {
                     ev.dataTransfer.effectAllowed = 'move';
                     setDraggedColumn(displayName);
+                  }}
+                  onKeyDown={(ev) => {
+                    if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') {
+                      return;
+                    }
+                    ev.preventDefault();
+                    const index = columns.findIndex((column) => column.name === displayName);
+                    const target = columns[index + (ev.key === 'ArrowUp' ? -1 : 1)];
+                    if (target?.reorderable) {
+                      onColumnsReorder(displayName, target.name);
+                    }
                   }}
                   onDragEnd={() => {
                     setDraggedColumn(null);

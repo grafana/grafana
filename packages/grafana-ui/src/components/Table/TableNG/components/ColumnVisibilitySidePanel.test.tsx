@@ -1,8 +1,18 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { ColumnVisibilitySidePanel } from './ColumnVisibilitySidePanel';
+
+function createDataTransfer() {
+  return {
+    effectAllowed: '',
+    dropEffect: '',
+    setData: jest.fn(),
+    getData: jest.fn(),
+    setDragImage: jest.fn(),
+  };
+}
 
 const columns = [
   { name: 'Column A', reorderable: true, hideable: true },
@@ -54,6 +64,34 @@ describe('ColumnVisibilitySidePanel', () => {
 
     await userEvent.click(screen.getByLabelText('Hide Column A'));
     expect(await screen.findByLabelText('Show Column A')).toBeInTheDocument();
+  });
+
+  it('reports a drag reorder', () => {
+    const onColumnsReorder = jest.fn();
+    render(<Harness onColumnsReorder={onColumnsReorder} />);
+
+    const handleB = screen.getByLabelText('Reorder Column B');
+    const rowA = screen.getByLabelText('Reorder Column A').closest('div')!;
+    const dataTransfer = createDataTransfer();
+
+    fireEvent.dragStart(handleB, { dataTransfer });
+    fireEvent.dragOver(rowA, { dataTransfer });
+    fireEvent.drop(rowA, { dataTransfer });
+
+    expect(onColumnsReorder).toHaveBeenCalledWith('Column B', 'Column A');
+  });
+
+  it('moves a column with the keyboard and ignores moves beyond the first column', async () => {
+    const user = userEvent.setup();
+    const onColumnsReorder = jest.fn();
+    render(<Harness onColumnsReorder={onColumnsReorder} />);
+    await user.click(screen.getByRole('button', { name: 'Reorder Column B' }));
+    await user.keyboard('{ArrowUp}');
+    expect(onColumnsReorder).toHaveBeenCalledWith('Column B', 'Column A');
+    onColumnsReorder.mockClear();
+    await user.click(screen.getByRole('button', { name: 'Reorder Column A' }));
+    await user.keyboard('{ArrowUp}');
+    expect(onColumnsReorder).not.toHaveBeenCalled();
   });
 
   it('dims before closing at the splitter threshold', () => {

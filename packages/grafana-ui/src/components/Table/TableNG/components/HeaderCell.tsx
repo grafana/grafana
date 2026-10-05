@@ -19,7 +19,14 @@ import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import { getDisplayName, isColumnMenuVisible, isFieldFilterable, isFieldHideable, isSortableField } from '../utils';
+import {
+  getDisplayName,
+  isColumnMenuVisible,
+  isFieldFilterable,
+  isFieldHideable,
+  isFieldReorderable,
+  isSortableField,
+} from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -74,7 +81,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
   const hideable = isFieldHideable(field);
-  const reorderable = false;
+  const reorderable = isFieldReorderable(field);
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 

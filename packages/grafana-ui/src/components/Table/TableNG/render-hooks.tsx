@@ -87,6 +87,7 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
+  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -602,7 +603,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
-      draggable: false,
+      draggable: isFieldReorderable(field),
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

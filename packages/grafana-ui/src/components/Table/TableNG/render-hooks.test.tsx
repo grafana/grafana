@@ -448,6 +448,21 @@ describe('useColumnBuilderFromFields', () => {
   });
 
   describe('table.refresh column reorder', () => {
+    it('is draggable per column, from that column’s own config', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+
+      const mixedFields = frame.fields.map((field, index) => ({
+        ...field,
+        config: { ...field.config, custom: { ...field.config.custom, reorderable: index === 0 } },
+      }));
+
+      const mixed = callFromFields(hook, mixedFields, [100, 100], frame, rows, rows);
+      expect(mixed.columns.map((c) => c.draggable)).toEqual([true, false]);
+
+      const unset = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(unset.columns.map((c) => c.draggable)).toEqual([false, false]);
+    });
+
     it('adds the settle class to headerCellClass only for settling columns', () => {
       const theme = createTheme();
       const hook = renderColumnBuilderHook({
