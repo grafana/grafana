@@ -37,7 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -290,7 +290,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			}),
 	}}
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),
@@ -1166,7 +1166,7 @@ func TestIntegrationDeleteFolders(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), user)
 	db, cfg := sqlstore.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
-	alertingStore := ngstore.DBstore{
+	alertingStore := ngrules.RuleStore{
 		SQLStore:      db,
 		Cfg:           cfg.UnifiedAlerting,
 		Logger:        log.New("test-alerting-store"),

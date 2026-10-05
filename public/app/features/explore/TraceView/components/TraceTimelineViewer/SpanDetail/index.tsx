@@ -38,12 +38,14 @@ import { Icon, useStyles2, useTheme2 } from '@grafana/ui';
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
+import { SpanErrorIcon } from '../../common/SpanErrorIcon';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { type SpanLinkFunc } from '../../types/links';
 import { type TraceProcess, type TraceSpan, type TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../../utils/date';
 import { getServiceDisplayName } from '../../utils/service-name';
 import { getSummaryCountBadgeStyle, getSummaryDurationStats, partitionAggregationTags } from '../../utils/summary-span';
+import { isErrorSpan } from '../utils';
 
 import AccordionCategorizedKeyValues from './AccordionCategorizedKeyValues';
 import AccordionKeyValues from './AccordionKeyValues';
@@ -183,8 +185,13 @@ const getStyles = (theme: GrafanaTheme2) => {
     serviceNameAndLinks: css({
       label: 'ServiceNameAndLinks',
       display: 'flex',
+      alignItems: 'center',
       width: '100%',
       marginBottom: theme.spacing(1),
+    }),
+    errorIcon: css({
+      label: 'SpanDetailErrorIcon',
+      marginRight: theme.spacing(0.5),
     }),
     operationName: css({
       label: 'SpanDetailOperationName',
@@ -617,6 +624,12 @@ export default function SpanDetail(props: SpanDetailProps) {
     <div data-testid="span-detail-component" className={styles.spanDetailComponent}>
       <div className={styles.header}>
         <div className={styles.serviceNameAndLinks}>
+          {isErrorSpan(span) && (
+            <SpanErrorIcon
+              className={styles.errorIcon}
+              ariaLabel={t('explore.span-detail.error-indicator', 'Span has an error')}
+            />
+          )}
           <h6 className={styles.operationName} title={operationName}>
             {operationName}
           </h6>

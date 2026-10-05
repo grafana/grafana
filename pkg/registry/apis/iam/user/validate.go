@@ -38,11 +38,11 @@ func ValidateOnCreate(ctx context.Context, search *dualwrite.Selector[SearchBack
 	if err != nil {
 		return err
 	}
-	if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
+	if err := validateEmail(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Email); err != nil {
 		return err
 	}
 
-	if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
+	if err := validateLogin(ctx, userSearchClient, obj.GetNamespace(), obj.Name, obj.Spec.Login); err != nil {
 		return err
 	}
 
@@ -122,13 +122,13 @@ func ValidateOnUpdate(ctx context.Context, search *dualwrite.Selector[SearchBack
 	}
 
 	if newObj.Spec.Email != oldObj.Spec.Email {
-		if err := validateEmail(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
+		if err := validateEmail(ctx, userSearchClient, newObj.GetNamespace(), newObj.Name, newObj.Spec.Email); err != nil {
 			return err
 		}
 	}
 
 	if newObj.Spec.Login != oldObj.Spec.Login {
-		if err := validateLogin(ctx, userSearchClient, requester.GetNamespace(), newObj.Name, newObj.Spec.Login); err != nil {
+		if err := validateLogin(ctx, userSearchClient, newObj.GetNamespace(), newObj.Name, newObj.Spec.Login); err != nil {
 			return err
 		}
 	}

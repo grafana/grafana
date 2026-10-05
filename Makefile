@@ -271,8 +271,7 @@ gen-enterprise-go: ## Generate Wire graph (Enterprise)
 endif
 gen-go: gen-enterprise-go ## Generate Wire graph
 	@echo "generating Wire graph"
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire
-	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server
+	$(GO) run ./pkg/build/wire/cmd/wire/main.go gen -tags "oss" -gen_tags "(!enterprise && !pro)" ./pkg/server/bootstrap/wire ./pkg/server
 
 .PHONY: gen-app-manifests-unistore
 gen-app-manifests-unistore: ## Generate unified storage app manifests list

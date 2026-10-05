@@ -9,7 +9,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/rest"
 
 	provisioningapis "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	versioned "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -17,8 +16,8 @@ import (
 	informers "github.com/grafana/grafana/apps/provisioning/pkg/generated/informers/externalversions"
 	listers "github.com/grafana/grafana/apps/provisioning/pkg/generated/listers/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/nats"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // ConnectionGetter is the read seam the connection controller reconciles
@@ -35,10 +34,9 @@ type ConnectionGetter interface {
 // A non-nil keys makes the NATS re-list keys-only (identity, no bodies); nil
 // keeps the full-object list. Both callers follow [provisioning]
 // keys_only_relist, in process over storage and in the operator over HTTP.
-func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys KeysLister, resync time.Duration, reg prometheus.Registerer) (DeltaSource, ConnectionGetter) {
+func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, reg prometheus.Registerer) (DeltaSource, ConnectionGetter) {
 	if nats.Enabled(subscriber) {
-		resourceName := provisioningapis.ConnectionResourceInfo.GroupVersionResource().Resource
-		onProjection := newRelistProjectionRecorder(reg, resourceName)
+		onProjection := newRelistProjectionRecorder(reg, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
 		source := NewConnectionInformer(subscriber, client, "", resync, usinformer.NewStore(), keys, onProjection)
 		// Same as the repository informer: the controller's only feed, with
 		// connection health checks driven by the re-list, so it must keep
@@ -51,21 +49,9 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 	return inf.Informer(), NewCachedConnectionGetter(inf.Lister())
 }
 
-// NewGRPCConnectionKeysLister lists connection keys from unified storage over
-// gRPC, for the in-process server.
-func NewGRPCConnectionKeysLister(store resourcepb.ResourceStoreClient) KeysLister {
-	return NewGRPCKeysLister(store, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
-}
-
-// NewHTTPConnectionKeysLister lists connection keys through the apiserver, for
-// the out-of-process operator.
-func NewHTTPConnectionKeysLister(client rest.Interface) KeysLister {
-	return NewHTTPKeysLister(client, provisioningapis.ConnectionResourceInfo.GroupVersionResource())
-}
-
 // NewConnectionInformer builds an Informer for connections. When keys is
 // non-nil the periodic re-list is keys-only; otherwise it lists full objects.
-func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys KeysLister, onProjection func(keysOnly bool)) *usinformer.Informer {
+func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, onProjection func(keysOnly bool)) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
 		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
@@ -76,7 +62,7 @@ func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interfac
 // connectionList builds the informer's re-list. With a keys lister it asks
 // storage for identities only; without one, or against storage too old to honour
 // the projection, it lists full objects.
-func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys KeysLister, onProjection func(keysOnly bool)) func(context.Context) ([]runtime.Object, int64, error) {
+func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys keysapi.Lister, onProjection func(keysOnly bool)) func(context.Context) ([]runtime.Object, int64, error) {
 	observe := func(keysOnly bool) {
 		if onProjection != nil {
 			onProjection(keysOnly)
@@ -89,12 +75,13 @@ func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 				observe(true)
 				return objs, listRV, nil
 			}
-			if !errors.Is(err, ErrKeysOnlyUnsupported) {
+			if !errors.Is(err, keysapi.ErrUnsupported) {
 				return nil, 0, err
 			}
-			// Storage predates keys_only. The full list is still correct, and
-			// failing the tick would stop reconciling altogether.
-			logging.FromContext(ctx).Warn("storage did not honour keys_only, re-listing full objects")
+			// The server did not serve keys: over storage it predates keys_only,
+			// over HTTP the route is absent. Either way the full list is still
+			// correct, and failing the tick would stop reconciling altogether.
+			logging.FromContext(ctx).Warn("server did not serve a keys-only list, re-listing full objects", "error", err)
 		}
 		objs, listRV, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
 			return c.Connections(namespace).List(ctx, opts)
@@ -109,7 +96,7 @@ func connectionList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 // listConnectionKeys collects a keys-only re-list into the minimal objects the
 // informer's Store keys on. The Store diffs the whole set, so the stream has to
 // be drained; the reconcile re-fetches the bodies it needs.
-func listConnectionKeys(ctx context.Context, keys KeysLister) ([]runtime.Object, int64, error) {
+func listConnectionKeys(ctx context.Context, keys keysapi.Lister) ([]runtime.Object, int64, error) {
 	listRV, seq := keys.ListKeys(ctx)
 	var objs []runtime.Object
 	for k, err := range seq {

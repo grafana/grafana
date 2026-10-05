@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Zoekopdracht geannuleerd - {{numberOfRules}} regels gevonden",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Importeren is niet beschikbaar terwijl de automatische synchronisatie van Mimir Alertmanager actief is"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Nieuwe ervaring gebruiken",
         "view-previous-experience": "Terug naar de vorige ervaring"
       },
-      "unknown-rule-type": "Onbekend regeltype"
+      "unknown-rule-type": "Onbekend regeltype",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Er is een fout opgetreden bij het laden van regels",
@@ -3193,7 +3198,10 @@
       "view-as": "Bekijk als"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Filters wissen"
+      "clear-filters": "Filters wissen",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Verwijderen",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Doorgaan"
-        },
-        "title": {
-          "proceed-to-external-site": "Doorgaan naar externe site?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Geen dashboards gevonden"
@@ -6162,9 +6160,6 @@
       "only-overrides-button-tooltip": "Alleen overschrijvingen weergeven",
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Terug naar Query's"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6747,7 +6742,6 @@
       "playlist-previous": "Naar het vorige dashboard",
       "playlist-stop": "Afspeellijst stoppen",
       "refresh": "Dashboard vernieuwen",
-      "save": "Dashboard opslaan",
       "save-as-template": {
         "label": "Opslaan als sjabloon"
       },
@@ -6762,8 +6756,6 @@
       "save-dashboard-short": "Opslaan",
       "save-library-panel": "Bibliotheekpaneel",
       "save-library-panel-short": "Opslaan",
-      "settings": "Dashboardinstellingen",
-      "share-button": "Delen",
       "star-add-error": "Kan niet toevoegen aan favorieten",
       "star-added": "Toegevoegd aan favorieten",
       "star-remove-error": "Kan niet verwijderen uit favorieten",
@@ -6825,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-expressie toevoegen",
       "sql-cta-description": "Heb je liever SQL? Voeg dan een SQL-expressie toe aan je zoekopdrachten."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Door alle transformaties te verwijderen, ga je terug naar het hoofdselectiescherm."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Nog een transformatie toevoegen"
-      },
-      "confirmText-delete-all": "Alles verwijderen",
-      "delete-all-transformations": "Alle transformaties verwijderen",
-      "title-delete-all-transformations": "Alle transformaties verwijderen?",
-      "tooltip-clear-search": "Zoekopdracht wissen",
-      "tooltip-close-picker": "Kiezer sluiten"
     },
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
@@ -11524,6 +11503,15 @@
         "open-explore": "Open in Verkennen",
         "set-up": "Instellen"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Cluster-CPU · afgelopen 24u",
         "description": "Bekijk de gezondheid van het cluster, de kosten en de besparingen door de juiste grootte in één weergave.",
@@ -11531,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11557,22 @@
         "data-points-per-minute": "{{value}} datapunten/min",
         "description": "Verbind Prometheus-compatibele metrics om de gezondheid en trends van de infrastructuur te verkennen.",
         "disk-worst": "{{host}} op {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Schijfgebruik onderzoeken in Verkennen",
         "series-trend": "Actieve reeks · afgelopen 24u",
         "setup-hint": "een metrics-bron verbinden",
@@ -13298,7 +13295,9 @@
       "copy-markdown": "Kopiëren als Markdown",
       "download-markdown": "Downloaden als .md",
       "error": "Kan notitieboek niet exporteren",
-      "label": "Exporteren"
+      "label": "Exporteren",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Blok toevoegen",
@@ -18186,10 +18185,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Een kijkje nemen",
-      "description": "We hebben een nieuw ontwerp!",
-      "revert": "Teruggaan",
-      "title": "Nieuwe stijlen"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

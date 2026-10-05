@@ -11,11 +11,12 @@ import {
   type KubernetesScope,
   resolveKubernetesDatasource,
 } from '../solutions/kubernetesData';
-import { fetchKubernetesLabelValues, kubernetesFilterStorageKey } from '../solutions/kubernetesFilter';
+import { fetchKubernetesLabelValues } from '../solutions/kubernetesFilter';
 import { logsSolution } from '../solutions/logsSolution';
-import { metricsSolution } from '../solutions/metricsSolution';
+import { metricsDetection, metricsSolution } from '../solutions/metricsSolution';
 import { pluginAvailability, setupGuideEnabled } from '../solutions/pluginAvailability';
 import { accessibleAppPage } from '../solutions/pluginPages';
+import { solutionFilterStorageKey } from '../solutions/solutionFilter';
 import { syntheticsSolution } from '../solutions/syntheticsSolution';
 import { deferred, stubSolution } from '../solutions/test-utils';
 import { tracesSolution } from '../solutions/tracesSolution';
@@ -49,7 +50,7 @@ jest.mock('../solutions/pluginPages', () => ({
 
 // The other solutions stay inert so the Kubernetes one is the only live card in both sections.
 jest.mock('../solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
-jest.mock('../solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
+jest.mock('../solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('../solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('../solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 
@@ -63,6 +64,7 @@ const datasource = { uid: 'k8s-uid', name: 'k8s-prom', type: 'prometheus' } as D
 beforeEach(() => {
   jest.mocked(logsSolution).mockImplementation(() => stubSolution('logs'));
   jest.mocked(metricsSolution).mockImplementation(() => stubSolution('metrics'));
+  jest.mocked(metricsDetection).mockReturnValue(async () => ({ status: 'inactive', datasource: null }));
   jest.mocked(tracesSolution).mockImplementation(() => stubSolution('traces'));
   jest.mocked(syntheticsSolution).mockImplementation(() => stubSolution('synthetics'));
   window.localStorage.clear();
@@ -130,7 +132,7 @@ it('reloads both homepage cards with scoped facts after saving a filter', async 
   ]);
   expect(jest.mocked(resolveKubernetesDatasource)).toHaveBeenCalledTimes(1);
   // Bound to the datasource the card resolved.
-  expect(JSON.parse(window.localStorage.getItem(kubernetesFilterStorageKey()) ?? '')).toMatchObject({
+  expect(JSON.parse(window.localStorage.getItem(solutionFilterStorageKey('kubernetes')) ?? '')).toMatchObject({
     datasourceUid: 'k8s-uid',
   });
 });

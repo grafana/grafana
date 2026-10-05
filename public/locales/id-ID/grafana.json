@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "Pencarian dibatalkan – {{numberOfRules}} aturan ditemukan",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Impor tidak tersedia saat sinkronisasi otomatis Mimir Alertmanager aktif"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "Gunakan pengalaman baru",
         "view-previous-experience": "Kembali ke pengalaman sebelumnya"
       },
-      "unknown-rule-type": "Jenis aturan tidak diketahui"
+      "unknown-rule-type": "Jenis aturan tidak diketahui",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Kesalahan saat memuat aturan",
@@ -3167,7 +3170,10 @@
       "view-as": "Tampilkan sebagai"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Hapus filter"
+      "clear-filters": "Hapus filter",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Menghapus",
@@ -5629,16 +5635,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Lanjutkan"
-        },
-        "title": {
-          "proceed-to-external-site": "Lanjutkan ke situs eksternal?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "dasbor {{dashboardName}}",
       "label-no-dashboards-found": "Tidak ada dasbor yang ditemukan"
@@ -6116,9 +6112,6 @@
       "only-overrides-button-tooltip": "Tampilkan penimpaan saja",
       "placeholder-search-options": "Opsi pencarian",
       "visualization-button-tooltip": "Opsi pencarian"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Kembali ke Kueri"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6701,7 +6694,6 @@
       "playlist-previous": "Buka dasbor sebelumnya",
       "playlist-stop": "Hentikan daftar putar",
       "refresh": "Muat ulang dasbor",
-      "save": "Simpan dasbor",
       "save-as-template": {
         "label": "Simpan sebagai templat"
       },
@@ -6716,8 +6708,6 @@
       "save-dashboard-short": "Simpan",
       "save-library-panel": "Simpan panel pustaka",
       "save-library-panel-short": "Simpan",
-      "settings": "Pengaturan dasbor",
-      "share-button": "Bagikan",
       "star-add-error": "Gagal menambahkan ke yang dibintangi",
       "star-added": "Ditambahkan ke yang dibintangi",
       "star-remove-error": "Gagal menghapus dari yang dibintangi",
@@ -6778,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Tambahkan ekspresi SQL",
       "sql-cta-description": "Lebih suka SQL? Tambahkan ekspresi SQL ke kueri Anda."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Dengan menghapus semua transformasi, Anda akan kembali ke layar pilihan utama."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Tambah transformasi lain"
-      },
-      "confirmText-delete-all": "Hapus semua",
-      "delete-all-transformations": "Hapus semua transformasi",
-      "title-delete-all-transformations": "Hapus semua transformasi?",
-      "tooltip-clear-search": "Hapus pencarian",
-      "tooltip-close-picker": "Tutup pemilih"
     },
     "validation": {
       "invalid-dashboard-id": "Tidak dapat menemukan ID Grafana.com yang valid",
@@ -11456,6 +11433,15 @@
         "open-explore": "Buka di Explore",
         "set-up": "Siapkan"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU Klaster · 24 jam terakhir",
         "description": "Lihat kesehatan klaster, biaya, dan penghematan akibat ukuran yang tepat dalam satu tampilan.",
@@ -11463,19 +11449,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11502,6 +11481,22 @@
         "data-points-per-minute": "{{value}} titik data/mnt",
         "description": "Hubungkan metrik yang kompatibel dengan Prometheus untuk menganalisis kesehatan dan tren infrastruktur.",
         "disk-worst": "{{host}} di {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Selidiki penggunaan disk di Explore",
         "series-trend": "Seri aktif · 24 jam terakhir",
         "setup-hint": "hubungkan sumber metrik",
@@ -13205,7 +13200,9 @@
       "copy-markdown": "Salin sebagai Markdown",
       "download-markdown": "Unduh sebagai .md",
       "error": "Gagal mengekspor notebook",
-      "label": "Ekspor"
+      "label": "Ekspor",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Tambahkan blok",
@@ -18054,10 +18051,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Coba lihat",
-      "description": "Kami telah mendesain ulang!",
-      "revert": "Bawa saya kembali",
-      "title": "Gaya tampilan baru"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

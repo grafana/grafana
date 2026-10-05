@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Pesquisa cancelada. Foram encontradas {{numberOfRules}} regras",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "As importações não estão disponíveis enquanto a sincronização automática do Alertmanager do Mimir estiver ativa"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Usar nova experiência",
         "view-previous-experience": "Reverter para a experiência anterior"
       },
-      "unknown-rule-type": "Tipo de regra desconhecido"
+      "unknown-rule-type": "Tipo de regra desconhecido",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Erros ao carregar regras",
@@ -3193,7 +3198,10 @@
       "view-as": "Ver como"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Limpar filtros"
+      "clear-filters": "Limpar filtros",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Excluindo",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Prosseguir"
-        },
-        "title": {
-          "proceed-to-external-site": "Deseja prosseguir para o site externo?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Painel {{dashboardName}}",
       "label-no-dashboards-found": "Nenhum painel encontrado"
@@ -6162,9 +6160,6 @@
       "only-overrides-button-tooltip": "Exibir apenas substituições",
       "placeholder-search-options": "Opções de pesquisa",
       "visualization-button-tooltip": "Opções de pesquisa"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Voltar para Consultas"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6747,7 +6742,6 @@
       "playlist-previous": "Ir para o painel de controle anterior",
       "playlist-stop": "Parar lista de reprodução",
       "refresh": "Atualizar painel de controle",
-      "save": "Salvar painel de controle",
       "save-as-template": {
         "label": "Salvar como modelo"
       },
@@ -6762,8 +6756,6 @@
       "save-dashboard-short": "Salvar",
       "save-library-panel": "Salvar painel da biblioteca",
       "save-library-panel-short": "Salvar",
-      "settings": "Configurações do painel de controle",
-      "share-button": "Compartilhar",
       "star-add-error": "Falha ao adicionar aos favoritos",
       "star-added": "Adicionado aos favoritos",
       "star-remove-error": "Falha ao remover dos favoritos",
@@ -6825,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Adicionar expressão SQL",
       "sql-cta-description": "Prefere SQL? Adicione uma expressão SQL às suas consultas."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Ao excluir todas as transformações, você voltará para a tela de seleção principal."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Adicionar outra transformação"
-      },
-      "confirmText-delete-all": "Excluir tudo",
-      "delete-all-transformations": "Excluir todas as transformações",
-      "title-delete-all-transformations": "Deseja excluir todas as transformações?",
-      "tooltip-clear-search": "Limpar pesquisa",
-      "tooltip-close-picker": "Fechar seletor"
     },
     "validation": {
       "invalid-dashboard-id": "Não foi possível encontrar um ID do Grafana.com válido",
@@ -11524,6 +11503,15 @@
         "open-explore": "Abrir no Explore",
         "set-up": "Configure"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU do cluster · últimas 24 horas",
         "description": "Veja a integridade do cluster, o custo e a economia com o dimensionamento correto em uma única visualização.",
@@ -11531,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11557,22 @@
         "data-points-per-minute": "{{value}} pontos de dados/min",
         "description": "Conecte métricas compatíveis com o Prometheus para analisar a integridade e as tendências da infraestrutura.",
         "disk-worst": "{{host}} em {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Investigar o uso do disco no Explore",
         "series-trend": "Séries ativas · últimas 24 horas",
         "setup-hint": "conectar uma fonte de métricas",
@@ -13298,7 +13295,9 @@
       "copy-markdown": "Copiar como linguagem de marcação",
       "download-markdown": "Baixar como .md",
       "error": "Erro ao exportar o bloco de anotações",
-      "label": "Exportar"
+      "label": "Exportar",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Adicionar bloco",
@@ -18186,10 +18185,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dê uma olhada",
-      "description": "Estamos com um novo design!",
-      "revert": "Retornar ao original",
-      "title": "Novos estilos"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

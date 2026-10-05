@@ -19,6 +19,7 @@ const (
 	defaultLoginMaxLifetime             = "30d"
 	defaultTokenRotationIntervalMinutes = 10
 	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
+	defaultOAuthRefreshLockWaitBudgetMs = int64(5000)
 	defaultUserLastSeenUpdateInterval   = "15m"
 )
 
@@ -107,6 +108,7 @@ func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
 
 func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.OAuthRefreshTokenServerLockMinWaitMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(defaultOAuthRefreshLockMinWaitMs)
+	cfg.OAuthRefreshTokenServerLockWaitBudgetMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_wait_budget_ms").MustInt64(defaultOAuthRefreshLockWaitBudgetMs)
 }
 
 func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {

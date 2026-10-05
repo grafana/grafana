@@ -45,26 +45,18 @@ func TestSearch(t *testing.T) {
 		return client
 	}
 
-	t.Run("should hit unified storage search handler", func(t *testing.T) {
+	t.Run("requests field-value results", func(t *testing.T) {
 		mockClient := &MockClient{}
 		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), mockClient, nil)
 
 		doSearch(t, searchHandler, "/search")
 
 		require.NotNil(t, mockClient.LastSearchRequest)
-		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, mockClient.LastSearchRequest.ResultFormat)
-	})
-
-	t.Run("requests field-value results when enabled", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
-
-		client := doSearch(t, searchHandler, "/search")
-
-		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, client.LastSearchRequest.ResultFormat)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, mockClient.LastSearchRequest.ResultFormat)
 	})
 
 	t.Run("ignores response fields that field-value results do not support", func(t *testing.T) {
-		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, featuremgmt.WithFeatures(featuremgmt.FlagDashboardSearchFieldValueResults))
+		searchHandler := NewSearchHandler(tracing.NewNoopTracerService(), &MockClient{}, nil)
 
 		client := doSearch(t, searchHandler, "/search?field=panel_types&field=labels&field=not_declared&field=labels.custom&field=rv&field=grafana.app/deprecatedInternalID&field=_score&field=source.path&field=source.checksum&field=source.timestampMillis")
 
@@ -101,7 +93,7 @@ func TestSearchErrorStatus(t *testing.T) {
 			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
 			var got metav1.Status
 			require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &got))
-			require.Equal(t, resource.GetError(failure).(apierrors.APIStatus).Status(), got)
+			require.Equal(t, resource.StatusError(failure).(apierrors.APIStatus).Status(), got)
 		})
 	}
 }
@@ -1589,6 +1581,9 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.NotNil(t, result)
+
+			assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, result.ResultFormat)
+			tt.expected.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 			// Exclude query fields from the expected search
 			if tt.queryString != "" {

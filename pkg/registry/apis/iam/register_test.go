@@ -142,24 +142,43 @@ func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 		Features{},
 	)
 
-	// Serving the kind is moot unless the standalone authorizer allows it; the
-	// flat fall-through would otherwise deny every ssosettings request.
-	attrs := authorizer.AttributesRecord{
+	// Standalone serves this kind read-only to service identities: reads are allowed
+	// only for access policies; other identity types and mutating verbs are denied.
+	readAttrs := authorizer.AttributesRecord{
 		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
 		ResourceRequest: true,
 		Verb:            "get",
 	}
+	writeAttrs := authorizer.AttributesRecord{
+		Resource:        legacyiamv0.SSOSettingResourceInfo.GetName(),
+		ResourceRequest: true,
+		Verb:            "create",
+	}
 
-	t.Run("allows an authenticated identity", func(t *testing.T) {
+	t.Run("allows reads from an access policy identity", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
-		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionAllow, decision)
 	})
 
+	t.Run("denies writes even from an access policy identity", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAccessPolicy})
+		decision, _, err := b.authorizer.Authorize(ctx, writeAttrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
+	t.Run("denies non-access-policy identities", func(t *testing.T) {
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeUser})
+		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
+		require.NoError(t, err)
+		require.Equal(t, authorizer.DecisionDeny, decision)
+	})
+
 	t.Run("denies an anonymous identity", func(t *testing.T) {
 		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: authlib.TypeAnonymous})
-		decision, _, err := b.authorizer.Authorize(ctx, attrs)
+		decision, _, err := b.authorizer.Authorize(ctx, readAttrs)
 		require.NoError(t, err)
 		require.Equal(t, authorizer.DecisionDeny, decision)
 	})
