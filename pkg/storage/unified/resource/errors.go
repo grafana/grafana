@@ -99,7 +99,7 @@ func IsConflict(err error) bool {
 	if apierrors.IsConflict(err) {
 		return true
 	}
-	return apierrors.IsConflict(GetError(errorResultFromGRPCDetails(err)))
+	return apierrors.IsConflict(StatusError(errorResultFromGRPCDetails(err)))
 }
 
 // ErrorFromResponse resolves the outcome of a unified storage call — which
@@ -115,7 +115,7 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err != nil {
 		return err
 	}
-	return GetError(respErr)
+	return StatusError(respErr)
 }
 
 // StatusErrorFromResponse derives a Kubernetes [apierrors.StatusError] from a
@@ -128,7 +128,7 @@ func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 // since that mapping only ever applied in-process.
 func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 	if err == nil {
-		return GetError(respErr)
+		return StatusError(respErr)
 	}
 	// In-process calls can return context errors instead of gRPC statuses.
 	localContextErr := errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded)
@@ -151,7 +151,7 @@ func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
 		}
 		result.Message = http.StatusText(int(result.Code))
 	}
-	return GetError(result)
+	return StatusError(result)
 }
 
 func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
@@ -332,14 +332,21 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 	}
 }
 
-func GetError(res *resourcepb.ErrorResult) error {
+// StatusError converts an ErrorResult into a Kubernetes StatusError, preserving the HTTP code, reason, details and
+// causes; defaults an unspecified HTTP code to 500. Returns nil for nil; counterpart of [AsErrorResult].
+func StatusError(res *resourcepb.ErrorResult) error {
 	if res == nil {
 		return nil
 	}
 
+	code := res.Code
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+
 	status := &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status:  metav1.StatusFailure,
-		Code:    res.Code,
+		Code:    code,
 		Reason:  metav1.StatusReason(res.Reason),
 		Message: res.Message,
 	}}

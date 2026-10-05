@@ -92,7 +92,7 @@ func TestUnaryRequestDurationInterceptor(t *testing.T) {
 			foundStatus := false
 			foundListPath := false
 			for _, family := range families {
-				if family.GetName() != "storage_server_grpc_request_duration_seconds" {
+				if family.GetName() != "grafana_storage_server_grpc_request_duration_seconds" {
 					continue
 				}
 				require.Len(t, family.Metric, 1)
@@ -135,7 +135,7 @@ func TestUnaryRequestDurationInterceptorRecordsListPath(t *testing.T) {
 	families, err := reg.Gather()
 	require.NoError(t, err)
 	for _, family := range families {
-		if family.GetName() != "storage_server_grpc_request_duration_seconds" {
+		if family.GetName() != "grafana_storage_server_grpc_request_duration_seconds" {
 			continue
 		}
 		require.Len(t, family.Metric, 1)

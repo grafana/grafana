@@ -271,6 +271,14 @@ Users with Viewer role have read-only access to Git Sync:
 - `dashboards:read` - On folders/dashboards where assigned Folder Viewer or Dashboard Viewer
 - `folders:read` - On folders where assigned Folder Viewer
 
+#### None role
+
+The `None` basic role, also called **No basic role** in the UI, doesn't have any Git Sync permissions by default, as it doesn't inherit the default permissions of Viewer, Editor, or Admin. Without explicit grants, as a `None` user you can't read Git Sync settings or repository configurations, configure repositories, submit jobs, or read and modify provisioned dashboards and folders. In any case, you can use RBAC to assign specific permissions to your `None` users.
+
+- **Resource access:** Refer to [RBAC for dashboards and folders](#rbac-for-dashboards-and-folders).
+- **Job access:** Refer to [Job actions and required permissions](#job-actions-and-required-permissions).
+- **Repository subresource access:** Refer to [Repository subresource access](#repository-subresource-access).
+
 ### RBAC for dashboards and folders
 
 Provisioned dashboards and folders use the Grafana standard permission model. To modify provisioned resources, you will need permissions over your dashboard and folder.

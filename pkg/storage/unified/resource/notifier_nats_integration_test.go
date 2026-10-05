@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -31,7 +31,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("committed write round-trips through NATS with every field intact", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		event := Event{
@@ -66,7 +67,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 	t.Run("every action type survives the marshal/transport/unmarshal round trip", func(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, nil, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		establishInterest(t, ctx, out, backend)
@@ -143,7 +145,8 @@ func TestIntegrationNatsWatchNotificationRoundTrip(t *testing.T) {
 		ctx, pub, sub := startNatsRoundTrip(t)
 		backend := newTestKVStorageBackend(pub)
 		dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "nats_notifier_dropped_total"}, []string{"reason"})
-		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, dropped, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		notifier := newNatsNotifier(natsSubscriberAdapter{sub: sub}, expiry, dropped, &logging.NoOpLogger{})
 		out := notifier.Watch(ctx, WatchOptions{})
 
 		// Interest must be live first, else NATS drops the bad messages before the

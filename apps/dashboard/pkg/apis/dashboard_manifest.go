@@ -69,7 +69,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv0alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -228,7 +231,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -379,7 +385,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv1beta1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv1beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -530,7 +539,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -681,7 +693,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -832,7 +847,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2beta1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",

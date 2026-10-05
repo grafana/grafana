@@ -406,7 +406,8 @@
       "metadata": {
         "name": "alertingImportYAMLUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-05-21T15:59:41Z"
+        "creationTimestamp": "2025-05-21T15:59:41Z",
+        "deletionTimestamp": "2026-09-23T18:37:49Z"
       },
       "spec": {
         "description": "Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules",
@@ -1405,7 +1406,8 @@
       "metadata": {
         "name": "dashboard.apiSearchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for requests from the /api/search endpoint",
@@ -1446,7 +1448,8 @@
       "metadata": {
         "name": "dashboard.searchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for dashboard search requests",
@@ -1734,6 +1737,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.queryGatewaySlimAudit",
+        "resourceVersion": "1790805819665",
+        "creationTimestamp": "2026-09-30T22:03:39Z"
+      },
+      "spec": {
+        "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.queryTypes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -1889,6 +1906,23 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.tabularNums",
+        "resourceVersion": "1790951488017",
+        "creationTimestamp": "2026-10-02T09:33:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-02 14:31:28.017202 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables tabular numerals for visualization legend values",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -5033,7 +5067,8 @@
       "metadata": {
         "name": "search.apiFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for generic resource search API requests",

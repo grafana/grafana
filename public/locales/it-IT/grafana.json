@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Ricerca annullata: {{numberOfRules}} regole trovate",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Le importazioni non sono disponibili mentre la sincronizzazione automatica di Mimir Alertmanager è attiva"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Usa la nuova esperienza",
         "view-previous-experience": "Torna all'esperienza precedente"
       },
-      "unknown-rule-type": "Tipo di regola sconosciuto"
+      "unknown-rule-type": "Tipo di regola sconosciuto",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errori durante il caricamento delle regole",
@@ -3193,7 +3198,10 @@
       "view-as": "Visualizza come"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Cancella i filtri"
+      "clear-filters": "Cancella i filtri",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Eliminazione",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Procedi"
-        },
-        "title": {
-          "proceed-to-external-site": "Procedere al sito esterno?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Nessuna dashboard trovata"
@@ -6162,9 +6160,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Torna alle Query"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6747,7 +6742,6 @@
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
       "refresh": "Aggiorna dashboard",
-      "save": "Salva dashboard",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6762,8 +6756,6 @@
       "save-dashboard-short": "Salva",
       "save-library-panel": "Salva pannello della libreria",
       "save-library-panel-short": "Salva",
-      "settings": "Impostazioni dashboard",
-      "share-button": "Condividi",
       "star-add-error": "Impossibile aggiungere ai preferiti",
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
@@ -6825,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Aggiungi espressione SQL",
       "sql-cta-description": "Preferisci SQL? Aggiungi invece un'espressione SQL alle tue query."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Aggiungi un'altra trasformazione"
-      },
-      "confirmText-delete-all": "Elimina tutto",
-      "delete-all-transformations": "Elimina tutte le trasformazioni",
-      "title-delete-all-transformations": "Eliminare tutte le trasformazioni?",
-      "tooltip-clear-search": "Azzera ricerca",
-      "tooltip-close-picker": "Chiudi il selettore"
     },
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
@@ -11524,6 +11503,15 @@
         "open-explore": "Apri in Esplora",
         "set-up": "Configura"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU del cluster · ultime 24 ore",
         "description": "Visualizza lo stato di integrità del cluster, i costi e i risparmi derivanti dal ridimensionamento in un'unica schermata.",
@@ -11531,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11576,6 +11557,22 @@
         "data-points-per-minute": "{{value}} punti dati/min",
         "description": "Connetti metriche compatibili con Prometheus per esplorare lo stato di integrità e le tendenze dell'infrastruttura.",
         "disk-worst": "{{host}} al {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Esamina l'utilizzo del disco in Esplora",
         "series-trend": "Serie attive · ultime 24 ore",
         "setup-hint": "collega un'origine delle metriche",
@@ -13225,6 +13222,12 @@
       "query": {
         "add": "Aggiungi query",
         "run": "Esegui query"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13292,7 +13295,9 @@
       "copy-markdown": "Copia come Markdown",
       "download-markdown": "Scarica come .md",
       "error": "Impossibile esportare il blocco appunti",
-      "label": "Esporta"
+      "label": "Esporta",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Aggiungi blocco",
@@ -13308,7 +13313,9 @@
       "redo-action": "Ripeti: {{action}}",
       "remove-query": "Rimuovi query",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Seleziona query",
+      "set-cell-time-range": "",
       "split-block": "Dividi blocco",
       "switch-datasource": "Cambia origine dei dati",
       "undo": "Annulla",
@@ -15864,8 +15871,7 @@
       "deleted-by-removed": "Account eliminato",
       "deleted-by-unknown-short": "<0></0> Sconosciuto",
       "deleted-by-unknown-tooltip": "Impossibile trovare l'account che ha eliminato questa dashboard",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tempo rimanente",
+      "deleted-header": "",
       "location-header": "Posizione",
       "name-header": "Nome",
       "tags-header": "Tag",
@@ -18179,10 +18185,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dai un'occhiata",
-      "description": "Abbiamo effettuato una riprogettazione!",
-      "revert": "Riportami indietro",
-      "title": "Nuovi stili"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

@@ -15,32 +15,6 @@ labels:
 menuTitle: Dynamic thresholds
 title: Example of dynamic thresholds per dimension
 weight: 1105
-refs:
-  testdata-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
-  math-expression:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#math
-  table-data-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/table-data/
-  multi-dimensional-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
-  recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
 ---
 
 # Example of dynamic thresholds per dimension
@@ -53,7 +27,7 @@ As your alerting setup grows, you may find that different targets require differ
 
 Instead of duplicating alert rules, you can assign a **different threshold value to each target**—while keeping the same condition. This simplifies alert maintenance.
 
-This example shows how to do that using [multi-dimensional alerts](ref:multi-dimensional-example) and a [Math expression](ref:math-expression).
+This example shows how to do that using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) and a [Math expression](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
 
 ## Example overview
 
@@ -72,7 +46,7 @@ But the team quickly finds that some services require stricter thresholds. For e
 
 You want to avoid creating one alert rule per service—this is harder to maintain.
 
-In Grafana Alerting, you can define one alert rule that monitors multiple similar components like this scenario. This is called [multi-dimensional alerts](ref:multi-dimensional-example): one alert rule, many alert instances—**one per unique label set**.
+In Grafana Alerting, you can define one alert rule that monitors multiple similar components like this scenario. This is called [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/): one alert rule, many alert instances—**one per unique label set**.
 
 But there's an issue: Grafana supports only **one alert condition per rule**.
 
@@ -90,7 +64,7 @@ To evaluate per-service thresholds, you need a distinct threshold value for each
 
 ## Dynamic thresholds using a Math expression
 
-You can create a dynamic alert condition by operating on two queries with a [Math expression](ref:math-expression).
+You can create a dynamic alert condition by operating on two queries with a [Math expression](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
 
 - `$A` for query results (e.g., `p95_api_latency`).
 - `$B` for per-service thresholds (from CSV data or another query).
@@ -138,7 +112,7 @@ _1 items **dropped from union(s)**: ["$A > $B": ($B: {service=payment-api})]_
 
 ## Try it with TestData
 
-You can use the [TestData data source](ref:testdata-data-source) to replicate this example:
+You can use the [TestData data source](/docs/grafana/<GRAFANA_VERSION>/datasources/testdata/) to replicate this example:
 
 1. Add the **TestData** data source through the **Connections** menu.
 1. Create an alert rule.
@@ -177,7 +151,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 
    The `value` column is a numeric value used for the alert comparison.
 
-   For details on CSV format requirements, see [table data examples](ref:table-data-example).
+   For details on CSV format requirements, see [table data examples](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/table-data/).
 
 1. Add a new **Reduce** expression (`$C`).
    - Type: Reduce
@@ -206,7 +180,7 @@ You can use the [TestData data source](ref:testdata-data-source) to replicate th
 
 ## Other use cases
 
-This example showed how to build a single alert rule with different thresholds per series using [multi-dimensional alerts](ref:multi-dimensional-example) and [Math expressions](ref:math-expression).
+This example showed how to build a single alert rule with different thresholds per series using [multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) and [Math expressions](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#math).
 
 This approach scales well when monitoring similar components with distinct reliability goals.
 
@@ -214,7 +188,7 @@ By aligning series from two queries, you can apply a dynamic threshold—one val
 
 While this example uses static CSV content to define thresholds, the same technique works in other scenarios:
 
-- **Dynamic thresholds from queries or recording rules**: Fetch threshold values from a real-time query, or from [custom recording rules](ref:recording-rules).
+- **Dynamic thresholds from queries or recording rules**: Fetch threshold values from a real-time query, or from [custom recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/).
 - **Combine multiple conditions**: Build more advanced threshold logic by combining multiple conditions—such as latency, error rate, or traffic volume.
 
 For example, you can define a PromQL expression that sets a latency threshold which adjusts based on traffic—allowing higher response times during periods of high-load.
