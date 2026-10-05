@@ -86,7 +86,7 @@ In the **PDF** section, use the following switches to choose what it contains:
   Defaults to on.
 
 When you turn a switch off, that item no longer appears on any page, and the panels get the space instead.
-If you turn all three off, the header area is removed unless the report has **Show template variables** selected.
+If you turn all three off, Grafana removes the header area unless the report has **Show template variables** selected.
 
 These switches apply to the report PDF and to the separate PDF of table data.
 They also apply to the PDFs you generate with **Preview PDF** during report creation and with **Export as PDF** on a dashboard.
