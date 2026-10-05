@@ -6,9 +6,21 @@ const dashboards = [{ uid: `login-title-a-${suffix}`, title: `API Latency ${suff
 test.use({
   httpCredentials: undefined,
   featureToggles: { useSessionStorageForRedirection: true },
+  openFeature: { flags: { 'grafana.preserveLoginTabTitle': true } },
 });
 
 test.describe('Section titles after session expiry', { tag: ['@dashboards'] }, () => {
+  // Context routes also apply to tabs created with context.newPage().
+  test.beforeEach(async ({ context }) => {
+    await context.route('**/ofrep/v1/evaluate/flags', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.flags = body.flags.filter((flag: { key: string }) => flag.key !== 'grafana.preserveLoginTabTitle');
+      body.flags.push({ key: 'grafana.preserveLoginTabTitle', value: true, reason: 'STATIC' });
+      await route.fulfill({ response, json: body });
+    });
+  });
+
   test.beforeAll(async ({ request }) => {
     for (const dashboard of dashboards) {
       const response = await request.post('/api/dashboards/import', {

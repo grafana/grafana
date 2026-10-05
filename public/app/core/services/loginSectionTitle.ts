@@ -1,5 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { getNavTitle } from '../utils/navBarItem-translations';
 
@@ -36,8 +37,7 @@ export function clearLoginSectionTitle() {
 }
 
 export function getLoginSectionTitle(): string | undefined {
-  // Match the legacy redirection flag used by handleRedirectTo and LoginCtrl.
-  if (!config.featureToggles.useSessionStorageForRedirection) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPreserveLoginTabTitle, false)) {
     return undefined;
   }
 

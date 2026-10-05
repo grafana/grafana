@@ -1,22 +1,23 @@
 import { config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { RedirectToUrlKey } from './context_srv';
 import { clearLoginSectionTitle, getLoginSectionTitle, rememberLoginSectionTitle } from './loginSectionTitle';
 
 const originalSubUrl = config.appSubUrl;
-const originalToggle = config.featureToggles.useSessionStorageForRedirection;
 
 beforeEach(() => {
   sessionStorage.clear();
   config.appSubUrl = '/grafana';
-  config.featureToggles.useSessionStorageForRedirection = true;
+  setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
 });
 
 afterEach(() => {
   jest.restoreAllMocks();
   sessionStorage.clear();
   config.appSubUrl = originalSubUrl;
-  config.featureToggles.useSessionStorageForRedirection = originalToggle;
+  setTestFlags({});
 });
 
 it.each([
@@ -87,9 +88,9 @@ it('falls back when browser storage is unavailable', () => {
   expect(getLoginSectionTitle()).toBeUndefined();
 });
 
-it('falls back when session-storage redirection is disabled', () => {
+it('falls back when login tab title preservation is disabled', () => {
   rememberLoginSectionTitle({ id: 'explore', text: 'Explore' }, '/explore');
   sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/explore'));
-  config.featureToggles.useSessionStorageForRedirection = false;
+  setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false });
   expect(getLoginSectionTitle()).toBeUndefined();
 });

@@ -3094,6 +3094,14 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:        "grafana.preserveLoginTabTitle",
+			Description: "Preserves the navigation section label in the browser tab title after session expiry",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaFrontendNavigation,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:        "grafana.customizableMegaMenu",
 			Description: "Allows users to customise the mega menu by hiding top-level navigation items they are not interested in",
 			Stage:       FeatureStageExperimental,

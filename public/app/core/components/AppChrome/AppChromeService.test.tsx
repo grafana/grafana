@@ -1,4 +1,6 @@
-import { config, locationService, reportInteraction } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { AppChromeService } from './AppChromeService';
@@ -11,10 +13,9 @@ jest.mock('@grafana/runtime', () => ({
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 describe('AppChromeService', () => {
-  it('does not read the location when session-storage redirection is disabled', () => {
-    const originalToggle = config.featureToggles.useSessionStorageForRedirection;
+  it('does not read the location when login tab title preservation is disabled', () => {
     const originalSignedIn = contextSrv.user.isSignedIn;
-    config.featureToggles.useSessionStorageForRedirection = false;
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false });
     contextSrv.user.isSignedIn = true;
     const readLocation = jest.spyOn(locationService, 'getLocation').mockImplementation(() => {
       throw new Error('Location is unavailable');
@@ -28,7 +29,7 @@ describe('AppChromeService', () => {
     } finally {
       readLocation.mockRestore();
       contextSrv.user.isSignedIn = originalSignedIn;
-      config.featureToggles.useSessionStorageForRedirection = originalToggle;
+      setTestFlags({});
     }
   });
 

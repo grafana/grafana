@@ -1,5 +1,7 @@
 import { type GrafanaConfig, locationUtil } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { contextSrv, RedirectToUrlKey } from '../services/context_srv';
 import { getLoginSectionTitle, rememberLoginSectionTitle } from '../services/loginSectionTitle';
@@ -98,8 +100,7 @@ describe('handleRedirectTo', () => {
   });
 
   it('keeps the title while logged out and consumes it after successful login', () => {
-    const originalToggle = config.featureToggles.useSessionStorageForRedirection;
-    config.featureToggles.useSessionStorageForRedirection = true;
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: true });
     try {
       rememberLoginSectionTitle({ id: 'dashboards/browse', text: 'Secret dashboard' }, '/d/test');
       sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/test?orgId=1'));
@@ -113,7 +114,7 @@ describe('handleRedirectTo', () => {
       sessionStorage.setItem(RedirectToUrlKey, encodeURIComponent('/d/test?orgId=1'));
       expect(getLoginSectionTitle()).toBeUndefined();
     } finally {
-      config.featureToggles.useSessionStorageForRedirection = originalToggle;
+      setTestFlags({});
       sessionStorage.clear();
     }
   });
