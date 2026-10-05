@@ -4310,6 +4310,9 @@
     "subtitle": "Manage your auth settings and configure single sign-on. Find out more in our <2>documentation</2>."
   },
   "bar-chart": {
+    "tooltip": {
+      "select-hint": "Alt-click to pin"
+    },
     "warn": {
       "missing-numeric": "No numeric fields found",
       "missing-series": "Bar charts require a string or time field"
