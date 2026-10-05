@@ -84,7 +84,10 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 				"verb", req.Verb,
 				"error", err.Error(),
 			)
-			return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
+			return &accessCheckError{
+				StatusError: apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err)),
+				cause:       err,
+			}
 		}
 		if !rsp.Allowed {
 			logger.Debug("access check denied (no fallback)",
@@ -120,7 +123,10 @@ func (c *sessionAccessChecker) Check(ctx context.Context, req authlib.CheckReque
 			"fallbackRole", c.fallbackRole,
 			"orgRole", requester.GetOrgRole(),
 		)
-		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
+		return &accessCheckError{
+			StatusError: apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err)),
+			cause:       err,
+		}
 	}
 
 	if rsp.Allowed {
