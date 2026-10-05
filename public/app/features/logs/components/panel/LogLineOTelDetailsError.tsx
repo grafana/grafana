@@ -154,7 +154,7 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
     background: theme.colors.error.transparent,
     border: `1px solid ${theme.colors.error.border}`,
     borderRadius: theme.shape.radius.default,
-    marginTop: theme.spacing(1),
+    margin: theme.spacing(1),
     padding: theme.spacing(1),
   }),
   header: css({
