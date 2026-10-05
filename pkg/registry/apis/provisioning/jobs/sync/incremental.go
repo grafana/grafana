@@ -123,7 +123,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 	progress.SetMessage(ctx, "versioned changes replicated")
 
 	cleanupStart := time.Now()
-	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, tracer)
+	foldersToDelete := findOrphanedFolders(ctx, repo, currentRef, affectedFolders, relocations, tracer)
 
 	for _, r := range replaced {
 		if progress.HasDirPathFailedCreation(r.Path) {
@@ -490,6 +490,7 @@ func findOrphanedFolders(
 	repo repository.Versioned,
 	currentRef string,
 	affectedFolders map[string]string,
+	relocations map[string][]string,
 	tracer tracing.Tracer,
 ) []folderDeletion {
 	ctx, span := tracer.Start(ctx, "provisioning.sync.incremental.find_orphaned_folders")
@@ -501,10 +502,22 @@ func findOrphanedFolders(
 		return nil
 	}
 
+	relocatedUIDs := make(map[string]struct{})
+	for _, uids := range relocations {
+		for _, uid := range uids {
+			relocatedUIDs[uid] = struct{}{}
+		}
+	}
+
 	logger := logging.FromContext(ctx)
 	var orphaned []folderDeletion
 	for path, folderName := range affectedFolders {
 		span.SetAttributes(attribute.String("folder", folderName))
+
+		if _, ok := relocatedUIDs[folderName]; ok {
+			span.AddEvent("folder relocated in this sync, skipping")
+			continue
+		}
 
 		_, err := readerRepo.Read(ctx, path, currentRef)
 		if err != nil && (errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {

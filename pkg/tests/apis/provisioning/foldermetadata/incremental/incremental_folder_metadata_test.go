@@ -857,6 +857,41 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"gr-nometa-001": {Title: "No Meta Dashboard", SourcePath: "new-team/dashboard1.json"},
 		})
 	})
+
+	t.Run("rename with an edited dashboard reported as delete and create keeps the folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+
+		const repoName = "incr-graceful-rename-delete-create"
+		const folderUID = "gr-delete-create-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-team/_folder.json": folderMetadataJSON(folderUID, "My Team"),
+			"old-team/renamed.json": common.DashboardJSON("gr-dc-renamed", "Renamed Dashboard", 1),
+			"old-team/edited.json":  common.DashboardJSON("gr-dc-edited", "Edited Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireFolderState(t, helper.Folders, folderUID, "My Team", "old-team", "")
+
+		_, err := local.Git("mv", "old-team", "new-team")
+		require.NoError(t, err)
+		require.NoError(t, local.UpdateFile("new-team/edited.json", string(common.DashboardJSON("gr-dc-edited", "Edited Dashboard v2", 2))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename old-team to new-team and edit a dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+
+		common.RequireFolderState(t, helper.Folders, folderUID, "My Team", "new-team", "")
+		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-team"})
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+			"gr-dc-renamed": {Title: "Renamed Dashboard", SourcePath: "new-team/renamed.json", Folder: folderUID},
+			"gr-dc-edited":  {Title: "Edited Dashboard v2", SourcePath: "new-team/edited.json", Folder: folderUID},
+		})
+	})
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderUIDChange verifies that

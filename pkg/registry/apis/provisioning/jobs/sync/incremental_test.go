@@ -1415,6 +1415,30 @@ func TestIncrementalSync_CleanupOrphanedFolders(t *testing.T) {
 	}
 }
 
+func TestFindOrphanedFolders_SkipsRelocatedUIDs(t *testing.T) {
+	mockReader := repository.NewMockReader(t)
+	repo := &compositeRepo{
+		MockVersioned: repository.NewMockVersioned(t),
+		MockReader:    mockReader,
+	}
+	mockReader.On("Read", mock.Anything, "removed/", "new-ref").
+		Return((*repository.FileInfo)(nil), repository.ErrFileNotFound)
+
+	affectedFolders := map[string]string{
+		"audiences/": "moved-uid",
+		"removed/":   "removed-uid",
+	}
+	relocations := map[string][]string{
+		"Computations/": {"moved-uid"},
+	}
+
+	orphaned := findOrphanedFolders(context.Background(), repo, "new-ref", affectedFolders, relocations, tracing.NewNoopTracerService())
+
+	require.Equal(t, []folderDeletion{
+		{Path: "removed/", UID: "removed-uid", Reason: provisioning.ReasonFolderOrphaned},
+	}, orphaned)
+}
+
 func TestIncrementalSync_MissingFolderMetadata(t *testing.T) {
 	t.Run("flag enabled detects missing folder metadata", func(t *testing.T) {
 		mockVersioned := repository.NewMockVersioned(t)
