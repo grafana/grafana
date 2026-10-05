@@ -1,4 +1,11 @@
-import { NewSceneObjectAddedEvent, sceneUtils, type SceneObjectUrlValues } from '@grafana/scenes';
+import { locationService } from '@grafana/runtime';
+import {
+  NewSceneObjectAddedEvent,
+  sceneGraph,
+  SceneVariableSet,
+  sceneUtils,
+  type SceneObjectUrlValues,
+} from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -62,7 +69,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
       // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
       // into panel edit.
-      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
+      syncRebuiltChildrenFromUrl(scene);
 
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
@@ -71,7 +78,31 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
     undo: () => {
       scene.setState(previousState);
       scene.state.sidebar.refreshAfterRebuild();
-      scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
+      syncRebuiltChildrenFromUrl(scene);
     },
   });
+}
+
+/**
+ * Re-attaches the swapped-in children to url sync, which restores url-only state such as the
+ * selected tab. Variable values are not url-only: the spec carries them, so the URL is first
+ * rewritten to the rebuilt values. Otherwise the sync reads the pre-swap `var-*` params back
+ * and silently reverts every variable value the spec just set.
+ */
+function syncRebuiltChildrenFromUrl(scene: DashboardScene) {
+  const search = locationService.getSearch();
+  const variableUrlState: SceneObjectUrlValues = {};
+  for (const set of sceneGraph.findAllObjects(scene, (obj) => obj instanceof SceneVariableSet)) {
+    for (const [key, value] of Object.entries(sceneUtils.getUrlState(set))) {
+      // Only keys the URL already holds: those are the ones the sync below would read back.
+      if (search.has(key)) {
+        variableUrlState[key] = value;
+      }
+    }
+  }
+  if (Object.keys(variableUrlState).length > 0) {
+    locationService.partial(variableUrlState, true);
+  }
+
+  scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
 }
