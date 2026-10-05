@@ -322,7 +322,7 @@ func TestConversionSerializerCleansInvalidManagedFields(t *testing.T) {
 		}},
 		{"wrong version", func(o *unstructured.Unstructured) {
 			fields := o.GetManagedFields()
-			fields[0].APIVersion = "example-app/v1"
+			fields[0].APIVersion = "example-app/v0"
 			o.SetManagedFields(fields)
 		}},
 		{"different manager", func(o *unstructured.Unstructured) {
@@ -517,4 +517,98 @@ func TestConversionSerializerClearsMalformedStoredOwnership(t *testing.T) {
 	require.NotContains(t, result.Object["metadata"], "managedFields")
 	require.Equal(t, original.GetName(), result.GetName())
 	require.Equal(t, converted.Object["spec"], result.Object["spec"])
+}
+
+func TestConversionSerializerPreservesOwnershipWhenConverterCopiesMetadata(t *testing.T) {
+	for _, operation := range []metav1.ManagedFieldsOperationType{metav1.ManagedFieldsOperationApply, metav1.ManagedFieldsOperationUpdate} {
+		t.Run(string(operation), func(t *testing.T) {
+			original := conversionTestObject(t)
+			original.Object["spec"] = map[string]any{"old": "42"}
+			fields := original.GetManagedFields()
+			fields[0].Operation = operation
+			original.SetManagedFields(fields)
+			raw, err := original.MarshalJSON()
+			require.NoError(t, err)
+
+			// Typed converters copy ObjectMeta even when converting a field's value type.
+			converted := original.DeepCopy()
+			converted.SetAPIVersion("example-app/v2")
+			converted.Object["spec"] = map[string]any{"old": int64(42)}
+			require.Equal(t, original.GetManagedFields(), converted.GetManagedFields())
+			serializer := conversionTestSerializer(t, converted)
+			decoded, err := serializer.Decode(t.Context(), raw, nil)
+			require.NoError(t, err)
+			require.Equal(t, fields, decoded.(*unstructured.Unstructured).GetManagedFields())
+
+			manager, err := newFieldManager(converted.GroupVersionKind(), nil)
+			require.NoError(t, err)
+			patch := converted.DeepCopy()
+			patch.SetManagedFields(nil)
+			patch.Object["spec"] = map[string]any{"old": int64(43)}
+			_, err = manager.Apply(decoded.DeepCopyObject(), patch, "second", false)
+			require.True(t, apierrors.IsConflict(err), "copied metadata must still protect .spec.old, got %v", err)
+			require.ErrorContains(t, err, ".spec.old")
+			require.ErrorContains(t, err, `conflict with "first"`)
+			if operation == metav1.ManagedFieldsOperationApply {
+				_, err = manager.Apply(decoded.DeepCopyObject(), patch, "first", false)
+				require.NoError(t, err)
+			}
+			_, err = manager.Apply(decoded.DeepCopyObject(), patch, "second", true)
+			require.NoError(t, err)
+
+			// An ordinary write after conversion must not persist an ownership-free object.
+			updated := decoded.DeepCopyObject().(*unstructured.Unstructured)
+			updated.Object["spec"].(map[string]any)["unrelated"] = true
+			saved, err := manager.Update(decoded.DeepCopyObject(), updated, "writer")
+			require.NoError(t, err)
+			encoded, err := serializer.Encode(t.Context(), saved)
+			require.NoError(t, err)
+			reloaded, err := serializer.Decode(t.Context(), encoded, nil)
+			require.NoError(t, err)
+			_, err = manager.Apply(reloaded, patch, "second", false)
+			require.True(t, apierrors.IsConflict(err), "ownership must survive an update and storage round trip, got %v", err)
+			require.ErrorContains(t, err, `conflict with "first"`)
+		})
+	}
+}
+
+func TestConversionSerializerDoesNotGuessRenamedOwnership(t *testing.T) {
+	original := conversionTestObject(t)
+	raw, err := original.MarshalJSON()
+	require.NoError(t, err)
+	for _, rename := range []bool{false, true} {
+		t.Run(fmt.Sprintf("renamed=%t", rename), func(t *testing.T) {
+			converted := original.DeepCopy()
+			converted.SetAPIVersion("example-app/v2")
+			converted.Object["spec"] = map[string]any{"new": "value"}
+			if !rename {
+				converted.Object["spec"].(map[string]any)["old"] = "value"
+				fields := converted.GetManagedFields()
+				require.NoError(t, fields[0].FieldsV1.UnmarshalJSON([]byte(`{"f:spec":{"f:new":{}}}`)))
+				converted.SetManagedFields(fields)
+			}
+			obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+			require.NoError(t, err)
+			require.Empty(t, obj.(*unstructured.Unstructured).GetManagedFields())
+			require.Equal(t, converted.Object["spec"], obj.(*unstructured.Unstructured).Object["spec"])
+		})
+	}
+}
+
+func TestConversionSerializerPreservesCopiedUpdateOwnersAcrossVersions(t *testing.T) {
+	original := conversionTestObject(t)
+	first := original.GetManagedFields()[0]
+	first.Operation = metav1.ManagedFieldsOperationUpdate
+	second := *first.DeepCopy()
+	second.APIVersion = "example-app/v0"
+	require.NoError(t, second.FieldsV1.UnmarshalJSON([]byte(`{"f:spec":{"f:other":{}}}`)))
+	original.Object["spec"].(map[string]any)["other"] = "value"
+	original.SetManagedFields([]metav1.ManagedFieldsEntry{first, second})
+	raw, err := original.MarshalJSON()
+	require.NoError(t, err)
+	converted := original.DeepCopy()
+	converted.SetAPIVersion("example-app/v2")
+	obj, err := conversionTestSerializer(t, converted).Decode(t.Context(), raw, nil)
+	require.NoError(t, err)
+	require.Equal(t, original.GetManagedFields(), obj.(*unstructured.Unstructured).GetManagedFields())
 }
