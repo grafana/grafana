@@ -87,6 +87,16 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 				}
 				policy.customRoutes[route] = true
 			}
+			for path := range version.OpenAPI.Paths {
+				path = strings.TrimPrefix(path, "/")
+				path = strings.TrimPrefix(path, "namespaces/{namespace}/")
+				if suffix, ok := strings.CutPrefix(path, resource+"/{name}/"); ok {
+					route, _, _ := strings.Cut(suffix, "/")
+					if route != "" && !reservedSubresources[route] {
+						policy.customRoutes[route] = true
+					}
+				}
+			}
 			policies[resource] = policy
 		}
 	}

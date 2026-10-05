@@ -87,6 +87,10 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 			Routes: map[string]spec3.PathProps{"/reload": {Post: &spec3.Operation{}}}},
 	)
 
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/secrets/{name}/refresh": {Post: &spec3.Operation{}},
+	}
+
 	b := &AppPluginAPIBuilder{
 		pluginJSON:    plugins.JSONData{ID: "test-app"},
 		kindPolicies:  kindPolicies(manifest),
@@ -100,6 +104,11 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 		decision authorizer.Decision
 		reason   string
 	}{
+		{
+			name:     "an OpenAPI custom route is reachable on a cluster kind",
+			attr:     authorizer.AttributesRecord{Resource: "secrets", Subresource: "refresh", Verb: "create"},
+			decision: authorizer.DecisionAllow,
+		},
 		{
 			name:     "a namespaced kind is left to the storage layer",
 			attr:     authorizer.AttributesRecord{Resource: "testkinds", Verb: "create"},

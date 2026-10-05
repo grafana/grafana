@@ -465,9 +465,17 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			}
 		}
 
-		// Checked against the mounted routes rather than the manifest, since
-		// routes that shadow a resource or use unservable methods are dropped.
-		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
+		// Legacy routes may be filtered during mounting; OpenAPI routes are
+		// installed separately by the plugin route interceptor.
+		hasCustomRoutes := hasRoutes(b.GetAPIRoutes(gv))
+		if b.manifest != nil {
+			for _, version := range b.manifest.Versions {
+				if version.Name == gv.Version && version.Served && len(version.OpenAPI.Paths) > 0 {
+					hasCustomRoutes = true
+				}
+			}
+		}
+		if len(storage) == 0 && hasCustomRoutes {
 			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}
 

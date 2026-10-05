@@ -1,0 +1,997 @@
+{
+    "apiVersion": "apps.grafana.app/v1alpha2",
+    "kind": "AppManifest",
+    "metadata": {
+        "name": "example-appsdktest-app"
+    },
+    "spec": {
+        "appName": "example-appsdktest-app",
+        "appDisplayName": "example-appsdktest-app",
+        "group": "appsdktest.ext.grafana.app",
+        "versions": [
+            {
+                "name": "v1alpha1",
+                "served": true,
+                "kinds": [
+                    {
+                        "kind": "TestResource",
+                        "plural": "TestResources",
+                        "scope": "Namespaced",
+                        "userReadable": false,
+                        "admission": {
+                            "validation": {
+                                "operations": [
+                                    "CREATE",
+                                    "UPDATE"
+                                ]
+                            }
+                        },
+                        "schemas": {
+                            "OperatorState": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "descriptiveState": {
+                                        "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                                        "type": "string"
+                                    },
+                                    "details": {
+                                        "additionalProperties": true,
+                                        "description": "details contains any extra information that is operator-specific",
+                                        "type": "object"
+                                    },
+                                    "lastEvaluation": {
+                                        "description": "lastEvaluation is the ResourceVersion last evaluated",
+                                        "type": "string"
+                                    },
+                                    "state": {
+                                        "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                                        "enum": [
+                                            "success",
+                                            "in_progress",
+                                            "failed"
+                                        ],
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "lastEvaluation",
+                                    "state"
+                                ],
+                                "type": "object"
+                            },
+                            "TestResource": {
+                                "properties": {
+                                    "secure": {
+                                        "type": "object",
+                                        "properties": {
+                                            "apiKey": {
+                                                "description": "API key from the service",
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
+                                                    }
+                                                ]
+                                            },
+                                            "token": {
+                                                "$ref": "#/components/schemas/com.github.grafana.grafana-app-sdk.resource.InlineSecureValue"
+                                            }
+                                        },
+                                        "additionalProperties": false
+                                    },
+                                    "spec": {
+                                        "$ref": "#/components/schemas/spec"
+                                    },
+                                    "status": {
+                                        "$ref": "#/components/schemas/status"
+                                    }
+                                },
+                                "required": [
+                                    "spec"
+                                ]
+                            },
+                            "appsdktest.APITestJobResults": {
+                                "required": [
+                                    "results"
+                                ],
+                                "properties": {
+                                    "lastRun": {
+                                        "type": "string"
+                                    },
+                                    "results": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                        }
+                                    }
+                                }
+                            },
+                            "appsdktest.APITestResult": {
+                                "required": [
+                                    "group",
+                                    "version",
+                                    "resource",
+                                    "code",
+                                    "count"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "integer",
+                                        "format": "int64"
+                                    },
+                                    "count": {
+                                        "type": "integer",
+                                        "format": "int64"
+                                    },
+                                    "error": {
+                                        "type": "string"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "resource": {
+                                        "type": "string"
+                                    },
+                                    "version": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "appsdktest.APITestResults": {
+                                "required": [
+                                    "results"
+                                ],
+                                "properties": {
+                                    "results": {
+                                        "type": "array",
+                                        "items": {
+                                            "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                        }
+                                    }
+                                }
+                            },
+                            "appsdktest.Dummy": {
+                                "required": [
+                                    "message",
+                                    "id",
+                                    "info"
+                                ],
+                                "properties": {
+                                    "auth": {
+                                        "description": "authentication information (from context)",
+                                        "type": "object"
+                                    },
+                                    "id": {
+                                        "description": "identifier of the thing",
+                                        "type": "string"
+                                    },
+                                    "info": {
+                                        "$ref": "#/components/schemas/resource.RouteRequestInfo"
+                                    },
+                                    "message": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "com.github.grafana.grafana-app-sdk.resource.InlineSecureValue": {
+                                "type": "object",
+                                "oneOf": [
+                                    {
+                                        "required": [
+                                            "create"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "name"
+                                        ]
+                                    },
+                                    {
+                                        "required": [
+                                            "remove"
+                                        ]
+                                    }
+                                ],
+                                "not": {
+                                    "required": [
+                                        "description"
+                                    ],
+                                    "not": {
+                                        "required": [
+                                            "create"
+                                        ]
+                                    }
+                                },
+                                "properties": {
+                                    "create": {
+                                        "description": "Plaintext value to create in the secret service. Used only in create or update requests.",
+                                        "type": "string",
+                                        "maxLength": 24576,
+                                        "minLength": 1
+                                    },
+                                    "description": {
+                                        "description": "Optional description for a newly created secret. Only valid when create is set.",
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "description": "Reference to an existing value in the secret service.",
+                                        "type": "string",
+                                        "maxLength": 253,
+                                        "minLength": 1
+                                    },
+                                    "remove": {
+                                        "description": "Remove this entry from the secure value map, deleting the secret if it is owned by this resource.",
+                                        "type": "boolean"
+                                    }
+                                },
+                                "additionalProperties": false
+                            },
+                            "resource.RouteRequestInfo": {
+                                "properties": {
+                                    "decryptedSecureValues": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "namespace": {
+                                        "type": "string"
+                                    },
+                                    "parent": {
+                                        "type": "string"
+                                    },
+                                    "plural": {
+                                        "type": "string"
+                                    },
+                                    "resourceVersion": {
+                                        "type": "string"
+                                    },
+                                    "version": {
+                                        "type": "string"
+                                    }
+                                }
+                            },
+                            "spec": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "dummy": {
+                                        "description": "dummy is a demo field. The validator rejects the object if dummy == \"forbidden\".",
+                                        "type": "string"
+                                    },
+                                    "title": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "title",
+                                    "description",
+                                    "dummy"
+                                ],
+                                "type": "object"
+                            },
+                            "status": {
+                                "additionalProperties": false,
+                                "properties": {
+                                    "additionalFields": {
+                                        "additionalProperties": true,
+                                        "description": "additionalFields is reserved for future use",
+                                        "type": "object"
+                                    },
+                                    "operatorStates": {
+                                        "additionalProperties": {
+                                            "$ref": "#/components/schemas/OperatorState"
+                                        },
+                                        "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                                        "type": "object"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "secure": [
+                            {
+                                "key": "apiKey",
+                                "description": "API key from the service"
+                            },
+                            {
+                                "key": "token"
+                            }
+                        ],
+                        "conversion": false,
+                        "routes": {
+                            "/baz": {
+                                "get": {
+                                    "summary": "get baz",
+                                    "operationId": "getBaz",
+                                    "parameters": [
+                                        {
+                                            "name": "namespace",
+                                            "in": "path",
+                                            "required": true,
+                                            "schema": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        {
+                                            "name": "name",
+                                            "in": "path",
+                                            "required": true,
+                                            "schema": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    ],
+                                    "responses": {
+                                        "200": {
+                                            "description": "The requested resource thing",
+                                            "content": {
+                                                "application/json": {
+                                                    "schema": {
+                                                        "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                ],
+                "routes": {
+                    "namespaced": {
+                        "/apitest": {
+                            "get": {
+                                "summary": "List each tested API in the request namespace",
+                                "operationId": "getApiTest",
+                                "parameters": [
+                                    {
+                                        "name": "namespace",
+                                        "in": "path",
+                                        "description": "Namespace to test",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "description": "API list results",
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.APITestResults"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "/apitestjob": {
+                            "get": {
+                                "summary": "Get the latest background API test results across all namespaces",
+                                "operationId": "getApiTestJob",
+                                "parameters": [
+                                    {
+                                        "name": "namespace",
+                                        "in": "path",
+                                        "description": "Request namespace",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "description": "Latest background API test results",
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.APITestJobResults"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "/bar": {
+                            "get": {
+                                "summary": "get bar",
+                                "operationId": "getBar",
+                                "parameters": [
+                                    {
+                                        "name": "namespace",
+                                        "in": "path",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "description": "The requested namespaced thing",
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "cluster": {
+                        "/foo": {
+                            "get": {
+                                "summary": "get foo",
+                                "operationId": "getFoo",
+                                "parameters": [
+                                    {
+                                        "name": "input",
+                                        "in": "query",
+                                        "description": "query",
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "description": "cluster request for foo",
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                }
+                                            }
+                                        }
+                                    }
+                                },
+                                "x-grafana-declared-authz-resource": "testresources",
+                                "x-grafana-declared-authz-verb": "create"
+                            }
+                        }
+                    },
+                    "schemas": {
+                        "appsdktest.APITestJobResults": {
+                            "required": [
+                                "results"
+                            ],
+                            "properties": {
+                                "lastRun": {
+                                    "type": "string"
+                                },
+                                "results": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                    }
+                                }
+                            }
+                        },
+                        "appsdktest.APITestResult": {
+                            "required": [
+                                "group",
+                                "version",
+                                "resource",
+                                "code",
+                                "count"
+                            ],
+                            "properties": {
+                                "code": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "count": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "error": {
+                                    "type": "string"
+                                },
+                                "group": {
+                                    "type": "string"
+                                },
+                                "resource": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "appsdktest.APITestResults": {
+                            "required": [
+                                "results"
+                            ],
+                            "properties": {
+                                "results": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                    }
+                                }
+                            }
+                        },
+                        "appsdktest.Dummy": {
+                            "required": [
+                                "message",
+                                "id",
+                                "info"
+                            ],
+                            "properties": {
+                                "auth": {
+                                    "description": "authentication information (from context)",
+                                    "type": "object"
+                                },
+                                "id": {
+                                    "description": "identifier of the thing",
+                                    "type": "string"
+                                },
+                                "info": {
+                                    "$ref": "#/components/schemas/resource.RouteRequestInfo"
+                                },
+                                "message": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "resource.RouteRequestInfo": {
+                            "properties": {
+                                "decryptedSecureValues": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    }
+                                },
+                                "group": {
+                                    "type": "string"
+                                },
+                                "kind": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "namespace": {
+                                    "type": "string"
+                                },
+                                "parent": {
+                                    "type": "string"
+                                },
+                                "plural": {
+                                    "type": "string"
+                                },
+                                "resourceVersion": {
+                                    "type": "string"
+                                },
+                                "version": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                },
+                "openapi": {
+                    "paths": {
+                        "/foo": {
+                            "get": {
+                                "operationId": "getFoo",
+                                "parameters": [
+                                    {
+                                        "description": "query",
+                                        "in": "query",
+                                        "name": "input",
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                }
+                                            }
+                                        },
+                                        "description": "cluster request for foo"
+                                    }
+                                },
+                                "summary": "get foo",
+                                "x-grafana-declared-authz-resource": "testresources",
+                                "x-grafana-declared-authz-verb": "create"
+                            }
+                        },
+                        "/namespaces/{namespace}/apitest": {
+                            "get": {
+                                "operationId": "getApiTest",
+                                "parameters": [
+                                    {
+                                        "description": "Namespace to test",
+                                        "in": "path",
+                                        "name": "namespace",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.APITestResults"
+                                                }
+                                            }
+                                        },
+                                        "description": "API list results"
+                                    }
+                                },
+                                "summary": "List each tested API in the request namespace"
+                            },
+                            "parameters": [
+                                {
+                                    "in": "path",
+                                    "name": "namespace",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        },
+                        "/namespaces/{namespace}/apitestjob": {
+                            "get": {
+                                "operationId": "getApiTestJob",
+                                "parameters": [
+                                    {
+                                        "description": "Request namespace",
+                                        "in": "path",
+                                        "name": "namespace",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.APITestJobResults"
+                                                }
+                                            }
+                                        },
+                                        "description": "Latest background API test results"
+                                    }
+                                },
+                                "summary": "Get the latest background API test results across all namespaces"
+                            },
+                            "parameters": [
+                                {
+                                    "in": "path",
+                                    "name": "namespace",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        },
+                        "/namespaces/{namespace}/bar": {
+                            "get": {
+                                "operationId": "getBar",
+                                "parameters": [
+                                    {
+                                        "in": "path",
+                                        "name": "namespace",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                }
+                                            }
+                                        },
+                                        "description": "The requested namespaced thing"
+                                    }
+                                },
+                                "summary": "get bar"
+                            },
+                            "parameters": [
+                                {
+                                    "in": "path",
+                                    "name": "namespace",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        },
+                        "/namespaces/{namespace}/testresources/{name}/baz": {
+                            "get": {
+                                "operationId": "getBaz",
+                                "parameters": [
+                                    {
+                                        "in": "path",
+                                        "name": "namespace",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    {
+                                        "in": "path",
+                                        "name": "name",
+                                        "required": true,
+                                        "schema": {
+                                            "type": "string"
+                                        }
+                                    }
+                                ],
+                                "responses": {
+                                    "200": {
+                                        "content": {
+                                            "application/json": {
+                                                "schema": {
+                                                    "$ref": "#/components/schemas/appsdktest.Dummy"
+                                                }
+                                            }
+                                        },
+                                        "description": "The requested resource thing"
+                                    }
+                                },
+                                "summary": "get baz"
+                            },
+                            "parameters": [
+                                {
+                                    "in": "path",
+                                    "name": "namespace",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                },
+                                {
+                                    "in": "path",
+                                    "name": "name",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "components": {
+                        "schemas": {
+                            "appsdktest.APITestJobResults": {
+                                "properties": {
+                                    "lastRun": {
+                                        "type": "string"
+                                    },
+                                    "results": {
+                                        "items": {
+                                            "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "required": [
+                                    "results"
+                                ]
+                            },
+                            "appsdktest.APITestResult": {
+                                "properties": {
+                                    "code": {
+                                        "format": "int64",
+                                        "type": "integer"
+                                    },
+                                    "count": {
+                                        "format": "int64",
+                                        "type": "integer"
+                                    },
+                                    "error": {
+                                        "type": "string"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "resource": {
+                                        "type": "string"
+                                    },
+                                    "version": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "group",
+                                    "version",
+                                    "resource",
+                                    "code",
+                                    "count"
+                                ]
+                            },
+                            "appsdktest.APITestResults": {
+                                "properties": {
+                                    "results": {
+                                        "items": {
+                                            "$ref": "#/components/schemas/appsdktest.APITestResult"
+                                        },
+                                        "type": "array"
+                                    }
+                                },
+                                "required": [
+                                    "results"
+                                ]
+                            },
+                            "appsdktest.Dummy": {
+                                "properties": {
+                                    "auth": {
+                                        "description": "authentication information (from context)",
+                                        "type": "object"
+                                    },
+                                    "id": {
+                                        "description": "identifier of the thing",
+                                        "type": "string"
+                                    },
+                                    "info": {
+                                        "$ref": "#/components/schemas/resource.RouteRequestInfo"
+                                    },
+                                    "message": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "message",
+                                    "id",
+                                    "info"
+                                ]
+                            },
+                            "resource.RouteRequestInfo": {
+                                "properties": {
+                                    "decryptedSecureValues": {
+                                        "additionalProperties": {
+                                            "type": "string"
+                                        },
+                                        "type": "object"
+                                    },
+                                    "group": {
+                                        "type": "string"
+                                    },
+                                    "kind": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "namespace": {
+                                        "type": "string"
+                                    },
+                                    "parent": {
+                                        "type": "string"
+                                    },
+                                    "plural": {
+                                        "type": "string"
+                                    },
+                                    "resourceVersion": {
+                                        "type": "string"
+                                    },
+                                    "version": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "preferredVersion": "v1alpha1",
+        "extraPermissions": {
+            "accessKinds": [
+                {
+                    "group": "folder.grafana.app",
+                    "resource": "folders",
+                    "actions": [
+                        "get",
+                        "list"
+                    ]
+                },
+                {
+                    "group": "dashboard.grafana.app",
+                    "resource": "dashboards",
+                    "actions": [
+                        "get",
+                        "list"
+                    ]
+                },
+                {
+                    "group": "secret.grafana.app",
+                    "resource": "securevalues",
+                    "actions": [
+                        "get",
+                        "list"
+                    ]
+                }
+            ]
+        },
+        "roles": {
+            "example-appsdktest-app:admin": {
+                "title": "example-appsdktest-app Admin",
+                "description": "Allows all actions on TestResources",
+                "kinds": [
+                    {
+                        "kind": "TestResource",
+                        "permissionSet": "admin"
+                    },
+                    {
+                        "kind": "TestResource/status",
+                        "permissionSet": "admin"
+                    }
+                ]
+            },
+            "example-appsdktest-app:editor": {
+                "title": "example-appsdktest-app Editor",
+                "description": "Create, Read, Update, and Delete TestResources",
+                "kinds": [
+                    {
+                        "kind": "TestResource",
+                        "permissionSet": "editor"
+                    }
+                ]
+            },
+            "example-appsdktest-app:reader": {
+                "title": "example-appsdktest-app Reader",
+                "description": "Read TestResources",
+                "kinds": [
+                    {
+                        "kind": "TestResource",
+                        "permissionSet": "viewer"
+                    }
+                ]
+            }
+        },
+        "roleBindings": {
+            "viewer": [
+                "example-appsdktest-app:reader"
+            ],
+            "editor": [
+                "example-appsdktest-app:editor"
+            ],
+            "admin": [
+                "example-appsdktest-app:admin"
+            ]
+        }
+    }
+}

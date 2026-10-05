@@ -28,6 +28,7 @@ import (
 	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	apiserverauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
@@ -45,6 +46,7 @@ type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client
 type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
+	RouteAccess        types.AccessChecker
 	AccessControl      accesscontrol.AccessControl
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
@@ -106,6 +108,7 @@ func ProvidePluginLoaderDependencies(
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
+			RouteAccess:        accessClient,
 			DualWrite:          dualWrite,
 			SecureValues:       secureValues,
 			MetricsRegister:    reg,
@@ -325,6 +328,9 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		DualWrite:       b.deps.DualWrite,
 		StorageOpts:     &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
 		BuilderMetrics:  b.deps.BuilderMetrics,
+	}
+	if b.deps.RouteAccess != nil {
+		opts.RouteAuthorizer = apiserverauthorizer.NewResourceAuthorizer(b.deps.RouteAccess)
 	}
 	if b.deps.AccessControl != nil {
 		opts.AccessChecker = appplugin.NewPluginAccessChecker(b.deps.AccessControl)

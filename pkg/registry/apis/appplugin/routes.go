@@ -242,6 +242,12 @@ func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRou
 	return nil
 }
 
+// CustomRouteHandler forwards an already-authorized route using this builder's
+// storage and secure-value lookup. The caller supplies the matched name path variable.
+func (b *AppPluginAPIBuilder) CustomRouteHandler(gv schema.GroupVersion, resource, path string) http.HandlerFunc {
+	return b.routeHandler(gv, resource, path)
+}
+
 // routeHandler forwards a manifest route to the plugin's v3 route service.
 // resource is empty for version routes; for a kind subresource route it is the
 // kind's plural, and the parent object's name comes from the path.

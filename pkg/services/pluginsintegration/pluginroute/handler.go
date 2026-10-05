@@ -24,6 +24,7 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
@@ -56,6 +57,7 @@ type Options struct {
 	ClientV3        appclientv3.Client
 	ContextProvider appplugin.PluginContextWrapper
 	Decrypter       decrypt.DecryptService
+	RouteAuthorizer authorizer.Authorizer
 	AccessChecker   appplugin.PluginAccessChecker
 	Search          resourcepb.ResourceIndexClient
 	Store           resourcepb.ResourceStoreClient
@@ -157,6 +159,23 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 		builder.GetDefaultBuildHandlerChainFunc, gvs,
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions}, reg, resources); err != nil {
 		return nil, fmt.Errorf("%s: setup config: %w", group, err)
+	}
+	routes, err := newCustomRoutes(plugin, b, opts.RouteAuthorizer)
+	if err != nil {
+		return nil, fmt.Errorf("%s: custom routes: %w", group, err)
+	}
+	postProcess := config.OpenAPIV3Config.PostProcessSpec
+	config.OpenAPIV3Config.PostProcessSpec = func(doc *spec3.OpenAPI) (*spec3.OpenAPI, error) {
+		doc, err := postProcess(doc)
+		if err != nil {
+			return nil, err
+		}
+		addCustomRouteOpenAPI(doc, plugin)
+		return doc, nil
+	}
+	chain := config.BuildHandlerChainFunc
+	config.BuildHandlerChainFunc = func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
+		return chain(routes.wrap(delegate), c)
 	}
 	server, err := config.Complete().New(group, genericapiserver.NewEmptyDelegate())
 	if err != nil {
