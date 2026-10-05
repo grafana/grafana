@@ -1,6 +1,7 @@
 import { toDataFrame } from '../../dataframe/processDataFrame';
 import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
+import { type RangeValueMatcherOptions } from '../matchers/valueMatchers/types';
 
 import {
   filterByValueTransformer,
@@ -34,14 +35,14 @@ function config(predicate: FilterByValueConfig['options']['filters'][number]): F
     },
   };
 }
-const range = (options: { min?: number; max?: number; includeMissing: boolean }, fieldName = 'Value') =>
-  config({ fieldName, config: { id: 'numericRange', options } });
+const range = (options: RangeValueMatcherOptions<number>, fieldName = 'Value') =>
+  config({ fieldName, config: { id: 'between', options: { ...options, inclusive: true, allowOpenBounds: true } } });
 
 it.each([
-  [{ min: 2, max: 10, includeMissing: false }, [10, 2, 3]],
-  [{ min: 0, includeMissing: false }, [10, 2, 3]],
-  [{ max: 0, includeMissing: false }, [-1]],
-  [{ min: 20, includeMissing: true }, [null]],
+  [{ from: 2, to: 10, includeMissing: false }, [10, 2, 3]],
+  [{ from: 0, includeMissing: false }, [10, 2, 3]],
+  [{ to: 0, includeMissing: false }, [-1]],
+  [{ from: 20, includeMissing: true }, [null]],
   [{ includeMissing: false }, [10, 2, 3, -1]],
 ])('filters values for inclusive/open bounds and missing values: %j', (bounds, expected) => {
   expect(
@@ -53,7 +54,7 @@ it.each([
 it('keeps nanoseconds aligned and includes both timestamp endpoints', () => {
   const data = frame();
   const output = filterByValueTransformer.transformer(
-    range({ min: 1000, max: 2000, includeMissing: false }, 'Time').options,
+    range({ from: 1000, to: 2000, includeMissing: false }, 'Time').options,
     { interpolate: (s) => s }
   )([data])[0];
   expect(output.fields[2].values).toEqual([1000, 1000, 1000, 2000]);
@@ -69,7 +70,7 @@ it.each([
     fields: [{ name: 'Value', type: FieldType.number, values: [null, undefined, NaN, Infinity, 0, 1, 2] }],
   });
   expect(
-    filterByValueTransformer.transformer(range({ min: 0, max: 1, includeMissing }).options, { interpolate: (s) => s })([
+    filterByValueTransformer.transformer(range({ from: 0, to: 1, includeMissing }).options, { interpolate: (s) => s })([
       data,
     ])[0].fields[0].values
   ).toEqual(expected);

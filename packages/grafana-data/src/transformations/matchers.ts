@@ -20,7 +20,7 @@ import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
-import { valueSetMatcher, numericRangeMatcher } from './matchers/valueMatchers/setAndRangeMatchers';
+import { valueSetMatcher } from './matchers/valueMatchers/setMatchers';
 import { getSubstringValueMatchers } from './matchers/valueMatchers/substringMatchers';
 
 /**
@@ -54,7 +54,6 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
   return [
     valueSetMatcher,
-    numericRangeMatcher,
     ...getNullValueMatchers(),
     ...getNumericValueMatchers(),
     ...getEqualValueMatchers(),

@@ -127,7 +127,4 @@ export { createFieldsOrdererAuto } from '../transformations/transformers/order';
 export { getFrameIdentity, getRowIdentity } from '../transformations/frameIdentity';
 
 export { filterByValueTransformer, type FilterByValueConfig } from '../transformations/transformers/filterByValue';
-export {
-  type ValueSetOptions,
-  type NumericRangeOptions,
-} from '../transformations/matchers/valueMatchers/setAndRangeMatchers';
+export { type ValueSetOptions } from '../transformations/matchers/valueMatchers/setMatchers';
