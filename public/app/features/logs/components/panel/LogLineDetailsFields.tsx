@@ -34,7 +34,6 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
-import { useLogDetailsContext } from './LogDetailsContext';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
@@ -177,7 +176,6 @@ const LogLineDetailsField = ({
     onClickHideField,
     prettifyJSON,
   } = useLogListContext();
-  const { closeDetails } = useLogDetailsContext();
 
   const styles = useStyles2(getFieldStyles);
 
