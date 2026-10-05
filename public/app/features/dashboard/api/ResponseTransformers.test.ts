@@ -1,15 +1,12 @@
-import { type AnnotationQuery, type DataQuery, type VariableModel, VariableRefresh, type Panel } from '@grafana/schema';
+import { type VariableModel, VariableRefresh } from '@grafana/schema';
 import {
-  type Spec as DashboardV2Spec,
   defaultDataQueryKind,
-  type GridLayoutItemKind,
   type GridLayoutKind,
   type PanelKind,
   type RowsLayoutKind,
   type RowsLayoutRowKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -27,7 +24,7 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { getDefaultDatasource, ResponseTransformers, transformMappingsToV1 } from './ResponseTransformers';
+import { getDefaultDatasource, ResponseTransformers } from './ResponseTransformers';
 import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -815,68 +812,6 @@ describe('ResponseTransformers', () => {
       expect(row4grid.spec.items).toHaveLength(0);
     });
   });
-
-  function validateAnnotation(v1: AnnotationQuery, v2: DashboardV2Spec['annotations'][0]) {
-    const { spec: v2Spec } = v2;
-    expect(v1.name).toBe(v2Spec.name);
-    expect(v1.datasource?.type).toBe(v2Spec.query.group);
-    expect(v1.datasource?.uid).toBe(v2Spec.query.datasource?.name);
-    expect(v1.enable).toBe(v2Spec.enable);
-    expect(v1.hide).toBe(v2Spec.hide);
-    expect(v1.iconColor).toBe(v2Spec.iconColor);
-    expect(v1.builtIn).toBe(v2Spec.builtIn !== undefined ? (v2Spec.builtIn ? 1 : 0) : undefined);
-    expect(v1.target).toEqual(v2Spec.query.spec);
-    expect(v1.filter).toEqual(v2Spec.filter);
-  }
-
-  function validatePanel(v1: Panel, v2: PanelKind, layoutV2: GridLayoutKind, panelKey: string) {
-    const { spec: v2Spec } = v2;
-
-    expect(v1.id).toBe(v2Spec.id);
-    expect(v1.id).toBe(v2Spec.id);
-    expect(v1.type).toBe(v2Spec.vizConfig.group);
-    expect(v1.title).toBe(v2Spec.title);
-    expect(v1.description).toBe(v2Spec.description);
-    expect(v1.fieldConfig).toEqual(transformMappingsToV1(v2Spec.vizConfig.spec.fieldConfig));
-    expect(v1.options).toBe(v2Spec.vizConfig.spec.options);
-    expect(v1.pluginVersion).toBe(v2Spec.vizConfig.version);
-    expect(v1.links).toEqual(v2Spec.links);
-    expect(v1.targets).toEqual(
-      v2Spec.data.spec.queries.map((q) => {
-        return {
-          refId: q.spec.refId,
-          hide: q.spec.hidden,
-          datasource: {
-            type: q.spec.query.group,
-            uid: q.spec.query.datasource?.name,
-          },
-          ...q.spec.query.spec,
-        };
-      })
-    );
-    expect(v1.transformations).toEqual(v2Spec.data.spec.transformations.map((t) => ({ id: t.group, ...t.spec })));
-    const layoutElement = layoutV2.spec.items.find(
-      (item) => item.kind === 'GridLayoutItem' && item.spec.element.name === panelKey
-    ) as GridLayoutItemKind;
-    expect(v1.gridPos?.x).toEqual(layoutElement?.spec.x);
-    expect(v1.gridPos?.y).toEqual(layoutElement?.spec.y);
-    expect(v1.gridPos?.w).toEqual(layoutElement?.spec.width);
-    expect(v1.gridPos?.h).toEqual(layoutElement?.spec.height);
-
-    expect(v1.repeat).toEqual(layoutElement?.spec.repeat?.value);
-    expect(v1.repeatDirection).toEqual(layoutElement?.spec.repeat?.direction);
-    expect(v1.maxPerRow).toEqual(layoutElement?.spec.repeat?.maxPerRow);
-
-    expect(v1.cacheTimeout).toBe(v2Spec.data.spec.queryOptions.cacheTimeout);
-    expect(v1.maxDataPoints).toBe(v2Spec.data.spec.queryOptions.maxDataPoints);
-    expect(v1.interval).toBe(v2Spec.data.spec.queryOptions.interval);
-    expect(v1.hideTimeOverride).toBe(v2Spec.data.spec.queryOptions.hideTimeOverride);
-    expect(v1.queryCachingTTL).toBe(v2Spec.data.spec.queryOptions.queryCachingTTL);
-    expect(v1.timeFrom).toBe(v2Spec.data.spec.queryOptions.timeFrom);
-    expect(v1.timeShift).toBe(v2Spec.data.spec.queryOptions.timeShift);
-    expect(v1.timeCompare).toBe(v2Spec.data.spec.queryOptions.timeCompare);
-    expect(v1.transparent).toBe(v2Spec.transparent);
-  }
 
   function validateVariablesV1ToV2(v2: VariableKind, v1: VariableModel | undefined) {
     if (!v1) {

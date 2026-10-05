@@ -1,17 +1,6 @@
 import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  type DataQuery,
-  type DataSourceRef,
-  type Panel,
-  type RowPanel,
-  type VariableModel,
-  type FieldConfigSource as FieldConfigSourceV1,
-  FieldColorModeId as FieldColorModeIdV1,
-  ThresholdsMode as ThresholdsModeV1,
-  MappingType as MappingTypeV1,
-  SpecialValueMatch as SpecialValueMatchV1,
-} from '@grafana/schema';
+import { type DataQuery, type DataSourceRef, type Panel, type RowPanel } from '@grafana/schema';
 import {
   type AnnotationQueryKind,
   type Spec as DashboardV2Spec,
@@ -22,10 +11,6 @@ import {
   type PanelQueryKind,
   type QueryVariableKind,
   type TransformationKind,
-  type FieldColorModeId,
-  type FieldConfigSource,
-  type ThresholdsMode,
-  type SpecialValueMatch,
   type AdhocVariableKind,
   type CustomVariableKind,
   type ConstantVariableKind,
@@ -58,10 +43,8 @@ import {
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { convertRowsToGridPanels, type LegacyRow } from 'app/features/dashboard/state/convertRowsToGridPanels';
-import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
-import { type TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import {
   LEGACY_STRING_VALUE_KEY,
@@ -74,7 +57,7 @@ import {
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
+import { isDashboardResource, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
@@ -454,7 +437,7 @@ export function getDefaultDatasource(): DataSourceRef {
   };
 }
 
-export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
+function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
     // Check if target datasource is empty object {} (no keys), treat it as missing
@@ -923,147 +906,6 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
     };
     return aq;
   });
-}
-
-export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
-  const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
-    switch (mode) {
-      case 'absolute':
-        return ThresholdsModeV1.Absolute;
-      case 'percentage':
-        return ThresholdsModeV1.Percentage;
-      default:
-        return ThresholdsModeV1.Absolute;
-    }
-  };
-
-  const transformedDefaults: any = {
-    ...fieldConfig.defaults,
-  };
-
-  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
-      switch (mapping.type) {
-        case 'value':
-          return {
-            ...mapping,
-            type: MappingTypeV1.ValueToText,
-          };
-        case 'range':
-          return {
-            ...mapping,
-            type: MappingTypeV1.RangeToText,
-          };
-        case 'regex':
-          return {
-            ...mapping,
-            type: MappingTypeV1.RegexToText,
-          };
-        case 'special': {
-          const v1Match = transformSpecialValueMatchToV1(mapping.options.match);
-          if (v1Match === undefined) {
-            return [];
-          }
-          return {
-            ...mapping,
-            options: {
-              ...mapping.options,
-              match: v1Match,
-            },
-            type: MappingTypeV1.SpecialValue,
-          };
-        }
-        default:
-          return mapping;
-      }
-    });
-  }
-
-  if (fieldConfig.defaults.thresholds) {
-    transformedDefaults.thresholds = {
-      ...fieldConfig.defaults.thresholds,
-      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
-    };
-  }
-
-  if (fieldConfig.defaults.color?.mode) {
-    transformedDefaults.color = {
-      ...fieldConfig.defaults.color,
-      mode: colorIdToEnumv1(fieldConfig.defaults.color.mode),
-    };
-  }
-
-  return {
-    ...fieldConfig,
-    defaults: transformedDefaults,
-  };
-}
-
-function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
-  switch (colorId) {
-    case 'thresholds':
-      return FieldColorModeIdV1.Thresholds;
-    case 'palette-classic':
-      return FieldColorModeIdV1.PaletteClassic;
-    case 'palette-classic-by-name':
-      return FieldColorModeIdV1.PaletteClassicByName;
-    case 'continuous-GrYlRd':
-      return FieldColorModeIdV1.ContinuousGrYlRd;
-    case 'continuous-RdYlGr':
-      return FieldColorModeIdV1.ContinuousRdYlGr;
-    case 'continuous-BlYlRd':
-      return FieldColorModeIdV1.ContinuousBlYlRd;
-    case 'continuous-YlRd':
-      return FieldColorModeIdV1.ContinuousYlRd;
-    case 'continuous-BlPu':
-      return FieldColorModeIdV1.ContinuousBlPu;
-    case 'continuous-YlBl':
-      return FieldColorModeIdV1.ContinuousYlBl;
-    case 'continuous-blues':
-      return FieldColorModeIdV1.ContinuousBlues;
-    case 'continuous-reds':
-      return FieldColorModeIdV1.ContinuousReds;
-    case 'continuous-greens':
-      return FieldColorModeIdV1.ContinuousGreens;
-    case 'continuous-purples':
-      return FieldColorModeIdV1.ContinuousPurples;
-    case 'continuous-viridis':
-      return FieldColorModeIdV1.ContinuousViridis;
-    case 'continuous-magma':
-      return FieldColorModeIdV1.ContinuousMagma;
-    case 'continuous-plasma':
-      return FieldColorModeIdV1.ContinuousPlasma;
-    case 'continuous-inferno':
-      return FieldColorModeIdV1.ContinuousInferno;
-    case 'continuous-cividis':
-      return FieldColorModeIdV1.ContinuousCividis;
-    case 'fixed':
-      return FieldColorModeIdV1.Fixed;
-    case 'shades':
-      return FieldColorModeIdV1.Shades;
-    default:
-      return FieldColorModeIdV1.Thresholds;
-  }
-}
-
-function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 | undefined {
-  switch (match) {
-    case 'true':
-      return SpecialValueMatchV1.True;
-    case 'false':
-      return SpecialValueMatchV1.False;
-    case 'null':
-      return SpecialValueMatchV1.Null;
-    case 'nan':
-      return SpecialValueMatchV1.NaN;
-    case 'null+nan':
-      return SpecialValueMatchV1.NullAndNan;
-    case 'empty':
-      return SpecialValueMatchV1.Empty;
-    default:
-      console.warn(`Skipping special value mapping with unknown match type: "${match}"`);
-      return undefined;
-  }
 }
 
 function transformAnnotationMappingsV1ToV2(
