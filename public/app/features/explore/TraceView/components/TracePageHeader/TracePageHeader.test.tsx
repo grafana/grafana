@@ -215,7 +215,7 @@ describe('TracePageHeader test', () => {
 
     setup({ links: [], isLoading: false }, false, undefined, errorTrace);
 
-    expect(screen.getByLabelText('Trace has errors')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace has errors')).toHaveAttribute('data-testid', 'icon-exclamation-circle');
     expect(screen.queryByLabelText('Trace has client errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('POST')).toBeInTheDocument();
@@ -243,7 +243,7 @@ describe('TracePageHeader test', () => {
 
     setup({ links: [], isLoading: false }, false, undefined, warningTrace);
 
-    expect(screen.getByLabelText('Trace has client errors')).toBeInTheDocument();
+    expect(screen.getByLabelText('Trace has client errors')).toHaveAttribute('data-testid', 'icon-exclamation-triangle');
     expect(screen.queryByLabelText('Trace has errors')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Trace succeeded')).not.toBeInTheDocument();
     expect(screen.getByText('404')).toBeInTheDocument();

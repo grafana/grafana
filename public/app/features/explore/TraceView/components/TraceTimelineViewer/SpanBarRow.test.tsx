@@ -74,6 +74,19 @@ describe('<SpanBarRow>', () => {
     expect(() => render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />)).not.toThrow();
   });
 
+  it('shows the same error icon as span details when the span failed', () => {
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} showErrorIcon />);
+
+    const icon = screen.getByTestId('icon-exclamation-circle');
+    expect(icon).not.toHaveStyle({ backgroundColor: '#db2828' });
+  });
+
+  it('hides the error icon when the span did not fail', () => {
+    render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
+
+    expect(screen.queryByTestId('icon-exclamation-circle')).not.toBeInTheDocument();
+  });
+
   it('escalates detail toggling', async () => {
     render(<SpanBarRow {...(props as unknown as SpanBarRowProps)} />);
     const { onDetailToggled } = props;
