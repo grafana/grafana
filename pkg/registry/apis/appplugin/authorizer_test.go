@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -13,7 +14,9 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -26,6 +29,14 @@ func TestGetAuthorizer(t *testing.T) {
 		expectedErr      bool
 		fakeAC           actest.FakeAccessControl
 	}{
+		{
+			name:             "denies without a requester",
+			ctx:              context.Background(),
+			fakeAC:           actest.FakeAccessControl{ExpectedEvaluate: true},
+			expectedDecision: authorizer.DecisionDeny,
+			expectedReason:   "valid user is required",
+			expectedErr:      true,
+		},
 		{
 			name:             "denies when access control evaluation fails",
 			ctx:              identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1}),
@@ -43,7 +54,7 @@ func TestGetAuthorizer(t *testing.T) {
 			expectedErr:      false,
 		},
 		{
-			name:             "allows when user has permission",
+			name:             "checks request type when user has permission",
 			ctx:              identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1}),
 			fakeAC:           actest.FakeAccessControl{ExpectedEvaluate: true},
 			expectedDecision: authorizer.DecisionAllow,
@@ -61,15 +72,46 @@ func TestGetAuthorizer(t *testing.T) {
 				accessChecker: NewPluginAccessChecker(&tt.fakeAC),
 			}
 
-			auth := builder.GetAuthorizer()
-			decision, reason, err := auth.Authorize(tt.ctx, authorizer.AttributesRecord{})
-
-			require.Equal(t, tt.expectedDecision, decision)
-			require.Equal(t, tt.expectedReason, reason)
-			if tt.expectedErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
+			for _, request := range []struct {
+				name     string
+				attr     authorizer.AttributesRecord
+				decision authorizer.Decision
+			}{
+				{
+					name:     "manifest kind",
+					attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "testkinds", Verb: "create"},
+					decision: authorizer.DecisionAllow,
+				},
+				{
+					name:     "app settings",
+					attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Verb: "update"},
+					decision: authorizer.DecisionNoOpinion,
+				},
+				{
+					name:     "app subresource",
+					attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Subresource: "resources", Verb: "create"},
+					decision: authorizer.DecisionNoOpinion,
+				},
+				{
+					name:     "non-resource request",
+					attr:     authorizer.AttributesRecord{Path: "/apis/test-app/v1", Verb: "get"},
+					decision: authorizer.DecisionNoOpinion,
+				},
+			} {
+				t.Run(request.name, func(t *testing.T) {
+					decision, reason, err := builder.GetAuthorizer().Authorize(tt.ctx, request.attr)
+					expectedDecision := tt.expectedDecision
+					if expectedDecision == authorizer.DecisionAllow {
+						expectedDecision = request.decision
+					}
+					require.Equal(t, expectedDecision, decision)
+					require.Equal(t, tt.expectedReason, reason)
+					if tt.expectedErr {
+						require.Error(t, err)
+					} else {
+						require.NoError(t, err)
+					}
+				})
 			}
 		})
 	}
@@ -102,28 +144,28 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 	}{
 		{
 			name:     "a namespaced kind is left to the storage layer",
-			attr:     authorizer.AttributesRecord{Resource: "testkinds", Verb: "create"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "testkinds", Verb: "create"},
 			decision: authorizer.DecisionAllow,
 		},
 		{
-			name:     "the settings API is not a manifest kind",
-			attr:     authorizer.AttributesRecord{Resource: "app", Verb: "update"},
-			decision: authorizer.DecisionAllow,
+			name:     "the settings API defers to the remaining authorizers",
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Verb: "update"},
+			decision: authorizer.DecisionNoOpinion,
 		},
 		{
 			name:     "a cluster-scoped kind is unreadable unless the manifest says otherwise",
-			attr:     authorizer.AttributesRecord{Resource: "secrets", Verb: "get"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "secrets", Verb: "get"},
 			decision: authorizer.DecisionDeny,
 			reason:   "cluster-scoped resource not readable by users",
 		},
 		{
 			name:     "a user-readable cluster-scoped kind can be read",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "list"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "settings", Verb: "list"},
 			decision: authorizer.DecisionAllow,
 		},
 		{
 			name:     "a user-readable cluster-scoped kind cannot be written",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "update"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "settings", Verb: "update"},
 			decision: authorizer.DecisionDeny,
 			reason:   "verb not permitted for cluster-scoped resource",
 		},
@@ -131,24 +173,24 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 			// Without this an informer over the kind cannot start, and the watch
 			// the reader role grants is dead.
 			name:     "a user-readable cluster-scoped kind can be watched",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "watch"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "settings", Verb: "watch"},
 			decision: authorizer.DecisionAllow,
 		},
 		{
 			// The route is served by the plugin, not unified storage, so app
 			// access is what authorizes it -- the read-only rule does not apply.
 			name:     "a custom route on a cluster-scoped kind is reachable",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "reload", Verb: "create"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "settings", Subresource: "reload", Verb: "create"},
 			decision: authorizer.DecisionAllow,
 		},
 		{
 			name:     "a custom route is reachable on a kind users cannot read",
-			attr:     authorizer.AttributesRecord{Resource: "secrets", Subresource: "rotate", Verb: "create"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "secrets", Subresource: "rotate", Verb: "create"},
 			decision: authorizer.DecisionAllow,
 		},
 		{
 			name:     "a subresource the manifest does not declare is still refused",
-			attr:     authorizer.AttributesRecord{Resource: "settings", Subresource: "status", Verb: "update"},
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "settings", Subresource: "status", Verb: "update"},
 			decision: authorizer.DecisionDeny,
 			reason:   "verb not permitted for cluster-scoped resource",
 		},
@@ -173,8 +215,73 @@ func TestGetAuthorizerAppAccessGatesKinds(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
 	decision, reason, err := b.GetAuthorizer().Authorize(ctx,
-		authorizer.AttributesRecord{Resource: "testkinds", Verb: "get"})
+		authorizer.AttributesRecord{ResourceRequest: true, Resource: "testkinds", Verb: "get"})
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Equal(t, "access denied", reason)
+}
+
+func TestGetAuthorizerRoleFallback(t *testing.T) {
+	b := &AppPluginAPIBuilder{
+		pluginJSON:    plugins.JSONData{ID: "test-app"},
+		accessChecker: NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	gv := schema.GroupVersion{Group: "test-app", Version: "v0alpha1"}
+	auth := grafanaauthorizer.NewGrafanaBuiltInSTAuthorizer()
+	auth.Register(gv, b.GetAuthorizer())
+
+	for _, tt := range []struct {
+		name     string
+		role     org.RoleType
+		attr     authorizer.AttributesRecord
+		decision authorizer.Decision
+	}{
+		{
+			name:     "viewer can read app settings",
+			role:     org.RoleViewer,
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Verb: "get"},
+			decision: authorizer.DecisionAllow,
+		},
+		{
+			name:     "viewer cannot update app settings despite app access",
+			role:     org.RoleViewer,
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Verb: "update"},
+			decision: authorizer.DecisionDeny,
+		},
+		{
+			name:     "editor can update app settings",
+			role:     org.RoleEditor,
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Verb: "update"},
+			decision: authorizer.DecisionAllow,
+		},
+		{
+			name:     "viewer cannot post to app subresources despite app access",
+			role:     org.RoleViewer,
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "app", Subresource: "resources", Verb: "create"},
+			decision: authorizer.DecisionDeny,
+		},
+		{
+			name:     "non-resource requests also fall through to the role authorizer",
+			role:     org.RoleViewer,
+			attr:     authorizer.AttributesRecord{Verb: "post", Path: "/apis/test-app/v0alpha1/custom"},
+			decision: authorizer.DecisionDeny,
+		},
+		{
+			name:     "manifest kinds still leave permissions to storage",
+			role:     org.RoleViewer,
+			attr:     authorizer.AttributesRecord{ResourceRequest: true, Resource: "testkinds", Verb: "create"},
+			decision: authorizer.DecisionAllow,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			requester := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: tt.role}
+			ctx := identity.WithRequester(context.Background(), requester)
+			tt.attr.User = requester
+			tt.attr.APIGroup = gv.Group
+			tt.attr.APIVersion = gv.Version
+			decision, _, err := auth.Authorize(ctx, tt.attr)
+			require.NoError(t, err)
+			require.Equal(t, tt.decision, decision)
+		})
+	}
 }
