@@ -27,6 +27,7 @@ import {
   type BiSelectionStamp,
   getValidBiSelection,
   haveSameExpression,
+  isBiSelectable,
   releaseIdenticalBiSelection,
 } from '../bi/biSelectionStamp';
 import { buildEntries } from '../inspect/StandardErrorsAndNoticesInspector';
@@ -389,8 +390,7 @@ function applyBiSelection(
   const { key, values, clickedValue } = update;
   const current = filterVar.state.filters;
 
-  const isReplaceable = (filter: AdHocFilterWithLabels) =>
-    filter.key === key && (filter.operator === '=' || filter.operator === '=|') && !filter.origin && !filter.readOnly;
+  const isReplaceable = (filter: AdHocFilterWithLabels) => filter.key === key && isBiSelectable(filter);
 
   const insertAt = current.findIndex(isReplaceable);
   const filters = current.filter((filter) => !isReplaceable(filter));

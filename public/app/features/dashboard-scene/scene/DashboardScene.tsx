@@ -68,6 +68,7 @@ import {
   type ResourceForCreate,
 } from '../../apiserver/types';
 import { edit } from '../actions/utils/edit';
+import { BiSelectionUrlSync } from '../bi/BiSelectionUrlSync';
 import { getValidBiSelection } from '../bi/biSelectionStamp';
 import { type DataRequestFiltersEnricher } from '../bi/scenesShim';
 import { createMutationClient } from '../mutation-api/clientBridge';
@@ -240,6 +241,11 @@ export class DashboardScene
       sidebar: new DashboardSidebar(),
       layoutOrchestrator: new DashboardLayoutOrchestrator(),
       preferences: state.preferences ?? {},
+      // Constructed here like the sidebar, so clones and saved models never carry it. Without BI mode the URL is
+      // left exactly as it was.
+      ...(getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false) && {
+        biSelectionUrlSync: new BiSelectionUrlSync(),
+      }),
     });
 
     this.serializer =
@@ -299,6 +305,7 @@ export class DashboardScene
     getDashboardSrv().setCurrent(oldDashboardWrapper);
 
     const destroyMutationClient = createMutationClient(this, 'dashboard');
+    const deactivateBiSelectionUrlSync = this.state.biSelectionUrlSync?.activate();
 
     return () => {
       this.cancelPendingViews();
@@ -312,6 +319,7 @@ export class DashboardScene
         this.setState({ planning: undefined });
       }
       destroyMutationClient();
+      deactivateBiSelectionUrlSync?.();
       window.__grafanaSceneContext = prevSceneContext;
       clearKeyBindings();
       this._changeTracker.terminate();

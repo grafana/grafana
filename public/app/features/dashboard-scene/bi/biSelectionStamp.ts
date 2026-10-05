@@ -1,9 +1,9 @@
 import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 /**
- * Marks an ad hoc filter as a BI selection written by a panel click (session-only, stripped on save and
- * absent from the URL). `values` is a copy of what was written, so a later edit of the filter's value
- * invalidates the stamp and the filter becomes an ordinary filter.
+ * Marks an ad hoc filter as a BI selection written by a panel click. It is stripped on save; the URL carries only
+ * the owner and key (see BiSelectionUrlSync). `values` is a copy of what was written, so a later edit of the filter's
+ * value invalidates the stamp and the filter becomes an ordinary filter.
  */
 export interface BiSelectionStamp {
   sourcePanel: string;
@@ -32,6 +32,21 @@ export function getValidBiSelection(filter: AdHocFilterWithLabels): BiSelectionS
 
   const matches = current.length === stamp.values.length && current.every((value, i) => value === stamp.values[i]);
   return matches ? stamp : undefined;
+}
+
+/**
+ * Whether a filter can hold a BI selection: an editable `=` or `=|` filter that was not injected.
+ */
+export function isBiSelectable(filter: AdHocFilterWithLabels): boolean {
+  return (filter.operator === '=' || filter.operator === '=|') && !filter.origin && !filter.readOnly;
+}
+
+/**
+ * Returns a copy of a selectable filter stamped as owned by `sourcePanel` with its current values.
+ */
+export function stampBiSelection(filter: AdHocFilterWithLabels, sourcePanel: string): AdHocFilterWithLabels {
+  const values = filter.operator === '=|' ? [...(filter.values ?? [])] : [filter.value];
+  return { ...filter, meta: { ...getMeta(filter), biSelection: { sourcePanel, key: filter.key, values } } };
 }
 
 /**
@@ -67,8 +82,9 @@ export function haveSameExpression(
 }
 
 /**
- * When `filters` holds a BI selection with the same expression as `filter`, returns `filters` with that selection's
- * stamp removed, so it becomes an ordinary filter for every panel. Otherwise returns undefined.
+ * When `filters` holds a BI selection with the same expression as `filter`, returns `filters` with that selection
+ * released (see releaseBiSelectionStamp), so it becomes an ordinary filter for every panel. Otherwise returns
+ * undefined.
  *
  * Scenes deduplicates identical filters, so adding a manual filter next to an identical selection would leave only one
  * of them, and the selecting panel would then skip a filter the user added by hand.
@@ -83,8 +99,34 @@ export function releaseIdenticalBiSelection(
   }
 
   const next = filters.slice();
-  next.splice(index, 1, stripBiSelectionStamp(filters[index]));
+  next.splice(index, 1, releaseBiSelectionStamp(filters[index]));
   return next;
+}
+
+/**
+ * Returns the filter with its stamp replaced by `null`: an ordinary filter that remembers it was deliberately released,
+ * so URL ownership sync does not stamp it again. Saving strips the marker like a stamp.
+ */
+export function releaseBiSelectionStamp(filter: AdHocFilterWithLabels): AdHocFilterWithLabels {
+  return { ...filter, meta: { ...getMeta(filter), biSelection: null } };
+}
+
+/**
+ * Whether the filter carries BI selection metadata at all, valid or not. A filter replaced from the URL has none; an
+ * edited, released or re-keyed selection keeps its stale metadata.
+ */
+export function hasBiSelectionMeta(filter: AdHocFilterWithLabels): boolean {
+  const meta = getMeta(filter);
+  return Boolean(meta && 'biSelection' in meta);
+}
+
+/**
+ * Whether the filter carries a stamp that no longer describes it, for example after a pill edit. Scenes keeps `meta`
+ * across edits, so editing the value or key back would make such a stamp valid again; release it instead.
+ */
+export function isStaleBiSelection(filter: AdHocFilterWithLabels): boolean {
+  const stamp = getMeta(filter)?.biSelection;
+  return stamp !== null && stamp !== undefined && !getValidBiSelection(filter);
 }
 
 function getMeta(filter: AdHocFilterWithLabels): Record<string, unknown> | undefined {
