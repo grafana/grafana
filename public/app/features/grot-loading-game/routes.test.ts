@@ -8,7 +8,7 @@ describe('getGrotLoadingGameRoutes', () => {
   }
 
   it('registers the playground in development builds', () => {
-    expect(getGrotLoadingGameRoutes(withEnv('development')).map((r) => r.path)).toEqual(['/grot-game']);
+    expect(getGrotLoadingGameRoutes(withEnv('development')).map((r) => r.path)).toEqual(['/sandbox/grot-game']);
   });
 
   it('registers nothing in production builds', () => {

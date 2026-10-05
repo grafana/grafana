@@ -10,7 +10,7 @@ export function getGrotLoadingGameRoutes(cfg = config): RouteDescriptor[] {
 
   return [
     {
-      path: '/grot-game',
+      path: '/sandbox/grot-game',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "GrotLoadingGamePage"*/ 'app/features/grot-loading-game/GrotLoadingGamePage')
       ),
