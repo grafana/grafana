@@ -14421,7 +14421,7 @@
       "token-description": "Git repository access token or password",
       "token-label": "Access Token",
       "token-required": "Git token is required",
-      "token-user-description": "The username that will be used to access the repository with the access token",
+      "token-user-description": "The username that will be used to access the repository with the access token. Defaults to \"git\". Bitbucket requires \"x-token-auth\".",
       "url-description": "The Git repository URL. Most servers require the URL to end with .git (e.g. https://host/owner/repo.git).",
       "url-pattern": "Must be a valid Git repository URL",
       "url-required": "Repository URL is required"
