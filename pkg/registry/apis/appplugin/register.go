@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -74,6 +75,7 @@ type AppPluginRunnerOptions struct {
 
 	SearchAPIEnabled bool
 	TrashAPIEnabled  bool
+	HybridAPIEnabled bool
 	KeysAPIEnabled   bool
 
 	// When this exists, dual write settings will be used
@@ -90,10 +92,10 @@ type AppPluginAPIBuilder struct {
 	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
-	clientV3        v3.ClientV3
+	clientV3        appclientv3.Client
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
-	decrypter       decrypt.DecryptService // Used with unified storage
+	decrypter       *secureValueLookup
 	accessChecker   PluginAccessChecker
 	features        featuremgmt.FeatureToggles
 	search          resourcepb.ResourceIndexClient
@@ -117,7 +119,7 @@ type AppPluginAPIBuilder struct {
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
-	clientV3 v3.ClientV3,
+	clientV3 appclientv3.Client,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
@@ -140,7 +142,7 @@ func NewAppPluginAPIBuilder(
 		clientV3:        clientV3,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
-		decrypter:       decrypter,
+		decrypter:       newSecureValueLookup(decrypter),
 		accessChecker:   accessChecker,
 		search:          search,
 		store:           store,
@@ -178,6 +180,7 @@ func RegisterAPIService(
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
 	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
+	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
 	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 
 	// Find all local plugins
@@ -202,11 +205,21 @@ func RegisterAPIService(
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
+	exchanger, err := NewClientV3TokenExchanger(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
+		clientV3, err := v3.WithAuthentication(v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID), plugin.JSONData.ID,
+			ClientV3TokenExchanger(cfg, plugin.JSONData.ID, exchanger))
+		if err != nil {
+			return nil, err
+		}
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
-			v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID),
+			clientV3,
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
@@ -223,6 +236,7 @@ func RegisterAPIService(
 
 				SearchAPIEnabled: searchAPIEnabled,
 				TrashAPIEnabled:  trashAPIEnabled,
+				HybridAPIEnabled: hybridAPIEnabled,
 				KeysAPIEnabled:   keysAPIEnabled,
 			},
 			tracer,
@@ -449,6 +463,12 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 					}
 				}
 			}
+		}
+
+		// Checked against the mounted routes rather than the manifest, since
+		// routes that shadow a resource or use unservable methods are dropped.
+		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
+			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}
 
 		if len(storage) > 0 {

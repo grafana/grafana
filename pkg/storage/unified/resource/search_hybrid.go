@@ -31,8 +31,8 @@ import (
 // legs fetch 2x the requested limit so near-miss overlaps can still fuse
 // into the top results.
 //
-// Returns Unimplemented when no embedding provider or vector backend is
-// configured.
+// Without an embedding provider or vector backend, searches the regular
+// resource index using only the lexical leg.
 func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (resp *resourcepb.HybridSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.HybridSearch")
 	defer span.End()
@@ -50,16 +50,14 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		}
 	}
 	defer func() {
-		if s.vectorMetrics != nil {
-			metricutil.ObserveWithExemplar(ctx,
-				s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
-				time.Since(start).Seconds(),
-			)
-		}
+		metricutil.ObserveWithExemplar(ctx,
+			s.vectorMetrics.HybridSearchDuration.WithLabelValues(group, resource, status.Code(retErr).String()),
+			time.Since(start).Seconds(),
+		)
 	}()
 
-	if s.embedder == nil || s.vectorBackend == nil {
-		return nil, status.Error(codes.Unimplemented, "hybrid search not configured")
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
 	}
 	if err := validateHybridSearchRequest(req); err != nil {
 		return nil, err
@@ -90,26 +88,32 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	if !types.NamespaceMatches(user.GetNamespace(), req.Key.Namespace) {
 		return nil, status.Error(codes.PermissionDenied, "namespace mismatch")
 	}
-	coll, allowed, err := s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
-	if err != nil {
-		return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
-	}
-	if !allowed {
-		return nil, status.Error(codes.NotFound, "collection not found")
-	}
-
-	if coll.IsExternal && s.externalLexical == nil {
-		return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
+	semanticEnabled := s.embedder != nil && s.vectorBackend != nil
+	var coll vector.Collection
+	if semanticEnabled {
+		var allowed bool
+		var err error
+		coll, allowed, err = s.resolveAllowedCollection(ctx, req.Key.Group, req.Key.Resource)
+		if err != nil {
+			return nil, s.grpcStatusError(ctx, "hybrid search: resolve collection", err)
+		}
+		if !allowed {
+			return nil, status.Error(codes.NotFound, "collection not found")
+		}
+		if coll.IsExternal && s.externalLexical == nil {
+			return nil, status.Error(codes.InvalidArgument, "hybrid search requires an indexed resource; use VectorSearch for external collections")
+		}
 	}
 	// Before the rate check so rejected requests don't burn budget.
 	if err := validateHybridSearchFilters(req, coll.IsExternal); err != nil {
 		return nil, err
 	}
 
-	// Hybrid embeds a query, so it draws from the same per-tenant budget
-	// as VectorSearch.
-	if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
-		return nil, err
+	// Only the semantic leg draws from VectorSearch's embedding budget.
+	if semanticEnabled {
+		if err := s.checkVectorSearchRateLimit(ctx, req.Key.Namespace); err != nil {
+			return nil, err
+		}
 	}
 
 	embedText := req.Query
@@ -135,11 +139,13 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	})
 
 	var sem []vector.VectorSearchResult
-	g.Go(func() error {
-		var err error
-		sem, err = s.hybridSemanticLeg(gctx, user, req, coll, embedText, depth, vectorFilters)
-		return err
-	})
+	if semanticEnabled {
+		g.Go(func() error {
+			var err error
+			sem, err = s.hybridSemanticLeg(gctx, user, req, coll, embedText, depth, vectorFilters)
+			return err
+		})
+	}
 
 	if err := g.Wait(); err != nil {
 		return nil, s.grpcStatusError(ctx, "hybrid search", err)
@@ -461,10 +467,8 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 			fmt.Errorf("%d scores for %d results", len(scores), len(results))), nil
 	}
 
-	if s.vectorMetrics != nil {
-		s.vectorMetrics.RerankCandidatesTotal.
-			WithLabelValues(s.reranker.Model).Add(float64(len(results)))
-	}
+	s.vectorMetrics.RerankCandidatesTotal.
+		WithLabelValues(s.reranker.Model).Add(float64(len(results)))
 	for i, r := range results {
 		r.Score = scores[i]
 	}
@@ -482,7 +486,7 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 				kept = append(kept, r)
 			}
 		}
-		if dropped := len(results) - len(kept); dropped > 0 && s.vectorMetrics != nil {
+		if dropped := len(results) - len(kept); dropped > 0 {
 			s.vectorMetrics.RerankDroppedResultsTotal.
 				WithLabelValues(s.reranker.Model, minRelevance).Add(float64(dropped))
 		}

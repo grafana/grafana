@@ -355,7 +355,7 @@ func applyIncrementalChanges(
 						renameOpts = append(renameOpts, resources.WithRelocatingUIDs(dir, uids...))
 					}
 				}
-				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, renameOpts...)
+				name, oldFolderName, gvk, size, err := repositoryResources.RenameResourceFile(renameCtx, change.PreviousPath, change.PreviousRef, change.Path, change.Ref, reserveQuota(quotaTracker), renameOpts...)
 				if err != nil {
 					renameSpan.RecordError(err)
 					resultBuilder.WithError(fmt.Errorf("renaming resource file from %s to %s: %w", change.PreviousPath, change.Path, err))
@@ -375,6 +375,18 @@ func applyIncrementalChanges(
 	}
 
 	return affectedFolders, nil
+}
+
+// reserveQuota is the hook RenameResourceFile calls before it creates a resource
+// that is not in Grafana yet: it takes a slot from the tracker, or refuses with a
+// quota error, and returns the function that gives the slot back.
+func reserveQuota(tracker quotas.QuotaTracker) resources.BeforeCreate {
+	return func(_ context.Context, path string) (func(), error) {
+		if !tracker.TryAcquire() {
+			return nil, quotas.NewQuotaExceededError(fmt.Errorf("resource quota exceeded, skipping recovery of %s", path))
+		}
+		return tracker.Release, nil
+	}
 }
 
 // sortChangesByActionPriority reorders changes so deletions are processed before creations.
@@ -503,7 +515,7 @@ func deleteFolders(
 		if entry.Reason != "" {
 			resultBuilder.WithReason(entry.Reason)
 		}
-		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil {
+		if err := repositoryResources.RemoveFolder(ctx, entry.UID); err != nil && !apierrors.IsNotFound(err) {
 			span.RecordError(err)
 			resultBuilder.WithError(fmt.Errorf("delete folder %s: %w", entry.UID, err))
 		}

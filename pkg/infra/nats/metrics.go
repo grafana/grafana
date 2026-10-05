@@ -82,30 +82,30 @@ func (m connectionMetrics) collectors() []prometheus.Collector {
 // publisherMetrics covers the publisher connection plus its publish counters.
 type publisherMetrics struct {
 	connectionMetrics
-	messagesPublished prometheus.Counter
-	publishErrors     prometheus.Counter
+	messagesAccepted prometheus.Counter
+	publishErrors    prometheus.Counter
 }
 
 func newPublisherMetrics() *publisherMetrics {
 	return &publisherMetrics{
 		connectionMetrics: newConnectionMetrics(rolePublisher),
-		messagesPublished: prometheus.NewCounter(prometheus.CounterOpts{
+		messagesAccepted: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
-			Name:      "publisher_messages_published_total",
-			Help:      "Total number of messages published to NATS.",
+			Name:      "publisher_messages_accepted_total",
+			Help:      "Total number of messages accepted by the local NATS client; this is not subscriber delivery.",
 		}),
 		publishErrors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsSubsystem,
 			Name:      "publisher_publish_errors_total",
-			Help:      "Total number of NATS publish errors.",
+			Help:      "Total number of local NATS publish failures, before subscriber delivery.",
 		}),
 	}
 }
 
 func (m *publisherMetrics) collectors() []prometheus.Collector {
-	return append(m.connectionMetrics.collectors(), m.messagesPublished, m.publishErrors)
+	return append(m.connectionMetrics.collectors(), m.messagesAccepted, m.publishErrors)
 }
 
 // subscriberMetrics covers the subscriber connection plus its delivery counters.

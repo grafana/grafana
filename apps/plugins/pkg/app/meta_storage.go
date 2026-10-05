@@ -20,6 +20,7 @@ import (
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
+	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 )
 
@@ -144,6 +145,11 @@ func (s *MetaStorage) List(ctx context.Context, options *internalversion.ListOpt
 				ParentID: plugin.Spec.ParentId,
 			})
 			if err != nil {
+				reason := "error"
+				if errors.Is(err, meta.ErrMetaNotFound) {
+					reason = "not_found"
+				}
+				metrics.MetaResolutionFailuresTotal.WithLabelValues(plugin.Spec.Id, reason).Inc()
 				logger.Warn("Failed to fetch metadata for plugin", "pluginId", plugin.Spec.Id, "version", plugin.Spec.Version, "error", err)
 				return nil
 			}

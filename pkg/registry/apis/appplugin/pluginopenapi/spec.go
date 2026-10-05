@@ -73,10 +73,11 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 		offlineStoreClient{},
 		appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
-			// Generated specs always enable search and trash route registration.
+			// Generated specs always enable search, trash and hybrid route registration.
 			// searchroutes still applies its per-kind eligibility rules.
 			SearchAPIEnabled: true,
 			TrashAPIEnabled:  true,
+			HybridAPIEnabled: true,
 			KeysAPIEnabled:   true,
 		},
 		tracing.NewNoopTracerService(),

@@ -17,7 +17,8 @@ import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncid
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY, INCIDENTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
+import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
+import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -89,11 +90,11 @@ export default function HomePage() {
     extensionPointId: PluginExtensionPoints.HomepageTabs,
   });
 
-  // Persisted team scopes, one per view; each also drives that view's header pill.
+  // Persisted filter scopes, one per view; each also drives that view's header pill.
   const [alertsTeam, setAlertsTeam] = useStoredString(ALERTS_TEAM_FILTER_STORAGE_KEY, '');
-  const [incidentsTeam, setIncidentsTeam] = useStoredString(INCIDENTS_TEAM_FILTER_STORAGE_KEY, '');
+  const [incidentsFilter, setIncidentsFilter] = useStoredString(INCIDENTS_FILTER_STORAGE_KEY, '');
   const alertsData = useFiringAlerts(alertsTeam);
-  const incidentsData = useIncidents(incidentsTeam);
+  const incidentsData = useIncidents(incidentsFilter);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
   const isWaitingForTabs = !redesignEnabled && isLoadingTabs;
@@ -185,8 +186,8 @@ export default function HomePage() {
                       incidentsData={incidentsData}
                       alertsTeam={alertsTeam}
                       onAlertsTeamChange={setAlertsTeam}
-                      incidentsTeam={incidentsTeam}
-                      onIncidentsTeamChange={setIncidentsTeam}
+                      incidentsFilter={incidentsFilter}
+                      onIncidentsFilterChange={setIncidentsFilter}
                       switchRef={alertIncidentRef}
                     />
                   </HomeGrid>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { type PopValueActionMeta, type RemoveValueActionMeta } from 'react-select';
 
 import {
+  type DataSourceInstanceListItem,
   type DataSourceInstanceSettings,
   type SelectableValue,
   getDataSourceUID,
@@ -11,6 +12,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
@@ -24,6 +26,16 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   const dataSourceSrv = getDataSourceSrv();
 
   const [state, setState] = useState<{ error?: string }>();
+
+  const dataSourceListItems: DataSourceInstanceListItem[] = dataSourceSrv.getList().map((ds) => ({
+    uid: ds.uid,
+    type: ds.type,
+    apiVersion: ds.apiVersion,
+    name: ds.name,
+    meta: ds.meta,
+    isDefault: ds.isDefault ?? false,
+  }));
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceListItems);
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
@@ -107,7 +119,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
 
     const alertManagingDs = dataSources.filter(isDataSourceManagingAlerts).map((ds) => ({
       value: ds.name,
-      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+      label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
     }));
@@ -116,7 +128,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       .filter((ds) => !isDataSourceManagingAlerts(ds))
       .map((ds) => ({
         value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+        label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,
       }));

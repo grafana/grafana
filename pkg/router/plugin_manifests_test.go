@@ -3,7 +3,6 @@ package router
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -12,20 +11,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	sdkbackend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
-	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -87,10 +82,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	authenticator := manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-		return &identity.StaticRequester{UserUID: "test-user"}, nil
-	})
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, &authenticator)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -105,126 +97,6 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	backends := target.Backends()
 	require.Equal(t, "appsdktest.ext.grafana.app", backends[0].Group().Name)
 	require.Contains(t, backends[0].Key(), "managed:grafana-appsdktest-app:")
-	require.Same(t, &authenticator, backends[0].(*pluginDeploymentBackend).authn)
-}
-
-type manifestTokenAuthenticatorFunc func(context.Context, string) (identity.Requester, error)
-
-func (f manifestTokenAuthenticatorFunc) AuthenticateToken(ctx context.Context, token string) (identity.Requester, error) {
-	return f(ctx, token)
-}
-
-type manifestHandlerBackend struct {
-	Backend
-	handler http.Handler
-}
-
-func (b manifestHandlerBackend) Load(context.Context) (http.Handler, error) {
-	return b.handler, nil
-}
-
-func TestPluginDeploymentBackendAuthentication(t *testing.T) {
-	const token = "Bearer obo-token"
-	info := &identity.StaticRequester{Type: types.TypeUser, UserUID: "test-user", Namespace: "stacks-123"}
-	authCalls, handlerCalls := 0, 0
-	req := httptest.NewRequest(http.MethodGet, "/test", nil).WithContext(t.Context())
-	req.Header.Set("X-Access-Token", token)
-	backend := &pluginDeploymentBackend{
-		Backend: manifestHandlerBackend{handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			handlerCalls++
-			got, ok := types.AuthInfoFrom(r.Context())
-			require.True(t, ok)
-			require.Same(t, info, got)
-			authenticated, accepted, err := apiserverauthenticator.NewAuthenticator().AuthenticateRequest(r)
-			require.NoError(t, err)
-			require.True(t, accepted)
-			require.Same(t, info, authenticated.User)
-			require.Equal(t, req.URL, r.URL)
-			w.WriteHeader(http.StatusNoContent)
-		})},
-		authn: manifestTokenAuthenticatorFunc(func(ctx context.Context, got string) (identity.Requester, error) {
-			authCalls++
-			require.Equal(t, 1, authCalls, "authentication must not recurse")
-			require.Equal(t, token, got)
-			require.Equal(t, req.Context().Done(), ctx.Done(), "authentication must retain request cancellation")
-			return info, nil
-		}),
-	}
-	handler, err := backend.Load(t.Context())
-	require.NoError(t, err)
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, req)
-	require.Equal(t, http.StatusNoContent, response.Code)
-	require.Equal(t, 1, authCalls)
-	require.Equal(t, 1, handlerCalls)
-	_, ok := types.AuthInfoFrom(req.Context())
-	require.False(t, ok, "original request must not be mutated")
-}
-
-func TestAuthenticatingWrapperRejectsMissingAccessToken(t *testing.T) {
-	for _, header := range []string{"", "Authorization"} {
-		t.Run("header="+header, func(t *testing.T) {
-			wrapper := &authenticatingWrapper{
-				Handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-					t.Fatal("handler must not run without an access token")
-				}),
-				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-					t.Fatal("authenticator must not run without an access token")
-					return nil, nil
-				}),
-			}
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			if header != "" {
-				req.Header.Set(header, "Bearer obo-token")
-			}
-			response := httptest.NewRecorder()
-			wrapper.ServeHTTP(response, req)
-			require.Equal(t, http.StatusUnauthorized, response.Code)
-			require.Contains(t, response.Body.String(), "missing access token header")
-		})
-	}
-}
-
-func TestAuthenticatingWrapperRejectsAuthenticationError(t *testing.T) {
-	for _, tc := range []struct {
-		name   string
-		err    error
-		status int
-	}{
-		{name: "unauthorized", err: apierrors.NewUnauthorized("invalid token"), status: http.StatusUnauthorized},
-		{name: "internal", err: errors.New("authentication unavailable"), status: http.StatusInternalServerError},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			authCalls := 0
-			wrapper := &authenticatingWrapper{
-				Handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
-					t.Fatal("handler must not run after authentication fails")
-				}),
-				authn: manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-					authCalls++
-					return nil, tc.err
-				}),
-			}
-			response := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodGet, "/test", nil)
-			req.Header.Set("X-Access-Token", "Bearer invalid-token")
-			wrapper.ServeHTTP(response, req)
-			require.Equal(t, tc.status, response.Code)
-			require.Equal(t, 1, authCalls)
-		})
-	}
-}
-
-func TestPluginDeploymentBackendLoadErrors(t *testing.T) {
-	backend := &pluginDeploymentBackend{}
-	_, err := backend.Load(t.Context())
-	require.ErrorContains(t, err, "requires a token authenticator")
-	backend.authn = manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-		return nil, apierrors.NewUnauthorized("invalid token")
-	})
-	backend.Backend = failingBackend{}
-	_, err = backend.Load(t.Context())
-	require.ErrorContains(t, err, "load failed")
 }
 
 func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
@@ -236,7 +108,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 	patterns, err := compileGroupPatterns([]string{"*.internal"})
 	require.NoError(t, err)
 
-	target, err := newPluginManifestsTarget(srv.URL, patterns, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget(srv.URL, patterns, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
@@ -249,7 +121,7 @@ func TestPluginManifestsTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	ctx := t.Context()
@@ -278,7 +150,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
@@ -294,7 +166,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 func TestNewPluginManifestsTarget_RejectsNonAbsoluteURL(t *testing.T) {
 	for _, badURL := range []string{"", "/just/a/path", "plugins.example.invalid"} {
 		t.Run(badURL, func(t *testing.T) {
-			_, err := newPluginManifestsTarget(badURL, nil, http.DefaultClient, PluginDependencies{}, nil)
+			_, err := newPluginManifestsTarget(badURL, nil, http.DefaultClient, PluginDependencies{})
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
@@ -306,7 +178,7 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -327,7 +199,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{}, nil)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 
@@ -472,19 +344,16 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	}))
 	defer srv.Close()
 	storage := &manifestKindResourceClient{}
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{Unified: storage},
-		manifestTokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
-			return &identity.StaticRequester{Type: types.TypeUser, OrgID: 1, Namespace: "default"}, nil
-		}))
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{Unified: storage})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
 	handler, err := target.Backends()[0].Load(t.Context())
 	require.NoError(t, err)
-	t.Cleanup(handler.(*authenticatingWrapper).Handler.(interface{ Destroy() }).Destroy)
+	t.Cleanup(handler.(interface{ Destroy() }).Destroy)
 	request := func(method, path, body string) *httptest.ResponseRecorder {
 		t.Helper()
-		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req := newAuthenticatedRequest(method, path, strings.NewReader(body))
 		req.Header.Set("X-Access-Token", "test-token")
 		req.Header.Set("Content-Type", "application/json")
 		res := httptest.NewRecorder()

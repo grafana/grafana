@@ -372,7 +372,7 @@ func TestIntegrationIPv6AddressSupport(t *testing.T) {
 	}
 }
 
-var _ store = new(fakeStore)
+var _ store = (*fakeStore)(nil)
 
 type fakeStore struct {
 	ExpectedErr         error

@@ -326,8 +326,8 @@ describe('NotebookPageStateManager', () => {
   });
 
   describe('newNotebook', () => {
-    /** Nobody is asked for a name, so the notebook arrives with one it made up. */
-    const TITLE_PATTERN = /^Notebook #[a-z0-9]{12}$/;
+    /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
+    const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
     it('builds an empty notebook with no resource behind it and nothing fetched', () => {
       serveNotebooks();
@@ -343,16 +343,22 @@ describe('NotebookPageStateManager', () => {
       expect(requested).toEqual([]);
     });
 
-    // The reason for the token at all: autosave creates these without asking for a name, so two
-    // notebooks made one after the other have to be tellable apart in the list.
-    it('gives each new notebook a title of its own', () => {
+    // The reason for naming them at all: autosave creates these without asking for a name, so
+    // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
+    // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
+    it('names each new notebook after the time it was created', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
+      const now = jest.spyOn(Date, 'now');
 
+      now.mockReturnValue(new Date('2026-07-01T09:15:00Z').getTime());
       manager.newNotebook();
       const first = manager.state.scene?.state.title;
+      now.mockReturnValue(new Date('2026-07-01T11:42:00Z').getTime());
       manager.newNotebook();
       const second = manager.state.scene?.state.title;
+
+      now.mockRestore();
 
       expect(first).toMatch(TITLE_PATTERN);
       expect(second).toMatch(TITLE_PATTERN);
