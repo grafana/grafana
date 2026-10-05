@@ -1127,6 +1127,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   inspect: boolean;
   minWidth?: number;
   /**
+   * Whether the column can be reordered from the table.
+   */
+  reorderable?: boolean;
+  /**
    * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
    */
   sortable?: boolean;

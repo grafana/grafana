@@ -1907,7 +1907,7 @@ describe('TableNG utils', () => {
     });
 
     it('is hidden for a column that can do nothing, on a table with no sidebar', () => {
-      expect(isColumnMenuVisible(fieldWith({}), false)).toBe(false);
+      expect(isColumnMenuVisible(fieldWith({ reorderable: true }), false)).toBe(false);
     });
   });
 
@@ -2538,6 +2538,20 @@ describe('TableNG utils', () => {
       expect(compute(fields, 50)).toEqual([50]);
     });
 
+    it('reserves header space for the drag handle on a reorderable column', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
+      ];
+      // 32px label + 22px sort + 20px drag handle + 13px chrome.
+      const widths = computeContentAwareColWidths(fields, 80, {
+        typographyCtx: makeTypographyCtx(),
+        headerTypographyCtx: makeTypographyCtx(),
+      });
+      expect(widths).toEqual([87]);
+      const notReorderable: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(compute(notReorderable, 60)).toEqual([67]);
+    });
+
     it('reserves the first column’s extra padding when the panel has none of its own', () => {
       const fields: Field[] = [
         { name: 'Name', type: FieldType.string, values: ['a'], config: {} },
@@ -2629,6 +2643,20 @@ describe('TableNG utils', () => {
           hasColumnSidebar: true,
         })
       ).toEqual([89]);
+    });
+
+    it('reserves both the drag handle and the menu on a reorderable column with a sidebar', () => {
+      const fields: Field[] = [
+        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
+      ];
+      expect(
+        computeContentAwareColWidths(fields, 100, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          hasColumnSidebar: true,
+        })
+      ).toEqual([109]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {

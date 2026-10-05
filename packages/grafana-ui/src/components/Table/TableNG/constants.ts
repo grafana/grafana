@@ -133,3 +133,4 @@ export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
 export const SCROLL_SHADOW_THRESHOLD = 1;
 // Reserve the hover-only drag handle so the label does not shift when it appears.
 export const HEADER_DRAG_HANDLE_WIDTH = 16;
+export const HEADER_DRAG_HANDLE_SPACE = HEADER_DRAG_HANDLE_WIDTH + HEADER_ICON_GAP;

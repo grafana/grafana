@@ -41,6 +41,7 @@ import {
   COLUMN,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
+  HEADER_DRAG_HANDLE_SPACE,
   HEADER_ICON_SPACE,
   HEADER_MENU_SPACE,
   HEADER_TOOLTIP_SPACE,
@@ -1443,13 +1444,18 @@ export function isFieldFilterable(field: Field): boolean {
 }
 
 /** @internal */
+export function isFieldReorderable(field: Field): boolean {
+  return field.config.custom?.reorderable ?? false;
+}
+
+/** @internal */
 export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
 }
 
 /** Whether any field can be managed by the column sidebar. @internal */
 export function canManageColumns(fields: Field[]): boolean {
-  return fields.some(isFieldHideable);
+  return fields.some((field) => isFieldReorderable(field) || isFieldHideable(field));
 }
 
 /** Whether the column menu has an action to show. @internal */
@@ -1497,6 +1503,7 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
+  width += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     width += isColumnMenuVisible(field, hasColumnSidebar) ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon

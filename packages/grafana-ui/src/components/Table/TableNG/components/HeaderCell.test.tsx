@@ -20,6 +20,7 @@ function makeField(overrides: Partial<Field> = {}): Field {
   };
 }
 
+const reorderableField = () => makeField({ config: { custom: { reorderable: true } } });
 const hideableField = () => makeField({ config: { custom: { hideable: true } } });
 
 const column = { key: 'Field1' } as Column<TableRow, TableSummaryRow>;
@@ -92,6 +93,15 @@ describe('HeaderCell', () => {
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Field1' })).color).toBe(
       theme.colors.text.secondary
     );
+  });
+
+  it('collapses the reorder drag handle until the header cell is hovered', () => {
+    const { container } = render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+    const handle = container.querySelector('button[aria-hidden="true"]')!;
+    const styles = window.getComputedStyle(handle);
+    expect(styles.width).toBe('0px');
+    expect(styles.opacity).toBe('0');
+    expect(handle.querySelector('svg')).toBeInTheDocument();
   });
 
   it('keeps the refreshed label colour when Wrap header text is toggled', () => {
@@ -308,8 +318,13 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
+    it('omits the menu for reordering without a sidebar', () => {
+      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
     it('shows the menu when the sidebar is available', () => {
-      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
+      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled hasColumnSidebar />);
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
@@ -318,7 +333,7 @@ describe('HeaderCell', () => {
       render(
         <HeaderCell
           {...baseProps}
-          field={hideableField()}
+          field={reorderableField()}
           tableRefreshEnabled
           hasColumnSidebar
           onOpenColumnPanel={onOpenColumnPanel}

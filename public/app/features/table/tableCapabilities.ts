@@ -19,6 +19,7 @@ export function withRefreshedTableCapabilities(
         custom: {
           ...field.config.custom,
           filterable: true,
+          reorderable: columnManagementEnabled,
           hideable: columnManagementEnabled,
         },
       },
