@@ -24,6 +24,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -39,12 +40,6 @@ type receiverAuthz interface {
 	AuthorizeDeleteByUID(context.Context, identity.Requester, string) error
 }
 
-type AlertRuleNotificationSettingsStore interface {
-	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	RenameTimeIntervalInNotificationSettings(ctx context.Context, orgID int64, oldTimeInterval, newTimeInterval string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
-}
-
 type emailIntegrationValidator interface {
 	ValidateIntegrationConfig(ctx context.Context, orgID int64, integration alertingModels.IntegrationConfig, logger log.Logger) error
 }
@@ -54,7 +49,7 @@ type ContactPointService struct {
 	configStore               alertmanagerConfigStore
 	encryptionService         secrets.Service //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	provenanceStore           ProvisioningStore
-	notificationSettingsStore AlertRuleNotificationSettingsStore
+	notificationSettingsStore rulestore.ContactPointRoutingReader
 	xact                      TransactionManager
 	receiverService           receiverService
 	log                       log.Logger
@@ -77,7 +72,7 @@ func NewContactPointService(
 	xact TransactionManager,
 	receiverService receiverService,
 	log log.Logger,
-	nsStore AlertRuleNotificationSettingsStore,
+	nsStore rulestore.ContactPointRoutingReader,
 	resourcePermissions ac.ReceiverPermissionsService,
 	allowedIntegrations map[schema.IntegrationType]struct{},
 	emailValidator emailIntegrationValidator,

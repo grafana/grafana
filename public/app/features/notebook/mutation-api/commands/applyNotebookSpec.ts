@@ -5,7 +5,7 @@ import { type MutationCommand } from 'app/features/dashboard-scene/mutation-api/
 
 import { notebookResourceFor } from '../../api/notebookResource';
 import { type NotebookScene } from '../../scene/NotebookScene';
-import { isEmptyMarkdown } from '../../scene/layout-notebook/isEmptyMarkdown';
+import { isEmptyMarkdown } from '../../scene/layout-notebook/cellEmptiness';
 import { validateNotebookSpec } from '../../schema/notebookSpecSchema';
 import { transformNotebookSceneToSaveModel } from '../../serialization/transformNotebookSceneToSaveModel';
 import { type Spec as NotebookSpec } from '../../types';
@@ -114,7 +114,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
 
       return {
         success: true,
-        data: { applied: true, spec: appliedNotebook },
+        data: { applied: true, spec: appliedNotebook, resourceVersion: scene.autosave.state.savedResourceVersion },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };

@@ -215,6 +215,24 @@ describe('<SpanDetail>', () => {
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
   });
 
+  it('shows an error icon in the header when the span failed', () => {
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+
+    expect(screen.getByLabelText('Span has an error')).toHaveAttribute('data-testid', 'icon-exclamation-circle');
+  });
+
+  it('hides the header error icon when the span did not fail', () => {
+    const okSpan = {
+      ...span,
+      statusCode: 0,
+      tags: span.tags.filter((tag) => tag.key !== 'error'),
+    };
+
+    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={okSpan} />);
+
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
+  });
+
   it('lists the service name, duration, start time and kind', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByText('Duration:')).toBeInTheDocument();

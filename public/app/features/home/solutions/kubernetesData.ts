@@ -14,7 +14,7 @@ import {
   PROBE_TIMEOUT_MS,
   PROBE_TTL_MS,
 } from './probeUtils';
-import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import { quotePromString, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 /** Kubernetes Monitoring app plugin ID. @lintignore */
 export const KUBERNETES_APP_ID = 'grafana-k8s-app';
@@ -53,11 +53,9 @@ const POD_LABELS: ScopeLabel[] = ['cluster', 'namespace'];
 const NODE_LABELS: ScopeLabel[] = ['cluster', 'node'];
 const ALL_LABELS: ScopeLabel[] = ['cluster', 'namespace', 'node'];
 
-// PromQL string literal: PromQL only accepts Go escapes, so backslash, quote and newline are escaped.
 // Regex alternations escape RE2 metacharacters first; a dot in a node name therefore renders as `\\.`
 // in the query text (the string escape of the regex escape).
-const quote = (value: string) => `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
-const anyOf = (values: string[]) => quote(values.map(escapeRegex).join('|'));
+const anyOf = (values: string[]) => quotePromString(values.map(escapeRegex).join('|'));
 
 // Matchers for the scope fields that `labels` carry, in cluster, namespace, node order.
 function matchers(scope: KubernetesScope | null, labels: ScopeLabel[]): string[] {
@@ -66,7 +64,7 @@ function matchers(scope: KubernetesScope | null, labels: ScopeLabel[]): string[]
   }
   const result: string[] = [];
   if (labels.includes('cluster') && scope.cluster) {
-    result.push(`cluster=${quote(scope.cluster)}`);
+    result.push(`cluster=${quotePromString(scope.cluster)}`);
   }
   if (labels.includes('namespace') && scope.namespaces.length > 0) {
     result.push(`namespace=~${anyOf(scope.namespaces)}`);

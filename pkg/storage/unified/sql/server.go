@@ -37,7 +37,9 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
+	BlobBackend      resource.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -74,6 +76,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withBlobConfig,
 		withAccessClient,
 		withMaxPageSizeBytes,
+		withAuthorizeBeforeFetch,
 		withBackend,
 		withVectorBackend,
 		withEmbedder,
@@ -137,8 +140,9 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
-		Reg:          opts.Reg,
-		SecureValues: opts.SecureValues,
+		Reg:                     opts.Reg,
+		SecureValues:            opts.SecureValues,
+		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
 	}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
@@ -185,6 +189,9 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
+	if resourceOpts.Blob.URL == "" {
+		resourceOpts.Blob.Backend = opts.BlobBackend
+	}
 	// Support local file blob
 	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
 		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
@@ -204,6 +211,11 @@ func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceSe
 	return nil
 }
 
+func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
+	return nil
+}
+
 func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
@@ -219,6 +231,7 @@ func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceSer
 }
 
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.WatchExpiry = opts.WatchExpiry
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
 	}
@@ -314,11 +327,7 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
 				resourceOpts.Search.EmbeddingConfig = configs
 			}
-			var skipped *prometheus.CounterVec
-			if resourceOpts.VectorMetrics != nil {
-				skipped = resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal
-			}
-			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, skipped)
+			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal)
 			if err != nil {
 				return fmt.Errorf("embedding enrollment: %w", err)
 			}
@@ -381,6 +390,10 @@ func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServ
 
 func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	resourceOpts.VectorMetrics = opts.VectorMetrics
+	// Recording sites should not have to check for nil.
+	if resourceOpts.VectorMetrics == nil {
+		resourceOpts.VectorMetrics = resource.ProvideVectorMetrics(nil)
+	}
 	return nil
 }
 
