@@ -591,7 +591,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return result.Action() == repository.FileActionDeleted &&
 						result.Path() == "dashboards/test.json" &&
 						result.Error() != nil &&
-						result.Error().Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+						errors.Is(result.Error(), resources.ErrMissingExistingReference)
 				})).Return()
 			},
 		},
@@ -611,7 +611,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 					return result.Action() == repository.FileActionDeleted &&
 						result.Path() == "dashboards/test.json" &&
 						result.Error() != nil &&
-						result.Error().Error() == "processing deletion for file dashboards/test.json: missing existing reference"
+						errors.Is(result.Error(), resources.ErrMissingExistingReference)
 				})).Return()
 			},
 		},
@@ -1620,7 +1620,7 @@ func TestApplyChanges_SkipsDeferredFolderDeletionPerGuardCondition(t *testing.T)
 					r.Action() == repository.FileActionIgnored &&
 					r.Name() == "orphan-uid" &&
 					r.Warning() != nil &&
-					r.Warning().Error() == "folder was not deleted because dependent path changes failed"
+					errors.Is(r.Warning(), resources.ErrSkippedDependentPathChangeFailed)
 			})).Return()
 
 			err := applyChanges(

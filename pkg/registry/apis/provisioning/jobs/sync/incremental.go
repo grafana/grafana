@@ -130,7 +130,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 			progress.Record(ctx, jobs.NewFolderResult(r.Path).
 				WithAction(repository.FileActionIgnored).
 				WithName(r.OldUID).
-				WithWarning(fmt.Errorf("old folder %s not deleted because the replacement folder at %s could not be created", r.OldUID, r.Path)).
+				WithWarning(resources.NewReplacementFolderNotCreatedError(r.OldUID)).
 				Build())
 			continue
 		}
@@ -188,7 +188,7 @@ func applyIncrementalChanges(
 			// Skip this resource since its parent folder failed to be created
 			skipCtx, skipSpan := tracer.Start(ctx, "provisioning.sync.incremental.skip_nested_resource")
 			progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
-				WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
+				WithError(resources.ErrSkippedParentFolderNotCreated).
 				AsSkipped().
 				Build())
 			skipSpan.End()
@@ -504,7 +504,7 @@ func deleteFolders(
 			progress.Record(ctx, jobs.NewFolderResult(entry.Path).
 				WithAction(repository.FileActionIgnored).
 				WithName(entry.UID).
-				WithWarning(fmt.Errorf("folder %s was not deleted because a related operation failed", entry.UID)).
+				WithWarning(resources.NewSkippedDependentPathChangeFailedError(entry.UID)).
 				Build())
 			continue
 		}

@@ -100,6 +100,14 @@ func classifyWarning(err error) (provisioning.SyncIssueReason, bool) {
 		return provisioning.ReasonFolderUIDTooLong, true
 	case errors.As(err, &folderValidationErr):
 		return provisioning.ReasonFolderValidationFailed, true
+	case errors.Is(err, resources.ErrSkippedParentFolderNotCreated):
+		return provisioning.ReasonSkippedParentFolderNotCreated, true
+	case errors.Is(err, resources.ErrSkippedFolderChildrenNotDeleted):
+		return provisioning.ReasonSkippedFolderChildrenNotDeleted, true
+	case errors.Is(err, resources.ErrSkippedDependentPathChangeFailed):
+		return provisioning.ReasonSkippedDependentPathChangeFailed, true
+	case errors.Is(err, resources.ErrReplacementFolderNotCreated):
+		return provisioning.ReasonReplacementFolderNotCreated, true
 	default:
 		return "", false
 	}

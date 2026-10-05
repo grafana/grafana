@@ -527,3 +527,154 @@ func (e *ResourceNotFoundError) Error() string {
 func (e *ResourceNotFoundError) Unwrap() error {
 	return ErrResourceNotFound
 }
+
+// ErrSkippedParentFolderNotCreated indicates a resource was not processed
+// during sync because its parent folder failed to be created earlier in the
+// same sync run.
+var ErrSkippedParentFolderNotCreated = errors.New("resource was not processed because the parent folder could not be created")
+
+// ErrSkippedFolderChildrenNotDeleted indicates a folder was not processed
+// during sync because resources nested under it could not be deleted.
+var ErrSkippedFolderChildrenNotDeleted = errors.New("folder was not processed because children resources in its path could not be deleted")
+
+// ErrSkippedDependentPathChangeFailed is the sentinel for a folder delete
+// skipped because a related path change elsewhere in the same tree (a
+// create, update, or another delete) failed earlier in the sync. Use
+// errors.Is(err, ErrSkippedDependentPathChangeFailed) to detect it.
+var ErrSkippedDependentPathChangeFailed = errors.New("folder was not deleted because a dependent path change failed")
+
+// SkippedDependentPathChangeFailedError carries the UID of the folder that
+// was skipped. The folder's path is already tracked separately on the
+// JobResourceResult (and from there on ResourceSyncIssue.Path); the UID has
+// nowhere else to go, so it lives here instead of being string-interpolated
+// into the message at each call site.
+type SkippedDependentPathChangeFailedError struct {
+	UID string
+}
+
+func (e *SkippedDependentPathChangeFailedError) Error() string {
+	return fmt.Sprintf("folder %s was not deleted because a dependent path change failed", e.UID)
+}
+
+func (e *SkippedDependentPathChangeFailedError) Unwrap() error {
+	return ErrSkippedDependentPathChangeFailed
+}
+
+func NewSkippedDependentPathChangeFailedError(uid string) *SkippedDependentPathChangeFailedError {
+	return &SkippedDependentPathChangeFailedError{UID: uid}
+}
+
+// ErrReplacementFolderNotCreated is the sentinel for a renamed folder's old
+// UID not being deleted because the replacement folder at its new path could
+// not be created. Use errors.Is(err, ErrReplacementFolderNotCreated) to
+// detect it.
+var ErrReplacementFolderNotCreated = errors.New("old folder not deleted because the replacement folder could not be created")
+
+// ReplacementFolderNotCreatedError carries the old folder's UID. The new
+// (replacement) path is already tracked separately on the JobResourceResult,
+// so only the UID - which has no other home - is carried here.
+type ReplacementFolderNotCreatedError struct {
+	OldUID string
+}
+
+func (e *ReplacementFolderNotCreatedError) Error() string {
+	return fmt.Sprintf("old folder %s not deleted because the replacement folder could not be created", e.OldUID)
+}
+
+func (e *ReplacementFolderNotCreatedError) Unwrap() error {
+	return ErrReplacementFolderNotCreated
+}
+
+func NewReplacementFolderNotCreatedError(oldUID string) *ReplacementFolderNotCreatedError {
+	return &ReplacementFolderNotCreatedError{OldUID: oldUID}
+}
+
+// ErrMissingExistingReference indicates a delete change was processed with no
+// existing resource reference to delete - a data-consistency problem in the
+// diff rather than a normal sync outcome. The affected path is already
+// tracked separately on the JobResourceResult, so this sentinel is used
+// directly with no extra wrapping.
+var ErrMissingExistingReference = errors.New("processing deletion: missing existing reference")
+
+// ExportResourceNotFoundError, ExportAppGeneratedError and
+// ExportManagedByOtherError below are deliberately absent from
+// classifyWarning in job_resource_result.go. Their call sites use
+// .WithError(...) with no .AsSkipped(), specifically to keep these as hard
+// errors that escalate the job state - adding a classifyWarning case for any
+// of them would make isWarningError (and so .WithError) silently downgrade
+// them to warnings instead, since classifyWarning doubles as both the reason
+// classifier and the warning/error severity switch.
+
+// ExportResourceNotFoundError carries the kind label and name of a resource
+// explicitly requested for export that no longer exists in Grafana. It wraps
+// the same ErrResourceNotFound sentinel used elsewhere (e.g.
+// ResourceNotFoundError), so errors.Is(err, ErrResourceNotFound) detects
+// either, even though the two carry different identifying fields (this one
+// has only a human kind label and name available, not a Group/Resource).
+type ExportResourceNotFoundError struct {
+	Kind string
+	Name string
+}
+
+func (e *ExportResourceNotFoundError) Error() string {
+	return fmt.Sprintf("%s %q not found", e.Kind, e.Name)
+}
+
+func (e *ExportResourceNotFoundError) Unwrap() error {
+	return ErrResourceNotFound
+}
+
+func NewExportResourceNotFoundError(kind, name string) *ExportResourceNotFoundError {
+	return &ExportResourceNotFoundError{Kind: kind, Name: name}
+}
+
+// ErrExportAppGenerated is the sentinel for an explicitly requested export of
+// an app-generated resource (e.g. an SLO-app dashboard), which has an
+// underscore name invalid on sync-back and so cannot be exported. Use
+// errors.Is(err, ErrExportAppGenerated) to detect it.
+var ErrExportAppGenerated = errors.New("resource is generated by another app and cannot be exported")
+
+// ExportAppGeneratedError carries the kind label and name of the
+// app-generated resource.
+type ExportAppGeneratedError struct {
+	Kind string
+	Name string
+}
+
+func (e *ExportAppGeneratedError) Error() string {
+	return fmt.Sprintf("%s %q is generated by another app and cannot be exported", e.Kind, e.Name)
+}
+
+func (e *ExportAppGeneratedError) Unwrap() error {
+	return ErrExportAppGenerated
+}
+
+func NewExportAppGeneratedError(kind, name string) *ExportAppGeneratedError {
+	return &ExportAppGeneratedError{Kind: kind, Name: name}
+}
+
+// ErrExportManagedByOther is the sentinel for an explicitly requested export
+// of a resource already managed by a different manager (another repository,
+// a plugin, etc.), which cannot be exported. Use
+// errors.Is(err, ErrExportManagedByOther) to detect it.
+var ErrExportManagedByOther = errors.New("resource is managed by another manager and cannot be exported")
+
+// ExportManagedByOtherError carries the kind label and name of the resource,
+// plus the kind of manager that owns it.
+type ExportManagedByOtherError struct {
+	Kind        string
+	Name        string
+	ManagerKind string
+}
+
+func (e *ExportManagedByOtherError) Error() string {
+	return fmt.Sprintf("%s %q is managed by %q and cannot be exported", e.Kind, e.Name, e.ManagerKind)
+}
+
+func (e *ExportManagedByOtherError) Unwrap() error {
+	return ErrExportManagedByOther
+}
+
+func NewExportManagedByOtherError(kind, name, managerKind string) *ExportManagedByOtherError {
+	return &ExportManagedByOtherError{Kind: kind, Name: name, ManagerKind: managerKind}
+}

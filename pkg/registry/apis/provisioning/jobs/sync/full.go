@@ -160,7 +160,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 		skipSpan.SetAttributes(attribute.String("path", change.Path))
 
 		progress.Record(skipCtx, jobs.NewPathOnlyResult(change.Path).
-			WithError(fmt.Errorf("resource was not processed because the parent folder could not be created")).
+			WithError(resources.ErrSkippedParentFolderNotCreated).
 			AsSkipped().
 			Build())
 		skipSpan.End()
@@ -174,7 +174,7 @@ func shouldSkipChange(ctx context.Context, change ResourceFileChange, progress j
 			WithGroup(resources.FolderKind.Group).
 			WithKind(resources.FolderKind.Kind).
 			WithPath(change.Path).
-			WithError(fmt.Errorf("folder was not processed because children resources in its path could not be deleted")).
+			WithError(resources.ErrSkippedFolderChildrenNotDeleted).
 			AsSkipped().
 			Build())
 		skipSpan.End()
@@ -215,7 +215,7 @@ func applyChange(
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
 
 		if change.Existing == nil || change.Existing.Name == "" {
-			result := resultBuilder.WithError(fmt.Errorf("processing deletion for file %s: missing existing reference", change.Path)).Build()
+			result := resultBuilder.WithError(resources.ErrMissingExistingReference).Build()
 			progress.Record(deleteCtx, result)
 			deleteSpan.RecordError(result.Error())
 			deleteSpan.End()
@@ -631,7 +631,7 @@ func cleanupOrphanFolders(
 				progress.Record(skipCtx, jobs.NewFolderResult(folder.Path).
 					WithName(folder.UID).
 					WithReason(folder.Reason).
-					WithError(fmt.Errorf("folder was not deleted because dependent path changes failed")).
+					WithError(resources.NewSkippedDependentPathChangeFailedError(folder.UID)).
 					AsSkipped().
 					Build())
 				skipSpan.End()
