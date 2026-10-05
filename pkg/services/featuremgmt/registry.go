@@ -3052,6 +3052,14 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:        "dataviz.tabularNums",
+			Description: "Enables tabular numerals for visualization legend values",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDatavizSquad,
+			Expression:  "false",
+			Generate:    Generate{React: true},
+		},
+		{
 			Name:         "datetime.useLuxon",
 			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
 			Stage:        FeatureStageExperimental,
@@ -3358,6 +3366,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, React: true},
+		},
+		{
+			Name:         "datasources.queryGatewaySlimAudit",
+			Description:  "Only attach query payloads to query gateway audit events when a guardrail fires",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
 		},
 		// TODO: add docs for the unified_alerting.folder_label_full_sync_interval setting before removing this
 		{

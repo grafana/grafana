@@ -55,6 +55,9 @@ type MockResourceIndex struct {
 	// and forgets them in ForgetType.
 	documentTypes map[schema.GroupResource]struct{}
 
+	// When the index was last compared with storage, through RecordReconciledAt.
+	reconciledAt time.Time
+
 	// Items passed to BulkIndex, and how many writes carried them, guarded by
 	// updateIndexMu.
 	bulkItems []*BulkIndexItem
@@ -154,6 +157,19 @@ func (m *MockResourceIndex) DocumentTypes() ([]schema.GroupResource, error) {
 		}
 	}
 	return slices.Collect(maps.Keys(types)), nil
+}
+
+func (m *MockResourceIndex) ReconciledAt() (time.Time, error) {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	return m.reconciledAt, nil
+}
+
+func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
+	m.updateIndexMu.Lock()
+	defer m.updateIndexMu.Unlock()
+	m.reconciledAt = t
+	return nil
 }
 
 // ForgetType forgets both records, and the documents a test set up, which the
@@ -911,6 +927,16 @@ func TestShouldRebuildIndex(t *testing.T) {
 		"build time before last import time": {
 			buildInfo:       IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour)},
 			lastImportTime:  now,
+			expectedRebuild: true,
+		},
+		"build time equal to last import time": {
+			buildInfo:       IndexBuildInfo{BuildTime: now},
+			lastImportTime:  now,
+			expectedRebuild: true,
+		},
+		"build and import in the same second": {
+			buildInfo:       IndexBuildInfo{BuildTime: now.Truncate(time.Second)},
+			lastImportTime:  now.Truncate(time.Second).Add(500 * time.Millisecond),
 			expectedRebuild: true,
 		},
 		"build time after last import time": {

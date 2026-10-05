@@ -14,7 +14,6 @@ import (
 	"uuid"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/bwmarrin/snowflake"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -201,6 +200,15 @@ type BackendReadResponse struct {
 // ErrBatchReadUnsupported signals the caller to fall back to per-resource reads.
 // On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
 var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
+
+type deletedBatchReadSupport interface {
+	SupportsDeletedBatchReads() bool
+}
+
+func supportsDeletedBatchReads(backend StorageBackend) bool {
+	support, ok := backend.(deletedBatchReadSupport)
+	return ok && support.SupportsDeletedBatchReads()
+}
 
 type ResourceLastImportTime struct {
 	NamespacedResource
@@ -1259,8 +1267,8 @@ func (s *server) create(ctx context.Context, user claims.AuthInfo, req *resource
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, *event)
 	if err != nil {
 		if apierrors.IsConflict(err) {
-			// Retryable concurrent-create conflict. Return as gRPC Aborted
-			// so client retry interceptors can handle it.
+			// Return concurrent-create conflicts as gRPC Aborted so callers can decide
+			// whether to retry; the gRPC layer must not replay conflicts automatically.
 			return nil, status.Error(codes.Aborted, err.Error())
 		}
 		rsp.Error = AsErrorResult(err)
@@ -1788,8 +1796,6 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 		rsp, err = s.listWithSelectors(ctx, req)
 		if !errors.Is(err, errSearchCannotAnswerList) {
 			path = listPathSearch
-			gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "search").Inc()
 			return rsp, err
 		}
 		// The store scan reads the objects themselves, so it answers what the index
@@ -1800,18 +1806,11 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	if s.shouldUseSearchForTrash(req) {
 		path = listPathTrashSearch
 		rsp, err = s.listTrashFromSearch(ctx, req)
-		gr := req.Options.Key.Group + "/" + req.Options.Key.Resource
 		if !errors.Is(err, errSearchCannotAnswerTrash) {
-			if s.storageMetrics != nil {
-				s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "trash_search").Inc()
-			}
 			return rsp, err
 		}
 
 		path = listPathTrashSearchFallback
-		if s.storageMetrics != nil {
-			s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "trash_search_fallback").Inc()
-		}
 		s.log.Warn("Search cannot answer trash List, falling back to the store", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return s.listFromTrash(ctx, req)
 	}
@@ -2285,8 +2284,6 @@ func (s *server) finalizeListResponse(ctx context.Context, rsp *resourcepb.ListR
 
 	rsp.ResourceVersion = rv
 	rsp.NextPageToken = nextToken
-	gr := key.Group + "/" + key.Resource
-	s.storageMetrics.ListWithFieldSelectors.WithLabelValues(gr, "storage").Inc()
 	return rsp, nil
 }
 
@@ -3072,8 +3069,7 @@ func classifyAuthError(err error) string {
 // Unix timestamps (SQL backend).
 func ResourceVersionTime(rv int64) time.Time {
 	if IsSnowflake(rv) {
-		msec := (rv >> (snowflake.NodeBits + snowflake.StepBits)) + snowflake.Epoch
-		return time.UnixMilli(msec)
+		return time.UnixMilli(snowflakeTimestampMillis(rv))
 	}
 	return time.UnixMicro(rv)
 }

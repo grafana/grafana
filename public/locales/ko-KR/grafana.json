@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "검색 취소됨 – {{numberOfRules}}개의 규칙 찾음",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 자동 동기화가 활성화되어 있는 동안에는 가져오기를 사용할 수 없습니다"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "새로운 환경 사용",
         "view-previous-experience": "이전 환경으로 되돌리기"
       },
-      "unknown-rule-type": "알 수 없는 규칙 유형"
+      "unknown-rule-type": "알 수 없는 규칙 유형",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "규칙 로딩 중 오류 발생",
@@ -3167,7 +3170,10 @@
       "view-as": "보기 방식"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "필터 초기화"
+      "clear-filters": "필터 초기화",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "삭제 중",
@@ -6107,9 +6113,6 @@
       "placeholder-search-options": "검색 옵션",
       "visualization-button-tooltip": "검색 옵션"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "쿼리로 돌아가기"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6765,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL 표현식 추가",
       "sql-cta-description": "SQL을 선호하시나요? 대신 쿼리에 SQL 표현식을 추가하세요."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "모든 변환을 삭제하면 기본 선택 화면으로 돌아갑니다."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "다른 변환 추가"
-      },
-      "confirmText-delete-all": "전체 삭제",
-      "delete-all-transformations": "모든 변환 삭제",
-      "title-delete-all-transformations": "모든 변환을 삭제하시겠어요?",
-      "tooltip-clear-search": "검색 초기화",
-      "tooltip-close-picker": "선택기 닫기"
     },
     "validation": {
       "invalid-dashboard-id": "유효한 Grafana.com ID를 찾지 못했습니다.",
@@ -11443,6 +11433,15 @@
         "open-explore": "Explore에서 열기",
         "set-up": "설정"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "클러스터 CPU · 최근 24시간",
         "description": "클러스터 상태, 비용 및 적정 크기 조정에 따른 절감액을 한눈에 확인하세요.",
@@ -11450,19 +11449,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11489,6 +11481,22 @@
         "data-points-per-minute": "분당 데이터 포인트 {{value}}개",
         "description": "Prometheus 호환 메트릭을 연결하여 인프라 상태와 추세를 살펴보세요.",
         "disk-worst": "{{host}}: {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Explore에서 디스크 사용량 조사",
         "series-trend": "활성 시리즈 · 지난 24시간",
         "setup-hint": "메트릭 소스 연결",

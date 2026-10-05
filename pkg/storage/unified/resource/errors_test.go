@@ -74,7 +74,7 @@ func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
 			require.Equal(t, int32(http.StatusForbidden), got.Code, "an authorization outcome must not burn the 5xx error budget")
 			require.Equal(t, string(metav1.StatusReasonForbidden), got.Reason)
 			require.Equal(t, claims.ErrNamespaceMismatch.Error(), got.Message)
-			require.True(t, apierrors.IsForbidden(GetError(got)), "callers should see a typed Forbidden error")
+			require.True(t, apierrors.IsForbidden(StatusError(got)), "callers should see a typed Forbidden error")
 		})
 	}
 }
