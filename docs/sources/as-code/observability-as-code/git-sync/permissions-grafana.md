@@ -313,9 +313,9 @@ Move and delete permission checks work the same way regardless of which branch t
 | Manual sync (pull from Git)         | `provisioning.repositories:write`                                                                             | Admins only                                               |
 | Release / delete orphaned resources | `provisioning.repositories:write`                                                                             | Admins only                                               |
 
-### Repository `subresource` access
+### Repository subresource access
 
-The repository API exposes several `subresources`. The following table shows the permission each one is gated on.
+The repository API exposes several subresources. The following table shows the permission each one is gated on.
 
 The `refs` subresource lists the repository's branches and commits, and two distinct flows legitimately need it:
 
@@ -324,7 +324,7 @@ The `refs` subresource lists the repository's branches and commits, and two dist
 
 Because the `repositories` resource has no Editor tier (`repositories:read` is granted to Viewer and above, while `write`, `create`, and `delete` are admin-only), `refs` accepts either of these checks, and viewers satisfy neither.
 
-| `Subresource`                    | Purpose                                              | Required permission                                                                                                                                       | Who can access it       |
+| Subresource                      | Purpose                                              | Required permission                                                                                                                                       | Who can access it       |
 | -------------------------------- | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | `files`                          | Read and write provisioned resource files            | Authenticated access, then standard `dashboards:*` / `folders:*` checks                                                                                   | All authenticated users |
 | `jobs` (create)                  | Create a move, delete, push, migrate, and so on, job | Authenticated access; the specific action decides the permission - refer to [Job actions and required permissions](#job-actions-and-required-permissions) | All authenticated users |
