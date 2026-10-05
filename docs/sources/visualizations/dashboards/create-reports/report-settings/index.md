@@ -172,7 +172,7 @@ While you're editing the footer, you can also:
 - Reorder the footer.
   Use the up and down arrows next to each item.
 
-The next report that Grafana generates uses the new footer.
+The next report that Grafana generates uses the updated footer.
 To check it sooner, click **Preview PDF** during report creation.
 
 The footer applies to the report PDF, and to the PDFs you generate with **Preview PDF** during report creation and with **Export as PDF** on a dashboard.
