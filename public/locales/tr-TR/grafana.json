@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Arama seçenekleri",
       "visualization-button-tooltip": "Arama seçenekleri"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Sorgulara geri dön"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL ifadesi ekle",
       "sql-cta-description": "SQL'i mi tercih ediyorsunuz? Bunun yerine sorgularınıza bir SQL ifadesi ekleyin."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Tüm dönüşümleri silerek ana seçim ekranına geri döneceksiniz."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Başka bir dönüşüm ekle"
-      },
-      "confirmText-delete-all": "Tümünü sil",
-      "delete-all-transformations": "Tüm dönüşümleri sil",
-      "title-delete-all-transformations": "Tüm dönüşümler silinsin mi?",
-      "tooltip-clear-search": "Aramayı temizle",
-      "tooltip-close-picker": "Seçiciyi kapat"
     },
     "validation": {
       "invalid-dashboard-id": "Geçerli bir Grafana.com kimliği bulunamadı",
