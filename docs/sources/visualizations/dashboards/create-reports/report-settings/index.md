@@ -96,7 +96,7 @@ They also apply to the PDFs you generate with **Preview PDF** during report crea
 {{< admonition type="note" >}}
 The PDF footer options are available in [Grafana Enterprise](ref:grafana-enterprise), as well as in [Grafana Cloud](/docs/grafana-cloud/).
 
-In self-managed Grafana, enable the `reportingFooterSettings` [feature toggle](ref:feature-toggles) in your Grafana configuration file.
+In self-managed Grafana Enterprise, enable the `reportingFooterSettings` [feature toggle](ref:feature-toggles) in your Grafana configuration file.
 {{< /admonition >}}
 
 The PDF footer repeats at the bottom of every page of the report PDF.
