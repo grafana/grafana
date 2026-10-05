@@ -15,14 +15,17 @@ declare module "@openfeature/core" {
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
     | "alerting.syncExternalAlertmanager"
+
     // assistant.*
     | "assistant.dashboardPlanning"
     | "assistant.frontend.tools.dashboardTemplates"
     | "assistant.fullscreenWorkspace"
+
     // dashboard.*
     | "dashboard.notebooks"
     | "dashboard.recentlyDeletedViaTrash"
     | "dashboard.vectorSearch"
+
     // datasources.*
     | "datasources.apiserver.useNewAPIsForDatasourceResources"
     | "datasources.azureMonitorBatchAPI"
@@ -30,10 +33,13 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "datasources.querier.newName"
     | "datasources.queryGateway"
+
     // dataviz.*
     | "dataviz.experimentalColorSchemes"
+
     // flameGraph.*
     | "flameGraph.tableNg"
+
     // grafana.*
     | "grafana.cmdkHybridSearch"
     | "grafana.customDashboardTemplates"
@@ -70,39 +76,52 @@ declare module "@openfeature/core" {
     | "grafana.vectorSearchCmdk"
     | "grafana.viewPanelPane"
     | "grafana.visualDesignRefresh"
+
     // libraryelements.*
     | "libraryelements.kubernetesLibraryPanels"
+
     // paneledit.*
     | "paneledit.buttonLabels"
+
     // plugins.*
     | "plugins.initDataSourcesAsync"
     | "plugins.useMTPluginSettings"
     | "plugins.useMTPlugins"
+
     // provisioning.*
     | "provisioning.gitConventions"
     | "provisioning.readmes"
     | "provisioning.userAttribution"
+
     // queryHistory.*
     | "queryHistory.localOnly"
     | "queryHistory.recentQueriesUI"
+
     // queryeditor.*
     | "queryeditor.coauthoringUi"
+
     // rawPrometheus.*
     | "rawPrometheus.tableNg"
+
     // reporting.*
     | "reporting.anyPageReporting"
+
     // snapshots.*
     | "snapshots.kubernetesSnapshots"
+
     // stateTimeline.*
     | "stateTimeline.nameAboveBars"
+
     // table.*
     | "table.autoColumnWidths"
     | "table.inspectDataTableNG"
     | "table.paginationPageSize"
     | "table.refresh"
     | "table.refreshNewFeatures"
+
     // text.*
     | "text.newFeatures"
+
     // legacy toggles
     | "alertRuleRestore"
     | "alertingNavigationV2"

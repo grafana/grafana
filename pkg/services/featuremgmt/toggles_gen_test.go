@@ -691,6 +691,10 @@ func getReactTypingsKeys(keys []string) string {
 			return
 		}
 		sort.Strings(groupKeys)
+		// Blank line between groups, but not before the first one.
+		if s.Len() > 0 {
+			s.WriteString("\n")
+		}
 		s.WriteString("\n    // ")
 		s.WriteString(header)
 		for _, key := range groupKeys {
@@ -799,8 +803,10 @@ func TestGenerateOpenFeatureReactForFlags(t *testing.T) {
 	require.Contains(t, typings, `export type BooleanFlagKey =
     // other.*
     | "other.enabled"
+
     // test.*
     | "test.enabled"
+
     // legacy toggles
     | "legacyToggle";`)
 	require.Contains(t, typings, `export type NumberFlagKey =
