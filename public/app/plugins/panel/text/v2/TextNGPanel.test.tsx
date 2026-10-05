@@ -1,11 +1,20 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { CoreApp, type InterpolateFunction, toDataFrame } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  type GrafanaTheme2,
+  type InterpolateFunction,
+  ThemeContext,
+  toDataFrame,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
+import { themeMacro } from 'app/features/templating/themeMacro';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -858,6 +867,41 @@ describe('TextNGPanel', () => {
 
       expect(html()).toContain('second');
       expect(html()).not.toContain('first');
+    });
+
+    describe('with a ${__theme} macro', () => {
+      const originalTheme = config.theme2;
+      const dark = createTheme({ colors: { mode: 'dark' } });
+      const light = createTheme({ colors: { mode: 'light' } });
+
+      // The app's ThemeProvider updates config.theme2 before its children render.
+      const themed = (theme: GrafanaTheme2, props: Props) => {
+        config.theme2 = theme;
+        return <ThemeContext.Provider value={theme}>{viewing(props)}</ThemeContext.Provider>;
+      };
+
+      afterEach(() => {
+        config.theme2 = originalTheme;
+      });
+
+      it('re-renders the content with the new theme tokens when the theme changes', () => {
+        const props = createProps(
+          (target) =>
+            target.replace('${__theme.colors.text.primary}', (match) => themeMacro(match, 'colors.text.primary')),
+          {
+            options: { content: '<span style="color: ${__theme.colors.text.primary}">hi</span>', mode: TextMode.HTML },
+          }
+        );
+
+        const { rerender } = render(themed(dark, props));
+        settle();
+        expect(screen.getByText('hi')).toHaveStyle({ color: dark.colors.text.primary });
+
+        rerender(themed(light, props));
+        settle();
+
+        expect(screen.getByText('hi')).toHaveStyle({ color: light.colors.text.primary });
+      });
     });
   });
 

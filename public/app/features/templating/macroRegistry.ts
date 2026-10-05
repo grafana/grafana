@@ -4,6 +4,7 @@ import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { getVariablesUrlParams } from '../variables/getAllVariableValuesForUrl';
 
 import { dataMacro, fieldMacro, seriesNameMacro, valueMacro } from './dataMacros';
+import { themeMacro } from './themeMacro';
 import { type MacroHandler } from './types';
 
 export const macroRegistry: Record<string, MacroHandler> = {
@@ -14,6 +15,7 @@ export const macroRegistry: Record<string, MacroHandler> = {
   [DataLinkBuiltInVars.includeVars]: includeVarsMacro,
   [DataLinkBuiltInVars.keepTime]: urlTimeRangeMacro,
   ['__timezone']: timeZoneMacro,
+  ['__theme']: themeMacro,
 };
 
 function includeVarsMacro(match: string, fieldPath?: string, scopedVars?: ScopedVars) {

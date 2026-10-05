@@ -73,6 +73,7 @@ export function TextNGPanel(props: Props) {
     width,
   } = props;
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
   const isEditing = app === CoreApp.PanelEditor;
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
@@ -153,7 +154,8 @@ export function TextNGPanel(props: Props) {
 
   // Batches bursts of change (data/variable refresh) so the interpolate and
   // markdown/sanitize pass runs once per burst. renderCounter covers a
-  // referenced variable changing, which leaves options and data untouched.
+  // referenced variable changing and theme a ${__theme} token changing, neither
+  // of which touches options or data.
   useDebounce(
     () => {
       if (isEditing) {
@@ -174,6 +176,7 @@ export function TextNGPanel(props: Props) {
       series,
       replaceVariables,
       renderCounter,
+      theme,
     ]
   );
 
@@ -374,7 +377,9 @@ function EditorLoadingFallback({
   const layout = useStyles2(getEditorLayoutStyles);
   const rendered = useMemo(
     () => renderPanelContent(options, renderMode, series, replaceVariables, rowWindow),
-    [options, renderMode, series, replaceVariables, rowWindow]
+    // theme: ${__theme} reads the current theme, which no other input reflects.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [options, renderMode, series, replaceVariables, rowWindow, theme]
   );
   const isCode = options.mode === TextMode.Code;
 
