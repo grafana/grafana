@@ -224,21 +224,18 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
-func TestPgvectorBackend_ListBackfillJobs(t *testing.T) {
+func TestPgvectorBackend_ListIncompleteBackfillJobs(t *testing.T) {
 	rdb := test.NewDBProviderNopSQL(t)
 	backend := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
 	rdb.SQLMock.ExpectQuery(`SELECT .*"content_version".* FROM vector_backfill_jobs`).WithArgs("m").
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "model", "resource", "stopping_rv", "content_version", "last_seen_key", "is_complete", "last_error",
-		}).AddRow(int64(1), "m", "folder_embeddings", int64(100), 2, nil, false, nil).
-			AddRow(int64(2), "m", "dashboards", int64(200), 3, nil, true, nil))
+		}).AddRow(int64(1), "m", "folder_embeddings", int64(100), 2, nil, false, nil))
 
-	jobs, err := backend.ListBackfillJobs(t.Context(), "m")
+	jobs, err := backend.ListIncompleteBackfillJobs(t.Context(), "m")
 	require.NoError(t, err)
 	require.Equal(t, []BackfillJob{{
 		ID: 1, Model: "m", Resource: "folder_embeddings", StoppingRV: 100, ContentVersion: 2,
-	}, {
-		ID: 2, Model: "m", Resource: "dashboards", StoppingRV: 200, ContentVersion: 3, IsComplete: true,
 	}}, jobs)
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }

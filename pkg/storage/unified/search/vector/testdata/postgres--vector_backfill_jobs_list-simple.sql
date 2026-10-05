@@ -8,6 +8,7 @@ SELECT
     "is_complete",
     "last_error"
     FROM vector_backfill_jobs
-    WHERE "model" = 'text-embedding-005'
+    WHERE "is_complete" = FALSE
+      AND "model" = 'text-embedding-005'
     ORDER BY "id"
 ;

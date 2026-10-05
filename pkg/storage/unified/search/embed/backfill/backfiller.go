@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -143,7 +142,6 @@ func (b *VectorBackfiller) Run(ctx context.Context) error {
 		return nil
 	}
 	defer release()
-	defer b.metrics.BackfillJobComplete.Reset()
 
 	b.runBackfill(ctx)
 	t := time.NewTicker(b.interval)
@@ -166,26 +164,20 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 	// cannot change content versions midway through a job.
 	builders, err := b.resolveBuilders(ctx)
 	if err != nil {
-		b.metrics.BackfillJobComplete.Reset()
 		log.Error("backfill: resolve collections", "err", err)
 		return
 	}
-	if len(builders) > 0 {
-		b.reopenStaleJobs(ctx, log, builders)
+	if len(builders) == 0 {
+		return
 	}
+	b.reopenStaleJobs(ctx, log, builders)
 
-	jobs, err := b.vectorBackend.ListBackfillJobs(ctx, b.batchEmbedder.Model())
-	// Remove deleted jobs and old revisions; a failed read must not report stale completion.
-	b.metrics.BackfillJobComplete.Reset()
+	jobs, err := b.vectorBackend.ListIncompleteBackfillJobs(ctx, b.batchEmbedder.Model())
 	if err != nil {
 		log.Error("backfill: list jobs", "err", err)
 		return
 	}
-	for _, job := range jobs {
-		b.recordJobCompletion(job)
-	}
-	jobs = slices.DeleteFunc(jobs, func(job vector.BackfillJob) bool { return job.IsComplete })
-	if len(jobs) == 0 || len(builders) == 0 {
+	if len(jobs) == 0 {
 		return
 	}
 
@@ -211,26 +203,16 @@ func (b *VectorBackfiller) runBackfill(ctx context.Context) {
 		}
 		if err := b.runBackfillJob(ctx, job, builders); err != nil {
 			log.Error("backfill: job failed",
-				"job_id", job.ID, "model", job.Model, "resource", job.Resource, "reembed_version", job.ContentVersion, "err", err)
+				"job_id", job.ID, "model", job.Model, "err", err)
 			_ = b.vectorBackend.MarkBackfillJobError(ctx, job.ID, err.Error())
 			continue
 		}
 		if err := b.vectorBackend.CompleteBackfillJob(ctx, job.ID); err != nil {
 			log.Error("backfill: complete job", "job_id", job.ID, "err", err)
 		} else {
-			job.IsComplete = true
-			b.recordJobCompletion(job)
-			log.Info("backfill: job complete", "job_id", job.ID, "model", job.Model, "resource", job.Resource, "reembed_version", job.ContentVersion)
+			log.Info("backfill: job complete", "job_id", job.ID, "model", job.Model)
 		}
 	}
-}
-
-func (b *VectorBackfiller) recordJobCompletion(job vector.BackfillJob) {
-	complete := 0.0
-	if job.IsComplete {
-		complete = 1
-	}
-	b.metrics.BackfillJobComplete.WithLabelValues(job.Resource, job.Model, strconv.Itoa(job.ContentVersion)).Set(complete)
 }
 
 // reopenStaleJobs runs before listing incomplete jobs so reopened work is

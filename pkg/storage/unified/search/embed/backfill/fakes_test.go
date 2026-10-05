@@ -227,7 +227,6 @@ type fakeVector struct {
 	// Backfill bookkeeping:
 	jobs              []vector.BackfillJob
 	onListJobs        func()
-	listJobsErr       error
 	jobContentVersion map[int64]int // job ID -> content_version; absent = DB DEFAULT 1
 	reopenCalls       []reopenCall
 	checkpoints       []checkpointCall
@@ -538,18 +537,17 @@ func (f *fakeVector) ReopenStaleBackfillJobs(_ context.Context, model, res strin
 	return reopened, nil
 }
 
-func (f *fakeVector) ListBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
+// ListIncompleteBackfillJobs mirrors the real SQL's `is_complete = FALSE`
+// filter so tests can prove a completed job is invisible until reopened.
+func (f *fakeVector) ListIncompleteBackfillJobs(_ context.Context, model string) ([]vector.BackfillJob, error) {
 	if f.onListJobs != nil {
 		f.onListJobs()
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if f.listJobsErr != nil {
-		return nil, f.listJobsErr
-	}
 	out := make([]vector.BackfillJob, 0, len(f.jobs))
 	for _, j := range f.jobs {
-		if j.Model == model {
+		if j.Model == model && !j.IsComplete {
 			if version, ok := f.jobContentVersion[j.ID]; ok {
 				j.ContentVersion = version
 			}

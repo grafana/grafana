@@ -452,7 +452,7 @@ func (f *fakeVector) SetLatestRV(_ context.Context, rv int64) error {
 	}
 	return nil
 }
-func (f *fakeVector) ListBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
+func (f *fakeVector) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
 func (f *fakeVector) EnsureResourcePartition(_ context.Context, res string) error {
