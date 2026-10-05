@@ -21,6 +21,8 @@ import { type RangeSliderProps } from './types';
 export const RangeSlider = ({
   min,
   max,
+  controlled = false,
+  ariaLabelForHandle,
   onChange,
   onAfterChange,
   orientation = 'horizontal',
@@ -71,14 +73,15 @@ export const RangeSlider = ({
         min={min}
         max={max}
         step={step}
-        defaultValue={value}
+        defaultValue={controlled ? undefined : value}
+        value={controlled ? value : undefined}
         range={true}
         onChange={handleChange}
         onChangeComplete={handleChangeComplete}
         vertical={!isHorizontal}
         reverse={reverse}
         handleRender={tipHandleRender}
-        ariaLabelForHandle={dragHandleAriaLabel}
+        ariaLabelForHandle={ariaLabelForHandle ?? dragHandleAriaLabel}
       />
     </div>
   );
