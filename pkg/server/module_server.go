@@ -497,7 +497,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry), sql.WithBlobBackend(s.blobBackend))
+	serviceOptions := s.unifiedServiceOptions()
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
@@ -539,12 +539,16 @@ func (s *ModuleServer) initZanzanaServerModule() (services.Service, error) {
 	return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, reconcilerState)
 }
 
+func (s *ModuleServer) unifiedServiceOptions() []sql.ServiceOption {
+	return append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry), sql.WithBlobBackend(s.blobBackend))
+}
+
 func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	support, err := InitializeSearchSupport(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, err
 	}
-	serviceOptions := append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry))
+	serviceOptions := s.unifiedServiceOptions()
 	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err

@@ -73,7 +73,7 @@ func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.Put
 	}
 	info.SetContentType(req.ContentType)
 
-	w, err := s.kv.Save(ctx, kv.BlobDataSection, kvBlobKey(req.Resource, info.UID, info.ContentType()).String())
+	w, err := s.kv.Save(ctx, kv.BlobDataSection, kvBlobKey(req.Resource, info.UID, req.ContentType).String())
 	if err != nil {
 		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
 	}

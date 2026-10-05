@@ -79,23 +79,26 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 
 	t.Run("blob support", func(t *testing.T) {
 		for _, tc := range []struct {
-			name      string
-			namespace string
+			name        string
+			namespace   string
+			contentType string
 		}{
-			{name: "namespaced", namespace: "default"},
-			{name: "cluster-scoped", namespace: ""},
+			{name: "namespaced", namespace: "default", contentType: "application/json"},
+			{name: "cluster-scoped", namespace: "", contentType: "application/json"},
+			{name: "content type with extra parameters", namespace: "default", contentType: "multipart/form-data; boundary=example"},
+			{name: "content type with mixed case", namespace: "default", contentType: "Application/JSON; Charset=UTF-8"},
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				for _, writer := range env.stores() {
 					for _, reader := range env.stores() {
 						t.Run(reader.name+" reads a blob written by "+writer.name, func(t *testing.T) {
 							key := env.newResource(t, tc.namespace)
-							put := env.put(t, writer.store, key, "application/json", `{"from":"`+writer.name+`"}`)
+							put := env.put(t, writer.store, key, tc.contentType, `{"from":"`+writer.name+`"}`)
 
 							rsp := env.get(t, reader.store, key, put.Uid)
 							require.Nil(t, rsp.Error)
 							require.Equal(t, `{"from":"`+writer.name+`"}`, string(rsp.Value))
-							require.Equal(t, "application/json", rsp.ContentType)
+							require.Equal(t, tc.contentType, rsp.ContentType)
 						})
 					}
 				}
