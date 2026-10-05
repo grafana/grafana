@@ -14,14 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-var _ builder.APIGroupMutation = (*DataSourceAPIBuilder)(nil)
+var _ builder.APIGroupValidation = (*DataSourceAPIBuilder)(nil)
 
-// Mutate rejects datasource creates that embed Team LBAC rules. The API server
-// discovers this hook through APIGroupMutation when it registers the builder.
+// Validate rejects datasource creates that embed Team LBAC rules. The API server
+// discovers this hook through APIGroupValidation when it registers the builder.
 // Updates require comparing the old and new values so existing rules can be
 // echoed without allowing callers to change them.
 // See https://github.com/grafana/identity-access-team/issues/2467 for the update guard.
-func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
+func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
 	isCreate := a.GetOperation() == admission.Create
 	// Admission dispatch is by group/version, which also contains other resources.
 	isDatasourceResource := a.GetResource().Resource == b.datasourceResourceInfo.GetName()

@@ -44,7 +44,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 				ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 				resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, false, nil,
 			)
-			err := admissionPlugin.Admit(context.Background(), attrs, nil)
+			err := admissionPlugin.Validate(context.Background(), attrs, nil)
 			if tt.wantField == "" {
 				require.NoError(t, err)
 				return
@@ -80,7 +80,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 				ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 				gvr, tt.subresource, tt.operation, &metav1.CreateOptions{}, false, nil,
 			)
-			require.NoError(t, admissionPlugin.Admit(context.Background(), attrs, nil))
+			require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
 		})
 	}
 }
@@ -100,5 +100,5 @@ func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
 		ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 		resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, false, nil,
 	)
-	require.NoError(t, admissionPlugin.Admit(context.Background(), attrs, nil))
+	require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
 }
