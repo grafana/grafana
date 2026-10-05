@@ -1,0 +1,28 @@
+# Fully owned and documented, but still carries a scratch "tmp" label, which the ownership
+# RulePolicy forbids. A forbidden key is rejected even when its value is empty.
+apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: queue-backlog
+  annotations:
+    grafana.app/folder: platform-alerts
+spec:
+  title: Queue backlog is growing
+  trigger:
+    interval: 1m
+  noDataState: NoData
+  execErrState: Error
+  expressions:
+    A:
+      model:
+        type: math
+        expression: "1 > 0"
+      source: true
+  labels:
+    team: platform
+    severity: warning
+    tmp: ""
+  annotations:
+    runbook_url: https://runbooks.example.com/queue-backlog
+    summary: The queue backlog is growing.
+    description: More messages are arriving than are being processed.

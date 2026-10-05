@@ -1,0 +1,8 @@
+# Has a team prefix but is longer than 40 characters. The length convention is only a Warn, so
+# the folder is created and the response carries a warning.
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: platform-runbooks
+spec:
+  title: "platform: Runbooks and operational playbooks"

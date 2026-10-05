@@ -1,0 +1,7 @@
+# Breaks the team-prefix convention, which is enforced with Deny: the folder is not created.
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: platform-dashboards
+spec:
+  title: Platform Dashboards

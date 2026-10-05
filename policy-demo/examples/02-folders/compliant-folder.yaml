@@ -1,0 +1,8 @@
+# Follows both conventions: starts with a team prefix and is under 40 characters.
+# The alert rule examples are created in this folder.
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: platform-alerts
+spec:
+  title: "platform: Alerts"

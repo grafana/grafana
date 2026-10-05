@@ -1,0 +1,8 @@
+# Renames the legacy folder to a title that follows the convention: admitted.
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: legacy-alerts
+spec:
+  title: "platform: Legacy alerts"
+  description: Kept for history; to be migrated.

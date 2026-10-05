@@ -1,0 +1,25 @@
+# Meets the enforced ownership policy but skips the documentation annotations. The documentation
+# RulePolicy is only a Warn, so the rule is created and the response carries warnings.
+apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: certificate-expiry
+  annotations:
+    grafana.app/folder: platform-alerts
+spec:
+  title: Certificate expires soon
+  trigger:
+    interval: 1m
+  noDataState: NoData
+  execErrState: Error
+  expressions:
+    A:
+      model:
+        type: math
+        expression: "1 > 0"
+      source: true
+  labels:
+    team: platform
+    severity: warning
+  annotations:
+    runbook_url: https://runbooks.example.com/certificate-expiry

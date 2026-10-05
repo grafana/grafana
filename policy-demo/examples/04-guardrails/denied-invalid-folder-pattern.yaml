@@ -1,0 +1,9 @@
+# Look-behind is not supported by RE2, the regular expression engine CEL uses, so the pattern
+# is rejected when the FolderNamingPolicy is written rather than failing on every folder write.
+apiVersion: foldernaming.grafana.app/v0alpha1
+kind: FolderNamingPolicy
+metadata:
+  name: lookbehind
+spec:
+  enforcement: Deny
+  titlePattern: "(?<=team-)[a-z]+"

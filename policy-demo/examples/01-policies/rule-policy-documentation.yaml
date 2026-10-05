@@ -1,0 +1,12 @@
+# Alert rules should be documented, but this is not enforced yet.
+# enforcement: Warn admits the write and returns a warning, so a new requirement can be assessed
+# before it is switched to Deny.
+apiVersion: rulepolicy.alerting.grafana.app/v0alpha1
+kind: RulePolicy
+metadata:
+  name: documentation
+spec:
+  enforcement: Warn
+  requiredAnnotations:
+    - summary
+    - description

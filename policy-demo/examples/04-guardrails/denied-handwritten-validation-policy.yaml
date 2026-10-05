@@ -1,0 +1,14 @@
+# Users cannot write validation policies directly, not even org admins: only Grafana apps do,
+# through their reconcilers. This request is forbidden by authorization before it is stored.
+apiVersion: policy.grafana.app/v0alpha1
+kind: ValidationPolicy
+metadata:
+  name: handwritten
+spec:
+  match:
+    - group: rules.alerting.grafana.app
+      versions: [v0alpha1]
+      kinds: [AlertRule]
+  validations:
+    - expression: "false"
+      message: no alert rules for anyone

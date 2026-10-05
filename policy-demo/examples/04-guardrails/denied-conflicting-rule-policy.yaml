@@ -1,0 +1,12 @@
+# A key that is both required and forbidden could never be satisfied, so the RulePolicy itself
+# is rejected when it is written.
+apiVersion: rulepolicy.alerting.grafana.app/v0alpha1
+kind: RulePolicy
+metadata:
+  name: contradictory
+spec:
+  enforcement: Deny
+  requiredLabels:
+    - team
+  forbiddenLabels:
+    - team

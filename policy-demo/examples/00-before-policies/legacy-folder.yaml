@@ -1,0 +1,8 @@
+# A folder that exists before any naming convention. Folder naming policies only check creates
+# and renames, so this folder stays editable after the convention is introduced.
+apiVersion: folder.grafana.app/v1
+kind: Folder
+metadata:
+  name: legacy-alerts
+spec:
+  title: Legacy Alerts

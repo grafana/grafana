@@ -1,0 +1,9 @@
+# Folder titles should be short enough to read in the folder tree. Only a warning for now.
+apiVersion: foldernaming.grafana.app/v0alpha1
+kind: FolderNamingPolicy
+metadata:
+  name: short-titles
+spec:
+  enforcement: Warn
+  titlePattern: ".{1,40}"
+  description: "keep folder titles to 40 characters or fewer"

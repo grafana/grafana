@@ -1,0 +1,27 @@
+# Carries every required label and annotation and no forbidden ones: admitted silently.
+# The rule uses a server-side math expression so the demo needs no datasource.
+apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: api-error-rate
+  annotations:
+    grafana.app/folder: platform-alerts
+spec:
+  title: API error rate is high
+  trigger:
+    interval: 1m
+  noDataState: NoData
+  execErrState: Error
+  expressions:
+    A:
+      model:
+        type: math
+        expression: "1 > 0"
+      source: true
+  labels:
+    team: platform
+    severity: critical
+  annotations:
+    runbook_url: https://runbooks.example.com/api-error-rate
+    summary: The API is returning too many errors.
+    description: More than 5% of API requests failed over the last 5 minutes.

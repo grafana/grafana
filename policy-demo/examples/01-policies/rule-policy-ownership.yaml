@@ -1,0 +1,16 @@
+# Every alert rule must say who owns it and how to respond, and must not carry scratch labels.
+# enforcement: Deny rejects any alert rule write that breaks this policy.
+apiVersion: rulepolicy.alerting.grafana.app/v0alpha1
+kind: RulePolicy
+metadata:
+  name: ownership
+spec:
+  enforcement: Deny
+  requiredLabels:
+    - team
+    - severity
+  requiredAnnotations:
+    - runbook_url
+  forbiddenLabels:
+    - tmp
+    - test

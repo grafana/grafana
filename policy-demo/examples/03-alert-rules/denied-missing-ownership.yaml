@@ -1,0 +1,25 @@
+# Has no owner, no severity and no runbook. The ownership RulePolicy is enforced with Deny, so
+# the rule is not created and the error lists everything that is missing.
+apiVersion: rules.alerting.grafana.app/v0alpha1
+kind: AlertRule
+metadata:
+  name: disk-almost-full
+  annotations:
+    grafana.app/folder: platform-alerts
+spec:
+  title: Disk is almost full
+  trigger:
+    interval: 1m
+  noDataState: NoData
+  execErrState: Error
+  expressions:
+    A:
+      model:
+        type: math
+        expression: "1 > 0"
+      source: true
+  labels:
+    severity: "  "
+  annotations:
+    summary: A disk is running out of space.
+    description: Less than 10% of a disk is free.

@@ -1,0 +1,10 @@
+# Folder titles must start with the owning team, like "platform: Alerts".
+# titlePattern is an RE2 regular expression that the whole title must match.
+apiVersion: foldernaming.grafana.app/v0alpha1
+kind: FolderNamingPolicy
+metadata:
+  name: team-prefix
+spec:
+  enforcement: Deny
+  titlePattern: "[a-z0-9-]+: .+"
+  description: "start with the owning team in lowercase, like 'platform: Alerts'"
