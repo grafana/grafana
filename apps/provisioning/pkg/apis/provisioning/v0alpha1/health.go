@@ -98,6 +98,25 @@ const (
 	// ReasonFolderOrphaned indicates the folder exists in the cluster but
 	// no longer in the git repository.
 	ReasonFolderOrphaned SyncIssueReason = "FolderOrphaned"
+	// ReasonSkippedParentFolderNotCreated indicates a resource was not
+	// processed because its parent folder failed to be created earlier in
+	// the same sync. The parent folder's own failure is reported separately
+	// on its own result; this result did not fail on its own.
+	ReasonSkippedParentFolderNotCreated SyncIssueReason = "SkippedParentFolderNotCreated"
+	// ReasonSkippedFolderChildrenNotDeleted indicates a folder was not
+	// processed because resources nested under it could not be deleted. The
+	// child resources' own failures are reported separately.
+	ReasonSkippedFolderChildrenNotDeleted SyncIssueReason = "SkippedFolderChildrenNotDeleted"
+	// ReasonSkippedDependentPathChangeFailed indicates a folder delete was
+	// skipped because a related path change elsewhere in the same tree (a
+	// create, update, or another delete) failed earlier in the sync. That
+	// failure is reported separately on its own result.
+	ReasonSkippedDependentPathChangeFailed SyncIssueReason = "SkippedDependentPathChangeFailed"
+	// ReasonReplacementFolderNotCreated indicates a renamed folder's old UID
+	// was not deleted because the replacement folder at its new path could
+	// not be created. The replacement folder's own failure is reported
+	// separately.
+	ReasonReplacementFolderNotCreated SyncIssueReason = "ReplacementFolderNotCreated"
 	// ReasonFolderDepthExceeded indicates that creating the folder would exceed
 	// the maximum folder depth enforced by the folder API. The repository
 	// owner must shorten the offending path; provisioning cannot recover
