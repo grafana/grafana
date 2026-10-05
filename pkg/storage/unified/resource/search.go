@@ -1456,6 +1456,12 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 			s.log.Warn("failed to get build info for index", "key", key, "error", err)
 			continue
 		}
+		if lastImportTime := importTimes[key]; !lastImportTime.IsZero() && !bi.BuildTime.After(lastImportTime) {
+			return &resourcepb.RebuildIndexesResponse{
+				RebuildCount: int64(rebuildCount),
+				Error:        AsErrorResult(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime)),
+			}, nil
+		}
 		if !bi.BuildTime.IsZero() {
 			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{
 				Group:         key.Group,
