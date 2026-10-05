@@ -58,7 +58,7 @@ export function TimeRangeFields({
         { input: toInput, label: toLabel, error: toError, id: toId },
       ].map(({ input, label, error, id }) => (
         <div key={id} className={rowStyle}>
-          <Field label={label} invalid={!!error} error={error} className={fieldStyle}>
+          <Field label={label} invalid={!!error} error={error}>
             <Input id={id} autoComplete="off" {...input} addonAfter={icon} />
           </Field>
           {fieldSuffix}
@@ -75,4 +75,3 @@ export function TimeRangeFields({
 }
 
 const rowStyle = css({ display: 'flex' });
-const fieldStyle = css({ width: 208, maxWidth: '100%' });

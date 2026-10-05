@@ -5,6 +5,37 @@ import { dateTimeParse } from '@grafana/data';
 
 import { TimeRangeFields } from './TimeRangeFields';
 
+it.each([
+  { name: 'default sizing', width: undefined, expectedWidth: '100%' },
+  { name: 'caller sizing', width: 26, expectedWidth: '208px' },
+])('preserves $name without constraining the fields', ({ width, expectedWidth }) => {
+  render(
+    <TimeRangeFields
+      fromInput={{ defaultValue: 'now-1h', width }}
+      toInput={{ defaultValue: 'now', width }}
+      fieldSuffix={<span data-testid="field-suffix" />}
+      calendar={{
+        isFullscreen: true,
+        from: dateTimeParse('now-1h'),
+        to: dateTimeParse('now'),
+        onApply: jest.fn(),
+        onChange: jest.fn(),
+      }}
+    />
+  );
+
+  for (const input of screen.getAllByTestId('input-wrapper')) {
+    expect(input).toHaveStyle({ width: expectedWidth });
+  }
+  for (const suffix of screen.getAllByTestId('field-suffix')) {
+    // Field sizing must remain intrinsic even when its input has an explicit width.
+    // eslint-disable-next-line testing-library/no-node-access
+    const field = suffix.previousElementSibling!;
+    expect(getComputedStyle(field).width).toBe('');
+    expect(getComputedStyle(field).maxWidth).toBe('');
+  }
+});
+
 it('opens an anchored calendar with caller labels and restores trigger focus on Escape', async () => {
   const user = userEvent.setup();
   const anchor = document.createElement('div');
