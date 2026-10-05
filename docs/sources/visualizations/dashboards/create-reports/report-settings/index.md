@@ -167,8 +167,7 @@ To customize the PDF footer, follow these steps:
 
 While you're editing the footer, you can also:
 
-- Style a page number, date, or fixed text item.
-  Click the gear icon next to the item and set **Size**, **Weight**, **Style**, or **Color**.
+- Apply text styling options to a page number, date, or fixed text item. For more information, refer to [Text styling options](#text-styling-options)
 - Reorder the footer.
   Use the up and down arrows next to each item.
 
