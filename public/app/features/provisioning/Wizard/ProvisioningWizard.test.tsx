@@ -592,8 +592,8 @@ describe('ProvisioningWizard', () => {
       let stored = createRepository({ metadata: { resourceVersion: '5' } }); // generation 1, observedGeneration 1
       const saved = createRepository({ metadata: { generation: 2, resourceVersion: '6' } }); // observedGeneration still 1
       let savingBootstrap = false;
-      let releaseStaleGet = () => {};
-      const staleGet = new Promise<void>((resolve) => (releaseStaleGet = resolve));
+      let releaseLists = () => {};
+      const listsReleased = new Promise<void>((resolve) => (releaseLists = resolve));
 
       server.use(
         http.post(`${BASE}/repositories`, () => HttpResponse.json(stored)),
@@ -604,9 +604,9 @@ describe('ProvisioningWizard', () => {
           return HttpResponse.json(stored);
         }),
         http.get(`${BASE}/repositories`, async () => {
-          const snapshot = stored; // read at request time, possibly before the PUT lands
-          if (savingBootstrap && snapshot.metadata?.generation === 1) {
-            await staleGet; // the GET fired by the pre-save connection test fulfils after the PUT
+          const snapshot = stored; // read at request time, like a server does
+          if (savingBootstrap) {
+            await listsReleased; // only the PUT response can reach the cache until released
           }
           return HttpResponse.json({
             items: [snapshot],
@@ -632,13 +632,13 @@ describe('ProvisioningWizard', () => {
       expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
 
-      // The pre-save GET lands with the old reconciled object. No list refetch follows it: the save's
-      // invalidation already ran while this GET was in flight, so the cache must keep the newer object.
+      // The list refetch triggered by the save lands; the step must stay loading until a watch
+      // event reports the new generation as reconciled.
       const selectRepositoryList = provisioningAPIv0alpha1.endpoints.listRepository.select({
         fieldSelector: 'metadata.name=test-repo-abc123',
         watch: true,
       });
-      releaseStaleGet();
+      releaseLists();
       await waitFor(() => expect(selectRepositoryList(store.getState()).isLoading).toBe(false));
       expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();

@@ -7,7 +7,12 @@ import server from '@grafana/test-utils/server';
 import { createRepository } from 'app/features/provisioning/mocks/factories';
 import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 
-import { type Repository, useListRepositoryQuery, useReplaceRepositoryMutation } from './index';
+import {
+  type Repository,
+  useCreateRepositoryTestMutation,
+  useListRepositoryQuery,
+  useReplaceRepositoryMutation,
+} from './index';
 
 setupProvisioningMswServer();
 
@@ -21,22 +26,18 @@ function repo(name: string, generation: number, resourceVersion: string, observe
 
 /**
  * Fake list server. Responses use the items as they were when the request arrived (a server
- * reads before it responds). While `hold()` is active, GETs wait until released.
+ * reads before it responds). While held, responses wait until released.
  */
 function serveRepositories(initial: Repository[]) {
   let items = initial;
-  let holding = false;
-  let gets = 0;
-  const waiting: Array<() => void> = [];
+  let gate = Promise.resolve();
+  let release = () => {};
   server.use(
     http.get(`${BASE}/repositories`, async ({ request }) => {
-      gets++;
       const selector = new URL(request.url).searchParams.get('fieldSelector');
       const snapshot = items.filter((item) => !selector || selector === `metadata.name=${item.metadata?.name}`);
-      if (holding) {
-        await new Promise<void>((resolve) => waiting.push(resolve));
-      }
-      return HttpResponse.json({ items: snapshot, metadata: { resourceVersion: String(10 + gets) } });
+      await gate;
+      return HttpResponse.json({ items: snapshot, metadata: { resourceVersion: '10' } });
     })
   );
   return {
@@ -44,14 +45,9 @@ function serveRepositories(initial: Repository[]) {
       items = next;
     },
     hold: () => {
-      holding = true;
+      gate = new Promise<void>((resolve) => (release = resolve));
     },
-    releaseOne: () => waiting.shift()?.(),
-    releaseAll: () => {
-      holding = false;
-      waiting.splice(0).forEach((resolve) => resolve());
-    },
-    gets: () => gets,
+    release: () => release(),
   };
 }
 
@@ -59,31 +55,32 @@ function servePut(onPut: () => Repository) {
   server.use(http.put(`${BASE}/repositories/:name`, () => HttpResponse.json(onPut())));
 }
 
-function renderMine() {
-  return renderHook(
+async function renderLoadedLists() {
+  const { result } = renderHook(
     () => ({
       mine: useListRepositoryQuery(byName(NAME)),
       other: useListRepositoryQuery(byName('other-repo')),
       replace: useReplaceRepositoryMutation()[0],
+      test: useCreateRepositoryTestMutation()[0],
     }),
     { wrapper: getWrapper({}) }
   );
+  await waitFor(() => expect(result.current.mine.data?.items).toHaveLength(1));
+  await waitFor(() => expect(result.current.other.data?.items).toEqual([]));
+  return result;
 }
 
-// While a refetch is pending, RTK pins an existing hook's `data` to its last result; `currentData`
-// is the store entry itself. A hook mounted after the save (the wizard's synchronize step) reads
-// the store entry, so that is what the cache rules are asserted against.
+// `currentData` is the store entry itself, which is what a hook mounted after a save reads;
+// `data` may lag behind it while a refetch is pending.
 describe('provisioningAPIv0alpha1 listRepository cache', () => {
-  it('shows the replaceRepository response in cached lists while the invalidation refetch is in flight', async () => {
+  it('shows the replaceRepository response in cached lists before the invalidation refetch lands', async () => {
     const lists = serveRepositories([repo(NAME, 1, '5')]);
     const updated = repo(NAME, 2, '6');
     servePut(() => {
       lists.set([updated]);
       return updated;
     });
-    const { result } = renderMine();
-    await waitFor(() => expect(result.current.mine.data?.items).toHaveLength(1));
-    await waitFor(() => expect(result.current.other.data?.items).toEqual([]));
+    const result = await renderLoadedLists();
 
     lists.hold();
     await act(async () => {
@@ -94,41 +91,8 @@ describe('provisioningAPIv0alpha1 listRepository cache', () => {
     // never inserted into a list that did not contain it
     expect(result.current.other.currentData?.items).toEqual([]);
 
-    lists.releaseAll();
+    lists.release();
     await waitFor(() => expect(result.current.mine.isFetching).toBe(false));
-  });
-
-  it('keeps the replaceRepository response when a list GET issued before the PUT fulfils afterwards with the old object', async () => {
-    const lists = serveRepositories([repo(NAME, 1, '5')]);
-    const updated = repo(NAME, 2, '6');
-    servePut(() => {
-      lists.set([updated]);
-      return updated;
-    });
-    const { result } = renderMine();
-    await waitFor(() => expect(result.current.mine.data?.items).toHaveLength(1));
-    await waitFor(() => expect(result.current.other.data?.items).toEqual([]));
-
-    // a GET that read the pre-PUT object and is still in flight when the PUT completes
-    lists.hold();
-    act(() => {
-      result.current.mine.refetch();
-    });
-    await waitFor(() => expect(lists.gets()).toBe(3)); // mine + other initial, then the held refetch
-
-    await act(async () => {
-      await result.current.replace({ name: NAME, repository: updated }).unwrap();
-    });
-    expect(result.current.mine.currentData?.items[0].metadata?.resourceVersion).toBe('6');
-
-    // the stale GET fulfils; RTK then dispatches the deferred invalidation refetches (held too)
-    lists.releaseOne();
-    await waitFor(() => expect(lists.gets()).toBeGreaterThanOrEqual(4));
-    expect(result.current.mine.currentData?.items[0].metadata).toMatchObject({ generation: 2, resourceVersion: '6' });
-
-    lists.releaseAll();
-    await waitFor(() => expect(result.current.mine.isFetching).toBe(false));
-    expect(result.current.mine.data?.items[0].metadata).toMatchObject({ generation: 2, resourceVersion: '6' });
   });
 
   it('does not overwrite a cached repository that is already newer than the replaceRepository response', async () => {
@@ -136,9 +100,7 @@ describe('provisioningAPIv0alpha1 listRepository cache', () => {
     const lists = serveRepositories([repo(NAME, 2, '9', 2)]);
     const older = repo(NAME, 2, '6');
     servePut(() => older);
-    const { result } = renderMine();
-    await waitFor(() => expect(result.current.mine.data?.items).toHaveLength(1));
-    await waitFor(() => expect(result.current.other.data?.items).toEqual([]));
+    const result = await renderLoadedLists();
     const before = result.current.mine.currentData;
 
     lists.hold();
@@ -148,21 +110,21 @@ describe('provisioningAPIv0alpha1 listRepository cache', () => {
 
     expect(result.current.mine.currentData).toBe(before);
 
-    lists.releaseAll();
+    lists.release();
     await waitFor(() => expect(result.current.mine.isFetching).toBe(false));
   });
 
-  it('follows the fresh list for membership and newer versions when refetching', async () => {
-    const lists = serveRepositories([repo('a', 1, '5'), repo('b', 1, '5')]);
-    const { result } = renderHook(() => useListRepositoryQuery({ watch: true }), { wrapper: getWrapper({}) });
-    await waitFor(() => expect(result.current.data?.items).toHaveLength(2));
+  it('does not refetch cached repository lists after a connection test', async () => {
+    const stored = repo(NAME, 1, '5');
+    serveRepositories([stored]);
+    const result = await renderLoadedLists();
 
-    lists.set([repo('a', 2, '7')]);
-    act(() => {
-      result.current.refetch();
+    await act(async () => {
+      await result.current.test({ name: NAME, body: { spec: stored.spec } }).unwrap();
     });
 
-    await waitFor(() => expect(result.current.data?.items).toHaveLength(1));
-    expect(result.current.data?.items[0].metadata).toMatchObject({ name: 'a', generation: 2, resourceVersion: '7' });
+    // an invalidation would have marked the list pending synchronously
+    expect(result.current.mine.isFetching).toBe(false);
+    expect(result.current.mine.currentData?.items[0].metadata?.resourceVersion).toBe('5');
   });
 });

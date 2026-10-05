@@ -24,7 +24,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
-import { compareResourceVersions, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
+import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
@@ -79,19 +79,6 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
         url: `/repositories`,
         params: queryArg,
       }),
-      // A refetch can carry a snapshot the server read before a mutation whose response is
-      // already in the cache (a list GET fired by the pre-save connection test can fulfil after
-      // the PUT). Membership and list metadata follow the response; per item, keep the cached
-      // object when its resourceVersion is the same or newer.
-      merge: (draft, response) => {
-        const cached = new Map((draft.items ?? []).map((item) => [item.metadata?.name, item]));
-        draft.items = (response.items ?? []).map((item) => {
-          const existing = cached.get(item.metadata?.name);
-          const cmp = compareResourceVersions(item.metadata?.resourceVersion, existing?.metadata?.resourceVersion);
-          return existing && cmp !== null && cmp <= 0 ? existing : item;
-        });
-        draft.metadata = response.metadata;
-      },
       onCacheEntryAdded: createOnCacheEntryAdded<RepositorySpec, RepositoryStatus>('repositories', {
         onError: (_error, _updateCachedData, dispatch) => {
           dispatch(
@@ -191,6 +178,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createRepositoryTest: {
+      // Testing a submitted spec touches nothing on the server, so the generated
+      // invalidation would only refetch every Repository-tagged query for nothing.
+      invalidatesTags: [],
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
@@ -243,23 +233,12 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       onQueryStarted: async (_, { queryFulfilled, dispatch, getState }) => {
         try {
           const { data } = await queryFulfilled;
-          // Until the invalidation refetch or watch event lands, cached lists still hold the
-          // pre-update object, whose observedGeneration matches its old generation, so
-          // readiness checks would briefly treat a just-edited repository as reconciled.
+          // Cached lists must show the saved object before the invalidation refetch or watch
+          // event lands; apply the response like a watch MODIFIED event.
           for (const args of generatedAPI.util.selectCachedArgsForQuery(getState(), 'listRepository')) {
             dispatch(
               generatedAPI.util.updateQueryData('listRepository', args, (draft) => {
-                const index = draft.items?.findIndex((item) => item.metadata?.name === data.metadata?.name) ?? -1;
-                if (!draft.items || index === -1) {
-                  return;
-                }
-                const cmp = compareResourceVersions(
-                  data.metadata?.resourceVersion,
-                  draft.items[index].metadata?.resourceVersion
-                );
-                if (cmp === null || cmp > 0) {
-                  draft.items[index] = data;
-                }
+                applyWatchEvent(draft.items, { type: 'MODIFIED', object: data });
               })
             );
           }
