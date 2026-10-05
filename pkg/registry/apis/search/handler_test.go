@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -131,17 +135,56 @@ func TestHandler_RejectsWrongEnvelopeKind(t *testing.T) {
 }
 
 func TestHandler_PropagatesBackendErrorResult(t *testing.T) {
-	client := &fakeIndexClient{resp: &resourcepb.ResourceSearchResponse{
-		Error: &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index is not ready"},
-	}}
-	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid search field",
+		Details: &resourcepb.ErrorDetails{
+			Group: searchv0.GROUP, Kind: searchv0.KindSearchQuery, Name: "query", Uid: "query-uid",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "where", Message: "invalid filter"}},
+		},
+	}
+	grpcStatus, err := status.New(codes.Unknown, "transport message").WithDetails(result)
+	require.NoError(t, err)
+	want := resource.StatusError(result).(*apierrors.StatusError).Status()
+	for name, client := range map[string]*fakeIndexClient{
+		"payload":      {resp: &resourcepb.ResourceSearchResponse{Error: result}},
+		"grpc details": {err: grpcStatus.Err()},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+			for route, call := range map[string]func() *httptest.ResponseRecorder{
+				"search": func() *httptest.ResponseRecorder { return doRequest(t, h, globalQuery("")) },
+				"global": func() *httptest.ResponseRecorder { return doGlobalRequest(t, h, globalQuery("")) },
+				"trash":  func() *httptest.ResponseRecorder { return doTrashRequest(t, h, trashBody("")) },
+			} {
+				t.Run(route, func(t *testing.T) {
+					w := call()
+					require.NotNil(t, client.got)
+					require.Equal(t, int(result.Code), w.Code, w.Body.String())
+					var got metav1.Status
+					require.NoError(t, json.Unmarshal(w.Body.Bytes(), &got))
+					assert.Equal(t, want, got)
+				})
+			}
+		})
+	}
+}
 
-	w := doRequest(t, h, `{
-		"apiVersion": "`+searchv0.APIVERSION+`",
-		"kind": "`+searchv0.KindSearchQuery+`"
-	}`)
-
-	assert.Equal(t, http.StatusServiceUnavailable, w.Code, w.Body.String())
+func TestHandler_TransportErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		err  error
+		code int
+	}{
+		{name: "ordinary error", err: errors.New("private connection failure"), code: http.StatusInternalServerError},
+		{name: "grpc unavailable", err: status.Error(codes.Unavailable, "private connection failure"), code: http.StatusServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			h := NewHandler(&fakeIndexClient{err: tc.err}, testProvider(), noop.NewTracerProvider().Tracer(""))
+			w := doRequest(t, h, globalQuery(""))
+			assert.Equal(t, tc.code, w.Code, w.Body.String())
+			assert.NotContains(t, w.Body.String(), "private connection failure")
+		})
+	}
 }
 
 // searchAs runs a search whose caller is scoped to callerNS against the
