@@ -50,7 +50,7 @@ func TestResourceResult_ManagerKindConflict(t *testing.T) {
 			if tt.warning {
 				require.NoError(t, result.Error())
 				require.ErrorIs(t, result.Warning(), tt.err)
-				require.Equal(t, provisioning.ReasonResourceInvalid, result.WarningReason())
+				require.Equal(t, provisioning.ReasonResourceInvalid, string(result.WarningReason()))
 				require.False(t, isNonFailingWarning(result.Warning()))
 			} else {
 				require.ErrorIs(t, result.Error(), tt.err)
