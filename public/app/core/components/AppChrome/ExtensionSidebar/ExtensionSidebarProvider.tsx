@@ -2,16 +2,29 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useS
 import { useAsync, useLocalStorage } from 'react-use';
 
 import { PluginExtensionPoints, store } from '@grafana/data';
-import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
+import {
+  getAppEvents,
+  reportInteraction,
+  usePluginComponents,
+  usePluginLinks,
+  locationService,
+} from '@grafana/runtime';
 import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './constants';
-import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
+import {
+  EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
+  EXTENSION_SIDEBAR_URL_PARAM,
+  getComponentIdFromUrlValue,
+  getComponentMetaFromComponentId,
+  getComponentUrlValue,
+} from './extensionSidebarUtils';
 
 const EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY = 'grafana.navigation.extensionSidebarWidth';
 const PERMITTED_EXTENSION_SIDEBAR_PLUGINS = [
+  'grafana',
   'grafana-assistant-app',
   'grafana-assistant-onboarding-app',
   'grafana-dash-app',
@@ -71,16 +84,19 @@ interface ExtensionSidebarContextProps {
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const [props, setProps] = useState<Record<string, unknown> | undefined>(undefined);
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+  const urlDockedComponentId = getComponentIdFromUrlValue(
+    locationService.getSearchObject()[EXTENSION_SIDEBAR_URL_PARAM]
+  );
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
     DEFAULT_EXTENSION_SIDEBAR_WIDTH
   );
 
-  const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
+  const [currentLocation, setCurrentLocation] = useState(locationService.getLocation());
 
   useEffect(() => {
     const subscription = locationService.getLocationObservable().subscribe((location) => {
-      setCurrentPath(location.pathname);
+      setCurrentLocation(location);
     });
 
     return () => {
@@ -95,8 +111,11 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   const { links, isLoading: isPluginLinksLoading } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
     context: {
-      path: currentPath,
+      path: currentLocation.pathname,
     },
+  });
+  const { components, isLoading: isPluginComponentsLoading } = usePluginComponents({
+    extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
 
   const { loading: isExtensionPointPluginMetaLoading, value: pluginMap } = useAsync(() =>
@@ -104,37 +123,66 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
   );
 
   const isLoading = useMemo(
-    () => isPluginLinksLoading || isExtensionPointPluginMetaLoading,
-    [isPluginLinksLoading, isExtensionPointPluginMetaLoading]
+    () => isPluginLinksLoading || isPluginComponentsLoading || isExtensionPointPluginMetaLoading,
+    [isPluginComponentsLoading, isPluginLinksLoading, isExtensionPointPluginMetaLoading]
   );
 
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
-  const availableComponents = useMemo(
-    () =>
-      new Map(
-        Array.from(pluginMap?.entries() || []).filter(
-          ([pluginId, pluginMeta]) =>
-            PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
-            links.some(
-              (link) =>
-                link.pluginId === pluginId &&
-                pluginMeta.addedComponents.some((component) => component.title === link.title)
-            )
-        )
-      ),
-    [links, pluginMap]
-  );
+  const availableComponents = useMemo(() => {
+    const available = new Map(
+      Array.from(pluginMap?.entries() || []).filter(
+        ([pluginId, pluginMeta]) =>
+          PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
+          links.some(
+            (link) =>
+              link.pluginId === pluginId &&
+              pluginMeta.addedComponents.some((component) => component.title === link.title)
+          )
+      )
+    );
+
+    const coreComponents = components
+      .filter((component) => component.meta.pluginId === 'grafana')
+      .filter((component) => links.some((link) => link.pluginId === 'grafana' && link.title === component.meta.title))
+      .map((component) => ({
+        targets: PluginExtensionPoints.ExtensionSidebar,
+        title: component.meta.title,
+        description: component.meta.description,
+      }));
+
+    if (coreComponents.length > 0) {
+      available.set('grafana', { addedComponents: coreComponents, addedLinks: [] });
+    }
+
+    return available;
+  }, [components, links, pluginMap]);
 
   // check if the stored docked component is still available
   let defaultDockedComponentId: string | undefined;
-  if (storedDockedPluginId) {
-    const dockedMeta = getComponentMetaFromComponentId(storedDockedPluginId);
+  const initialDockedComponentId = urlDockedComponentId ?? storedDockedPluginId;
+  if (initialDockedComponentId) {
+    const dockedMeta = getComponentMetaFromComponentId(initialDockedComponentId);
     if (dockedMeta) {
-      defaultDockedComponentId = storedDockedPluginId;
+      defaultDockedComponentId = initialDockedComponentId;
     }
   }
-  const [dockedComponentId, setDockedComponentId] = useState<string | undefined>(defaultDockedComponentId);
+  const [dockedComponentId, setDockedComponentState] = useState<string | undefined>(defaultDockedComponentId);
+
+  const syncDockedComponentInUrl = useCallback((componentId: string | undefined) => {
+    const urlValue = componentId ? getComponentUrlValue(componentId) : undefined;
+    if (locationService.getSearchObject()[EXTENSION_SIDEBAR_URL_PARAM] !== urlValue) {
+      locationService.partial({ [EXTENSION_SIDEBAR_URL_PARAM]: urlValue ?? null }, true);
+    }
+  }, []);
+
+  const setDockedComponentId = useCallback(
+    (componentId: string | undefined) => {
+      setDockedComponentState(componentId);
+      syncDockedComponentInUrl(componentId);
+    },
+    [syncDockedComponentInUrl]
+  );
 
   useEffect(() => {
     if (isLoading) {
@@ -145,15 +193,56 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
       if (dockedMeta) {
         const plugin = availableComponents.get(dockedMeta.pluginId);
-        if (!plugin || !plugin.addedComponents.some((c) => c.title === dockedMeta.componentTitle)) {
-          setDockedComponentId(undefined);
+        const componentAvailable = plugin?.addedComponents.some((c) => c.title === dockedMeta.componentTitle);
+        const coreLinkStillAvailable =
+          dockedMeta.pluginId === 'grafana' &&
+          links.some((link) => link.pluginId === 'grafana' && link.title === dockedMeta.componentTitle);
+        if (!componentAvailable && !coreLinkStillAvailable) {
+          setDockedComponentState(undefined);
         }
       } else {
         // no component found, so we clear the docked component id
-        setDockedComponentId(undefined);
+        setDockedComponentState(undefined);
       }
     }
-  }, [isLoading, availableComponents, dockedComponentId]);
+  }, [isLoading, availableComponents, dockedComponentId, links]);
+
+  useEffect(() => {
+    if (isLoading || dockedComponentId) {
+      return;
+    }
+
+    const requestedComponentId = getComponentIdFromUrlValue(
+      locationService.getSearchObject()[EXTENSION_SIDEBAR_URL_PARAM]
+    );
+    const requestedMeta = requestedComponentId ? getComponentMetaFromComponentId(requestedComponentId) : undefined;
+    if (
+      requestedComponentId &&
+      requestedMeta &&
+      availableComponents
+        .get(requestedMeta.pluginId)
+        ?.addedComponents.some((component) => component.title === requestedMeta.componentTitle)
+    ) {
+      setDockedComponentState(requestedComponentId);
+    }
+  }, [availableComponents, dockedComponentId, isLoading]);
+
+  useEffect(() => {
+    if (isLoading || !dockedComponentId) {
+      return;
+    }
+
+    const dockedMeta = getComponentMetaFromComponentId(dockedComponentId);
+    const componentAvailable = dockedMeta
+      ? availableComponents
+          .get(dockedMeta.pluginId)
+          ?.addedComponents.some((component) => component.title === dockedMeta.componentTitle)
+      : false;
+
+    if (componentAvailable) {
+      syncDockedComponentInUrl(dockedComponentId);
+    }
+  }, [availableComponents, currentLocation, dockedComponentId, isLoading, syncDockedComponentInUrl]);
 
   const setDockedComponentWithProps = useCallback(
     (componentId: string | undefined, props?: Record<string, unknown>) => {
@@ -206,7 +295,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
       closeSubscription.unsubscribe();
       toggleSubscription.unsubscribe();
     };
-  }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
+  }, [setDockedComponentWithProps, setDockedComponentId, availableComponents, dockedComponentId]);
 
   // update the stored docked component id when it changes
   useEffect(() => {

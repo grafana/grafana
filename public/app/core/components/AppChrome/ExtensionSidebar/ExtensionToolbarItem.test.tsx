@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 import { render, screen } from 'test/test-utils';
 
 import { EventBusSrv, store } from '@grafana/data';
-import { setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -79,6 +79,7 @@ describe('ExtensionToolbarItem', () => {
     (store.get as jest.Mock).mockClear();
     (store.set as jest.Mock).mockClear();
     (store.delete as jest.Mock).mockClear();
+    locationService.replace('/');
     setAppEvents(new EventBusSrv());
   });
 
