@@ -1082,7 +1082,9 @@ describe('setDashboardPanelContext', () => {
 
         await context.onAddAdHocFilter!({ key: 'country', value: 'UK', operator: '=' });
 
-        expect(variable!.state.filters).toEqual([{ key: 'country', operator: '=', value: 'UK' }]);
+        expect(variable!.state.filters).toEqual([
+          { key: 'country', operator: '=', value: 'UK', meta: { biSelection: null } },
+        ]);
         expect(onValueChanged).toHaveBeenCalledTimes(1);
       });
 
@@ -1098,7 +1100,7 @@ describe('setDashboardPanelContext', () => {
         ]);
 
         expect(variable!.state.filters).toEqual([
-          { key: 'country', operator: '=', value: 'UK' },
+          { key: 'country', operator: '=', value: 'UK', meta: { biSelection: null } },
           { key: 'region', value: 'EU', operator: '=' },
         ]);
         expect(onValueChanged).toHaveBeenCalledTimes(1);

@@ -2,7 +2,9 @@ import { type AdHocFilterWithLabels } from '@grafana/scenes';
 
 import {
   getValidBiSelection,
+  hasBiSelectionMeta,
   haveSameExpression,
+  releaseBiSelectionStamp,
   releaseIdenticalBiSelection,
   stripBiSelectionStamp,
 } from './biSelectionStamp';
@@ -76,6 +78,23 @@ describe('stripBiSelectionStamp', () => {
   });
 });
 
+describe('releaseBiSelectionStamp and hasBiSelectionMeta', () => {
+  it('marks a released filter as ordinary, keeps its other meta, and save strips the marker', () => {
+    const released = releaseBiSelectionStamp({
+      key: 'country',
+      operator: '=',
+      value: 'UK',
+      meta: { biSelection: single, other: 1 },
+    });
+
+    expect(released.meta).toEqual({ biSelection: null, other: 1 });
+    expect(getValidBiSelection(released)).toBeUndefined();
+    expect(hasBiSelectionMeta(released)).toBe(true);
+    expect(hasBiSelectionMeta({ key: 'country', operator: '=', value: 'UK' })).toBe(false);
+    expect(stripBiSelectionStamp(released)).toEqual({ key: 'country', operator: '=', value: 'UK', meta: { other: 1 } });
+  });
+});
+
 describe('haveSameExpression', () => {
   it('compares key, operator, value and values only', () => {
     expect(
@@ -100,7 +119,7 @@ describe('haveSameExpression', () => {
 });
 
 describe('releaseIdenticalBiSelection', () => {
-  it('strips the stamp of an identical selection', () => {
+  it('releases an identical selection, leaving a marker so it is not restored', () => {
     const other: AdHocFilterWithLabels = { key: 'region', operator: '=', value: 'EU' };
     const filters: AdHocFilterWithLabels[] = [
       other,
@@ -109,7 +128,7 @@ describe('releaseIdenticalBiSelection', () => {
 
     expect(releaseIdenticalBiSelection(filters, { key: 'country', operator: '=', value: 'UK' })).toEqual([
       other,
-      { key: 'country', operator: '=', value: 'UK' },
+      { key: 'country', operator: '=', value: 'UK', meta: { biSelection: null } },
     ]);
     expect(filters[1].meta).toEqual({ biSelection: single });
   });

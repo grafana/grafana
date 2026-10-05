@@ -82,8 +82,9 @@ export function haveSameExpression(
 }
 
 /**
- * When `filters` holds a BI selection with the same expression as `filter`, returns `filters` with that selection's
- * stamp removed, so it becomes an ordinary filter for every panel. Otherwise returns undefined.
+ * When `filters` holds a BI selection with the same expression as `filter`, returns `filters` with that selection
+ * released (see releaseBiSelectionStamp), so it becomes an ordinary filter for every panel. Otherwise returns
+ * undefined.
  *
  * Scenes deduplicates identical filters, so adding a manual filter next to an identical selection would leave only one
  * of them, and the selecting panel would then skip a filter the user added by hand.
@@ -98,8 +99,25 @@ export function releaseIdenticalBiSelection(
   }
 
   const next = filters.slice();
-  next.splice(index, 1, stripBiSelectionStamp(filters[index]));
+  next.splice(index, 1, releaseBiSelectionStamp(filters[index]));
   return next;
+}
+
+/**
+ * Returns the filter with its stamp replaced by `null`: an ordinary filter that remembers it was deliberately released,
+ * so URL ownership sync does not stamp it again. Saving strips the marker like a stamp.
+ */
+export function releaseBiSelectionStamp(filter: AdHocFilterWithLabels): AdHocFilterWithLabels {
+  return { ...filter, meta: { ...getMeta(filter), biSelection: null } };
+}
+
+/**
+ * Whether the filter carries BI selection metadata at all, valid or not. A filter replaced from the URL has none; an
+ * edited, released or re-keyed selection keeps its stale metadata.
+ */
+export function hasBiSelectionMeta(filter: AdHocFilterWithLabels): boolean {
+  const meta = getMeta(filter);
+  return Boolean(meta && 'biSelection' in meta);
 }
 
 function getMeta(filter: AdHocFilterWithLabels): Record<string, unknown> | undefined {
