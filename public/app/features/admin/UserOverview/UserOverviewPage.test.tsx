@@ -227,6 +227,31 @@ it('allows profile edits with user-specific write permission and refreshes saved
   expect(await screen.findByText('Alice Updated')).toBeInTheDocument();
 });
 
+it('keeps a failed profile edit open and allows retrying the mutation', async () => {
+  let saved = { ...profile, accessControl: { [AccessControlAction.UsersWrite]: true } };
+  let attempts = 0;
+  server.use(
+    http.get('/api/users/alice', () => HttpResponse.json(saved)),
+    http.put('/api/users/alice', () => {
+      if (++attempts === 1) {
+        return HttpResponse.json({ message: 'Update failed' }, { status: 500 });
+      }
+      saved = { ...saved, name: 'Alice Updated' };
+      return HttpResponse.json({ message: 'User updated' });
+    })
+  );
+  const { user } = setup();
+  await user.click(await screen.findByRole('button', { name: 'Edit Name' }));
+  await user.clear(screen.getByRole('textbox', { name: 'Name' }));
+  await user.type(screen.getByRole('textbox', { name: 'Name' }), 'Alice Updated');
+  await user.click(screen.getByRole('button', { name: 'Save' }));
+  expect(await screen.findByText('Unable to update user. Please try again.')).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Alice Updated');
+  await user.click(screen.getByRole('button', { name: 'Save' }));
+  expect(await screen.findByText('Alice Updated')).toBeInTheDocument();
+  expect(screen.queryByRole('textbox', { name: 'Name' })).not.toBeInTheDocument();
+});
+
 it.each([{ isExternal: true }, { isProvisioned: true }])(
   'locks externally managed profile fields: %j',
   async (flags) => {

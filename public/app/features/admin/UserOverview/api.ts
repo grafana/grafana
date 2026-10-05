@@ -1,5 +1,5 @@
 import { generatedAPI, type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-import { dateTimeFormatTimeAgo } from '@grafana/data';
+import { dateTimeFormatTimeAgo, type OrgRole } from '@grafana/data';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { rolesAPI } from 'app/api/clients/roles';
 import { type SyncInfo } from 'app/types/ldap';
@@ -33,6 +33,57 @@ const managementAPI = legacyAPI.injectEndpoints({
     getOverviewLdapStatus: build.query<SyncInfo, void>({
       query: () => ({ url: '/admin/ldap-sync-status' }),
     }),
+    updateOverviewProfile: build.mutation<void, { uid: string; profile: Pick<UserDTO, 'name' | 'email' | 'login'> }>({
+      query: ({ uid, profile }) => ({ url: `/users/${uid}`, method: 'PUT', body: profile }),
+    }),
+    updateOverviewPassword: build.mutation<void, { uid: string; password: string }>({
+      query: ({ uid, password }) => ({ url: `/admin/users/${uid}/password`, method: 'PUT', body: { password } }),
+    }),
+    updateOverviewAdmin: build.mutation<void, { uid: string; isGrafanaAdmin: boolean }>({
+      query: ({ uid, isGrafanaAdmin }) => ({
+        url: `/admin/users/${uid}/permissions`,
+        method: 'PUT',
+        body: { isGrafanaAdmin },
+      }),
+    }),
+    deleteOverviewUser: build.mutation<void, string>({
+      query: (uid) => ({ url: `/admin/users/${uid}`, method: 'DELETE' }),
+    }),
+    disableOverviewUser: build.mutation<void, string>({
+      query: (uid) => ({ url: `/admin/users/${uid}/disable`, method: 'POST' }),
+    }),
+    enableOverviewUser: build.mutation<void, string>({
+      query: (uid) => ({ url: `/admin/users/${uid}/enable`, method: 'POST' }),
+    }),
+    addOverviewOrgUser: build.mutation<void, { orgId: number; loginOrEmail: string; role: OrgRole }>({
+      query: ({ orgId, loginOrEmail, role }) => ({
+        url: `/orgs/${orgId}/users/`,
+        method: 'POST',
+        body: { loginOrEmail, role },
+      }),
+    }),
+    removeOverviewOrgUser: build.mutation<void, { orgId: number; uid: string }>({
+      query: ({ orgId, uid }) => ({ url: `/orgs/${orgId}/users/${uid}`, method: 'DELETE' }),
+    }),
+    updateOverviewOrgRole: build.mutation<void, { orgId: number; uid: string; role: OrgRole }>({
+      query: ({ orgId, uid, role }) => ({ url: `/orgs/${orgId}/users/${uid}`, method: 'PATCH', body: { role } }),
+    }),
+    updateOverviewBasicRole: build.mutation<void, { userId: number; role: OrgRole }>({
+      query: ({ userId, role }) => ({ url: `/org/users/${userId}`, method: 'PATCH', body: { role } }),
+    }),
+    revokeOverviewSession: build.mutation<void, { uid: string; authTokenId: number }>({
+      query: ({ uid, authTokenId }) => ({
+        url: `/admin/users/${uid}/revoke-auth-token`,
+        method: 'POST',
+        body: { authTokenId },
+      }),
+    }),
+    revokeOverviewSessions: build.mutation<void, string>({
+      query: (uid) => ({ url: `/admin/users/${uid}/logout`, method: 'POST' }),
+    }),
+    syncOverviewLdapUser: build.mutation<void, number>({
+      query: (userId) => ({ url: `/admin/ldap/sync/${userId}`, method: 'POST' }),
+    }),
   }),
 });
 
@@ -42,6 +93,19 @@ export const {
   useGetOverviewOrgUsersQuery,
   useGetOverviewSessionsQuery,
   useGetOverviewLdapStatusQuery,
+  useUpdateOverviewProfileMutation,
+  useUpdateOverviewPasswordMutation,
+  useUpdateOverviewAdminMutation,
+  useDeleteOverviewUserMutation,
+  useDisableOverviewUserMutation,
+  useEnableOverviewUserMutation,
+  useAddOverviewOrgUserMutation,
+  useRemoveOverviewOrgUserMutation,
+  useUpdateOverviewOrgRoleMutation,
+  useUpdateOverviewBasicRoleMutation,
+  useRevokeOverviewSessionMutation,
+  useRevokeOverviewSessionsMutation,
+  useSyncOverviewLdapUserMutation,
 } = managementAPI;
 
 export interface RoleAssignment {

@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, Text } from '@grafana/ui';
 import { useListRolesQuery } from 'app/api/clients/roles';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
@@ -17,7 +17,21 @@ import { UserLdapSyncInfo } from '../UserLdapSyncInfo';
 import { UserOrgs } from '../UserOrgs';
 import { UserSessions } from '../UserSessions';
 
-import { useGetOverviewOrgsQuery, useGetOverviewSessionsQuery, useGetOverviewLdapStatusQuery } from './api';
+import {
+  useGetOverviewOrgsQuery,
+  useGetOverviewSessionsQuery,
+  useGetOverviewLdapStatusQuery,
+  useDeleteOverviewUserMutation,
+  useDisableOverviewUserMutation,
+  useEnableOverviewUserMutation,
+  useAddOverviewOrgUserMutation,
+  useRemoveOverviewOrgUserMutation,
+  useUpdateOverviewOrgRoleMutation,
+  useUpdateOverviewBasicRoleMutation,
+  useRevokeOverviewSessionMutation,
+  useRevokeOverviewSessionsMutation,
+  useSyncOverviewLdapUserMutation,
+} from './api';
 
 interface Props {
   user: UserDTO;
@@ -51,6 +65,9 @@ export function ActionError() {
 }
 
 export function AccountManagement({ user, onUpdated }: Props) {
+  const [deleteUser] = useDeleteOverviewUserMutation();
+  const [disableUser] = useDisableOverviewUserMutation();
+  const [enableUser] = useEnableOverviewUserMutation();
   const { run, failed } = useUserAction(onUpdated);
   return (
     <Stack direction="column" gap={3}>
@@ -59,18 +76,21 @@ export function AccountManagement({ user, onUpdated }: Props) {
         user={user}
         onUserDelete={() =>
           run(async () => {
-            await getBackendSrv().delete(`/api/admin/users/${user.uid}`);
+            await deleteUser(user.uid).unwrap();
             locationService.push('/admin/users');
           }, false)
         }
-        onUserDisable={() => run(() => getBackendSrv().post(`/api/admin/users/${user.uid}/disable`))}
-        onUserEnable={() => run(() => getBackendSrv().post(`/api/admin/users/${user.uid}/enable`))}
+        onUserDisable={() => run(() => disableUser(user.uid).unwrap())}
+        onUserEnable={() => run(() => enableUser(user.uid).unwrap())}
       />
     </Stack>
   );
 }
 
 export function OrganizationsTab({ user, onUpdated }: Props) {
+  const [addOrgUser] = useAddOverviewOrgUserMutation();
+  const [removeOrgUser] = useRemoveOverviewOrgUserMutation();
+  const [updateOrgRole] = useUpdateOverviewOrgRoleMutation();
   const { currentData: orgs, isFetching, error, refetch } = useGetOverviewOrgsQuery(user.uid);
   const { run, failed } = useUserAction(() => {
     refetch();
@@ -91,19 +111,17 @@ export function OrganizationsTab({ user, onUpdated }: Props) {
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
-        onOrgAdd={(orgId, role) =>
-          run(() => getBackendSrv().post(`/api/orgs/${orgId}/users/`, { loginOrEmail: user.login, role }))
-        }
-        onOrgRemove={(orgId) => run(() => getBackendSrv().delete(`/api/orgs/${orgId}/users/${user.uid}`))}
-        onOrgRoleChange={(orgId, role) =>
-          run(() => getBackendSrv().patch(`/api/orgs/${orgId}/users/${user.uid}`, { role }))
-        }
+        onOrgAdd={(orgId, role) => run(() => addOrgUser({ orgId, loginOrEmail: user.login, role }).unwrap())}
+        onOrgRemove={(orgId) => run(() => removeOrgUser({ orgId, uid: user.uid }).unwrap())}
+        onOrgRoleChange={(orgId, role) => run(() => updateOrgRole({ orgId, uid: user.uid, role }).unwrap())}
       />
     </Stack>
   );
 }
 
 export function SessionsTab({ uid }: { uid: string }) {
+  const [revokeSession] = useRevokeOverviewSessionMutation();
+  const [revokeSessions] = useRevokeOverviewSessionsMutation();
   const { currentData: sessions, error, refetch } = useGetOverviewSessionsQuery(uid);
   const { run, failed } = useUserAction(refetch);
   if (error) {
@@ -118,16 +136,15 @@ export function SessionsTab({ uid }: { uid: string }) {
       <UserSessions
         showHeading={false}
         sessions={sessions}
-        onSessionRevoke={(authTokenId) =>
-          run(() => getBackendSrv().post(`/api/admin/users/${uid}/revoke-auth-token`, { authTokenId }))
-        }
-        onAllSessionsRevoke={() => run(() => getBackendSrv().post(`/api/admin/users/${uid}/logout`))}
+        onSessionRevoke={(authTokenId) => run(() => revokeSession({ uid, authTokenId }).unwrap())}
+        onAllSessionsRevoke={() => run(() => revokeSessions(uid).unwrap())}
       />
     </Stack>
   );
 }
 
 export function AuthenticationTab({ user, onUpdated }: Props) {
+  const [syncUser] = useSyncOverviewLdapUserMutation();
   const { currentData: status, error, refetch } = useGetOverviewLdapStatusQuery();
   const { run, failed } = useUserAction(() => {
     refetch();
@@ -151,7 +168,7 @@ export function AuthenticationTab({ user, onUpdated }: Props) {
         showHeading={false}
         user={user}
         ldapSyncInfo={status}
-        onUserSync={() => run(() => getBackendSrv().post(`/api/admin/ldap/sync/${user.id}`))}
+        onUserSync={() => run(() => syncUser(user.id).unwrap())}
       />
     </Stack>
   );
@@ -171,6 +188,7 @@ export function UserRolesEditor({
   onUpdated: () => void;
 }) {
   const [editing, setEditing] = useState(false);
+  const [updateBasicRole] = useUpdateOverviewBasicRoleMutation();
   const { run, failed, pending } = useUserAction(onUpdated);
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canEditBasic =
@@ -187,7 +205,7 @@ export function UserRolesEditor({
   if ((!canEditBasic && !canEditDirect) || !isBasicRole(basicRole)) {
     return null;
   }
-  const updateBasic = (role: OrgRole) => run(() => getBackendSrv().patch(`/api/org/users/${user.id}`, { role }));
+  const updateBasic = (role: OrgRole) => run(() => updateBasicRole({ userId: user.id, role }).unwrap());
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}

@@ -4,13 +4,17 @@ import { useState } from 'react';
 import { type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
 import { Button, Input, RadioButtonGroup, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AccountManagement, ActionError, useUserAction } from './UserManagement';
-import { type OverviewProfile } from './api';
+import {
+  type OverviewProfile,
+  useUpdateOverviewProfileMutation,
+  useUpdateOverviewPasswordMutation,
+  useUpdateOverviewAdminMutation,
+} from './api';
 
 type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
 interface DetailField {
@@ -33,6 +37,9 @@ export function UserDetails({
 }) {
   const [editing, setEditing] = useState<EditableField | null>(null);
   const [value, setValue] = useState('');
+  const [updateProfile] = useUpdateOverviewProfileMutation();
+  const [updatePassword] = useUpdateOverviewPasswordMutation();
+  const [updateAdmin] = useUpdateOverviewAdminMutation();
   const { run, failed, pending } = useUserAction(() => {
     setEditing(null);
     onUpdated();
@@ -119,15 +126,18 @@ export function UserDetails({
     const field = editing;
     run(() =>
       field === 'isGrafanaAdmin'
-        ? getBackendSrv().put(`/api/admin/users/${profile.uid}/permissions`, { isGrafanaAdmin: value === 'true' })
+        ? updateAdmin({ uid: profile.uid, isGrafanaAdmin: value === 'true' }).unwrap()
         : field === 'password'
-          ? getBackendSrv().put(`/api/admin/users/${profile.uid}/password`, { password: value })
-          : getBackendSrv().put(`/api/users/${profile.uid}`, {
-              name: profile.name,
-              email: profile.email,
-              login: profile.login,
-              [field]: value,
-            })
+          ? updatePassword({ uid: profile.uid, password: value }).unwrap()
+          : updateProfile({
+              uid: profile.uid,
+              profile: {
+                name: profile.name,
+                email: profile.email,
+                login: profile.login,
+                [field]: value,
+              },
+            }).unwrap()
     );
   };
 
