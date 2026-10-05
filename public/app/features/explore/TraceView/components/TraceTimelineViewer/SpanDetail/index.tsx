@@ -627,7 +627,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           {isErrorSpan(span) && (
             <SpanErrorIcon
               className={styles.errorIcon}
-              aria-label={t('explore.span-detail.error-indicator', 'Span has an error')}
+              ariaLabel={t('explore.span-detail.error-indicator', 'Span has an error')}
             />
           )}
           <h6 className={styles.operationName} title={operationName}>

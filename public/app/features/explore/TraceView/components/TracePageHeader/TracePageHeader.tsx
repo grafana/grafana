@@ -277,7 +277,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <div className={styles.titleRow}>
         <div className={styles.titleSection}>
           {showErrorIcon && (
-            <SpanErrorIcon aria-label={t('explore.trace-page-header.error-indicator', 'Trace has errors')} />
+            <SpanErrorIcon ariaLabel={t('explore.trace-page-header.error-indicator', 'Trace has errors')} />
           )}
           {showWarningIcon && (
             <Icon
