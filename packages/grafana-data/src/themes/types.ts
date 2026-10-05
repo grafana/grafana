@@ -39,6 +39,11 @@ export interface GrafanaTheme2 {
      * @internal
      */
     visualDesignRefresh?: boolean;
+    /**
+     * Use tabular numerals for visualization legend and tooltip values.
+     * @internal
+     */
+    tabularNums?: boolean;
   } & Record<string, boolean | undefined>;
 }
 

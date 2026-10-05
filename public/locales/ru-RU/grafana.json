@@ -3059,6 +3059,7 @@
         "results-with-cancellation": "Поиск отменен. Найдено правил: {{numberOfRules}}",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Импорт недоступен, пока активна автоматическая синхронизация с Mimir Alertmanager"
       },
@@ -3083,7 +3084,15 @@
         "use-new-experience": "Использовать новый интерфейс",
         "view-previous-experience": "К предыдущему интерфейсу"
       },
-      "unknown-rule-type": "Неизвестный тип правила"
+      "unknown-rule-type": "Неизвестный тип правила",
+      "checking-data-sources_one": "",
+      "checking-data-sources_few": "",
+      "checking-data-sources_many": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_few": "",
+      "hidden-empty-data-sources_many": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Ошибки при загрузке правил",
@@ -3245,7 +3254,10 @@
       "view-as": "Просмотр в виде"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Очистить фильтры"
+      "clear-filters": "Очистить фильтры",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Удаляется",
@@ -6245,9 +6257,6 @@
       "placeholder-search-options": "Поиск параметров",
       "visualization-button-tooltip": "Поиск параметров"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Назад к запросам"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6906,19 +6915,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Добавить SQL-выражение",
       "sql-cta-description": "Предпочитаете SQL? Тогда добавьте SQL-выражение в свои запросы."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Удалив все преобразования, вы вернетесь на главный экран выбора."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Добавить другое преобразование"
-      },
-      "confirmText-delete-all": "Удалить все",
-      "delete-all-transformations": "Удалить все преобразования",
-      "title-delete-all-transformations": "Удалить все преобразования?",
-      "tooltip-clear-search": "Очистить поиск",
-      "tooltip-close-picker": "Закрыть указатель"
     },
     "validation": {
       "invalid-dashboard-id": "Не удалось найти действительный идентификатор Grafana.com",
@@ -11647,6 +11643,15 @@
         "open-explore": "Открыть в Explore",
         "set-up": "Установить"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU кластера · последние 24 часа",
         "description": "Просматривайте состояние кластера, затраты и экономию от оптимизации ресурсов в одном представлении.",
@@ -11654,19 +11659,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11711,6 +11709,22 @@
         "data-points-per-minute": "Точек данных в минуту: {{value}}",
         "description": "Подключите совместимые с Prometheus метрики, чтобы изучить состояние инфраструктуры и тенденции.",
         "disk-worst": "{{host}} на {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Изучите использование дискового пространства в Explore",
         "series-trend": "Активные ряды · последние 24 часа",
         "setup-hint": "подключите источник метрик",

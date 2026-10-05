@@ -3059,6 +3059,7 @@
         "results-with-cancellation": "Wyszukiwanie anulowane – liczba znalezionych reguł: {{numberOfRules}}",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Importy są niedostępne, gdy aktywna jest automatyczna synchronizacja menedżera alertów Mimir"
       },
@@ -3083,7 +3084,15 @@
         "use-new-experience": "Użyj nowego interfejsu",
         "view-previous-experience": "Przywróć poprzedni interfejs"
       },
-      "unknown-rule-type": "Nieznany typ reguły"
+      "unknown-rule-type": "Nieznany typ reguły",
+      "checking-data-sources_one": "",
+      "checking-data-sources_few": "",
+      "checking-data-sources_many": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_few": "",
+      "hidden-empty-data-sources_many": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Błędy wczytywania reguł",
@@ -3245,7 +3254,10 @@
       "view-as": "Wyświetl jako"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Wyczyść filtry"
+      "clear-filters": "Wyczyść filtry",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Usuwam",
@@ -6245,9 +6257,6 @@
       "placeholder-search-options": "Opcje wyszukiwania",
       "visualization-button-tooltip": "Opcje wyszukiwania"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Wróć do zapytań"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6906,19 +6915,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Dodaj wyrażenie SQL",
       "sql-cta-description": "Wolisz SQL? Zamiast tego dodaj wyrażenie SQL do swoich zapytań."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Po usunięciu wszystkich transformacji nastąpi powrót do głównego ekranu wyboru."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Dodaj inną transformację"
-      },
-      "confirmText-delete-all": "Usuń wszystkie",
-      "delete-all-transformations": "Usuń wszystkie transformacje",
-      "title-delete-all-transformations": "Usunąć wszystkie transformacje?",
-      "tooltip-clear-search": "Wyczyść wyszukiwanie",
-      "tooltip-close-picker": "Zamknij selektor"
     },
     "validation": {
       "invalid-dashboard-id": "Nie można znaleźć prawidłowego identyfikatora Grafana.com",
@@ -11647,6 +11643,15 @@
         "open-explore": "Otwórz w widoku „Eksploruj”",
         "set-up": "Skonfiguruj"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU klastra · ostatnie 24 godz.",
         "description": "Sprawdzaj stan klastra, koszty i oszczędności związane z optymalizacją w jednym widoku.",
@@ -11654,19 +11659,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11711,6 +11709,22 @@
         "data-points-per-minute": "{{value}} pkt danych/min",
         "description": "Połącz metryki kompatybilne z Prometheus, aby przeglądać stan infrastruktury i trendy.",
         "disk-worst": "{{host}} na poziomie {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Zbadaj wykorzystanie dysku w widoku „Eksploruj”",
         "series-trend": "Aktywne szeregi · ostatnie 24 godz.",
         "setup-hint": "połącz źródło metryk",

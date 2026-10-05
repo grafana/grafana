@@ -126,7 +126,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	} else if result.Error != nil {
 		// Return the status error directly because Kubernetes response writers
 		// do not unwrap errors when determining the HTTP status.
-		return v0alpha1.SearchResults{}, resource.GetError(result.Error)
+		return v0alpha1.SearchResults{}, resource.StatusError(result.Error)
 	}
 
 	switch result.ResultFormat {

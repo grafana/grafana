@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Solange die automatische Synchronisierung von Mimir Alertmanager aktiv ist, sind Importe nicht verfügbar"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Neue Benutzeroberfläche verwenden",
         "view-previous-experience": "Zurück zur vorherigen Oberfläche"
       },
-      "unknown-rule-type": "Unbekannter Regeltyp"
+      "unknown-rule-type": "Unbekannter Regeltyp",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fehler beim Laden der Regeln",
@@ -3193,7 +3198,10 @@
       "view-as": "Anzeigen als"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Filter zurücksetzen"
+      "clear-filters": "Filter zurücksetzen",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Wird gelöscht",
@@ -6153,9 +6161,6 @@
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Zurück zu den Abfragen"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6812,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-Ausdruck hinzufügen",
       "sql-cta-description": "Bevorzugen Sie SQL? Fügen Sie Ihren Abfragen stattdessen einen SQL-Ausdruck hinzu."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Wenn Sie alle Transformationen löschen, kehren Sie zum Hauptauswahlbildschirm zurück."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Weitere Transformation hinzufügen"
-      },
-      "confirmText-delete-all": "Alles löschen",
-      "delete-all-transformations": "Alle Transformationen löschen",
-      "title-delete-all-transformations": "Alle Transformationen löschen?",
-      "tooltip-clear-search": "Suche löschen",
-      "tooltip-close-picker": "Auswahl schließen"
     },
     "validation": {
       "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",
@@ -11511,6 +11503,15 @@
         "open-explore": "In Explore öffnen",
         "set-up": "Einrichten"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Cluster-CPU · letzte 24 Stunden",
         "description": "Sehen Sie den Cluster-Zustand, die Kosten und die Einsparungen durch die richtige Dimensionierung in einer Ansicht.",
@@ -11518,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11563,6 +11557,22 @@
         "data-points-per-minute": "{{value}} Datenpunkte/Min.",
         "description": "Verbinden Sie mit Prometheus kompatible Metriken, um den Zustand und die Trends der Infrastruktur zu untersuchen.",
         "disk-worst": "{{host}} bei {{percent}} %",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Festplattennutzung in Explore untersuchen",
         "series-trend": "Aktive Reihen · letzte 24 Stunden",
         "setup-hint": "eine Metrikquelle verbinden",
