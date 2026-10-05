@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -44,5 +45,36 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, creator)
 		require.Contains(t, err.Error(), "missing auth info")
+	})
+}
+
+func TestAfterMoveToRootPermissionCreator(t *testing.T) {
+	var inheritedFrom string
+	var hasInheritedFrom bool
+	setter := func(ctx context.Context, key *resourcepb.ResourceKey, auth authtypes.AuthInfo, val utils.GrafanaMetaAccessor) error {
+		inheritedFrom, hasInheritedFrom = InheritedFrom(ctx)
+		return nil
+	}
+	ctx := authtypes.WithAuthInfo(context.Background(), &identity.StaticRequester{UserID: 1, Type: authtypes.TypeUser})
+
+	t.Run("create does not carry a source folder", func(t *testing.T) {
+		creator, err := afterCreatePermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, &v0alpha1.Dashboard{}, setter)
+		require.NoError(t, err)
+		require.NoError(t, creator(ctx))
+		require.False(t, hasInheritedFrom)
+	})
+
+	t.Run("move to root tells the setter which folder the resource came from", func(t *testing.T) {
+		creator, err := afterMoveToRootPermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, &v0alpha1.Dashboard{}, setter, "old-parent")
+		require.NoError(t, err)
+		require.NoError(t, creator(ctx))
+		require.True(t, hasInheritedFrom)
+		require.Equal(t, "old-parent", inheritedFrom)
+	})
+
+	t.Run("move to root without a grant does nothing", func(t *testing.T) {
+		creator, err := afterMoveToRootPermissionCreator(ctx, nil, "", &v0alpha1.Dashboard{}, setter, "old-parent")
+		require.NoError(t, err)
+		require.Nil(t, creator)
 	})
 }

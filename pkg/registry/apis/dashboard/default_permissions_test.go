@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -14,9 +15,12 @@ import (
 	authlib "github.com/grafana/authlib/types"
 
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/apiserver/client"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -87,6 +91,41 @@ func TestSetDefaultDashboardPermissions(t *testing.T) {
 			map[string]any{"kind": "Team", "name": "team-a", "verb": "edit"},
 			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "edit"},
 			map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "edit"},
+		}, storedPermissions(t, dyn))
+	})
+
+	t.Run("a dashboard moved to the root keeps the access it inherited from its old folder tree", func(t *testing.T) {
+		folderPermissions := func(uid string, permissions ...any) *unstructured.Unstructured {
+			return &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": gvr.GroupVersion().String(),
+				"kind":       "ResourcePermission",
+				"metadata":   map[string]any{"name": "folder.grafana.app-folders-" + uid, "namespace": "default"},
+				"spec": map[string]any{
+					"resource":    map[string]any{"apiGroup": "folder.grafana.app", "resource": "folders", "name": uid},
+					"permissions": permissions,
+				},
+			}}
+		}
+		b, dyn := newBuilder(
+			folderPermissions("root", map[string]any{"kind": "Team", "name": "team-a", "verb": "view"}),
+			folderPermissions("child", map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "admin"}),
+		)
+
+		parents, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&foldersv1.FolderInfoList{Items: []foldersv1.FolderInfo{
+			{Name: "root"}, {Name: "child", Parent: "root"}, {Name: "gone", Detached: true},
+		}})
+		require.NoError(t, err)
+		handler := new(client.MockK8sHandler)
+		handler.On("Get", mock.Anything, "child", int64(1), mock.Anything, []string{"parents"}).Return(&unstructured.Unstructured{Object: parents}, nil)
+		b.folderClientProvider = newSimpleClientProvider(handler)
+
+		movedCtx := apistore.WithInheritedFrom(ctx, "child")
+		require.NoError(t, b.setDefaultDashboardPermissions(movedCtx, key, creator, dashboardMeta(t, "")))
+
+		// Only what the old folder tree granted: no generic defaults and no admin for the mover.
+		require.ElementsMatch(t, []any{
+			map[string]any{"kind": "Team", "name": "team-a", "verb": "view"},
+			map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "admin"},
 		}, storedPermissions(t, dyn))
 	})
 

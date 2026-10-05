@@ -55,6 +55,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -1251,6 +1252,15 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}...)
 
 	svc := dr.getPermissionsService(key.Resource == "folders")
+	if from, ok := apistore.InheritedFrom(ctx); ok {
+		// A dashboard moved to the root keeps the access it had through its old folder tree
+		// instead of getting the generic defaults, so the move neither widens nor narrows who
+		// can reach it, and the mover gains nothing they did not already have.
+		permissions, err = dr.inheritedFolderPermissions(ctx, user, from)
+		if err != nil {
+			return err
+		}
+	}
 	// The setter also runs when an existing dashboard is moved into the root folder, where it
 	// may already carry permissions. SetPermissions replaces the level of every assignee it is
 	// given, so drop the ones that already have a grant to never lower (or raise) existing access.
@@ -1275,8 +1285,58 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	return nil
 }
 
-// withoutExistingAssignees drops the commands for users and basic roles that already have a
-// managed permission on the resource, because SetPermissions would replace their current level.
+// permissionLevelRank orders the dashboard permission levels so the broadest grant per
+// assignee wins when merging a folder's own and inherited permissions.
+var permissionLevelRank = map[string]int{
+	dashboardaccess.PERMISSION_VIEW.String():  1,
+	dashboardaccess.PERMISSION_EDIT.String():  2,
+	dashboardaccess.PERMISSION_ADMIN.String(): 3,
+}
+
+// inheritedFolderPermissions returns, as commands, the managed permissions a dashboard inside
+// folderUID gets from the folder tree: the folder's own grants plus the ones it inherits, with
+// the broadest level per assignee. Folder levels apply to dashboards one to one.
+func (dr *DashboardServiceImpl) inheritedFolderPermissions(ctx context.Context, user identity.Requester, folderUID string) ([]accesscontrol.SetResourcePermissionCommand, error) {
+	existing, err := dr.folderPermissions.GetPermissions(ctx, user, folderUID)
+	if err != nil {
+		return nil, fmt.Errorf("get permissions of folder %s: %w", folderUID, err)
+	}
+
+	type assignee struct {
+		userID, teamID int64
+		builtInRole    string
+	}
+	byIndex := map[assignee]int{}
+	commands := make([]accesscontrol.SetResourcePermissionCommand, 0, len(existing))
+	for _, p := range existing {
+		if !p.IsManaged {
+			continue
+		}
+		level := dr.folderPermissions.MapActions(p)
+		if level == "" {
+			continue
+		}
+		key := assignee{userID: p.UserID, teamID: p.TeamID, builtInRole: p.BuiltInRole}
+		if i, seen := byIndex[key]; seen {
+			if permissionLevelRank[level] > permissionLevelRank[commands[i].Permission] {
+				commands[i].Permission = level
+			}
+			continue
+		}
+		byIndex[key] = len(commands)
+		commands = append(commands, accesscontrol.SetResourcePermissionCommand{
+			UserID:      p.UserID,
+			TeamID:      p.TeamID,
+			BuiltinRole: p.BuiltInRole,
+			Permission:  level,
+		})
+	}
+	return commands, nil
+}
+
+// withoutExistingAssignees drops the commands for users, teams and basic roles that already
+// have a managed permission on the resource, because SetPermissions would replace their current
+// level.
 func withoutExistingAssignees(ctx context.Context, svc accesscontrol.PermissionsService, user identity.Requester, uid string, permissions []accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.SetResourcePermissionCommand, error) {
 	existing, err := svc.GetPermissions(ctx, user, uid)
 	if err != nil {
@@ -1284,6 +1344,7 @@ func withoutExistingAssignees(ctx context.Context, svc accesscontrol.Permissions
 	}
 
 	userIDs := map[int64]bool{}
+	teamIDs := map[int64]bool{}
 	builtInRoles := map[string]bool{}
 	for _, p := range existing {
 		if !p.IsManaged || p.IsInherited {
@@ -1292,6 +1353,9 @@ func withoutExistingAssignees(ctx context.Context, svc accesscontrol.Permissions
 		if p.UserID != 0 {
 			userIDs[p.UserID] = true
 		}
+		if p.TeamID != 0 {
+			teamIDs[p.TeamID] = true
+		}
 		if p.BuiltInRole != "" {
 			builtInRoles[p.BuiltInRole] = true
 		}
@@ -1299,7 +1363,7 @@ func withoutExistingAssignees(ctx context.Context, svc accesscontrol.Permissions
 
 	missing := make([]accesscontrol.SetResourcePermissionCommand, 0, len(permissions))
 	for _, p := range permissions {
-		if (p.UserID != 0 && userIDs[p.UserID]) || (p.BuiltinRole != "" && builtInRoles[p.BuiltinRole]) {
+		if (p.UserID != 0 && userIDs[p.UserID]) || (p.TeamID != 0 && teamIDs[p.TeamID]) || (p.BuiltinRole != "" && builtInRoles[p.BuiltinRole]) {
 			continue
 		}
 		missing = append(missing, p)

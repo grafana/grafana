@@ -452,12 +452,21 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+
 	// The creator gets admin on their folder, in addition to the default basic-role permissions.
 	// Anonymous and other non-user identities don't get an explicit grant.
 	defaults := buildDefaultFolderPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+	if from, ok := apistore.InheritedFrom(ctx); ok {
+		// A folder moved to the root keeps the access it had through its old parent tree instead
+		// of getting the generic defaults, so the move neither widens nor narrows who can reach
+		// it, and the mover gains nothing they did not already have.
+		defaults, err = resourcepermission.InheritedPermissions(ctx, client, b.folderParents, from)
+		if err != nil {
+			return fmt.Errorf("inherited folder permissions: %w", err)
+		}
+	}
 	name := fmt.Sprintf("%s-%s-%s", gvr.Group, gvr.Resource, obj.GetName())
 
 	existing, err := client.Get(ctx, name, metav1.GetOptions{})
@@ -506,6 +515,31 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	}
 
 	return nil
+}
+
+// folderParents resolves a folder and all of its ancestors with the same walk the "parents"
+// subresource uses.
+func (b *FolderAPIBuilder) folderParents(ctx context.Context, folderUID string) ([]string, error) {
+	obj, err := b.storage.Get(ctx, folderUID, &metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	f, ok := obj.(*foldersv1.Folder)
+	if !ok {
+		return nil, fmt.Errorf("expected folder, found %T", obj)
+	}
+	info, err := b.parents(ctx, f)
+	if err != nil {
+		return nil, err
+	}
+	uids := make([]string, 0, len(info.Items))
+	for _, item := range info.Items {
+		if item.Detached {
+			continue
+		}
+		uids = append(uids, item.Name)
+	}
+	return uids, nil
 }
 
 func (b *FolderAPIBuilder) registerPermissionHooks(store *genericregistry.Store) {

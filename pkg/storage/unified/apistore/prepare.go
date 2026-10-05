@@ -41,6 +41,9 @@ type objectForStorage struct {
 	// apply permissions after create (defined in the resource body)
 	grantPermissions string
 
+	// the folder an updated resource was moved out of when it arrived at the root
+	inheritedFrom string
+
 	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
 	permissionCreator permissionCreatorFunc
 
@@ -336,6 +339,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
 	if grant != "" && s.movedIntoRoot(previous, obj) {
 		v.grantPermissions = grant
+		v.inheritedFrom = previous.GetFolder()
 	}
 
 	// Make sure the deprecated internalID does not change

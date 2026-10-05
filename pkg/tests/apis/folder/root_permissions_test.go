@@ -22,11 +22,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationMoveFolderToRootDefaultPermissions covers the default permissions a folder
-// gets when the legacy folder API moves it to the root, where there is no parent to inherit
-// access from. It runs with the ResourcePermission API enabled: with it disabled the legacy
-// folder defaults are set by the folder REST storage on create only, so a legacy move to the
-// root is not covered.
+// TestIntegrationMoveFolderToRootDefaultPermissions covers the permissions a folder keeps when
+// the legacy folder API moves it to the root, where there is no parent to inherit access from: it
+// carries over the access it had through its old parent tree, so the move neither widens nor
+// narrows who can reach it. It runs with the ResourcePermission API enabled: with it disabled the
+// legacy folder defaults are set by the folder REST storage on create only, so a legacy move to
+// the root is not covered.
 func TestIntegrationMoveFolderToRootDefaultPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -99,39 +100,71 @@ func TestIntegrationMoveFolderToRootDefaultPermissions(t *testing.T) {
 		return byRole
 	}
 
+	moveToRoot := func(t *testing.T, uid string) {
+		t.Helper()
+		move := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/folders/" + uid + "/move",
+			Body:   []byte(`{"parentUid":""}`),
+		}, &dtos.Folder{})
+		require.Equal(t, http.StatusOK, move.Response.StatusCode, string(move.Body))
+		require.Equal(t, "", move.Result.ParentUID)
+	}
+
+	viewerCanSee := func(uid string) bool {
+		_, err := viewerFolders.Resource.Get(ctx, uid, metav1.GetOptions{})
+		if err == nil {
+			return true
+		}
+		require.True(t, apierrors.IsForbidden(err), "unexpected error reading folder %s as viewer: %v", uid, err)
+		return false
+	}
+
 	// A root folder viewers cannot see: created with the defaults, then restricted to admins.
-	createFolder(t, "parent", "")
-	setRolePermissions(t, "parent", map[org.RoleType]dashboardaccess.PermissionType{org.RoleAdmin: dashboardaccess.PERMISSION_ADMIN})
-	_, err := viewerFolders.Resource.Get(ctx, "parent", metav1.GetOptions{})
-	require.True(t, apierrors.IsForbidden(err), "viewer must not see the restricted parent folder, got: %v", err)
+	createFolder(t, "restricted", "")
+	setRolePermissions(t, "restricted", map[org.RoleType]dashboardaccess.PermissionType{org.RoleAdmin: dashboardaccess.PERMISSION_ADMIN})
+	require.False(t, viewerCanSee("restricted"), "viewer must not see the restricted folder")
 
-	createFolder(t, "child", "parent")
-	_, err = viewerFolders.Resource.Get(ctx, "child", metav1.GetOptions{})
-	require.True(t, apierrors.IsForbidden(err), "viewer must not see a folder inside the restricted folder, got: %v", err)
+	// A root folder with the defaults, plus a grant above the default level for Editors.
+	createFolder(t, "open", "")
+	setRolePermissions(t, "open", map[org.RoleType]dashboardaccess.PermissionType{
+		org.RoleAdmin:  dashboardaccess.PERMISSION_ADMIN,
+		org.RoleEditor: dashboardaccess.PERMISSION_ADMIN,
+		org.RoleViewer: dashboardaccess.PERMISSION_VIEW,
+	})
 
-	// An explicit grant above the default level, which the defaults must not lower.
-	setRolePermissions(t, "child", map[org.RoleType]dashboardaccess.PermissionType{org.RoleEditor: dashboardaccess.PERMISSION_ADMIN})
+	t.Run("folder moved out of a restricted folder stays hidden from viewers", func(t *testing.T) {
+		createFolder(t, "restricted-child", "restricted")
+		require.False(t, viewerCanSee("restricted-child"), "viewer must not see a folder inside the restricted folder")
 
-	move := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Admin,
-		Method: http.MethodPost,
-		Path:   "/api/folders/child/move",
-		Body:   []byte(`{"parentUid":""}`),
-	}, &dtos.Folder{})
-	require.Equal(t, http.StatusOK, move.Response.StatusCode, string(move.Body))
-	require.Equal(t, "", move.Result.ParentUID)
+		// An explicit grant on the folder itself, which the move must leave untouched.
+		setRolePermissions(t, "restricted-child", map[org.RoleType]dashboardaccess.PermissionType{org.RoleEditor: dashboardaccess.PERMISSION_ADMIN})
 
-	_, err = viewerFolders.Resource.Get(ctx, "child", metav1.GetOptions{})
-	require.NoError(t, err, "viewer should see a folder moved to the root")
+		moveToRoot(t, "restricted-child")
 
-	legacyGet := apis.DoRequest(helper, apis.RequestParams{
-		User:   helper.Org1.Viewer,
-		Method: http.MethodGet,
-		Path:   "/api/folders/child",
-	}, &dtos.Folder{})
-	require.Equal(t, http.StatusOK, legacyGet.Response.StatusCode, "viewer should see a folder moved to the root through the legacy API too")
+		require.False(t, viewerCanSee("restricted-child"), "a move to the root must not widen access")
+		acl := ownRolePermissions(t, "restricted-child")
+		require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the existing Editor grant must be kept")
+		require.NotContains(t, acl, org.RoleViewer, "no Viewer grant must be added")
+	})
 
-	acl := ownRolePermissions(t, "child")
-	require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the existing Editor grant must not be lowered to the default")
-	require.Equal(t, dashboardaccess.PERMISSION_VIEW, acl[org.RoleViewer], "the missing Viewer default must be added")
+	t.Run("folder moved out of an open folder keeps the access it inherited", func(t *testing.T) {
+		createFolder(t, "open-child", "open")
+		require.True(t, viewerCanSee("open-child"), "viewer should see a folder inside the open folder")
+
+		moveToRoot(t, "open-child")
+
+		require.True(t, viewerCanSee("open-child"), "viewer should still see the folder after the move to the root")
+		legacyGet := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Viewer,
+			Method: http.MethodGet,
+			Path:   "/api/folders/open-child",
+		}, &dtos.Folder{})
+		require.Equal(t, http.StatusOK, legacyGet.Response.StatusCode, "viewer should see the moved folder through the legacy API too")
+
+		acl := ownRolePermissions(t, "open-child")
+		require.Equal(t, dashboardaccess.PERMISSION_VIEW, acl[org.RoleViewer], "the inherited Viewer grant must be carried over")
+		require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the inherited Editor grant must be carried over at its own level")
+	})
 }

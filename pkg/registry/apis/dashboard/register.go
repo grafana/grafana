@@ -1521,12 +1521,21 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	}
 	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+
 	// The creator gets admin on their dashboard, in addition to the default basic-role
 	// permissions. Anonymous and other non-user identities don't get an explicit grant.
 	defaults := buildDefaultDashboardPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	if from, ok := apistore.InheritedFrom(ctx); ok {
+		// A dashboard moved to the root keeps the access it had through its old folder tree
+		// instead of getting the generic defaults, so the move neither widens nor narrows who
+		// can reach it, and the mover gains nothing they did not already have.
+		defaults, err = resourcepermission.InheritedPermissions(ctx, client, b.folderParents(nsInfo), from)
+		if err != nil {
+			return fmt.Errorf("inherited dashboard permissions: %w", err)
+		}
+	}
 	name := fmt.Sprintf("%s-%s-%s", gvr.Group, gvr.Resource, obj.GetName())
 
 	existing, err := client.Get(ctx, name, metav1.GetOptions{})
@@ -1575,6 +1584,36 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	}
 
 	return nil
+}
+
+// folderParents resolves a folder and all of its ancestors through the folders "parents"
+// subresource, for the namespace of the resource whose permissions are being set.
+func (b *DashboardsAPIBuilder) folderParents(ns authlib.NamespaceInfo) resourcepermission.FolderParents {
+	return func(ctx context.Context, folderUID string) ([]string, error) {
+		if b.folderClientProvider == nil {
+			return nil, fmt.Errorf("folder client provider is not configured")
+		}
+		folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+		if folderClient == nil {
+			return nil, fmt.Errorf("folder client handler is not configured for namespace %q", ns.Value)
+		}
+		obj, err := folderClient.Get(ctx, folderUID, ns.OrgID, metav1.GetOptions{}, "parents")
+		if err != nil {
+			return nil, err
+		}
+		var info folders.FolderInfoList
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &info); err != nil {
+			return nil, fmt.Errorf("convert folder parents: %w", err)
+		}
+		uids := make([]string, 0, len(info.Items))
+		for _, item := range info.Items {
+			if item.Detached {
+				continue
+			}
+			uids = append(uids, item.Name)
+		}
+		return uids, nil
+	}
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

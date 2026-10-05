@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -17,6 +18,8 @@ import (
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -87,6 +90,41 @@ func TestSetDefaultFolderPermissions(t *testing.T) {
 			map[string]any{"kind": "BasicRole", "name": "Admin", "verb": "admin"},
 			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "edit"},
 			map[string]any{"kind": "BasicRole", "name": "Editor", "verb": "edit"},
+		}, storedPermissions(t, dyn))
+	})
+
+	t.Run("a folder moved to the root keeps the access it inherited from its old parent tree", func(t *testing.T) {
+		folderPermissions := func(uid string, permissions ...any) *unstructured.Unstructured {
+			return &unstructured.Unstructured{Object: map[string]any{
+				"apiVersion": gvr.GroupVersion().String(),
+				"kind":       "ResourcePermission",
+				"metadata":   map[string]any{"name": "folder.grafana.app-folders-" + uid, "namespace": "default"},
+				"spec": map[string]any{
+					"resource":    map[string]any{"apiGroup": "folder.grafana.app", "resource": "folders", "name": uid},
+					"permissions": permissions,
+				},
+			}}
+		}
+		b, dyn := newBuilder(
+			folderPermissions("root", map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"}),
+			folderPermissions("parent", map[string]any{"kind": "Team", "name": "team-a", "verb": "edit"}),
+		)
+
+		storage := grafanarest.NewMockStorage(t)
+		storage.On("Get", mock.Anything, "parent", mock.Anything).Return(&foldersv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}, nil)
+		b.storage = storage
+		b.parents = func(_ context.Context, f *foldersv1.Folder) (*foldersv1.FolderInfoList, error) {
+			require.Equal(t, "parent", f.Name)
+			return &foldersv1.FolderInfoList{Items: []foldersv1.FolderInfo{{Name: "root"}, {Name: "parent", Parent: "root"}}}, nil
+		}
+
+		movedCtx := apistore.WithInheritedFrom(ctx, "parent")
+		require.NoError(t, b.setDefaultFolderPermissions(movedCtx, key, creator, folderMeta(t, "")))
+
+		// Only what the old parent tree granted: no generic defaults and no admin for the mover.
+		require.ElementsMatch(t, []any{
+			map[string]any{"kind": "BasicRole", "name": "Viewer", "verb": "view"},
+			map[string]any{"kind": "Team", "name": "team-a", "verb": "edit"},
 		}, storedPermissions(t, dyn))
 	})
 

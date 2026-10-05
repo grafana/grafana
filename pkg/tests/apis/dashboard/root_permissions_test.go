@@ -26,10 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
-// TestIntegrationRootLevelDefaultPermissions covers the default permissions a dashboard or
-// folder gets at the root of the folder tree, where there is no parent to inherit access
-// from: both when it is created there and when it is moved there later. The requests mirror
-// what the frontend sends: the grant-permissions annotation is set on every save.
+// TestIntegrationRootLevelDefaultPermissions covers the permissions a dashboard or folder gets at
+// the root of the folder tree, where there is no parent to inherit access from. Created there, it
+// gets the defaults. Moved there, it keeps the access it had through its old folder tree, so the
+// move neither widens nor narrows who can reach it. The requests mirror what the frontend sends:
+// the grant-permissions annotation is set on every save.
 func TestIntegrationRootLevelDefaultPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -64,14 +65,22 @@ func TestIntegrationRootLevelDefaultPermissions(t *testing.T) {
 			adminDashboards := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: dashGVR})
 			viewerFolders := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: folderGVR})
 			viewerDashboards := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Viewer, GVR: dashGVR})
+			adminRole, editorRole := string(org.RoleAdmin), string(org.RoleEditor)
 
 			// A root folder viewers cannot see: created with the defaults, then restricted to admins.
-			parent := createRootPermissionsFolder(t, adminFolders, "parent", "")
-			adminRole := string(org.RoleAdmin)
-			setLegacyPermissions(t, helper, "/api/folders/"+parent.GetName()+"/permissions",
+			restricted := createRootPermissionsFolder(t, adminFolders, "restricted", "")
+			setLegacyPermissions(t, helper, "/api/folders/"+restricted.GetName()+"/permissions",
 				[]ResourcePermissionSetting{{Role: &adminRole, Level: ResourcePermissionLevelAdmin}})
-			_, err := viewerFolders.Resource.Get(ctx, parent.GetName(), metav1.GetOptions{})
-			require.True(t, apierrors.IsForbidden(err), "viewer must not see the restricted parent folder, got: %v", err)
+			_, err := viewerFolders.Resource.Get(ctx, restricted.GetName(), metav1.GetOptions{})
+			require.True(t, apierrors.IsForbidden(err), "viewer must not see the restricted folder, got: %v", err)
+
+			// A root folder with the defaults, plus a grant above the default level for Editors.
+			open := createRootPermissionsFolder(t, adminFolders, "open", "")
+			setLegacyPermissions(t, helper, "/api/folders/"+open.GetName()+"/permissions", []ResourcePermissionSetting{
+				{Role: &adminRole, Level: ResourcePermissionLevelAdmin},
+				{Role: &editorRole, Level: ResourcePermissionLevelAdmin},
+				{Role: ptr(string(org.RoleViewer)), Level: ResourcePermissionLevelView},
+			})
 
 			t.Run("dashboard created at the root is visible to viewers", func(t *testing.T) {
 				dash := createRootPermissionsDashboard(t, adminDashboards, "root-dash", "")
@@ -79,43 +88,74 @@ func TestIntegrationRootLevelDefaultPermissions(t *testing.T) {
 				require.NoError(t, err, "viewer should see a dashboard created at the root")
 			})
 
-			t.Run("dashboard moved to the root becomes visible to viewers and keeps its existing grants", func(t *testing.T) {
-				dash := createRootPermissionsDashboard(t, adminDashboards, "nested-dash", parent.GetName())
+			t.Run("dashboard moved out of a restricted folder stays hidden from viewers", func(t *testing.T) {
+				dash := createRootPermissionsDashboard(t, adminDashboards, "restricted-dash", restricted.GetName())
 				_, err := viewerDashboards.Resource.Get(ctx, dash.GetName(), metav1.GetOptions{})
 				require.True(t, apierrors.IsForbidden(err), "viewer must not see a dashboard inside the restricted folder, got: %v", err)
 
-				// An explicit grant above the default level, which the defaults must not lower.
-				editorRole := string(org.RoleEditor)
+				// An explicit grant on the dashboard itself, which the move must leave untouched.
 				setLegacyPermissions(t, helper, "/api/dashboards/uid/"+dash.GetName()+"/permissions",
 					[]ResourcePermissionSetting{{Role: &editorRole, Level: ResourcePermissionLevelAdmin}})
 
 				moveToRoot(t, adminDashboards, dash.GetName())
 
 				_, err = viewerDashboards.Resource.Get(ctx, dash.GetName(), metav1.GetOptions{})
-				require.NoError(t, err, "viewer should see a dashboard moved to the root")
+				require.True(t, apierrors.IsForbidden(err), "a move to the root must not widen access, got: %v", err)
 
 				acl := getLegacyRolePermissions(t, helper, "/api/dashboards/uid/"+dash.GetName()+"/permissions")
-				require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the existing Editor grant must not be lowered to the default")
-				require.Equal(t, dashboardaccess.PERMISSION_VIEW, acl[org.RoleViewer], "the missing Viewer default must be added")
+				require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the existing Editor grant must be kept")
+				require.NotContains(t, acl, org.RoleViewer, "no Viewer grant must be added")
+			})
+
+			t.Run("dashboard moved out of an open folder keeps the access it inherited", func(t *testing.T) {
+				dash := createRootPermissionsDashboard(t, adminDashboards, "open-dash", open.GetName())
+				_, err := viewerDashboards.Resource.Get(ctx, dash.GetName(), metav1.GetOptions{})
+				require.NoError(t, err, "viewer should see a dashboard inside the open folder")
+
+				moveToRoot(t, adminDashboards, dash.GetName())
+
+				_, err = viewerDashboards.Resource.Get(ctx, dash.GetName(), metav1.GetOptions{})
+				require.NoError(t, err, "viewer should still see the dashboard after the move to the root")
+
+				acl := getLegacyRolePermissions(t, helper, "/api/dashboards/uid/"+dash.GetName()+"/permissions")
+				require.Equal(t, dashboardaccess.PERMISSION_VIEW, acl[org.RoleViewer], "the inherited Viewer grant must be carried over")
+				require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the inherited Editor grant must be carried over at its own level")
 			})
 
 			if !tc.coverFolders {
 				return
 			}
 
-			t.Run("folder moved to the root becomes visible to viewers", func(t *testing.T) {
-				child := createRootPermissionsFolder(t, adminFolders, "child", parent.GetName())
+			t.Run("folder moved out of a restricted folder stays hidden from viewers", func(t *testing.T) {
+				child := createRootPermissionsFolder(t, adminFolders, "restricted-child", restricted.GetName())
 				_, err := viewerFolders.Resource.Get(ctx, child.GetName(), metav1.GetOptions{})
 				require.True(t, apierrors.IsForbidden(err), "viewer must not see a folder inside the restricted folder, got: %v", err)
 
 				moveToRoot(t, adminFolders, child.GetName())
 
 				_, err = viewerFolders.Resource.Get(ctx, child.GetName(), metav1.GetOptions{})
-				require.NoError(t, err, "viewer should see a folder moved to the root")
+				require.True(t, apierrors.IsForbidden(err), "a move to the root must not widen access, got: %v", err)
+			})
+
+			t.Run("folder moved out of an open folder keeps the access it inherited", func(t *testing.T) {
+				child := createRootPermissionsFolder(t, adminFolders, "open-child", open.GetName())
+				_, err := viewerFolders.Resource.Get(ctx, child.GetName(), metav1.GetOptions{})
+				require.NoError(t, err, "viewer should see a folder inside the open folder")
+
+				moveToRoot(t, adminFolders, child.GetName())
+
+				_, err = viewerFolders.Resource.Get(ctx, child.GetName(), metav1.GetOptions{})
+				require.NoError(t, err, "viewer should still see the folder after the move to the root")
+
+				acl := getLegacyRolePermissions(t, helper, "/api/folders/"+child.GetName()+"/permissions")
+				require.Equal(t, dashboardaccess.PERMISSION_VIEW, acl[org.RoleViewer], "the inherited Viewer grant must be carried over")
+				require.Equal(t, dashboardaccess.PERMISSION_ADMIN, acl[org.RoleEditor], "the inherited Editor grant must be carried over at its own level")
 			})
 		})
 	}
 }
+
+func ptr[T any](v T) *T { return &v }
 
 func createRootPermissionsFolder(t *testing.T, client *apis.K8sResourceClient, name, parentUID string) *unstructured.Unstructured {
 	t.Helper()

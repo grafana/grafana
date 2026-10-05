@@ -521,6 +521,11 @@ func TestPrepareObjectForUpdate_GrantPermissions(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tt.expected, v.grantPermissions)
 			require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions), "annotation must never be persisted")
+			if tt.expected != "" {
+				require.Equal(t, tt.oldFolder, v.inheritedFrom, "the setter must learn which folder the resource came from")
+			} else {
+				require.Empty(t, v.inheritedFrom)
+			}
 		})
 	}
 }
