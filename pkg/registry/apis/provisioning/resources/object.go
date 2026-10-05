@@ -45,7 +45,7 @@ func (o *ResourceListerFromSearch) List(ctx context.Context, namespace, reposito
 		Kind:      string(utils.ManagerKindRepo),
 		Id:        repository,
 	})
-	if err := resource.StatusErrorFromResponse(objects.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(objects.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -76,7 +76,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	}
 
 	counts, err := o.store.CountManagedObjects(ctx, req)
-	if err := resource.StatusErrorFromResponse(counts.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(counts.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +116,7 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 	info, err := o.store.GetStats(ctx, &resourcepb.ResourceStatsRequest{
 		Namespace: namespace,
 	})
-	if err := resource.StatusErrorFromResponse(info.GetError(), err); err != nil {
+	if err := resource.ErrorFromResponse(info.GetError(), err); err != nil {
 		return nil, err
 	}
 

@@ -2,6 +2,8 @@ package resources
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -80,13 +82,20 @@ func resourceErrorCases(t *testing.T) []resourceErrorCase {
 	want := resource.StatusError(result).(apierrors.APIStatus).Status()
 	return []resourceErrorCase{
 		{name: "embedded", result: result, want: want},
-		{name: "grpc details", err: st.Err(), want: want},
+		{name: "grpc details", err: st.Err()},
+		{name: "wrapped grpc", err: fmt.Errorf("storage: %w", st.Err())},
+		{name: "unstructured grpc", err: status.Error(codes.Unavailable, "backend connection failed")},
+		{name: "ordinary transport", err: errors.New("transport failed")},
 	}
 }
 
 func (tc resourceErrorCase) assertError(t *testing.T, err error) {
 	t.Helper()
+	if tc.err != nil {
+		require.Same(t, tc.err, err)
+		return
+	}
 	apiStatus, ok := err.(apierrors.APIStatus)
-	require.True(t, ok, "API writers need an unwrapped APIStatus")
+	require.True(t, ok)
 	require.Equal(t, tc.want, apiStatus.Status())
 }
