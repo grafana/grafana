@@ -7,7 +7,8 @@ import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { configureStore } from 'app/store/configureStore';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { createJob, createRepository } from '../mocks/factories';
@@ -579,6 +580,79 @@ describe('ProvisioningWizard', () => {
       await waitFor(() => {
         expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
       });
+    });
+
+    it('enters the synchronize step in the loading state after the bootstrap save bumps the generation', async () => {
+      // Real submission hook: the bootstrap save must perform the actual connection test + PUT round-trip
+      const { useCreateOrUpdateRepository: realUseCreateOrUpdateRepository } = jest.requireActual<{
+        useCreateOrUpdateRepository: typeof useCreateOrUpdateRepository;
+      }>('../hooks/useCreateOrUpdateRepository');
+      mockUseCreateOrUpdateRepository.mockImplementation(realUseCreateOrUpdateRepository);
+
+      let stored = createRepository({ metadata: { resourceVersion: '5' } }); // generation 1, observedGeneration 1
+      const saved = createRepository({ metadata: { generation: 2, resourceVersion: '6' } }); // observedGeneration still 1
+      let savingBootstrap = false;
+      let releaseStaleGet = () => {};
+      const staleGet = new Promise<void>((resolve) => (releaseStaleGet = resolve));
+
+      server.use(
+        http.post(`${BASE}/repositories`, () => HttpResponse.json(stored)),
+        http.put(`${BASE}/repositories/:name`, () => {
+          if (savingBootstrap) {
+            stored = saved; // the bootstrap step changes title/target: spec change, generation bump
+          }
+          return HttpResponse.json(stored);
+        }),
+        http.get(`${BASE}/repositories`, async () => {
+          const snapshot = stored; // read at request time, possibly before the PUT lands
+          if (savingBootstrap && snapshot.metadata?.generation === 1) {
+            await staleGet; // the GET fired by the pre-save connection test fulfils after the PUT
+          }
+          return HttpResponse.json({
+            items: [snapshot],
+            metadata: { resourceVersion: snapshot.metadata?.resourceVersion },
+          });
+        })
+      );
+
+      const store = configureStore();
+      const { user } = render(
+        <StepStatusProvider>
+          <ProvisioningWizard type="github" />
+        </StepStatusProvider>,
+        { store }
+      );
+      await navigateToBootstrapStep(user);
+
+      savingBootstrap = true;
+      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+      expect(
+        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      // The pre-save GET lands with the old reconciled object. No list refetch follows it: the save's
+      // invalidation already ran while this GET was in flight, so the cache must keep the newer object.
+      const selectRepositoryList = provisioningAPIv0alpha1.endpoints.listRepository.select({
+        fieldSelector: 'metadata.name=test-repo-abc123',
+        watch: true,
+      });
+      releaseStaleGet();
+      await waitFor(() => expect(selectRepositoryList(store.getState()).isLoading).toBe(false));
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository({
+            metadata: { generation: 2, resourceVersion: '7' },
+            status: { observedGeneration: 2 },
+          }),
+        });
+      });
+      expect(await screen.findByRole('button', { name: /Begin synchronization/i })).toBeEnabled();
     });
   });
 

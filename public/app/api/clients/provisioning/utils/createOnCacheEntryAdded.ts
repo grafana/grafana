@@ -20,7 +20,7 @@ interface OnCacheEntryAddedOptions<List = unknown> {
  * deliver events out of order or more than once). Returns null when either
  * version is missing or non-numeric — callers must fail open and apply the event.
  */
-function compareResourceVersions(a: string | undefined, b: string | undefined): number | null {
+export function compareResourceVersions(a: string | undefined, b: string | undefined): number | null {
   if (!a || !b || !/^\d+$/.test(a) || !/^\d+$/.test(b)) {
     return null;
   }
