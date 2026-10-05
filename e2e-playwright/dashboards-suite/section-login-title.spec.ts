@@ -41,6 +41,19 @@ test.describe('Section titles after session expiry', { tag: ['@dashboards'] }, (
     }
   });
 
+  test('keeps the dashboard section title after a slugless URL is rewritten', async ({ page, context, selectors }) => {
+    const dashboard = dashboards[0];
+    await page.goto(`/d/${dashboard.uid}`);
+    await expect(page).toHaveURL(new RegExp(`/d/${dashboard.uid}/api-latency-${suffix}(?:\\?|$)`));
+    await expect(page.getByTestId(selectors.components.NavToolbar.markAsFavorite)).toBeVisible();
+    await expect(page).toHaveTitle(new RegExp(dashboard.title));
+
+    await context.clearCookies({ name: 'grafana_session' });
+    await page.reload();
+    await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
+    await expect(page).toHaveTitle('Dashboards - Sign in - Grafana');
+  });
+
   test('uses the latest section after navigating in the same tab', async ({ page, context, selectors }) => {
     await page.goto(`/d/${dashboards[0].uid}`);
     await expect(page).toHaveTitle(new RegExp(dashboards[0].title));
