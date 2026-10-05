@@ -1133,7 +1133,7 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
 	require.Equal(t, 1, backend.batchCalls)
-	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, readChunkSize, backend.batchReqs)
 	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
@@ -1341,10 +1341,10 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 		opts.KvStore = kvWrapper
 	})
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize+1)
-	denied := make(map[string]struct{}, searchReadChunkSize)
+	rows := make([]*resourcepb.ResourceTableRow, 0, readChunkSize+1)
+	denied := make(map[string]struct{}, readChunkSize)
 	var listRV int64
-	for i := range searchReadChunkSize + 1 {
+	for i := range readChunkSize + 1 {
 		name := fmt.Sprintf("cross-batch-%02d", i)
 		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
 		rows = append(rows, &resourcepb.ResourceTableRow{
@@ -1352,7 +1352,7 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 			ResourceVersion: listRV,
 			SortFields:      []string{name},
 		})
-		if i < searchReadChunkSize {
+		if i < readChunkSize {
 			denied[name] = struct{}{}
 		}
 	}

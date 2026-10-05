@@ -658,8 +658,8 @@ func TestReconcileDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
 // Reads are chunked, but writes are not split per read chunk: each write has a
 // fixed cost.
 func TestReconcileWritesInFullBatches(t *testing.T) {
-	names := make([]string, 0, 3*reconcileReadChunkSize)
-	for i := range 3 * reconcileReadChunkSize {
+	names := make([]string, 0, 3*readChunkSize)
+	for i := range 3 * readChunkSize {
 		names = append(names, fmt.Sprintf("dash-%03d", i))
 	}
 	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
@@ -1291,13 +1291,17 @@ func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 	assert.True(t, queued[0].reconcile)
 }
 
-// One just built matches storage already, so it is not reconciled again.
-func TestFreshGlobalIndexIsNotReconciled(t *testing.T) {
+// One just built missed what changed after its listing, since notifications
+// have nowhere to go until it is published, so it is reconciled too.
+func TestFreshGlobalIndexIsReconciled(t *testing.T) {
 	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
 
 	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
 	require.NoError(t, err)
-	assert.Zero(t, server.rebuildQueue.Len())
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.True(t, queued[0].reconcile)
 }
 
 // A global index gets no updater, so it never asks storage for changes since a

@@ -2264,11 +2264,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	sources := indexSources(nsr)
 	standardFieldsOnly := nsr.IsGlobal()
 
-	// Whether the index was built from storage, rather than reused from disk or
-	// restored from a snapshot.
-	built := false
 	builderFn := func(index ResourceIndex) (int64, error) {
-		built = true
 		span := trace.SpanFromContext(ctx)
 		span.AddEvent("building index", trace.WithAttributes(attribute.Int64("size", size), attribute.String("reason", indexBuildReason)))
 
@@ -2589,11 +2585,12 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 		return nil, err
 	}
 
-	// A global index reused from disk or restored from a snapshot missed whatever
-	// changed while it was closed, and replays no events to catch up, so it is
-	// compared with storage now rather than at its next slot. One just built
-	// matches storage already.
-	if nsr.IsGlobal() && !built {
+	// A global index replays no events, so whatever it missed is repaired by
+	// comparing it with storage, at once rather than at its next slot. One reused
+	// from disk or restored from a snapshot missed what changed while it was
+	// closed. One just built missed what changed after its listing: until it is
+	// published, notifications go to the index it replaces, or nowhere.
+	if nsr.IsGlobal() {
 		s.queueReconcile(nsr)
 	}
 

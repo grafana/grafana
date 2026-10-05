@@ -309,7 +309,9 @@ func (s *server) consumeSearchRows(
 	return nil
 }
 
-const searchReadChunkSize = 10
+// readChunkSize is how many objects one batch read asks storage for, which
+// bounds how many bodies are fetched together.
+const readChunkSize = 10
 
 func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
@@ -319,7 +321,7 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.
 			ResourceVersion: row.resourceVersion,
 		}
 	}
-	return readResourcesInChunks(ctx, s.backend, requests, searchReadChunkSize)
+	return readResourcesInChunks(ctx, s.backend, requests, readChunkSize)
 }
 
 // readResourcesInChunks reads the requests a chunk at a time, falling back to one

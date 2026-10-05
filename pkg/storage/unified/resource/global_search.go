@@ -393,9 +393,6 @@ func (s *searchServer) reconcileGlobalIndex(ctx context.Context, key NamespacedR
 	return total, idx.RecordReconciledAt(startedAt)
 }
 
-// reconcileReadChunkSize bounds how many drifted objects are read at once.
-const reconcileReadChunkSize = 50
-
 // reconcileResourceType repairs one resource type in a global index by comparing it
 // with storage, rather than replaying changes, so it fixes drift however it
 // happened and costs one keys-only listing when nothing drifted.
@@ -675,7 +672,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
-	for chunk := range slices.Chunk(names, reconcileReadChunkSize) {
+	for chunk := range slices.Chunk(names, readChunkSize) {
 		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
 		for _, name := range chunk {
 			requests = append(requests, &resourcepb.ReadRequest{
@@ -683,7 +680,7 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 			})
 		}
 
-		for response := range readResourcesInChunks(ctx, s.storage, requests, reconcileReadChunkSize) {
+		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
@@ -869,7 +866,7 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 	// Storage answers one response per request, in order, but the reader can add
 	// an error of its own after the last one.
 	i := 0
-	for response := range readResourcesInChunks(ctx, s.storage, requests, reconcileReadChunkSize) {
+	for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
