@@ -13230,7 +13230,7 @@
           "format": "int64"
         },
         "source": {
-          "$ref": "#/definitions/AnnotationQuery"
+          "$ref": "#/definitions/DashAnnotation"
         },
         "tags": {
           "type": "array",
@@ -14577,6 +14577,59 @@
         },
         "name": {
           "type": "string"
+        }
+      }
+    },
+    "DashAnnotation": {
+      "type": "object",
+      "title": "DashAnnotation is the dashboard annotation query an annotation event was produced by.",
+      "properties": {
+        "builtIn": {
+          "type": "number",
+          "format": "double"
+        },
+        "datasource": {
+          "$ref": "#/definitions/DataSourceRef"
+        },
+        "enable": {
+          "type": "boolean"
+        },
+        "filter": {
+          "$ref": "#/definitions/DashAnnotationPanelFilter"
+        },
+        "hide": {
+          "type": "boolean"
+        },
+        "iconColor": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "placement": {
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/definitions/AnnotationTarget"
+        },
+        "type": {
+          "type": "string"
+        }
+      }
+    },
+    "DashAnnotationPanelFilter": {
+      "type": "object",
+      "title": "DashAnnotationPanelFilter limits an annotation query to a set of panels by panel ID.",
+      "properties": {
+        "exclude": {
+          "type": "boolean"
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "int64"
+          }
         }
       }
     },

@@ -35,13 +35,13 @@ func UnmarshalDashboardAnnotations(sj *simplejson.Json) (*models.AnnotationsDto,
 // the datasource on the query (datasource.name, group); v2alpha1 keeps it on the annotation spec.
 type v2AnnotationQuery struct {
 	Spec struct {
-		Name       string                           `json:"name"`
-		Enable     bool                             `json:"enable"`
-		Hide       *bool                            `json:"hide,omitempty"`
-		IconColor  string                           `json:"iconColor"`
-		BuiltIn    *bool                            `json:"builtIn,omitempty"`
-		Placement  *string                          `json:"placement,omitempty"`
-		Filter     *dashboard.AnnotationPanelFilter `json:"filter,omitempty"`
+		Name       string                            `json:"name"`
+		Enable     bool                              `json:"enable"`
+		Hide       *bool                             `json:"hide,omitempty"`
+		IconColor  string                            `json:"iconColor"`
+		BuiltIn    *bool                             `json:"builtIn,omitempty"`
+		Placement  *string                           `json:"placement,omitempty"`
+		Filter     *models.DashAnnotationPanelFilter `json:"filter,omitempty"`
 		Datasource *struct {
 			Uid  *string `json:"uid,omitempty"`
 			Type *string `json:"type,omitempty"`

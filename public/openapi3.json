@@ -3148,7 +3148,7 @@
             "type": "integer"
           },
           "source": {
-            "$ref": "#/components/schemas/AnnotationQuery"
+            "$ref": "#/components/schemas/DashAnnotation"
           },
           "tags": {
             "items": {
@@ -4497,6 +4497,59 @@
         "required": [
           "name"
         ],
+        "type": "object"
+      },
+      "DashAnnotation": {
+        "properties": {
+          "builtIn": {
+            "format": "double",
+            "type": "number"
+          },
+          "datasource": {
+            "$ref": "#/components/schemas/DataSourceRef"
+          },
+          "enable": {
+            "type": "boolean"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/DashAnnotationPanelFilter"
+          },
+          "hide": {
+            "type": "boolean"
+          },
+          "iconColor": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "placement": {
+            "type": "string"
+          },
+          "target": {
+            "$ref": "#/components/schemas/AnnotationTarget"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "title": "DashAnnotation is the dashboard annotation query an annotation event was produced by.",
+        "type": "object"
+      },
+      "DashAnnotationPanelFilter": {
+        "properties": {
+          "exclude": {
+            "type": "boolean"
+          },
+          "ids": {
+            "items": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "type": "array"
+          }
+        },
+        "title": "DashAnnotationPanelFilter limits an annotation query to a set of panels by panel ID.",
         "type": "object"
       },
       "DashboardACLInfoDTO": {
