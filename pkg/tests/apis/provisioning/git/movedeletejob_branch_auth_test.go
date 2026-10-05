@@ -15,17 +15,23 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
-// folderScopedViewerREST creates an org Viewer with dashboards:read/write/create/delete
-// scoped to repo's root folder (Folder Admin style - see issue #127254) and returns a
-// REST client for them. The grant targets the repo's root folder, not a subfolder:
-// this package runs with WithoutProvisioningFolderMetadata, so subfolder UIDs are
-// hash-derived rather than stable, but RBAC's ancestor-permission cascade from the
-// root grant still covers descendants like "team-a/".
+// folderScopedViewerREST creates the persona from issue #127254 - org Viewer across the
+// instance, Admin on one folder - and returns a REST client for them. Both dashboards:*
+// and folders:* are granted, because a directory move or delete is authorized against
+// the folder actions while a file one uses the dashboard actions.
+//
+// The grant targets the repo's root folder, not a subfolder: this package runs with
+// WithoutProvisioningFolderMetadata, so subfolder UIDs are hash-derived rather than
+// stable, but RBAC's ancestor-permission cascade from the root grant still covers
+// descendants like "team-a/".
 func folderScopedViewerREST(t *testing.T, helper *common.GitTestHelper, name, repo string) *rest.RESTClient {
 	t.Helper()
 	folderUser := helper.CreateUser(name, apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
 		{
-			Actions:           []string{"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete"},
+			Actions: []string{
+				"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete",
+				"folders:read", "folders:write", "folders:create", "folders:delete",
+			},
 			Resource:          "folders",
 			ResourceAttribute: "uid",
 			ResourceID:        repo,
@@ -192,6 +198,78 @@ func TestIntegrationGit_MoveDeleteJob_BranchKindConfusionDenied(t *testing.T) {
 			},
 		})
 		require.NoError(t, err, "the configured branch's content is untouched, so this must still succeed")
+		require.Equal(t, http.StatusAccepted, statusCode)
+
+		helper.AwaitJobs(t, repo)
+	})
+}
+
+// TestIntegrationGit_MoveDeleteJob_FolderBranchAuthorization is the directory
+// counterpart of the dashboard cases above. Issue #127254 reports "move or delete
+// dashboard *or folder*", and a directory takes the folders:* route through the
+// authorizer (authorizeMoveFolder / authorizeDeleteFolder) rather than the
+// dashboards:* one, so the file cases prove nothing about it.
+//
+// Folder identity is deliberately resolved from the configured branch regardless of
+// ref, so the point here isn't that the ref changes the outcome - it's that targeting
+// a feature branch doesn't *break* a folder operation the user is entitled to.
+func TestIntegrationGit_MoveDeleteJob_FolderBranchAuthorization(t *testing.T) {
+	helper := sharedGitHelper(t)
+
+	t.Run("folder admin can delete a folder on a feature branch", func(t *testing.T) {
+		const repo = "branch-auth-folder-delete"
+		const branch = "feature-folder-delete"
+		_, local := helper.CreateFolderTargetGitRepo(t, repo, map[string][]byte{
+			"team-a/dashboard.json": common.DashboardJSON("folder-branch-del-dash", "Folder Branch Delete", 1),
+		}, "write", "branch")
+		helper.SyncAndWait(t, repo)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		_, err := local.Git("checkout", "-b", branch)
+		require.NoError(t, err)
+		_, err = local.Git("push", "-u", "origin", branch)
+		require.NoError(t, err)
+
+		restClient := folderScopedViewerREST(t, helper, "FolderBranchDeleteUser", repo)
+
+		statusCode, err := postJob(t, restClient, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"team-a/"},
+				Ref:   branch,
+			},
+		})
+		require.NoError(t, err, "folder admin should be able to delete a folder they administer on a feature branch")
+		require.Equal(t, http.StatusAccepted, statusCode)
+
+		helper.AwaitJobs(t, repo)
+	})
+
+	t.Run("folder admin can move a folder on a feature branch", func(t *testing.T) {
+		const repo = "branch-auth-folder-move"
+		const branch = "feature-folder-move"
+		_, local := helper.CreateFolderTargetGitRepo(t, repo, map[string][]byte{
+			"team-a/dashboard.json": common.DashboardJSON("folder-branch-mv-dash", "Folder Branch Move", 1),
+		}, "write", "branch")
+		helper.SyncAndWait(t, repo)
+		helper.RequireRepoDashboardCount(t, repo, 1)
+
+		_, err := local.Git("checkout", "-b", branch)
+		require.NoError(t, err)
+		_, err = local.Git("push", "-u", "origin", branch)
+		require.NoError(t, err)
+
+		restClient := folderScopedViewerREST(t, helper, "FolderBranchMoveUser", repo)
+
+		statusCode, err := postJob(t, restClient, repo, provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"team-a/"},
+				TargetPath: "archived/",
+				Ref:        branch,
+			},
+		})
+		require.NoError(t, err, "folder admin should be able to move a folder they administer on a feature branch")
 		require.Equal(t, http.StatusAccepted, statusCode)
 
 		helper.AwaitJobs(t, repo)
