@@ -289,7 +289,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be listed in `trashAllowlist` in `pkg/services/apiserver/searchroutes/searchroutes.go`. That list grows as the access rule trash uses is checked against more kinds. Once your kind is on it, `trash: false` opts back out.
+- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be accepted by `resource.TrashSearchAllowed`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
@@ -299,6 +299,35 @@ Hybrid search combines lexical matches with semantic matches from embeddings.
 To make your resource embeddable, declare its embedding inputs with `embed.fields`
 in CUE and enroll the resource in the deployment. Your resource's
 data must already be in unified storage, as described in the prerequisite above.
+
+### Expose the endpoint
+
+Hybrid routes require an explicit opt-in on each namespaced kind version. In the
+kind's CUE definition, set:
+
+```cue
+search: {
+	hybrid: true
+}
+```
+
+Run `make gen-apps` to regenerate the manifest artifacts. Only versions served by
+the API process get `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search/hybrid`.
+The route is absent when `search.hybrid` is omitted or false, or the kind is
+cluster-scoped. The same rules apply to core APIs, app plugins and manifest-backed
+custom resource definitions.
+
+`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these
+routes deployment-wide. Standalone API servers expose the equivalent flag
+`--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's
+`search.hybrid` setting are independent of lexical search and trash: hybrid can
+remain available when `enable_search_api`, `enable_trash_api` or
+`search.endpoint` is false.
+
+Route availability does not enroll a resource for embeddings. The `embed.fields`
+declaration and `vector_allowed_internal_collections` setting below control that
+separately. A hybrid request on a storage version that does not implement the RPC
+returns `501 Not Implemented`.
 
 ### 1. Declare the fields to embed
 

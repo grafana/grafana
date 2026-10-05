@@ -21,10 +21,10 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 
 ## Supported data sources
 
-LBAC for data sources is currently supported for Loki and Prometheus.
+LBAC for data sources is currently supported for Loki, Prometheus, and Tempo data sources.
 
 {{< admonition type="note" >}}
-Traces support is in public preview and available on Grafana Cloud only. Team LBAC is available for traces that Grafana Cloud can access, whether those traces are available through a Tempo data source configured for a Grafana Cloud stack or the built-in Cloud Traces database.
+Traces LBAC is in public preview and requires Grafana Cloud Traces as the trace backend. It works when Grafana Cloud or Grafana Enterprise v12.3 and later connects to Grafana Cloud Traces. It doesn't work with self-hosted Tempo OSS or Grafana Enterprise Traces (GET).
 {{< /admonition >}}
 
 Support for additional data sources may be added in future updates.
@@ -33,10 +33,10 @@ Support for additional data sources may be added in future updates.
 | ----------- | -------------- | ---------------------------------------------- | -------------------------- |
 | Loki        | GA             | GA (requires GEL - Grafana Enterprise Logs)    | ❌                         |
 | Prometheus  | GA             | GA (requires GEM - Grafana Enterprise Metrics) | ❌                         |
-| Tempo       | Public preview | Not available                                  | ❌                         |
+| Tempo       | Public preview | Public preview (requires Cloud Traces)         | ❌                         |
 
 {{< admonition type="note" >}}
-For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
+For logs and metrics on Grafana Enterprise, LBAC requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL). Traces LBAC requires Grafana Cloud Traces as the trace backend, even when you use Grafana Enterprise.
 {{< /admonition >}}
 
 LBAC for data sources offers:

@@ -126,6 +126,37 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 	}
 }
 
+func TestRegisterAPIServiceHybridSearchConfiguration(t *testing.T) {
+	flag := featuremgmt.FlagApppluginsRegisterAPIServer
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
+	})))
+	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+
+	for _, tc := range []struct {
+		name string
+		ini  string
+		want bool
+	}{
+		{name: "default", want: true},
+		{name: "disabled", ini: "enable_hybrid_api = false"},
+		{name: "hybrid only", ini: "enable_search_api = false\nenable_trash_api = false", want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := setting.NewCfgFromBytes([]byte("[grafana-apiserver]\n" + tc.ini))
+			require.NoError(t, err)
+			sources := &fakeSourceRegistry{sources: []plugins.PluginSource{
+				&fakePluginSource{bundles: []*plugins.FoundBundle{bundle("example-app", plugins.TypeApp)}},
+			}}
+			b, err := RegisterAPIService(&recordingAPIRegistrar{}, nil, nil, nil, sources, nil,
+				&recordingRoleService{}, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
+			require.NoError(t, err)
+			require.NotNil(t, b)
+			require.Equal(t, tc.want, b.opts.HybridAPIEnabled)
+		})
+	}
+}
+
 type recordingAPIRegistrar struct {
 	builder.APIRegistrar
 	builders []builder.APIGroupBuilder

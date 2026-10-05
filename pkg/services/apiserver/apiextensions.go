@@ -52,6 +52,8 @@ type ApiExtensionsDelegateConfig struct {
 	StorageClient resource.ResourceClient
 	// SearchAPIEnabled follows the core server's search setting for CRD-backed APIs.
 	SearchAPIEnabled bool
+	// HybridAPIEnabled follows the core server's hybrid setting for CRD-backed APIs.
+	HybridAPIEnabled bool
 	// AccessClient is the in-process RBAC access client.
 	AccessClient authlib.AccessClient
 	// AuthorizerRegistry is the ST authorizer, which supports dynamic per-CRD-group
