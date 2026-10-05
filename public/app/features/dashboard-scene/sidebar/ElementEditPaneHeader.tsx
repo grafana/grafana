@@ -49,7 +49,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           icon="copy"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.duplicate}
-          onClick={onDuplicate}
+          onClick={() => onDuplicate()}
         >
           <Trans i18nKey="dashboard.sidebar.element-actions.duplicate">Duplicate</Trans>
         </Button>
@@ -61,7 +61,7 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           icon="clipboard-alt"
           fill="text"
           data-testid={selectors.components.EditPaneHeader.copy}
-          onClick={onCopy}
+          onClick={() => onCopy()}
           tooltip={t('dashboard.sidebar.element-actions.copy-tooltip', 'Copy')}
           tooltipPlacement="bottom"
         >

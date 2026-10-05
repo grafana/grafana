@@ -25,10 +25,10 @@ func servedVersions(t *testing.T, group, resourceName string) []string {
 
 	var out []string
 	for _, m := range resource.AppManifests() {
-		if m.ManifestData == nil || m.ManifestData.Group != group {
+		if m == nil || m.Group != group {
 			continue
 		}
-		for _, version := range m.ManifestData.Versions {
+		for _, version := range m.Versions {
 			if !version.Served {
 				continue
 			}
@@ -56,7 +56,7 @@ func resourceNameFor(kind app.ManifestVersionKind) string {
 // its search fields would reject every custom field, so this checks the real
 // compiled-in manifests rather than a test fixture.
 func TestDashboardCustomFieldsResolveOnEveryServedVersion(t *testing.T) {
-	provider := resource.NewManifestBackedProvider(resource.AppManifests())
+	provider := resource.NewManifestBackedProvider(resource.AppManifests()...)
 
 	versions := servedVersions(t, dashboardGroup, dashboardResource)
 	// Guard against the manifest shrinking to a single version and this test

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -51,7 +52,7 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 // registry-backed builders extract them, as they do in production.
 func iamTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(iamManifests)
+	sel, hashes, providers, err := resource.SearchFieldsForManifests(iam.LocalManifest().ManifestData)
 	require.NoError(t, err)
 	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
 }

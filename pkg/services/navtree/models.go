@@ -164,6 +164,14 @@ func (root *NavTreeRoot) RemoveEmptyConnectionsSection() {
 	}
 }
 
+// RemoveEmptyDrilldownSection removes the Drilldown section if it has no children.
+// Must be called AFTER all hooks have had a chance to add their nav items.
+func (root *NavTreeRoot) RemoveEmptyDrilldownSection() {
+	if sec := root.FindById(NavIDDrilldown); sec != nil && len(sec.Children) == 0 {
+		root.RemoveSectionByID(NavIDDrilldown)
+	}
+}
+
 func (root *NavTreeRoot) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root.Children)
 }

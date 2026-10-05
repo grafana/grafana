@@ -52,7 +52,7 @@ func mergeGroupVersionListSetting(settingName, csvSetting string, layer map[stri
 	if csvSetting == "" {
 		return nil
 	}
-	for _, part := range strings.Split(csvSetting, ",") {
+	for part := range strings.SplitSeq(csvSetting, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

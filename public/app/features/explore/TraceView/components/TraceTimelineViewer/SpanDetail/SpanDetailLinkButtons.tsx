@@ -42,7 +42,7 @@ export type Props = {
   datasourceUid: string;
   timeRange: TimeRange;
   createSpanLink?: SpanLinkFunc;
-  app: CoreApp;
+  app: CoreApp | string;
   focusSpanLink: LinkModel;
 };
 
@@ -285,48 +285,52 @@ const createLinkModel = (
   datasourceType: string,
   traceDatasourceUid?: string
 ): SpanLinkModel => {
+  const linkModel: LinkModel = {
+    ...link.linkModel,
+    ...link,
+    title: title,
+    target: '_blank',
+    origin: link.field,
+    onClick: (event: React.MouseEvent) => {
+      // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
+      // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
+      // this interaction will not be tracked with link right clicks
+      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+        datasourceType,
+        grafana_version: config.buildInfo.version,
+        type,
+        location: 'spanDetails',
+      });
+
+      const href = linkModel.href;
+
+      if (link.onClick) {
+        link.onClick?.(event);
+      } else {
+        // TODO: Replace with https://github.com/grafana/grafana/issues/103593
+        // We need to handle absolute and relative URLs correctly because when
+        // there are multiple links we group them into a dropdown and not use
+        // the grafana/ui DataLinkButton component which handles relative and
+        // absolute URLs nicely. A nice solution would be to have a separate
+        // component that handles this for us and not pass the onClick in the
+        // SpanLinkModel when link.href is defined (removing the need of having
+        // if (link.onClick) in here.
+
+        // if it's an absolute URL - open it in a new window
+        if (!ABSOLUTE_LINK_PATTERN.test(href) && type !== SpanLinkType.Logs) {
+          // handle relative URLs by changing current URL:
+          locationService.push(href);
+        } else {
+          window.open(href, '_blank', 'noopener,noreferrer');
+        }
+      }
+    },
+  };
+
   return {
     icon,
     type,
-    linkModel: {
-      ...link.linkModel,
-      ...link,
-      title: title,
-      target: '_blank',
-      origin: link.field,
-      onClick: (event: React.MouseEvent) => {
-        // DataLinkButton assumes if you provide an onClick event you would want to prevent default behavior like navigation
-        // In this case, if an onClick is not defined, restore navigation to the provided href while keeping the tracking
-        // this interaction will not be tracked with link right clicks
-        reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-          datasourceType,
-          grafana_version: config.buildInfo.version,
-          type,
-          location: 'spanDetails',
-        });
-
-        if (link.onClick) {
-          link.onClick?.(event);
-        } else {
-          // TODO: Replace with https://github.com/grafana/grafana/issues/103593
-          // We need to handle absolute and relative URLs correctly because when
-          // there are multiple links we group them into a dropdown and not use
-          // the grafana/ui DataLinkButton component which handles relative and
-          // absolute URLs nicely. A nice solution would be to have a separate
-          // component that handles this for us and not pass the onClick in the
-          // SpanLinkModel when link.href is defined (removing the need of having
-          // if (link.onClick) in here.
-
-          // if it's an absolute URL - open it in a new window
-          if (!ABSOLUTE_LINK_PATTERN.test(link.href)) {
-            // handle relative URLs by changing current URL:
-            locationService.push(link.href);
-          } else {
-            window.open(link.href, '_blank', 'noopener,noreferrer');
-          }
-        }
-      },
-    },
+    linkModel,
     traceDatasourceUid,
   };
 };

@@ -38,13 +38,22 @@ type IndexViewData struct {
 	UseLuxon               bool              `json:"-"`
 	// AutoLoginRedirectURL is the URL the frontend should redirect to for auto-login.
 	// Empty means no auto-login redirect should occur.
-	AutoLoginRedirectURL  string `json:"autoLoginRedirectURL,omitempty"`
-	AssetSriChecksEnabled bool   `json:"-"`
-	OFREPRootUrlEnabled   bool   `json:"-"`
+	AutoLoginRedirectURL    string `json:"autoLoginRedirectURL,omitempty"`
+	AssetSriChecksEnabled   bool   `json:"-"`
+	OFREPRootUrlEnabled     bool   `json:"-"`
+	LegacyFeatureToggleMode string `json:"-"`
+
+	// ESModuleAssetsEnabled mirrors Assets.ESModule — the template uses it to pick the
+	// matching <script type>.
+	ESModuleAssetsEnabled bool `json:"-"`
 }
 
 type EntryPointAssets struct {
 	ContentDeliveryURL string `json:"cdn,omitempty"`
+
+	// ESModule is true when the bundler that produced these assets emitted ES modules
+	// rather than classic scripts, as declared in assets-manifest.json.
+	ESModule bool `json:"-"`
 
 	// PublicPath is the URL prefix the bundler compiled its asset references against.
 	// The page rebuilds that prefix for a CDN, and it varies by bundler.

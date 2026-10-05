@@ -2,18 +2,18 @@ import { css, cx } from '@emotion/css';
 import { type AriaRole, type HTMLAttributes, type ReactNode } from 'react';
 import * as React from 'react';
 
-import { type ThemeTypographyVariantTypes, type GrafanaTheme2, type ThemeSpacingTokens } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { type IconName, type IconSize } from '../../types/icon';
+import { type IconName } from '../../types/icon';
 import { Button } from '../Button/Button';
 import { Icon } from '../Icon/Icon';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 import { Text } from '../Text/Text';
-export type AlertVariant = 'success' | 'warning' | 'error' | 'info' | 'tertiary' | 'accent';
+export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -27,7 +27,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   topSpacing?: number;
   /** Custom action element rendered in the alert's button area, independently from the dismiss button. */
   action?: ReactNode;
-  size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -48,21 +47,19 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       className,
       severity = 'error',
       action,
-      size = 'md',
       ...restProps
     },
     ref
   ) => {
     const theme = useTheme2();
+    const visualRefreshEnabled = theme.flags.visualDesignRefresh;
     const hasTitle = Boolean(title);
-    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing, size);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
     const rolesBySeverity: Record<AlertVariant, AriaRole> = {
       error: 'alert',
       warning: 'alert',
       info: 'status',
       success: 'status',
-      tertiary: 'status',
-      accent: 'status',
     };
     const role = restProps['role'] || rolesBySeverity[severity];
     const ariaLabel = restProps['aria-label'] || title;
@@ -71,24 +68,39 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
 
     return (
       <div ref={ref} className={cx(styles.wrapper, className)} role={role} aria-label={ariaLabel} {...restProps}>
-        <div data-testid={selectors.components.Alert.alertV2(severity)} className={styles.box}>
-          <Box display="flex" alignItems="flex-start" justifyContent="flex-start">
-            <div className={styles.icon}>
-              <Icon size={styles.iconSize} name={getIconFromSeverity(severity)} />
+        <Box
+          data-testid={selectors.components.Alert.alertV2(severity)}
+          display="flex"
+          backgroundColor={severity}
+          borderRadius="lg"
+          paddingY={1}
+          paddingX={2}
+          borderStyle="solid"
+          borderColor={severity}
+          alignItems="stretch"
+          boxShadow={elevated ? 'z3' : undefined}
+        >
+          <Box display="flex" paddingY={0.5} paddingRight={2}>
+            <div className={styles.iconBox}>
+              <Icon
+                size={visualRefreshEnabled ? 'lg' : 'xl'}
+                name={getIconFromSeverity(severity)}
+                className={styles.icon}
+              />
             </div>
           </Box>
 
           <Stack alignItems="center" flex={1} wrap="wrap" columnGap={1} rowGap={0}>
-            <Box display={'flex'} direction={'column'} flex={1} minWidth="50%" gap={styles.titleGap}>
-              <Text color={severity} variant={styles.titleVariant} weight="medium">
-                {title}
+            <Box flex={1} minWidth="50%">
+              <Text weight="medium">
+                <span className={styles.title}>{title}</span>
               </Text>
               {children && <div className={styles.content}>{children}</div>}
             </Box>
             <Stack alignItems="center" wrap="wrap">
               {action}
               {onRemove && buttonContent && (
-                <Button aria-label={closeLabel} variant="secondary" onClick={onRemove} type="button">
+                <Button variant="secondary" onClick={onRemove} type="button">
                   {buttonContent}
                 </Button>
               )}
@@ -107,7 +119,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
               />
             </div>
           )}
-        </div>
+        </Box>
       </div>
     );
   }
@@ -125,29 +137,8 @@ const getIconFromSeverity = (severity: AlertVariant): IconName => {
       return 'info-circle';
     case 'success':
       return 'check';
-    case 'tertiary':
-      return 'info-circle';
-    case 'accent':
-      return 'info-circle';
   }
 };
-
-function getSpacing(size: 'sm' | 'md' | 'lg'): {
-  padding: number;
-  iconWidth: number;
-  iconSize: IconSize;
-  titleVariant: keyof ThemeTypographyVariantTypes;
-  titleGap: ThemeSpacingTokens;
-} {
-  switch (size) {
-    case 'sm':
-      return { padding: 1, iconWidth: 4, iconSize: 'md', titleVariant: 'h6', titleGap: 0 };
-    case 'md':
-      return { padding: 2, iconWidth: 5, iconSize: 'xl', titleVariant: 'h5', titleGap: 0.25 };
-    case 'lg':
-      return { padding: 3, iconWidth: 7, iconSize: 'xxl', titleVariant: 'h4', titleGap: 1 };
-  }
-}
 
 const getStyles = (
   theme: GrafanaTheme2,
@@ -155,11 +146,15 @@ const getStyles = (
   hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
-  topSpacing?: number,
-  size: 'sm' | 'md' | 'lg' = 'md'
+  topSpacing?: number
 ) => {
   const color = theme.colors[severity];
-  const sizing = getSpacing(size);
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
+  // In light mode, color.text is claimed by the matching solid button (a different shade), so the
+  // alert's icon and text (title + body) use mainEmphasis instead - in dark mode, color.text is
+  // free and matches what the alert needs directly. Legacy (non-refresh) theme is untouched.
+  const iconColor = color.text;
+  const textColor = visualRefreshEnabled ? color.textEmphasis : theme.colors.text.primary;
 
   return {
     wrapper: css({
@@ -180,40 +175,50 @@ const getStyles = (
         zIndex: -1,
       },
     }),
-    titleVariant: sizing.titleVariant,
-    titleGap: sizing.titleGap,
-    box: css({
-      display: 'flex',
-      borderRadius: theme.shape.radius.lg,
-      boxShadow: elevated ? theme.shadows.z3 : undefined,
-      padding: theme.spacing(sizing.padding),
-      //background: `linear-gradient(345deg, ${theme.components.card.background} 20%, color-mix(in oklab, ${theme.components.card.background} 41%, ${color.background}))`,
-      background: `color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background})`,
-      border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 55%, ${color.border})`,
-      gap: theme.spacing(sizing.padding),
+    iconBox: css(
+      {
+        alignSelf: 'flex-start',
+        display: 'inline-flex',
+        borderRadius: theme.shape.radius.default,
+      },
+      visualRefreshEnabled && {
+        backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+        padding: theme.spacing(1),
+      }
+    ),
+    icon: css(
+      {
+        color: iconColor,
+      },
+      !visualRefreshEnabled && {
+        position: 'relative',
+        top: '-1px',
+      }
+    ),
+    title: css({
+      color: textColor,
     }),
-    icon: css({
-      color: color.text,
-      backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
-      position: 'relative',
-      width: theme.spacing(sizing.iconWidth),
-      height: theme.spacing(sizing.iconWidth),
-      borderRadius: theme.shape.radius.default,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }),
-    iconSize: sizing.iconSize,
     content: css({
-      color: theme.colors.text.primary,
+      color: textColor,
       maxHeight: '50vh',
       overflowY: 'auto',
     }),
-    close: css({
-      position: 'relative',
-      color: theme.colors.text.secondary,
-      background: 'none',
-      display: 'flex',
-    }),
+    close: css(
+      {
+        position: 'relative',
+        color: theme.colors.text.secondary,
+        background: 'none',
+        display: 'flex',
+        top: '-6px',
+        right: '-14px',
+      },
+      visualRefreshEnabled && {
+        button: {
+          '&:hover, &:focus': {
+            backgroundColor: `color-mix(in srgb, ${color.subtleBackground} 94%, ${iconColor} 6%)`,
+          },
+        },
+      }
+    ),
   };
 };

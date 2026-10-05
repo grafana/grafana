@@ -20,37 +20,6 @@ labels:
     - oss
 title: Labels and annotations
 weight: 105
-refs:
-  alert-instances:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals#alert-instances
-  link-alert-rules-to-panels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/link-alert-rules-to-panels/
-  templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
-  alert-rule-evaluation:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/
-  silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
-  notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
 ---
 
 # Labels and annotations
@@ -64,7 +33,7 @@ Labels and annotations add additional information about an alert using key/value
 
 {{< shared id="labels-basics" >}}
 
-**Labels** are unique identifiers of an [alert instance](ref:alert-instances). You can use them for searching, silencing, and routing notifications.
+**Labels** are unique identifiers of an [alert instance](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals#alert-instances). You can use them for searching, silencing, and routing notifications.
 
 Examples of labels are `server=server1` or `team=backend`. Each alert rule can have more than one label and the complete set of labels for an alert rule is called its label set. It is this label set that identifies the alert.
 
@@ -78,7 +47,7 @@ Labels are a fundamental component of alerting:
 
 - The complete set of labels for an alert is what uniquely identifies an alert instance.
 - The alerting UI shows labels for every alert instance generated during evaluation of that rule.
-- [Notification policies](ref:notification-policies) and [silences](ref:silences) use labels to match alert instances and route them to contact points or stop their notifications.
+- [Notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) and [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) use labels to match alert instances and route them to contact points or stop their notifications.
 - Contact points can include information from labels in notification messages.
 
 ### Label types
@@ -89,7 +58,7 @@ An alert's label set can contain three types of labels:
 
 Labels that you manually configure in the alert rule to identify the generated alert instances and manage the alerts. Common custom labels, depending on the use case, are: `severity`, `priority`, `team`, and `service`.
 
-Additionally, you can use a [template](ref:templates) to customize the label value and generate dynamic values from query data.
+Additionally, you can use a [template](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/) to customize the label value and generate dynamic values from query data.
 
 **Query labels**
 
@@ -128,7 +97,7 @@ Any invalid characters are removed or replaced by the Grafana alerting engine be
 - Whitespace is removed.
 - ASCII characters are replaced with `_`.
 - All other characters are replaced with their lower-case hex representation.
-  If this is the first character it's prefixed with `_`.
+  If this is the first character, it's prefixed with `_`.
 
 Example: A label key/value pair `Alert! 🔔="🔥"` will become `Alert_0x1f514="🔥"`.
 
@@ -149,7 +118,7 @@ Annotations are displayed in Grafana and are included by default in notification
 - `summary`: A short summary of what the alert has detected and why.
 - `description`: A detailed description of what happened and what the alert does.
 - `runbook_url`: The runbook page to guide operators managing a potential incident.
-- `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](ref:link-alert-rules-to-panels) to facilitate alert investigation.
+- `__dashboardUid__` and `__panelId__`: [Link the alert to a dashboard and panel](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/link-alert-rules-to-panels/) to facilitate alert investigation.
 
 {{< /shared >}}
 
@@ -169,4 +138,4 @@ This indicates that the system is under heavy load and may result in an outage.
 Consider scaling the server's resources and investigating bottlenecks.
 ```
 
-Like labels, annotations can use a [template](ref:templates) to include dynamic data from queries.
+Like labels, annotations can use a [template](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/) to include dynamic data from queries.

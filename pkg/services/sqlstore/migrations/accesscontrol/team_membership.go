@@ -21,7 +21,7 @@ func AddTeamMembershipMigrations(mg *migrator.Migrator) {
 	mg.AddMigration(TeamsMigrationID, &teamPermissionMigrator{})
 }
 
-var _ migrator.CodeMigration = new(teamPermissionMigrator)
+var _ migrator.CodeMigration = (*teamPermissionMigrator)(nil)
 
 type teamPermissionMigrator struct {
 	permissionMigrator

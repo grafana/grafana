@@ -10,6 +10,9 @@ test.use({
     reloadDashboardsOnParamsChange: true,
     useScopesNavigationEndpoint: true,
   },
+  // Trusted Types blocks the change detection web worker under this server's CSP.
+  // Without this dashboards won't report unsaved changes.
+  contextOptions: { bypassCSP: true },
 });
 
 test.describe('Scope Redirect Functionality', () => {
@@ -306,12 +309,17 @@ test.describe('Scope Redirect Functionality', () => {
     });
 
     await test.step('Exit edit mode', async () => {
-      // Click the "Exit edit" button — the dashboard is not dirty (only scopes changed,
-      // not the dashboard itself), so no confirmation dialog will appear.
+      const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
+      // The dashboard fixture is schema v1. Loading it migrates it to v2 making it dirty.
+      // Change detection is debounced. Wait for the dirty flag, otherwise exiting skips the modal.
+      await expect(saveButton).toHaveAttribute('data-testactive');
+
       await dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.editButton).click();
 
+      // Discard the migration diff to leave edit mode
+      await page.getByTestId(selectors.pages.ConfirmModal.delete).click();
+
       // Verify we are no longer in edit mode: the save button should not be visible
-      const saveButton = dashboardPage.getByGrafanaSelector(selectors.components.NavToolbar.editDashboard.saveButton);
       await expect(saveButton).not.toBeVisible();
     });
 

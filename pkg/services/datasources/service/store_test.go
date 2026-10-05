@@ -231,7 +231,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10} //nolint:staticcheck // Exercise legacy field compatibility.
 			dataSource, err := ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, ds.UID, dataSource.UID)
@@ -458,7 +458,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
@@ -482,7 +482,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			ss := SqlStore{db: db}
 			numberOfDatasource := 50
-			for i := 0; i < numberOfDatasource; i++ {
+			for i := range numberOfDatasource {
 				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),

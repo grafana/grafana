@@ -4,18 +4,8 @@ import { action } from 'storybook/actions';
 
 import { CodeEditor } from './CodeEditor';
 import mdx from './CodeEditor.mdx';
-import type { CodeMirrorCompletionSource, CodeMirrorEditorLanguage } from './types';
-
-const languageOptions: CodeMirrorEditorLanguage[] = [
-  'go',
-  'html',
-  'json',
-  'markdown',
-  'sql',
-  'typescript',
-  'xml',
-  'yaml',
-];
+import { CODE_MIRROR_LANGUAGES } from './languages';
+import type { CodeMirrorCompletionSource } from './types';
 
 const keywordCompletionSource: CodeMirrorCompletionSource = (context) => {
   const word = context.matchBefore(/\w*/);
@@ -45,7 +35,7 @@ const meta: Meta<typeof CodeEditor> = {
       page: mdx,
     },
     controls: {
-      exclude: ['onChange', 'completionSources', 'extensions'],
+      exclude: ['onChange', 'onBlur', 'onSave', 'completionSources', 'extensions'],
     },
   },
   argTypes: {
@@ -59,7 +49,7 @@ const meta: Meta<typeof CodeEditor> = {
     language: {
       control: { type: 'select' },
       description: 'Pass in a language to enable syntax highlighting and language-aware behavior.',
-      options: languageOptions,
+      options: Object.keys(CODE_MIRROR_LANGUAGES),
     },
     completionMode: {
       control: { type: 'inline-radio' },
@@ -88,6 +78,8 @@ const ControlledEditor: StoryFn<typeof CodeEditor> = (args) => {
         setValue(nextValue);
         action('onChange')(nextValue);
       }}
+      onBlur={(currentValue) => action('onBlur')(currentValue)}
+      onSave={(currentValue) => action('onSave')(currentValue)}
     />
   );
 };

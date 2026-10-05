@@ -8,7 +8,8 @@ import webpack, { type Configuration } from 'webpack';
 import { getEnvConfig } from '../cli/env-util.ts';
 
 import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
-import { esbuildRule, sassRule } from './rules.ts';
+import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
+import { cssRule, esbuildRule } from './rules.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -19,13 +20,14 @@ export type Env = Record<string, string | true | undefined>;
 export default (env: Env = {}): Configuration => ({
   target: 'web',
   entry: {
-    app: './public/app/index.ts',
+    // Polyfills — webpack build only. See public/app/polyfills.ts.
+    app: ['./public/app/polyfills.ts', './public/app/index.ts'],
     boot: {
       import: './public/boot/index.ts',
       runtime: false,
     },
-    dark: './public/sass/grafana.dark.scss',
-    light: './public/sass/grafana.light.scss',
+    dark: './public/sass/grafana.dark.css',
+    light: './public/sass/grafana.light.css',
   },
   experiments: {
     // Required to load WASM modules.
@@ -52,7 +54,7 @@ export default (env: Env = {}): Configuration => ({
     alias: {
       // some of data source plugins use global Prism object to add the language definition
       // we want to have same Prism object in core and in grafana/ui
-      prismjs: require.resolve('prismjs'),
+      prismjs$: require.resolve('prismjs'),
       // Core injects the real implementation during bootstrap only when Luxon is disabled.
       'moment-timezone$': path.resolve(grafanaRoot, 'public/app/core/legacyMomentShim.ts'),
       // due to our webpack configuration not understanding package.json `exports`
@@ -91,6 +93,7 @@ export default (env: Env = {}): Configuration => ({
   ],
   plugins: [
     new CorsWorkerPlugin(),
+    new E2ESelectorsPlugin(),
     new webpack.ProvidePlugin({
       Buffer: ['buffer', 'Buffer'],
     }),
@@ -109,7 +112,7 @@ export default (env: Env = {}): Configuration => ({
   module: {
     rules: [
       esbuildRule,
-      sassRule,
+      cssRule,
       {
         test: require.resolve('jquery'),
         loader: 'expose-loader',
