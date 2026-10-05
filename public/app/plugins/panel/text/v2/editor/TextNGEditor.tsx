@@ -157,9 +157,7 @@ export function TextNGEditor({
             )
           : ''
       ),
-    // theme: ${__theme} reads the current theme, which no other input reflects.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables, theme]
+    [showPreview, previewSource, mode, series, renderMode, rowWindow, format, replaceVariables]
   );
 
   const previewHtml = useMemo(

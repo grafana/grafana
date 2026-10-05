@@ -7,6 +7,11 @@ import { ThemeMacro } from './themeMacro';
 
 describe('__theme', () => {
   const templateSrv = initTemplateSrv('theme', []);
+  const originalTheme = config.theme2;
+
+  afterEach(() => {
+    config.theme2 = originalTheme;
+  });
 
   it('resolves a theme token path to its value', () => {
     expect(templateSrv.replace('color: ${__theme.colors.text.primary}')).toBe(
@@ -34,14 +39,12 @@ describe('__theme', () => {
   });
 
   it('reads the theme current at interpolation time', () => {
-    const original = config.theme2;
-    config.theme2 = { ...original, colors: { ...original.colors, text: { ...original.colors.text, primary: 'red' } } };
+    config.theme2 = {
+      ...originalTheme,
+      colors: { ...originalTheme.colors, text: { ...originalTheme.colors.text, primary: 'red' } },
+    };
 
-    try {
-      expect(templateSrv.replace('${__theme.colors.text.primary}')).toBe('red');
-    } finally {
-      config.theme2 = original;
-    }
+    expect(templateSrv.replace('${__theme.colors.text.primary}')).toBe('red');
   });
 
   describe('in scenes', () => {
