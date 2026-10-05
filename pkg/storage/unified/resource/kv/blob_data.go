@@ -53,25 +53,53 @@ func ParseBlobKey(key string) (BlobKey, error) {
 	return BlobKey{Group: parts[0], Resource: parts[1], Namespace: parts[2], Name: parts[3], UID: uid, ContentType: contentType}, nil
 }
 
-func parseBlobUIDPrefix(prefix string) (BlobKey, bool) {
-	if !strings.HasSuffix(prefix, "~") {
-		return BlobKey{}, false
-	}
-	bk, err := ParseBlobKey(prefix)
-	return bk, err == nil && bk.ContentType == ""
+var (
+	blobKeyColumns      = []string{"group", "resource", "namespace", "name", "uuid"}
+	blobIdentityColumns = []string{"uuid", "namespace", "group", "resource", "name", "content_type"}
+)
+
+func blobIdentityArgs(key BlobKey) []any {
+	return []any{key.UID, key.Namespace, key.Group, key.Resource, key.Name, key.ContentType}
 }
 
-func (k *SqlKV) blobWhere(start int) string {
-	cols := []string{"uuid", "namespace", "group", "resource", "name"}
+func blobKeyFilter(opt ListOptions) ([]string, []any) {
+	prefix := opt.StartKey
+	if opt.EndKey != PrefixRangeEnd(opt.StartKey) {
+		prefix = commonPrefix(opt.StartKey, opt.EndKey)
+	}
+	parts := strings.Split(prefix, "/")
+	complete := parts[:min(len(parts)-1, len(blobKeyColumns)-1)]
+	args := make([]any, 0, len(blobKeyColumns))
+	for _, part := range complete {
+		args = append(args, part)
+	}
+	if len(complete) == len(blobKeyColumns)-1 && len(parts) == len(blobKeyColumns) {
+		if uid, _, found := strings.Cut(parts[len(parts)-1], "~"); found {
+			args = append(args, uid)
+		}
+	}
+	if len(args) == 0 {
+		return nil, nil
+	}
+	return blobKeyColumns[:len(args)], args
+}
+
+func commonPrefix(a, b string) string {
+	n := min(len(a), len(b))
+	for i := 0; i < n; i++ {
+		if a[i] != b[i] {
+			return a[:i]
+		}
+	}
+	return a[:n]
+}
+
+func (k *SqlKV) blobWhere(cols []string) string {
 	conds := make([]string, len(cols))
 	for i, c := range cols {
-		conds[i] = fmt.Sprintf("%s = %s", k.dialect.QuoteIdent(c), k.dialect.Placeholder(start+i))
+		conds[i] = fmt.Sprintf("%s = %s", k.dialect.QuoteIdent(c), k.dialect.Placeholder(i+1))
 	}
 	return strings.Join(conds, " AND ")
-}
-
-func blobWhereArgs(key BlobKey) []any {
-	return []any{key.UID, key.Namespace, key.Group, key.Resource, key.Name}
 }
 
 func (k *SqlKV) saveBlob(ctx context.Context, key string, value []byte) error {
@@ -79,6 +107,29 @@ func (k *SqlKV) saveBlob(ctx context.Context, key string, value []byte) error {
 	if err != nil {
 		return err
 	}
+	if conn, ok := dbtxFromCtx(ctx); ok {
+		return k.replaceBlob(ctx, conn, bk, value)
+	}
+	tx, err := k.db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to begin blob save transaction: %w", err)
+	}
+	if err := k.replaceBlob(ctx, tx, bk, value); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit blob save: %w", err)
+	}
+	return nil
+}
+
+func (k *SqlKV) replaceBlob(ctx context.Context, conn dbtx, bk BlobKey, value []byte) error {
+	deleteQuery := fmt.Sprintf("DELETE FROM %s WHERE %s", k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(blobIdentityColumns))
+	if _, err := conn.ExecContext(ctx, deleteQuery, blobIdentityArgs(bk)...); err != nil {
+		return fmt.Errorf("failed to replace blob: %w", err)
+	}
+
 	hash := md5.Sum(value) // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	cols := []string{"uuid", "created", "group", "resource", "namespace", "name", "value", "hash", "content_type"}
 	quoted := make([]string, len(cols))
@@ -90,7 +141,7 @@ func (k *SqlKV) saveBlob(ctx context.Context, key string, value []byte) error {
 	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)",
 		k.dialect.QuoteIdent(resourceBlobTable), strings.Join(quoted, ", "), strings.Join(placeholders, ", "))
 	args := []any{bk.UID, time.Now().UTC(), bk.Group, bk.Resource, bk.Namespace, bk.Name, value, hex.EncodeToString(hash[:]), bk.ContentType}
-	if _, err := k.conn(ctx).ExecContext(ctx, query, args...); err != nil {
+	if _, err := conn.ExecContext(ctx, query, args...); err != nil {
 		return fmt.Errorf("failed to save blob: %w", err)
 	}
 	return nil
@@ -102,9 +153,9 @@ func (k *SqlKV) getBlob(ctx context.Context, key string) (io.ReadCloser, error) 
 		return nil, err
 	}
 	query := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
-		k.dialect.QuoteIdent("value"), k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(1))
+		k.dialect.QuoteIdent("value"), k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(blobIdentityColumns))
 	var value []byte
-	if err := k.conn(ctx).QueryRowContext(ctx, query, blobWhereArgs(bk)...).Scan(&value); err != nil {
+	if err := k.conn(ctx).QueryRowContext(ctx, query, blobIdentityArgs(bk)...).Scan(&value); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrNotFound
 		}
@@ -118,8 +169,8 @@ func (k *SqlKV) deleteBlob(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
-	query := fmt.Sprintf("DELETE FROM %s WHERE %s", k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(1))
-	if _, err := k.conn(ctx).ExecContext(ctx, query, blobWhereArgs(bk)...); err != nil {
+	query := fmt.Sprintf("DELETE FROM %s WHERE %s", k.dialect.QuoteIdent(resourceBlobTable), k.blobWhere(blobIdentityColumns))
+	if _, err := k.conn(ctx).ExecContext(ctx, query, blobIdentityArgs(bk)...); err != nil {
 		return fmt.Errorf("failed to delete blob: %w", err)
 	}
 	return nil
@@ -130,10 +181,9 @@ func (k *SqlKV) blobKeys(ctx context.Context, opt ListOptions, yield func(string
 		k.dialect.QuoteIdent("group"), k.dialect.QuoteIdent("resource"), k.dialect.QuoteIdent("namespace"),
 		k.dialect.QuoteIdent("name"), k.dialect.QuoteIdent("uuid"), k.dialect.QuoteIdent("content_type"),
 		k.dialect.QuoteIdent(resourceBlobTable))
-	var args []any
-	if bk, ok := parseBlobUIDPrefix(opt.StartKey); ok && opt.EndKey == PrefixRangeEnd(opt.StartKey) {
-		query += " WHERE " + k.blobWhere(1)
-		args = blobWhereArgs(bk)
+	cols, args := blobKeyFilter(opt)
+	if len(cols) > 0 {
+		query += " WHERE " + k.blobWhere(cols)
 	}
 	rows, err := k.conn(ctx).QueryContext(ctx, query, args...)
 	if err != nil {
