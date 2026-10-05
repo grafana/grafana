@@ -3,7 +3,7 @@
  * It is not meant to be used in any other way
  * This file doesn't require any compilation
  */
-define(['react', '@grafana/data'], function (React, grafanaData) {
+define(['react', '@grafana/data', 'jquery'], function (React, grafanaData) {
   // This would be a custom editor component
   function Editor() {
     const onChangeInternal = (event) => {
