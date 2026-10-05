@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 )
 
 // Options are the parts of a running server's configuration that are visible in
@@ -58,31 +59,19 @@ func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error
 
 // newBuilder uses offline substitutes for dependencies that are required to
 // register routes but are only called while serving requests.
-func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
+func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.PluginAPI, error) {
 	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
-	return appplugin.NewAppPluginAPIBuilder(
-		plugin,
-		offlinePluginClient{},
-		offlineClientV3{},
-		offlinePluginContext{},
-		nil, // no decrypter: reading secrets is a request time concern
-		appplugin.NewPluginAccessChecker(nil),
-		offlineSearchClient{},
-		offlineStoreClient{},
-		appplugin.AppPluginRunnerOptions{
+	return pluginroute.NewAPI(plugin, pluginroute.Options{
+		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
+		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
+		SearchAPIEnabled: true, TrashAPIEnabled: true, HybridAPIEnabled: true, KeysAPIEnabled: true,
+		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
-			// Generated specs always enable search, trash and hybrid route registration.
-			// searchroutes still applies its per-kind eligibility rules.
-			SearchAPIEnabled: true,
-			TrashAPIEnabled:  true,
-			HybridAPIEnabled: true,
-			KeysAPIEnabled:   true,
 		},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-	)
+		Tracer: tracing.NewNoopTracerService(), Features: featuremgmt.WithFeatures(),
+	})
 }
 
 // Build returns the OpenAPI v3 spec for one app plugin group version.

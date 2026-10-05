@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"context"
@@ -20,32 +20,38 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
 // testBuilder is a builder over the manifest, served under the group
-// NewAppPluginAPIBuilder would pick for it.
-func testBuilder(t *testing.T, manifest *app.ManifestData) *AppPluginAPIBuilder {
+// NewmanifestBuilder would pick for it.
+func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
 	t.Helper()
 
 	plugin := definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "example-app"},
 		Manifest: manifest,
 	}
-	return &AppPluginAPIBuilder{
-		group:           apiGroupForPlugin(plugin),
-		manifest:        manifest,
-		pluginJSON:      plugin.JSONData,
-		client:          struct{ PluginClient }{},
-		contextProvider: struct{ PluginContextWrapper }{},
-		clientV3:        &fakeRouteClient{},
+	settings, err := appplugin.NewAppPluginAPIBuilder(plugin, struct{ appplugin.PluginClient }{}, struct{ appplugin.PluginContextWrapper }{}, nil, nil, appplugin.AppPluginRunnerOptions{}, nil, nil)
+	require.NoError(t, err)
+	group := plugin.JSONData.ID
+	if manifest != nil {
+		group = manifest.Group
+	}
+	return &manifestBuilder{
+		group:      group,
+		manifest:   manifest,
+		pluginJSON: plugin.JSONData,
+		settings:   settings,
+		clientV3:   &fakeRouteClient{},
 	}
 }
 
 // testAPIGroupOptions builds what server startup hands UpdateAPIGroupInfo. The
 // storage it registers is never read: only the shape of the resource map matters.
-func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserver.APIGroupInfo, builder.APIGroupOptions) {
+func testAPIGroupOptions(t *testing.T, b *manifestBuilder) (*genericapiserver.APIGroupInfo, builder.APIGroupOptions) {
 	t.Helper()
 
 	scheme := runtime.NewScheme()
@@ -140,7 +146,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	// The apiserver skips a version with no storage, which would take its custom
 	// routes out of discovery and OpenAPI.
 	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
-		routesOnly := func(routes app.ManifestVersionRoutes) *AppPluginAPIBuilder {
+		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder {
 			b := testBuilder(t, &app.ManifestData{
 				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
@@ -149,7 +155,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 					Routes: routes,
 				}},
 			})
-			b.client = nil // no settings, so the routes are all the version has
+			b.settings = nil // no settings, so the routes are all the version has
 			return b
 		}
 		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}

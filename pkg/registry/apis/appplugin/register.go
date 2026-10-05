@@ -3,22 +3,18 @@ package appplugin
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
-	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental/pluginschema"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -28,21 +24,15 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
-	searchapi "github.com/grafana/grafana/pkg/registry/apis/search"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var (
@@ -73,11 +63,6 @@ type AppPluginRunnerOptions struct {
 	SendUserHeader           bool // from cfg
 	PluginsAppsSkipVerifyTLS bool // from cfg
 
-	SearchAPIEnabled bool
-	TrashAPIEnabled  bool
-	HybridAPIEnabled bool
-	KeysAPIEnabled   bool
-
 	// When this exists, dual write settings will be used
 	LegacyStore grafanarest.Storage
 
@@ -85,21 +70,17 @@ type AppPluginRunnerOptions struct {
 	AccessControl ac.AccessControl
 }
 
-// AppPluginAPIBuilder builds an apiserver for a single app plugin.
+// AppPluginAPIBuilder serves app settings and their v2 health, resource and proxy endpoints.
 type AppPluginAPIBuilder struct {
 	// the API group -- the group defined in manifest data or the pluginID
 	group           string
-	manifest        *app.ManifestData
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
-	clientV3        appclientv3.Client
 	contextProvider PluginContextWrapper
 	schemas         map[string]*pluginschema.PluginSchema
-	decrypter       *secureValueLookup
+	decrypter       decrypt.DecryptService
 	accessChecker   PluginAccessChecker
 	features        featuremgmt.FeatureToggles
-	search          resourcepb.ResourceIndexClient
-	store           resourcepb.ResourceStoreClient
 	tracer          tracing.Tracer
 
 	// optional configuration
@@ -107,45 +88,26 @@ type AppPluginAPIBuilder struct {
 
 	// Get values from storage
 	getter getter
-
-	// Manifest kind storage by resource, used to dispatch admission hooks.
-	kinds map[schema.GroupVersionResource]*kindstore.Store
-
-	// How each manifest kind is authorized, by resource. Built from the
-	// manifest, so the authorizer can run before storage is installed.
-	kindPolicies map[string]kindPolicy
 }
 
 func NewAppPluginAPIBuilder(
 	plugin definition.PluginDefinition,
 	client PluginClient, // will only ever be called with the same plugin id!
-	clientV3 appclientv3.Client,
 	contextProvider PluginContextWrapper,
 	decrypter decrypt.DecryptService, // when not reading legacy
 	accessChecker PluginAccessChecker,
-	search resourcepb.ResourceIndexClient,
-	store resourcepb.ResourceStoreClient,
 	opts AppPluginRunnerOptions, // can change without updating wire :)
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
-	if plugin.Manifest != nil && !openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{}) {
-		client = nil
-		contextProvider = nil
-	}
 	return &AppPluginAPIBuilder{
 		group:           apiGroupForPlugin(plugin),
-		manifest:        plugin.Manifest,
-		kindPolicies:    kindPolicies(plugin.Manifest),
 		pluginJSON:      plugin.JSONData,
 		client:          client,
-		clientV3:        clientV3,
 		contextProvider: contextProvider,
 		schemas:         plugin.Schemas,
-		decrypter:       newSecureValueLookup(decrypter),
+		decrypter:       decrypter,
 		accessChecker:   accessChecker,
-		search:          search,
-		store:           store,
 		opts:            opts,
 		features:        features,
 		tracer:          tracer,
@@ -157,12 +119,10 @@ func RegisterAPIService(
 	apiRegistrar builder.APIRegistrar,
 	pluginClient plugins.Client, // access to everything
 	contextProvider PluginContextWrapper,
-	clientV3Loader v3.ClientV3Loader,
 	pluginSources sources.Registry,
 	pluginSettings pluginsettings.Service,
 	acService ac.Service, // Required to declare roles from a manifest
 	accessControl ac.AccessControl,
-	unified resource.ResourceClient,
 	decrypter decrypt.DecryptService,
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
@@ -176,12 +136,6 @@ func RegisterAPIService(
 	if !routed && !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
-
-	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
-	searchAPIEnabled := apiserverSection.Key(searchapi.ConfigKey).MustBool(true)
-	trashAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true)
-	hybridAPIEnabled := apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true)
-	keysAPIEnabled := apiserverSection.Key(keysapi.ConfigKey).MustBool(false)
 
 	// Find all local plugins
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, pluginSources, definition.Options{
@@ -197,34 +151,27 @@ func RegisterAPIService(
 			return false
 		},
 		Schemas: true,
-		// The router always loads manifests, so startup must provision matching roles and settings.
-		AppManifest: routed || getflag(featuremgmt.FlagApppluginsLoadAppManifest),
+		// Manifest plugins are served exclusively by the router.
+		AppManifest: true,
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
 
-	exchanger, err := NewClientV3TokenExchanger(cfg)
-	if err != nil {
-		return nil, err
-	}
-
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
-		clientV3, err := v3.WithAuthentication(v3.NewLazyClient(clientV3Loader, plugin.JSONData.ID), plugin.JSONData.ID,
-			ClientV3TokenExchanger(cfg, plugin.JSONData.ID, exchanger))
-		if err != nil {
-			return nil, err
+		if err := declareManifestRoles(acService, apiGroupForPlugin(plugin), plugin.JSONData.Name, plugin.Manifest); err != nil {
+			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+		}
+		if plugin.Manifest != nil && !routed {
+			continue
 		}
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
-			clientV3,
 			contextProvider,
 			decrypter,
 			NewPluginAccessChecker(accessControl),
-			unified, // search support
-			unified, // list-keys reads the resource store
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
 				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
@@ -233,23 +180,12 @@ func RegisterAPIService(
 				DataProxyLogging:         cfg.DataProxyLogging,
 				SendUserHeader:           cfg.SendUserHeader,
 				PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
-
-				SearchAPIEnabled: searchAPIEnabled,
-				TrashAPIEnabled:  trashAPIEnabled,
-				HybridAPIEnabled: hybridAPIEnabled,
-				KeysAPIEnabled:   keysAPIEnabled,
 			},
 			tracer,
 			features,
 		)
 		if err != nil {
 			return nil, err
-		}
-
-		// Unified storage checks every *.ext.grafana.app group,
-		// and nothing else grants the actions a manifest kind is checked against.
-		if err := declareManifestRoles(acService, b.group, plugin.JSONData.Name, plugin.Manifest); err != nil {
-			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
 		}
 
 		// Routed plugins still need their roles declared before startup registers them.
@@ -286,92 +222,17 @@ func apiGroupForPlugin(plugin definition.PluginDefinition) string {
 	return plugin.JSONData.ID
 }
 
-// GetGroupVersions returns the served versions, preferred version first.
-// Legacy settings add v0alpha1 only when settings are enabled.
+// GetGroupVersions returns the settings API version.
 func (b *AppPluginAPIBuilder) GetGroupVersions() []schema.GroupVersion {
-	settingsGV := schema.GroupVersion{
-		Group:   b.group,
-		Version: apppluginV0.VERSION,
-	}
-	if b.manifest == nil {
-		return []schema.GroupVersion{settingsGV}
-	}
-
-	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions)+1)
-	for _, v := range b.manifest.Versions {
-		if !v.Served {
-			continue
-		}
-		gv := schema.GroupVersion{
-			Group:   b.group,
-			Version: v.Name,
-		}
-		if b.manifest.PreferredVersion == v.Name {
-			gvs = slices.Insert(gvs, 0, gv)
-		} else {
-			gvs = append(gvs, gv)
-		}
-	}
-	// Keep the legacy settings version last so it does not become preferred.
-	if !slices.Contains(gvs, settingsGV) && b.includeSettings() {
-		gvs = append(gvs, settingsGV)
-	}
-	return gvs
+	return []schema.GroupVersion{{Group: b.group, Version: apppluginV0.VERSION}}
 }
 
 func (b *AppPluginAPIBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gvs := b.GetGroupVersions()
-	if len(gvs) == 0 {
-		return fmt.Errorf("plugin %s has no served versions", b.pluginJSON.ID)
+	gv := b.GetGroupVersions()[0]
+	if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
+		return err
 	}
-	for _, gv := range gvs {
-		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
-			return err
-		}
-	}
-
-	if b.manifest != nil {
-		registered := map[schema.GroupVersionKind]bool{}
-		addKind := func(gvk schema.GroupVersionKind) error {
-			if registered[gvk] {
-				return nil
-			}
-			registered[gvk] = true
-			listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
-			// The settings kind and the metav1 types are registered in every
-			// served version above, and AddKnownTypeWithName panics when a GVK
-			// is already bound to a different Go type -- so a kind named
-			// Settings or Status would take the whole server down at startup.
-			for _, taken := range []schema.GroupVersionKind{gvk, listGVK} {
-				if scheme.Recognizes(taken) {
-					return fmt.Errorf("kind %s in %s claims the reserved kind name %q",
-						gvk.Kind, gvk.GroupVersion().String(), taken.Kind)
-				}
-			}
-			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
-			scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
-			return nil
-		}
-
-		// Server-side apply uses the internal version to track managed fields.
-		internalGV := schema.GroupVersion{Group: b.group, Version: runtime.APIVersionInternal}
-		for _, version := range b.manifest.Versions {
-			if !version.Served {
-				continue
-			}
-			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
-			for _, r := range version.Kinds {
-				if err := addKind(gv.WithKind(r.Kind)); err != nil {
-					return err
-				}
-				if err := addKind(internalGV.WithKind(r.Kind)); err != nil {
-					return err
-				}
-			}
-		}
-	}
-
-	return scheme.SetVersionPriority(gvs...)
+	return scheme.SetVersionPriority(gv)
 }
 
 func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
@@ -403,11 +264,6 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			}
 		}
 	}
-	kinds := make(map[schema.GroupVersionResource]*kindstore.Store)
-
-	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
-		return spec.MustCreateRef(name)
-	}, b.group, b.manifest)
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
@@ -416,7 +272,11 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			storage[settingsRI.StoragePath()] = settingsStorage
 
 			provider := func(ctx context.Context) (context.Context, backend.PluginContext, error) {
-				return b.getPluginContext(ctx, gv.Version)
+				version := gv.Version
+				if info, ok := request.RequestInfoFrom(ctx); ok && info.APIVersion != "" {
+					version = info.APIVersion
+				}
+				return b.getPluginContext(ctx, version)
 			}
 
 			storage[settingsRI.StoragePath("health")] = &subHealthREST{
@@ -433,50 +293,10 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			}
 		}
 
-		// Configure storage for manifest-defined kinds.
-		if b.manifest != nil {
-			for _, v := range b.manifest.Versions {
-				if v.Name != gv.Version {
-					continue
-				}
-
-				for _, kind := range v.Kinds {
-					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
-						StorageOptsGetter: opts.StorageOptsGetter,
-					}, defs)
-					if err != nil {
-						return err
-					}
-
-					// Without this, a kind whose plural shadows the settings resource
-					// (or an earlier kind) would silently replace it in the map.
-					resource := store.DefaultQualifiedResource.Resource
-					if _, taken := storage[resource]; taken {
-						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
-							kind.Kind, gv.String(), resource)
-					}
-					storage[resource] = store
-					kinds[gv.WithResource(resource)] = store
-
-					if store.HasStatus() {
-						storage[resource+"/status"] = kindstore.NewStatusStore(store)
-					}
-				}
-			}
-		}
-
-		// Checked against the mounted routes rather than the manifest, since
-		// routes that shadow a resource or use unservable methods are dropped.
-		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
-			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
-		}
-
 		if len(storage) > 0 {
 			apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
 		}
 	}
-
-	b.kinds = kinds
 
 	// Direct reads of this plugin's own storage, by group version resource.
 	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
@@ -484,12 +304,7 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 			return settingsStorage.(rest.Getter).Get(ctx, name, &v1.GetOptions{})
 		}
 
-		store, ok := kinds[gvr]
-		if !ok {
-			// This indicates a setup error not a bad request
-			return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
-		}
-		return store.Get(ctx, name, &v1.GetOptions{})
+		return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
 	}
 	return nil
 }

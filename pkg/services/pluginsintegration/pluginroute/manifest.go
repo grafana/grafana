@@ -1,0 +1,219 @@
+package pluginroute
+
+import (
+	"context"
+	"fmt"
+	"slices"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+)
+
+type getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error)
+
+type manifestBuilder struct {
+	group         string
+	manifest      *app.ManifestData
+	pluginJSON    plugins.JSONData
+	clientV3      appclientv3.Client
+	settings      *appplugin.AppPluginAPIBuilder
+	decrypter     *secureValueLookup
+	accessChecker appplugin.PluginAccessChecker
+	search        resourcepb.ResourceIndexClient
+	store         resourcepb.ResourceStoreClient
+	tracer        tracing.Tracer
+	opts          Options
+	getter        getter
+	kinds         map[schema.GroupVersionResource]*kindstore.Store
+	kindPolicies  map[string]kindPolicy
+}
+
+// GetGroupVersions returns the served versions, preferred version first.
+// Legacy settings add v0alpha1 only when settings are enabled.
+func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
+	settingsGV := schema.GroupVersion{
+		Group:   b.group,
+		Version: apppluginV0.VERSION,
+	}
+	if b.manifest == nil {
+		return []schema.GroupVersion{settingsGV}
+	}
+
+	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions)+1)
+	for _, v := range b.manifest.Versions {
+		if !v.Served {
+			continue
+		}
+		gv := schema.GroupVersion{
+			Group:   b.group,
+			Version: v.Name,
+		}
+		if b.manifest.PreferredVersion == v.Name {
+			gvs = slices.Insert(gvs, 0, gv)
+		} else {
+			gvs = append(gvs, gv)
+		}
+	}
+	// Keep the legacy settings version last so it does not become preferred.
+	if !slices.Contains(gvs, settingsGV) && b.includeSettings() {
+		gvs = append(gvs, settingsGV)
+	}
+	return gvs
+}
+
+func (b *manifestBuilder) InstallSchema(scheme *runtime.Scheme) error {
+	gvs := b.GetGroupVersions()
+	if len(gvs) == 0 {
+		return fmt.Errorf("plugin %s has no served versions", b.pluginJSON.ID)
+	}
+	for _, gv := range gvs {
+		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {
+			return err
+		}
+	}
+
+	if b.manifest != nil {
+		registered := map[schema.GroupVersionKind]bool{}
+		addKind := func(gvk schema.GroupVersionKind) error {
+			if registered[gvk] {
+				return nil
+			}
+			registered[gvk] = true
+			listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
+			// The settings kind and the metav1 types are registered in every
+			// served version above, and AddKnownTypeWithName panics when a GVK
+			// is already bound to a different Go type -- so a kind named
+			// Settings or Status would take the whole server down at startup.
+			for _, taken := range []schema.GroupVersionKind{gvk, listGVK} {
+				if scheme.Recognizes(taken) {
+					return fmt.Errorf("kind %s in %s claims the reserved kind name %q",
+						gvk.Kind, gvk.GroupVersion().String(), taken.Kind)
+				}
+			}
+			scheme.AddKnownTypeWithName(gvk, &unstructured.Unstructured{})
+			scheme.AddKnownTypeWithName(listGVK, &unstructured.UnstructuredList{})
+			return nil
+		}
+
+		// Server-side apply uses the internal version to track managed fields.
+		internalGV := schema.GroupVersion{Group: b.group, Version: runtime.APIVersionInternal}
+		for _, version := range b.manifest.Versions {
+			if !version.Served {
+				continue
+			}
+			gv := schema.GroupVersion{Group: b.group, Version: version.Name}
+			for _, r := range version.Kinds {
+				if err := addKind(gv.WithKind(r.Kind)); err != nil {
+					return err
+				}
+				if err := addKind(internalGV.WithKind(r.Kind)); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return scheme.SetVersionPriority(gvs...)
+}
+
+func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
+	if opts.OptsGetter == nil {
+		return fmt.Errorf("apps require a storage options getter")
+	}
+	var settingsStorage map[string]rest.Storage
+	if b.settings != nil {
+		if err := b.settings.UpdateAPIGroupInfo(apiGroupInfo, opts); err != nil {
+			return err
+		}
+		settingsStorage = apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION]
+	}
+	kinds := make(map[schema.GroupVersionResource]*kindstore.Store)
+
+	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
+		return spec.MustCreateRef(name)
+	}, b.group, b.manifest)
+
+	for _, gv := range b.GetGroupVersions() {
+		storage := map[string]rest.Storage{}
+
+		for key, value := range settingsStorage {
+			storage[key] = value
+		}
+
+		// Configure storage for manifest-defined kinds.
+		if b.manifest != nil {
+			for _, v := range b.manifest.Versions {
+				if v.Name != gv.Version {
+					continue
+				}
+
+				for _, kind := range v.Kinds {
+					store, err := kindstore.New(gv.WithKind(kind.Kind), kind, b.clientV3, kindstore.Options{
+						StorageOptsGetter: opts.StorageOptsGetter,
+					}, defs)
+					if err != nil {
+						return err
+					}
+
+					// Without this, a kind whose plural shadows the settings resource
+					// (or an earlier kind) would silently replace it in the map.
+					resource := store.DefaultQualifiedResource.Resource
+					if _, taken := storage[resource]; taken {
+						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
+							kind.Kind, gv.String(), resource)
+					}
+					storage[resource] = store
+					kinds[gv.WithResource(resource)] = store
+
+					if store.HasStatus() {
+						storage[resource+"/status"] = kindstore.NewStatusStore(store)
+					}
+				}
+			}
+		}
+
+		// Checked against the mounted routes rather than the manifest, since
+		// routes that shadow a resource or use unservable methods are dropped.
+		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
+			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
+		}
+
+		if len(storage) > 0 {
+			apiGroupInfo.VersionedResourcesStorageMap[gv.Version] = storage
+		}
+	}
+
+	b.kinds = kinds
+
+	// Direct reads of this plugin's own storage, by group version resource.
+	b.getter = func(ctx context.Context, gvr schema.GroupVersionResource, name string) (runtime.Object, error) {
+		store, ok := kinds[gvr]
+		if !ok {
+			// This indicates a setup error not a bad request
+			return nil, apierrors.NewInternalError(fmt.Errorf("no storage registered for %s", gvr))
+		}
+		return store.Get(ctx, name, &v1.GetOptions{})
+	}
+	return nil
+}
+
+func (b *manifestBuilder) includeSettings() bool { return b.settings != nil }
+func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
+	return []string{builder.AllResourcesAllowed}
+}
