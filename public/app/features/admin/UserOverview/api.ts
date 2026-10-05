@@ -1,8 +1,10 @@
 import { generatedAPI, type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { dateTimeFormatTimeAgo, type OrgRole } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { rolesAPI } from 'app/api/clients/roles';
+import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -160,9 +162,13 @@ const overviewAPI = generatedAPI.injectEndpoints({
     getOverviewUser: build.query<{ user: User; hasLastSeen: boolean }, string>({
       async queryFn(uid, api) {
         try {
-          const capabilities = await api
-            .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
-            .unwrap();
+          // kubernetesUsersApi is LegacyFrontend-only until its backend registry entry is migrated.
+          // eslint-disable-next-line @grafana/no-config-feature-toggles
+          const capabilities = config.featureToggles.kubernetesUsersApi
+            ? await api
+                .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
+                .unwrap()
+            : { users: false };
           if (capabilities.users) {
             const user = await api
               .dispatch(
@@ -233,9 +239,11 @@ const overviewAPI = generatedAPI.injectEndpoints({
     getOverviewTeams: build.query<Team[], string>({
       async queryFn(uid, api) {
         try {
-          const capabilities = await api
-            .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
-            .unwrap();
+          const capabilities = getFeatureFlagClient().getBooleanValue(FlagKeys.KubernetesTeamsApi, false)
+            ? await api
+                .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
+                .unwrap()
+            : { userTeams: false };
           if (!capabilities.userTeams) {
             const teams = await getBackendSrv().get<LegacyTeam[]>(`/api/users/${uid}/teams`);
             return {

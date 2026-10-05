@@ -5,6 +5,8 @@ import { render, screen, within, waitFor } from 'test/test-utils';
 import { type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -52,6 +54,8 @@ const profile: UserDTO = {
 };
 
 beforeEach(() => {
+  config.featureToggles.kubernetesUsersApi = true;
+  setTestFlags({ kubernetesTeamsApi: true });
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   server.use(
@@ -91,7 +95,11 @@ beforeEach(() => {
   );
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  setTestFlags();
+  delete config.featureToggles.kubernetesUsersApi;
+  jest.restoreAllMocks();
+});
 
 function setup(tab = 'details') {
   return render(
@@ -446,6 +454,29 @@ it('supports IAM user reads alongside legacy team membership reads', async () =>
   expect(await screen.findByText('Never')).toBeInTheDocument();
   await user.click(screen.getByRole('tab', { name: 'Teams' }));
   expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+});
+
+it('keeps legacy reads when rollout flags are off despite advertised IAM APIs', async () => {
+  config.featureToggles.kubernetesUsersApi = false;
+  setTestFlags({ kubernetesTeamsApi: false });
+  const iamRequests = jest.fn();
+  server.use(
+    http.get('/api/users/alice/teams', () => HttpResponse.json([{ id: 21, uid: 'platform', name: 'Platform' }])),
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice', () => {
+      iamRequests();
+      return HttpResponse.json(person);
+    }),
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice/teams', () => {
+      iamRequests();
+      return HttpResponse.json({ items: [] });
+    })
+  );
+  const { user } = setup();
+  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(screen.queryByText('Never')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Teams' }));
+  expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
+  expect(iamRequests).not.toHaveBeenCalled();
 });
 
 it('does not offer basic-role editing for a provisioned user', async () => {
