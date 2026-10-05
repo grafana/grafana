@@ -78,9 +78,13 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         notebookSpec = payload.spec as unknown as NotebookSpec;
       }
 
-      const { transformNotebookToScene } = await import(
-        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
-      );
+      // Both are loaded before the scene changes, so a failed import cannot leave it changed but unsaved.
+      const [{ transformNotebookToScene }, { transformNotebookSceneToSaveModel }] = await Promise.all([
+        import(/* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'),
+        import(
+          /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
+        ),
+      ]);
 
       const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
 
@@ -88,10 +92,6 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
         overlay: undefined,
       });
-
-      const { transformNotebookSceneToSaveModel } = await import(
-        /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookSceneToSaveModel'
-      );
 
       let appliedNotebook: NotebookSpec | undefined;
       try {
