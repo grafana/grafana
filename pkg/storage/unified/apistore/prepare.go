@@ -83,6 +83,13 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 	return nil
 }
 
+// movedIntoRoot reports whether an update takes the resource out of a folder and into the root
+// of the folder tree. Moves between root aliases (empty and "general") do not count.
+func (s *Storage) movedIntoRoot(previous, updated utils.GrafanaMetaAccessor) bool {
+	return s.opts.EnableFolderSupport &&
+		!folder.IsRootFolderUID(previous.GetFolder()) && folder.IsRootFolderUID(updated.GetFolder())
+}
+
 // verifyFolder enforces the folder-annotation contract on write.
 //
 //   - EnableFolderSupport=false: the resource does not live in the folder tree
@@ -318,8 +325,18 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
-	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
+	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+
+	// The grant annotation is never persisted. On update it is only honoured when the resource
+	// moves into the root folder: it loses the parent it inherited access from, exactly like a
+	// resource created there, so without its own default permissions only admins can see it.
+	// Any caller may trigger this, not only service identities: moving already requires write
+	// access to the resource, and the setters only add default grants that are missing.
+	grant := obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
+	if grant != "" && s.movedIntoRoot(previous, obj) {
+		v.grantPermissions = grant
+	}
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck

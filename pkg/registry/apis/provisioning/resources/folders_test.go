@@ -335,6 +335,70 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 		require.Equal(t, "New Title", newTitle, "the updated object should have the new title")
 	})
 
+	t.Run("requests default permissions when moving a folder to the root", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				obj := managedFolder(name, "Title", cfg.Name)
+				obj.SetAnnotations(map[string]string{
+					utils.AnnoKeyManagerIdentity: cfg.Name,
+					utils.AnnoKeyFolder:          "old-parent",
+				})
+				return obj, nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:    "folder-id",
+			Title: "Title",
+			Path:  "",
+		}, "")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-id"}, client.updateCalls)
+		require.Empty(t, updatedObj.GetAnnotations()[utils.AnnoKeyFolder], "folder should now be at the root")
+		require.Equal(t, utils.AnnoGrantPermissionsDefault, updatedObj.GetAnnotations()[utils.AnnoKeyGrantPermissions],
+			"a folder moved to the root must request its default permissions")
+	})
+
+	t.Run("does not request default permissions when moving a folder under another folder", func(t *testing.T) {
+		repo, cfg := newRepo(t)
+		tree := NewEmptyFolderTree()
+
+		var updatedObj *unstructured.Unstructured
+		client := &fakeDynamicResourceClient{
+			getFn: func(name string) (*unstructured.Unstructured, error) {
+				return managedFolder(name, "Title", cfg.Name), nil
+			},
+			updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				updatedObj = obj.DeepCopy()
+				return obj, nil
+			},
+		}
+
+		fm := NewFolderManager(repo, client, tree, FolderKind)
+		err := fm.EnsureFolderExists(ctx, Folder{
+			ID:       "folder-id",
+			Title:    "Title",
+			Path:     "",
+			ParentID: "new-parent",
+		}, "new-parent")
+
+		require.NoError(t, err)
+		require.Equal(t, []string{"folder-id"}, client.updateCalls)
+		require.Equal(t, "new-parent", updatedObj.GetAnnotations()[utils.AnnoKeyFolder])
+		require.Empty(t, updatedObj.GetAnnotations()[utils.AnnoKeyGrantPermissions],
+			"a nested folder inherits permissions from its parent")
+	})
+
 	t.Run("returns error when update fails", func(t *testing.T) {
 		repo, cfg := newRepo(t)
 		tree := NewEmptyFolderTree()

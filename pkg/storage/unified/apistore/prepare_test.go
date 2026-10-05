@@ -459,6 +459,72 @@ func failingDynClient(err error) func(context.Context) (dynamic.Interface, error
 	return func(context.Context) (dynamic.Interface, error) { return nil, err }
 }
 
+func TestPrepareObjectForUpdate_GrantPermissions(t *testing.T) {
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+	s := &Storage{
+		gr:         dashv1.DashboardResourceInfo.GroupResource(),
+		serializer: &jsonSerializer{},
+		snowflake:  node,
+		opts: StorageOptions{
+			GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+			EnableFolderSupport: true,
+			MaximumNameLength:   100,
+		},
+	}
+
+	userCtx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser},
+	)
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+
+	dashboardIn := func(folderUID string) *dashv1.Dashboard {
+		d := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name", UID: "XXX"}}
+		meta, err := utils.MetaAccessor(d)
+		require.NoError(t, err)
+		if folderUID != "" {
+			meta.SetFolder(folderUID)
+		}
+		return d
+	}
+
+	tests := []struct {
+		name       string
+		ctx        context.Context
+		annotation string
+		oldFolder  string
+		newFolder  string
+		expected   string
+	}{
+		{"user move to root grants", userCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"provisioning move to root grants", provisioningCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"move to root without annotation does not grant", userCtx, "", "folder-a", "", ""},
+		{"move between root aliases does not grant", userCtx, utils.AnnoGrantPermissionsDefault, folder.GeneralFolderUID, "", ""},
+		{"staying at root does not grant", userCtx, utils.AnnoGrantPermissionsDefault, "", "", ""},
+		{"move into a folder does not grant", userCtx, utils.AnnoGrantPermissionsDefault, "", "folder-a", ""},
+		{"move between folders does not grant", userCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "folder-b", ""},
+		{"invalid value is still passed through on move to root", userCtx, "bogus", "folder-a", "", "bogus"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			previous := dashboardIn(tt.oldFolder)
+			updated := dashboardIn(tt.newFolder)
+			meta, err := utils.MetaAccessor(updated)
+			require.NoError(t, err)
+			if tt.annotation != "" {
+				meta.SetAnnotation(utils.AnnoKeyGrantPermissions, tt.annotation)
+			}
+
+			v, err := s.prepareObjectForUpdate(tt.ctx, updated, previous)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, v.grantPermissions)
+			require.Empty(t, meta.GetAnnotation(utils.AnnoKeyGrantPermissions), "annotation must never be persisted")
+		})
+	}
+}
+
 func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	makeDashboard := func(t *testing.T, folder string, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
 		t.Helper()

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -32,8 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -442,9 +443,9 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 	log.Debug("setting default folder permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
 	// Setting the default permissions is a system operation triggered by the creation of the
-	// folder, not an action the requester performs directly. The creator does not yet have
-	// permission to manage permissions on the brand-new folder, so we use a service identity to
-	// write them through the ResourcePermission API.
+	// folder (or its move into the root folder), not an action the requester performs directly.
+	// The requester does not necessarily have permission to manage permissions on the folder, so
+	// we use a service identity to write them through the ResourcePermission API.
 	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("parse namespace: %w", err)
@@ -453,37 +454,36 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 
 	// The creator gets admin on their folder, in addition to the default basic-role permissions.
 	// Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultFolderPermissions(id)
+	defaults := buildDefaultFolderPermissions(id)
 
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", foldersv1.FolderResourceInfo.GroupVersionResource().Group, foldersv1.FolderResourceInfo.GroupVersionResource().Resource, obj.GetName())
+	gvr := foldersv1.FolderResourceInfo.GroupVersionResource()
+	name := fmt.Sprintf("%s-%s-%s", gvr.Group, gvr.Resource, obj.GetName())
 
-	// the resource permission will likely already exist with admin can admin, so we will need to update it
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-						"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
-			logger.Error("failed to update root permissions", "error", err)
+	existing, err := client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("get root permissions: %w", err)
+	}
+
+	if err == nil {
+		// The resource permission often already exists (e.g. seeded with admin-can-admin, or the
+		// folder was moved to the root); only add the defaults that are missing, never replace them.
+		current, _, _ := unstructured.NestedSlice(existing.Object, "spec", "permissions")
+		merged, changed := resourcepermission.MergeDefaultPermissions(current, defaults)
+		if !changed {
+			return nil
+		}
+		if err := unstructured.SetNestedSlice(existing.Object, merged, "spec", "permissions"); err != nil {
+			return fmt.Errorf("set root permissions: %w", err)
+		}
+		if _, err := client.Update(ctx, existing, metav1.UpdateOptions{}); err != nil {
+			log.Error("failed to update root permissions", "error", err)
 			return fmt.Errorf("update root permissions: %w", err)
 		}
-
 		return nil
 	}
 
+	permissions, _ := resourcepermission.MergeDefaultPermissions(nil, defaults)
 	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
@@ -492,8 +492,8 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 			},
 			"spec": map[string]any{
 				"resource": map[string]any{
-					"apiGroup": foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					"resource": foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+					"apiGroup": gvr.Group,
+					"resource": gvr.Resource,
 					"name":     obj.GetName(),
 				},
 				"permissions": permissions,
@@ -501,7 +501,7 @@ func (b *FolderAPIBuilder) setDefaultFolderPermissions(ctx context.Context, key 
 		},
 	}, metav1.CreateOptions{})
 	if err != nil {
-		logger.Error("failed to create root permissions", "error", err)
+		log.Error("failed to create root permissions", "error", err)
 		return fmt.Errorf("create root permissions: %w", err)
 	}
 

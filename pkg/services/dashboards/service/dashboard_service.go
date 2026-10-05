@@ -1251,6 +1251,16 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}...)
 
 	svc := dr.getPermissionsService(key.Resource == "folders")
+	// The setter also runs when an existing dashboard is moved into the root folder, where it
+	// may already carry permissions. SetPermissions replaces the level of every assignee it is
+	// given, so drop the ones that already have a grant to never lower (or raise) existing access.
+	permissions, err = withoutExistingAssignees(ctx, svc, user, obj.GetName(), permissions)
+	if err != nil {
+		return err
+	}
+	if len(permissions) == 0 {
+		return nil
+	}
 	if _, err := svc.SetPermissions(ctx, ns.OrgID, obj.GetName(), permissions...); err != nil {
 		logger.Error("Could not set default permissions", "error", err)
 		return err
@@ -1263,6 +1273,38 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	}
 
 	return nil
+}
+
+// withoutExistingAssignees drops the commands for users and basic roles that already have a
+// managed permission on the resource, because SetPermissions would replace their current level.
+func withoutExistingAssignees(ctx context.Context, svc accesscontrol.PermissionsService, user identity.Requester, uid string, permissions []accesscontrol.SetResourcePermissionCommand) ([]accesscontrol.SetResourcePermissionCommand, error) {
+	existing, err := svc.GetPermissions(ctx, user, uid)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := map[int64]bool{}
+	builtInRoles := map[string]bool{}
+	for _, p := range existing {
+		if !p.IsManaged || p.IsInherited {
+			continue
+		}
+		if p.UserID != 0 {
+			userIDs[p.UserID] = true
+		}
+		if p.BuiltInRole != "" {
+			builtInRoles[p.BuiltInRole] = true
+		}
+	}
+
+	missing := make([]accesscontrol.SetResourcePermissionCommand, 0, len(permissions))
+	for _, p := range permissions {
+		if (p.UserID != 0 && userIDs[p.UserID]) || (p.BuiltinRole != "" && builtInRoles[p.BuiltinRole]) {
+			continue
+		}
+		missing = append(missing, p)
+	}
+	return missing, nil
 }
 
 func (dr *DashboardServiceImpl) SetDefaultPermissions(ctx context.Context, dto *dashboards.SaveDashboardDTO, dash *dashboards.Dashboard, provisioned bool) {

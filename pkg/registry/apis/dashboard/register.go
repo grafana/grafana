@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -1510,9 +1511,10 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
 	// Setting the default permissions is a system operation triggered by the creation
-	// of the dashboard, not an action the requester performs directly. The creator does
-	// not yet have permission to manage permissions on the brand-new dashboard, so we use
-	// a service identity to write them through the ResourcePermission API.
+	// of the dashboard (or its move into the root folder), not an action the requester
+	// performs directly. The requester does not necessarily have permission to manage
+	// permissions on the dashboard, so we use a service identity to write them through
+	// the ResourcePermission API.
 	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("parse namespace: %w", err)
@@ -1521,36 +1523,36 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 
 	// The creator gets admin on their dashboard, in addition to the default basic-role
 	// permissions. Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultDashboardPermissions(id)
+	defaults := buildDefaultDashboardPermissions(id)
 
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+	name := fmt.Sprintf("%s-%s-%s", gvr.Group, gvr.Resource, obj.GetName())
 
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
-		if err != nil {
+	existing, err := client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("get dashboard permissions: %w", err)
+	}
+
+	if err == nil {
+		// A dashboard moved to the root (or one whose permissions were seeded elsewhere) may
+		// already have grants; only add the defaults that are missing, never replace them.
+		current, _, _ := unstructured.NestedSlice(existing.Object, "spec", "permissions")
+		merged, changed := resourcepermission.MergeDefaultPermissions(current, defaults)
+		if !changed {
+			return nil
+		}
+		if err := unstructured.SetNestedSlice(existing.Object, merged, "spec", "permissions"); err != nil {
+			return fmt.Errorf("set dashboard permissions: %w", err)
+		}
+		if _, err := client.Update(ctx, existing, metav1.UpdateOptions{}); err != nil {
 			log.Error("failed to update dashboard permissions", "error", err)
 			return fmt.Errorf("update dashboard permissions: %w", err)
 		}
-
 		return nil
 	}
 
+	permissions, _ := resourcepermission.MergeDefaultPermissions(nil, defaults)
 	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
@@ -1559,8 +1561,8 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 			},
 			"spec": map[string]any{
 				"resource": map[string]any{
-					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					"apiGroup": gvr.Group,
+					"resource": gvr.Resource,
 					"name":     obj.GetName(),
 				},
 				"permissions": permissions,

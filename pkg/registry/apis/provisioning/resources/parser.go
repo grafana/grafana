@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -277,6 +278,15 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 	parsed.FolderScoped = supportsFolderAnnotation(r.clients.SupportedResources(), parsed.GVK)
 	if info.Path != "" && parsed.FolderScoped {
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
+	}
+
+	// A root-level dashboard has no parent folder to inherit access from, so it needs its own
+	// default permissions or only admins can see it. The dashboard API server grants them when
+	// this annotation is present on create, or on an update that moves the dashboard to the root;
+	// the annotation itself is never persisted. Folders get the same treatment in FolderManager.
+	if parsed.GVK.GroupKind() == dashboard.DashboardResourceInfo.GroupVersionKind().GroupKind() &&
+		foldermodel.IsRootFolderUID(parsed.Meta.GetFolder()) {
+		parsed.Meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
 	}
 
 	return parsed, nil

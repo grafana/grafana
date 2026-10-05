@@ -305,6 +305,11 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				Checksum: folder.MetadataHash,
 			})
 			meta.SetFolder(folder.ParentID)
+			if folder.ParentID == "" {
+				// The folder API server grants default permissions on an update only when the
+				// folder moves into the root; the annotation itself is never persisted.
+				meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+			}
 			if takeover {
 				meta.SetManagerProperties(utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo,
