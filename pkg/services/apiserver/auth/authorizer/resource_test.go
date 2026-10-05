@@ -9,18 +9,23 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
 
-// recordingLogger captures Error() calls for assertions. With/WithContext
+// recordingLogger captures Debug()/Error() calls for assertions. With/WithContext
 // return itself, since FromContext calls WithContext before logging.
 type recordingLogger struct {
+	debugCalls [][]any
 	errorCalls [][]any
 }
 
-func (l *recordingLogger) Debug(string, ...any) {}
-func (l *recordingLogger) Info(string, ...any)  {}
-func (l *recordingLogger) Warn(string, ...any)  {}
+func (l *recordingLogger) Debug(msg string, args ...any) {
+	l.debugCalls = append(l.debugCalls, append([]any{msg}, args...))
+}
+func (l *recordingLogger) Info(string, ...any) {}
+func (l *recordingLogger) Warn(string, ...any) {}
 func (l *recordingLogger) Error(msg string, args ...any) {
 	l.errorCalls = append(l.errorCalls, append([]any{msg}, args...))
 }
@@ -322,6 +327,7 @@ func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckError_LogsFai
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Empty(t, reason)
 
+	require.Empty(t, logger.debugCalls, "a non-cancellation failure should not be logged at debug level")
 	require.Len(t, logger.errorCalls, 1, "the access-check failure should be logged exactly once")
 	logged := logger.errorCalls[0]
 	require.Equal(t, "resource access check failed", logged[0])
@@ -329,6 +335,46 @@ func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckError_LogsFai
 	require.Contains(t, logged, "stacks-4669")
 	require.Contains(t, logged, "folders")
 	require.Contains(t, logged, "delete")
+}
+
+func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckCanceled_LogsAtDebug(t *testing.T) {
+	cases := map[string]error{
+		"context.Canceled":    context.Canceled,
+		"grpc codes.Canceled": status.Error(codes.Canceled, "context canceled"),
+	}
+
+	for name, checkErr := range cases {
+		t.Run(name, func(t *testing.T) {
+			mockChecker := &fakeAccessChecker{
+				checkFunc: func(ctx context.Context, ident types.AuthInfo, req types.CheckRequest, extra string) (types.CheckResponse, error) {
+					return types.CheckResponse{}, checkErr
+				},
+			}
+
+			auth := NewResourceAuthorizerWithSubresourceHandlers(mockChecker, map[string]SubresourceCheck{})
+
+			logger := &recordingLogger{}
+			ctx := types.WithAuthInfo(context.Background(), newTestAuthInfo())
+			ctx = logging.Context(ctx, logger)
+
+			attrs := mockAttributes{
+				isResourceRequest: true,
+				verb:              "delete",
+				apiGroup:          "folder.grafana.app",
+				resource:          "folders",
+				namespace:         "stacks-4669",
+				name:              "efzt6k5xkg3y8b",
+			}
+
+			decision, _, err := auth.Authorize(ctx, attrs)
+			require.ErrorIs(t, err, checkErr)
+			require.Equal(t, authorizer.DecisionDeny, decision)
+
+			require.Empty(t, logger.errorCalls, "a cancellation should not be logged at error level")
+			require.Len(t, logger.debugCalls, 1, "a cancellation should be logged at debug level")
+			require.Equal(t, "resource access check failed", logger.debugCalls[0][0])
+		})
+	}
 }
 
 func TestNewResourceAuthorizerWithSubresourceHandlers_DelegateCheckDenied(t *testing.T) {

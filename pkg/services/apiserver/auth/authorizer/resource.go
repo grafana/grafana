@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	claims "github.com/grafana/authlib/types"
@@ -42,7 +44,12 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 
 	if err != nil {
 		// The client only ever sees a generic 500 for this, so log it here.
-		logging.FromContext(ctx).Error("resource access check failed",
+		// Context cancellation just means the caller gave up, not a real failure.
+		logError := logging.FromContext(ctx).Error
+		if errors.Is(err, context.Canceled) || status.Code(err) == codes.Canceled {
+			logError = logging.FromContext(ctx).Debug
+		}
+		logError("resource access check failed",
 			"err", err,
 			"apiGroup", attr.GetAPIGroup(),
 			"resource", attr.GetResource(),
