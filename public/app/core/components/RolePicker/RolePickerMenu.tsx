@@ -296,8 +296,12 @@ export const RolePickerMenu = ({
 };
 
 const filterCustomRoles = (option: Role) => !option.name?.startsWith('fixed:') && !option.name.startsWith('plugins:');
-const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:');
-const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:');
+const filterFixedRoles = (option: Role) => option.name?.startsWith('fixed:') && !isAssistantRole(option);
+const filterPluginsRoles = (option: Role) => option.name?.startsWith('plugins:') || isAssistantRole(option);
+
+// Temporary UI grouping until plugin and App Platform role provisioning are aligned.
+const isAssistantRole = (role: Role) =>
+  role.name.startsWith('plugins:grafana-assistant-app:') || role.name.startsWith('fixed:assistant.ext.grafana.app:');
 
 interface GroupsMap {
   [key: string]: { roles: Role[]; name: string };
@@ -330,10 +334,16 @@ const getRoleGroup = (role: Role) => {
 };
 
 const getRoleGroupName = (role: Role) => {
+  if (isAssistantRole(role)) {
+    return 'Grafana Assistant';
+  }
   return role.group || 'Other';
 };
 
 const getRolePrefix = (role: Role) => {
+  if (isAssistantRole(role)) {
+    return 'plugins';
+  }
   const prefixEnd = role.name.indexOf(':');
   if (prefixEnd < 0) {
     return 'unknown';
