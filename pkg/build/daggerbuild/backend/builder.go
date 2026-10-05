@@ -110,6 +110,13 @@ func GolangContainer(
 		return ViceroyContainer(d, log, distro, goVersion, viceroyVersion, opts)
 	}
 
+	// The Kerberos/GSSAPI variant needs real glibc dev headers (<gssapi/gssapi.h>) and is a
+	// native linux/amd64 build (the runner is already amd64), so it skips the Alpine+zig
+	// cross-compile path entirely rather than trying to get glibc krb5 headers into zig's sysroot.
+	if opts.CGOEnabled && distro == DistLinuxAMD64Krb5 {
+		return Krb5Container(d, log, goVersion, distro, opts)
+	}
+
 	container := golang.Container(d, platform, goVersion)
 	if opts.CGOEnabled {
 		container = container.
@@ -128,6 +135,34 @@ func GolangContainer(
 			WithExec([]string{"wget", "-q", "https://dl.grafana.com/ci/x86_64-w64-mingw32-cross.tgz", "-P", "/toolchain"}).
 			WithExec([]string{"tar", "-xf", "/toolchain/x86_64-w64-mingw32-cross.tgz", "-C", "/toolchain"})
 	}
+	return WithGoEnv(log, container, distro, opts)
+}
+
+// Krb5Container returns a Debian ("bookworm") based Go build container with the Kerberos/GSSAPI
+// development headers installed, used only for DistLinuxAMD64Krb5. The grafana-enterprise-kerberos
+// variant links a forked go-sql-driver/mysql that adds GSSAPI (Kerberos) auth support for MySQL;
+// the CGO dependency (github.com/openshift/gssapi) only needs <gssapi/gssapi.h> at compile time and
+// dlopen()s libgssapi_krb5.so at runtime, so no cross-compiled library is needed - just the header,
+// from a real glibc/Debian environment rather than Alpine.
+//
+// Unlike every other CGO distro, this one skips zig and relies on the container's own native gcc,
+// so it deliberately ignores the caller's requested platform (which, unlike the Distribution itself,
+// is derived from a global --platform flag that defaults to the invoking host's own arch - e.g.
+// linux/arm64 on an Apple Silicon machine running `dagger run` locally) and always builds on
+// linux/amd64, which this distro targets unconditionally.
+func Krb5Container(
+	d *dagger.Client,
+	log *slog.Logger,
+	goVersion string,
+	distro Distribution,
+	opts *BuildOpts,
+) (*dagger.Container, error) {
+	container := d.Container(dagger.ContainerOpts{Platform: "linux/amd64"}).
+		From(fmt.Sprintf("golang:%s-bookworm", goVersion)).
+		WithExec([]string{"apt-get", "update"}).
+		WithExec([]string{"apt-get", "install", "-y",
+			"gcc", "libgssapi-krb5-2", "libkrb5-dev", "libsasl2-modules-gssapi-mit"})
+
 	return WithGoEnv(log, container, distro, opts)
 }
 
@@ -198,6 +233,20 @@ func Builder(
 
 	if opts.Enterprise {
 		builder = builder.WithFile("/src/.buildinfo.enterprise-commit", commitInfo.EnterpriseCommit)
+	}
+
+	// Swap in the Kerberos-patched go-sql-driver/mysql fork, only inside this ephemeral build
+	// container's copy of go.mod/go.sum - this never touches the committed checkout. The fork
+	// (github.com/grafana/mysql@v1.7.1g) is upstream go-sql-driver/mysql v1.7.1 (the version
+	// already pinned repo-wide for unrelated reasons) plus GSSAPI/Kerberos support.
+	if distro == DistLinuxAMD64Krb5 {
+		builder = builder.
+			WithExec([]string{"go", "mod", "edit",
+				"-replace", "github.com/go-sql-driver/mysql=github.com/grafana/mysql@v1.7.1g"}).
+			WithExec([]string{"go", "get",
+				"github.com/jcmturner/gokrb5/v8@v8.4.4",
+				"github.com/openshift/gssapi@v0.0.0-20161010215902-5fb4217df13b"}).
+			WithExec([]string{"go", "mod", "tidy"})
 	}
 
 	builder = golang.WithCachedGoDependencies(

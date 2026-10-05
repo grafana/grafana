@@ -24,6 +24,7 @@ var DynamicDistributions = []backend.Distribution{
 	backend.DistWindowsARM64,
 	backend.DistLinuxAMD64Dynamic,
 	backend.DistLinuxAMD64DynamicMusl,
+	backend.DistLinuxAMD64Krb5,
 }
 
 func DistroFlags() []pipeline.Flag {

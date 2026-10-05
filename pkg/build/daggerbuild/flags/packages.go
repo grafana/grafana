@@ -73,6 +73,17 @@ var PackageNameFlags = []pipeline.Flag{
 			GoTags:             append(DefaultTags, "enterprise"),
 		},
 	},
+	{
+		Name: "kerberos",
+		Options: map[pipeline.FlagOption]any{
+			DockerRepositories: []string{"grafana-enterprise-image-tags"},
+			PackageName:        string(packages.PackageEnterpriseKerberos),
+			Enterprise:         true,
+			WireTag:            "enterprise",
+			GoExperiments:      []string{},
+			GoTags:             append(DefaultTags, "enterprise"),
+		},
+	},
 }
 
 var SignFlag = pipeline.Flag{

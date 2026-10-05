@@ -60,6 +60,7 @@ const (
 	DistLinuxAMD64v4          Distribution = "linux/amd64/v4"
 	DistLinuxAMD64Dynamic     Distribution = "linux/amd64/dynamic"
 	DistLinuxAMD64DynamicMusl Distribution = "linux/amd64/dynamic-musl"
+	DistLinuxAMD64Krb5        Distribution = "linux/amd64/krb5"
 	DistLinuxARM              Distribution = "linux/arm"
 	DistLinuxARMv6            Distribution = "linux/arm/v6"
 	DistLinuxARMv7            Distribution = "linux/arm/v7"
@@ -176,6 +177,7 @@ func PackageArch(d Distribution) string {
 func Platform(d Distribution) dagger.Platform {
 	p := strings.ReplaceAll(string(d), "/dynamic-musl", "")
 	p = strings.ReplaceAll(p, "/dynamic", "")
+	p = strings.ReplaceAll(p, "/krb5", "")
 	p = strings.ReplaceAll(p, "arm/v6", "arm/v7")
 	// for now let's just try to use the distro name as the platform and see if that works...
 	return dagger.Platform(p)
@@ -386,6 +388,10 @@ var DistributionGoOpts = map[Distribution]DistroBuildOptsFunc{
 	DistDarwinARM64:  ViceroyBuildOpts,
 
 	DistLinuxAMD64DynamicMusl: BuildOptsWithoutZig,
+
+	// Built natively (no cross-compiler) in a Debian-based container with Kerberos/GSSAPI
+	// headers installed; see Krb5Container in builder.go.
+	DistLinuxAMD64Krb5: BuildOptsWithoutZig,
 }
 
 func DistroOptsLogger(log *slog.Logger, fn DistroBuildOptsFunc) func(distro Distribution, experiments []string, tags []string) *GoBuildOpts {

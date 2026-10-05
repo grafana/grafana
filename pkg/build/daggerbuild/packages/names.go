@@ -10,11 +10,12 @@ import (
 type Name string
 
 const (
-	PackageGrafana          Name = "grafana"
-	PackageEnterprise       Name = "grafana-enterprise"
-	PackageEnterpriseBoring Name = "grafana-enterprise-boringcrypto"
-	PackagePro              Name = "grafana-pro"
-	PackageNightly          Name = "grafana-nightly"
+	PackageGrafana            Name = "grafana"
+	PackageEnterprise         Name = "grafana-enterprise"
+	PackageEnterpriseBoring   Name = "grafana-enterprise-boringcrypto"
+	PackageEnterpriseKerberos Name = "grafana-enterprise-kerberos"
+	PackagePro                Name = "grafana-pro"
+	PackageNightly            Name = "grafana-nightly"
 )
 
 type NameOpts struct {
