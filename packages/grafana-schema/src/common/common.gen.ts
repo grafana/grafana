@@ -811,6 +811,10 @@ export interface TableColorTextCellOptions {
  * Json view cell options
  */
 export interface TableJsonViewCellOptions {
+  /**
+   * Enables syntax highlighting. Defaults to true when omitted.
+   */
+  syntaxHighlighting?: boolean;
   type: TableCellDisplayMode.JSONView;
 }
 
@@ -1075,6 +1079,11 @@ export interface TableOptions {
    * Used to control row sorting
    */
   sortBy?: Array<TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultTableOptions: Partial<TableOptions> = {
@@ -1084,6 +1093,7 @@ export const defaultTableOptions: Partial<TableOptions> = {
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 /**

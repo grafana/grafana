@@ -126,6 +126,7 @@
     "testdata-variables-that-update-on-time-c": (import '../dev-dashboards/feature-templating/testdata-variables-that-update-on-time-change.json'),
     "text-options": (import '../dev-dashboards/panel-text/text-options.json'),
     "text-panel": (import '../dev-dashboards/panel-text/text-panel.json'),
+    "time-compare": (import '../dev-dashboards/scenarios/time-compare.json'),
     "text-panel-examples": (import '../dev-dashboards/panel-text/text-panel-examples.json'),
     "time_zone_support": (import '../dev-dashboards/scenarios/time_zone_support.json'),
     "timeline-align-endtime": (import '../dev-dashboards/panel-timeline/timeline-align-endtime.json'),
@@ -157,4 +158,4 @@
     "xychart-migrations": (import '../dev-dashboards/panel-xychart/xychart-migrations.json'),
     "xychart-tooltip-color-test": (import '../dev-dashboards/panel-xychart/xychart-tooltip-color-test.json'),
   },
-} 
+}

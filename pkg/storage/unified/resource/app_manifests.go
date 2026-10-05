@@ -1,5 +1,8 @@
 package resource
 
+// Generated: edits are overwritten. To add a manifest that is compiled into a
+// distribution but lives outside apps/, see RegisterAppManifest.
+
 //go:generate sh -c "cd ../../../.. && bash pkg/storage/unified/resource/generate_manifests.sh"
 
 import (
@@ -29,7 +32,7 @@ import (
 	shorturl "github.com/grafana/grafana/apps/shorturl/pkg/apis"
 )
 
-func AppManifests() []*app.ManifestData {
+func generatedAppManifests() []*app.ManifestData {
 	// TODO: don't use hardcoded list of manifests when possible.
 	return []*app.ManifestData{
 		advisor.LocalManifest().ManifestData,

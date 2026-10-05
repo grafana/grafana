@@ -1,5 +1,6 @@
 import { type Unsubscribable } from 'rxjs';
 
+import { FlagKeys, getFeatureFlagClient, useFlagPerPanelNonApplicableDrilldowns } from '@grafana/runtime/internal';
 import {
   type SceneComponentProps,
   type SceneObjectState,
@@ -23,8 +24,13 @@ interface ApplicabilitySupportHelperState {
 }
 
 export interface VizPanelSubHeaderState extends SceneObjectState {
-  hideNonApplicableDrilldowns?: boolean;
   supportsApplicability?: boolean;
+  /**
+   * Mirrors the panel's loaded {@link PanelPlugin.hideNonApplicableFilters}. The plugin
+   * is loaded asynchronously, so this is tracked as scene state (rather than read directly
+   * from `getPlugin()` at render time) to make the subheader re-render once it resolves.
+   */
+  pluginHidesNonApplicableFilters?: boolean;
 }
 
 export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
@@ -39,10 +45,7 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
   private _queryRunnerDatasource?: DataSourceRef | null;
 
   constructor(state: Partial<VizPanelSubHeaderState>) {
-    super({
-      hideNonApplicableDrilldowns: state.hideNonApplicableDrilldowns ?? false,
-      ...state,
-    });
+    super(state);
 
     this.addActivationHandler(this._onActivate);
   }
@@ -52,15 +55,30 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
       throw new Error('VizPanelSubHeader can be used only with VizPanel');
     }
 
-    if (!this.state.hideNonApplicableDrilldowns) {
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.PerPanelNonApplicableDrilldowns, false)) {
       this.subscribeToDrilldownVariableChanges();
     }
 
+    const panel = this.parent;
+
+    // The plugin may already be resolved (e.g. cached from a previous panel of the same
+    // type) by the time we get here, in which case no further panel state change will
+    // happen to trigger the subscription below - so check it once up front too.
+    this.updatePluginHidesNonApplicableFilters(panel);
+    const panelSub = panel.subscribeToState(() => {
+      this.updatePluginHidesNonApplicableFilters(panel);
+    });
+
     return () => {
+      panelSub.unsubscribe();
       this._groupBySub?.unsubscribe();
       this._adHocSub?.unsubscribe();
     };
   };
+
+  private updatePluginHidesNonApplicableFilters(panel: VizPanel) {
+    this.setState({ pluginHidesNonApplicableFilters: panel.getPlugin()?.hideNonApplicableFilters === true });
+  }
 
   private subscribeToDrilldownVariableChanges() {
     const vars = sceneGraph.getVariables(this);
@@ -171,13 +189,19 @@ export class VizPanelSubHeader extends SceneObjectBase<VizPanelSubHeaderState> {
 }
 
 function VizPanelSubHeaderRenderer({ model }: SceneComponentProps<VizPanelSubHeader>) {
-  const { supportsApplicability, hideNonApplicableDrilldowns } = model.useState();
+  const { supportsApplicability, pluginHidesNonApplicableFilters } = model.useState();
   const variables = sceneGraph.getVariables(model);
   const adhocFiltersVar = variables.state.variables.find((variable) => variable instanceof AdHocFiltersVariable);
   const groupByVar = variables.state.variables.find((variable) => variable instanceof GroupByVariable);
   const queryRunner = model.getQueryRunner();
+  const perPanelNonApplicableDrilldownsEnabled = useFlagPerPanelNonApplicableDrilldowns();
 
-  if (!queryRunner || hideNonApplicableDrilldowns || !supportsApplicability) {
+  if (
+    !queryRunner ||
+    !perPanelNonApplicableDrilldownsEnabled ||
+    pluginHidesNonApplicableFilters ||
+    !supportsApplicability
+  ) {
     return null;
   }
 

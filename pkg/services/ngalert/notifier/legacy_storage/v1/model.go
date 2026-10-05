@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/grafana/alerting/definition"
@@ -25,16 +26,23 @@ type AMConfigV1 struct {
 	Templates       map[ResourceUID]TemplateGroup
 	InhibitionRules map[ResourceUID]InhibitionRule
 	TimeIntervals   map[ResourceUID]TimeInterval
-	Receivers       []*PostableApiReceiver
+	Receivers       map[ResourceUID]PostableApiReceiver
 
 	AlertmanagerConfig PostableApiAlertingConfig
 	ExtraConfigs       []ExtraConfiguration
-	ManagedRoutes      ManagedRoutes
+	ManagedRoutes      map[string]*Route
 }
 
-// GetReceivers returns the receivers.
+// GetReceivers returns the receivers sorted by name, for deterministic iteration and serialization.
 func (c *AMConfigV1) GetReceivers() []*PostableApiReceiver {
-	return c.Receivers
+	res := make([]*PostableApiReceiver, 0, len(c.Receivers))
+	for _, r := range c.Receivers {
+		res = append(res, &r)
+	}
+	slices.SortFunc(res, func(a, b *PostableApiReceiver) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+	return res
 }
 
 // SortedTemplates returns templates ordered by kind and title.
@@ -99,8 +107,6 @@ func (c *AMConfigV1) Validate() error {
 	}
 	return c.AlertmanagerConfig.Route.ValidateReceivers(receivers)
 }
-
-type ManagedRoutes map[string]*Route
 
 // ExtraAlertmanagerConfig is a parsed imported Prometheus/Mimir Alertmanager configuration.
 // It preserves the upstream config types; conversion to Grafana's wire format is left to
@@ -505,6 +511,8 @@ func (r *Route) ResourceID() string {
 type Provenance string
 
 type PostableApiReceiver struct {
+	ResourceMetadata
+
 	Name                    string
 	GrafanaManagedReceivers []*PostableGrafanaReceiver
 }

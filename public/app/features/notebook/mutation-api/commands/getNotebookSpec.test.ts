@@ -1,8 +1,16 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
+import { updateNotebook } from '../../api/notebookResource';
 import { NotebookMutationClient } from '../NotebookMutationClient';
 import { NOTEBOOKS_FLAG, notebookScene, notebookSpec } from '../test-utils';
+
+// Only the network write is stubbed, so APPLY_NOTEBOOK_SPEC can drive a real save in the
+// resourceVersion tests below without hitting the network.
+jest.mock('../../api/notebookResource', () => ({
+  ...jest.requireActual('../../api/notebookResource'),
+  updateNotebook: jest.fn(),
+}));
 
 // Driven through the client, which is where the permission rule and the payload schema actually run.
 describe('GET_NOTEBOOK_SPEC', () => {
@@ -77,6 +85,25 @@ describe('GET_NOTEBOOK_SPEC', () => {
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('Validation failed');
+  });
+
+  it('carries no resourceVersion when nothing has been saved through this scene yet', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const result = await client.execute({ type: 'GET_NOTEBOOK_SPEC', payload: {} });
+
+    expect((result.data as { resourceVersion?: string }).resourceVersion).toBeUndefined();
+  });
+
+  it('carries the resourceVersion of the last save, so a caller can conflict-check without a REST read', async () => {
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 2, resourceVersion: '1756' });
+    const scene = notebookScene();
+    const client = new NotebookMutationClient(scene);
+    await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: notebookSpec({ title: 'Renamed' }) } });
+
+    const result = await client.execute({ type: 'GET_NOTEBOOK_SPEC', payload: {} });
+
+    expect((result.data as { resourceVersion?: string }).resourceVersion).toBe('1756');
   });
 
   it('is refused when notebooks are not enabled', async () => {

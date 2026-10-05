@@ -15,6 +15,28 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func TestIndexableDocumentUsesFixedWidthDeletedResourceVersionForSorting(t *testing.T) {
+	for _, tc := range []struct {
+		value string
+		want  string
+	}{
+		{value: "2", want: "0000000000000000002"},
+		{value: "10", want: "0000000000000000010"},
+		{value: "1856241819843796993", want: "1856241819843796993"},
+	} {
+		doc := (&IndexableDocument{DeletedRV: &tc.value}).UpdateCopyFields()
+		require.NotNil(t, doc.DeletedRVSort)
+		require.Equal(t, tc.want, *doc.DeletedRVSort)
+		require.Equal(t, tc.value, *doc.DeletedRV)
+	}
+
+	t.Run("invalid values are not indexed as sort keys", func(t *testing.T) {
+		value := "not-a-resource-version"
+		doc := (&IndexableDocument{DeletedRV: &value}).UpdateCopyFields()
+		require.Nil(t, doc.DeletedRVSort)
+	})
+}
+
 func TestStandardDocumentBuilder(t *testing.T) {
 	ctx := context.Background()
 	builder := StandardDocumentBuilder(nil)
@@ -38,6 +60,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"resource": "playlists",
 			"name": "test1"
 		},
+		"groupResource": "playlists.grafana.app/playlists",
 		"name": "test1",
 		"rv": 10,
 		"_rv": "10",

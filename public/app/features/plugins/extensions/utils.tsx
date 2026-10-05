@@ -16,7 +16,7 @@ import {
   type PluginMeta,
   urlUtil,
 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { FlagKeys, getAppPluginMetas, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
@@ -40,6 +40,7 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { type ExtensionsLog, log as baseLog } from './logs/log';
 import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
@@ -171,45 +172,6 @@ const getModalWrapper = ({
 
   return ModalWrapper;
 };
-
-// Deep-clones and deep-freezes an object.
-// (Returns with a new object, does not modify the original object)
-//
-// @param `object` The object to freeze
-// @param `frozenProps` A set of objects that have already been frozen (used to prevent infinite recursion)
-export function deepFreeze(value?: object | Record<string | symbol, unknown> | unknown[], frozenProps = new Map()) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
-    return value;
-  }
-
-  // Deep cloning the object to prevent freezing the original object
-  const clonedValue = Array.isArray(value) ? [...value] : { ...value };
-
-  // Prevent infinite recursion by looking for cycles inside an object
-  if (frozenProps.has(value)) {
-    return frozenProps.get(value);
-  }
-  frozenProps.set(value, clonedValue);
-
-  const propNames = Reflect.ownKeys(clonedValue);
-
-  for (const name of propNames) {
-    const prop = Array.isArray(clonedValue) ? clonedValue[Number(name)] : clonedValue[name];
-
-    // If the property is an object:
-    //   1. clone it
-    //   2. freeze it
-    if (prop && (typeof prop === 'object' || typeof prop === 'function')) {
-      if (Array.isArray(clonedValue)) {
-        clonedValue[Number(name)] = deepFreeze(prop, frozenProps);
-      } else {
-        clonedValue[name] = deepFreeze(prop, frozenProps);
-      }
-    }
-  }
-
-  return Object.freeze(clonedValue);
-}
 
 export function generateExtensionId(pluginId: string, extensionPointId: string, title: string): string {
   const str = `${pluginId}${extensionPointId}${title}`;
@@ -616,10 +578,6 @@ export function addedLinkToExtensionLink(
     openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
   };
 }
-
-// Comes from the `app_mode` setting in the Grafana config (defaults to "development")
-// Can be set with the `GF_DEFAULT_APP_MODE` environment variable
-export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.

@@ -102,7 +102,7 @@ type TVirtualizedTraceViewOwnProps = {
   createSpanLink?: SpanLinkFunc;
   scrollElement?: Element;
   focusedSpanId?: string;
-  focusedSpanIdForSearch: string;
+  focusedSpanForSearch?: { spanID: string };
   showSpanFilterMatchesOnly: boolean;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement | null>;
@@ -249,7 +249,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
   }
 
   componentDidUpdate(prevProps: Readonly<VirtualizedTraceViewProps>) {
-    const { headerHeight, focusedSpanId, focusedSpanIdForSearch } = this.props;
+    const { headerHeight, focusedSpanId, focusedSpanForSearch } = this.props;
 
     if (!this.hasScrolledToSpan) {
       this.scrollToSpan(headerHeight, focusedSpanId);
@@ -260,8 +260,8 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       this.scrollToSpan(headerHeight, focusedSpanId);
     }
 
-    if (focusedSpanIdForSearch !== prevProps.focusedSpanIdForSearch) {
-      this.scrollToSpan(headerHeight, focusedSpanIdForSearch);
+    if (focusedSpanForSearch !== prevProps.focusedSpanForSearch) {
+      this.scrollToSpan(headerHeight, focusedSpanForSearch?.spanID);
     }
   }
 
@@ -420,7 +420,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
       removeHoverIndentGuideId,
       createSpanLink,
       focusedSpanId,
-      focusedSpanIdForSearch,
+      focusedSpanForSearch,
       showSpanFilterMatchesOnly,
       theme,
       datasourceType,
@@ -434,7 +434,7 @@ class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewP
     const isCollapsed = childrenHiddenIDs.has(spanID);
     const isDetailExpanded = detailStates.has(spanID);
     const isMatchingFilter = findMatchesIDs ? findMatchesIDs.has(spanID) : false;
-    const isFocused = spanID === focusedSpanId || spanID === focusedSpanIdForSearch;
+    const isFocused = spanID === focusedSpanId || spanID === focusedSpanForSearch?.spanID;
     const showErrorIcon = isErrorSpan(span) || (isCollapsed && spanContainsErredSpan(trace.spans, spanIndex));
 
     // Check for direct child "server" span if the span is a "client" span.

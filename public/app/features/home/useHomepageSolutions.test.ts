@@ -1,31 +1,36 @@
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import { type DataSourceInstanceListItem, store } from '@grafana/data';
 
-import { kubernetesSolution } from './solutions/kubernetesSolution';
+import { detectIrmSignal } from './solutions/irmSignal';
+import { kubernetesDetection, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
-import { metricsSolution } from './solutions/metricsSolution';
+import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
+import { solutionFilterStorageKey } from './solutions/solutionFilter';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution, type SolutionId } from './solutions/types';
 import { useHomepageSolutions } from './useHomepageSolutions';
 
-jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn() }));
+jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn(), kubernetesDetection: jest.fn() }));
 jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
-jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn() }));
+jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
+jest.mock('./solutions/irmSignal', () => ({ detectIrmSignal: jest.fn() }));
 
-const mockFactories: Record<SolutionId, jest.MockedFunction<() => Solution>> = {
-  kubernetes: jest.mocked(kubernetesSolution),
-  traces: jest.mocked(tracesSolution),
-  metrics: jest.mocked(metricsSolution),
-  logs: jest.mocked(logsSolution),
-  synthetics: jest.mocked(syntheticsSolution),
-};
+// `satisfies` keeps every solution present; `jest.mocked` keeps each factory's own signature.
+const mockFactories = jest.mocked({
+  kubernetes: kubernetesSolution,
+  traces: tracesSolution,
+  metrics: metricsSolution,
+  logs: logsSolution,
+  synthetics: syntheticsSolution,
+} satisfies Record<SolutionId, (...args: never[]) => Solution>);
 const mockProbeSpanMetrics = jest.mocked(probeSpanMetrics);
+const mockDetectIrmSignal = jest.mocked(detectIrmSignal);
 
 const datasource: DataSourceInstanceListItem = {
   uid: 'prometheus',
@@ -34,6 +39,9 @@ const datasource: DataSourceInstanceListItem = {
   meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
   isDefault: true,
 };
+// The detections the owner hands to every filtered solution it creates.
+const detectKubernetes = jest.fn(async () => ({ status: 'active' as const, datasource }));
+const detectMetrics = jest.fn(async () => ({ status: 'active' as const, datasource }));
 
 function solution(id: SolutionId, status: 'active' | 'inactive' | 'unknown' = 'inactive'): Solution {
   return {
@@ -55,6 +63,7 @@ function solution(id: SolutionId, status: 'active' | 'inactive' | 'unknown' = 'i
 let fixtures: Record<SolutionId, Solution>;
 
 beforeEach(() => {
+  window.localStorage.clear();
   fixtures = {
     kubernetes: solution('kubernetes', 'active'),
     traces: solution('traces', 'unknown'),
@@ -65,7 +74,12 @@ beforeEach(() => {
   for (const id of Object.keys(mockFactories) as SolutionId[]) {
     mockFactories[id].mockReset().mockImplementation(() => fixtures[id]);
   }
+  detectKubernetes.mockClear();
+  detectMetrics.mockClear();
+  jest.mocked(kubernetesDetection).mockReset().mockReturnValue(detectKubernetes);
+  jest.mocked(metricsDetection).mockReset().mockReturnValue(detectMetrics);
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
+  mockDetectIrmSignal.mockReset().mockResolvedValue('inactive');
 });
 
 describe('useHomepageSolutions', () => {
@@ -89,6 +103,9 @@ describe('useHomepageSolutions', () => {
       }
     }
     expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
+    expect(mockDetectIrmSignal).not.toHaveBeenCalled();
+    expect(detectKubernetes).not.toHaveBeenCalled();
+    expect(detectMetrics).not.toHaveBeenCalled();
   });
 
   it('returns solutions in display order', () => {
@@ -125,29 +142,83 @@ describe('useHomepageSolutions', () => {
       kubernetes: 'active',
       spanMetrics: 'active',
       synthetics: 'inactive',
+      irm: 'inactive',
     });
-    expect(fixtures.metrics.signal).toHaveBeenCalledTimes(1);
+    // The filtered solutions' signals come from the shared detections, not from a solution instance.
+    expect(detectMetrics).toHaveBeenCalledTimes(1);
+    expect(detectKubernetes).toHaveBeenCalledTimes(1);
+    expect(fixtures.metrics.signal).not.toHaveBeenCalled();
+    expect(fixtures.kubernetes.signal).not.toHaveBeenCalled();
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
-    expect(fixtures.kubernetes.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('shares the memoized span-metrics probe between repeated snapshot reads', async () => {
+  it('shares the memoized span-metrics and IRM probes between repeated snapshot reads', async () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
     await Promise.all([result.current.signals(), result.current.signals()]);
 
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('maps a rejecting solution getter to unknown without rejecting the snapshot', async () => {
+  it('maps a rejecting solution signal to unknown without rejecting the snapshot', async () => {
     fixtures.logs.signal = jest.fn(async () => {
       throw new Error('Loki unavailable');
     });
     const { result } = renderHook(() => useHomepageSolutions());
 
-    await expect(result.current.signals()).resolves.toEqual(expect.objectContaining({ logs: 'unknown' }));
+    await expect(result.current.signals()).resolves.toEqual({
+      metrics: 'active',
+      logs: 'unknown',
+      traces: 'unknown',
+      kubernetes: 'active',
+      spanMetrics: 'active',
+      synthetics: 'inactive',
+      irm: 'inactive',
+    });
+  });
+
+  it.each([
+    {
+      solution: 'kubernetes' as const,
+      index: 0,
+      scope: { cluster: 'prod', namespaces: [], nodes: [] },
+      detect: detectKubernetes,
+    },
+    {
+      solution: 'metrics' as const,
+      index: 1,
+      scope: { excludes: [{ label: 'instance', regex: 'cache-.*' }] },
+      detect: detectMetrics,
+    },
+  ])('recreates only the $solution solution when its filter changes', ({ solution: id, index, scope, detect }) => {
+    mockFactories[id].mockImplementation(() => solution(id, 'active'));
+    const { result } = renderHook(() => useHomepageSolutions());
+    const first = result.current;
+
+    act(() => {
+      store.set(
+        solutionFilterStorageKey(id),
+        JSON.stringify({ datasourceUid: 'prometheus', datasourceName: 'Prometheus', ...scope })
+      );
+    });
+
+    expect(mockFactories[id]).toHaveBeenCalledTimes(2);
+    expect(mockFactories[id]).toHaveBeenLastCalledWith(expect.objectContaining(scope), detect);
+    result.current.solutions.forEach((current, i) => {
+      if (i === index) {
+        expect(current).not.toBe(first.solutions[i]);
+      } else {
+        expect(current).toBe(first.solutions[i]);
+      }
+    });
+    expect(result.current.signals).toBe(first.signals);
+    for (const other of Object.keys(mockFactories) as SolutionId[]) {
+      expect(mockFactories[other]).toHaveBeenCalledTimes(other === id ? 2 : 1);
+    }
   });
 });

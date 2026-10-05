@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const threshold = 9999
@@ -599,8 +600,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 			RV:      1,
 			Name:    "dashboard-1",
 			Title:   "Hello dashboard",
+			Folder:  "folder-1",
 			Tags:    []string{"production", "overview"},
 			Created: 1234,
+			References: resource.ResourceReferences{{
+				Group:    "dashboard.grafana.app",
+				Kind:     "LibraryPanel",
+				Name:     "library-panel-1",
+				Relation: "depends-on",
+			}},
+			Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: "42"}, // nolint:staticcheck
 			Key: &resourcepb.ResourceKey{
 				Namespace: key.Namespace,
 				Group:     key.Group,
@@ -632,6 +641,33 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Equal(t, []string{"Hello dashboard"}, fields[resource.SEARCH_FIELD_TITLE].StringValues)
 		require.Equal(t, []string{"production", "overview"}, fields[resource.SEARCH_FIELD_TAGS].StringValues)
 		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
+	})
+
+	t.Run("library panel search", func(t *testing.T) {
+		req := newTestQuery("")
+		req.Options.Fields = []*resourcepb.Requirement{{
+			Key:      builders.DASHBOARD_LIBRARY_PANEL_REFERENCE,
+			Operator: "=",
+			Values:   []string{"library-panel-1"},
+		}}
+		req.Fields = []string{
+			resource.SEARCH_FIELD_FOLDER,
+			resource.SEARCH_FIELD_LEGACY_ID,
+			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+		}
+		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+
+		res, err := index.Search(t.Context(), nil, req, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, res.Error)
+		require.Len(t, res.Rows, 1)
+		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
+
+		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		require.NoError(t, err)
+		require.Equal(t, "folder-1", values[resource.SEARCH_FIELD_FOLDER])
+		require.Equal(t, int64(42), values[resource.SEARCH_FIELD_LEGACY_ID])
+		require.Equal(t, "42", values[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("explicit score with free-text query", func(t *testing.T) {
@@ -724,7 +760,7 @@ func TestSearchResultFormatMetric(t *testing.T) {
 	require.NotNil(t, res.Error)
 	require.Equal(t, 1.0, testutil.ToFloat64(metrics.SearchResultFormats.WithLabelValues("field_values")), "a response without a result format is not counted")
 
-	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "index_server_search_result_format_total"))
+	require.Equal(t, 2, testutil.CollectAndCount(metrics.SearchResultFormats, "grafana_index_server_search_result_format_total"))
 }
 
 func newQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
@@ -1415,9 +1451,8 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: threshold, // use in-memory for tests
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -1600,8 +1635,13 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
 	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
 
-	// Only known selectable fields are indexed.
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil)
+	// A field the index was not built with is refused, rather than answered with an
+	// empty result that reads as "nothing matches".
+	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, res.Error)
+	require.True(t, resource.IsSelectableFieldNotIndexed(res.Error))
+	require.Equal(t, int32(http.StatusBadRequest), res.Error.Code)
 }
 
 func selectableFieldQuery(key *resourcepb.ResourceKey, field, value string) *resourcepb.ResourceSearchRequest {
@@ -1754,11 +1794,10 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		Resource:  "dashboards",
 	}
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold, // use in-memory for tests
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  true,
-		PostRankAuthz:         cfg,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold, // use in-memory for tests
+		PostRankAuthzEnabled: true,
+		PostRankAuthz:        cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -3715,8 +3754,8 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
 		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
 			deleted("middle", "Alpha middle", alice, 2000, 20),
-			deleted("newest", "Alpha newest", bob, 3000, 30),
-			deleted("oldest", "Alpha oldest", alice, 1000, 10),
+			deleted("newest", "Alpha newest", bob, 3000, 100),
+			deleted("oldest", "Alpha oldest", alice, 1000, 3),
 			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
@@ -3752,6 +3791,39 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
 	})
 
+	// Different digit counts would sort as 100, 20, 3 if the returned value were
+	// used directly as a keyword. The index uses a fixed-width internal copy.
+	t.Run("sorting by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
+
+		q.SortBy[0].Desc = true
+		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
+	})
+
+	t.Run("paging by deleted resource version", func(t *testing.T) {
+		q := newTestQuery("")
+		q.IsDeleted = true
+		q.Limit = 1
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		// A List(TRASH) caller only persists the last RV, not the resource name.
+		// Starting after the RV plus the minimum name keeps that RV inclusive.
+		q.SearchAfter = []string{"0000000000000000003", ""}
+
+		for _, name := range []string{"oldest", "middle", "newest"} {
+			res, err := index.Search(context.Background(), nil, q, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, res.Error)
+			require.Len(t, res.Results.Rows, 1)
+			row := res.Results.Rows[0]
+			require.Equal(t, name, row.Key.Name)
+			require.Len(t, row.SortFields, 2, "resource version plus the name tie-breaker")
+			q.SearchAfter = row.SortFields
+		}
+	})
+
 	t.Run("returning the values", func(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
@@ -3775,7 +3847,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		// int64 columns are encoded big-endian, not as JSON (see NewTableBuilder).
 		require.Len(t, rows[0].Cells[1], 8)
 		require.Equal(t, int64(1000), int64(binary.BigEndian.Uint64(rows[0].Cells[1])))
-		require.Equal(t, "10", string(rows[0].Cells[2]), "the resource version of the delete")
+		require.Equal(t, "3", string(rows[0].Cells[2]), "the resource version of the delete")
 	})
 
 	// Resource versions are snowflake ids well past the range a float64 represents
@@ -4202,10 +4274,9 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         threshold,
-		IndexDeletedDocuments: true,
-		PostRankAuthzEnabled:  postRankAuthz,
+		Root:                 t.TempDir(),
+		FileThreshold:        threshold,
+		PostRankAuthzEnabled: postRankAuthz,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -4264,6 +4335,7 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 		resource.SEARCH_FIELD_RV_STRING,
 		resource.SEARCH_FIELD_IS_DELETED,
 		resource.SEARCH_FIELD_IS_PROVISIONED,
+		resource.SEARCH_FIELD_DELETED_RV_SORT,
 	}
 	for _, field := range internal {
 		t.Run(field, func(t *testing.T) {
