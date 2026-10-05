@@ -3059,6 +3059,7 @@
         "results-with-cancellation": "Wyszukiwanie anulowane – liczba znalezionych reguł: {{numberOfRules}}",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Importy są niedostępne, gdy aktywna jest automatyczna synchronizacja menedżera alertów Mimir"
       },
@@ -3083,7 +3084,15 @@
         "use-new-experience": "Użyj nowego interfejsu",
         "view-previous-experience": "Przywróć poprzedni interfejs"
       },
-      "unknown-rule-type": "Nieznany typ reguły"
+      "unknown-rule-type": "Nieznany typ reguły",
+      "checking-data-sources_one": "",
+      "checking-data-sources_few": "",
+      "checking-data-sources_many": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_few": "",
+      "hidden-empty-data-sources_many": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Błędy wczytywania reguł",
@@ -3245,7 +3254,10 @@
       "view-as": "Wyświetl jako"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Wyczyść filtry"
+      "clear-filters": "Wyczyść filtry",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Usuwam",
@@ -5764,16 +5776,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Kontynuuj"
-        },
-        "title": {
-          "proceed-to-external-site": "Przejść do witryny zewnętrznej?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Pulpit {{dashboardName}}",
       "label-no-dashboards-found": "Nie znaleziono pulpitów"
@@ -5899,10 +5901,16 @@
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Zmień tytuł wiersza",
       "switch-layout": "Przełącz układ",
       "switch-layout-row": "Przełącz układ",
       "switch-layout-tab": "Przełącz układ",
+      "tab-repeat-variable": "",
       "tab-title": "Zmień tytuł karty",
       "variable-description": "Zmień opis zmiennej",
       "variable-hide": "Zmień opcję ukrywania zmiennej",
@@ -6248,9 +6256,6 @@
       "only-overrides-button-tooltip": "Pokaż tylko zastąpienia",
       "placeholder-search-options": "Opcje wyszukiwania",
       "visualization-button-tooltip": "Opcje wyszukiwania"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Wróć do zapytań"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6833,7 +6838,6 @@
       "playlist-previous": "Przejdź do poprzedniego pulpitu",
       "playlist-stop": "Zatrzymaj autoodtwarzanie",
       "refresh": "Odśwież pulpit",
-      "save": "Zapisz pulpit",
       "save-as-template": {
         "label": "Zapisz jako szablon"
       },
@@ -6848,8 +6852,6 @@
       "save-dashboard-short": "Zapisz",
       "save-library-panel": "Zapisz panel biblioteki",
       "save-library-panel-short": "Zapisz",
-      "settings": "Ustawienia panelu",
-      "share-button": "Udostępnij",
       "star-add-error": "Nie udało się oznaczyć gwiazdką",
       "star-added": "Oznaczono gwiazdką",
       "star-remove-error": "Nie udało się usunąć z oznaczonych gwiazdką",
@@ -6913,19 +6915,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Dodaj wyrażenie SQL",
       "sql-cta-description": "Wolisz SQL? Zamiast tego dodaj wyrażenie SQL do swoich zapytań."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Po usunięciu wszystkich transformacji nastąpi powrót do głównego ekranu wyboru."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Dodaj inną transformację"
-      },
-      "confirmText-delete-all": "Usuń wszystkie",
-      "delete-all-transformations": "Usuń wszystkie transformacje",
-      "title-delete-all-transformations": "Usunąć wszystkie transformacje?",
-      "tooltip-clear-search": "Wyczyść wyszukiwanie",
-      "tooltip-close-picker": "Zamknij selektor"
     },
     "validation": {
       "invalid-dashboard-id": "Nie można znaleźć prawidłowego identyfikatora Grafana.com",
@@ -9572,6 +9561,8 @@
     "menu": "Otwórz menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Zapisz",
     "title": "Sterowanie funkcjami"
   },
@@ -11652,6 +11643,15 @@
         "open-explore": "Otwórz w widoku „Eksploruj”",
         "set-up": "Skonfiguruj"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU klastra · ostatnie 24 godz.",
         "description": "Sprawdzaj stan klastra, koszty i oszczędności związane z optymalizacją w jednym widoku.",
@@ -11659,19 +11659,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11716,6 +11709,22 @@
         "data-points-per-minute": "{{value}} pkt danych/min",
         "description": "Połącz metryki kompatybilne z Prometheus, aby przeglądać stan infrastruktury i trendy.",
         "disk-worst": "{{host}} na poziomie {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Zbadaj wykorzystanie dysku w widoku „Eksploruj”",
         "series-trend": "Aktywne szeregi · ostatnie 24 godz.",
         "setup-hint": "połącz źródło metryk",
@@ -13403,6 +13412,12 @@
       "query": {
         "add": "Dodaj zapytanie",
         "run": "Uruchom zapytanie"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13470,7 +13485,9 @@
       "copy-markdown": "Kopiuj jako Markdown",
       "download-markdown": "Pobierz jako plik .md",
       "error": "Nie udało się wyeksportować notatnika",
-      "label": "Eksportuj"
+      "label": "Eksportuj",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Dodaj blok",
@@ -13486,7 +13503,9 @@
       "redo-action": "Ponów: {{action}}",
       "remove-query": "Usuń zapytanie",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Wybierz zapytanie",
+      "set-cell-time-range": "",
       "split-block": "Podziel blok",
       "switch-datasource": "Przełącz źródło danych",
       "undo": "Cofnij",
@@ -16102,8 +16121,7 @@
       "deleted-by-removed": "Usunięte konto",
       "deleted-by-unknown-short": "<0></0> Nieznane konto",
       "deleted-by-unknown-tooltip": "Nie udało się wyszukać konta użytkownika, który usunął ten pulpit",
-      "deleted-less-than-1-min": "< 1 min",
-      "deleted-remaining-header": "Pozostały czas",
+      "deleted-header": "",
       "location-header": "Lokalizacja",
       "name-header": "Nazwa",
       "tags-header": "Znaczniki",
@@ -18435,10 +18453,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Sprawdź",
-      "description": "Zmieniliśmy wygląd",
-      "revert": "Powrót",
-      "title": "Nowe style"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

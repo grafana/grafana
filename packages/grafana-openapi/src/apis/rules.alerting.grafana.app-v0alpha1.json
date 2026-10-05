@@ -3936,6 +3936,31 @@
         "type": "string",
         "enum": ["Unknown", "OK", "Paused", "Error", "NoData"]
       },
+      "AlertRuleAlertRuleInstanceTotals": {
+        "description": "Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "integer"
+          },
+          "firing": {
+            "type": "integer"
+          },
+          "healthy": {
+            "type": "integer"
+          },
+          "nodata": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "recovering": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
       "AlertRuleAlertRuleState": {
         "type": "string",
         "enum": ["Inactive", "Healthy", "Firing", "Pending", "Recovering"]
@@ -4266,6 +4291,9 @@
           },
           "stateReason": {
             "$ref": "#/components/schemas/AlertRuleAlertRuleStateReason"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AlertRuleAlertRuleInstanceTotals"
           }
         },
         "additionalProperties": false
@@ -5701,13 +5729,13 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }

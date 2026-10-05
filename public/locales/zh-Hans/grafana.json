@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "搜索已取消 – 找到 {{numberOfRules}} 个规则",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 自动同步处于活跃状态时，导入功能不可用"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "使用新体验",
         "view-previous-experience": "恢复为以前的体验"
       },
-      "unknown-rule-type": "未知规则类型"
+      "unknown-rule-type": "未知规则类型",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "加载规则时出错",
@@ -3167,7 +3170,10 @@
       "view-as": "查看方式"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "清除筛选器"
+      "clear-filters": "清除筛选器",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "删除",
@@ -5629,16 +5635,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "继续"
-        },
-        "title": {
-          "proceed-to-external-site": "继续前往外部网站？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} 数据面板",
       "label-no-dashboards-found": "未找到数据面板"
@@ -5764,10 +5760,16 @@
       "paste-panel": "粘贴面板",
       "remove": "移除{{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "更改行标题",
       "switch-layout": "切换布局",
       "switch-layout-row": "切换布局",
       "switch-layout-tab": "切换布局",
+      "tab-repeat-variable": "",
       "tab-title": "更改选项卡标题",
       "variable-description": "更改变量描述",
       "variable-hide": "更改变量隐藏选项",
@@ -6110,9 +6112,6 @@
       "only-overrides-button-tooltip": "仅显示覆盖",
       "placeholder-search-options": "搜索选项",
       "visualization-button-tooltip": "搜索选项"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "返回查询"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6695,7 +6694,6 @@
       "playlist-previous": "前往上一个仪表板",
       "playlist-stop": "停止播放列表",
       "refresh": "刷新仪表板",
-      "save": "保存仪表板",
       "save-as-template": {
         "label": "另存为模板"
       },
@@ -6710,8 +6708,6 @@
       "save-dashboard-short": "保存",
       "save-library-panel": "保存库面板",
       "save-library-panel-short": "保存",
-      "settings": "仪表板设置",
-      "share-button": "分享",
       "star-add-error": "添加到星标失败",
       "star-added": "已添加到星标",
       "star-remove-error": "从星标中移除失败",
@@ -6772,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "添加 SQL 表达式",
       "sql-cta-description": "如果您更习惯使用 SQL，也可以改为直接在查询中添加 SQL 表达式。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "删除所有转换后，您将返回主选择屏幕。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "添加其他转换"
-      },
-      "confirmText-delete-all": "删除全部",
-      "delete-all-transformations": "删除所有转换",
-      "title-delete-all-transformations": "删除所有转换？",
-      "tooltip-clear-search": "清除搜索",
-      "tooltip-close-picker": "关闭选取器"
     },
     "validation": {
       "invalid-dashboard-id": "找不到有效的 Grafana.com ID",
@@ -9404,6 +9387,8 @@
     "menu": "打开菜单",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "保存",
     "title": "功能控制"
   },
@@ -11448,6 +11433,15 @@
         "open-explore": "在“探索”中打开",
         "set-up": "设置"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "集群 CPU · 过去 24 小时",
         "description": "在一个视图中查看集群运行状况、费用和调整资源规模所节省的费用。",
@@ -11455,19 +11449,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11494,6 +11481,22 @@
         "data-points-per-minute": "{{value}} 个数据点/分钟",
         "description": "连接与 Prometheus 兼容的指标，以探索基础设施的运行状况和趋势。",
         "disk-worst": "{{host}} 为 {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "在“探索”中调查磁盘使用量",
         "series-trend": "活跃序列 · 过去 24 小时",
         "setup-hint": "连接指标源",
@@ -13124,6 +13127,12 @@
       "query": {
         "add": "添加查询",
         "run": "运行查询"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13191,7 +13200,9 @@
       "copy-markdown": "复制为 Markdown",
       "download-markdown": "下载为 .md",
       "error": "导出笔记本失败",
-      "label": "导出"
+      "label": "导出",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "添加块",
@@ -13207,7 +13218,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查询",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "选择查询",
+      "set-cell-time-range": "",
       "split-block": "拆分块",
       "switch-datasource": "切换数据源",
       "undo": "撤销",
@@ -15733,8 +15746,7 @@
       "deleted-by-removed": "已删除帐户",
       "deleted-by-unknown-short": "<0></0> 未知",
       "deleted-by-unknown-tooltip": "查找删除此数据面板的账户失败",
-      "deleted-less-than-1-min": "< 1 分钟",
-      "deleted-remaining-header": "剩余时间",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名称",
       "tags-header": "标签",
@@ -18039,10 +18051,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "查看",
-      "description": "我们进行了重新设计！",
-      "revert": "返回",
-      "title": "新样式"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

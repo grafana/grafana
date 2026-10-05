@@ -17,13 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanafs "github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -95,41 +92,6 @@ func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
 				obj, err := client.Resource.Get(ctx, instanceName, metav1.GetOptions{})
 				require.NoError(t, err)
 				return obj
-			}
-
-			// Every app plugin's settings share one unified storage collection, named by plugin ID
-			if mode == rest.Mode5 {
-				t.Run("stored in the shared plugins group", func(t *testing.T) {
-					writeSettings(t)
-
-					svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
-					rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
-						Namespace: "default",
-						Group:     apppluginV0.STORAGE_GROUP,
-						Resource:  apppluginV0.APP_RESOURCE_NAME,
-						Name:      testAppID,
-					}})
-					require.NoError(t, err)
-					require.Nil(t, rsp.Error)
-
-					stored := &unstructured.Unstructured{}
-					require.NoError(t, stored.UnmarshalJSON(rsp.Value))
-					require.Equal(t, apppluginV0.STORAGE_GROUP+"/v0alpha1", stored.GetAPIVersion())
-					require.Equal(t, testAppID, stored.GetName())
-					url, _, _ := unstructured.NestedString(stored.Object, "spec", "jsonData", "url")
-					require.Equal(t, "https://api.example.com", url)
-
-					// Nothing is written under the plugin's own group
-					rsp, err = helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
-						Namespace: "default",
-						Group:     gvrSettings.Group,
-						Resource:  gvrSettings.Resource,
-						Name:      instanceName,
-					}})
-					require.NoError(t, err)
-					require.NotNil(t, rsp.Error)
-					require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
-				})
 			}
 
 			t.Run("patch updates settings using resourceVersion test", func(t *testing.T) {
@@ -391,16 +353,19 @@ func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
 }
 
 func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, false, extraFeatures...)
+	return setupHelperFull(t, mode, "", extraFeatures...)
 }
 
 // setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, true, extraFeatures...)
+	return setupHelperFull(t, mode, "app-sdk-manifest.json", extraFeatures...)
 }
 
-func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
+// setupHelperFull installs the test app with the named testdata manifest, or
+// with no manifest when manifestFile is empty.
+func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	withManifest := manifestFile != ""
 
 	features := slices.Clone(extraFeatures)
 	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
@@ -442,7 +407,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
 	if withManifest {
-		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json")
+		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
 		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
 	}
 

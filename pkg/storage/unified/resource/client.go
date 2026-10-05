@@ -167,11 +167,11 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 
 	cc := grpchan.InterceptClientConn(channel, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
 
-	// Add retry interceptor for transient conflict errors (same config as remote client).
+	// Retry transient failures, but leave resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.1)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 	cc = grpchan.InterceptClientConn(cc, retryInterceptor, nil)
 
@@ -193,9 +193,26 @@ type RemoteResourceClientConfig struct {
 	// the unifiedStorageClient.requireCallerIdentity feature flag.
 	RequireCallerIdentity func(context.Context) bool
 
+	// OnBehalfOf decides, per request, whether a caller already carried inside the verified
+	// access token is exchanged on behalf of that caller (caller's token as exchange subject,
+	// scoped to the caller's namespace) instead of being flattened into the plain service
+	// exchange. Nil defers to the unifiedStorageClient.onBehalfOf feature flag.
+	OnBehalfOf func(context.Context) bool
+
 	// CarriesCallerIdentity marks a client whose TokenExchanger already puts the caller in
 	// the access token, so a missing ID token is not an identity drop.
+	//
+	// Deprecated: superseded by OnBehalfOf; kept only until enterprise apiextensions migrates.
 	CarriesCallerIdentity bool
+}
+
+// onBehalfOfPolicy resolves the per-request OBO decision, deferring to the feature flag
+// when the config does not override it.
+func (cfg RemoteResourceClientConfig) onBehalfOfPolicy() func(context.Context) bool {
+	if cfg.OnBehalfOf != nil {
+		return cfg.OnBehalfOf
+	}
+	return onBehalfOfFlag
 }
 
 func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
@@ -235,6 +252,10 @@ func NewAuthnGrpcClientInterceptor(tracer trace.Tracer, cfg RemoteResourceClient
 		tc = client
 	}
 
+	// Wrapped unconditionally: the wrapper passes through unless the per-request policy
+	// says otherwise, so flag-off behaviour is identical to an unwrapped exchanger.
+	tc = &onBehalfOfExchanger{delegate: tc, enabled: cfg.onBehalfOfPolicy()}
+
 	return authnlib.NewGrpcClientInterceptor(
 		tc,
 		authnlib.WithClientInterceptorTracer(tracer),
@@ -253,6 +274,7 @@ const (
 	identityModeOnBehalfOf      = "obo"              // user, carried inside the exchanged access token
 	identityModeFallbackService = "fallback_service" // user identity dropped; storage authorizes the service instead
 	identityModeDenied          = "denied"           // user identity dropped and the fallback is switched off
+	identityModeCancelled       = "cancelled"        // user identity dropped but the request is already done; nothing is sent
 )
 
 // Package level so the store and index clients sharing an interceptor do not register twice.
@@ -261,10 +283,12 @@ var clientIdentityTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 	Help: "Outgoing unified storage calls by how the caller's identity was carried.",
 }, []string{"mode"})
 
-// IDTokenExtractor keeps the service-identity fallback unconditionally. Used by the in-process
-// client, whose token never leaves the process and whose on-prem users have no ID token.
+// IDTokenExtractor keeps the service-identity fallback unconditionally and never exchanges
+// on behalf of the caller. Used by the in-process client, whose token never leaves the
+// process and whose on-prem users have no ID token.
 var IDTokenExtractor = newIDTokenExtractor(RemoteResourceClientConfig{
 	RequireCallerIdentity: func(context.Context) bool { return false },
+	OnBehalfOf:            func(context.Context) bool { return false },
 })
 
 // requireCallerIdentityFlag reads the deny policy from OpenFeature per request: the provider is
@@ -280,6 +304,7 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 	if requireCallerIdentity == nil {
 		requireCallerIdentity = requireCallerIdentityFlag
 	}
+	onBehalfOf := cfg.onBehalfOfPolicy()
 
 	return func(ctx context.Context) (string, error) {
 		if identity.IsServiceIdentity(ctx) {
@@ -296,6 +321,11 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 		// If the identity is the service identity, we don't need to extract the ID token
 		case info.GetIdentityType() == types.TypeAccessPolicy:
 			clientIdentityTotal.WithLabelValues(identityModeService).Inc()
+			return "", nil
+		// The exchanger applies the same predicate and carries the caller inside the
+		// exchanged token, so nothing is forwarded here: pure OBO, no ID token.
+		case onBehalfOfSubjectToken(info) != "" && onBehalfOf(ctx):
+			clientIdentityTotal.WithLabelValues(identityModeOnBehalfOf).Inc()
 			return "", nil
 		case len(info.GetIDToken()) != 0:
 			clientIdentityTotal.WithLabelValues(identityModeIDToken).Inc()
@@ -314,6 +344,13 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 			"callerService", extraClaim(info, authnlib.ServiceIdentityKey),
 			"originService", extraClaim(info, authnlib.InnermostServiceIdentityKey),
 		)
+
+		// The call cannot succeed on a done context, so it is neither a fallback nor a denial.
+		if err := ctx.Err(); err != nil {
+			clientIdentityTotal.WithLabelValues(identityModeCancelled).Inc()
+			logger.Debug("request cancelled, not calling resource store as the service")
+			return "", status.FromContextError(err).Err()
+		}
 
 		if requireCallerIdentity(ctx) {
 			clientIdentityTotal.WithLabelValues(identityModeDenied).Inc()

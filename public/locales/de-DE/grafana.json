@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Suche abgebrochen – {{numberOfRules}} Regeln gefunden",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Solange die automatische Synchronisierung von Mimir Alertmanager aktiv ist, sind Importe nicht verfügbar"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Neue Benutzeroberfläche verwenden",
         "view-previous-experience": "Zurück zur vorherigen Oberfläche"
       },
-      "unknown-rule-type": "Unbekannter Regeltyp"
+      "unknown-rule-type": "Unbekannter Regeltyp",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Fehler beim Laden der Regeln",
@@ -3193,7 +3198,10 @@
       "view-as": "Anzeigen als"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Filter zurücksetzen"
+      "clear-filters": "Filter zurücksetzen",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Wird gelöscht",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Fortfahren"
-        },
-        "title": {
-          "proceed-to-external-site": "Weiter zu externer Seite?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "{{dashboardName}} Dashboard",
       "label-no-dashboards-found": "Keine Dashboards gefunden"
@@ -5809,10 +5807,16 @@
       "paste-panel": "Panel einfügen",
       "remove": "{{typeName}} entfernen",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Zeilentitel ändern",
       "switch-layout": "Layout wechseln",
       "switch-layout-row": "Layout wechseln",
       "switch-layout-tab": "Layout wechseln",
+      "tab-repeat-variable": "",
       "tab-title": "Tab-Titel ändern",
       "variable-description": "Variablenbeschreibung ändern",
       "variable-hide": "Option zum Ausblenden von Variablen ändern",
@@ -6156,9 +6160,6 @@
       "only-overrides-button-tooltip": "Nur Überschreibungen anzeigen",
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Zurück zu den Abfragen"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6741,7 +6742,6 @@
       "playlist-previous": "Zum vorherigen Dashboard",
       "playlist-stop": "Wiedergabeliste stoppen",
       "refresh": "Dashboard aktualisieren",
-      "save": "Dashboard speichern",
       "save-as-template": {
         "label": "Als Vorlage speichern"
       },
@@ -6756,8 +6756,6 @@
       "save-dashboard-short": "Speichern",
       "save-library-panel": "Bibliotheks-Panel speichern",
       "save-library-panel-short": "Speichern",
-      "settings": "Dashboard-Einstellungen",
-      "share-button": "Teilen",
       "star-add-error": "Hinzufügen zu Favoriten fehlgeschlagen",
       "star-added": "Zu Favoriten hinzugefügt",
       "star-remove-error": "Entfernen von Favoriten fehlgeschlagen",
@@ -6819,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-Ausdruck hinzufügen",
       "sql-cta-description": "Bevorzugen Sie SQL? Fügen Sie Ihren Abfragen stattdessen einen SQL-Ausdruck hinzu."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Wenn Sie alle Transformationen löschen, kehren Sie zum Hauptauswahlbildschirm zurück."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Weitere Transformation hinzufügen"
-      },
-      "confirmText-delete-all": "Alles löschen",
-      "delete-all-transformations": "Alle Transformationen löschen",
-      "title-delete-all-transformations": "Alle Transformationen löschen?",
-      "tooltip-clear-search": "Suche löschen",
-      "tooltip-close-picker": "Auswahl schließen"
     },
     "validation": {
       "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",
@@ -9460,6 +9445,8 @@
     "menu": "Menü öffnen",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Speichern",
     "title": "Funktionssteuerung"
   },
@@ -11516,6 +11503,15 @@
         "open-explore": "In Explore öffnen",
         "set-up": "Einrichten"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "Cluster-CPU · letzte 24 Stunden",
         "description": "Sehen Sie den Cluster-Zustand, die Kosten und die Einsparungen durch die richtige Dimensionierung in einer Ansicht.",
@@ -11523,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11568,6 +11557,22 @@
         "data-points-per-minute": "{{value}} Datenpunkte/Min.",
         "description": "Verbinden Sie mit Prometheus kompatible Metriken, um den Zustand und die Trends der Infrastruktur zu untersuchen.",
         "disk-worst": "{{host}} bei {{percent}} %",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Festplattennutzung in Explore untersuchen",
         "series-trend": "Aktive Reihen · letzte 24 Stunden",
         "setup-hint": "eine Metrikquelle verbinden",
@@ -13217,6 +13222,12 @@
       "query": {
         "add": "Abfrage hinzufügen",
         "run": "Abfrage ausführen"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13284,7 +13295,9 @@
       "copy-markdown": "Als Markdown kopieren",
       "download-markdown": "Als .md herunterladen",
       "error": "Notizbuch konnte nicht exportiert werden",
-      "label": "Exportieren"
+      "label": "Exportieren",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Block hinzufügen",
@@ -13300,7 +13313,9 @@
       "redo-action": "Wiederherstellen: {{action}}",
       "remove-query": "Abfrage entfernen",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Abfrage auswählen",
+      "set-cell-time-range": "",
       "split-block": "Block aufteilen",
       "switch-datasource": "Datenquelle wechseln",
       "undo": "Rückgängig machen",
@@ -15856,8 +15871,7 @@
       "deleted-by-removed": "Gelöschter Account",
       "deleted-by-unknown-short": "<0></0> Unbekannt",
       "deleted-by-unknown-tooltip": "Der Account, der dieses Dashboard gelöscht hat, konnte nicht gesucht werden",
-      "deleted-less-than-1-min": "< 1 Min.",
-      "deleted-remaining-header": "Verbleibende Zeit",
+      "deleted-header": "",
       "location-header": "Standort",
       "name-header": "Name",
       "tags-header": "Tags",
@@ -18171,10 +18185,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Mehr anzeigen",
-      "description": "Wir haben eine Neugestaltung vorgenommen!",
-      "revert": "Ich möchte zurück",
-      "title": "Neue Stile"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {

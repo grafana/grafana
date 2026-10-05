@@ -505,12 +505,6 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Format:      "double",
 						},
 					},
-					"explain": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Explain the score (if possible)",
-							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
-						},
-					},
 				},
 				Required: []string{"resource", "name", "title"},
 			},

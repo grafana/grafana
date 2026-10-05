@@ -29,8 +29,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   initial reconcile. A closed `Notify` channel must not busy-loop (set it to nil).
 - **`Ready` fails only when nothing is served.** A partial reconcile error is logged, but must not
   drain the router from its load balancer.
-- **The circuit breaker is passive only.** `gobreaker`, one breaker per group, driven by the
-  outcomes of real proxied requests; no active health probes. Context cancellation is excluded from
+- **The circuit breaker is passive only.** `gobreaker`'s two-step breaker, one per group, driven by
+  the outcomes of real proxied requests; no active health probes. An outcome is reported as soon as
+  the response status is written, never when the body ends, so a watch can't hold a half-open
+  breaker's trial slot. Only requests whose own context ended (`errCallerGone`) are excluded from
   breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
@@ -53,13 +55,28 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
   Without a requester (standalone), they pass through. `X-Forwarded-*` is always set.
+  - Identity-assertion headers (`X-Remote-User`, `X-Remote-Group`, `X-Remote-Extra-*`,
+    `X-Webauth-*`) are always dropped: the router never asserts identity that way.
+  - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
+    requester's tokens decide who the request acts as. Without one, the backend authorizes them
+    against the caller's own credentials.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
   reconcile or poll `ctx`). The SDK's default logger is Grafana's, so nothing is lost when the
   context carries no logger.
-- **Scope is CRUD, List and Watch over HTTP/1.1.** Plugin operators watch their resources through
-  in-process plugin backends. No upgrades. Any per-request timeout must exempt watches.
+- **Scope is CRUD, List and Watch over HTTP/1.1, and a watch must behave as it does in Kubernetes.**
+  Plugin operators watch their resources through in-process plugin backends. Every change to the
+  proxy path must hold for a watch that streams for 30+ minutes:
+  - Nothing may bound the whole request; only the response-header timeout applies. The backend ends
+    a watch (for example at `timeoutSeconds`), or the client does.
+  - Every proxy flushes after each write (`streamingFlushInterval`).
+  - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
+    when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
+  - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
+    count in `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
+  - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
+    deprecated `/watch/` path form is not supported either.
 
 ## Package layout
 
@@ -112,7 +129,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 | `/apis/{group}[/...]` | Proxied to the owning backend, through its breaker. |
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
-| `/openapi/v3/apis/{group}/{version}` | Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`. |
+| `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
@@ -129,8 +146,27 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
-- **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
-  create new series.
+- **Size limits:** nothing the router buffers or decodes can grow without bound.
+  - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
+    one streams to the client and isn't cached.
+  - It buffers discovery sub-requests up to `maxDiscoveryDocBytes` (16 MiB). Past that, the rest is
+    discarded and the read fails as incomplete. Both limits are variables, so tests can lower them.
+  - A write past the limit never fails: `ReverseProxy` panics when a write fails, and discovery
+    fetches run on their own goroutines.
+  - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
+    `plugins_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
+    (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
+- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
+  dashboard queries; keep it in sync with `metrics.go`.
+  - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
+    `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
+    serving never update gauges.
+  - Labels stay bounded. `group` is only a served group; any other is `unknown` (`KnownGroup`).
+    `verb` is limited to `metricVerbs`, and any other value is `other`. `route`, `reason`, `state`
+    and `result` have fixed sets of values. A new label value must come from a fixed set too.
+  - In middleware mode, only requests the router owns (`owns`) are instrumented.
+  - New backends must name their source (`Backend.Source`), and new sources should report through
+    `loaderStatus`, or their loads don't appear in the metrics.
 
 ## Lifecycle
 

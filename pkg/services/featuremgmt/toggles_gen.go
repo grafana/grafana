@@ -519,6 +519,10 @@ const (
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
+	// FlagDatasourcesTeamHttpHeadersWriteGuard
+	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
+	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
+
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
@@ -942,18 +946,6 @@ const (
 	// Frontend Service doesn't rely on the /bootdata API, instead loads configuration as needed
 	FlagFrontendServiceReducedBootDataAPI = "frontendService.reducedBootDataAPI"
 
-	// FlagDashboardSearchFieldValueResults
-	// Uses field-value results for dashboard search requests
-	FlagDashboardSearchFieldValueResults = "dashboard.searchFieldValueResults"
-
-	// FlagDashboardApiSearchFieldValueResults
-	// Uses field-value results for requests from the /api/search endpoint
-	FlagDashboardApiSearchFieldValueResults = "dashboard.apiSearchFieldValueResults"
-
-	// FlagSearchApiFieldValueResults
-	// Uses field-value results for generic resource search API requests
-	FlagSearchApiFieldValueResults = "search.apiFieldValueResults"
-
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
@@ -1046,6 +1038,10 @@ const (
 	// Data source query gateway guardrails
 	FlagDatasourcesGatewayGuardrails = "datasources.gatewayGuardrails"
 
+	// FlagDatasourcesQueryGatewaySlimAudit
+	// Only attach query payloads to query gateway audit events when a guardrail fires
+	FlagDatasourcesQueryGatewaySlimAudit = "datasources.queryGatewaySlimAudit"
+
 	// FlagAlertingFolderHasRulesLabel
 	// Maintain the alerting.grafana.app/has-rules label on folders that contain Grafana-managed alert or recording rules, so folders holding rules can be queried by label selector
 	FlagAlertingFolderHasRulesLabel = "alerting.folderHasRulesLabel"
@@ -1053,4 +1049,8 @@ const (
 	// FlagUnifiedStorageClientRequireCallerIdentity
 	// Fail unified storage calls that cannot carry the calling user's identity, instead of silently downgrading them to the service identity
 	FlagUnifiedStorageClientRequireCallerIdentity = "unifiedStorageClient.requireCallerIdentity"
+
+	// FlagUnifiedStorageClientOnBehalfOf
+	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
+	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
 )

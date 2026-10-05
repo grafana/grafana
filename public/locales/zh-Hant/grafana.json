@@ -2990,6 +2990,7 @@
         "results-with-cancellation": "搜尋已取消 – 找到 {{numberOfRules}} 個規則",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Mimir Alertmanager 自動同步處於啟用狀態時，無法匯入"
       },
@@ -3014,7 +3015,9 @@
         "use-new-experience": "使用新體驗",
         "view-previous-experience": "還原為之前的體驗"
       },
-      "unknown-rule-type": "未知的規則類型"
+      "unknown-rule-type": "未知的規則類型",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "載入規則時發生錯誤",
@@ -3167,7 +3170,10 @@
       "view-as": "檢視形式"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "清除篩選條件"
+      "clear-filters": "清除篩選條件",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "正在刪除",
@@ -5629,16 +5635,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "繼續"
-        },
-        "title": {
-          "proceed-to-external-site": "是否繼續前往外部網站？"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "「{{dashboardName}}」儀表板",
       "label-no-dashboards-found": "未找到儀表板"
@@ -5764,10 +5760,16 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "變更列標題",
       "switch-layout": "切換版面配置",
       "switch-layout-row": "切換版面配置",
       "switch-layout-tab": "切換版面配置",
+      "tab-repeat-variable": "",
       "tab-title": "變更分頁標題",
       "variable-description": "變更變數描述",
       "variable-hide": "變更變數隱藏選項",
@@ -6110,9 +6112,6 @@
       "only-overrides-button-tooltip": "僅顯示覆寫",
       "placeholder-search-options": "搜尋選項",
       "visualization-button-tooltip": "搜尋選項"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "返回查詢"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6695,7 +6694,6 @@
       "playlist-previous": "前往上一個儀表板",
       "playlist-stop": "停止播放清單",
       "refresh": "重新整理儀表板",
-      "save": "儲存儀表板",
       "save-as-template": {
         "label": "儲存為範本"
       },
@@ -6710,8 +6708,6 @@
       "save-dashboard-short": "儲存",
       "save-library-panel": "儲存資料庫面板",
       "save-library-panel-short": "儲存",
-      "settings": "儀表板設定",
-      "share-button": "分享",
       "star-add-error": "無法新增至星號標記",
       "star-added": "已新增至星號標記",
       "star-remove-error": "無法從星號標記中移除",
@@ -6772,19 +6768,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "新增 SQL 運算式",
       "sql-cta-description": "偏好 SQL 嗎？請改為將 SQL 運算式新增至您的查詢。"
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "刪除所有轉換後，您將返回主選擇畫面。"
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "新增另一個轉換"
-      },
-      "confirmText-delete-all": "全部刪除",
-      "delete-all-transformations": "刪除所有轉換",
-      "title-delete-all-transformations": "是否要刪除所有轉換？",
-      "tooltip-clear-search": "清除搜尋",
-      "tooltip-close-picker": "關閉選擇器"
     },
     "validation": {
       "invalid-dashboard-id": "沒有找到有效的 Grafana.com ID",
@@ -9404,6 +9387,8 @@
     "menu": "開啟選單",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "儲存",
     "title": "功能控制項"
   },
@@ -11448,6 +11433,15 @@
         "open-explore": "在「探索」中開啟",
         "set-up": "設定"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "叢集 CPU · 最近 24 小時",
         "description": "在單一檢視中查看叢集健康狀態、成本和適當規模調整所節省的費用。",
@@ -11455,19 +11449,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11494,6 +11481,22 @@
         "data-points-per-minute": "{{value}} 資料點／分鐘",
         "description": "連接與 Prometheus 相容的指標，以探索基礎架構的健康狀態和趨勢。",
         "disk-worst": "{{host}} 處於 {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "在「探索」中調查磁碟使用情況",
         "series-trend": "使用中的系列 · 最近 24 小時",
         "setup-hint": "連接指標來源",
@@ -13124,6 +13127,12 @@
       "query": {
         "add": "新增查詢",
         "run": "執行查詢"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13191,7 +13200,9 @@
       "copy-markdown": "複製為 Markdown",
       "download-markdown": "下載為 .md",
       "error": "無法匯出筆記本",
-      "label": "匯出"
+      "label": "匯出",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "新增區塊",
@@ -13207,7 +13218,9 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查詢",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "選取查詢項目",
+      "set-cell-time-range": "",
       "split-block": "分割區塊",
       "switch-datasource": "切換資料來源",
       "undo": "還原",
@@ -15733,8 +15746,7 @@
       "deleted-by-removed": "已刪除的帳戶",
       "deleted-by-unknown-short": "<0></0> 不明",
       "deleted-by-unknown-tooltip": "無法查詢刪除此儀表板的帳戶",
-      "deleted-less-than-1-min": "< 1 分鐘",
-      "deleted-remaining-header": "剩餘時間",
+      "deleted-header": "",
       "location-header": "位置",
       "name-header": "名稱",
       "tags-header": "標籤",
@@ -18039,10 +18051,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "查看",
-      "description": "我們重新設計了介面！",
-      "revert": "帶我返回",
-      "title": "新樣式"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
