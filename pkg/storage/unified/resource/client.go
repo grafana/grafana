@@ -274,6 +274,7 @@ const (
 	identityModeOnBehalfOf      = "obo"              // user, carried inside the exchanged access token
 	identityModeFallbackService = "fallback_service" // user identity dropped; storage authorizes the service instead
 	identityModeDenied          = "denied"           // user identity dropped and the fallback is switched off
+	identityModeCancelled       = "cancelled"        // user identity dropped but the request is already done; nothing is sent
 )
 
 // Package level so the store and index clients sharing an interceptor do not register twice.
@@ -343,6 +344,13 @@ func newIDTokenExtractor(cfg RemoteResourceClientConfig) func(context.Context) (
 			"callerService", extraClaim(info, authnlib.ServiceIdentityKey),
 			"originService", extraClaim(info, authnlib.InnermostServiceIdentityKey),
 		)
+
+		// The call cannot succeed on a done context, so it is neither a fallback nor a denial.
+		if err := ctx.Err(); err != nil {
+			clientIdentityTotal.WithLabelValues(identityModeCancelled).Inc()
+			logger.Debug("request cancelled, not calling resource store as the service")
+			return "", status.FromContextError(err).Err()
+		}
 
 		if requireCallerIdentity(ctx) {
 			clientIdentityTotal.WithLabelValues(identityModeDenied).Inc()
