@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Sökalternativ",
       "visualization-button-tooltip": "Sökalternativ"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Gå tillbaka till frågor"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Lägg till SQL-uttryck",
       "sql-cta-description": "Föredrar du SQL? Lägg till ett SQL-uttryck i dina frågor istället."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Om du tar bort alla transformationer kommer du att återgå till huvudvalsskärmen."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Lägg till ytterligare en transformering"
-      },
-      "confirmText-delete-all": "Radera alla",
-      "delete-all-transformations": "Radera alla transformeringar",
-      "title-delete-all-transformations": "Radera alla transformeringar?",
-      "tooltip-clear-search": "Rensa sökningen",
-      "tooltip-close-picker": "Stäng väljaren"
     },
     "validation": {
       "invalid-dashboard-id": "Kunde inte hitta ett giltigt Grafana.com-ID\n",
