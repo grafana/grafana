@@ -72,7 +72,7 @@ The options in this section control the branding and theming of the report attac
 {{< admonition type="note" >}}
 The PDF header options are available in [Grafana Enterprise](ref:grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
-In self-managed Grafana, enable the `reportingHeaderSettings` [feature toggle](ref:feature-toggles) in your Grafana configuration file.
+In self-managed Grafana Enterprise, enable the `reportingHeaderSettings` [feature toggle](ref:feature-toggles) in your Grafana configuration file.
 {{< /admonition >}}
 
 The PDF header repeats at the top of every page of the report PDF.
