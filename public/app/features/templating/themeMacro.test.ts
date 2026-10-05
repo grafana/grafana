@@ -1,9 +1,6 @@
 import { initTemplateSrv } from 'test/helpers/initTemplateSrv';
 
 import { config } from '@grafana/runtime';
-import { sceneGraph, SceneFlexLayout, sceneUtils } from '@grafana/scenes';
-
-import { ThemeMacro } from './themeMacro';
 
 describe('__theme', () => {
   const templateSrv = initTemplateSrv('theme', []);
@@ -45,32 +42,5 @@ describe('__theme', () => {
     };
 
     expect(templateSrv.replace('${__theme.colors.text.primary}')).toBe('red');
-  });
-
-  describe('in scenes', () => {
-    let unregister: () => void;
-    const scene = new SceneFlexLayout({ children: [] });
-
-    beforeAll(() => {
-      unregister = sceneUtils.registerVariableMacro('__theme', ThemeMacro);
-    });
-
-    afterAll(() => {
-      unregister();
-    });
-
-    it('resolves a theme token path to its value', () => {
-      expect(sceneGraph.interpolate(scene, 'color: ${__theme.colors.text.primary}')).toBe(
-        `color: ${config.theme2.colors.text.primary}`
-      );
-    });
-
-    it('leaves a function token unresolved', () => {
-      expect(sceneGraph.interpolate(scene, '${__theme.spacing}')).toBe('${__theme.spacing}');
-    });
-
-    it('resolves the token for the text format', () => {
-      expect(sceneGraph.interpolate(scene, '${__theme.typography.fontSize:text}')).toBe('14');
-    });
   });
 });

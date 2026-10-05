@@ -126,7 +126,6 @@ import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { cleanupOldExpandedFolders } from './features/search/utils';
-import { ThemeMacro } from './features/templating/themeMacro';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
 import { createConstantVariableAdapter } from './features/variables/constant/adapter';
@@ -394,8 +393,6 @@ export class GrafanaApp {
         sceneUtils.registerVariableMacro('__from', DashboardLevelTimeMacro, true);
         sceneUtils.registerVariableMacro('__to', DashboardLevelTimeMacro, true);
       }
-
-      sceneUtils.registerVariableMacro('__theme', ThemeMacro);
 
       const root = createRoot(document.getElementById('reactRoot')!);
       root.render(createElement(AppWrapper, { context: this.context }));

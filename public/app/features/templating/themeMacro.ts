@@ -1,6 +1,6 @@
 import { type ScopedVars } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { type FormatVariable, type SceneObject, type VariableCustomFormatterFn } from '@grafana/scenes';
+import { type VariableCustomFormatterFn } from '@grafana/scenes';
 
 import { getFieldAccessor } from './fieldAccessorCache';
 import { formatVariableValue } from './formatVariableValue';
@@ -14,36 +14,10 @@ export function themeMacro(
   scopedVars?: ScopedVars,
   format?: string | VariableCustomFormatterFn
 ) {
-  return formatVariableValue(getThemeValue(fieldPath) ?? match, format);
-}
+  const value = fieldPath ? getFieldAccessor(fieldPath)(config.theme2) : undefined;
 
-export class ThemeMacro implements FormatVariable {
-  public state: { name: string; type: string };
+  // Only leaf values: an object would render as [object Object] and a function as its source code.
+  const isLeaf = typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 
-  public constructor(
-    name: string,
-    _sceneObject: SceneObject,
-    private _match: string
-  ) {
-    this.state = { name, type: 'theme_macro' };
-  }
-
-  public getValue(fieldPath?: string): string {
-    return getThemeValue(fieldPath) ?? this._match;
-  }
-}
-
-// Only leaf values: an object would render as [object Object] and a function as its source code.
-function getThemeValue(fieldPath?: string): string | undefined {
-  if (!fieldPath) {
-    return undefined;
-  }
-
-  const value = getFieldAccessor(fieldPath)(config.theme2);
-
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  return undefined;
+  return formatVariableValue(isLeaf ? String(value) : match, format);
 }
