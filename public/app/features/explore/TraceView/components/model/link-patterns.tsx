@@ -20,14 +20,14 @@ const parameterRegExp = /#\{([^{}]*)\}/g;
 
 type ProcessedTemplate = {
   parameters: string[];
-  template: (template: { [key: string]: any }) => string;
+  template: (template: Record<string, unknown>) => string;
 };
 
 export type ProcessedLinkPattern = {
-  object: any;
+  object: unknown;
   type: (link: string) => boolean;
   key: (link: string) => boolean;
-  value: (value: any) => boolean;
+  value: (value: unknown) => boolean;
   url: ProcessedTemplate;
   text: ProcessedTemplate;
   parameters: string[];
@@ -44,7 +44,7 @@ function getParamNames(str: string) {
   return Array.from(names);
 }
 
-function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: Record<string, any>) {
+function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: Record<string, unknown>) {
   return str.replace(parameterRegExp, (_, name) => {
     const value = map[name];
     return value == null ? '' : encodeFn(value);
@@ -115,7 +115,7 @@ export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
   }
 }
 
-function callTemplate(template: ProcessedTemplate, data: any) {
+function callTemplate(template: ProcessedTemplate, data: Record<string, unknown>) {
   return template.template(data);
 }
 
@@ -128,7 +128,7 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
   linkPatterns
     ?.filter((pattern) => pattern?.type('traces'))
     .forEach((pattern) => {
-      const parameterValues: Record<string, any> = {};
+      const parameterValues: Record<string, Trace[keyof Trace]> = {};
       const allParameters = pattern?.parameters.every((parameter) => {
         const key = parameter as keyof Trace;
         if (validKeys.includes(key)) {

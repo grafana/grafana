@@ -254,7 +254,7 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 		Kind:             c.QueryInt("kind"),
 		TypeFilter:       c.Query("typeFilter"),
 		ExcludeUID:       c.Query("excludeUid"),
-		FolderFilter:     c.Query("folderFilter"),
+		FolderFilter:     c.Query("folderFilter"), //nolint:staticcheck // Preserve legacy field compatibility.
 		FolderFilterUIDs: c.Query("folderFilterUIDs"),
 	}
 
@@ -406,7 +406,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 		connectionID := int64(hash.Sum64() & ((1 << 52) - 1))
 
 		connections = append(connections, model.LibraryElementConnectionDTO{
-			ID:            connectionID,
+			ID:            connectionID, //nolint:staticcheck // Preserve legacy field compatibility.
 			Kind:          int64(model.PanelElement),
 			ElementID:     element.ID,
 			ConnectionID:  dashboard.ID, // nolint:staticcheck

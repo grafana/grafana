@@ -50,6 +50,8 @@ export const FlagKeys = {
   DashboardRecentlyDeletedViaTrash: "dashboard.recentlyDeletedViaTrash",
   /** Exposes the semantic (vector) search endpoint for dashboards under the dashboard API */
   DashboardVectorSearch: "dashboard.vectorSearch",
+  /** Enables new dashboard layouts */
+  DashboardNewLayouts: "dashboardNewLayouts",
   /** Enables the Assistant button in the dashboard templates card */
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
@@ -70,6 +72,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables tabular numerals for visualization legend values */
+  DatavizTabularNums: "dataviz.tabularNums",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -453,6 +457,17 @@ export const useFlagDashboardVectorSearch = (options?: ReactFlagEvaluationOption
 };
 
 /**
+ * Enables new dashboard layouts
+ *
+ * **Details:**
+ * - flag key: `dashboardNewLayouts`
+ * - default value: `true`
+ */
+export const useFlagDashboardNewLayouts = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboardNewLayouts", true, options).value;
+};
+
+/**
  * Enables the Assistant button in the dashboard templates card
  *
  * **Details:**
@@ -560,6 +575,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables tabular numerals for visualization legend values
+ *
+ * **Details:**
+ * - flag key: `dataviz.tabularNums`
+ * - default value: `false`
+ */
+export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.tabularNums", false, options).value;
 };
 
 /**

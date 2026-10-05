@@ -8,6 +8,7 @@ import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafa
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
+import { createRelativeUrl } from '../../../utils/url';
 import { useListNotificationPolicyRoutes } from '../../notification-policies/useNotificationPolicyRoute';
 
 /**
@@ -157,7 +158,7 @@ export function PolicyTreeSelector() {
                 </Button>
               )}
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >
@@ -191,7 +192,7 @@ export function PolicyTreeSelector() {
                 <Trans i18nKey="alerting.policy-tree-selector.change">Change</Trans>
               </Button>
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >

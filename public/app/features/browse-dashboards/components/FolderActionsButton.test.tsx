@@ -2,6 +2,7 @@ import { render, screen, userEvent } from 'test/test-utils';
 
 import { AppEvents } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -30,6 +31,13 @@ const deleteMenuItemLabel = /Delete this folder/i;
 
 describe('browse-dashboards FolderActionsButton', () => {
   const mockFolder = mockFolderDTO();
+  const repo = (target: RepositoryView['target'], name: string): RepositoryView => ({
+    name,
+    target,
+    title: name,
+    type: 'github',
+    workflows: ['write'],
+  });
   const mockPermissions = {
     canCreateDashboards: true,
     canEditDashboards: true,
@@ -230,10 +238,33 @@ describe('browse-dashboards FolderActionsButton', () => {
         ...mockPermissions,
       };
     });
-    // passing undefined to parentUid to make it root repo folder
-    render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
+    // a `folder` target repository's root folder shares the repository's name
+    render(
+      <FolderActionsButton
+        folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }}
+        repository={repo('folder', mockFolder.uid)}
+      />
+    );
 
     expect(screen.queryByRole('button', { name: 'Folder actions' })).not.toBeInTheDocument();
+  });
+
+  it('renders "Move" and "Delete" for a top-level folder of a folderless repository', async () => {
+    jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
+      return {
+        ...mockPermissions,
+      };
+    });
+    render(
+      <FolderActionsButton
+        folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }}
+        repository={repo('folderless', 'folderless-repo')}
+      />
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
+    expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
 
   it('does render the "Move" option if folder is provisioned and is NOT root repo folder', async () => {
@@ -269,7 +300,12 @@ describe('browse-dashboards FolderActionsButton', () => {
     });
 
     it('renders the "Folder actions" button for provisioned root repo folder when user can view permissions', async () => {
-      render(<FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }} />);
+      render(
+        <FolderActionsButton
+          folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: undefined }}
+          repository={repo('folder', mockFolder.uid)}
+        />
+      );
 
       expect(screen.getByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));

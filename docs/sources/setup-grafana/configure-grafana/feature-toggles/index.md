@@ -58,7 +58,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                    | Yes                |
-| `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                            | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
@@ -109,6 +108,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles

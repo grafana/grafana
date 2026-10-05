@@ -19,6 +19,8 @@ import (
 
 	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel"
+	grpcCodes "google.golang.org/grpc/codes"
+	grpcStatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -356,14 +358,8 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
-	rsp, err := s.store.Create(ctx, req)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-		resErr := resource.AsErrorResult(err)
-		if resErr.Code == http.StatusConflict {
-			err = storage.NewKeyExistsError(key, 0)
-		} else {
-			err = resource.GetError(resErr)
-		}
+	rsp, err := s.createWithRetry(ctx, key, req)
+	if err != nil {
 		return v.finish(ctx, err, s.opts.SecureValues)
 	}
 
@@ -387,6 +383,37 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	}
 
 	return v.finish(ctx, nil, s.opts.SecureValues)
+}
+
+// createWithRetry distinguishes an existing object from a temporarily busy write lease.
+// A create can hit a lease conflict when another write to the same object is still in
+// progress. That write might fail, so the conflict does not prove the object exists.
+// An AlreadyExists reason confirms a duplicate; HTTP 409 or a Conflict reason instead
+// gets a bounded retry using the same backoff as updates and deletes. AsErrorResult
+// handles both response errors and gRPC errors, including bare Aborted as HTTP 409.
+// If contention persists, return Conflict, not KeyExistsError: exhausting retries still
+// does not prove the object exists. Unlike updates, a create has no stale RV to refresh.
+func (s *Storage) createWithRetry(ctx context.Context, key string, req *resourcepb.CreateRequest) (*resourcepb.CreateResponse, error) {
+	bo := backoff.New(ctx, updateRetryConfig)
+	var lastErr error
+	for bo.Ongoing() {
+		rsp, err := s.store.Create(ctx, req)
+		err = resource.ErrorFromResponse(rsp.GetError(), err)
+		if err == nil {
+			return rsp, nil
+		}
+		resErr := resource.AsErrorResult(err)
+		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) {
+			return nil, storage.NewKeyExistsError(key, 0)
+		}
+		if resErr.Code == http.StatusConflict || resErr.Reason == string(metaV1.StatusReasonConflict) {
+			lastErr = apierrors.NewConflict(schema.GroupResource{Group: req.Key.Group, Resource: req.Key.Resource}, req.Key.Name, err)
+			bo.Wait()
+			continue
+		}
+		return nil, resource.StatusError(resErr)
+	}
+	return nil, retriesExhausted(ctx, bo, lastErr)
 }
 
 // Delete removes the specified key and returns the value that existed at that spot.
@@ -457,13 +484,13 @@ func (s *Storage) Delete(
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
 		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
+			return resource.StatusError(resource.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
 		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -508,13 +535,16 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	ctx, cancelWatch := context.WithCancel(ctx)
 	client, err := s.store.Watch(ctx, cmd)
 	if err != nil {
-		// if the context was canceled, just return a new empty watch
+		// if the context was canceled, just return a new empty watch.
+		// gRPC clients report a done context as a status code, not the context error.
 		cancelWatch()
-		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
+		code := grpcStatus.Code(err)
+		if code == grpcCodes.Canceled || code == grpcCodes.DeadlineExceeded ||
+			errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, io.EOF) {
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resource.GetError(resource.AsErrorResult(err))
+		return nil, resource.StatusError(resource.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -557,7 +587,7 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.GetError(resErr)
+		return resource.StatusError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
@@ -588,10 +618,10 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resource.GetError(resource.AsErrorResult(err))
+		return resource.StatusError(resource.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
-		return resource.GetError(rsp.Error)
+		return resource.StatusError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -753,7 +783,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
 			resErr := resource.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resource.GetError(resErr)
+				return resource.StatusError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -821,7 +851,7 @@ func (s *Storage) GuaranteedUpdate(
 		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.GetError(resource.AsErrorResult(err))
+			err = resource.StatusError(resource.AsErrorResult(err))
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we

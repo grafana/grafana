@@ -64,10 +64,11 @@ export const InspectDataTab = memo(function InspectDataTab({
   useTableNG,
 }: Props) {
   /** The string is joinByField transformation. Otherwise it is a dataframe index */
-  const [selectedDataFrame, setSelectedDataFrame] = useState<number | DataTransformerID>(0);
+  const [selectedDataFrame, setSelectedDataFrame] = useState<number | DataTransformerID.joinByField>(0);
   const [dataFrameIndex, setDataFrameIndex] = useState(0);
-  const [transformId, setTransformId] = useState(DataTransformerID.noop);
-  const [transformationOptions] = useState(buildTransformationOptions);
+  const [transformId, setTransformId] = useState<DataTransformerID>(DataTransformerID.noop);
+  const [transformationOptions] =
+    useState<Array<SelectableValue<DataTransformerID.joinByField>>>(buildTransformationOptions);
   const [joined, setJoined] = useState<{ input: DataFrame[]; frames: DataFrame[] }>();
   const [excelCompatibilityMode, setExcelCompatibilityMode] = useState(false);
   const styles = useStyles2(getPanelInspectorStyles2);
@@ -140,7 +141,7 @@ export const InspectDataTab = memo(function InspectDataTab({
     downloadAsJson(data, dataName);
   };
 
-  const onDataFrameChange = (item: SelectableValue<DataTransformerID | number>) => {
+  const onDataFrameChange = (item: SelectableValue<DataTransformerID.joinByField | number>) => {
     setTransformId(
       item.value === DataTransformerID.joinByField ? DataTransformerID.joinByField : DataTransformerID.noop
     );
@@ -308,7 +309,7 @@ function moveFirstNonEmptyFrameToFront(frames: DataFrame[]): DataFrame[] {
 }
 
 function buildTransformationOptions() {
-  const transformations: Array<SelectableValue<DataTransformerID>> = [
+  const transformations: Array<SelectableValue<DataTransformerID.joinByField>> = [
     {
       value: DataTransformerID.joinByField,
       label: t('dashboard.inspect-data.transformation', 'Series joined by time'),

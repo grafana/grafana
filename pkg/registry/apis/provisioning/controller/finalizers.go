@@ -80,7 +80,6 @@ func (f *finalizer) process(ctx context.Context,
 		var err error
 		var count int
 		start := time.Now()
-		outcome := metricutils.SuccessOutcome
 
 		switch finalizer {
 		case repository.RemovePendingJobsFinalizer:
@@ -88,7 +87,6 @@ func (f *finalizer) process(ctx context.Context,
 			count, err = f.jobs.CleanupQueue(ctx, cfg.Namespace, cfg.Name)
 			if err != nil {
 				err = fmt.Errorf("clear job queue: %w", err)
-				outcome = metricutils.ErrorOutcome
 			}
 
 		case repository.CleanFinalizer:
@@ -100,11 +98,9 @@ func (f *finalizer) process(ctx context.Context,
 			repo, buildErr := f.repoFactory.Build(ctx, cfg)
 			if buildErr != nil {
 				err = fmt.Errorf("create repository from configuration: %w", buildErr)
-				outcome = metricutils.ErrorOutcome
 			} else if webhookRepo, ok := repo.(repository.WebhookRepository); ok {
 				if err = webhookOnDelete(ctx, webhookRepo); err != nil {
 					err = fmt.Errorf("execute deletion hooks: %w", err)
-					outcome = metricutils.ErrorOutcome
 				}
 			}
 
@@ -113,7 +109,6 @@ func (f *finalizer) process(ctx context.Context,
 			count, err = f.releaseExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("release resources: %w", err)
-				outcome = metricutils.ErrorOutcome
 			}
 
 		case repository.RemoveOrphanResourcesFinalizer:
@@ -121,7 +116,6 @@ func (f *finalizer) process(ctx context.Context,
 			count, err = f.deleteExistingItems(ctx, cfg)
 			if err != nil {
 				err = fmt.Errorf("remove resources: %w", err)
-				outcome = metricutils.ErrorOutcome
 			}
 
 		default:
@@ -129,7 +123,14 @@ func (f *finalizer) process(ctx context.Context,
 			continue
 		}
 
-		f.metrics.RecordFinalizer(finalizer, outcome, count, time.Since(start).Seconds())
+		outcome := metricutils.SuccessOutcome
+		cause := ""
+		if err != nil {
+			outcome = metricutils.ErrorOutcome
+			cause = classifyTokenErrorCause(err)
+		}
+
+		f.metrics.RecordFinalizer(finalizer, outcome, cause, count, time.Since(start).Seconds())
 
 		if err != nil {
 			return &finalizerError{finalizer: finalizer, err: err}

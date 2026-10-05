@@ -3013,6 +3013,7 @@
         "results-with-cancellation": "Ricerca annullata: {{numberOfRules}} regole trovate",
         "search-in-plugin": ""
       },
+      "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
         "auto-sync": "Le importazioni non sono disponibili mentre la sincronizzazione automatica di Mimir Alertmanager è attiva"
       },
@@ -3037,7 +3038,11 @@
         "use-new-experience": "Usa la nuova esperienza",
         "view-previous-experience": "Torna all'esperienza precedente"
       },
-      "unknown-rule-type": "Tipo di regola sconosciuto"
+      "unknown-rule-type": "Tipo di regola sconosciuto",
+      "checking-data-sources_one": "",
+      "checking-data-sources_other": "",
+      "hidden-empty-data-sources_one": "",
+      "hidden-empty-data-sources_other": ""
     },
     "rule-list-errors": {
       "cloud-rulessource-errors-title-errors-loading-rules": "Errori durante il caricamento delle regole",
@@ -3193,7 +3198,10 @@
       "view-as": "Visualizza come"
     },
     "rules-filter-sidebar": {
-      "clear-filters": "Cancella i filtri"
+      "clear-filters": "Cancella i filtri",
+      "empty-data-sources": "",
+      "empty-data-sources-tooltip": "",
+      "empty-data-sources-tooltip-title": ""
     },
     "rules-group": {
       "deleting": "Eliminazione",
@@ -5674,16 +5682,6 @@
         "title": ""
       }
     },
-    "dash-nav": {
-      "on-open-snapshot-original": {
-        "confirmText": {
-          "proceed": "Procedi"
-        },
-        "title": {
-          "proceed-to-external-site": "Procedere al sito esterno?"
-        }
-      }
-    },
     "dashboard-links-menu": {
       "aria-label-dashboard-name": "Dashboard {{dashboardName}}",
       "label-no-dashboards-found": "Nessuna dashboard trovata"
@@ -5809,10 +5807,16 @@
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "remove-multiple": "",
+      "row-fill-screen-disable": "",
+      "row-fill-screen-enable": "",
+      "row-hide-header": "",
+      "row-repeat-variable": "",
+      "row-show-header": "",
       "row-title": "Modifica il titolo riga",
       "switch-layout": "Cambia layout",
       "switch-layout-row": "Cambia layout",
       "switch-layout-tab": "Cambia layout",
+      "tab-repeat-variable": "",
       "tab-title": "Modifica il titolo della scheda",
       "variable-description": "Modifica la descrizione della variabile",
       "variable-hide": "Modifica l'opzione di occultamento della variabile",
@@ -6156,9 +6160,6 @@
       "only-overrides-button-tooltip": "Mostra solo sovrascritture",
       "placeholder-search-options": "Opzioni di ricerca",
       "visualization-button-tooltip": "Opzioni di ricerca"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Torna alle Query"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6741,7 +6742,6 @@
       "playlist-previous": "Vai al dashboard precedente",
       "playlist-stop": "Interrompi playlist",
       "refresh": "Aggiorna dashboard",
-      "save": "Salva dashboard",
       "save-as-template": {
         "label": "Salva come modello"
       },
@@ -6756,8 +6756,6 @@
       "save-dashboard-short": "Salva",
       "save-library-panel": "Salva pannello della libreria",
       "save-library-panel-short": "Salva",
-      "settings": "Impostazioni dashboard",
-      "share-button": "Condividi",
       "star-add-error": "Impossibile aggiungere ai preferiti",
       "star-added": "Elemento aggiunto ai preferiti",
       "star-remove-error": "Impossibile rimuovere dai preferiti",
@@ -6820,19 +6818,6 @@
       "sql-cta-button": "Aggiungi espressione SQL",
       "sql-cta-description": "Preferisci SQL? Aggiungi invece un'espressione SQL alle tue query."
     },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Eliminando tutte le trasformazioni, tornerai alla schermata di selezione principale."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Aggiungi un'altra trasformazione"
-      },
-      "confirmText-delete-all": "Elimina tutto",
-      "delete-all-transformations": "Elimina tutte le trasformazioni",
-      "title-delete-all-transformations": "Eliminare tutte le trasformazioni?",
-      "tooltip-clear-search": "Azzera ricerca",
-      "tooltip-close-picker": "Chiudi il selettore"
-    },
     "validation": {
       "invalid-dashboard-id": "Impossibile trovare un ID Grafana.com valido",
       "invalid-json": "JSON non valido",
@@ -6842,9 +6827,6 @@
     },
     "variable": {
       "description-tooltip": "Descrizione della variabile"
-    },
-    "view-json-modal": {
-      "title-json": "JSON"
     },
     "view-panel": {
       "back-to-dashboard": "Torna alla dashboard",
@@ -9463,6 +9445,8 @@
     "menu": "Apri menu",
     "new-flag": "new-flag-override",
     "ofrep-evaluation": "",
+    "ofrep-reason": "",
+    "ofrep-variant": "",
     "save-flag": "Salva",
     "title": "Controllo funzionalità"
   },
@@ -11519,6 +11503,15 @@
         "open-explore": "Apri in Esplora",
         "set-up": "Configura"
       },
+      "filter": {
+        "badge-ignored": "",
+        "cancel": "",
+        "clear": "",
+        "edit": "",
+        "ignored-tooltip": "",
+        "save": "",
+        "save-failed": ""
+      },
       "kubernetes": {
         "cluster-cpu": "CPU del cluster · ultime 24 ore",
         "description": "Visualizza lo stato di integrità del cluster, i costi e i risparmi derivanti dal ridimensionamento in un'unica schermata.",
@@ -11526,19 +11519,12 @@
           "all-clusters": "",
           "all-namespaces": "",
           "all-nodes": "",
-          "badge-ignored": "",
-          "cancel": "",
-          "clear": "",
           "cluster": "",
-          "edit": "",
-          "ignored-tooltip": "",
           "namespaces": "",
           "no-match": "",
           "no-match-hint": "",
           "nodes": "",
           "open": "",
-          "save": "",
-          "save-failed": "",
           "summary-cluster": "",
           "summary-namespaces": "",
           "summary-nodes": "",
@@ -11571,6 +11557,22 @@
         "data-points-per-minute": "{{value}} punti dati/min",
         "description": "Connetti metriche compatibili con Prometheus per esplorare lo stato di integrità e le tendenze dell'infrastruttura.",
         "disk-worst": "{{host}} al {{percent}}%",
+        "filter": {
+          "exclude-add": "",
+          "exclude-label": "",
+          "exclude-pattern": "",
+          "exclude-pattern-placeholder": "",
+          "exclude-remove": "",
+          "excludes": "",
+          "excludes-description": "",
+          "invalid-label": "",
+          "invalid-pattern": "",
+          "label-required": "",
+          "open": "",
+          "pattern-required": "",
+          "summary-excludes": "",
+          "title": ""
+        },
         "investigate-disk": "Esamina l'utilizzo del disco in Esplora",
         "series-trend": "Serie attive · ultime 24 ore",
         "setup-hint": "collega un'origine delle metriche",
@@ -13220,6 +13222,12 @@
       "query": {
         "add": "Aggiungi query",
         "run": "Esegui query"
+      },
+      "time-range": {
+        "button": "",
+        "locked": "",
+        "sync-back": "",
+        "tooltip-default": ""
       }
     },
     "errors": {
@@ -13287,7 +13295,9 @@
       "copy-markdown": "Copia come Markdown",
       "download-markdown": "Scarica come .md",
       "error": "Impossibile esportare il blocco appunti",
-      "label": "Esporta"
+      "label": "Esporta",
+      "pdf": "",
+      "pdf-popup-blocked": ""
     },
     "history": {
       "add-block": "Aggiungi blocco",
@@ -13303,7 +13313,9 @@
       "redo-action": "Ripeti: {{action}}",
       "remove-query": "Rimuovi query",
       "remove-tag": "",
+      "reset-cell-time-range": "",
       "select-query": "Seleziona query",
+      "set-cell-time-range": "",
       "split-block": "Dividi blocco",
       "switch-datasource": "Cambia origine dei dati",
       "undo": "Annulla",
@@ -13353,7 +13365,7 @@
       "count-truncated_other": "Primi {{count}} blocchi appunti caricati"
     },
     "new": {
-      "default-title": "Blocco appunti n. {{token}}"
+      "default-title-with-date": ""
     },
     "save-status": {
       "failed": "Salvataggio non riuscito",
@@ -14892,12 +14904,16 @@
       "force-delete-cancel": "",
       "force-delete-confirm": "",
       "force-delete-title": "",
-      "force-delete-warning": ""
+      "force-delete-warning": "",
+      "release-button": "",
+      "release-confirm": "",
+      "release-in-progress": "",
+      "release-title": "",
+      "release-warning": ""
     },
     "repository-status-page": {
       "back-to-repositories": "Torna ai repository",
       "cleaning-up-resources": "Pulizia delle risorse del repository",
-      "not-found": "non trovato",
       "not-found-message": "Repository non trovato",
       "repository-config-exists-configuration": "Assicurati che la configurazione del repository esista nel file di configurazione.",
       "tab-overview": "Panoramica",
@@ -15193,26 +15209,6 @@
     }
   },
   "public-dashboard": {
-    "acknowledgment-checkboxes": {
-      "ack-title": "Prima di rendere pubblico il dashboard, conferma quanto segue:",
-      "data-src-ack-desc": "La pubblicazione attualmente funziona solo con un sottoinsieme di origini dati*",
-      "data-src-ack-tooltip": "Scopri di più sulle origini dati pubbliche",
-      "public-ack-desc": "L'intero dashboard sarà pubblico*",
-      "public-ack-tooltip": "Scopri di più sui dashboard pubblici",
-      "usage-ack-desc": "Rendere pubblico un dashboard comporterà l'esecuzione di query ogni volta che viene visualizzato, il che potrebbe aumentare i costi*",
-      "usage-ack-desc-tooltip": "Scopri di più sulla memorizzazione nella cache delle query"
-    },
-    "config": {
-      "can-view-dashboard-radio-button-label": "Può visualizzare il dashboard",
-      "copy-button": "Copia",
-      "dashboard-url-field-label": "URL dashboard",
-      "email-share-type-option-label": "Solo persone specificate",
-      "pause-sharing-dashboard-label": "Sospendi la condivisione del dashboard",
-      "public-share-type-option-label": "Chiunque abbia un link",
-      "revoke-public-URL-button": "Revoca URL pubblico",
-      "revoke-public-URL-button-title": "Revoca URL pubblico",
-      "settings-title": "Impostazioni"
-    },
     "configuration": {
       "display-annotations-description": "Annotazioni presenti su questo dashboard",
       "display-annotations-label": "Visualizza annotazioni",
@@ -15225,21 +15221,11 @@
       "time-range-label": "Intervallo di tempo",
       "time-range-tooltip": "Il dashboard condiviso utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard"
     },
-    "create-page": {
-      "generate-public-url-button": "Genera URL pubblico",
-      "unsupported-features-desc": "Al momento non supportiamo variabili di modello o origini dati frontend",
-      "welcome-title": "Ti diamo il benvenuto nei dashboard pubblici!"
-    },
     "email-sharing": {
       "accept-button": "Accetta",
       "alert-text": "La condivisione dei dashboard tramite email viene addebitata per utente per la durata del token di 30 giorni, indipendentemente dal numero di dashboard condivise. La fatturazione si interrompe dopo 30 giorni, a meno che non si rinnovi il token.",
       "bill-ack": "Comprendo che l'aggiunta di utenti richiede un pagamento.*",
       "cancel-button": "Annulla",
-      "input-invalid-email-text": "Email non valida",
-      "input-required-email-text": "Email è un campo obbligatorio",
-      "invite-button": "Invito",
-      "invite-field-desc": "Invita persone tramite email",
-      "invite-field-label": "Invito",
       "learn-more-button": "Scopri di più",
       "recipient-email-placeholder": "Email",
       "recipient-invalid-email-text": "Email non valida",
@@ -15249,17 +15235,12 @@
       "recipient-list-description": "Solo le persone che hai invitato direttamente possono accedere a questo dashboard",
       "recipient-list-title": "Persone con accesso",
       "recipient-required-email-text": "Email è un campo obbligatorio",
-      "resend-button": "Invia nuovamente",
-      "resend-button-title": "Invia nuovamente",
       "resend-invite-label": "Rinvia invito",
       "revoke-access-label": "Revoca accesso",
-      "revoke-button": "Revoca",
-      "revoke-button-title": "Revoca",
       "success-creation": "Il tuo dashboard è pronto per la condivisione esterna",
       "success-share-type-change": "Accesso al dashboard aggiornato: solo alcune persone possono ora accedere con il link"
     },
     "modal-alerts": {
-      "save-dashboard-changes-alert-title": "Salva le modifiche al dashboard prima di aggiornare la configurazione pubblica",
       "unsupport-data-source-alert-readmore-link": "Scopri di più sulle origini dati supportate",
       "unsupported-data-source-alert-title": "Origini dati non supportate",
       "unsupported-template-variable-alert-desc": "Questo dashboard pubblico potrebbe non funzionare poiché utilizza variabili di modello",
@@ -15273,25 +15254,6 @@
       "public-ack": "Sono consapevole che l'intero dashboard sarà pubblico.*",
       "success-creation": "Il tuo dashboard è ora accessibile al pubblico",
       "success-share-type-change": "Accesso al dashboard aggiornato: chiunque sia in possesso del link ora può accedere"
-    },
-    "settings-bar-header": {
-      "collapse-settings-tooltip": "Riduci impostazioni",
-      "expand-settings-tooltip": "Espandi impostazioni"
-    },
-    "settings-configuration": {
-      "default-time-range-label": "Intervallo di tempo predefinito",
-      "default-time-range-label-desc": "Il dashboard pubblico utilizza le impostazioni dell'intervallo di tempo predefinite del dashboard",
-      "show-annotations-label": "Mostra annotazioni",
-      "show-annotations-label-desc": "Mostra annotazioni sul dashboard pubblico",
-      "time-range-picker-label": "Selettore intervallo di tempo abilitato",
-      "time-range-picker-label-desc": "Consenti agli spettatori di modificare l'intervallo di tempo"
-    },
-    "settings-summary": {
-      "annotations-hide-text": "Annotazioni = nascondi",
-      "annotations-show-text": "Annotazioni = mostra",
-      "time-range-picker-disabled-text": "Selettore intervallo di tempo = disabilitato",
-      "time-range-picker-enabled-text": "Selettore intervallo di tempo = abilitato",
-      "time-range-text": "Intervallo di tempo = "
     },
     "share": {
       "success-delete": "Il tuo dashboard non è più condivisibile"
@@ -15909,8 +15871,7 @@
       "deleted-by-removed": "Account eliminato",
       "deleted-by-unknown-short": "<0></0> Sconosciuto",
       "deleted-by-unknown-tooltip": "Impossibile trovare l'account che ha eliminato questa dashboard",
-      "deleted-less-than-1-min": "<1 min",
-      "deleted-remaining-header": "Tempo rimanente",
+      "deleted-header": "",
       "location-header": "Posizione",
       "name-header": "Nome",
       "tags-header": "Tag",
@@ -16076,9 +16037,6 @@
     }
   },
   "share-modal": {
-    "dashboard": {
-      "title": "Condividi"
-    },
     "embed": {
       "copy": "Copia negli appunti",
       "html": "Incorpora HTML",
@@ -16125,9 +16083,6 @@
       "time-range-description": "Trasforma l'intervallo di tempo relativo corrente in un intervallo di tempo assoluto",
       "time-range-label": "Blocca intervallo di tempo"
     },
-    "panel": {
-      "title": "Condividi pannello"
-    },
     "snapshot": {
       "cancel-button": "Annulla",
       "copy-link-button": "Copia",
@@ -16143,16 +16098,11 @@
       "local-button": "Pubblica istantanea",
       "mistake-message": "Hai commesso un errore? ",
       "name": "Nome istantanea",
-      "timeout": "Timeout (secondi)",
-      "timeout-description": "Potrebbe essere necessario configurare il valore Timeout se la raccolta delle metriche del dashboard richiede molto tempo.",
       "url-label": "URL istantanea"
     },
     "tab-title": {
-      "embed": "Incorpora",
       "export": "Esporta",
-      "library-panel": "Pannello della libreria",
       "link": "Link",
-      "public-dashboard-title": "Dashboard pubblico",
       "snapshot": "Istantanea"
     },
     "theme-picker": {
@@ -18235,10 +18185,11 @@
   },
   "visual-refresh": {
     "info": {
-      "apply": "Dai un'occhiata",
-      "description": "Abbiamo effettuato una riprogettazione!",
-      "revert": "Riportami indietro",
-      "title": "Nuovi stili"
+      "apply": "",
+      "description": "",
+      "revert": "",
+      "title": "",
+      "title-visual-refresh": ""
     }
   },
   "visualization": {
