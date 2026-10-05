@@ -1,10 +1,22 @@
+import { isFunction } from 'lodash';
 import { catchError, combineLatest, defer, forkJoin, from, map, type Observable, of, switchMap } from 'rxjs';
 
-import { PluginExtensionTypes, type PluginExtension, type PluginExtensionComponent } from '@grafana/data';
-import { type GetObservablePluginLinks, type GetObservablePluginComponents } from '@grafana/runtime/internal';
+import {
+  PluginExtensionTypes,
+  type PluginExtension,
+  type PluginExtensionComponent,
+  type PluginExtensionFunction,
+} from '@grafana/data';
+import {
+  type GetObservablePluginLinks,
+  type GetObservablePluginComponents,
+  type GetObservablePluginFunctions,
+} from '@grafana/runtime/internal';
 
 import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
+import { type AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
+import { type RegistryType } from './registry/Registry';
 import { getPluginExtensionRegistries } from './registry/setup';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
@@ -30,7 +42,7 @@ import {
  */
 
 export const getObservablePluginExtensions = (
-  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
+  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry' | 'addedFunctionsRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
@@ -57,8 +69,11 @@ export const getObservablePluginExtensions = (
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
         registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
+        registries.addedFunctionsRegistry.asObservableSlice(
+          (state: RegistryType<AddedFunctionsRegistryItem[]>) => state[extensionPointId]
+        ),
       ]).pipe(
-        map(([components, links]) =>
+        map(([components, links, functions]) =>
           getPluginExtensions({
             ...options,
             addedComponentsRegistry: {
@@ -66,6 +81,9 @@ export const getObservablePluginExtensions = (
             },
             addedLinksRegistry: {
               [extensionPointId]: links,
+            },
+            addedFunctionsRegistry: {
+              [extensionPointId]: functions,
             },
           })
         )
@@ -86,6 +104,12 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
   );
 };
 
+export const getObservablePluginFunctions: GetObservablePluginFunctions = (options) => {
+  return getObservablePluginExtensions(options).pipe(
+    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.function))
+  );
+};
+
 // Returns with a list of plugin extensions for the given extension point
 export const getPluginExtensions: GetExtensions = ({
   context,
@@ -93,6 +117,7 @@ export const getPluginExtensions: GetExtensions = ({
   limitPerPlugin,
   addedLinksRegistry,
   addedComponentsRegistry,
+  addedFunctionsRegistry,
 }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
@@ -180,6 +205,35 @@ export const getPluginExtensions: GetExtensions = ({
 
     extensions.push(extension);
     extensionsByPlugin[addedComponent.pluginId] += 1;
+  }
+
+  const addedFunctions = addedFunctionsRegistry?.[extensionPointId] ?? [];
+  for (const addedFunction of addedFunctions) {
+    // Only limit if the `limitPerPlugin` is set
+    if (limitPerPlugin && extensionsByPlugin[addedFunction.pluginId] >= limitPerPlugin) {
+      continue;
+    }
+
+    // The registry's `fn` is `unknown` (it carries the caller's own Signature generic); narrow it without a cast.
+    if (!isFunction(addedFunction.fn)) {
+      continue;
+    }
+
+    if (extensionsByPlugin[addedFunction.pluginId] === undefined) {
+      extensionsByPlugin[addedFunction.pluginId] = 0;
+    }
+
+    const extension: PluginExtensionFunction = {
+      id: generateExtensionId(addedFunction.pluginId, extensionPointId, addedFunction.title),
+      type: PluginExtensionTypes.function,
+      pluginId: addedFunction.pluginId,
+      title: addedFunction.title,
+      description: addedFunction.description ?? '',
+      fn: addedFunction.fn,
+    };
+
+    extensions.push(extension);
+    extensionsByPlugin[addedFunction.pluginId] += 1;
   }
 
   return { extensions };
