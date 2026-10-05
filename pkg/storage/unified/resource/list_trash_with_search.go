@@ -66,7 +66,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		value *BackendReadResponse
 		obj   utils.GrafanaMetaAccessor
 	}
-	for chunk := range slices.Chunk(page.rows, searchReadChunkSize) {
+	for chunk := range slices.Chunk(page.rows, readChunkSize) {
 		requests := make([]*resourcepb.ReadRequest, len(chunk))
 		for i, row := range chunk {
 			requests[i] = &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion}
