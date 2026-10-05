@@ -43,6 +43,7 @@ import {
   type RowsLayoutSpec,
   type TabsLayoutSpec,
   defaultDataQueryKind,
+  type PanelKind,
   type PanelSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -79,6 +80,8 @@ import {
   getVizPanelQueries,
   vizPanelToSchemaV2,
 } from './transformSceneToSaveModelSchemaV2';
+
+import { buildVizPanel } from './layoutSerializers/utils';
 
 // Mock dependencies
 jest.mock('../utils/dashboardSceneGraph', () => {
@@ -2047,7 +2050,7 @@ describe('vizPanelToSchemaV2 time range fields', () => {
 });
 
 describe('vizPanelToSchemaV2 subtitle', () => {
-  it('should preserve the panel subtitle when the description is used as subtitle', () => {
+  it('should preserve the panel subtitle', () => {
     const vizPanel = new VizPanel({
       key: 'panel-1',
       pluginId: 'timeseries',
@@ -2060,6 +2063,15 @@ describe('vizPanelToSchemaV2 subtitle', () => {
     expect(result.kind).toBe('Panel');
     expect((result.spec as PanelSpec).subtitle).toBe('hello');
     expect((result.spec as PanelSpec).description).toBe('');
+  });
+
+  it('should keep the subtitle after a save/load round trip', () => {
+    const vizPanel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', title: 'Test', subtitle: 'hello' });
+
+    const loaded = buildVizPanel(vizPanelToSchemaV2(vizPanel, undefined, false) as PanelKind);
+
+    expect(loaded.state.subtitle).toBe('hello');
+    expect(loaded.state.description).toBe('');
   });
 
   it('should omit subtitle when the panel has none', () => {
