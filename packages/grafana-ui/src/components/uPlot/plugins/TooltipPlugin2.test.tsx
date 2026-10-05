@@ -385,6 +385,155 @@ describe('TooltipPlugin2', () => {
     });
   });
 
+  describe('clickMode select', () => {
+    const hover = async (overrides?: Partial<React.ComponentProps<typeof TooltipPlugin2>>) => {
+      const onSelect = jest.fn();
+      const setup = setUp(undefined, { clickMode: 'select', onSelect, ...overrides });
+
+      await act(async () => {
+        setup.initCallback(setup.mockUPlot);
+        setup.setLegendCallback(setup.mockUPlot);
+        setup.setSeriesCallback(setup.mockUPlot, 1);
+      });
+
+      const click = async (init?: MouseEventInit) => {
+        await act(async () => {
+          setup.mockUPlot.over.dispatchEvent(new MouseEvent('click', init));
+          // let a deferred pin run
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+      };
+
+      return { ...setup, onSelect, click };
+    };
+
+    it('calls onSelect on a plain click and does not pin', async () => {
+      const { onSelect, click } = await hover();
+
+      await click();
+
+      expect(onSelect).toHaveBeenCalledWith(1, 5, { meta: false, shift: false });
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    });
+
+    it('passes Ctrl/Cmd and Shift as modifiers instead of selecting a time range', async () => {
+      const render = jest.fn(() => <span>Tooltip content</span>);
+      const { onSelect, click } = await hover({ render });
+
+      render.mockClear();
+      await click({ metaKey: true });
+      await click({ ctrlKey: true, shiftKey: true });
+
+      expect(onSelect).toHaveBeenNthCalledWith(1, 1, 5, { meta: true, shift: false });
+      expect(onSelect).toHaveBeenNthCalledWith(2, 1, 5, { meta: true, shift: true });
+      expect(render).not.toHaveBeenCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ from: expect.any(Number) }),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('pins on Alt-click without selecting', async () => {
+      const { onSelect, click } = await hover();
+
+      await click({ altKey: true });
+
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('follows a one-click link on a plain click, and selects on a modified click', async () => {
+      const windowOpen = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const getDataLinks = jest.fn(() => [
+        {
+          href: 'https://example.com/oneclick',
+          title: 'One-click link',
+          target: '_blank' as const,
+          origin: {},
+          oneClick: true,
+        },
+      ]);
+      const { onSelect, click } = await hover({ getDataLinks, render: renderFirstDataLinkTitle });
+
+      await click();
+
+      expect(windowOpen).toHaveBeenCalledWith('https://example.com/oneclick', '_blank');
+      expect(onSelect).not.toHaveBeenCalled();
+
+      await click({ metaKey: true });
+
+      expect(windowOpen).toHaveBeenCalledTimes(1);
+      expect(onSelect).toHaveBeenCalledWith(1, 5, { meta: true, shift: false });
+
+      windowOpen.mockRestore();
+    });
+
+    it('shows the hint while unpinned and hides it once pinned', async () => {
+      const { click } = await hover({ selectHint: 'Alt-click to pin' });
+
+      expect(screen.getByText('Alt-click to pin')).toBeInTheDocument();
+
+      await click({ altKey: true });
+
+      expect(screen.queryByText('Alt-click to pin')).not.toBeInTheDocument();
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+    });
+
+    it('renders no wrapper when render returns nothing', async () => {
+      const { onSelect, click } = await hover({ render: () => null, selectHint: 'Alt-click to pin' });
+
+      expect(screen.queryByText('Alt-click to pin')).not.toBeInTheDocument();
+      expect(document.querySelector('[aria-live="polite"]')).not.toBeInTheDocument();
+
+      await click();
+
+      expect(onSelect).toHaveBeenCalled();
+    });
+
+    it('does not pin on Alt-click when not pinnable', async () => {
+      const { onSelect, click } = await hover({ selectPinnable: false });
+
+      await click({ altKey: true });
+
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('prevents text selection on a Shift mousedown, only in select mode', async () => {
+      const { mockUPlot } = await hover();
+      const shiftDown = new MouseEvent('mousedown', { shiftKey: true, cancelable: true });
+      const plainDown = new MouseEvent('mousedown', { cancelable: true });
+
+      mockUPlot.over.dispatchEvent(shiftDown);
+      mockUPlot.over.dispatchEvent(plainDown);
+
+      expect(shiftDown.defaultPrevented).toBe(true);
+      expect(plainDown.defaultPrevented).toBe(false);
+    });
+
+    it('does not prevent Shift mousedown in pin mode', async () => {
+      const { mockUPlot } = await hover({ clickMode: 'pin' });
+      const shiftDown = new MouseEvent('mousedown', { shiftKey: true, cancelable: true });
+
+      mockUPlot.over.dispatchEvent(shiftDown);
+
+      expect(shiftDown.defaultPrevented).toBe(false);
+    });
+
+    it('does not show the hint in pin mode', async () => {
+      await hover({ clickMode: 'pin', selectHint: 'Alt-click to pin' });
+
+      expect(screen.getByText('Tooltip content')).toBeInTheDocument();
+      expect(screen.queryByText('Alt-click to pin')).not.toBeInTheDocument();
+    });
+  });
+
   describe('housekeeping', () => {
     it('should disconnect observables on unmount', () => {
       const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
