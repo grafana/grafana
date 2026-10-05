@@ -2,6 +2,7 @@ package kindstore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -9,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/warning"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
@@ -26,6 +28,8 @@ func TestConversionSerializer(t *testing.T) {
 	converted := []byte(`{"apiVersion":"example-app/v2","kind":"TestKind","metadata":{"name":"test","resourceVersion":"123"},"spec":{"new":"value"}}`)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	recorder := &warningRecorder{}
+	ctx = warning.WithWarningRecorder(ctx, recorder)
 	calls := 0
 	client := conversionClientFunc(func(gotCtx context.Context, req *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
 		calls++
@@ -41,11 +45,11 @@ func TestConversionSerializer(t *testing.T) {
 		require.Equal(t, gvk.Kind, obj.GetGvk().GetKind())
 		require.Equal(t, raw, obj.GetRaw())
 		return pluginv3.ConvertObjectsResponse_builder{Converted: []*pluginv3.ConvertObjectsResponse_Object{
-			pluginv3.ConvertObjectsResponse_Object_builder{Raw: converted}.Build(),
+			pluginv3.ConvertObjectsResponse_Object_builder{Raw: converted, Warnings: []string{"deprecated field"}}.Build(),
 		}}.Build(), nil
 	})
 	opts, scoped := newStoreOpts(t, gvk)
-	_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds"}, nil, client, opts, nil)
+	_, err := New(gvk, app.ManifestVersionKind{Kind: gvk.Kind, Plural: "testkinds", Conversion: true}, nil, client, opts, nil)
 	require.NoError(t, err)
 	require.NotNil(t, scoped.Serializer)
 	serializer := scoped.Serializer
@@ -65,8 +69,17 @@ func TestConversionSerializer(t *testing.T) {
 		require.JSONEq(t, string(converted), string(encoded))
 	}
 	require.Equal(t, 2, calls)
-	_, err = serializer.Decode(ctx, converted, nil)
-	require.NoError(t, err)
+	require.Equal(t, []string{"deprecated field", "deprecated field"}, recorder.warnings)
+	for _, into := range []runtime.Object{nil, &unstructured.Unstructured{Object: map[string]any{"stale": true}}} {
+		obj, err := serializer.Decode(ctx, converted, into)
+		require.NoError(t, err)
+		if into != nil {
+			require.Same(t, into, obj)
+		}
+		encoded, err := serializer.Encode(ctx, obj)
+		require.NoError(t, err)
+		require.JSONEq(t, string(converted), string(encoded))
+	}
 	require.Equal(t, 2, calls, "same-version objects do not need conversion")
 	_, err = serializer.Decode(ctx, []byte(`{`), nil)
 	require.Error(t, err)
@@ -107,6 +120,118 @@ func TestConversionSerializerErrors(t *testing.T) {
 			require.ErrorContains(t, err, tc.want)
 			if tc.err != nil {
 				require.ErrorIs(t, err, tc.err)
+			}
+		})
+	}
+}
+
+func TestConversionSerializerValidatesResponse(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
+	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original"}}`)
+	for _, tc := range []struct {
+		name  string
+		path  []string
+		value any
+		want  string
+	}{
+		{name: "wrong group", path: []string{"apiVersion"}, value: "other/v2", want: "unexpected GVK"},
+		{name: "wrong version", path: []string{"apiVersion"}, value: "example-app/v1", want: "unexpected GVK"},
+		{name: "missing version", path: []string{"apiVersion"}, want: "unexpected GVK"},
+		{name: "wrong kind", path: []string{"kind"}, value: "OtherKind", want: "unexpected GVK"},
+		{name: "missing kind", path: []string{"kind"}, want: "invalid object"},
+		{name: "changed name", path: []string{"metadata", "name"}, value: "other", want: "changed metadata.name"},
+		{name: "missing name", path: []string{"metadata", "name"}, want: "changed metadata.name"},
+		{name: "changed namespace", path: []string{"metadata", "namespace"}, value: "other", want: "changed metadata.namespace"},
+		{name: "missing namespace", path: []string{"metadata", "namespace"}, want: "changed metadata.namespace"},
+		{name: "changed UID", path: []string{"metadata", "uid"}, value: "other", want: "changed metadata.uid"},
+		{name: "missing UID", path: []string{"metadata", "uid"}, want: "changed metadata.uid"},
+		{name: "missing metadata", path: []string{"metadata"}, want: "changed metadata.name"},
+		{name: "invalid identity", path: []string{"metadata", "name"}, value: int64(1), want: "expected string"},
+		{name: "invalid labels", path: []string{"metadata", "labels"}, value: map[string]any{"label": int64(1)}, want: "expected string"},
+		{name: "invalid annotations", path: []string{"metadata", "annotations"}, value: map[string]any{"annotation": int64(1)}, want: "expected string"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var converted unstructured.Unstructured
+			require.NoError(t, json.Unmarshal(raw, &converted))
+			converted.SetGroupVersionKind(gvk)
+			if tc.value == nil {
+				unstructured.RemoveNestedField(converted.Object, tc.path...)
+			} else {
+				require.NoError(t, unstructured.SetNestedField(converted.Object, tc.value, tc.path...))
+			}
+			payload, err := json.Marshal(&converted)
+			require.NoError(t, err)
+			serializer := &conversionSerializer{
+				gvk: gvk,
+				client: conversionClientFunc(func(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+					return pluginv3.ConvertObjectsResponse_builder{Converted: []*pluginv3.ConvertObjectsResponse_Object{
+						pluginv3.ConvertObjectsResponse_Object_builder{Raw: payload}.Build(),
+					}}.Build(), nil
+				}),
+			}
+			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{Object: map[string]any{"untouched": true}}} {
+				var before runtime.Object
+				if into != nil {
+					before = into.DeepCopyObject()
+				}
+				obj, err := serializer.Decode(context.Background(), raw, into)
+				require.ErrorContains(t, err, tc.want)
+				require.Nil(t, obj)
+				require.Equal(t, before, into)
+			}
+		})
+	}
+}
+
+func TestConversionSerializerPreservesMetadata(t *testing.T) {
+	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
+	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","namespace":"default","uid":"original","resourceVersion":"123","generation":3,"finalizers":["example-app/cleanup"],"creationTimestamp":"2026-10-01T00:00:00Z","deletionTimestamp":"2026-10-02T00:00:00Z","deletionGracePeriodSeconds":30,"ownerReferences":[{"apiVersion":"example-app/v1","kind":"Owner","name":"parent","uid":"parent-uid"}],"managedFields":[{"manager":"test","operation":"Update","apiVersion":"example-app/v1","fieldsType":"FieldsV1","fieldsV1":{"f:spec":{}}}],"labels":{"old":"label"},"annotations":{"old":"annotation"}},"spec":{"old":"value"}}`)
+	for _, mode := range []string{"altered", "removed", "null labels and annotations"} {
+		t.Run(mode, func(t *testing.T) {
+			var original unstructured.Unstructured
+			require.NoError(t, json.Unmarshal(raw, &original))
+			converted := original.DeepCopy()
+			converted.SetGroupVersionKind(gvk)
+			metadata := converted.Object["metadata"].(map[string]any)
+			for key := range metadata {
+				if key != "name" && key != "namespace" && key != "uid" {
+					if mode != "altered" {
+						delete(metadata, key)
+					} else {
+						metadata[key] = "altered"
+					}
+				}
+			}
+			if mode == "altered" {
+				converted.SetLabels(map[string]string{"new": "label"})
+				converted.SetAnnotations(map[string]string{"new": "annotation"})
+			} else if mode == "null labels and annotations" {
+				metadata["labels"] = nil
+				metadata["annotations"] = nil
+			}
+			converted.Object["spec"] = map[string]any{"new": "value"}
+			payload, err := json.Marshal(converted)
+			require.NoError(t, err)
+			serializer := &conversionSerializer{
+				gvk: gvk,
+				client: conversionClientFunc(func(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+					return pluginv3.ConvertObjectsResponse_builder{Converted: []*pluginv3.ConvertObjectsResponse_Object{
+						pluginv3.ConvertObjectsResponse_Object_builder{Raw: payload}.Build(),
+					}}.Build(), nil
+				}),
+			}
+			expected := original.DeepCopy()
+			expected.SetGroupVersionKind(gvk)
+			expected.SetLabels(converted.GetLabels())
+			expected.SetAnnotations(converted.GetAnnotations())
+			expected.Object["spec"] = converted.Object["spec"]
+			for _, into := range []runtime.Object{nil, &unstructured.Unstructured{}} {
+				obj, err := serializer.Decode(context.Background(), raw, into)
+				require.NoError(t, err)
+				require.Equal(t, expected, obj)
+				if into != nil {
+					require.Same(t, into, obj)
+				}
 			}
 		})
 	}

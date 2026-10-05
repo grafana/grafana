@@ -262,6 +262,13 @@ func TestNew(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v1alpha1", Kind: "TestKind"}
 	falseValue := false
 	admission := &reviewClient{}
+	t.Run("a kind declaring conversion requires a client", func(t *testing.T) {
+		opts, _ := newStoreOpts(t, gvk)
+		_, err := New(gvk, app.ManifestVersionKind{
+			Kind: gvk.Kind, Plural: "testkinds", Conversion: true,
+		}, nil, nil, opts, nil)
+		require.ErrorContains(t, err, "declares conversion but has no plugin client")
+	})
 
 	t.Run("a namespaced kind is folder scoped by default", func(t *testing.T) {
 		opts, scoped := newStoreOpts(t, gvk)

@@ -109,6 +109,9 @@ func New(
 	if opts.StorageOptsGetter == nil {
 		return nil, fmt.Errorf("kind %s has no storage options getter", gvk.Kind)
 	}
+	if kind.Conversion && conversion == nil {
+		return nil, fmt.Errorf("kind %s declares conversion but has no plugin client", gvk.Kind)
+	}
 
 	gr := schema.GroupResource{Group: gvk.Group, Resource: strings.ToLower(kind.Plural)}
 	listGVK := gvk.GroupVersion().WithKind(gvk.Kind + "List")
@@ -177,9 +180,8 @@ func New(
 	}
 	if conversion != nil {
 		storageOpts.Serializer = &conversionSerializer{
-			Serializer: apistore.JSONSerializer(),
-			client:     conversion,
-			gvk:        gvk,
+			client: conversion,
+			gvk:    gvk,
 		}
 	}
 	optsGetter := opts.StorageOptsGetter(storageOpts)
