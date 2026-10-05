@@ -138,29 +138,20 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 	return rsp, nil
 }
 
-// Add a kind to the server list before adding it to the client list. Resource
-// servers deploy independently and must enforce the policy before clients can
-// mount the kind's trash route.
 var trashSearchAllowlist = map[string]bool{
 	"dashboard.grafana.app/dashboards": true,
 }
 
-// trashClientAllowlist controls which trash routes clients expose. It must stay
-// a subset of trashSearchAllowlist.
-var trashClientAllowlist = map[string]bool{
-	"dashboard.grafana.app/dashboards": true,
-}
-
 // TrashSearchAllowed reports whether a kind's authorization model has been
-// approved for clients to expose the trash route.
+// approved for search-backed trash.
 func TrashSearchAllowed(group, resource string) bool {
-	return resourceAllowed(trashClientAllowlist, group, resource)
+	return resourceAllowed(trashSearchAllowlist, group, resource)
 }
 
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
 		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
-		!resourceAllowed(trashSearchAllowlist, req.Options.Key.Group, req.Options.Key.Resource) ||
+		!TrashSearchAllowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||
 		req.KeysOnly || req.Options.Key.Namespace == "" || req.Options.Key.Name != "" ||

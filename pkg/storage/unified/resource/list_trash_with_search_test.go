@@ -213,14 +213,6 @@ func TestTrashSearchAllowed(t *testing.T) {
 	require.False(t, TrashSearchAllowed("exampletodoapp.ext.grafana.app", "todos"))
 }
 
-func TestTrashClientAllowlistIsCoveredByServerAllowlist(t *testing.T) {
-	for pattern, enabled := range trashClientAllowlist {
-		if enabled {
-			require.True(t, trashSearchAllowlist[pattern], "client pattern %q must be deployed to resource servers first", pattern)
-		}
-	}
-}
-
 func TestListTrashWithSearchFallsBackWhenIndexCannotServeTrash(t *testing.T) {
 	tests := []struct {
 		name    string
