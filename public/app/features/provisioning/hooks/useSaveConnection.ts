@@ -6,7 +6,7 @@ import { isFetchError } from '@grafana/runtime';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { type ConnectionFormData } from '../types';
-import { connectionSpecFromForm } from '../utils/connectionData';
+import { connectionSpecFromForm, parseScopes } from '../utils/connectionData';
 import { isOAuthConnectionType } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 
@@ -83,7 +83,16 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
       }
 
       if (shouldAuthorize && form.clientID && isOAuthConnectionType(form.type)) {
-        if (!authorize({ type: form.type, clientID: form.clientID, name, serverUrl: form.serverUrl })) {
+        if (
+          !authorize({
+            type: form.type,
+            clientID: form.clientID,
+            name,
+            serverUrl: form.serverUrl,
+            authURL: form.authURL,
+            scopes: parseScopes(form.scopes),
+          })
+        ) {
           return {
             status: 'error',
             fieldErrors: false,

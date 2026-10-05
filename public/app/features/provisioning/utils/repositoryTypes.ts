@@ -103,8 +103,10 @@ export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterp
 // Providers that support app-based authentication through provisioning connections.
 export const supportsConnections = (
   type?: RepoType
-): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
-  return type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket';
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' => {
+  return (
+    type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket' || type === 'git'
+  );
 };
 
 export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {

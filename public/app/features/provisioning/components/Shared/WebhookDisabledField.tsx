@@ -14,6 +14,10 @@ interface Props {
 }
 
 export function WebhookDisabledField({ type, registration, invalid, error }: Props) {
+  if (type === 'gitOAuth') {
+    return null;
+  }
+
   const description = isOAuthConnectionType(type)
     ? t(
         'provisioning.connection-form.description-webhook-disabled-oauth',

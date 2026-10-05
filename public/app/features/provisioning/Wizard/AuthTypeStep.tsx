@@ -195,6 +195,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
               onAuthorizingChange={setIsConnectionAuthorizing}
             />
             {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
+            {shouldShowRepositories && isGit && <RepositoryTokenInput tokenUserOnly />}
           </>
         ) : (
           <>

@@ -41,6 +41,7 @@ const PROVIDER_OPTIONS: Array<{
   },
   { value: 'gitlab', label: 'GitLab', types: ['gitlabOAuth'] },
   { value: 'bitbucket', label: 'Bitbucket', types: ['bitbucketOAuth'] },
+  { value: 'git', label: 'Git', types: ['gitOAuth'] },
 ];
 /* eslint-enable @grafana/i18n/no-untranslated-strings */
 
@@ -110,7 +111,8 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
     isEdit &&
     isOAuthConnectionType(form.type) &&
     (form.clientID !== data?.spec?.oauth?.clientID ||
-      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl));
+      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl) ||
+      (form.type === 'gitOAuth' && form.tokenURL !== data?.spec?.gitOAuth?.tokenURL));
 
   // OAuth app connections need the user to authorize the app before tokens can be issued
   const needsAuthorization = (form: ConnectionFormData) =>
@@ -119,6 +121,9 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
       Boolean(form.clientSecret) ||
       oauthIdentityChanged(form) ||
       (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
+      (form.type === 'gitOAuth' &&
+        (form.authURL !== data?.spec?.gitOAuth?.authURL ||
+          (form.scopes ?? '') !== (data?.spec?.gitOAuth?.scopes?.join(' ') ?? ''))) ||
       reauthorizeRef.current);
 
   useEffect(() => {

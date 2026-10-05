@@ -62,7 +62,7 @@ export function buildOAuthAuthorizeUrl(
   clientID: string,
   connectionName: string,
   serverUrl?: string,
-  opts?: { popup?: boolean; authURL?: string }
+  opts?: { popup?: boolean; authURL?: string; scopes?: string[] }
 ) {
   const state = generateUUID();
   const redirectUri = getOAuthCallbackUri();
@@ -84,6 +84,9 @@ export function buildOAuthAuthorizeUrl(
   }
   if (type === 'githubOAuth' || type === 'githubEnterpriseOAuth') {
     params.set('scope', 'repo');
+  }
+  if (type === 'gitOAuth' && opts?.scopes?.length) {
+    params.set('scope', opts.scopes.join(' '));
   }
 
   const authorizeUrl =

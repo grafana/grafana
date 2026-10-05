@@ -320,7 +320,7 @@ export function ConfigForm({ data }: ConfigFormProps) {
                 />
               </Field>
             )}
-            {gitFields.tokenUserConfig && !usesConnection && (
+            {gitFields.tokenUserConfig && (!usesConnection || type === 'git') && (
               <Field
                 noMargin
                 label={gitFields.tokenUserConfig.label}
