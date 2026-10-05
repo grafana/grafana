@@ -24,30 +24,14 @@ func NewKVBlobSupport(store kv.KV) BlobSupport {
 	return &kvBlobSupport{kv: store}
 }
 
-func kvBlobKey(key *resourcepb.ResourceKey, uid, contentType string) kv.BlobKey {
+func kvBlobKey(key *resourcepb.ResourceKey, uid string) kv.BlobKey {
 	return kv.BlobKey{
-		Group:       key.Group,
-		Resource:    key.Resource,
-		Namespace:   key.Namespace,
-		Name:        key.Name,
-		UID:         uid,
-		ContentType: contentType,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+		UID:       uid,
 	}
-}
-
-func (s *kvBlobSupport) findBlobKey(ctx context.Context, key *resourcepb.ResourceKey, uid string) (kv.BlobKey, error) {
-	prefix := kvBlobKey(key, uid, "").UIDPrefix()
-	for found, err := range s.kv.Keys(ctx, kv.BlobDataSection, kv.ListOptions{
-		StartKey: prefix,
-		EndKey:   kv.PrefixRangeEnd(prefix),
-		Limit:    1,
-	}) {
-		if err != nil {
-			return kv.BlobKey{}, err
-		}
-		return kv.ParseBlobKey(found)
-	}
-	return kv.BlobKey{}, kv.ErrNotFound
 }
 
 func (s *kvBlobSupport) SupportsSignedURLs() bool {
@@ -73,13 +57,15 @@ func (s *kvBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.Put
 	}
 	info.SetContentType(req.ContentType)
 
-	w, err := s.kv.Save(ctx, kv.BlobDataSection, kvBlobKey(req.Resource, info.UID, req.ContentType).String())
+	w, err := s.kv.Save(ctx, kv.BlobDataSection, kvBlobKey(req.Resource, info.UID).String())
 	if err != nil {
 		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
 	}
-	if _, err := w.Write(req.Value); err != nil {
-		_ = w.Close()
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	for _, part := range [][]byte{kv.EncodeBlobValueHeader(req.ContentType), req.Value} {
+		if _, err := w.Write(part); err != nil {
+			_ = w.Close()
+			return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		}
 	}
 	if err := w.Close(); err != nil {
 		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
@@ -98,17 +84,9 @@ func (s *kvBlobSupport) GetResourceBlob(ctx context.Context, key *resourcepb.Res
 	if info == nil || info.UID == "" {
 		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing blob uid")}, nil
 	}
-	notFound := &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
-	blobKey, err := s.findBlobKey(ctx, key, info.UID)
+	r, err := s.kv.Get(ctx, kv.BlobDataSection, kvBlobKey(key, info.UID).String())
 	if errors.Is(err, kv.ErrNotFound) {
-		return notFound, nil
-	}
-	if err != nil {
-		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
-	}
-	r, err := s.kv.Get(ctx, kv.BlobDataSection, blobKey.String())
-	if errors.Is(err, kv.ErrNotFound) {
-		return notFound, nil
+		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}, nil
 	}
 	if err != nil {
 		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
@@ -118,5 +96,9 @@ func (s *kvBlobSupport) GetResourceBlob(ctx context.Context, key *resourcepb.Res
 	if err != nil {
 		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
 	}
-	return &resourcepb.GetBlobResponse{Value: value, ContentType: blobKey.ContentType}, nil
+	contentType, body, err := kv.DecodeBlobValue(value)
+	if err != nil {
+		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	return &resourcepb.GetBlobResponse{Value: body, ContentType: contentType}, nil
 }

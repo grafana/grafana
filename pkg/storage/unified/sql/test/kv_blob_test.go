@@ -27,29 +27,29 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 
 	t.Run("kv", func(t *testing.T) {
 		t.Run("save overwrites an existing key", func(t *testing.T) {
-			k := newBlobKey(env.newResource(t, "default"), "text/plain")
-			env.save(t, k, "first")
-			env.save(t, k, "second")
+			key := env.newResource(t, "default")
+			k := newBlobKey(key)
+			env.save(t, k, "text/plain", "first")
+			env.save(t, k, "application/json", "second")
 
-			value, err := env.read(t, k)
+			contentType, value, err := env.read(t, k)
 			require.NoError(t, err)
+			require.Equal(t, "application/json", contentType)
 			require.Equal(t, "second", value)
-			require.Equal(t, []string{k.String()}, env.keys(t, k.UIDPrefix()))
+			require.Equal(t, []string{k.String()}, env.keys(t, resourcePrefix(key)))
 		})
 
-		t.Run("get and delete match the content type in the key", func(t *testing.T) {
-			k := newBlobKey(env.newResource(t, "default"), "text/plain")
-			env.save(t, k, "plain")
-			wrong := k
-			wrong.ContentType = "application/json"
-
-			_, err := env.read(t, wrong)
+		t.Run("get of an unknown blob is not found", func(t *testing.T) {
+			_, _, err := env.read(t, newBlobKey(env.newResource(t, "default")))
 			require.ErrorIs(t, err, kv.ErrNotFound)
+		})
 
-			require.NoError(t, env.kv.Delete(env.ctx, kv.BlobDataSection, wrong.String()))
-			value, err := env.read(t, k)
+		t.Run("save rejects a value without the blob header", func(t *testing.T) {
+			w, err := env.kv.Save(env.ctx, kv.BlobDataSection, newBlobKey(env.newResource(t, "default")).String())
 			require.NoError(t, err)
-			require.Equal(t, "plain", value)
+			_, err = w.Write([]byte("raw bytes"))
+			require.NoError(t, err)
+			require.Error(t, w.Close())
 		})
 
 		t.Run("lists the keys of a resource in order", func(t *testing.T) {
@@ -60,8 +60,8 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 
 			keys := env.keys(t, resourcePrefix(key))
 			require.ElementsMatch(t, []string{
-				blobKeyWithUID(key, fromKV.Uid, "application/json").String(),
-				blobKeyWithUID(key, fromSQL.Uid, "text/plain").String(),
+				blobKeyWithUID(key, fromKV.Uid).String(),
+				blobKeyWithUID(key, fromSQL.Uid).String(),
 			}, keys)
 			require.IsIncreasing(t, keys)
 		})
@@ -70,9 +70,9 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 			key := env.newResource(t, "default")
 			put := env.put(t, env.kvBlobs, key, "application/json", "kv")
 
-			require.NoError(t, env.kv.Delete(env.ctx, kv.BlobDataSection, blobKeyWithUID(key, put.Uid, "application/json").String()))
+			require.NoError(t, env.kv.Delete(env.ctx, kv.BlobDataSection, blobKeyWithUID(key, put.Uid).String()))
 			for _, s := range env.stores() {
-				require.Equal(t, int32(http.StatusNotFound), env.get(t, s.store, key, put.Uid).Error.Code, s.name)
+				requireErrorCode(t, http.StatusNotFound, env.get(t, s.store, key, put.Uid).Error)
 			}
 		})
 	})
@@ -115,13 +115,7 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 		t.Run("kv does not read a blob under another resource name", func(t *testing.T) {
 			put := env.put(t, env.kvBlobs, env.newResource(t, "default"), "application/json", "kv")
 			rsp := env.get(t, env.kvBlobs, env.newResource(t, "default"), put.Uid)
-			require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
-		})
-
-		t.Run("kv rejects signed url uploads as not implemented", func(t *testing.T) {
-			rsp, err := env.kvBlobs.PutResourceBlob(env.ctx, &resourcepb.PutBlobRequest{Resource: env.newResource(t, "default"), Method: resourcepb.PutBlobRequest_HTTP})
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusNotImplemented), rsp.Error.Code)
+			requireErrorCode(t, http.StatusNotFound, rsp.Error)
 		})
 	})
 }
@@ -170,7 +164,7 @@ func (e *kvBlobTestEnv) newResource(t *testing.T, namespace string) *resourcepb.
 	key := &resourcepb.ResourceKey{Namespace: namespace, Group: "dashboard.grafana.app", Resource: "snapshots", Name: "snap-" + uuid.NewV4().String()}
 	t.Cleanup(func() {
 		for _, k := range e.keys(t, resourcePrefix(key)) {
-			require.NoError(t, e.kv.Delete(context.Background(), kv.BlobDataSection, k))
+			require.NoError(t, e.kv.Delete(e.ctx, kv.BlobDataSection, k))
 		}
 	})
 	return key
@@ -196,31 +190,33 @@ func (e *kvBlobTestEnv) get(t *testing.T, store resource.BlobSupport, key *resou
 	return rsp
 }
 
-func (e *kvBlobTestEnv) save(t *testing.T, k kv.BlobKey, value string) {
+func (e *kvBlobTestEnv) save(t *testing.T, k kv.BlobKey, contentType, value string) {
 	t.Helper()
 	w, err := e.kv.Save(e.ctx, kv.BlobDataSection, k.String())
 	require.NoError(t, err)
-	_, err = w.Write([]byte(value))
+	_, err = w.Write(append(kv.EncodeBlobValueHeader(contentType), value...))
 	require.NoError(t, err)
 	require.NoError(t, w.Close())
 }
 
-func (e *kvBlobTestEnv) read(t *testing.T, k kv.BlobKey) (string, error) {
+func (e *kvBlobTestEnv) read(t *testing.T, k kv.BlobKey) (string, string, error) {
 	t.Helper()
 	r, err := e.kv.Get(e.ctx, kv.BlobDataSection, k.String())
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer func() { _ = r.Close() }()
 	value, err := io.ReadAll(r)
 	require.NoError(t, err)
-	return string(value), nil
+	contentType, body, err := kv.DecodeBlobValue(value)
+	require.NoError(t, err)
+	return contentType, string(body), nil
 }
 
 func (e *kvBlobTestEnv) keys(t *testing.T, prefix string) []string {
 	t.Helper()
 	var keys []string
-	for k, err := range e.kv.Keys(context.Background(), kv.BlobDataSection, kv.ListOptions{StartKey: prefix, EndKey: kv.PrefixRangeEnd(prefix)}) {
+	for k, err := range e.kv.Keys(e.ctx, kv.BlobDataSection, kv.ListOptions{StartKey: prefix, EndKey: kv.PrefixRangeEnd(prefix)}) {
 		require.NoError(t, err)
 		keys = append(keys, k)
 	}
@@ -231,10 +227,16 @@ func resourcePrefix(key *resourcepb.ResourceKey) string {
 	return key.Group + "/" + key.Resource + "/" + key.Namespace + "/" + key.Name + "/"
 }
 
-func blobKeyWithUID(key *resourcepb.ResourceKey, uid, contentType string) kv.BlobKey {
-	return kv.BlobKey{Group: key.Group, Resource: key.Resource, Namespace: key.Namespace, Name: key.Name, UID: uid, ContentType: contentType}
+func blobKeyWithUID(key *resourcepb.ResourceKey, uid string) kv.BlobKey {
+	return kv.BlobKey{Group: key.Group, Resource: key.Resource, Namespace: key.Namespace, Name: key.Name, UID: uid}
 }
 
-func newBlobKey(key *resourcepb.ResourceKey, contentType string) kv.BlobKey {
-	return blobKeyWithUID(key, uuid.NewV4().String(), contentType)
+func newBlobKey(key *resourcepb.ResourceKey) kv.BlobKey {
+	return blobKeyWithUID(key, uuid.NewV4().String())
+}
+
+func requireErrorCode(t *testing.T, want int32, got *resourcepb.ErrorResult) {
+	t.Helper()
+	require.NotNil(t, got)
+	require.Equal(t, want, got.Code)
 }
