@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { config, locationService, RefreshEvent } from '@grafana/runtime';
 import {
+  type AdHocFilterWithLabels,
   sceneGraph,
   SceneGridLayout,
   type SceneObject,
@@ -1843,6 +1844,103 @@ describe('DashboardScene', () => {
     it('Should hash the key of the cloned panels and set it as panelId', () => {
       const queryRunner = sceneGraph.findObject(scene, (o) => o.state.key === 'data-query-runner2')!;
       expect(scene.enrichDataRequest(queryRunner).panelId).toEqual(3670868617);
+    });
+  });
+
+  describe('Enriching data request filters', () => {
+    let scene: DashboardScene;
+
+    const stamped = (sourcePanel: string, value = 'UK'): AdHocFilterWithLabels => ({
+      key: 'country',
+      operator: '=',
+      value,
+      meta: { biSelection: { sourcePanel, key: 'country', values: [value] } },
+    });
+    const ordinary: AdHocFilterWithLabels = { key: 'region', operator: '=', value: 'EU' };
+
+    const runner = (key: string) => sceneGraph.findObject(scene, (o) => o.state.key === key)!;
+
+    beforeEach(() => {
+      scene = buildTestScene();
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('returns the filters unchanged while BI mode is off', () => {
+      const filters = [stamped('panel-1'), ordinary];
+
+      expect(scene.enrichDataRequestFilters(runner('data-query-runner'), filters)).toBe(filters);
+    });
+
+    describe('with BI mode on', () => {
+      beforeEach(() => {
+        setTestFlags({ 'dashboard.biMode': true });
+      });
+
+      it("drops only the requesting panel's own selection", () => {
+        const fromOtherPanel = stamped('panel-2', 'FR');
+
+        expect(
+          scene.enrichDataRequestFilters(runner('data-query-runner'), [stamped('panel-1'), fromOtherPanel, ordinary])
+        ).toEqual([fromOtherPanel, ordinary]);
+      });
+
+      it('keeps a selection whose value was edited after it was written', () => {
+        const edited = { ...stamped('panel-1'), value: 'DE' };
+
+        expect(scene.enrichDataRequestFilters(runner('data-query-runner'), [edited])).toEqual([edited]);
+      });
+
+      it('identifies repeat clones by the same path hash enrichDataRequest uses', () => {
+        const cloneRunner = runner('data-query-runner2');
+        const cloneIdentity = `clone-${scene.enrichDataRequest(cloneRunner).panelId}`;
+        const fromClone = stamped(cloneIdentity);
+        const fromOriginal = stamped('panel-2', 'FR');
+
+        expect(scene.enrichDataRequestFilters(cloneRunner, [fromClone, fromOriginal])).toEqual([fromOriginal]);
+        expect(scene.enrichDataRequestFilters(runner('data-query-runner'), [fromClone])).toEqual([fromClone]);
+      });
+
+      describe('while the panel editor is open', () => {
+        beforeEach(() => {
+          scene.onEnterEditMode();
+        });
+
+        const openEditor = () => {
+          const editPanel = buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!);
+          scene.setState({ editPanel });
+          return editPanel;
+        };
+
+        it("drops the edited panel's own selection from its queries", () => {
+          const editPanel = openEditor();
+
+          const queryRunner = editPanel.getPanel().state.$data!;
+
+          expect(scene.enrichDataRequestFilters(queryRunner, [stamped('panel-1'), ordinary])).toEqual([ordinary]);
+        });
+
+        it('keeps other panels on their own identity', () => {
+          openEditor();
+          const fromEdited = stamped('panel-1', 'FR');
+          // Same hash as 'Should hash the key of the cloned panels and set it as panelId'
+          const fromClone = stamped('clone-3670868617', 'DE');
+
+          expect(scene.enrichDataRequestFilters(runner('data-query-runner2'), [fromEdited, fromClone])).toEqual([
+            fromEdited,
+          ]);
+        });
+
+        it('falls back to the edited panel for a runner that belongs to the editor but not to a panel', () => {
+          const editPanel = openEditor();
+          const editorRunner = new SceneQueryRunner({ queries: [{ refId: 'A' }] });
+          editPanel.setState({ $data: editorRunner });
+
+          expect(scene.enrichDataRequestFilters(editorRunner, [stamped('panel-1'), ordinary])).toEqual([ordinary]);
+        });
+      });
     });
   });
 
