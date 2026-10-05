@@ -451,6 +451,14 @@ sum by (status) (
 `skipped_*` outcomes for objects that were skipped. When activity stops, check
 storage-api logs for `backfill: job complete` or `backfill: job failed`.
 
+For completion logs in Loki, replace the job selector with your storage-api log job:
+
+```logql
+{job="<storage-api log job>"} |= "backfill: job complete"
+```
+
+Use a time range covering your backfill. Each entry includes `job_id` and `model`.
+
 An increase in `grafana_vector_storage_embed_skipped_versions_total` indicates
 missing API-version declarations; filter by `group`, `resource`, and `version`.
 
