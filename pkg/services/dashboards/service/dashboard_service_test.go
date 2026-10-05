@@ -2679,6 +2679,15 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 			wantTitle:      "converted",
 		},
 		{
+			// v0 and v1 share the panels schema and convert without loss, so there is nothing to regain.
+			name:           "flag on with a v1 stored version reads once",
+			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sUseStoredAPIVersion: true},
+			first:          converted("v0alpha1", map[string]any{"failed": false, "storedVersion": "v1beta1"}),
+			wantVersions:   []string{""},
+			wantAPIVersion: "v0alpha1",
+			wantTitle:      "converted",
+		},
+		{
 			name:           "flag on with a preferred version reloads from that read's stored version",
 			query:          &dashboards.GetDashboardQuery{UID: uid, OrgID: 1, K8sGetAPIVersion: "v1beta1", K8sUseStoredAPIVersion: true},
 			first:          converted("v1beta1", map[string]any{"failed": false, "storedVersion": "v2beta1"}),
@@ -2717,7 +2726,7 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k8sCliMock := new(client.MockK8sHandler)
 			handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
-			service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+			service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler, log: log.NewNopLogger()}
 			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
 			k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).Return(tt.first, nil).Once()
@@ -2740,7 +2749,7 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 	t.Run("flag on maps a not found stored version read to ErrDashboardNotFound", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
-		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler, log: log.NewNopLogger()}
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
 		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).
@@ -2756,7 +2765,7 @@ func TestGetDashboardStoredAPIVersion(t *testing.T) {
 	t.Run("flag on wraps the error from the stored version read", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		handler := &versionRecordingK8sHandler{MockK8sHandler: k8sCliMock}
-		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler}
+		service := &DashboardServiceImpl{cfg: setting.NewCfg(), k8sclient: handler, log: log.NewNopLogger()}
 		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
 
 		k8sCliMock.On("Get", mock.Anything, uid, int64(1), mock.Anything, mock.Anything).

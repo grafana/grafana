@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // FindAnnotations returns annotations for a public dashboard
@@ -43,7 +42,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
 	for _, anno := range annoDto.Annotations.List {
 		// skip annotations that are not enabled or are not a grafana datasource
-		if !anno.Enable || (*anno.Datasource.Uid != grafanads.DatasourceUID && *anno.Datasource.Uid != grafanads.DatasourceName) {
+		if !anno.Enable || !isGrafanaAnnotationDatasource(anno.Datasource.Uid) {
 			continue
 		}
 		annoQuery := &annotations.ItemQuery{

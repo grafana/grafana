@@ -1852,6 +1852,7 @@ func TestIntegrationGetPublicDashboardForViewKeepsStoredSchema(t *testing.T) {
 			}
 
 			// queries are still sanitized on the v2 path
+			require.NotEmpty(t, result.Dashboard.Get("elements").MustMap())
 			for _, elem := range result.Dashboard.Get("elements").MustMap() {
 				for _, q := range simplejson.NewFromAny(elem).Get("spec").Get("data").Get("spec").Get("queries").MustArray() {
 					spec := simplejson.NewFromAny(q).Get("spec").Get("query").Get("spec")

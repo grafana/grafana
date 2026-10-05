@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dashboard2 "github.com/grafana/grafana/pkg/kinds/dashboard"
@@ -1530,4 +1531,144 @@ func TestIsDashboardV2(t *testing.T) {
 			assert.Equal(t, tt.expected, isDashboardV2(&dashboards.Dashboard{APIVersion: tt.apiVersion}))
 		})
 	}
+}
+
+func TestIntegrationFindAnnotationsV2(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	// v2beta1 keeps the datasource on the query; the v2alpha1 entry keeps it on the annotation spec.
+	const v2Annotations = `[
+		{"kind": "AnnotationQuery", "spec": {"name": "built-in", "enable": true, "iconColor": "red", "builtIn": true,
+			"query": {"kind": "DataQuery", "group": "grafana", "datasource": {"name": "-- Grafana --"},
+				"spec": {"limit": 100, "matchAny": false, "tags": [], "type": "dashboard"}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "tags", "enable": true, "iconColor": "blue",
+			"query": {"kind": "DataQuery", "group": "grafana", "datasource": {"name": "grafana"},
+				"spec": {"limit": 10, "matchAny": true, "tags": ["tag1"], "type": "tags"}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "alpha", "enable": true, "iconColor": "green",
+			"datasource": {"uid": "grafana", "type": "grafana"},
+			"query": {"kind": "grafana", "spec": {"limit": 5, "matchAny": false, "tags": ["tag2"], "type": "tags"}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "disabled", "enable": false, "iconColor": "red",
+			"query": {"kind": "DataQuery", "group": "grafana", "datasource": {"name": "grafana"}, "spec": {"type": "dashboard"}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "prometheus", "enable": true, "iconColor": "red",
+			"query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "prom"}, "spec": {"expr": "up", "limit": "not-a-number", "tags": "not-a-list"}}}},
+		{"kind": "AnnotationQuery", "spec": {"name": "no datasource", "enable": true, "iconColor": "red",
+			"query": {"kind": "DataQuery", "spec": {}}}}
+	]`
+
+	newV2Dashboard := func(t *testing.T, annotations string) *dashboards.Dashboard {
+		t.Helper()
+		data, err := simplejson.NewJson([]byte(`{"title": "v2", "elements": {}, "timeSettings": {"from": "now-6h", "to": "now"}, "annotations": ` + annotations + `}`))
+		require.NoError(t, err)
+		return &dashboards.Dashboard{ID: 1, UID: "v2dash", OrgID: 1, Data: data, APIVersion: "v2beta1"}
+	}
+
+	newService := func(t *testing.T, dash *dashboards.Dashboard) (*PublicDashboardServiceImpl, *annotations.FakeAnnotationsRepo) {
+		t.Helper()
+		pubdash := &models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dash.UID, AnnotationsEnabled: true, TimeSelectionEnabled: true}
+		fakeStore := &publicdashboards.FakePublicDashboardStore{}
+		fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(pubdash, nil)
+		fakeDashboardService := &dashboards.FakeDashboardService{}
+		fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil)
+		annotationsRepo := &annotations.FakeAnnotationsRepo{}
+		service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, annotationsRepo)
+		return service, annotationsRepo
+	}
+
+	t.Run("queries only the enabled grafana annotations of a v2 dashboard", func(t *testing.T) {
+		service, annotationsRepo := newService(t, newV2Dashboard(t, v2Annotations))
+
+		annotationsRepo.On("Find", mock.Anything, mock.MatchedBy(func(q *annotations.ItemQuery) bool {
+			return q.DashboardUID == "v2dash" && q.Limit == 100 && len(q.Tags) == 0
+		})).Return([]*annotations.ItemDTO{{ID: 1, DashboardID: 1, PanelID: 7, Time: 2, TimeEnd: 2, Text: "dashboard"}}, nil).Once()
+		annotationsRepo.On("Find", mock.Anything, mock.MatchedBy(func(q *annotations.ItemQuery) bool {
+			return q.DashboardUID == "" && q.Limit == 10 && q.MatchAny && len(q.Tags) == 1 && q.Tags[0] == "tag1"
+		})).Return([]*annotations.ItemDTO{{ID: 2, DashboardID: 1, PanelID: 7, Time: 3, TimeEnd: 3, Text: "tags"}}, nil).Once()
+		annotationsRepo.On("Find", mock.Anything, mock.MatchedBy(func(q *annotations.ItemQuery) bool {
+			return q.DashboardUID == "" && q.Limit == 5 && len(q.Tags) == 1 && q.Tags[0] == "tag2"
+		})).Return([]*annotations.ItemDTO{{ID: 3, DashboardID: 1, PanelID: 7, Time: 4, TimeEnd: 4, Text: "alpha"}}, nil).Once()
+
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{From: 1, To: 2}, "abc123")
+		require.NoError(t, err)
+		annotationsRepo.AssertExpectations(t)
+		require.Len(t, items, 3)
+
+		byID := map[int64]models.AnnotationEvent{}
+		for _, item := range items {
+			byID[item.Id] = item
+		}
+		// the built-in query is a dashboard query, so its events keep the panel they belong to
+		assert.Equal(t, int64(7), byID[1].PanelId)
+		assert.Equal(t, "red", byID[1].Color)
+		assert.Equal(t, "dashboard", *byID[1].Source.Type)
+		assert.Equal(t, float64(1), *byID[1].Source.BuiltIn)
+		assert.Equal(t, "-- Grafana --", *byID[1].Source.Datasource.Uid)
+		assert.Equal(t, "grafana", *byID[1].Source.Datasource.Type)
+		// tag queries apply to every panel
+		assert.Equal(t, int64(0), byID[2].PanelId)
+		assert.Equal(t, "blue", byID[2].Color)
+		assert.Equal(t, "tags", byID[2].Source.Target.Type)
+		assert.Equal(t, int64(0), byID[3].PanelId)
+		assert.Equal(t, "grafana", *byID[3].Source.Datasource.Uid)
+		assert.Equal(t, "grafana", *byID[3].Source.Datasource.Type)
+	})
+
+	t.Run("returns no events for a v2 dashboard without annotations", func(t *testing.T) {
+		service, annotationsRepo := newService(t, newV2Dashboard(t, `[]`))
+
+		items, err := service.FindAnnotations(context.Background(), models.AnnotationsQueryDTO{From: 1, To: 2}, "abc123")
+		require.NoError(t, err)
+		assert.Empty(t, items)
+		annotationsRepo.AssertNotCalled(t, "Find", mock.Anything, mock.Anything)
+	})
+}
+
+func TestIntegrationGetQueryDataResponseV2(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	data, err := simplejson.NewJson([]byte(`{
+		"title": "v2",
+		"timeSettings": {"from": "now-6h", "to": "now", "timezone": "utc"},
+		"elements": {
+			"panel-1": {"kind": "Panel", "spec": {"id": 1, "title": "panel-1", "data": {"kind": "QueryGroup", "spec": {"queries": [
+				{"kind": "PanelQuery", "spec": {"refId": "A", "hidden": false, "query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "prom"}, "spec": {"expr": "up", "refId": "A"}}}},
+				{"kind": "PanelQuery", "spec": {"refId": "B", "hidden": true, "query": {"kind": "DataQuery", "group": "prometheus", "datasource": {"name": "prom"}, "spec": {"expr": "down", "refId": "B"}}}}
+			]}}}}
+		},
+		"layout": {"kind": "GridLayout", "spec": {"items": [
+			{"kind": "GridLayoutItem", "spec": {"x": 0, "y": 0, "width": 12, "height": 8, "element": {"kind": "ElementReference", "name": "panel-1"}}}
+		]}}
+	}`))
+	require.NoError(t, err)
+	dashboard := &dashboards.Dashboard{UID: "v2dash", OrgID: 1, Data: data, APIVersion: "v2beta1"}
+
+	fakeStore := &publicdashboards.FakePublicDashboardStore{}
+	fakeStore.On("FindByAccessToken", mock.Anything, mock.AnythingOfType("string")).Return(
+		&models.PublicDashboard{Uid: "uid1", IsEnabled: true, OrgId: 1, DashboardUid: dashboard.UID}, nil,
+	)
+	fakeDashboardService := &dashboards.FakeDashboardService{}
+	fakeDashboardService.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
+	service, _, _ := newPublicDashboardServiceImpl(t, nil, nil, fakeStore, fakeDashboardService, nil)
+
+	fakeQueryService := &query.FakeQueryService{}
+	fakeQueryService.On("QueryData", mock.Anything, mock.Anything, mock.Anything, mock.MatchedBy(func(req dtos.MetricRequest) bool {
+		if len(req.Queries) != 1 || req.From == "" || req.To == "" {
+			return false
+		}
+		q := req.Queries[0]
+		return q.Get("refId").MustString() == "A" &&
+			q.Get("expr").MustString() == "up" &&
+			q.Get("datasource").Get("uid").MustString() == "prom" &&
+			q.Get("datasource").Get("type").MustString() == "prometheus" &&
+			q.Get("intervalMs").MustInt64() > 0 &&
+			q.Get("maxDataPoints").MustInt64() > 0
+	})).Return(&backend.QueryDataResponse{}, nil).Once()
+	service.QueryDataService = fakeQueryService
+
+	resp, err := service.GetQueryDataResponse(context.Background(), true, models.PublicDashboardQueryDTO{IntervalMs: 1000, MaxDataPoints: 100}, 1, "abc123")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	fakeQueryService.AssertExpectations(t)
+
+	_, err = service.GetQueryDataResponse(context.Background(), true, models.PublicDashboardQueryDTO{IntervalMs: 1000, MaxDataPoints: 100}, 99, "abc123")
+	require.ErrorIs(t, err, models.ErrPanelNotFound)
 }

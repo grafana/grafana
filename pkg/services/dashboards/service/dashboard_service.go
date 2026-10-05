@@ -1800,12 +1800,14 @@ func (dr *DashboardServiceImpl) getDashboardThroughK8s(ctx context.Context, quer
 }
 
 // reloadInStoredAPIVersion re-reads a dashboard in the API version it was stored with when the first read
-// returned it successfully converted to a different version. Failed conversions are left alone because
-// UnstructuredToLegacyDashboard already falls back to the stored payload for those.
+// returned it successfully converted from a v2 or later version. Dashboards stored as v0 or v1 are not
+// re-read: those versions share the panels schema and convert without loss, so a second read would only
+// cost a round trip. Failed conversions are left alone because UnstructuredToLegacyDashboard already
+// falls back to the stored payload for those.
 func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, query *dashboards.GetDashboardQuery, out *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	failed, storedVersion, _ := dashboardclient.GetConversionStatus(out)
 	gv, _ := schema.ParseGroupVersion(out.GetAPIVersion())
-	if failed || storedVersion == "" || storedVersion == gv.Version {
+	if failed || storedVersion == "" || storedVersion == gv.Version || !isV2OrLaterAPIVersion(storedVersion) {
 		return out, nil
 	}
 
@@ -1819,7 +1821,16 @@ func (dr *DashboardServiceImpl) reloadInStoredAPIVersion(ctx context.Context, qu
 	if err != nil || stored == nil {
 		return nil, dashboards.ErrDashboardNotFound
 	}
+	if storedGV, _ := schema.ParseGroupVersion(stored.GetAPIVersion()); storedGV.Version != storedVersion {
+		dr.log.Warn("Dashboard could not be read in its stored API version, returning the converted payload", "uid", query.UID, "orgId", query.OrgID, "storedVersion", storedVersion, "returnedVersion", storedGV.Version)
+	}
 	return stored, nil
+}
+
+// isV2OrLaterAPIVersion reports whether a dashboard API version (e.g. v2beta1) uses the v2 schema.
+// v0 and v1 versions use the panels schema.
+func isV2OrLaterAPIVersion(version string) bool {
+	return version != "" && !strings.HasPrefix(version, "v0") && !strings.HasPrefix(version, "v1")
 }
 
 func (dr *DashboardServiceImpl) saveProvisionedDashboardThroughK8s(ctx context.Context, cmd *dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning, unprovision bool) (*dashboards.Dashboard, error) {
