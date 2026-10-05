@@ -202,7 +202,7 @@ type staleType struct {
 // per-resource index, which is rebuilt when its build time is before the last
 // import.
 func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]staleType, error) {
-	recorded, err := idx.ImportTimes()
+	recorded, err := idx.CompletedTypeBuilds()
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 		if err != nil {
 			return nil, err
 		}
-		if recordedAt, held := recorded[gr]; held && !importedAt.After(recordedAt) {
+		if build, held := recorded[gr]; held && !importedAt.After(build.StorageImportTime) {
 			continue
 		}
 		stale = append(stale, staleType{src: src, importedAt: importedAt})
@@ -286,7 +286,7 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 		if res.Failed > 0 {
 			s.log.Warn("some objects of a rebuilt resource type could not be indexed", "namespace", key.Namespace, "resource", p.src.GroupResource(), "failed", res.Failed)
 		}
-		if err := idx.RecordImportTime(groupResourceOf(p.src), p.importedAt); err != nil {
+		if err := idx.RecordCompletedTypeBuild(groupResourceOf(p.src), TypeBuild{StorageImportTime: p.importedAt}); err != nil {
 			return err
 		}
 	}
