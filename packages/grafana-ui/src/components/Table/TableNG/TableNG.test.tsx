@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -31,8 +31,8 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 // this the grid renders no rows at all.
 beforeAll(() => {
   mockClientSize({ width: 800, height: 600 });
-  // Keep outer and inner widths consistent now that scrollbar space is measured during layout.
-  jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(800);
+  // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 // Shared helpers for test data frame construction
