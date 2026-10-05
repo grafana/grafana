@@ -2392,11 +2392,6 @@
       "count": 4
     }
   },
-  "public/app/features/inspector/InspectDataTab.tsx": {
-    "react-prefer-function-component/react-prefer-function-component": {
-      "count": 1
-    }
-  },
   "public/app/features/inspector/QueryInspector.tsx": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
