@@ -10780,7 +10780,10 @@
         "remove-all": "Remove all displayed values from the filter",
         "select-all": "Select all",
         "selected": "{{ numSelected }} selected",
-        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)"
+        "selected-some-hidden": "{{ numSelected }} selected ({{ numHidden }} hidden)",
+        "cancel": "Cancel",
+        "clear": "Clear filter",
+        "unsupported": "This filter cannot be edited here. Clear it to create a new filter."
       },
       "filter-placeholder": "Filter values",
       "filter-popup-apply": "Ok",
@@ -17447,7 +17450,12 @@
       "label-value-field-name": "Value field name",
       "modes": {
         "label": {
-          "columns": "Columns",
+      "columns": "Columns",
+      "view": {
+        "clear": "Clear filters ({{total}})",
+        "error": "Unable to apply this table view.",
+        "reset": "Reset view"
+      },
           "rows": "Rows"
         }
       },

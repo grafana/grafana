@@ -2,12 +2,13 @@ import { isEqual } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { type DataFrame, type Field } from '../../types/dataFrame';
+import { type DataFrame, type Field, FieldType } from '../../types/dataFrame';
 import {
   type DataTransformerConfig,
   type SynchronousDataTransformerInfo,
   type MatcherConfig,
 } from '../../types/transformations';
+import { getFrameIdentity, getRowIdentity } from '../frameIdentity';
 import { getValueMatcher } from '../matchers';
 
 import { DataTransformerID } from './ids';
@@ -34,6 +35,11 @@ export interface FilterByValueTransformerOptions {
   type: FilterByValueType;
   match: FilterByValueMatch;
   missingField?: 'ignore';
+  target?: {
+    frameKey: string;
+    parentIndex?: number;
+    parentKey?: string;
+  };
 }
 
 export interface FilterByValueConfig extends DataTransformerConfig<FilterByValueTransformerOptions> {
@@ -54,7 +60,35 @@ export const filterByValueTransformer: SynchronousDataTransformerInfo<FilterByVa
     if (!Array.isArray(options.filters) || options.filters.length === 0) {
       return data;
     }
-    return data.map((frame) => filterFrame(frame, options, data));
+    return data.map((frame, index) => {
+      const target = options.target;
+      if (target && getFrameIdentity(data, index) !== target.frameKey) {
+        return frame;
+      }
+      if (target?.parentIndex != null) {
+        const parentIndex = target.parentIndex;
+        if (
+          parentIndex >= frame.length ||
+          (target.parentKey != null && getRowIdentity(frame, parentIndex) !== target.parentKey)
+        ) {
+          return frame;
+        }
+        return {
+          ...frame,
+          fields: frame.fields.map((field) =>
+            field.type !== FieldType.nestedFrames
+              ? field
+              : {
+                  ...field,
+                  values: field.values.map((children: DataFrame[] | undefined, index: number) =>
+                    index === parentIndex ? children?.map((child) => filterFrame(child, options, children)) : children
+                  ),
+                }
+          ),
+        };
+      }
+      return filterFrame(frame, options, data);
+    });
   },
 };
 
