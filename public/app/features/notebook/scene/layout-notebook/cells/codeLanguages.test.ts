@@ -1,4 +1,4 @@
-import { type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { CODE_MIRROR_LANGUAGES } from '@grafana/ui/unstable';
 
 import {
   canonicalLanguage,
@@ -9,9 +9,7 @@ import {
   toCodeMirrorLanguage,
 } from './codeLanguages';
 
-// Every language the editor supports. Adding one to CodeMirrorEditorLanguage without adding it here
-// leaves this list short, so the exhaustiveness assertion below is what actually keeps them in step.
-const HIGHLIGHTED: CodeMirrorEditorLanguage[] = ['go', 'html', 'json', 'markdown', 'sql', 'typescript', 'xml', 'yaml'];
+const HIGHLIGHTED = Object.keys(CODE_MIRROR_LANGUAGES);
 
 /** Offered by the picker, but deliberately not highlighted. */
 const UNHIGHLIGHTED = ['promql', 'logql'];
@@ -80,6 +78,7 @@ describe('codeLanguageLabel', () => {
   it('uses a display name for a highlighted language', () => {
     expect(codeLanguageLabel('sql')).toBe('SQL');
     expect(codeLanguageLabel('typescript')).toBe('TypeScript');
+    expect(codeLanguageLabel('ini')).toBe('INI');
   });
 
   it('uses a display name for an offered language that is not highlighted', () => {

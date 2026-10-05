@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Benutzerdefinierten Namensraum auswählen",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "Namensraum auswählen",
       "aria-label-select-query-type": "Abfragetyp auswählen",
       "aria-label-select-region": "Region auswählen",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "Ressourcengruppe auswählen",
       "aria-label-select-subscription": "Abonnement auswählen",
       "label-custom-namespace": "Benutzerdefinierter Namensraum",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "Namensraum",
       "label-query-type": "Abfragetyp",
       "label-region": "Region",

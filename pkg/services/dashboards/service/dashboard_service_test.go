@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"reflect"
 	"slices"
 	"testing"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -35,7 +38,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -67,7 +70,6 @@ func TestDashboardServiceValidation(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          foldertest.NewFakeService(),
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 	}
 
@@ -770,7 +772,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		folderPermissions: folderPermService,
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
 				UID: "general",
 			},
 		},
@@ -784,7 +785,6 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 		OrgID: 1,
 	}
 
-	service.features = featuremgmt.WithFeatures()
 	folder, err := service.SaveFolderForProvisionedDashboards(context.Background(), cmd, "")
 	require.NoError(t, err)
 	require.NotNil(t, folder)
@@ -792,18 +792,60 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 	folderPermService.AssertNumberOfCalls(t, "SetPermissions", 0)
 }
 
+func TestSetDefaultPermissionsUsesIAMStartupResourcePermissionsAPI(t *testing.T) {
+	f := ini.Empty()
+	f.Section("rbac").Key("resources_with_managed_permissions_on_creation").SetValue("dashboard")
+	cfg, err := setting.NewCfgFromINIFile(f)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name       string
+		apiEnabled bool
+		wantLegacy bool
+	}{
+		{name: "legacy permissions when API is unavailable", wantLegacy: true},
+		{name: "App Platform permissions when API is available", apiEnabled: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			permissions := acmock.NewMockedPermissionsService()
+			permissions.On("SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
+
+			service := &DashboardServiceImpl{
+				cfg:                       cfg,
+				log:                       log.NewNopLogger(),
+				iamFeatures:               iamapi.Features{ResourcePermissionsAPI: tt.apiEnabled},
+				dashboardPermissionsReady: make(chan struct{}),
+				acService:                 &actest.FakeService{},
+			}
+			service.RegisterDashboardPermissions(permissions)
+
+			service.SetDefaultPermissions(
+				context.Background(),
+				&dashboards.SaveDashboardDTO{OrgID: 1, User: &user.SignedInUser{IsAnonymous: true}},
+				&dashboards.Dashboard{UID: "dashboard-uid"},
+				false,
+			)
+
+			if tt.wantLegacy {
+				permissions.AssertCalled(t, "SetPermissions", mock.Anything, int64(1), "dashboard-uid", mock.Anything)
+			} else {
+				permissions.AssertNotCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+			}
+		})
+	}
+}
+
 func TestSaveProvisionedDashboard(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{
-				ID:  0,
+				ID:  0, //nolint:staticcheck // Exercise legacy field compatibility.
 				UID: "general",
 			},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		log:      log.NewNopLogger(),
-		features: featuremgmt.WithFeatures(),
+		ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
+		log: log.NewNopLogger(),
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -848,8 +890,7 @@ func TestSaveDashboard(t *testing.T) {
 		folderService: &foldertest.FakeService{
 			ExpectedFolder: &folder.Folder{},
 		},
-		ac:       actest.FakeAccessControl{ExpectedEvaluate: true},
-		features: featuremgmt.WithFeatures(),
+		ac: actest.FakeAccessControl{ExpectedEvaluate: true},
 	}
 
 	query := &dashboards.SaveDashboardDTO{
@@ -1061,7 +1102,6 @@ func TestSearchDashboards(t *testing.T) {
 	fakeFolders.ExpectedFolders = []*folder.Folder{fakeFolders.ExpectedFolder}
 	service := &DashboardServiceImpl{
 		cfg:           setting.NewCfg(),
-		features:      featuremgmt.WithFeatures(),
 		folderService: fakeFolders,
 		metrics:       newDashboardsMetrics(prometheus.NewRegistry()),
 	}
@@ -1574,6 +1614,41 @@ func TestQuotaCount(t *testing.T) {
 	require.Equal(t, c, int64(3))
 }
 
+func TestQuotaCountCanceled(t *testing.T) {
+	for name, failure := range map[string]error{
+		"canceled":         context.Canceled,
+		"wrapped canceled": fmt.Errorf("get stats: %w", context.Canceled),
+	} {
+		t.Run(name, func(t *testing.T) {
+			service := &DashboardServiceImpl{
+				orgService: &orgtest.FakeOrgService{ExpectedOrgs: []*org.OrgDTO{{ID: 1}}},
+			}
+			ctx, k8sCliMock := setupK8sDashboardTests(service)
+			k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(nil, failure).Once()
+
+			_, err := service.Count(ctx, &quota.ScopeParameters{OrgID: 1})
+
+			require.ErrorIs(t, err, context.Canceled)
+			require.Same(t, failure, err)
+			require.Equal(t, 499, response.ErrOrFallback(http.StatusInternalServerError, "failed to get quota", err).Status())
+			k8sCliMock.AssertExpectations(t)
+		})
+	}
+}
+
+func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
+	service := &DashboardServiceImpl{}
+	ctx, k8sCliMock := setupK8sDashboardTests(service)
+	failure := resource.NewServiceUnavailableError("stats unavailable")
+	k8sCliMock.On("GetStats", mock.Anything, int64(1)).Return(&resourcepb.ResourceStatsResponse{Error: failure}, nil).Once()
+
+	count, err := service.CountDashboardsInOrg(ctx, 1)
+
+	require.Zero(t, count)
+	require.Equal(t, resource.StatusError(failure), err)
+	k8sCliMock.AssertExpectations(t)
+}
+
 func TestCountDashboardsInOrg(t *testing.T) {
 	service := &DashboardServiceImpl{
 		cfg: setting.NewCfg(),
@@ -1644,14 +1719,16 @@ func TestCountInFolders(t *testing.T) {
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("uses unspecified result format by default", func(t *testing.T) {
+	t.Run("uses field-value results with the requested response fields", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		fields := []string{resource.SEARCH_FIELD_TITLE}
 
-		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1}, fields)
 		require.NoError(t, err)
-		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		assert.Equal(t, fields, request.Fields)
 	})
 
 	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
@@ -1684,21 +1761,13 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId:                1,
-			Sort:                 sort.SortAlphaAsc,
-			UseFieldValueResults: true,
+			OrgId: 1,
+			Sort:  sort.SortAlphaAsc,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
-				slices.Equal(req.Fields, []string{
-					resource.SEARCH_FIELD_TITLE,
-					resource.SEARCH_FIELD_TAGS,
-					resource.SEARCH_FIELD_FOLDER,
-					resource.SEARCH_FIELD_DESCRIPTION,
-					resource.SEARCH_FIELD_LEGACY_ID,
-					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-				}) &&
+				slices.Equal(req.Fields, dashboardsearch.FieldValueIncludeFields) &&
 				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&
@@ -2039,15 +2108,12 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				ctx = identity.WithRequester(ctx, user)
 
 				// Setup mocks and service
-				features := featuremgmt.WithFeatures()
-
 				permService := acmock.NewMockedPermissionsService()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 				service := &DashboardServiceImpl{
 					cfg:                       setting.NewCfg(),
 					log:                       log.New("test-logger"),
-					features:                  features,
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
@@ -2140,7 +2206,7 @@ func TestCleanUpDashboard(t *testing.T) {
 		err := sqlStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			item := annotations.Item{
 				OrgID:       orgID,
-				DashboardID: 0,
+				DashboardID: 0, //nolint:staticcheck // Exercise legacy field compatibility.
 				Text:        "org annotation",
 				Epoch:       1,
 				Created:     1,
@@ -2328,8 +2394,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 
 			fakePublicDashboardService := publicdashboards.NewFakePublicDashboardServiceWrapper(t)
 			fakeOrgService := orgtest.NewOrgServiceFake()
-			features := featuremgmt.WithFeatures()
-
 			service := &DashboardServiceImpl{
 				cfg:                    setting.NewCfg(),
 				log:                    log.New("test.logger"),
@@ -2338,7 +2402,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 				orgService:             fakeOrgService,
 				serverLockService:      lockService,
 				kvstore:                kv,
-				features:               features,
 			}
 
 			ctx, k8sCliMock := setupK8sDashboardTests(service)
@@ -2372,7 +2435,6 @@ func TestIntegrationK8sDashboardCleanupJob(t *testing.T) {
 		service := &DashboardServiceImpl{
 			cfg:               cfg,
 			log:               log.New("test.logger"),
-			features:          featuremgmt.WithFeatures(),
 			serverLockService: lockService,
 		}
 
@@ -2426,7 +2488,6 @@ func TestGetDashboardsByLibraryPanelUID(t *testing.T) {
 		log:                    log.New("test.logger"),
 		folderService:          folderSvc,
 		ac:                     actest.FakeAccessControl{ExpectedEvaluate: true},
-		features:               featuremgmt.WithFeatures(),
 		publicDashboardService: fakePublicDashboardService,
 		k8sclient:              k8sCliMock,
 	}

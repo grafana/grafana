@@ -328,6 +328,8 @@ func (DashboardTransformationKind) OpenAPIModelName() string {
 type DashboardDataTransformerConfig struct {
 	// Unique identifier of transformer
 	Id string `json:"id"`
+	// Unique identifier of the instance of the transformer
+	RefId *string `json:"refId,omitempty"`
 	// Disabled transformations are skipped
 	Disabled *bool `json:"disabled,omitempty"`
 	// Optional frame matcher. When missing it will be applied to all results
@@ -1836,6 +1838,7 @@ func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardVariableSort"
 }
 
+// Source information for controls (e.g. variables or links)
 // +k8s:openapi-gen=true
 type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
 
@@ -2851,6 +2854,8 @@ func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1.DashboardTimeSettingsSpecWeekStart"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

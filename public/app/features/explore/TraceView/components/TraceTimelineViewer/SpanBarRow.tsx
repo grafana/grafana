@@ -23,6 +23,7 @@ import { DURATION, NONE, TAG } from '@grafana/o11y-ds-frontend';
 import { Icon, stylesFactory, Tooltip, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { autoColor } from '../Theme';
+import { SpanErrorIcon } from '../common/SpanErrorIcon';
 import { type SpanBarOptions } from '../settings/SpanBarSettings';
 import type TNil from '../types/TNil';
 import { SpanLinkType, type SpanLinkFunc } from '../types/links';
@@ -302,11 +303,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly
     }),
     errorIcon: css({
       label: 'errorIcon',
-      borderRadius: theme.shape.radius.md,
-      color: autoColor(theme, '#fff'),
-      fontSize: '0.6em',
       marginRight: '0.25rem',
-      padding: '1px',
     }),
     adaptiveTracesRestoredIconWrap: css({
       label: 'adaptiveTracesRestoredIconWrap',
@@ -547,15 +544,7 @@ export const SpanBarRow = memo((props: SpanBarRowProps) => {
   // stats as a sibling OUTSIDE the button (see below).
   const labelIdentity = (
     <>
-      {showErrorIcon && (
-        <Icon
-          name={'exclamation-circle'}
-          style={{
-            backgroundColor: span.errorIconColor ? autoColor(theme, span.errorIconColor) : autoColor(theme, '#db2828'),
-          }}
-          className={styles.errorIcon}
-        />
-      )}
+      {showErrorIcon && <SpanErrorIcon className={styles.errorIcon} />}
       {showServiceName && (
         <span
           className={cx(styles.svcName, {

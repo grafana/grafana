@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"gopkg.in/ini.v1"
 )
 
@@ -18,6 +19,7 @@ const (
 	defaultLoginMaxLifetime             = "30d"
 	defaultTokenRotationIntervalMinutes = 10
 	defaultOAuthRefreshLockMinWaitMs    = int64(1000)
+	defaultOAuthRefreshLockWaitBudgetMs = int64(5000)
 	defaultUserLastSeenUpdateInterval   = "15m"
 )
 
@@ -60,6 +62,17 @@ func readAdminSettings(iniFile *ini.File, cfg *Cfg) {
 		cfg.AdminEmail = cfg.AdminUser + "@localhost"
 	}
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
+
+	users := iniFile.Section("users")
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In(
+		string(identity.RoleViewer), []string{
+			string(identity.RoleNone),
+			string(identity.RoleViewer),
+			string(identity.RoleEditor),
+			string(identity.RoleAdmin),
+		})
 }
 
 func readSessionAuthSettings(iniFile *ini.File, cfg *Cfg) error {
@@ -95,6 +108,7 @@ func readOAuthAllowInsecureEmailLookup(iniFile *ini.File, cfg *Cfg) {
 
 func readOAuthRefreshLockSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.OAuthRefreshTokenServerLockMinWaitMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_min_wait_ms").MustInt64(defaultOAuthRefreshLockMinWaitMs)
+	cfg.OAuthRefreshTokenServerLockWaitBudgetMs = iniFile.Section("auth").Key("oauth_refresh_token_server_lock_wait_budget_ms").MustInt64(defaultOAuthRefreshLockWaitBudgetMs)
 }
 
 func readCookieSecuritySettings(iniFile *ini.File, cfg *Cfg) {

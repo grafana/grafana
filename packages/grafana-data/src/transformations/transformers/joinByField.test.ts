@@ -15,6 +15,7 @@ describe('JOIN Transformer', () => {
 
   describe('outer join', () => {
     const everySecondSeries = toDataFrame({
+      refId: 'A',
       name: 'even',
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
@@ -24,6 +25,7 @@ describe('JOIN Transformer', () => {
     });
 
     const everyOtherSecondSeries = toDataFrame({
+      refId: 'B',
       name: 'odd',
       fields: [
         { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
@@ -32,18 +34,20 @@ describe('JOIN Transformer', () => {
       ],
     });
 
-    it('joins by time field', async () => {
+    it('joins by time field with defined refId', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
           byField: 'time',
         },
+        refId: 'test',
       };
 
       await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(
         (received) => {
           const data = received[0];
           const filtered = data[0];
+          expect(filtered.refId).toBe('test');
           expect(filtered.fields).toMatchInlineSnapshot(`
             [
               {
@@ -134,7 +138,7 @@ describe('JOIN Transformer', () => {
       );
     });
 
-    it('joins by temperature field', async () => {
+    it('joins by temperature field with dynamic refId', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
         id: DataTransformerID.seriesToColumns,
         options: {
@@ -146,6 +150,7 @@ describe('JOIN Transformer', () => {
         (received) => {
           const data = received[0];
           const filtered = data[0];
+          expect(filtered.refId).toBe('joinByField-A-B');
           expect(filtered.fields).toMatchInlineSnapshot(`
             [
               {
@@ -607,6 +612,54 @@ describe('JOIN Transformer', () => {
         expect(data).toBeDefined();
         expect(data.length).toBeGreaterThanOrEqual(1);
         expect(data[0].length).toBe(0);
+      });
+    });
+  });
+
+  describe('static refId', () => {
+    const seriesA = toDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'temperature', type: FieldType.number, values: [10.3, 10.4] },
+      ],
+    });
+
+    const seriesB = toDataFrame({
+      refId: 'B',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 3000] },
+        { name: 'temperature', type: FieldType.number, values: [11.1, 11.3] },
+      ],
+    });
+
+    const staticCfg: DataTransformerConfig<JoinByFieldOptions> = {
+      id: DataTransformerID.seriesToColumns,
+      options: { byField: 'time', mode: JoinMode.outer },
+      refId: 'T-A',
+    };
+
+    it('keeps the static refId when the input shrinks from two frames to one', async () => {
+      await expect(transformDataFrame([staticCfg], [seriesA, seriesB])).toEmitValuesWith((received) => {
+        expect(received[0][0].refId).toBe('T-A');
+      });
+
+      // With one frame there is nothing to join, but a downstream byRefId filter is still
+      // pointed at the static name and has to keep matching.
+      await expect(transformDataFrame([staticCfg], [seriesA])).toEmitValuesWith((received) => {
+        expect(received[0]).toHaveLength(1);
+        expect(received[0][0].refId).toBe('T-A');
+      });
+    });
+
+    it('leaves the passthrough frame alone when no static refId is set', async () => {
+      const cfg: DataTransformerConfig<JoinByFieldOptions> = {
+        id: DataTransformerID.seriesToColumns,
+        options: { byField: 'time', mode: JoinMode.outer },
+      };
+
+      await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+        expect(received[0][0]).toBe(seriesA);
       });
     });
   });

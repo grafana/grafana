@@ -3252,7 +3252,8 @@ func schema_pkg_apis_dashboard_v2_DashboardPanelKindOrLibraryPanelKind(ref commo
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
+				Description: "Supported dashboard elements |* more element types in the future",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"PanelKind": {
 						SchemaProps: spec.SchemaProps{
@@ -4950,6 +4951,13 @@ func schema_pkg_apis_dashboard_v2_DashboardTransformationSpec(ref common.Referen
 				Description: "Transformations allow to manipulate data returned by a query before the system applies a visualization. Using transformations you can: rename fields, join time series data, perform mathematical operations across queries, use the output of one transformation as the input to another transformation, etc.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"refId": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Unique identifier of the instance of the transformer",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"disabled": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Disabled transformations are skipped",

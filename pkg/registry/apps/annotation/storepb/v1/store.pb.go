@@ -149,14 +149,17 @@ func (x *Annotation) GetDeletedAt() int64 {
 
 // AnnotationSpec contains the annotation specification fields
 type AnnotationSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
-	Time          int64                  `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
-	TimeEnd       *int64                 `protobuf:"varint,3,opt,name=time_end,json=timeEnd,proto3,oneof" json:"time_end,omitempty"`
-	DashboardUid  *string                `protobuf:"bytes,4,opt,name=dashboard_uid,json=dashboardUid,proto3,oneof" json:"dashboard_uid,omitempty"`
-	PanelId       *int64                 `protobuf:"varint,5,opt,name=panel_id,json=panelId,proto3,oneof" json:"panel_id,omitempty"`
-	Tags          []string               `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
-	Scopes        []string               `protobuf:"bytes,7,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Text  string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"`
+	Time  int64                  `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
+	// TimeEnd is optional, but the Grafana API will always normalize it to the
+	// same value as Time for point annotations, so in practice it is never omitted.
+	// Future versions of the proto may make this field explicitly required.
+	TimeEnd       *int64   `protobuf:"varint,3,opt,name=time_end,json=timeEnd,proto3,oneof" json:"time_end,omitempty"`
+	DashboardUid  *string  `protobuf:"bytes,4,opt,name=dashboard_uid,json=dashboardUid,proto3,oneof" json:"dashboard_uid,omitempty"`
+	PanelId       *int64   `protobuf:"varint,5,opt,name=panel_id,json=panelId,proto3,oneof" json:"panel_id,omitempty"`
+	Tags          []string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty"`
+	Scopes        []string `protobuf:"bytes,7,rep,name=scopes,proto3" json:"scopes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

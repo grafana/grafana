@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Component } from 'react';
-import { type default as uPlot, type AlignedData } from 'uplot';
+import { type default as uPlot } from 'uplot';
 
 import {
   type DataFrame,
@@ -103,7 +103,7 @@ function sameProps<T extends Record<string, unknown>>(
  */
 export interface GraphNGState {
   alignedFrame: DataFrame;
-  alignedData?: AlignedData;
+  alignedData?: React.ComponentProps<typeof UPlotChart>['data'];
   config?: UPlotConfigBuilder;
 }
 
@@ -121,7 +121,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
   constructor(props: GraphNGProps) {
     super(props);
     let state = this.prepState(props);
-    state.alignedData = state.config!.prepData!([state.alignedFrame]) as AlignedData;
+    state.alignedData = state.config!.prepData!([state.alignedFrame]);
     this.state = state;
     this.plotInstance = React.createRef();
   }
@@ -253,7 +253,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
           pluginLog('GraphNG', false, 'config recreated', newState.config);
         }
 
-        newState.alignedData = newState.config!.prepData!([newState.alignedFrame]) as AlignedData;
+        newState.alignedData = newState.config!.prepData!([newState.alignedFrame]);
 
         this.setState(newState);
       }
@@ -276,7 +276,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
             data={alignedData!}
             width={vizWidth}
             height={vizHeight}
-            plotRef={(u) => ((this.plotInstance as React.MutableRefObject<uPlot>).current = u)}
+            plotRef={(u) => (this.plotInstance.current = u)}
           >
             {children ? children(config, alignedFrame) : null}
           </UPlotChart>

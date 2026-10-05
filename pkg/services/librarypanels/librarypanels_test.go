@@ -491,7 +491,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		mockDashboardService := dashboards.NewFakeDashboardService(t)
 		mockFolderService := foldertest.NewFakeService()
 		mockFolder := &folder.Folder{
-			ID:        1,
+			ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 			UID:       "test-folder-uid",
 			Title:     "Test Folder",
 			URL:       "/dashboards/f/test-folder-uid/test-folder",
