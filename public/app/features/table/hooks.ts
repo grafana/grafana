@@ -21,6 +21,7 @@ import { type TableOptions } from '@grafana/schema';
 import { useAdHocTransformations, usePanelContext } from '@grafana/ui';
 import { getVisibleFields } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
+import { useStructureRev } from 'app/core/hooks/useStructureRev';
 
 import { decodeAdHocColumns, encodeColumnOrder, encodeHiddenColumns, frameFilterFor } from './adHocColumns';
 import { supportsColumnManagement } from './tableCapabilities';
@@ -29,6 +30,16 @@ import { getCellActions } from './utils';
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
 export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
+
+/** Scope runtime state to a query position and invalidate it when source structure changes. */
+export function useTableFrameScope(sourceSeries: readonly DataFrame[]) {
+  const frames = useMemo(() => [...sourceSeries], [sourceSeries]);
+  const structureRev = useStructureRev(frames);
+  return useCallback(
+    (frameIndex: number) => JSON.stringify([frames[frameIndex]?.refId, frameIndex, structureRev]),
+    [frames, structureRev]
+  );
+}
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached

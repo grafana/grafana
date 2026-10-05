@@ -8,7 +8,7 @@ import {
   type SynchronousDataTransformerInfo,
   type MatcherConfig,
 } from '../../types/transformations';
-import { getFrameIdentity, getRowIdentity } from '../frameIdentity';
+import { getRowIdentity } from '../frameIdentity';
 import { getValueMatcher } from '../matchers';
 
 import { DataTransformerID } from './ids';
@@ -36,7 +36,10 @@ export interface FilterByValueTransformerOptions {
   match: FilterByValueMatch;
   missingField?: 'ignore';
   target?: {
+    /** Opaque scope owned by the table; frame selection uses index and refId. */
     frameKey: string;
+    frameIndex?: number;
+    refId?: string;
     parentIndex?: number;
     parentKey?: string;
   };
@@ -62,7 +65,10 @@ export const filterByValueTransformer: SynchronousDataTransformerInfo<FilterByVa
     }
     return data.map((frame, index) => {
       const target = options.target;
-      if (target && getFrameIdentity(data, index) !== target.frameKey) {
+      if (
+        target &&
+        (index !== (target.frameIndex ?? 0) || (target.refId !== undefined && frame.refId !== target.refId))
+      ) {
         return frame;
       }
       if (target?.parentIndex != null) {

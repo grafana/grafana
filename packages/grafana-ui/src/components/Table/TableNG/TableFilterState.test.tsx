@@ -9,12 +9,7 @@ import {
   toDataFrame,
   type DataTransformerConfig,
 } from '@grafana/data';
-import {
-  FilterByValueMatch,
-  FilterByValueType,
-  getFrameIdentity,
-  type FilterByValueConfig,
-} from '@grafana/data/internal';
+import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
 import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 import { mockClientSize } from '@grafana/test-utils';
 
@@ -56,7 +51,7 @@ function setup() {
     },
     getSourceSeries: () => [data],
   };
-  const frameKey = getFrameIdentity([data], 0);
+  const frameKey = '[null,0,1]';
   const props = {
     data,
     width: 800,
@@ -100,6 +95,24 @@ it('updates one predicate without rewriting disabled, compound, other-frame or c
   expect(api.get('table')).toEqual([disabled, compound, elsewhere, organize]);
   act(() => result.current!.clearFilters());
   expect(api.get('table')).toEqual([disabled, elsewhere, organize]);
+});
+
+it('serializes frame position separately from the opaque scope and hides stale scopes', () => {
+  const { props, api } = setup();
+  const frameKey = '[null,1,7]';
+  props.rowTransformations = { ...props.rowTransformations, frameKey };
+  const scopedProps = { ...props, rowTransformations: { ...props.rowTransformations, frameIndex: 1 } };
+  const { result, rerender } = renderHook(useTableView, {
+    wrapper: ({ children }) => <TableViewProvider props={scopedProps}>{children}</TableViewProvider>,
+  });
+  act(() =>
+    result.current!.applyFilter(props.data.fields[0], { id: 'inSet', options: { mode: 'display', values: ['beta'] } })
+  );
+  expect(api.get('table')[0].options.target).toEqual({ frameKey, frameIndex: 1 });
+  expect(result.current!.getFilters(props.data.fields[0])).toHaveLength(1);
+  scopedProps.rowTransformations = { ...scopedProps.rowTransformations, frameKey: '[null,1,8]' };
+  rerender();
+  expect(result.current!.getFilters(props.data.fields[0])).toEqual([]);
 });
 
 it('restores checkbox controls from JSON and replaces an open draft only when its predicate changes', async () => {

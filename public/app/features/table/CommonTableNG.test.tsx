@@ -1,38 +1,40 @@
-import { OpenFeatureTestProvider } from '@openfeature/react-sdk';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
 
-import { createDataFrame, createTheme, FieldType } from '@grafana/data';
+import { applyFieldOverrides, createTheme, FieldType, toDataFrame } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { mockClientSize } from '@grafana/test-utils';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { CommonTableNG } from './CommonTableNG';
 
-beforeAll(() => {
-  mockClientSize({ width: 800, height: 600 });
-});
+beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+afterEach(() => setTestFlags({}));
 
-it.each([false, true])('gates JSON highlighting with new table features=%s', async (enabled) => {
+it.each([
+  [false, false, false],
+  [false, true, false],
+  [true, false, false],
+  [true, true, true],
+])('gates JSON highlighting with refresh=%s and newFeatures=%s', async (refresh, newFeatures, highlighted) => {
+  setTestFlags({ [FlagKeys.TableRefresh]: refresh, [FlagKeys.TableRefreshNewFeatures]: newFeatures });
   const theme = createTheme();
-  const data = createDataFrame({
-    fields: [
-      {
-        name: 'JSON',
-        type: FieldType.other,
-        values: [{ count: 42 }],
-        display: () => ({ text: '{"count":42}', numeric: NaN }),
-      },
-    ],
+  const [data] = applyFieldOverrides({
+    data: [toDataFrame({ fields: [{ name: 'metadata', type: FieldType.other, values: [{ region: 'west' }] }] })],
+    fieldConfig: { defaults: {}, overrides: [] },
+    theme,
+    replaceVariables: (value) => value,
+    timeZone: 'utc',
   });
   render(
-    <OpenFeatureTestProvider flagValueMap={{ [FlagKeys.TableRefreshNewFeatures]: enabled }}>
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <CommonTableNG data={data} width={800} height={400} />
-    </OpenFeatureTestProvider>
+    </OpenFeatureProvider>
   );
-  const cell = await screen.findByRole('gridcell', { name: /count/ });
-  expect(cell).toHaveTextContent('{ "count": 42 }');
-  if (enabled) {
-    expect(await screen.findByText('42')).toHaveStyle({ color: theme.components.codeEditor.number });
+  expect(await screen.findByRole('gridcell', { name: /west/ })).toHaveTextContent('"region": "west"');
+  if (highlighted) {
+    expect(await screen.findByText('"west"')).toHaveStyle({ color: theme.components.codeEditor.string });
   } else {
-    expect(cell.querySelector('span[style*="color"]')).not.toBeInTheDocument();
+    expect(screen.queryByText('"west"')).not.toBeInTheDocument();
   }
 });
