@@ -211,7 +211,7 @@ export function RichHistoryQueriesTab(props: RichHistoryQueriesTabProps) {
               tooltipAlwaysVisible={false}
               min={0}
               max={richHistorySettings.retentionPeriod}
-              value={timeFilter}
+              defaultValue={timeFilter}
               orientation="vertical"
               formatTooltipResult={mapNumbertoTimeInSlider}
               reverse={true}

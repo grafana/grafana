@@ -7,6 +7,14 @@ import { RangeSlider } from './RangeSlider';
 
 The `Range-slider` component is an input element where users can manipulate two values on a one-dimensional axis.
 
-`Range-slider` can be implemented in horizontal or vertical orientation. You can set the default starting values for the slider with the `value` prop.
+`Range-slider` can be implemented in horizontal or vertical orientation.
+
+Use `value` for a controlled slider and update it in `onChange`. Handle positions follow the supplied value, including external updates. If the parent does not update `value`, user interaction does not change the positions.
+
+Use `defaultValue` to set the initial positions of an uncontrolled slider. Later changes to `defaultValue` do not reset the positions. Use `onAfterChange` to handle completed interactions, such as applying a filter after dragging.
+
+## Migrating existing usage
+
+Previously, `value` set only the initial positions. Replace `value` with `defaultValue` to preserve that behavior. To control the slider, keep `value` and update it through `onChange`; `onAfterChange` alone does not keep a controlled slider's positions in sync during interaction. No separate `controlled` prop is required.
 
 <ArgTypes of={RangeSlider} />

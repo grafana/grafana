@@ -21,7 +21,7 @@ import { type RangeSliderProps } from './types';
 export const RangeSlider = ({
   min,
   max,
-  controlled = false,
+  defaultValue,
   ariaLabelForHandle,
   onChange,
   onAfterChange,
@@ -73,8 +73,8 @@ export const RangeSlider = ({
         min={min}
         max={max}
         step={step}
-        defaultValue={controlled ? undefined : value}
-        value={controlled ? value : undefined}
+        defaultValue={defaultValue}
+        value={value}
         range={true}
         onChange={handleChange}
         onChangeComplete={handleChangeComplete}

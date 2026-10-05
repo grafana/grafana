@@ -27,9 +27,10 @@ export interface SliderProps extends CommonSliderProps {
 }
 
 export interface RangeSliderProps extends CommonSliderProps {
-  /** Opt in to updating handle positions when value changes. */
-  controlled?: boolean;
+  /** Initial handle positions for an uncontrolled slider. */
+  defaultValue?: number[];
   ariaLabelForHandle?: string[];
+  /** Controlled handle positions. Update through onChange to allow interaction. */
   value?: number[];
   onChange?: (value: number[]) => void;
   onAfterChange?: (value?: number[]) => void;
