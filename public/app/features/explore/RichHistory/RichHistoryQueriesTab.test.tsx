@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line no-restricted-imports -- wildcard is used to spy on `useAsync`, not `useObservable`
 import * as reactUse from 'react-use';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -78,6 +79,23 @@ describe('RichHistoryQueriesTab', () => {
     fireEvent.change(input, { target: { value: '|=' } });
 
     expect(updateFiltersSpy).toHaveBeenCalledWith(expect.objectContaining({ search: '|=' }));
+  });
+
+  it('moves the history range handle and applies filter bounds only when the interaction completes', async () => {
+    const updateFilters = jest.fn();
+    const user = userEvent.setup();
+    setup({ updateFilters });
+    updateFilters.mockClear();
+    await user.tab();
+    const [minimumHandle] = screen.getAllByRole('slider');
+    expect(minimumHandle).toHaveAttribute('aria-valuenow', '0');
+    // The reversed vertical slider increments on ArrowDown; rc-slider requires legacy keyCode.
+    fireEvent.keyDown(minimumHandle, { key: 'ArrowDown', keyCode: 40 });
+    expect(minimumHandle).toHaveAttribute('aria-valuenow', '1');
+    expect(updateFilters).not.toHaveBeenCalled();
+    fireEvent.keyUp(minimumHandle, { key: 'ArrowDown', keyCode: 40 });
+    expect(updateFilters).toHaveBeenCalledTimes(1);
+    expect(updateFilters).toHaveBeenCalledWith({ from: 1, to: 30 });
   });
 
   it('should update the filter and get data once on mount, and update the filter when the it changes', async () => {
