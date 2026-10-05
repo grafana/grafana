@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -12,7 +12,7 @@ import { getIconForItem } from 'app/features/search/service/utils';
 import { Indent } from '../../../core/components/Indent/Indent';
 import { FolderRepo } from '../../../core/components/NestedFolderPicker/FolderRepo';
 import { canEditItemType } from '../permissions';
-import { useChildrenByParentUIDState } from '../state/hooks';
+import { useChildrenByParentUIDState, useFolderEditAccess } from '../state/hooks';
 import { type DashboardsTreeCellProps } from '../types';
 import { makeRowID } from '../utils/dashboards';
 
@@ -27,6 +27,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
   const styles = useStyles2(getStyles);
   const { item, level, isOpen } = data;
   const childrenByParentUID = useChildrenByParentUIDState();
+  const isReadOnlyFolder = useFolderEditAccess(item.kind === 'folder' ? item.uid : undefined) === false;
   // The tree only knows the browsed folder's permissions, which nested items inherit.
   const canEditItem = permissions ? canEditItemType(item.kind, permissions) : true;
 
@@ -94,7 +95,11 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
       )}
 
       <div className={styles.iconNameContainer}>
-        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
+        {isLoading ? (
+          <Spinner size={ICON_SIZE} />
+        ) : (
+          <Icon size={ICON_SIZE} name={iconName} className={isReadOnlyFolder ? styles.readOnly : undefined} />
+        )}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
@@ -108,7 +113,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
                 });
               }}
               href={item.url}
-              className={styles.link}
+              className={cx(styles.link, isReadOnlyFolder && styles.readOnly)}
             >
               {item.title}
             </Link>
@@ -153,6 +158,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       overflow: 'hidden',
+    }),
+    readOnly: css({
+      color: theme.colors.text.secondary,
     }),
     link: css({
       '&:hover': {

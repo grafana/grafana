@@ -6,11 +6,19 @@ import { isRootFolderUID } from '../../search/constants';
 import { type BrowseDashboardsState } from '../types';
 import { isNonSelectableVirtualFolder } from '../utils/dashboards';
 
-import { type fetchNextChildrenPage, type refetchChildren } from './actions';
+import { type fetchFolderEditAccess, type fetchNextChildrenPage, type refetchChildren } from './actions';
 import { ancestorsOf } from './utils';
 
 type FetchNextChildrenPageFulfilledAction = ReturnType<typeof fetchNextChildrenPage.fulfilled>;
 type RefetchChildrenFulfilledAction = ReturnType<typeof refetchChildren.fulfilled>;
+type FetchFolderEditAccessFulfilledAction = ReturnType<typeof fetchFolderEditAccess.fulfilled>;
+
+export function fetchFolderEditAccessFulfilled(
+  state: BrowseDashboardsState,
+  action: FetchFolderEditAccessFulfilledAction
+) {
+  Object.assign(state.folderEditAccess, action.payload);
+}
 
 export function refetchChildrenFulfilled(state: BrowseDashboardsState, action: RefetchChildrenFulfilledAction) {
   const { children, page, kind, lastPageOfKind } = action.payload;

@@ -136,6 +136,24 @@ export async function listFolders(
   });
 }
 
+/**
+ * Returns the subset of the given folder UIDs that the user can edit, using a single search request.
+ */
+export async function listEditableFolderUIDs(uids: string[]): Promise<string[]> {
+  if (uids.length === 0) {
+    return [];
+  }
+
+  const results = await getGrafanaSearcher().search({
+    kind: ['folder'],
+    uid: uids,
+    permission: 'edit',
+    limit: uids.length,
+  });
+
+  return results.view.map((item) => item.uid);
+}
+
 export async function listDashboards(parentUID?: string, page = 1, pageSize = PAGE_SIZE): Promise<DashboardViewItem[]> {
   const searcher = getGrafanaSearcher();
 

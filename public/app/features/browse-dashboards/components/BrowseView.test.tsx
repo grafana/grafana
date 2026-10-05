@@ -160,6 +160,7 @@ describe('browse-dashboards BrowseView', () => {
           rootItems: fullyLoadedViewItemCollection([folder]),
           childrenByParentUID: { 'same-uid': fullyLoadedViewItemCollection([dashboard]) },
           openFolders: { 'same-uid': true },
+          folderEditAccess: {},
           selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
         },
       },

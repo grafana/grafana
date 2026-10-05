@@ -77,6 +77,14 @@ export function starredFoldersEnabled(): boolean {
   );
 }
 
+// Edit access comes from the search API's permission filter, so it's only available on the app-platform folder API.
+export function folderEditAccessEnabled(): boolean {
+  return (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaBrowseDashboardsFolderEditAccess, false) &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.FoldersAppPlatformAPI, true)
+  );
+}
+
 // Construct folder URL and append orgId to it
 export function getFolderURL(uid: string) {
   const { orgId } = contextSrv.user;

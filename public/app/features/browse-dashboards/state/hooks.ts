@@ -101,6 +101,13 @@ export function useChildrenByParentUIDState() {
   return useSelector((wholeState: StoreState) => wholeState.browseDashboards.childrenByParentUID);
 }
 
+// Undefined when the folder has not been checked, e.g. while loading or when the feature is off
+export function useFolderEditAccess(folderUID: string | undefined): boolean | undefined {
+  return useSelector((wholeState: StoreState) =>
+    folderUID ? wholeState.browseDashboards.folderEditAccess[folderUID] : undefined
+  );
+}
+
 export function useActionSelectionState() {
   return useSelector((state) => selectedItemsForActionsSelector(state));
 }

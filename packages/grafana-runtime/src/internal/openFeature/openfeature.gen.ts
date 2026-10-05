@@ -90,6 +90,8 @@ export const FlagKeys = {
   FoldersAppPlatformAPI: "foldersAppPlatformAPI",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GlobalDashboardVariables: "globalDashboardVariables",
+  /** Dims folders the user cannot edit in the browse dashboards view */
+  GrafanaBrowseDashboardsFolderEditAccess: "grafana.browseDashboardsFolderEditAccess",
   /** Uses the hybrid (lexical + semantic) search endpoint as the dashboard search backend in the command palette */
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
@@ -674,6 +676,17 @@ export const useFlagFoldersAppPlatformAPI = (options?: ReactFlagEvaluationOption
  */
 export const useFlagGlobalDashboardVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("globalDashboardVariables", false, options).value;
+};
+
+/**
+ * Dims folders the user cannot edit in the browse dashboards view
+ *
+ * **Details:**
+ * - flag key: `grafana.browseDashboardsFolderEditAccess`
+ * - default value: `false`
+ */
+export const useFlagGrafanaBrowseDashboardsFolderEditAccess = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.browseDashboardsFolderEditAccess", false, options).value;
 };
 
 /**

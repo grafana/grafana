@@ -2,15 +2,17 @@ import { createSlice } from '@reduxjs/toolkit';
 
 import { type BrowseDashboardsState } from '../types';
 
-import { fetchNextChildrenPage, refetchChildren } from './actions';
+import { fetchFolderEditAccess, fetchNextChildrenPage, refetchChildren } from './actions';
 import * as allReducers from './reducers';
 
-const { fetchNextChildrenPageFulfilled, refetchChildrenFulfilled, ...baseReducers } = allReducers;
+const { fetchNextChildrenPageFulfilled, refetchChildrenFulfilled, fetchFolderEditAccessFulfilled, ...baseReducers } =
+  allReducers;
 
 const initialState: BrowseDashboardsState = {
   rootItems: undefined,
   childrenByParentUID: {},
   openFolders: {},
+  folderEditAccess: {},
   selectedItems: {
     dashboard: {},
     folder: {},
@@ -27,6 +29,7 @@ const browseDashboardsSlice = createSlice({
   extraReducers: (builder) => {
     builder.addCase(fetchNextChildrenPage.fulfilled, fetchNextChildrenPageFulfilled);
     builder.addCase(refetchChildren.fulfilled, refetchChildrenFulfilled);
+    builder.addCase(fetchFolderEditAccess.fulfilled, fetchFolderEditAccessFulfilled);
   },
 });
 

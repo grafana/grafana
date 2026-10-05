@@ -2385,6 +2385,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.browseDashboardsFolderEditAccess",
+        "resourceVersion": "1791205179578",
+        "creationTimestamp": "2026-10-05T12:59:39Z"
+      },
+      "spec": {
+        "description": "Dims folders the user cannot edit in the browse dashboards view",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.cmdkHybridSearch",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
