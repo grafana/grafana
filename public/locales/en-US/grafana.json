@@ -15214,8 +15214,7 @@
     },
     "query-group": {
       "add-query": "Add query",
-      "expression": "Expression",
-      "title-data-source-help": "Data source help"
+      "expression": "Expression"
     },
     "query-group-options-editor": {
       "collapsed-interval": "Interval = {{intervalDesc}}",
