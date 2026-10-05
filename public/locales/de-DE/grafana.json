@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Suchoptionen",
       "visualization-button-tooltip": "Suchoptionen"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Zurück zu den Abfragen"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-Ausdruck hinzufügen",
       "sql-cta-description": "Bevorzugen Sie SQL? Fügen Sie Ihren Abfragen stattdessen einen SQL-Ausdruck hinzu."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Wenn Sie alle Transformationen löschen, kehren Sie zum Hauptauswahlbildschirm zurück."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Weitere Transformation hinzufügen"
-      },
-      "confirmText-delete-all": "Alles löschen",
-      "delete-all-transformations": "Alle Transformationen löschen",
-      "title-delete-all-transformations": "Alle Transformationen löschen?",
-      "tooltip-clear-search": "Suche löschen",
-      "tooltip-close-picker": "Auswahl schließen"
     },
     "validation": {
       "invalid-dashboard-id": "Konnte keine gültige Grafana.com-ID finden",

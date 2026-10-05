@@ -34,8 +34,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
-2026-09-16,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-2026-09-16,reportingFooterSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-09-16,reportingHeaderSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
+2026-09-16,reportingFooterSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,sseExpressionErrorIsolation,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
@@ -294,7 +294,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
-2026-09-16,dashboard.recentlyDeletedViaTrash,experimental,@grafana/search-and-storage,false,false,true
+2026-09-16,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-09-16,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false

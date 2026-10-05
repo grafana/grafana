@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Keresési beállítások",
       "visualization-button-tooltip": "Keresési beállítások"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Vissza a lekérdezésekhez"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-kifejezés hozzáadása",
       "sql-cta-description": "Inkább SQL-t használna? Adjon hozzá egy SQL-kifejezést a lekérdezéseihez."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Ha minden transzformációt töröl, visszakerül a fő kiválasztási képernyőre."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Másik transzformáció hozzáadása"
-      },
-      "confirmText-delete-all": "Összes törlése",
-      "delete-all-transformations": "Összes transzformáció törlése",
-      "title-delete-all-transformations": "Törli az összes transzformációt?",
-      "tooltip-clear-search": "Keresés törlése",
-      "tooltip-close-picker": "Kiválasztó bezárása"
     },
     "validation": {
       "invalid-dashboard-id": "Nem található érvényes Grafana.com-azonosító",
