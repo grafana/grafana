@@ -25,7 +25,7 @@ describe('SingleValue', () => {
 
     expect(screen.getByText('checkout-service')).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy value to clipboard' })).toBeInTheDocument();
   });
 
   it('wraps the value in a single link when there is one link', () => {
@@ -36,7 +36,8 @@ describe('SingleValue', () => {
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveTextContent('checkout-service');
     expect(link.querySelector('svg')).toBeInTheDocument();
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy value to clipboard' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Open value in' })).not.toBeInTheDocument();
   });
 
   it('calls onLinkClick when the single link is clicked', async () => {

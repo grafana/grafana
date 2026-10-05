@@ -1,17 +1,7 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import {
-  memo,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   CoreApp,
@@ -397,12 +387,7 @@ const LogLineDetailsField = ({
         <div className={styles.value}>
           <div className={styles.valueContainer}>
             {singleValue ? (
-              <SingleValue
-                value={values[0]}
-                links={links}
-                prettifyJSON={prettifyJSON}
-                onLinkClick={reportLinkClick}
-              />
+              <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} onLinkClick={reportLinkClick} />
             ) : (
               <MultipleValue showCopy={true} values={values} links={links} onLinkClick={reportLinkClick} />
             )}
@@ -446,6 +431,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     justifyContent: 'space-between',
     paddingRight: 2,
+    marginTop: 2,
   }),
   statsIcon: css({
     margin: 0,

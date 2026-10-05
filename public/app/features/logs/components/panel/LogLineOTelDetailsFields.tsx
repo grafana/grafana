@@ -105,7 +105,7 @@ const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `fit-content(30%) 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(7) : theme.spacing(7.5)} fit-content(30%) 1fr`,
   }),
 });
 
@@ -137,7 +137,7 @@ const LogLineOTelDetailsField = ({
   const { app, isLabelFilterActive, noInteractions, onClickFilterLabel, onClickFilterOutLabel, prettifyJSON } =
     useLogListContext();
 
-  const styles = useStyles2(getFieldStyles, fontSize);
+  const styles = useStyles2(getFieldStyles);
 
   const getStats = useCallback(() => {
     if (isLabel) {
@@ -272,66 +272,55 @@ const LogLineOTelDetailsField = ({
   return (
     <>
       <div className={styles.row}>
+        {!disableActions && (
+          <div className={styles.actions}>
+            <div className={styles.actionIcons}>
+              {onClickFilterLabel && fieldSupportsFilters && (
+                <AsyncIconButton
+                  name="search-plus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
+                  onClick={filterLabel}
+                  // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
+                  isActive={labelFilterActive}
+                  tooltipSuffix={refIdTooltip}
+                />
+              )}
+              {onClickFilterOutLabel && fieldSupportsFilters && (
+                <IconButton
+                  name="search-minus"
+                  size={fontSize === 'small' ? 'sm' : undefined}
+                  tooltip={
+                    app === CoreApp.Explore && log.dataFrame?.refId
+                      ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
+                          query: log.dataFrame?.refId,
+                        })
+                      : t('logs.log-line-details.fields.filter-out', 'Filter out value')
+                  }
+                  onClick={filterOutLabel}
+                />
+              )}
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                size={fontSize === 'small' ? 'sm' : undefined}
+                tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
+                className={styles.statsIcon}
+                disabled={!singleKey}
+                onClick={showStats}
+              />
+            </div>
+          </div>
+        )}
         <div className={styles.label}>
           {singleKey ? getNormalizedFieldName(keys[0]) : <MultipleValue values={keys} />}
         </div>
         <div className={styles.value}>
           <div className={styles.valueContainer}>
-            <div className={styles.valueContent}>
-              {singleValue ? (
-                <SingleValue
-                  value={values[0]}
-                  links={links}
-                  prettifyJSON={prettifyJSON}
-                  onLinkClick={reportLinkClick}
-                />
-              ) : (
-                <MultipleValue values={values} links={links} />
-              )}
-              {!disableActions && (
-                <div className={styles.actions}>
-                  <div className={styles.actionIcons}>
-                    {onClickFilterLabel && fieldSupportsFilters && (
-                      <AsyncIconButton
-                        name="search-plus"
-                        size={fontSize === 'small' ? 'sm' : undefined}
-                        onClick={filterLabel}
-                        // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
-                        isActive={labelFilterActive}
-                        tooltipSuffix={refIdTooltip}
-                      />
-                    )}
-                    {onClickFilterOutLabel && fieldSupportsFilters && (
-                      <IconButton
-                        name="search-minus"
-                        size={fontSize === 'small' ? 'sm' : undefined}
-                        tooltip={
-                          app === CoreApp.Explore && log.dataFrame?.refId
-                            ? t(
-                                'logs.log-line-details.fields.filter-out-query',
-                                'Filter out value in query {{query}}',
-                                {
-                                  query: log.dataFrame?.refId,
-                                }
-                              )
-                            : t('logs.log-line-details.fields.filter-out', 'Filter out value')
-                        }
-                        onClick={filterOutLabel}
-                      />
-                    )}
-                    <IconButton
-                      variant={showFieldsStats ? 'primary' : 'secondary'}
-                      name="signal"
-                      size={fontSize === 'small' ? 'sm' : undefined}
-                      tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
-                      disabled={!singleKey}
-                      onClick={showStats}
-                    />
-                    <ClipboardButtonWrapper value={values[0]} />
-                  </div>
-                </div>
-              )}
-            </div>
+            {singleValue ? (
+              <SingleValue value={values[0]} links={links} prettifyJSON={prettifyJSON} onLinkClick={reportLinkClick} />
+            ) : (
+              <MultipleValue showCopy={true} values={values} links={links} onLinkClick={reportLinkClick} />
+            )}
           </div>
         </div>
       </div>
@@ -361,74 +350,59 @@ export function resolveAppFromLink(href: string): string | undefined {
   return href.match(/\/a\/([^/?#]+)/)?.[1];
 }
 
-const getFieldStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
-  const actions = css({
-    background: theme.colors.background.primary,
-    position: 'absolute',
-    top: 0,
-    right: 0,
+const getFieldStyles = (theme: GrafanaTheme2) => ({
+  row: css({
+    display: 'contents',
+  }),
+  actions: css({
     whiteSpace: 'nowrap',
-    visibility: 'hidden',
-  });
-
-  return {
-    row: css({
-      display: 'contents',
-      position: 'relative',
-    }),
-    actions,
-    actionIcons: css({
-      alignContent: 'center',
-      display: 'flex',
-      gap: theme.spacing(0.5),
-    }),
-    label: css({
-      color: theme.colors.text.secondary,
-      paddingRight: theme.spacing(1),
-      overflowWrap: 'break-word',
-      wordBreak: 'break-word',
-    }),
-    value: css({
-      position: 'relative',
-      minWidth: 0,
-      overflowWrap: 'break-word',
-      wordBreak: 'break-word',
-      [`&:hover .${actions}, &:focus-within .${actions}`]: {
+  }),
+  actionIcons: css({
+    display: 'flex',
+    justifyContent: 'space-between',
+    paddingRight: 2,
+    marginTop: 2,
+  }),
+  statsIcon: css({
+    margin: 0,
+    paddingRight: 4,
+  }),
+  label: css({
+    color: theme.colors.text.secondary,
+    paddingRight: theme.spacing(1),
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+  }),
+  value: css({
+    overflowWrap: 'break-word',
+    wordBreak: 'break-word',
+    'button:not([aria-haspopup])': {
+      visibility: 'hidden',
+    },
+    '&:hover': {
+      'button:not([aria-haspopup])': {
         visibility: 'visible',
       },
-    }),
-    link: css({
-      gridColumn: '2 / 4',
-    }),
-    linkNoActions: css({
-      gridColumn: 'span 2',
-      paddingBottom: theme.spacing(0.5),
-    }),
-    stats: css({
-      paddingRight: theme.spacing(1),
-      wordBreak: 'break-all',
-      width: '100%',
-      maxWidth: '50vh',
-    }),
-    statsColumn: css({
-      gridColumn: '2 / 4',
-    }),
-    valueContainer: css({
-      display: 'flex',
-      alignItems: 'flex-start',
-      width: '100%',
-      lineHeight: theme.typography.body.lineHeight,
-      whiteSpace: 'pre-wrap',
-      wordBreak: 'break-word',
-      maxHeight: '50vh',
-      overflow: 'auto',
-    }),
-    valueContent: css({
-      flex: 1,
-      minWidth: 0,
-    }),
-  };
-};
+    },
+  }),
+  stats: css({
+    paddingRight: theme.spacing(1),
+    wordBreak: 'break-all',
+    width: '100%',
+    maxWidth: '50vh',
+  }),
+  statsColumn: css({
+    gridColumn: '2 / 4',
+  }),
+  valueContainer: css({
+    display: 'flex',
+    lineHeight: theme.typography.body.lineHeight,
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
+    maxHeight: '50vh',
+    overflow: 'auto',
+  }),
+});
 
 const getValueLinkStyles = (theme: GrafanaTheme2) => ({
   linkValue: css({
@@ -483,7 +457,7 @@ const ClipboardButtonWrapper = ({ value }: { value: string }) => {
         fill="text"
         variant="secondary"
         icon="copy"
-        size="sm"
+        size="md"
       />
     </div>
   );
@@ -496,7 +470,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
       gap: 0,
       padding: 0,
       justifyContent: 'center',
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.circle,
       height: theme.spacing(theme.components.height.sm),
       width: theme.spacing(theme.components.height.sm),
       svg: {
@@ -513,7 +487,17 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({ links, values = [] }: { links?: LinkModelWithIcon[]; values: string[] }) => {
+export const MultipleValue = ({
+  links,
+  onLinkClick,
+  showCopy,
+  values = [],
+}: {
+  links?: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+  showCopy?: boolean;
+  values: string[];
+}) => {
   if (values.every((val) => val === '')) {
     return null;
   }
@@ -524,8 +508,11 @@ export const MultipleValue = ({ links, values = [] }: { links?: LinkModelWithIco
           return (
             <tr key={`${val}-${i}`}>
               <td>
-                <SingleValue value={val} links={links} />
+                <LinkedValue links={links} onLinkClick={onLinkClick}>
+                  {val}
+                </LinkedValue>
               </td>
+              <td>{showCopy && val !== '' && <ClipboardButtonWrapper value={val} />}</td>
             </tr>
           );
         })}
@@ -558,10 +545,29 @@ export const SingleValue = ({
     return originalValue;
   }, [originalValue, prettifyJSON]);
 
+  return (
+    <>
+      <LinkedValue links={links} onLinkClick={onLinkClick}>
+        {value}
+      </LinkedValue>
+      <ClipboardButtonWrapper value={value} />
+    </>
+  );
+};
+
+function LinkedValue({
+  children,
+  links,
+  onLinkClick,
+}: {
+  children: ReactNode;
+  links?: LinkModelWithIcon[];
+  onLinkClick?: (link: LinkModelWithIcon) => void;
+}) {
   if (links && links.length > 1) {
     return (
       <LinkValuesMenu links={links} onLinkClick={onLinkClick}>
-        {value}
+        {children}
       </LinkValuesMenu>
     );
   }
@@ -569,13 +575,13 @@ export const SingleValue = ({
   if (links?.length === 1) {
     return (
       <Link link={links[0]} onLinkClick={onLinkClick}>
-        {value}
+        {children}
       </Link>
     );
   }
 
-  return value;
-};
+  return children;
+}
 
 const Link = ({
   children,
