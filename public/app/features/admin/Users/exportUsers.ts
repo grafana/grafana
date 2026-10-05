@@ -2,13 +2,9 @@ import { saveAs } from 'file-saver';
 import Papa from 'papaparse';
 
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction, type Role } from 'app/types/accessControl';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
-import { getUsersSearchUrl, type UserSearchOptions } from './userSearch';
+import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './userSearch';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
 
@@ -32,24 +28,13 @@ export async function exportUsers({ scope, ...options }: UserExportOptions): Pro
   const perPage = 1000;
   let csv: string;
   if (scope === 'all') {
-    const users = await loadAllPages<UserDTO>((page) =>
-      getBackendSrv().get(getUsersSearchUrl({ ...options, page, perPage }))
-    );
+    const users = await loadAllPages((page) => getUsersPage({ ...options, page, perPage }));
     csv = usersToCsv(users);
   } else {
-    const orgId = contextSrv.user.orgId;
-    const includeRoles =
-      contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-    const users = await loadAllPages<OrgUser>(async (page) => {
-      const result = await getBackendSrv().get<{ orgUsers: OrgUser[]; totalCount: number }>(
-        '/api/org/users/search',
-        accessControlQueryParam({ perpage: perPage, page, query: options.query, sort: options.sort })
-      );
-      if (includeRoles && result.orgUsers.length > 0) {
-        const roles = await getBackendSrv().post<Record<number, Role[]>>(
-          '/api/access-control/users/roles/search?includeMapped=true',
-          { userIds: result.orgUsers.map((user) => user.userId), orgId }
-        );
+    const users = await loadAllPages(async (page) => {
+      const result = await getOrgUsers({ ...options, page, perPage });
+      if (canShowRoles() && result.orgUsers.length > 0) {
+        const roles = await getUserRoles(result.orgUsers.map((user) => user.userId));
         result.orgUsers.forEach((user) => {
           user.roles = roles?.[user.userId] ?? [];
         });

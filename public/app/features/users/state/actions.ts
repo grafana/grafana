@@ -2,9 +2,7 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { type FetchDataArgs } from '@grafana/ui';
-import { contextSrv } from 'app/core/services/context_srv';
-import { accessControlQueryParam } from 'app/core/utils/accessControl';
-import { AccessControlAction } from 'app/types/accessControl';
+import { canShowRoles, getOrgUsers, getUserRoles } from 'app/features/admin/Users/userSearch';
 import { type ThunkResult } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
 
@@ -24,30 +22,21 @@ export function loadUsers(): ThunkResult<void> {
     try {
       dispatch(usersFetchBegin());
       const { perPage, page, searchQuery, sort } = getState().users;
-      const users = await getBackendSrv().get(
-        `/api/org/users/search`,
-        accessControlQueryParam({ perpage: perPage, page, query: searchQuery, sort })
-      );
-
-      if (
-        contextSrv.licensedAccessControlEnabled() &&
-        contextSrv.hasPermission(AccessControlAction.ActionUserRolesList)
-      ) {
+      const users = await getOrgUsers({ perPage, page, query: searchQuery, sort });
+      if (canShowRoles() && users.orgUsers.length > 0) {
         dispatch(rolesFetchBegin());
-        const orgId = contextSrv.user.orgId;
-        const userIds = users?.orgUsers.map((u: OrgUser) => u.userId);
-        const roles = await getBackendSrv().post(`/api/access-control/users/roles/search?includeMapped=true`, {
-          userIds,
-          orgId,
-        });
-        users.orgUsers.forEach((u: OrgUser) => {
-          u.roles = roles ? roles[u.userId] || [] : [];
-        });
-        dispatch(rolesFetchEnd());
+        try {
+          const roles = await getUserRoles(users.orgUsers.map((user) => user.userId));
+          users.orgUsers.forEach((user) => {
+            user.roles = roles?.[user.userId] ?? [];
+          });
+        } finally {
+          dispatch(rolesFetchEnd());
+        }
       }
       dispatch(usersLoaded(users));
     } catch (error) {
-      usersFetchEnd();
+      dispatch(usersFetchEnd());
     }
   };
 }

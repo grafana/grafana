@@ -11,7 +11,7 @@ import { type LdapUser } from 'app/types/ldap';
 import { type ThunkResult } from 'app/types/store';
 import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
-import { getUsersSearchUrl } from '../Users/userSearch';
+import { getUsersPage } from '../Users/userSearch';
 
 import {
   userAdminPageLoadedAction,
@@ -283,8 +283,7 @@ export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
-      const url = getUsersSearchUrl({ perPage, page, query, filters, sort });
-      const result = await getBackendSrv().get(url);
+      const result = await getUsersPage({ perPage, page, query, filters, sort });
       dispatch(usersFetched(result));
     } catch (error) {
       usersFetchEnd();
