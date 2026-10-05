@@ -316,6 +316,12 @@ export const TooltipPlugin2 = ({
     config.addHook('init', (u) => {
       plotRef.current = _plot = u;
 
+      // uPlot caches the plot's page position and only refreshes it on scroll, resize and mouseenter. A layout
+      // shift without any of those (for example the filter bar growing a row after a click adds a filter) leaves
+      // it stale, and uPlot then reads the next click as a drag and swallows it. Refresh it before uPlot's own
+      // mousedown handler runs.
+      u.root.addEventListener('mousedown', () => u.syncRect(true), true);
+
       // detect shiftKey and mutate drag mode from x-only to y-only
       if (clientZoom) {
         u.over.addEventListener(
