@@ -151,7 +151,7 @@ func (f *fakeVectorBackend) SetLatestRV(context.Context, int64) error   { return
 func (f *fakeVectorBackend) TryAcquireReconcilerLock(context.Context) (func(), bool, error) {
 	return func() {}, true, nil
 }
-func (f *fakeVectorBackend) ListIncompleteBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
+func (f *fakeVectorBackend) ListBackfillJobs(context.Context, string) ([]vector.BackfillJob, error) {
 	return nil, nil
 }
 func (f *fakeVectorBackend) EnsureResourcePartition(context.Context, string) error { return nil }

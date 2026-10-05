@@ -154,6 +154,71 @@ func TestRunBackfill_NoIncompleteJobs_NoOp(t *testing.T) {
 	o.runBackfill(context.Background())
 	assert.Empty(t, vec.checkpoints)
 	assert.Empty(t, vec.completedJobIDs)
+	assert.Zero(t, testutil.CollectAndCount(o.metrics.BackfillJobComplete))
+}
+
+func TestBackfillJobCompletion_TracksPersistedRevision(t *testing.T) {
+	storage := newFakeStorage()
+	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{
+		ID: 1, Model: "test-model", Resource: "dashboards", ContentVersion: 1, IsComplete: true,
+	}}
+	b := newBackfillerWithBuilders(t, storage, vec, versionedBuilder{dashboard.New(), 2})
+
+	assertCompletion := func(version string, complete float64) {
+		t.Helper()
+		require.Equal(t, 1, testutil.CollectAndCount(b.metrics.BackfillJobComplete))
+		assert.Equal(t, complete, testutil.ToFloat64(b.metrics.BackfillJobComplete.WithLabelValues("dashboards", "test-model", version)))
+		require.Equal(t, 1, testutil.CollectAndCount(b.metrics.BackfillJobComplete), "old revisions must be removed")
+	}
+
+	b.runBackfill(t.Context())
+	assertCompletion("1", 1)
+	assert.Empty(t, storage.listCalls, "completed jobs are reported after restart without scanning again")
+	assert.Empty(t, vec.completedJobIDs)
+
+	vec.latestRV = 100
+	storage.listErr = errors.New("storage unavailable")
+	b.runBackfill(t.Context())
+	assertCompletion("2", 0)
+
+	storage.listErr = nil
+	vec.completeErr = errors.New("completion write failed")
+	b.runBackfill(t.Context())
+	assertCompletion("2", 0)
+
+	vec.completeErr = nil
+	b.runBackfill(t.Context())
+	assertCompletion("2", 1)
+	require.Equal(t, []int64{1}, vec.completedJobIDs)
+
+	vec.listJobsErr = errors.New("job state unavailable")
+	b.runBackfill(t.Context())
+	assert.Zero(t, testutil.CollectAndCount(b.metrics.BackfillJobComplete), "failed reads must not retain stale completion")
+
+	vec.listJobsErr = nil
+	b.runBackfill(t.Context())
+	assertCompletion("2", 1)
+
+	vec.jobs = nil
+	b.runBackfill(t.Context())
+	assert.Zero(t, testutil.CollectAndCount(b.metrics.BackfillJobComplete))
+}
+
+func TestBackfillJobCompletion_NoAvailableBuilders(t *testing.T) {
+	f := setupEnrollmentBackfillTest(t, []string{"folder.grafana.app/folders"}, nil)
+	f.vec.jobs = []vector.BackfillJob{
+		{ID: 1, Model: "test-model", Resource: "folders", ContentVersion: 1, IsComplete: true},
+		{ID: 2, Model: "test-model", Resource: "", ContentVersion: 1},
+	}
+
+	f.backfiller.runBackfill(t.Context())
+
+	m := f.backfiller.metrics.BackfillJobComplete
+	require.Equal(t, 2, testutil.CollectAndCount(m))
+	assert.Equal(t, float64(1), testutil.ToFloat64(m.WithLabelValues("folders", "test-model", "1")))
+	assert.Zero(t, testutil.ToFloat64(m.WithLabelValues("", "test-model", "1")))
+	assert.Empty(t, f.vec.completedJobIDs, "unavailable builders must not finish pending jobs")
 }
 
 func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
@@ -178,22 +243,22 @@ func TestRun_LockUnavailable_SkipsAllWork(t *testing.T) {
 
 func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
 	vec := newFakeVector()
+	vec.jobs = []vector.BackfillJob{{ID: 1, Model: "test-model", ContentVersion: 1, IsComplete: true}}
 	o := newBackfiller(t, newFakeStorage(), vec)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
 	go func() { done <- o.Run(ctx) }()
 
-	// Run loops on a ticker; wait for the lock, then stop it.
+	// Wait until the lock holder has published persisted state, then stop it.
 	require.Eventually(t, func() bool {
-		vec.mu.Lock()
-		defer vec.mu.Unlock()
-		return vec.lockAttempts == 1
+		return testutil.CollectAndCount(o.metrics.BackfillJobComplete) == 1
 	}, time.Second, time.Millisecond)
 	cancel()
 	require.ErrorIs(t, <-done, context.Canceled)
 
 	assert.Equal(t, 1, vec.lockReleases, "lock must be released when Run returns")
+	assert.Zero(t, testutil.CollectAndCount(o.metrics.BackfillJobComplete), "a stopped worker must not export job state")
 }
 
 // TestBackfill_ObservesItemDuration verifies the per-item histogram

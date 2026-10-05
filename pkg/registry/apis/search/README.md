@@ -434,9 +434,79 @@ deployment, these settings belong to the same Grafana process.
 After rollout, create or update a resource. The first write event processed by
 the reconciler initializes its vector collection and schedules a backfill of
 existing resources. Later writes keep embeddings up to date. Check generation
-and backfill metrics for your group/resource; an increase in
-`vector_storage_embed_skipped_versions_total` indicates that stored objects
-lack a matching API-version declaration.
+and backfill metrics as described below.
+
+### Monitor backfills
+
+Use the storage-api metrics to check completion and investigate skipped objects.
+Scope every query below to one deployment and vector database using your scrape
+labels. If a deployment uses several vector databases, keep their identifying
+labels in the aggregations and check each database separately.
+
+For folders at `reembedVersion: 1`, check:
+
+```promql
+max by (resource, model, reembed_version) (
+  grafana_vector_storage_backfill_job_complete{resource="folders", reembed_version="1"}
+)
+```
+
+Select the expected embedding model and re-embedding version. `1` means the
+persisted job's scan is complete; `0` means it is incomplete, including work
+waiting to run or retry. An older version's completed job does not confirm that
+the current version is complete. Missing data does not mean completion: the
+first resource write must create the job, and a backfiller must be running and
+successfully reading job state. New jobs are discovered between backfill runs;
+the default rescan interval is one minute.
+
+The `resource` label is the vector partition key (for example, `folders`), not
+`group/resource`. This metric covers all namespaces in that database and has no
+namespace or group label. Also inspect jobs with `resource=""` if present: these
+catch-all jobs cover all registered resources, independently of resource-specific
+jobs.
+
+Only the replica holding the backfill lock exports completion state. It reads
+persisted jobs, so completed state is restored after a restart. The series are
+cleared when the backfiller stops or cannot read job state. Use `max`, rather than
+`sum`, to combine replicas reporting the same database.
+
+To see resource processing attempts per second, broken down by outcome:
+
+```promql
+sum by (status) (
+  rate(grafana_vector_storage_backfill_item_duration_seconds_count{group="folder.grafana.app", resource="folders"}[5m])
+)
+```
+
+This counts resource attempts, not provider batches or embedding chunks; retries
+can count the same object again. A zero rate alone does not prove completion.
+Inspect `error` and `skipped_permanent_error` outcomes and the backfiller's error
+logs. Skips can also be expected: already embedded objects, identical content,
+empty embedding text, pending deletion, or objects updated since the scan.
+
+An increase in `grafana_vector_storage_embed_skipped_versions_total`, filtered
+by `group="folder.grafana.app", resource="folders"`, indicates that stored objects
+lack a matching API-version declaration. Its `version` label identifies the
+declaration to investigate. This counter includes both backfill and ongoing
+write processing.
+
+To see the number of stored embedding rows:
+
+```promql
+max by (resource, model) (
+  grafana_vector_storage_embeddings_stored{resource="folders"}
+)
+```
+
+This gauge is sampled by the reconciler lock holder and counts rows across all
+namespaces in the database. Chunked resources such as dashboards have multiple
+rows per object. It is neither a count of successfully backfilled objects nor a
+percentage complete; there is no total eligible-object count for that calculation.
+
+A completed scan can include skipped objects and permanent extraction failures.
+Check the outcome and skipped-version metrics alongside completion before
+concluding that all expected resources are searchable. Later writes continue to
+be processed by the reconciler after backfill finishes.
 
 ### Custom embedding builders
 

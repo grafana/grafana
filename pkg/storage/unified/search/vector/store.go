@@ -116,11 +116,10 @@ type VectorBackend interface {
 	// they don't contend with each other.
 	TryAcquireReconcilerLock(ctx context.Context) (release func(), acquired bool, err error)
 
-	// ListIncompleteBackfillJobs returns one row per active backfill job for
-	// the given model. Filtering server-side keeps instances configured for
-	// other embedder models from observing (and erroring on) jobs they don't
-	// own. Operators add rows via SQL migrations; the resource embedder drains them.
-	ListIncompleteBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error)
+	// ListBackfillJobs includes completed jobs so their persisted status can
+	// be reported after a restart. Filtering by model keeps instances from
+	// processing jobs owned by another embedding model.
+	ListBackfillJobs(ctx context.Context, model string) ([]BackfillJob, error)
 
 	// EnsureResourcePartition creates the embeddings_<resource> partition leaf (idempotent).
 	EnsureResourcePartition(ctx context.Context, resource string) error

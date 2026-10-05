@@ -26,6 +26,7 @@ type VectorMetrics struct {
 	ReconcilerSubresourcesEmbeddedTotal  *prometheus.CounterVec
 	ReconcilerSubresourcesDeletedTotal   *prometheus.CounterVec
 	BackfillItemDuration                 *prometheus.HistogramVec
+	BackfillJobComplete                  *prometheus.GaugeVec
 	EmbeddingsStored                     *prometheus.GaugeVec
 	QueryCacheHitsTotal                  *prometheus.CounterVec
 	QueryCacheMissesTotal                *prometheus.CounterVec
@@ -127,6 +128,10 @@ func ProvideVectorMetrics(reg prometheus.Registerer) *VectorMetrics {
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource", "status"}),
+		BackfillJobComplete: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_vector_storage_backfill_job_complete",
+			Help: "Persisted backfill job completion (1 complete, 0 incomplete), labeled by resource partition key, model, and re-embedding version. An empty resource covers all resources. Only the backfill lock holder exports this metric.",
+		}, []string{"resource", "model", "reembed_version"}),
 		EmbeddingsStored: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
 			Name: "grafana_vector_storage_embeddings_stored",
 			Help: "Number of embedding rows in the vector store, labeled by partition key and model. Sampled on a slow timer by whichever replica holds the reconciler lock; other replicas export nothing.",
