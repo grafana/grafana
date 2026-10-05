@@ -133,7 +133,7 @@ type JobResourceResult struct {
 	previousPath string
 	action       repository.FileAction
 	// explicit reason that caused this result, takes precedence over classifyWarning. Can be used to describe the action that caused the job result (success, warning, or error)
-	reason    string
+	reason    provisioning.SyncIssueReason
 	err       error
 	warning   error
 	startedAt time.Time // stamped when the builder is created; used to derive the operation duration at record time
@@ -257,7 +257,7 @@ func (b *jobResourceResultBuilder) WithBytes(n int) *jobResourceResultBuilder {
 // WithReason sets an explicit reason on the result. This takes precedence over
 // the reason derived from classifyWarning and can be used on success results
 // to explain why an operation happened (e.g., UID migration).
-func (b *jobResourceResultBuilder) WithReason(reason string) *jobResourceResultBuilder {
+func (b *jobResourceResultBuilder) WithReason(reason provisioning.SyncIssueReason) *jobResourceResultBuilder {
 	b.result.reason = reason
 	return b
 }
@@ -359,7 +359,7 @@ func (r JobResourceResult) Warning() error {
 }
 
 // Reason returns the explicit reason set via WithReason, or "" if none.
-func (r JobResourceResult) Reason() string {
+func (r JobResourceResult) Reason() provisioning.SyncIssueReason {
 	return r.reason
 }
 
@@ -367,7 +367,7 @@ func (r JobResourceResult) Reason() string {
 // or the explicit reason if set via WithReason.
 func (r JobResourceResult) WarningReason() provisioning.SyncIssueReason {
 	if r.reason != "" {
-		return provisioning.SyncIssueReason(r.reason)
+		return r.reason
 	}
 	reason, _ := classifyWarning(r.warning)
 	return reason

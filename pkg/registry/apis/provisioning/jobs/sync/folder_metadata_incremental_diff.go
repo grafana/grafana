@@ -30,7 +30,7 @@ type folderMetadataIncrementalDiffBuilder struct {
 type replacedFolder struct {
 	Path   string
 	OldUID string
-	Reason string
+	Reason provisioning.SyncIssueReason
 }
 
 // NewFolderMetadataIncrementalDiffBuilder wires the repository reader used to
@@ -366,7 +366,7 @@ func (d *folderMetadataIncrementalDiffBuilder) readMetadata(
 
 // reasonForMetadataAction maps a file action on a _folder.json entry to the
 // replacement reason recorded on the deleted old folder.
-func reasonForMetadataAction(action repository.FileAction) string {
+func reasonForMetadataAction(action repository.FileAction) provisioning.SyncIssueReason {
 	switch action {
 	case repository.FileActionCreated, repository.FileActionRenamed:
 		return provisioning.ReasonFolderMetadataCreated

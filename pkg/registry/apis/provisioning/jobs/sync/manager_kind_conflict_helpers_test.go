@@ -133,7 +133,7 @@ func testManagerKindConflictQuota(t *testing.T, syncType string) {
 			if utils.IsForbiddenManagerKindChangeError(tt.writeErr) {
 				require.NoError(t, firstResult.Error())
 				require.ErrorIs(t, firstResult.Warning(), tt.writeErr)
-				require.Equal(t, provisioning.ReasonResourceInvalid, string(firstResult.WarningReason()))
+				require.Equal(t, provisioning.ReasonResourceInvalid, firstResult.WarningReason())
 			} else {
 				require.ErrorIs(t, firstResult.Error(), tt.writeErr)
 				require.NoError(t, firstResult.Warning())

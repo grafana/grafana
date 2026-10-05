@@ -35,7 +35,7 @@ type ResourceFileChange struct {
 
 	// Reason provides an explicit reason for folder replacement or cleanup changes
 	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
-	Reason string
+	Reason provisioning.SyncIssueReason
 
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.

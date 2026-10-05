@@ -436,13 +436,13 @@ func (m *JobMetrics) RecordResourceOperation(action provisioning.JobAction, resu
 		outcome = OutcomeError
 	case result.Warning() != nil:
 		outcome = OutcomeWarning
-		reason = string(result.WarningReason())
+		reason = result.WarningReason()
 	default:
 		outcome = OutcomeSuccess
 	}
 
 	operation := fileActionToOperation(result.Action())
-	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), reason, result.Group(), result.Kind()).Inc()
+	m.resourceOpsTotal.WithLabelValues(string(action), string(operation), string(outcome), string(reason), result.Group(), result.Kind()).Inc()
 
 	// Ignored operations are no-ops (nothing was written), and an empty operation
 	// means the result carried no file action at all (e.g. a quota pre-check or a
