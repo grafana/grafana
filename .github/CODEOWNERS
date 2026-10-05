@@ -833,6 +833,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /lerna.json @grafana/grafana-frontend-platform
 /.prettierrc.js @grafana/grafana-frontend-platform
 /.vim @zoltanbedi
+/.zed/ @alexanderzobnin
 /jest.config.js @grafana/grafana-frontend-platform
 /latest.json @grafana/grafana-frontend-platform
 /stylelint.config.js @grafana/grafana-frontend-platform
