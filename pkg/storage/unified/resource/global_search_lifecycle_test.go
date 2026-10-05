@@ -11,6 +11,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
+	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -173,90 +174,6 @@ func TestGlobalIndexBuildReadsEveryCoveredType(t *testing.T) {
 	assert.Empty(t, storage.historyListed)
 }
 
-// The index is only as current as its oldest listing, so a change made while a
-// later listing ran is picked up by the next update rather than missed.
-func TestGlobalIndexBuildReportsTheOldestVersion(t *testing.T) {
-	storage := &multiTypeStorage{
-		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30, folderType("ns"): 20},
-	}
-	search := &mockSearchBackend{}
-	server := globalTestServer(t, storage, search)
-
-	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 2, "test", false, time.Time{})
-	require.NoError(t, err)
-
-	require.NotNil(t, search.lastUpdater)
-	idx := &MockResourceIndex{}
-	rv, _, err := search.lastUpdater(t.Context(), idx, 0)
-	require.NoError(t, err)
-	assert.Equal(t, int64(20), rv, "the oldest of the covered types")
-}
-
-func TestGlobalIndexUpdateFollowsEveryCoveredType(t *testing.T) {
-	event := func(action resourcepb.WatchEvent_Type, key NamespacedResource, name string, rv int64) *ModifiedResource {
-		return &ModifiedResource{
-			Action:          action,
-			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
-			ResourceVersion: rv,
-			Value:           testObjectJSON(name, name),
-		}
-	}
-	storage := &multiTypeStorage{
-		modified: map[NamespacedResource][]*ModifiedResource{
-			dashboardType("ns"): {event(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 11)},
-			folderType("ns"):    {event(resourcepb.WatchEvent_ADDED, folderType("ns"), "folder-a", 12)},
-		},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 11, folderType("ns"): 12},
-	}
-	search := &mockSearchBackend{}
-	server := globalTestServer(t, storage, search)
-
-	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 0, "test", false, time.Time{})
-	require.NoError(t, err)
-
-	idx := &MockResourceIndex{}
-	_, docs, err := search.lastUpdater(t.Context(), idx, 5)
-	require.NoError(t, err)
-
-	assert.Equal(t, 2, docs)
-	assert.ElementsMatch(t, []NamespacedResource{dashboardType("ns"), folderType("ns")}, storage.modifiedSince)
-	assert.Equal(t, []int64{5, 5}, storage.lastSinceRVSet, "every type is asked for changes since the same point")
-	assert.Equal(t, map[NamespacedResource][]string{
-		dashboardType("ns"): {"dash-a"},
-		folderType("ns"):    {"folder-a"},
-	}, indexedNames(t, idx))
-}
-
-// A delete removes the document. Trash lives in the per-resource index, and a
-// namespace-wide index that kept a deleted document would serve it as a hit.
-func TestGlobalIndexUpdateRemovesDeletedDocuments(t *testing.T) {
-	deleted := &ModifiedResource{
-		Action:          resourcepb.WatchEvent_DELETED,
-		Key:             resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a"},
-		ResourceVersion: 11,
-		Value:           testObjectJSON("dash-a", "dash-a"),
-	}
-	storage := &multiTypeStorage{
-		modified: map[NamespacedResource][]*ModifiedResource{dashboardType("ns"): {deleted}},
-	}
-	// Even where the deployment keeps deleted documents, this index does not.
-	search := &mockSearchBackend{keepsDeletedDocuments: true}
-	server := globalTestServer(t, storage, search)
-
-	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 0, "test", false, time.Time{})
-	require.NoError(t, err)
-
-	idx := &MockResourceIndex{buildInfo: IndexBuildInfo{Features: featuresForTestIndex(true)}}
-	_, _, err = search.lastUpdater(t.Context(), idx, 5)
-	require.NoError(t, err)
-
-	require.Len(t, idx.bulkItems, 1)
-	assert.Equal(t, ActionDelete, idx.bulkItems[0].Action)
-	assert.Nil(t, idx.bulkItems[0].Doc, "no document is kept for a deleted object")
-	assert.Equal(t, "dash-a", idx.bulkItems[0].Key.GetName())
-}
-
 // Per-resource indexes are unchanged: they read their own type and restore their
 // trash, whatever the namespace-wide index does.
 func TestPerResourceIndexIsUnaffected(t *testing.T) {
@@ -302,12 +219,6 @@ func TestGlobalIndexesAreIsolatedByNamespace(t *testing.T) {
 func TestGlobalIndexKeepsStandardFieldsOnly(t *testing.T) {
 	storage := &multiTypeStorage{
 		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		modified: map[NamespacedResource][]*ModifiedResource{dashboardType("ns"): {{
-			Action:          resourcepb.WatchEvent_MODIFIED,
-			Key:             resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-b"},
-			ResourceVersion: 11,
-			Value:           testObjectJSON("dash-b", "dash-b"),
-		}}},
 	}
 	search := &mockSearchBackend{}
 	server := globalTestServer(t, storage, search)
@@ -317,12 +228,6 @@ func TestGlobalIndexKeepsStandardFieldsOnly(t *testing.T) {
 	built := global.(*MockResourceIndex).indexedItems()
 	require.Len(t, built, 1)
 	assert.Empty(t, built[0].Doc.Fields, "the build drops them")
-
-	updated := &MockResourceIndex{}
-	_, _, err = search.lastUpdater(t.Context(), updated, 5)
-	require.NoError(t, err)
-	require.Len(t, updated.indexedItems(), 1)
-	assert.Empty(t, updated.indexedItems()[0].Doc.Fields, "so does an update")
 
 	perResource, err := server.build(t.Context(), dashboardType("ns"), 1, "test", false, time.Time{})
 	require.NoError(t, err)
@@ -394,56 +299,6 @@ func TestGlobalIndexStaysOffWhenSwitchedOff(t *testing.T) {
 	assert.Nil(t, search.GetIndex(GlobalSearchKey("ns")))
 }
 
-// The update skips a change it has already applied, but each resource type counts
-// its versions on its own, so a dashboard and a folder can share both a name and
-// a version. Both must be applied, and each skipped only when it repeats.
-func TestGlobalIndexUpdateTellsTypesApartWhenSkippingRepeats(t *testing.T) {
-	same := func(key NamespacedResource) *ModifiedResource {
-		return &ModifiedResource{
-			Action:          resourcepb.WatchEvent_MODIFIED,
-			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "shared"},
-			ResourceVersion: 11,
-			Value:           testObjectJSON("shared", "shared"),
-		}
-	}
-	storage := &multiTypeStorage{
-		modified: map[NamespacedResource][]*ModifiedResource{
-			dashboardType("ns"): {same(dashboardType("ns"))},
-			folderType("ns"):    {same(folderType("ns"))},
-		},
-	}
-	search := &mockSearchBackend{}
-	server, err := newSearchServer(SearchOptions{
-		Backend: search,
-		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{
-			"dashboard.grafana.app": "dashboards",
-			"folder.grafana.app":    "folders",
-		}},
-		GlobalIndexEnabled: true,
-		InitMinCount:       1,
-		// Switches on the cache that remembers applied changes.
-		IndexModificationCacheTTL: time.Minute,
-	}, storage, nil, nil, nil, nil, nil, ProvideIndexMetrics(nil), nil, nil)
-	require.NoError(t, err)
-
-	_, err = server.build(t.Context(), GlobalSearchKey("ns"), 0, "test", false, time.Time{})
-	require.NoError(t, err)
-
-	first := &MockResourceIndex{}
-	_, _, err = search.lastUpdater(t.Context(), first, 5)
-	require.NoError(t, err)
-	assert.Equal(t, map[NamespacedResource][]string{
-		dashboardType("ns"): {"shared"},
-		folderType("ns"):    {"shared"},
-	}, indexedNames(t, first), "both are applied, not one taken for the other")
-
-	// The same changes reported again are skipped for both.
-	again := &MockResourceIndex{}
-	_, _, err = search.lastUpdater(t.Context(), again, 5)
-	require.NoError(t, err)
-	assert.Empty(t, again.indexedItems())
-}
-
 // Identity is the whole key, so two resource types can hold the same name
 // without one replacing the other.
 func TestGlobalIndexKeepsNamesOfDifferentTypesApart(t *testing.T) {
@@ -478,6 +333,8 @@ type reconcileStorage struct {
 	afterList func()
 	// Simulates storage being unavailable.
 	readErr error
+	// Answers one more batch read than was asked for, as a misbehaving reader would.
+	extraBatchResponse bool
 }
 
 func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
@@ -495,9 +352,12 @@ func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*reso
 	if m.noBatchReads {
 		return nil, ErrBatchReadUnsupported
 	}
-	responses := make([]*BackendReadResponse, 0, len(requests))
+	responses := make([]*BackendReadResponse, 0, len(requests)+1)
 	for _, request := range requests {
 		responses = append(responses, m.readOne(request))
+	}
+	if m.extraBatchResponse && len(responses) > 0 {
+		responses = append(responses, responses[0])
 	}
 	return func(yield func(*BackendReadResponse) bool) {
 		for _, response := range responses {
@@ -1034,39 +894,6 @@ func TestImportDoesNotRebuildTheGlobalIndex(t *testing.T) {
 	assert.True(t, times[GlobalSearchKey("ns")].IsZero())
 }
 
-// A global index keeps one checkpoint for every type it covers. That holds only
-// because the KV backend answers every type with the same store-wide version: a
-// type nobody writes to must not answer with an older one and hold the rest back.
-func TestKVBackendAnswersEveryTypeWithTheSameVersion(t *testing.T) {
-	backend := setupTestStorageBackend(t)
-	apps := NamespacedResource{Namespace: "default", Group: "apps", Resource: "resources"}
-	core := NamespacedResource{Namespace: "default", Group: "core", Resource: "services"}
-
-	// Written to once, then left idle.
-	obj, err := createTestObjectWithName("idle", apps, "data")
-	require.NoError(t, err)
-	idleRV, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-	require.NoError(t, err)
-
-	// Written to after it.
-	obj, err = createTestObjectWithName("busy", core, "data")
-	require.NoError(t, err)
-	latest, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
-	require.NoError(t, err)
-
-	// Both asked since the idle type's write, which it has nothing newer than.
-	appsRV, _ := backend.ListModifiedSince(t.Context(), apps, idleRV, nil)
-	coreRV, _ := backend.ListModifiedSince(t.Context(), core, idleRV, nil)
-	assert.Equal(t, latest, coreRV)
-	assert.Equal(t, latest, appsRV, "the idle type answers with the store-wide version, not its own last write")
-
-	listRV, err := backend.ListIterator(t.Context(), &resourcepb.ListRequest{
-		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: apps.Namespace, Group: apps.Group, Resource: apps.Resource}},
-	}, func(ListIterator) error { return nil })
-	require.NoError(t, err)
-	assert.Equal(t, latest, listRV, "and so does a listing")
-}
-
 // The scan queues only the types storage reports as imported since the index
 // caught up, so the rebuild workers, not the scan, do the work.
 func TestImportQueuesARebuildOfOnlyTheImportedType(t *testing.T) {
@@ -1206,41 +1033,23 @@ func TestImportCheckIgnoresAnOlderImportTime(t *testing.T) {
 	assert.Zero(t, server.rebuildQueue.Len())
 }
 
-// A checkpoint from before the import would replay changes the import undid, so
-// the index is updated first, and nothing is rebuilt or recorded if that fails.
-func TestImportedTypeRebuildUpdatesTheIndexFirst(t *testing.T) {
+// A type rebuild replays no events first: a global index has none to replay.
+func TestImportedTypeRebuildDoesNotUpdateTheIndex(t *testing.T) {
 	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
 	}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
-	idx.updateIndexError = errors.New("update failed")
-
-	require.ErrorContains(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil), "update failed")
-	assert.Empty(t, idx.indexedItems(), "nothing rebuilt")
-	assert.Empty(t, idx.importTimes, "nothing recorded, so it is retried")
-
-	idx.updateIndexError = nil
-	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
-	assert.Equal(t, 2, idx.updateIndexCalls)
-	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
-}
-
-// With no import to catch up with, the index is left alone.
-func TestImportedTypeRebuildSkipsTheUpdateWhenCaughtUp(t *testing.T) {
-	storage := &reconcileStorage{}
-	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
-	server, idx := repairServer(t, storage, nil)
-	idx.importTimes = heldAt(importTuesday, time.Time{})
 
 	require.NoError(t, server.syncTypes(t.Context(), GlobalSearchKey("ns"), nil))
 	assert.Zero(t, idx.updateIndexCalls)
+	assert.Equal(t, importTuesday, idx.importTimes[dashboardsGroupResource])
 }
 
 // watchStorage hands out one notification stream a test controls.
 type watchStorage struct {
-	multiTypeStorage
+	reconcileStorage
 
 	events chan *WrittenEvent
 	// Streams asked for, so a test can see the stream being reopened.
@@ -1270,37 +1079,95 @@ func writtenEvent(action resourcepb.WatchEvent_Type, key NamespacedResource, nam
 	}
 }
 
-func globalWatchServer(t *testing.T, storage StorageBackend, search *mockSearchBackend) *searchServer {
-	t.Helper()
-	server := globalTestServer(t, storage, search)
-	// The index has to be open for notifications to have somewhere to go.
-	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
-	require.NoError(t, err)
-	return server
-}
-
-// A notification only says the index is behind, so the index is updated from
-// storage, once per batch however many notifications it got.
-func TestWatchUpdatesTheGlobalIndexOncePerBatch(t *testing.T) {
-	search := &mockSearchBackend{}
-	server := globalWatchServer(t, &multiTypeStorage{}, search)
-	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
-	updatesAfterBuild := idx.updateIndexCalls
+// A notification names an object; its current state is read from storage and
+// written, and nothing is replayed.
+func TestWatchWritesTheCurrentStateOfNotifiedObjects(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	server, idx := repairServer(t, storage, nil)
+	// A body that cannot be built, so the document can only have come from storage.
+	stale := writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
+	stale.Value = []byte("not an object")
 
 	server.applyWriteEvents(t.Context(), []*WrittenEvent{
-		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+		stale,
 		writtenEvent(resourcepb.WatchEvent_DELETED, folderType("ns"), "folder-a", 12),
 	})
 
-	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls)
-	assert.Empty(t, idx.indexedItems(), "nothing is written from the notification itself")
+	items := idx.indexedItems()
+	require.Len(t, items, 2)
+	assert.Equal(t, ActionIndex, items[0].Action, "built from what storage holds, not the notification's body")
+	assert.Equal(t, "dash-a", items[0].Doc.Key.Name)
+	assert.Empty(t, items[0].Doc.Fields, "standard fields only")
+	assert.Equal(t, ActionDelete, items[1].Action)
+	assert.Equal(t, "folder-a", items[1].Key.Name)
+	assert.Zero(t, idx.updateIndexCalls, "nothing is replayed from the event log")
+}
+
+// A late create for an object deleted since then must not bring it back.
+func TestWatchLateCreateOfADeletedObjectRemovesIt(t *testing.T) {
+	server, idx := repairServer(t, &reconcileStorage{}, nil)
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-gone", 10),
+	})
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, ActionDelete, items[0].Action)
+}
+
+// Several notifications for one object in a batch are one read and one write.
+func TestWatchReadsEachObjectOnce(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+	}}
+	server, idx := repairServer(t, storage, nil)
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 12),
+	})
+
+	assert.Equal(t, []string{"dash-a"}, storage.read)
+	assert.Len(t, idx.indexedItems(), 1)
+}
+
+// An object that cannot be built is removed, so a reconcile sees it missing.
+func TestWatchRemovesWhatFailsToBuild(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+	}}
+	storage.broken = map[string]bool{"dash-a": true}
+	server, idx := repairServer(t, storage, nil)
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 11),
+	})
+
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, ActionDelete, items[0].Action)
+}
+
+// When storage cannot be read, nothing is written, so the index is not changed
+// on a guess; a reconcile repairs it.
+func TestWatchWritesNothingWhenStorageFails(t *testing.T) {
+	storage := &reconcileStorage{readErr: errors.New("storage unavailable")}
+	server, idx := repairServer(t, storage, nil)
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 11),
+	})
+
+	assert.Empty(t, idx.indexedItems())
 }
 
 func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
-	search := &mockSearchBackend{}
-	server := globalWatchServer(t, &multiTypeStorage{}, search)
-	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
-	updatesAfterBuild := idx.updateIndexCalls
+	storage := &reconcileStorage{}
+	server, idx := repairServer(t, storage, nil)
 
 	playlists := NamespacedResource{Namespace: "ns", Group: "playlist.grafana.app", Resource: "playlists"}
 	server.applyWriteEvents(t.Context(), []*WrittenEvent{
@@ -1309,16 +1176,15 @@ func TestWatchIgnoresWhatTheIndexDoesNotCover(t *testing.T) {
 		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("other"), "not-mine", 12),
 	})
 
-	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+	assert.Empty(t, storage.read, "nothing read for what no open index here covers")
+	assert.Empty(t, idx.indexedItems())
 }
 
 func TestWatchConsumesUntilTheStreamEnds(t *testing.T) {
 	events := make(chan *WrittenEvent, 4)
 	storage := &watchStorage{events: events}
-	search := &mockSearchBackend{}
-	server := globalWatchServer(t, storage, search)
-	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
-	updatesAfterBuild := idx.updateIndexCalls
+	storage.live = map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}
+	server, idx := repairServer(t, storage, nil)
 
 	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11)
 	events <- writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-b", 12)
@@ -1326,7 +1192,7 @@ func TestWatchConsumesUntilTheStreamEnds(t *testing.T) {
 
 	server.consumeWriteEvents(t.Context(), events)
 
-	assert.Equal(t, updatesAfterBuild+1, idx.updateIndexCalls, "both arrived before the first batch was taken")
+	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}, indexedNames(t, idx))
 }
 
 // Arrivals that are already queued go into one write rather than one each.
@@ -1342,28 +1208,6 @@ func TestWatchBatchesWhatHasAlreadyArrived(t *testing.T) {
 	close(events)
 	_, ok = nextWriteEventBatch(t.Context(), events)
 	assert.False(t, ok, "a closed stream ends the loop")
-}
-
-func TestUpdateGlobalIndexes(t *testing.T) {
-	global := GlobalSearchKey("ns")
-	dashboards := NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
-
-	globalIdx := &MockResourceIndex{}
-	dashboardsIdx := &MockResourceIndex{}
-	backend := &mockSearchBackend{
-		openIndexes: []NamespacedResource{global, dashboards},
-		cache: map[NamespacedResource]ResourceIndex{
-			global:     globalIdx,
-			dashboards: dashboardsIdx,
-		},
-	}
-	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: ProvideIndexMetrics(nil), ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
-
-	s.updateGlobalIndexes(t.Context())
-
-	assert.Equal(t, 1, globalIdx.updateIndexCalls)
-	// Every other index is brought up to date by the search that reads it.
-	assert.Equal(t, 0, dashboardsIdx.updateIndexCalls)
 }
 
 func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
@@ -1398,38 +1242,83 @@ func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
 	assert.Equal(t, 1, dashboardsIdx.updateIndexCalls)
 }
 
-// Fetching an index counts as using it, so the background work leaves alone a
-// global index another instance now owns, and it can be closed here.
-func TestBackgroundWorkSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
-	search := &mockSearchBackend{}
-	server := globalWatchServer(t, &multiTypeStorage{}, search)
-	idx := search.cache[GlobalSearchKey("ns")].(*MockResourceIndex)
-	search.openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
+// Fetching an index counts as using it, so notifications leave alone a global
+// index another instance now owns, and it can be closed here.
+func TestWatchSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+	}}
+	server, idx := repairServer(t, storage, nil)
 	server.ownsIndexFn = func(NamespacedResource) (bool, error) { return false, nil }
-	updatesAfterBuild := idx.updateIndexCalls
 
-	server.updateGlobalIndexes(t.Context())
 	server.applyWriteEvents(t.Context(), []*WrittenEvent{
 		writtenEvent(resourcepb.WatchEvent_ADDED, dashboardType("ns"), "dash-a", 11),
 	})
 
-	assert.Equal(t, updatesAfterBuild, idx.updateIndexCalls)
+	assert.Empty(t, storage.read)
 	assert.Empty(t, idx.indexedItems())
 }
 
-// A global index just opened may have been reopened from disk long after it was
-// written, so the search that opens it waits for one update.
-func TestSearchUpdatesAGlobalIndexItJustOpened(t *testing.T) {
+// A global index replays no events, not even when a search opens it.
+func TestSearchNeverUpdatesAGlobalIndex(t *testing.T) {
 	search := &mockSearchBackend{}
 	server := globalTestServer(t, &multiTypeStorage{}, search)
 
-	idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
-	require.NoError(t, err)
-	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls)
+	for range 2 {
+		idx, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+		require.NoError(t, err)
+		assert.Zero(t, idx.(*MockResourceIndex).updateIndexCalls)
+	}
+}
 
-	_, err = server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+// A global index reused from disk, or restored from a snapshot, missed what
+// changed while it was closed, so it is reconciled at once, whatever its slot.
+func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
+	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{reusesFromDisk: true})
+
+	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
 	require.NoError(t, err)
-	assert.Equal(t, 1, idx.(*MockResourceIndex).updateIndexCalls, "not again once it is open")
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+	assert.True(t, queued[0].reconcile)
+}
+
+// One just built matches storage already, so it is not reconciled again.
+func TestFreshGlobalIndexIsNotReconciled(t *testing.T) {
+	server := globalTestServer(t, &multiTypeStorage{}, &mockSearchBackend{})
+
+	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
+	require.NoError(t, err)
+	assert.Zero(t, server.rebuildQueue.Len())
+}
+
+// A global index gets no updater, so it never asks storage for changes since a
+// checkpoint.
+func TestGlobalIndexIsBuiltWithoutAnUpdater(t *testing.T) {
+	search := &mockSearchBackend{}
+	server := globalTestServer(t, &multiTypeStorage{}, search)
+
+	_, err := server.build(t.Context(), GlobalSearchKey("ns"), 1, "test", false, time.Time{})
+	require.NoError(t, err)
+	assert.Nil(t, search.lastUpdater)
+}
+
+// The reader can add an error of its own after the last response; that must not
+// be taken for an object.
+func TestWatchToleratesAnExtraReadResponse(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+	}}
+	storage.extraBatchResponse = true
+	server, idx := repairServer(t, storage, nil)
+
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 11),
+	})
+
+	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, idx))
 }
 
 // A stream that never sends, as some backends return, does not hold up shutdown.
@@ -1679,37 +1568,56 @@ func TestFailedReconcileIsNotRecorded(t *testing.T) {
 	server, idx := repairServer(t, &reconcileStorage{}, nil)
 	idx.documentRefsErr = errors.New("index unavailable")
 
-	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	_, err := server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns"))
+	require.Error(t, err)
 	assert.Zero(t, idx.reconciledAt)
 }
 
-// A round reports how many indexes it covered, so a pod falling behind shows
-// up as rounds that take as long as the interval.
-func TestUpdateRoundReportsItsIndexes(t *testing.T) {
-	backend := &mockSearchBackend{
-		openIndexes: []NamespacedResource{GlobalSearchKey("a"), GlobalSearchKey("b"), dashboardType("a")},
-		cache: map[NamespacedResource]ResourceIndex{
-			GlobalSearchKey("a"): &MockResourceIndex{},
-			GlobalSearchKey("b"): &MockResourceIndex{},
-			dashboardType("a"):   &MockResourceIndex{},
-		},
+// Every reconcile is timed under its result, and reports what it repaired.
+func TestReconcileIsTimedByResult(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-new", "dash-broken"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	storage.broken = map[string]bool{"dash-broken": true}
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-gone", RV: 40}},
+	})
+
+	res, err := server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, repairResult{Reindexed: 1, Removed: 1, Failed: 1}, res)
+
+	idx.documentRefsErr = errors.New("index unavailable")
+	_, err = server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns"))
+	require.Error(t, err)
+
+	observed := func(result string) uint64 {
+		m := &dto.Metric{}
+		require.NoError(t, server.indexMetrics.GlobalReconcileDuration.WithLabelValues(result).(prometheus.Histogram).Write(m))
+		return m.GetHistogram().GetSampleCount()
 	}
-	metrics := ProvideIndexMetrics(nil)
-	s := &searchServer{search: backend, log: log.NewNopLogger(), indexMetrics: metrics, ownsIndexFn: func(NamespacedResource) (bool, error) { return true, nil }}
-
-	s.updateGlobalIndexes(t.Context())
-
-	assert.Equal(t, 2.0, testutil.ToFloat64(metrics.GlobalUpdateRoundIndexes))
-	assert.Equal(t, 1, testutil.CollectAndCount(metrics.GlobalUpdateRoundDuration))
+	assert.Equal(t, uint64(1), observed("success"))
+	assert.Equal(t, uint64(1), observed("failure"))
 }
 
-// Every reconcile is timed, by whether it compared every type.
-func TestReconcileIsTimedByResult(t *testing.T) {
-	server, idx := repairServer(t, &reconcileStorage{}, nil)
+// The index is looked up for each batch, so once a rebuild or a reopen has
+// replaced it, notifications go to the replacement, not the old one.
+func TestWatchWritesToAReplacedIndex(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+	}}
+	server, old := repairServer(t, storage, nil)
 
-	require.NoError(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
-	idx.documentRefsErr = errors.New("index unavailable")
-	require.Error(t, server.reconcileGlobalIndex(t.Context(), GlobalSearchKey("ns")))
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-a", 11),
+	})
+	replacement := &MockResourceIndex{}
+	server.search.(*mockSearchBackend).cache[GlobalSearchKey("ns")] = replacement
+	server.applyWriteEvents(t.Context(), []*WrittenEvent{
+		writtenEvent(resourcepb.WatchEvent_MODIFIED, dashboardType("ns"), "dash-b", 12),
+	})
 
-	assert.Equal(t, 2, testutil.CollectAndCount(server.indexMetrics.GlobalReconcileDuration), "one series for success, one for failure")
+	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, old))
+	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-b"}}, indexedNames(t, replacement))
 }

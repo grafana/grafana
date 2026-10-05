@@ -343,6 +343,9 @@ type mockSearchBackend struct {
 	// real backend makes from its options at creation.
 	keepsDeletedDocuments bool
 
+	// Skips the build function, as for an index reused from disk.
+	reusesFromDisk bool
+
 	mu                sync.Mutex
 	buildIndexCalls   []buildIndexCall
 	cache             map[NamespacedResource]ResourceIndex
@@ -414,10 +417,13 @@ func (m *mockSearchBackend) BuildIndex(ctx context.Context, key NamespacedResour
 	m.lastUpdater = updater
 	m.mu.Unlock()
 
-	// Call the builder function (required by the contract)
-	_, err := builder(index)
-	if err != nil {
-		return nil, err
+	// Call the builder function (required by the contract), unless standing in
+	// for an index reused from disk, which is not built again.
+	if !m.reusesFromDisk {
+		_, err := builder(index)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	m.mu.Lock()
