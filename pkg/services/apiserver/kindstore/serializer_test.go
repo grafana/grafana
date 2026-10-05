@@ -612,3 +612,104 @@ func TestConversionSerializerPreservesCopiedUpdateOwnersAcrossVersions(t *testin
 	require.NoError(t, err)
 	require.Equal(t, original.GetManagedFields(), obj.(*unstructured.Unstructured).GetManagedFields())
 }
+
+func TestConversionSerializerBatch(t *testing.T) {
+	recorder := &warningRecorder{}
+	ctx := warning.WithWarningRecorder(t.Context(), recorder)
+	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
+	var data [][]byte
+	for i, version := range []string{"v1", "v2", "v0", "v2", "v1"} {
+		obj := conversionTestObject(t)
+		obj.SetAPIVersion("example-app/" + version)
+		obj.SetName(fmt.Sprintf("item-%d", i))
+		raw, err := obj.MarshalJSON()
+		require.NoError(t, err)
+		data = append(data, raw)
+	}
+	calls := 0
+	s := &conversionSerializer{gvk: gvk, client: conversionClientFunc(func(got context.Context, req *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+		calls++
+		require.Same(t, ctx, got)
+		require.Len(t, req.GetObjects(), 3)
+		require.Equal(t, "v2", req.GetTargetVersion())
+		require.Equal(t, "example-app", req.GetApi().GetGroup())
+		require.NotEmpty(t, req.GetUid())
+		var converted []*pluginv3.ConvertObjectsResponse_Object
+		for i, idx := range []int{0, 2, 4} {
+			require.Equal(t, data[idx], req.GetObjects()[i].GetRaw())
+			obj := &unstructured.Unstructured{}
+			require.NoError(t, obj.UnmarshalJSON(req.GetObjects()[i].GetRaw()))
+			obj.SetGroupVersionKind(gvk)
+			obj.Object["spec"] = map[string]any{"new": "converted"}
+			raw, err := obj.MarshalJSON()
+			require.NoError(t, err)
+			converted = append(converted, pluginv3.ConvertObjectsResponse_Object_builder{Raw: raw, Warnings: []string{obj.GetName()}}.Build())
+		}
+		return pluginv3.ConvertObjectsResponse_builder{Converted: converted}.Build(), nil
+	})}
+	objects, err := s.DecodeBatch(ctx, data)
+	require.NoError(t, err)
+	require.Equal(t, 1, calls)
+	require.Len(t, objects, len(data))
+	for i, obj := range objects {
+		result := obj.(*unstructured.Unstructured)
+		require.Equal(t, fmt.Sprintf("item-%d", i), result.GetName())
+		require.Equal(t, gvk, result.GroupVersionKind())
+		if i%2 == 0 {
+			require.Equal(t, map[string]any{"new": "converted"}, result.Object["spec"])
+		} else {
+			raw, err := result.MarshalJSON()
+			require.NoError(t, err)
+			require.JSONEq(t, string(data[i]), string(raw), "matching GVK must preserve the entire object")
+		}
+	}
+	s.client = nil // Matching objects must decode even when conversion is unavailable.
+	matching, err := s.DecodeBatch(ctx, [][]byte{data[1], data[3]})
+	require.NoError(t, err)
+	require.Len(t, matching, 2)
+	for i, idx := range []int{1, 3} {
+		obj, err := s.Decode(ctx, data[idx], nil)
+		require.NoError(t, err)
+		require.Equal(t, matching[i], obj)
+	}
+	_, err = s.DecodeBatch(ctx, nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, calls, "same-version and empty batches must not call the plugin")
+	require.Equal(t, []string{"item-0", "item-2", "item-4"}, recorder.warnings)
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	_, err = s.DecodeBatch(canceled, data)
+	require.ErrorIs(t, err, context.Canceled)
+	require.Equal(t, 1, calls)
+}
+
+func TestConversionSerializerBatchRejectsPartialResults(t *testing.T) {
+	original := conversionTestObject(t)
+	raw, err := original.MarshalJSON()
+	require.NoError(t, err)
+	converted := original.DeepCopy()
+	converted.SetAPIVersion("example-app/v2")
+	good, err := converted.MarshalJSON()
+	require.NoError(t, err)
+	for _, mode := range []string{"too few", "too many", "invalid second object", "wrong second GVK"} {
+		t.Run(mode, func(t *testing.T) {
+			s := &conversionSerializer{gvk: converted.GroupVersionKind(), client: conversionClientFunc(func(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+				objects := []*pluginv3.ConvertObjectsResponse_Object{pluginv3.ConvertObjectsResponse_Object_builder{Raw: good, Warnings: []string{"first"}}.Build()}
+				switch mode {
+				case "too many":
+					objects = append(objects, objects[0], objects[0])
+				case "invalid second object":
+					objects = append(objects, pluginv3.ConvertObjectsResponse_Object_builder{Raw: []byte(`{`)}.Build())
+				case "wrong second GVK":
+					objects = append(objects, pluginv3.ConvertObjectsResponse_Object_builder{Raw: raw}.Build())
+				}
+				return pluginv3.ConvertObjectsResponse_builder{Converted: objects}.Build(), nil
+			})}
+			recorder := &warningRecorder{}
+			objects, err := s.DecodeBatch(warning.WithWarningRecorder(t.Context(), recorder), [][]byte{raw, raw})
+			require.Error(t, err)
+			require.Nil(t, objects)
+			require.Empty(t, recorder.warnings)
+		})
+	}
+}

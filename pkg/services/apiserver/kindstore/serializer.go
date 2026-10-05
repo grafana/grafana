@@ -37,41 +37,65 @@ func (c *conversionSerializer) Encode(ctx context.Context, obj runtime.Object) (
 }
 
 func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into runtime.Object) (runtime.Object, error) {
-	var ok bool
 	var target *unstructured.Unstructured
-	if into == nil {
-		target = &unstructured.Unstructured{}
-	} else {
-		if target, ok = into.(*unstructured.Unstructured); !ok {
+	if into != nil {
+		var ok bool
+		target, ok = into.(*unstructured.Unstructured)
+		if !ok {
 			return nil, fmt.Errorf("expected *unstructured.Unstructured, found %T", into)
 		}
 	}
-
-	var original unstructured.Unstructured
-	if err := original.UnmarshalJSON(data); err != nil {
+	objects, err := s.DecodeBatch(ctx, [][]byte{data})
+	if err != nil {
 		return nil, err
 	}
-
-	source := original.GroupVersionKind()
-	if source == s.gvk {
-		*target = original
+	obj := objects[0].(*unstructured.Unstructured)
+	if target != nil {
+		*target = *obj
 		return target, nil
 	}
+	return obj, nil
+}
 
-	gvk := &pluginv3.GroupVersionKind{}
-	gvk.SetGroup(source.Group)
-	gvk.SetVersion(source.Version)
-	gvk.SetKind(source.Kind)
-	obj := &pluginv3.ConvertObjectsRequest_Object{}
-	obj.SetGvk(gvk)
-	obj.SetRaw(data)
+// DecodeBatch converts only items that differ from the target GVK, then
+// restores their positions so storage can apply resource versions and predicates.
+func (s *conversionSerializer) DecodeBatch(ctx context.Context, data [][]byte) ([]runtime.Object, error) {
+	results := make([]runtime.Object, len(data))
+	var indices []int
+	var objects []*pluginv3.ConvertObjectsRequest_Object
+	for i, raw := range data {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+		original := &unstructured.Unstructured{}
+		if err := original.UnmarshalJSON(raw); err != nil {
+			return nil, err
+		}
+		results[i] = original
+		source := original.GroupVersionKind()
+		if source == s.gvk {
+			continue
+		}
+		gvk := &pluginv3.GroupVersionKind{}
+		gvk.SetGroup(source.Group)
+		gvk.SetVersion(source.Version)
+		gvk.SetKind(source.Kind)
+		obj := &pluginv3.ConvertObjectsRequest_Object{}
+		obj.SetGvk(gvk)
+		obj.SetRaw(raw)
+		objects = append(objects, obj)
+		indices = append(indices, i)
+	}
+	if len(objects) == 0 {
+		return results, nil
+	}
 	api := &pluginv3.GroupVersion{}
 	api.SetGroup(s.gvk.Group)
 	api.SetVersion(s.gvk.Version)
 	req := &pluginv3.ConvertObjectsRequest{}
 	req.SetApi(api)
 	req.SetUid(string(uuid.NewUUID()))
-	req.SetObjects([]*pluginv3.ConvertObjectsRequest_Object{obj})
+	req.SetObjects(objects)
 	req.SetTargetVersion(s.gvk.Version)
 	rsp, err := s.client.ConvertObjects(ctx, req)
 	if err != nil {
@@ -81,11 +105,27 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 		return nil, fmt.Errorf("conversion to %s failed: %s", s.gvk, status.GetMessage())
 	}
 	converted := rsp.GetConverted()
-	if len(converted) != 1 {
-		return nil, fmt.Errorf("conversion to %s returned %d objects, expected 1", s.gvk, len(converted))
+	if len(converted) != len(objects) {
+		return nil, fmt.Errorf("conversion to %s returned %d objects, expected %d", s.gvk, len(converted), len(objects))
 	}
+	for offset, idx := range indices {
+		obj, err := s.finishConversion(results[idx].(*unstructured.Unstructured), converted[offset].GetRaw())
+		if err != nil {
+			return nil, err
+		}
+		results[idx] = obj
+	}
+	for _, obj := range converted {
+		for _, w := range obj.GetWarnings() {
+			warning.AddWarning(ctx, "", w)
+		}
+	}
+	return results, nil
+}
+
+func (s *conversionSerializer) finishConversion(original *unstructured.Unstructured, data []byte) (*unstructured.Unstructured, error) {
 	var result unstructured.Unstructured
-	if err := result.UnmarshalJSON(converted[0].GetRaw()); err != nil {
+	if err := result.UnmarshalJSON(data); err != nil {
 		return nil, fmt.Errorf("conversion to %s returned an invalid object: %w", s.gvk, err)
 	}
 	if got := result.GroupVersionKind(); got != s.gvk {
@@ -98,7 +138,7 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 			return nil, fmt.Errorf("invalid stored metadata: expected an object, found %T", metadata)
 		}
 	}
-	fields := convertedManagedFields(&original, &result, s.gvk.GroupVersion().String())
+	fields := convertedManagedFields(original, &result, s.gvk.GroupVersion().String())
 
 	// List selectors and repository checks use stored metadata before decoding.
 	// Only field ownership may change with the converted payload.
@@ -108,13 +148,7 @@ func (s *conversionSerializer) Decode(ctx context.Context, data []byte, into run
 		delete(result.Object, "metadata")
 	}
 	result.SetManagedFields(fields)
-	for _, w := range converted[0].GetWarnings() {
-		warning.AddWarning(ctx, "", w)
-	}
-
-	// Return the new or "into" object
-	*target = result
-	return target, nil
+	return &result, nil
 }
 
 // Retain translated ownership, or copied ownership whose paths still exist
