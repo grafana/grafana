@@ -372,8 +372,12 @@ func (a *ProvisioningAuthorizer) authorizeFolder(ctx context.Context, path, verb
 		// For delete, check in the parent folder context
 		parentPath := safepath.Dir(path)
 		if parentPath == "" {
-			// Root-level folder
-			folderContext = ""
+			// A top-level directory's parent is the repository's own folder, not the
+			// instance root. Passing "" here claimed the latter, which left the check
+			// with no folder to resolve ancestry from, so a grant on the repository
+			// folder couldn't cascade to the folder being deleted - a user with Admin
+			// on the repository folder was denied deleting a folder inside it.
+			folderContext = RootFolder(a.repo)
 		} else {
 			folderContext, err = a.getFolderID(ctx, parentPath)
 			if err != nil {

@@ -361,3 +361,122 @@ func TestIntegrationProvisioning_MismatchedJobActionRejected(t *testing.T) {
 		require.True(t, apierrors.IsBadRequest(result.Error()))
 	})
 }
+
+// TestIntegrationProvisioning_FolderScopedUserCanMoveAndDeleteFolders covers the half
+// of issue #127254 the dashboard cases above don't. The reporter's repro is "move or
+// delete dashboard *or folder*", and folder Admin carries folders:* alongside
+// dashboards:*. Directory paths take a different route through the authorizer
+// (authorizeMoveFolder / authorizeDeleteFolder, checking the folders:* actions) than
+// file paths do, so dashboard-only coverage proves nothing about them.
+//
+// The delete case is the one worth pinning: authorizeFolder resolves a top-level
+// folder's parent context to "" rather than to the repository's wrapper folder, so the
+// check can only succeed by cascading from the grant on the wrapper - not from any
+// instance-wide permission, which this user deliberately doesn't have.
+func TestIntegrationProvisioning_FolderScopedUserCanMoveAndDeleteFolders(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "folder-scoped-folder-jobs-test"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		SyncTarget: "folder",
+		Workflows:  []string{"write"},
+		Copies: map[string]string{
+			"../testdata/all-panels.json":    "to-move/dashboard.json",
+			"../testdata/timeline-demo.json": "to-delete/dashboard.json",
+		},
+	})
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+	// The repository wrapper folder, plus to-move/ and to-delete/.
+	helper.RequireRepoFolderCount(t, repo, 3)
+
+	// Folder Admin exactly as the issue reports it: org Viewer across the instance,
+	// Admin on this one folder. folders:* is included because a directory move or
+	// delete is authorized against the folder actions, not the dashboard ones.
+	folderAdmin := helper.CreateUser("FolderAdminFolderJobsUser", apis.Org1, org.RoleViewer, []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions: []string{
+				"dashboards:read", "dashboards:write", "dashboards:create", "dashboards:delete",
+				"folders:read", "folders:write", "folders:create", "folders:delete",
+			},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        repo,
+		},
+	})
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+	folderAdminREST := folderAdmin.RESTClient(t, gv)
+
+	t.Run("folder admin can move a folder without Editor role", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"to-move/"},
+				TargetPath: "archived/",
+			},
+		})
+
+		var statusCode int
+		result := folderAdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "folder admin should be able to move a folder they administer, without Editor role")
+		require.Equal(t, http.StatusAccepted, statusCode)
+
+		helper.AwaitJobs(t, repo)
+	})
+
+	t.Run("folder admin can delete a top-level folder without Editor role", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"to-delete/"},
+			},
+		})
+
+		var statusCode int
+		result := folderAdminREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).StatusCode(&statusCode)
+
+		require.NoError(t, result.Error(), "folder admin should be able to delete a folder they administer, without Editor role")
+		require.Equal(t, http.StatusAccepted, statusCode)
+
+		helper.AwaitJobs(t, repo)
+	})
+
+	t.Run("plain viewer with no folder permissions still cannot delete a folder", func(t *testing.T) {
+		body := common.AsJSON(provisioning.JobSpec{
+			Action: provisioning.JobActionDelete,
+			Delete: &provisioning.DeleteJobOptions{
+				Paths: []string{"archived/"},
+			},
+		})
+
+		var statusCode int
+		result := helper.ViewerREST.Post().
+			Namespace("default").
+			Resource("repositories").
+			Name(repo).
+			SubResource("jobs").
+			Body(body).
+			SetHeader("Content-Type", "application/json").
+			Do(t.Context()).StatusCode(&statusCode)
+
+		require.Error(t, result.Error(), "a viewer without folder permissions must still be denied")
+		require.Equal(t, http.StatusForbidden, statusCode)
+		require.True(t, apierrors.IsForbidden(result.Error()))
+	})
+}

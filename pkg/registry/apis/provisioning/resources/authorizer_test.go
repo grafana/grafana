@@ -848,6 +848,37 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockAccess.AssertExpectations(t)
 	})
 
+	t.Run("top-level folder delete checks against the repository folder, not the instance root", func(t *testing.T) {
+		// Regression (issue #127254, folder half): this passed "" for a top-level
+		// directory, claiming the instance root as its parent. That left the check with
+		// no folder to resolve ancestry from, so a grant on the repository folder
+		// couldn't cascade - a user with Admin on the repository folder was denied
+		// deleting a folder inside it. The parent is the repository's own folder.
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), RootFolder(repo)).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/", "")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
 	t.Run("unauthorized file path returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
 			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
