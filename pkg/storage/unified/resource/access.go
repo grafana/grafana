@@ -84,11 +84,10 @@ func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.Au
 		return nil
 	}
 
-	// An identity with no token permissions at all is not an access-token
-	// deployment (single-tenant and in-process callers look like this), and the
-	// underlying client decides on its own there. Only a token that carries
-	// permissions but not this one is a deployment mistake.
-	if len(id.GetTokenPermissions()) == 0 && len(id.GetTokenDelegatedPermissions()) == 0 {
+	// Legacy identities have neither an access token nor token permissions.
+	// Authlib hides ordinary permissions on user calls, so a verified access
+	// token with no delegated permissions must still produce an explicit error.
+	if id.GetAccessToken() == "" && len(id.GetTokenPermissions()) == 0 && len(id.GetTokenDelegatedPermissions()) == 0 {
 		return nil
 	}
 

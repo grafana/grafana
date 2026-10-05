@@ -275,6 +275,7 @@ const (
 	identityModeFallbackService = "fallback_service" // user identity dropped; storage authorizes the service instead
 	identityModeDenied          = "denied"           // user identity dropped and the fallback is switched off
 	identityModeCancelled       = "cancelled"        // user identity dropped but the request is already done; nothing is sent
+	identityModeForwarded       = "forwarded"        // original authenticated access token and optional ID token
 )
 
 // Package level so the store and index clients sharing an interceptor do not register twice.
@@ -282,6 +283,11 @@ var clientIdentityTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 	Name: "grafana_unified_storage_client_identity_total",
 	Help: "Outgoing unified storage calls by how the caller's identity was carried.",
 }, []string{"mode"})
+
+// RecordForwardedClientIdentity counts an attempted call carrying the original authenticated credentials.
+func RecordForwardedClientIdentity() {
+	clientIdentityTotal.WithLabelValues(identityModeForwarded).Inc()
+}
 
 // IDTokenExtractor keeps the service-identity fallback unconditionally and never exchanges
 // on behalf of the caller. Used by the in-process client, whose token never leaves the

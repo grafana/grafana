@@ -64,6 +64,13 @@ func TestServiceCanDelegate(t *testing.T) {
 			wantErr:   true,
 			wantCount: 1,
 		},
+		"access token with no visible permissions": {
+			id: &identity.StaticRequester{
+				Type: authlib.TypeUser, Namespace: "stacks-1", AccessToken: "verified-token",
+			},
+			wantErr:   true,
+			wantCount: 1,
+		},
 		// Single-tenant and in-process callers carry no token permissions.
 		"no token permissions at all": {
 			id: userWithDelegatedPermissions(),
