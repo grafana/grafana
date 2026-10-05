@@ -115,6 +115,7 @@ For example, you can add a confidentiality label next to the page number, or cen
 Grafana prints footer items from left to right, in the order they appear in the list.
 The list might already contain the default items of a page number, a flex spacer, and a logo.
 Remove the ones you don't want before you add your own.
+
 You can add up to 10 items, and you can add the same item type more than once.
 If you remove every item, reports fall back to the default footer of a page number and the company logo.
 
