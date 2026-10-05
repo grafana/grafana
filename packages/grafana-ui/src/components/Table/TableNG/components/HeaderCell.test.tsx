@@ -20,7 +20,6 @@ function makeField(overrides: Partial<Field> = {}): Field {
   };
 }
 
-const reorderableField = () => makeField({ config: { custom: { reorderable: true } } });
 const hideableField = () => makeField({ config: { custom: { hideable: true } } });
 
 const column = { key: 'Field1' } as Column<TableRow, TableSummaryRow>;
@@ -309,13 +308,8 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
-    it('omits the menu for reordering without a sidebar', () => {
-      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
-      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
-    });
-
     it('shows the menu when the sidebar is available', () => {
-      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled hasColumnSidebar />);
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
@@ -324,7 +318,7 @@ describe('HeaderCell', () => {
       render(
         <HeaderCell
           {...baseProps}
-          field={reorderableField()}
+          field={hideableField()}
           tableRefreshEnabled
           hasColumnSidebar
           onOpenColumnPanel={onOpenColumnPanel}

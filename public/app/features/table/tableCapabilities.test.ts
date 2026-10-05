@@ -11,11 +11,11 @@ const frame = () =>
   });
 
 describe('withRefreshedTableCapabilities', () => {
-  it('opts every column into filtering', () => {
+  it('opts every column into filtering and hiding', () => {
     const withCapabilities = withRefreshedTableCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: true });
     }
   });
 
@@ -47,7 +47,7 @@ describe('withRefreshedTableCapabilities', () => {
     expect(a.values).toBe(original.fields[0].values);
   });
 
-  it('does not support column management for nested tables', () => {
+  it('disables column management for nested tables', () => {
     const nested = toDataFrame({
       fields: [
         { name: 'parent', type: FieldType.string, values: ['a'] },
@@ -58,7 +58,7 @@ describe('withRefreshedTableCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withRefreshedTableCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true });
+      expect(field.config.custom).toMatchObject({ filterable: true, hideable: false });
     }
   });
 });

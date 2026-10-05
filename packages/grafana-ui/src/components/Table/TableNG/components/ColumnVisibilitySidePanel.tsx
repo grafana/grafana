@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -8,7 +7,6 @@ import { Trans, t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Checkbox } from '../../../Forms/Checkbox';
-import { Icon } from '../../../Icon/Icon';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TABLE } from '../constants';
 import { getGridBackgroundColor } from '../styles';
@@ -17,7 +15,6 @@ const sidebarSelectors = selectors.components.Panels.Visualization.TableNG.colum
 
 export interface SidebarColumn {
   name: string;
-  reorderable: boolean;
   hideable: boolean;
 }
 
@@ -26,7 +23,6 @@ interface ColumnVisibilitySidePanelProps {
   columns: SidebarColumn[];
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
-  onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
   onClose: () => void;
   headerHeight?: number;
   transparent?: boolean;
@@ -38,7 +34,6 @@ export function ColumnVisibilitySidePanel({
   columns,
   hiddenColumns,
   onToggleColumn,
-  onColumnsReorder,
   onClose,
   headerHeight = TABLE.HEADER_HEIGHT,
   transparent,
@@ -46,9 +41,6 @@ export function ColumnVisibilitySidePanel({
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
   const visibleCount = columns.length - hiddenColumns.size;
-
-  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
-  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   return (
     // A complementary landmark cannot be nested inside the page's main landmark.
@@ -72,53 +64,12 @@ export function ColumnVisibilitySidePanel({
       </div>
       <div className={styles.columnList}>
         {columns.map(({ name: displayName, hideable }) => {
-          const reorderable = false;
           const isVisible = !hiddenColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;
 
           return (
-            <div
-              key={displayName}
-              className={css(styles.row, dragOverColumn === displayName && styles.rowDragOver)}
-              data-testid={sidebarSelectors.row(displayName)}
-              onDragOver={(ev) => {
-                if (!reorderable || draggedColumn == null || draggedColumn === displayName) {
-                  return;
-                }
-                ev.preventDefault();
-                setDragOverColumn(displayName);
-              }}
-              onDragLeave={() => setDragOverColumn((current) => (current === displayName ? null : current))}
-              onDrop={(ev) => {
-                ev.preventDefault();
-                setDragOverColumn(null);
-                if (reorderable && draggedColumn != null && draggedColumn !== displayName) {
-                  onColumnsReorder(draggedColumn, displayName);
-                }
-              }}
-            >
-              {reorderable ? (
-                <button
-                  type="button"
-                  className={styles.dragHandle}
-                  draggable
-                  aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
-                    columnName: displayName,
-                  })}
-                  onDragStart={(ev) => {
-                    ev.dataTransfer.effectAllowed = 'move';
-                    setDraggedColumn(displayName);
-                  }}
-                  onDragEnd={() => {
-                    setDraggedColumn(null);
-                    setDragOverColumn(null);
-                  }}
-                >
-                  <Icon name="draggabledots" aria-hidden="true" />
-                </button>
-              ) : (
-                <span className={styles.dragHandlePlaceholder} aria-hidden="true" />
-              )}
+            <div key={displayName} className={styles.row} data-testid={sidebarSelectors.row(displayName)}>
+              <span className={styles.dragHandlePlaceholder} aria-hidden="true" />
               {hideable ? (
                 <Checkbox
                   value={isVisible}

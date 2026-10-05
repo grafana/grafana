@@ -90,8 +90,11 @@ export function TablePanel(props: Props) {
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
   const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
   const main = useMemo(
-    () => (tableRefreshNewFeaturesEnabled && rawMain ? withRefreshedTableCapabilities(rawMain) : rawMain),
-    [rawMain, tableRefreshNewFeaturesEnabled]
+    () =>
+      tableRefreshNewFeaturesEnabled && rawMain
+        ? withRefreshedTableCapabilities(rawMain, Boolean(adHocColumns))
+        : rawMain,
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
   );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
@@ -127,6 +130,7 @@ export function TablePanel(props: Props) {
           : undefined
       }
       timeZone={props.timeZone}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}

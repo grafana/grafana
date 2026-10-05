@@ -6,7 +6,10 @@ export function supportsColumnManagement(frame: DataFrame | undefined): boolean 
 }
 
 /** Enables the refreshed table capabilities on every field without mutating the frame. */
-export function withRefreshedTableCapabilities(frame: DataFrame): DataFrame {
+export function withRefreshedTableCapabilities(
+  frame: DataFrame,
+  columnManagementEnabled = supportsColumnManagement(frame)
+): DataFrame {
   return {
     ...frame,
     fields: frame.fields.map((field) => ({
@@ -16,6 +19,7 @@ export function withRefreshedTableCapabilities(frame: DataFrame): DataFrame {
         custom: {
           ...field.config.custom,
           filterable: true,
+          hideable: columnManagementEnabled,
         },
       },
     })),

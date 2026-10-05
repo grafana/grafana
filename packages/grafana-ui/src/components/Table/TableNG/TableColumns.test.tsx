@@ -16,7 +16,7 @@ function Harness({ revision = 0 }: { revision?: number }) {
       name,
       type: FieldType.string,
       values: [`${name}${revision}`],
-      config: { custom: { hideable: true, reorderable: true } },
+      config: { custom: { hideable: true } },
     })),
   });
   const data = applyFieldOverrides({

@@ -5,17 +5,11 @@ import { useState } from 'react';
 import { ColumnVisibilitySidePanel } from './ColumnVisibilitySidePanel';
 
 const columns = [
-  { name: 'Column A', reorderable: true, hideable: true },
-  { name: 'Column B', reorderable: true, hideable: true },
+  { name: 'Column A', hideable: true },
+  { name: 'Column B', hideable: true },
 ];
 
-function Harness({
-  initialHidden = new Set<string>(),
-  onColumnsReorder = jest.fn(),
-}: {
-  initialHidden?: Set<string>;
-  onColumnsReorder?: (source: string, target: string) => void;
-}) {
+function Harness({ initialHidden = new Set<string>() }: { initialHidden?: Set<string> }) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(initialHidden);
 
   return (
@@ -33,7 +27,6 @@ function Harness({
           return next;
         });
       }}
-      onColumnsReorder={onColumnsReorder}
       onClose={jest.fn()}
     />
   );
@@ -61,7 +54,6 @@ describe('ColumnVisibilitySidePanel', () => {
       columns,
       hiddenColumns: new Set<string>(),
       onToggleColumn: jest.fn(),
-      onColumnsReorder: jest.fn(),
       onClose: jest.fn(),
     };
 
@@ -81,7 +73,6 @@ describe('ColumnVisibilitySidePanel', () => {
         columns={columns}
         hiddenColumns={new Set()}
         onToggleColumn={jest.fn()}
-        onColumnsReorder={jest.fn()}
         onClose={onClose}
       />
     );
