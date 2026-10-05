@@ -6161,9 +6161,6 @@
       "placeholder-search-options": "Zoekopties",
       "visualization-button-tooltip": "Zoekopties"
     },
-    "panel-not-supported": {
-      "go-back-to-queries": "Terug naar Query's"
-    },
     "plan-placeholder-badge": {
       "text": "",
       "tooltip": ""
@@ -6820,19 +6817,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "SQL-expressie toevoegen",
       "sql-cta-description": "Heb je liever SQL? Voeg dan een SQL-expressie toe aan je zoekopdrachten."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "Door alle transformaties te verwijderen, ga je terug naar het hoofdselectiescherm."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Nog een transformatie toevoegen"
-      },
-      "confirmText-delete-all": "Alles verwijderen",
-      "delete-all-transformations": "Alle transformaties verwijderen",
-      "title-delete-all-transformations": "Alle transformaties verwijderen?",
-      "tooltip-clear-search": "Zoekopdracht wissen",
-      "tooltip-close-picker": "Kiezer sluiten"
     },
     "validation": {
       "invalid-dashboard-id": "Kon geen geldige Grafana.com-ID vinden",
