@@ -2434,6 +2434,21 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 	defer s.broadcaster.Unsubscribe(stream)
 
+	since := requestedSince
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
+	}
+	select {
+	case <-watchExpiryC:
+		return expired()
+	default:
+	}
+
 	// Determine a safe starting resource-version for the watch.
 	// When the client requests SendInitialEvents we will use the resource-version
 	// of the last object returned from the initial list (handled below).
@@ -2505,6 +2520,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if !checker(iter.Name(), iter.Folder()) {
 					continue
 				}
+				select {
+				case <-watchExpiryC:
+					return expired()
+				default:
+				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
 					Resource: &resourcepb.WatchEvent_Resource{
@@ -2529,7 +2549,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		}
 	}
 
-	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
 		since = processedRV
@@ -2545,15 +2564,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		ticker := time.NewTicker(s.bookmarkFrequency)
 		defer ticker.Stop()
 		bookmarkC = ticker.C
-	}
-
-	expired := func() error {
-		if ctx.Err() != nil {
-			return nil
-		}
-		s.log.Debug("watch: expiring stream to bound stale-state duration",
-			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
-		return NewResourceVersionExpiredError(since)
 	}
 
 	for {

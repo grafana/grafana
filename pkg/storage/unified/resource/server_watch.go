@@ -28,7 +28,9 @@ func (s *server) initSeededWatcher(backend seededWatchBackend) {
 	initialize := func(ctx context.Context) (cacheSeed[*WrittenEvent], error) {
 		seed, events, err := backend.watchWriteEventsWithSeed(ctx)
 		if err != nil {
-			s.log.Error("failed to initialize watch cache", "error", err)
+			if ctx.Err() == nil {
+				s.log.Error("failed to initialize watch cache", "error", err)
+			}
 			return cacheSeed[*WrittenEvent]{}, err
 		}
 		s.mostRecentRV.Store(seed.highestRV)
