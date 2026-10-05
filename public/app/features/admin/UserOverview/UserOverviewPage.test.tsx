@@ -55,8 +55,32 @@ beforeEach(() => {
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(true);
   jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   server.use(
+    http.get('/apis', () =>
+      HttpResponse.json({
+        items: [
+          {
+            metadata: { name: 'iam.grafana.app' },
+            versions: [
+              {
+                version: 'v0alpha1',
+                resources: [
+                  {
+                    resource: 'users',
+                    responseKind: { kind: 'User' },
+                    verbs: ['get'],
+                    subresources: [{ subresource: 'teams', responseKind: { kind: 'UserTeam' }, verbs: ['get'] }],
+                  },
+                  { resource: 'teams', responseKind: { kind: 'Team' }, verbs: ['get'] },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    ),
     http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice', () => HttpResponse.json(person)),
     http.get('/api/users/alice', () => HttpResponse.json(profile)),
+    http.get('/api/users/alice/orgs', () => HttpResponse.json([{ orgId: 1, name: 'Main Org.', role: 'Viewer' }])),
     http.get('/api/org/users', () => HttpResponse.json([])),
     http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice/teams', () =>
       HttpResponse.json({ items: [{ team: 'platform' }], metadata: {} })
@@ -304,10 +328,7 @@ it('loads sessions only on their tab and allows individual revocation without lo
 
 it('keeps the existing profile accessible when the IAM API is unavailable', async () => {
   server.use(
-    http.get(
-      '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice',
-      () => new HttpResponse(null, { status: 404 })
-    ),
+    http.get('/apis', () => HttpResponse.json({ items: [] })),
     http.get('/api/users/alice/orgs', () => HttpResponse.json([{ orgId: 1, name: 'Main Org.', role: 'Viewer' }]))
   );
   setup();
@@ -344,6 +365,87 @@ it('does not offer role editing without write permissions', async () => {
   setup('roles');
   await screen.findByRole('link', { name: 'Platform' });
   expect(screen.queryByRole('button', { name: 'Edit roles' })).not.toBeInTheDocument();
+});
+
+it('uses legacy teams when discovery does not advertise the membership API', async () => {
+  const iamRequests = jest.fn();
+  server.use(
+    http.get('/apis', () => HttpResponse.json({ items: [] })),
+    http.get('/api/users/alice/teams', () =>
+      HttpResponse.json([{ id: 21, uid: 'platform', name: 'Platform', email: 'platform@example.com' }])
+    ),
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice', () => {
+      iamRequests();
+      return HttpResponse.json(person);
+    }),
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice/teams', () => {
+      iamRequests();
+      return HttpResponse.json({ items: [] });
+    })
+  );
+  const { user } = setup('teams');
+  expect(await screen.findByRole('link', { name: 'Platform' })).toHaveAttribute('href', '/org/teams/edit/platform');
+  expect(screen.getByText('platform@example.com')).toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Roles' }));
+  expect(await screen.findByText('Inherited from team')).toBeInTheDocument();
+  expect(screen.getAllByText('Dashboard reader')).toHaveLength(2);
+  expect(iamRequests).not.toHaveBeenCalled();
+});
+
+it('uses organization user data on older servers without requiring global user read', async () => {
+  const profileRequests = jest.fn();
+  jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => action === AccessControlAction.OrgUsersRead);
+  server.use(
+    http.get('/apis', () => new HttpResponse(null, { status: 404 })),
+    http.get('/api/org/users', () => HttpResponse.json([{ ...profile, userId: 12, role: 'Viewer', orgId: 1 }])),
+    http.get('/api/users/alice', () => {
+      profileRequests();
+      return new HttpResponse(null, { status: 403 });
+    })
+  );
+  setup();
+  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
+  expect(profileRequests).not.toHaveBeenCalled();
+});
+
+it.each([403, 500])('does not switch to legacy data when IAM returns %s', async (status) => {
+  server.use(
+    http.get(
+      '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice',
+      () => new HttpResponse(null, { status })
+    )
+  );
+  setup();
+  expect(await screen.findByRole('alert')).toHaveTextContent(
+    status === 403 ? 'You do not have permission' : 'Unable to load'
+  );
+  expect(screen.queryByText('Alice Example')).not.toBeInTheDocument();
+});
+
+it('supports IAM user reads alongside legacy team membership reads', async () => {
+  server.use(
+    http.get('/apis', () =>
+      HttpResponse.json({
+        items: [
+          {
+            metadata: { name: 'iam.grafana.app' },
+            versions: [
+              {
+                version: 'v0alpha1',
+                resources: [{ resource: 'users', responseKind: { kind: 'User' }, verbs: ['get'] }],
+              },
+            ],
+          },
+        ],
+      })
+    ),
+    http.get('/api/users/alice/teams', () => HttpResponse.json([{ id: 21, uid: 'platform', name: 'Platform' }]))
+  );
+  const { user } = setup();
+  expect(await screen.findByText('Never')).toBeInTheDocument();
+  await user.click(screen.getByRole('tab', { name: 'Teams' }));
+  expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
 });
 
 it('does not offer basic-role editing for a provisioned user', async () => {

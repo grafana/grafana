@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams, useSearchParams } from 'react-router-dom-v5-compat';
 
-import { useGetUserQuery, type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
@@ -20,7 +20,7 @@ import {
   type RoleAssignment,
   type OverviewProfile,
   useGetOverviewProfileQuery,
-  useGetOverviewOrgsQuery,
+  useGetOverviewUserQuery,
   useGetOverviewOrgUsersQuery,
   useGetOverviewTeamRolesQuery,
   useGetOverviewTeamsQuery,
@@ -31,41 +31,16 @@ export default function UserOverviewPage() {
   const { id: uid = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') ?? 'details';
-  const iam = useGetUserQuery({ name: uid });
+  const overview = useGetOverviewUserQuery(uid);
   const canReadProfile = contextSrv.hasPermission(AccessControlAction.UsersRead);
   const profileQuery = useGetOverviewProfileQuery(canReadProfile ? uid : skipToken);
   const profile = profileQuery.currentData;
-  const fallbackOrgs = useGetOverviewOrgsQuery(iam.error && profile ? uid : skipToken);
-  const user =
-    iam.currentData ??
-    (profile && {
-      metadata: {
-        name: profile.uid,
-        creationTimestamp: profile.createdAt,
-        labels: { 'grafana.app/deprecatedInternalID': String(profile.id) },
-      },
-      spec: {
-        login: profile.login,
-        title: profile.name,
-        email: profile.email,
-        grafanaAdmin: profile.isGrafanaAdmin,
-        provisioned: !!profile.isProvisioned,
-        disabled: profile.isDisabled,
-        emailVerified: false,
-        role: fallbackOrgs.currentData?.find((org) => org.orgId === contextSrv.user.orgId)?.role ?? '',
-      },
-      status: { lastSeenAt: 0 },
-    });
+  const user = overview.currentData?.user;
   const onUpdated = () => {
     if (canReadProfile) {
       profileQuery.refetch();
     }
-    if (!iam.error) {
-      iam.refetch();
-    }
-    if (fallbackOrgs.currentData) {
-      fallbackOrgs.refetch();
-    }
+    overview.refetch();
   };
   const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
   const showOrganizations = profile && contextSrv.hasPermission(AccessControlAction.OrgsRead);
@@ -103,9 +78,9 @@ export default function UserOverviewPage() {
           <Tab key={id} label={label} active={active === id} onChangeTab={() => setParams({ tab: id })} />
         ))}
       </TabsBar>
-      <Page.Contents isLoading={!user && (iam.isFetching || profileQuery.isFetching)}>
-        {!user && (iam.error || profileQuery.error) ? (
-          <LoadError error={profileQuery.error || iam.error} />
+      <Page.Contents isLoading={!user && (overview.isFetching || profileQuery.isFetching)}>
+        {!user && (overview.error || profileQuery.error) ? (
+          <LoadError error={overview.error || profileQuery.error} />
         ) : (
           user && (
             <>
@@ -115,7 +90,7 @@ export default function UserOverviewPage() {
                     key={uid}
                     user={user}
                     profile={profile}
-                    hasLastSeen={!!iam.currentData}
+                    hasLastSeen={!!overview.currentData?.hasLastSeen}
                     onUpdated={onUpdated}
                   />
                   {Boolean(profileQuery.error) && <LoadError error={profileQuery.error} />}

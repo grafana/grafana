@@ -1,8 +1,13 @@
-import { generatedAPI, type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { generatedAPI, type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { dateTimeFormatTimeAgo, type OrgRole } from '@grafana/data';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { legacyAPI } from 'app/api/clients/legacy';
 import { rolesAPI } from 'app/api/clients/roles';
+import { contextSrv } from 'app/core/services/context_srv';
+import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
+import { AccessControlAction } from 'app/types/accessControl';
 import { type SyncInfo } from 'app/types/ldap';
+import { type Team as LegacyTeam } from 'app/types/teams';
 import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
 export type OverviewProfile = UserDTO & { createdAt?: string };
@@ -116,11 +121,138 @@ export interface RoleAssignment {
   team?: Team;
 }
 
-const teamsAPI = generatedAPI.injectEndpoints({
+// Discover registered resources rather than relying on rollout flags: explicit IAM
+// startup configuration can enable APIs independently of those flags.
+const discoveryAPI = generatedAPI.injectEndpoints({
   endpoints: (build) => ({
+    getOverviewCapabilities: build.query<{ users: boolean; userTeams: boolean }, void>({
+      async queryFn() {
+        try {
+          const resources = discoveryResources(await getAPIGroupDiscoveryList()).filter(
+            (resource) =>
+              resource.responseKind.group === 'iam.grafana.app' && resource.responseKind.version === 'v0alpha1'
+          );
+          const users = resources.find((resource) => resource.resource === 'users');
+          return {
+            data: {
+              users: !!users?.verbs.includes('get'),
+              userTeams:
+                !!users?.subresources?.some(
+                  (resource) => resource.subresource === 'teams' && resource.verbs.includes('get')
+                ) && resources.some((resource) => resource.resource === 'teams' && resource.verbs.includes('get')),
+            },
+          };
+        } catch (error) {
+          // Older servers may not expose discovery. Authorization and transient
+          // failures must remain visible rather than silently switching backends.
+          if (isFetchError(error) && error.status === 404) {
+            return { data: { users: false, userTeams: false } };
+          }
+          return { error };
+        }
+      },
+    }),
+  }),
+});
+
+const overviewAPI = generatedAPI.injectEndpoints({
+  endpoints: (build) => ({
+    getOverviewUser: build.query<{ user: User; hasLastSeen: boolean }, string>({
+      async queryFn(uid, api) {
+        try {
+          const capabilities = await api
+            .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
+            .unwrap();
+          if (capabilities.users) {
+            const user = await api
+              .dispatch(
+                generatedAPI.endpoints.getUser.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+              )
+              .unwrap();
+            return { data: { user, hasLastSeen: true } };
+          }
+          const canReadProfile = contextSrv.hasPermission(AccessControlAction.UsersRead);
+          const profile = canReadProfile
+            ? await api
+                .dispatch(
+                  managementAPI.endpoints.getOverviewProfile.initiate(uid, { subscribe: false, forceRefetch: true })
+                )
+                .unwrap()
+            : undefined;
+          const members = contextSrv.hasPermission(AccessControlAction.OrgUsersRead)
+            ? await api
+                .dispatch(
+                  managementAPI.endpoints.getOverviewOrgUsers.initiate(profile?.login ?? '', {
+                    subscribe: false,
+                    forceRefetch: true,
+                  })
+                )
+                .unwrap()
+            : [];
+          const member = members.find((member) => member.uid === uid);
+          if (!profile && !member) {
+            return { error: { status: 404 } };
+          }
+          const orgs =
+            profile && !member
+              ? await api
+                  .dispatch(
+                    managementAPI.endpoints.getOverviewOrgs.initiate(uid, { subscribe: false, forceRefetch: true })
+                  )
+                  .unwrap()
+              : [];
+          return {
+            data: {
+              user: {
+                metadata: {
+                  name: uid,
+                  creationTimestamp: profile?.createdAt ?? profile?.created ?? member?.created,
+                  labels: { 'grafana.app/deprecatedInternalID': String(profile?.id ?? member?.userId) },
+                },
+                spec: {
+                  login: profile?.login ?? member!.login,
+                  title: profile?.name ?? member!.name,
+                  email: profile?.email ?? member!.email,
+                  role: member?.role ?? orgs.find((org) => org.orgId === contextSrv.user.orgId)?.role ?? '',
+                  grafanaAdmin: profile?.isGrafanaAdmin ?? false,
+                  disabled: profile?.isDisabled ?? member!.isDisabled,
+                  provisioned: !!(profile?.isProvisioned ?? member?.isProvisioned),
+                  emailVerified: false,
+                },
+                status: { lastSeenAt: 0 },
+              },
+              hasLastSeen: false,
+            },
+          };
+        } catch (error) {
+          return { error };
+        }
+      },
+      providesTags: ['User'],
+    }),
     getOverviewTeams: build.query<Team[], string>({
       async queryFn(uid, api) {
         try {
+          const capabilities = await api
+            .dispatch(discoveryAPI.endpoints.getOverviewCapabilities.initiate(undefined, { subscribe: false }))
+            .unwrap();
+          if (!capabilities.userTeams) {
+            const teams = await getBackendSrv().get<LegacyTeam[]>(`/api/users/${uid}/teams`);
+            return {
+              data: teams.map(
+                (team): Team => ({
+                  metadata: { name: team.uid, labels: { 'grafana.app/deprecatedInternalID': String(team.id) } },
+                  spec: {
+                    title: team.name,
+                    email: team.email ?? '',
+                    provisioned: !!team.isProvisioned,
+                    externalUID: '',
+                    members: [],
+                  },
+                })
+              ),
+            };
+          }
           const teams = new Set<string>();
           let next: string | undefined;
           do {
@@ -198,5 +330,5 @@ const assignmentsAPI = rolesAPI.injectEndpoints({
   }),
 });
 
-export const { useGetOverviewTeamsQuery } = teamsAPI;
+export const { useGetOverviewUserQuery, useGetOverviewTeamsQuery } = overviewAPI;
 export const { useGetOverviewTeamRolesQuery } = assignmentsAPI;
