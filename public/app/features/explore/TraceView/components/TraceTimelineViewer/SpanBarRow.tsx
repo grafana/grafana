@@ -64,9 +64,14 @@ const nameColumnClassName = 'nameColumn';
 
 const getStyles = stylesFactory((theme: GrafanaTheme2, showSpanFilterMatchesOnly: boolean, serviceColor: string) => {
   const animations = {
+    // Peak at 30% info. The row and the timeline cell both paint this color, so
+    // the layers stack. Solid info.main is about 3.2:1 with text.primary in the
+    // light theme, under 4.5:1 for the small span labels. At 30% the stacked
+    // layers stay above 4.5:1 in both themes, and contrast improves as the
+    // flash fades to info.transparent.
     flash: keyframes`
     from {
-      background-color: ${theme.colors.info.main};
+      background-color: ${colorManipulator.alpha(theme.colors.info.main, 0.3)};
     }
     to {
       background-color: ${theme.colors.info.transparent};
