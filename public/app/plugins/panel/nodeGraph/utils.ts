@@ -264,6 +264,15 @@ function processEdges(edges: DataFrame, edgeFields: EdgeFields, nodesMap: { [id:
     const sourceNode = nodesMap[source];
     const targetNode = nodesMap[target];
 
+    // An edge can name an id that the nodes frame does not contain. Left unchecked that
+    // surfaces as a TypeError here and again when counting incoming edges and when the
+    // layout resolves the endpoints.
+    if (!sourceNode || !targetNode) {
+      throw new Error(
+        `Edge "${id}" references "${!sourceNode ? source : target}", which is not an id in the nodes data frame.`
+      );
+    }
+
     return {
       id,
       dataFrameRowIndex: index,
