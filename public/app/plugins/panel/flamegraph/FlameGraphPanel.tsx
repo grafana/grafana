@@ -3,6 +3,7 @@ import { FlameGraph, checkFields, getMessageCheckFieldsResult } from '@grafana/f
 import { PanelDataErrorView, reportInteraction, config } from '@grafana/runtime';
 import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useTheme2 } from '@grafana/ui';
+import { useTableRefreshNewFeatures } from 'app/features/table/hooks';
 
 import { type Options } from './types';
 
@@ -17,6 +18,7 @@ function interaction(name: string, context: Record<string, string | number> = {}
 export const FlameGraphPanel = (props: PanelProps<Options>) => {
   const theme = useTheme2();
   const useTableNG = useFlagFlameGraphTableNg();
+  const rowTransformationsEnabled = useTableRefreshNewFeatures();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
   const wrongFields = checkFields(props.data.series[0]);
@@ -34,6 +36,7 @@ export const FlameGraphPanel = (props: PanelProps<Options>) => {
       fillHeight={true}
       useTableNG={useTableNG}
       tableRefreshEnabled={tableRefreshEnabled}
+      rowTransformationsEnabled={rowTransformationsEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
       showFlameGraphOnly={props.options?.showFlameGraphOnly ?? false}
       onTableSymbolClick={() => interaction('table_item_selected')}

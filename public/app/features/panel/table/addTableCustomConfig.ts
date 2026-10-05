@@ -7,6 +7,8 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
   options?: {
     hideFields?: boolean;
     filters?: boolean;
+    /** Controls when the column-filter switch is shown. */
+    filtersShowIf?: () => boolean;
     wrapHeaderText?: boolean;
   }
 ) {
@@ -71,6 +73,7 @@ export function addTableCustomConfig<T extends TableFieldOptions>(
       category,
       description: t('table.description-column-filter', 'Enables/disables field filters in table'),
       defaultValue: defaultTableFieldOptions.filterable,
+      showIf: options.filtersShowIf,
     });
   }
 
