@@ -724,6 +724,15 @@ export const versionedComponents = {
           },
         },
         Filters: {
+          Range: {
+            minimumInput: { '13.3.0': 'data-testid tableng range minimum-input' },
+            maximumInput: { '13.3.0': 'data-testid tableng range maximum-input' },
+            includeMissingCheckbox: { '13.3.0': 'data-testid tableng range include-missing-checkbox' },
+            applyButton: { '13.3.0': 'data-testid tableng range apply-button' },
+            cancelButton: { '13.3.0': 'data-testid tableng range cancel-button' },
+            clearButton: { '13.3.0': 'data-testid tableng range clear-button' },
+            histogram: { '13.3.0': 'data-testid tableng range histogram' },
+          },
           clearAll: { '13.3.0': 'data-testid tableng clear filters' },
           HeaderButton: {
             '12.1.0': 'data-testid tableng header filter',
