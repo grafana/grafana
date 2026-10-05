@@ -55,8 +55,28 @@ var defaultTextFields = []string{resource.SEARCH_FIELD_TITLE}
 // (gvr) and, on success, returns the backend request scoped to namespace.
 // On failure it returns a field.ErrorList suitable for a 400 BadRequest.
 func TranslateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, provider resource.SearchFieldsProvider) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	return translateSearchQuery(q, gvr, namespace, newFieldSet(gvr, provider))
+}
+
+// GlobalSearchGVR names the global index. It is not a stored resource,
+// so no kind is served under it; it identifies the index the request reads.
+func GlobalSearchGVR() schema.GroupVersionResource {
+	return schema.GroupVersionResource{
+		Group:    resource.GlobalSearchGroup,
+		Version:  searchv0.VERSION,
+		Resource: resource.GlobalSearchResource,
+	}
+}
+
+// TranslateGlobalSearchQuery is TranslateSearchQuery for a search that spans
+// resource types. The fields come from the global index rather than from
+// a kind's declarations, so no kind is named and no provider is consulted.
+func TranslateGlobalSearchQuery(q *searchv0.SearchQuery, namespace string) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
+	return translateSearchQuery(q, GlobalSearchGVR(), namespace, globalFieldSet())
+}
+
+func translateSearchQuery(q *searchv0.SearchQuery, gvr schema.GroupVersionResource, namespace string, fs *fieldSet) (*resourcepb.ResourceSearchRequest, field.ErrorList) {
 	errs := validateEnvelope(q.TypeMeta, searchv0.KindSearchQuery)
-	fs := newFieldSet(gvr, provider)
 
 	leaves, whereErrs := validateWhere(q.Where, fs, field.NewPath("where"))
 	errs = append(errs, whereErrs...)
@@ -141,6 +161,15 @@ func newFieldSet(gvr schema.GroupVersionResource, provider resource.SearchFields
 		for _, d := range provider.Fields(gvr) {
 			m[d.Name] = d
 		}
+	}
+	return &fieldSet{byName: m}
+}
+
+// globalFieldSet is the field set of the global index.
+func globalFieldSet() *fieldSet {
+	m := map[string]resource.SearchFieldDefinition{}
+	for _, d := range resource.GlobalSearchFieldDefinitions() {
+		m[d.Name] = d
 	}
 	return &fieldSet{byName: m}
 }
@@ -592,6 +621,7 @@ func checkCapability(fs *fieldSet, name string, cap resource.SearchCapability, p
 
 func newRequest(gvr schema.GroupVersionResource, namespace string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
 				Group:     gvr.Group,

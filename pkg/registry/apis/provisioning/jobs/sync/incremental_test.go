@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -266,7 +267,7 @@ func TestIncrementalSync(t *testing.T) {
 
 				progress.On("HasDirPathFailedCreation", "dashboards/new.json").Return(false)
 
-				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref", mock.Anything).
 					Return("renamed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
 
 				progress.On("Record", mock.Anything, matchesResult(jobs.NewGroupKindResult(
@@ -491,6 +492,306 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 	})
 }
 
+func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
+	permissiveQt := newPermissiveMockQuotaTracker(t)
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{
+		{
+			name:         "unsafe path is reported instead of silently ignored",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/Backend & UI.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					// Must NOT be FileActionIgnored: Record() excludes that action from
+					// error counting, which would make this failure invisible to the job.
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "folder/Backend & UI.json" &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "unsafe path on update is also reported instead of silently ignored",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionUpdated,
+						Path:   "folder/Backend & UI.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionUpdated &&
+						result.Path() == "folder/Backend & UI.json" &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "renamed onto an unsafe path removes the resource and warns about the new path",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "folder/Backend & UI.json",
+						PreviousPath: "folder/backend-ui.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder/backend-ui.json", "old-ref").
+					Return("removed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionRenamed &&
+						result.Path() == "folder/Backend & UI.json" &&
+						result.PreviousPath() == "folder/backend-ui.json" &&
+						result.Name() == "removed-dashboard" &&
+						result.Error() == nil &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return().Once()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "a failed removal on rename onto an unsafe path is an error",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "folder/Backend & UI.json",
+						PreviousPath: "folder/backend-ui.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "folder/backend-ui.json", "old-ref").
+					Return("", "", schema.GroupVersionKind{}, 0, errors.New("boom"))
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed &&
+						result.Error() != nil &&
+						result.Warning() == nil
+				})).Return().Once()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "renamed from an unsafe path to another unsafe path only warns",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "folder/Backend & UI.json",
+						PreviousPath: "folder/old & path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/Backend & UI.json").Return(false)
+
+				// no RemoveResourceFromFile expectation: the old path never synced either
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionRenamed &&
+						result.PreviousPath() == "folder/old & path.json" &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return().Once()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "delete of an unsafe path is not reported as unsupported",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionDeleted,
+						Path:   "folder/Backend & UI.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder/", "new-ref").
+					Return("folder-uid", nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Error() == nil && result.Warning() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "non-resource file with an unsafe character is not reported as unsupported",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// validatePathBasics runs before the extension check inside
+				// IsPathSupported, so this fails with a path-basics error, not
+				// ErrUnsupportedFileExtension -- must still be excluded by
+				// extension, not by which error came first.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/screenshot & notes.png",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/screenshot & notes.png").Return(false)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder/", "new-ref").
+					Return("folder-uid", nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Error() == nil && result.Warning() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "hidden file that also fails an earlier check is not reported as unsupported",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// "&" trips ErrInvalidCharacters before IsSafe ever reaches the
+				// hidden-path check.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/.hidden & broken.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/.hidden & broken.json").Return(false)
+
+				repoResources.On("EnsureFolderPathExist", mock.Anything, "folder/", "new-ref").
+					Return("folder-uid", nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Error() == nil && result.Warning() == nil
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+		{
+			name:         "traversal path is reported as unsupported, not silently dropped as hidden",
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				// ".." starts with '.' too; IsHidden must not treat it as hidden,
+				// or a traversal attempt would be waved through instead of
+				// failing the sync.
+				changes := []repository.VersionedFileChange{
+					{
+						Action: repository.FileActionCreated,
+						Path:   "folder/../evil.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 1).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "folder/../evil.json").Return(false)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var unsupportedErr *resources.UnsupportedPathError
+					return result.Action() == repository.FileActionCreated &&
+						result.Path() == "folder/../evil.json" &&
+						errors.As(result.Warning(), &unsupportedErr)
+				})).Return()
+
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+	})
+}
+
 func TestIncrementalSync_ErrorHandling(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{
@@ -627,6 +928,67 @@ func TestIncrementalSync_ErrorHandling(t *testing.T) {
 						result.Error() != nil &&
 						result.Error().Error() == "removing resource from file dashboards/old.json: delete failed"
 				})).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		},
+	})
+}
+
+func TestIncrementalSync_RenameQuotaGate(t *testing.T) {
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{
+		{
+			name:         "rename passes the real quota check through to RenameResourceFile",
+			quotaTracker: quotas.NewInMemoryQuotaTracker(9, 10),
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{
+					{
+						Action:       repository.FileActionRenamed,
+						Path:         "dashboards/recovered.json",
+						PreviousPath: "dashboards/old&path.json",
+						Ref:          "new-ref",
+						PreviousRef:  "old-ref",
+					},
+					{
+						Action: repository.FileActionCreated,
+						Path:   "dashboards/second.json",
+						Ref:    "new-ref",
+					},
+				}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+
+				progress.On("HasDirPathFailedCreation", "dashboards/recovered.json").Return(false)
+				progress.On("HasDirPathFailedCreation", "dashboards/second.json").Return(false)
+
+				// The decision of whether this rename actually needs quota lives
+				// inside RenameResourceFile (real code, tested in the resources
+				// package); here just consume the one free slot via the passed
+				// hook, as that code would, to prove incremental sync wired the
+				// real tracker through and not a stub -- the later plain create
+				// then has nothing left and gets blocked.
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old&path.json", "old-ref", "dashboards/recovered.json", "new-ref", mock.Anything).
+					Run(func(args mock.Arguments) {
+						if beforeCreate, ok := args.Get(5).(resources.BeforeCreate); ok {
+							_, _ = beforeCreate(context.Background(), "dashboards/recovered.json")
+						}
+					}).
+					Return("recovered-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionRenamed && result.Path() == "dashboards/recovered.json" && result.Error() == nil
+				})).Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					var qe *quotas.QuotaExceededError
+					return result.Action() == repository.FileActionIgnored &&
+						result.Path() == "dashboards/second.json" &&
+						result.Warning() != nil &&
+						errors.As(result.Warning(), &qe)
+				})).Return()
+
 				progress.On("TooManyErrors").Return(nil)
 			},
 			previousRef: "old-ref",
@@ -1762,6 +2124,27 @@ func TestDeleteFolders(t *testing.T) {
 
 		deleteFolders(context.Background(), []folderDeletion{
 			{Path: "alpha/", UID: "bad-uid"},
+		}, repoResources, progress, tracer)
+	})
+
+	t.Run("a folder that never existed is not a failure", func(t *testing.T) {
+		repoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+
+		progress.On("HasDirPathFailedCreation", "bad&path/").Return(false)
+		progress.On("HasDirPathFailedDeletion", "bad&path/").Return(false)
+		progress.On("HasChildPathFailedCreation", "bad&path/").Return(false)
+		progress.On("HasChildPathFailedUpdate", "bad&path/").Return(false)
+		notFound := apierrors.NewNotFound(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "never-existed-uid")
+		repoResources.On("RemoveFolder", mock.Anything, "never-existed-uid").Return(notFound)
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(r jobs.JobResourceResult) bool {
+			return r.Action() == repository.FileActionDeleted &&
+				r.Name() == "never-existed-uid" &&
+				r.Error() == nil
+		})).Return()
+
+		deleteFolders(context.Background(), []folderDeletion{
+			{Path: "bad&path/", UID: "never-existed-uid"},
 		}, repoResources, progress, tracer)
 	})
 

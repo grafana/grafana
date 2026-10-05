@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -67,7 +69,7 @@ func legacyStatusHandler(t *testing.T, rule *ngmodels.AlertRule) (*Handler, *log
 	client := NewLegacyClient(*service)
 	client.logger = logger
 	ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: 1, UserID: 1})
-	return NewHandler(client, client), logger, ctx
+	return NewHandler(selectorForBackend(alertrule.ResourceInfo.GroupResource(), client), selectorForBackend(recordingrule.ResourceInfo.GroupResource(), client)), logger, ctx
 }
 
 func TestPerKindSearch_legacyStatusProjection(t *testing.T) {

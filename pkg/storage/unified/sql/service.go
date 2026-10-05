@@ -55,6 +55,7 @@ type service struct {
 	subservicesWatcher *services.FailureWatcher
 
 	// -- Shared Components
+	watchExpiry   resource.WatchExpiry
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -90,6 +91,11 @@ type service struct {
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
 // ServiceOption allows customizing service behavior
 type ServiceOption func(*service)
+
+// WithWatchExpiry shares notification invalidation with the resource server.
+func WithWatchExpiry(expiry resource.WatchExpiry) ServiceOption {
+	return func(s *service) { s.watchExpiry = expiry }
+}
 
 // WithAuthenticator sets a custom authenticator for the service
 // This is primarily intended for testing scenarios
@@ -182,10 +188,9 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	}
 
 	if cfg.QOSEnabled {
-		qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 		queue := scheduler.NewQueue(&scheduler.QueueOptions{
 			MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-			Registerer:       qosReg,
+			Registerer:       reg,
 		})
 		scheduler, err := scheduler.NewScheduler(queue, &scheduler.Config{
 			NumWorkers: cfg.QOSNumberWorker,
@@ -396,7 +401,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	var snapshotStore search.RemoteIndexStore
-	if s.cfg.IndexSnapshotEnabled && s.cfg.IndexSnapshotStorageKV {
+	if s.cfg.IndexSnapshotEnabled {
 		snapshotStore, err = BuildKVSnapshotStore(s.cfg, s.backend, s.log)
 		if err != nil {
 			return err
@@ -429,6 +434,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	}
 
 	serverOptions := ServerOptions{
+		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
@@ -672,7 +678,7 @@ func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.Servic
 
 // BuildKVSnapshotStore wires a KVRemoteIndexStore that shares the KV
 // store and lease manager with the storage backend. The caller is
-// responsible for ensuring cfg.IndexSnapshotStorageKV is true. This
+// responsible for ensuring cfg.IndexSnapshotEnabled is true. This
 // function validates the remaining preconditions and fails loudly so
 // misconfiguration is caught at process start rather than at the first
 // snapshot operation.
@@ -682,12 +688,9 @@ func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.Servic
 // reuse the same construction and validation when they build their
 // own search options.
 func BuildKVSnapshotStore(cfg *setting.Cfg, backend resource.StorageBackend, logger log.Logger) (search.RemoteIndexStore, error) {
-	if cfg.IndexSnapshotBucketURL != "" {
-		return nil, fmt.Errorf("index_snapshot_storage_kv and index_snapshot_bucket_url are mutually exclusive")
-	}
 	kvBackend, ok := backend.(resource.KVBackend)
 	if !ok {
-		return nil, fmt.Errorf("index_snapshot_storage_kv requires a KV-backed storage backend (got %T)", backend)
+		return nil, fmt.Errorf("index_snapshot_enabled requires a KV-backed storage backend (got %T)", backend)
 	}
 
 	leaseMgr := kvBackend.LeaseManager()
