@@ -39,6 +39,7 @@ import {
   useSortedRows,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -140,7 +141,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
   const nestedFramesFieldName = useMemo(() => getDisplayName(nestedFramesField), [nestedFramesField]);
-  const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField]);
+  // New results can reuse the nested field while replacing frames inside its values buffer.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField, data]);
 
   const frameToRecords = useRowCompiler(data, nestedFramesFieldName);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
@@ -155,6 +158,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  const wrapFallback = useTextWrapFallback(data);
+  const nestedWrapFallback = useTextWrapFallback(data);
   // Row-height and column-width measurement must both see the same rendered value column-building
   // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
   // `prepareFieldsForDisplay`), so measuring against the raw visible fields would stringify its raw
@@ -324,6 +329,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const rowHeight = useRowHeight({
+    wrapFallback,
+    nestedWrapFallback,
     columnWidths: widths,
     fields: preparedFields,
     hasNestedFrames: true,
@@ -442,6 +449,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
+      nestedWrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -467,6 +476,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       typographyCtx,
     }),
     [
+      wrapFallback,
+      nestedWrapFallback,
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
