@@ -4,16 +4,9 @@ import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
+import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
 import { type DashboardScene } from '../scene/DashboardScene';
-import { getDsRefsFromScene } from '../utils/dashboardDsRefs';
-
-// Data sources whose queries are affected by scope filters.
-const SCOPE_FILTERED_DATASOURCE_TYPES = ['loki', 'prometheus'];
-
-function hasScopeFilteredDatasource(dashboard: DashboardScene): boolean {
-  return getDsRefsFromScene(dashboard).some((ref) => ref.type && SCOPE_FILTERED_DATASOURCE_TYPES.includes(ref.type));
-}
 
 export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const { isEditing } = dashboard.useState();
