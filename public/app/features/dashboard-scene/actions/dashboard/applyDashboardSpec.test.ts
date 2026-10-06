@@ -107,7 +107,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalSidebar = scene.state.sidebar;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.sidebar).toBe(originalSidebar);
   });
@@ -116,7 +116,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.title).toBe('New title');
     const newBody = scene.state.body;
@@ -140,7 +140,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     const addedObjects: unknown[] = [];
     scene.subscribeToEvent(NewSceneObjectAddedEvent, (evt) => addedObjects.push(evt.payload));
@@ -154,7 +154,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     expect(scene.state.isDirty).toBeFalsy();
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
     expect(scene.state.isDirty).toBe(true);
 
     scene.state.sidebar.undoAction();
@@ -165,7 +165,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
     const rowsBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
     const tabsBody = scene.state.body;
     expect(tabsBody).not.toBe(rowsBody);
@@ -188,7 +188,7 @@ describe('applyDashboardSpec', () => {
     const originalPane = scene.state.sidebar.state.openPane!;
     expect(originalPane.getId()).toBe('code');
 
-    applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
     const appliedPane = scene.state.sidebar.state.openPane!;
     expect(appliedPane.getId()).toBe('code');
@@ -211,7 +211,7 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.sidebar.state.openPane).toBe(addNewPane);
     expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(0);
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.sidebar.state.openPane).toBeUndefined();
   });
@@ -224,7 +224,7 @@ describe('applyDashboardSpec', () => {
     const originalPane = sidebar.state.openPane!;
     const originalPanel = sidebar.getSelectedObject();
 
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
     const appliedPanel = findVizPanelByKey(scene, 'panel-1')!;
     expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }]);
@@ -250,7 +250,7 @@ describe('applyDashboardSpec', () => {
     sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
     expect(sidebar.state.openPane?.getId()).toBe('element');
 
-    applyDashboardSpec({ scene, spec: makeSpec('Empty dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('Empty dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(sidebar.state.selectionContext.selected).toEqual([]);
     expect(sidebar.state.openPane).toBeUndefined();
@@ -263,7 +263,7 @@ describe('applyDashboardSpec', () => {
     const originalPanel = findVizPanelByKey(scene, 'panel-1')!;
     sidebar.selectObject(originalPanel);
 
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
     getEditableElementFor(sidebar.getSelectedObject())!.onChangeName!('Renamed after rebuild');
 
     expect(findVizPanelByKey(scene, 'panel-1')!.state.title).toBe('Renamed after rebuild');
@@ -276,7 +276,7 @@ describe('applyDashboardSpec', () => {
     sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
     sidebar.selectObject(findVizPanelByKey(scene, 'panel-2')!, { multi: true });
 
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
     expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }, { id: 'panel-2' }]);
     expect(sidebar.state.openPane?.getId()).toBe('element');
 
@@ -284,7 +284,7 @@ describe('applyDashboardSpec', () => {
     delete spec.elements['panel-2'];
     spec.layout = { kind: 'GridLayout', spec: { items: [gridItem('panel-1')] } };
     sidebar.setState({ isDocked: true });
-    applyDashboardSpec({ scene, spec, description: 'Remove panel' });
+    applyDashboardSpec({ scene, spec, description: 'Remove panel', scope: 'code-pane' });
 
     expect(sidebar.state.selectionContext.selected).toEqual([]);
     expect(sidebar.state.openPane).toBeUndefined();

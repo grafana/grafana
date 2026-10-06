@@ -2492,11 +2492,11 @@ describe('TableNG', () => {
 
       // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
-      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
-        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(
+        new RegExp(`^repeat\\(1, ${TABLE.HEADER_HEIGHT}px\\)\\s*${expectedRowHeight}px$`)
       );
     });
 
