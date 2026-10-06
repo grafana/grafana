@@ -287,12 +287,13 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 // stand in for the ones the controller used to generate for itself, by patching its own
 // status on every pass.
 //
-// The subject's health is never aged, so there is no point in the test at which its key
-// could legitimately produce field errors, however late the queue gets to it. The
-// control repository, whose health is aged, shows the controller draining its queue and
-// the sabotage taking effect while that holds. A reconcile the controller never picks up
-// at all would still read as a pass here; the delivery-certain version of this is the
-// unit test, which calls process directly.
+// The subject's health is stamped into the future, so there is no point in the test at
+// which its key could legitimately produce field errors -- however late the queue gets
+// to it, and however long the control's wait runs. The control repository, whose health
+// is aged, shows the controller draining its queue and the sabotage taking effect while
+// that holds. A reconcile the controller never picks up at all would still read as a
+// pass here; the delivery-certain version of this is the unit test, which calls process
+// directly.
 func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *testing.T) {
 	helper := sharedHelper(t)
 
@@ -328,14 +329,14 @@ func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *
 	require.NoError(t, os.RemoveAll(subjectPath))
 	require.NoError(t, os.RemoveAll(controlPath))
 
-	// Requeue the subject while its stored health check is fresh, and leave it fresh:
-	// each trigger re-stamps the timestamp, and nothing below ages it.
+	// Requeue the subject with its health check stamped well into the future, so it
+	// stays not-due for the rest of the test however long the control's wait takes.
 	for range 3 {
-		helper.TriggerRepositoryReconciliation(t, subject)
+		patchHealthChecked(t, helper, subject, time.Now().Add(freshHealthMargin))
 	}
 
 	// Age only the control's health, so its check is genuinely due.
-	markHealthCheckOverdue(t, helper, control)
+	patchHealthChecked(t, helper, control, time.Now().Add(-2*time.Minute))
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
 		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, control),
 			"a repository whose health check is due must still be tested")
@@ -347,13 +348,20 @@ func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *
 		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
 }
 
-// markHealthCheckOverdue pushes the stored health timestamp outside the recent-unhealthy
-// window, so the next reconcile has a health check genuinely due.
-func markHealthCheckOverdue(t *testing.T, helper *common.ProvisioningTestHelper, name string) {
+// freshHealthMargin keeps a subject's stored health check inside recentUnhealthyDuration
+// for the whole test. It has to outlast the control's wait below: WaitTimeoutDefault is
+// 60s and recentUnhealthyDuration is one minute, so a wall-clock "now" stamp would
+// expire inside that window and let a delayed pickup legitimately test the repository.
+const freshHealthMargin = 10 * time.Minute
+
+// patchHealthChecked stamps the stored health timestamp, which both requeues the
+// repository -- a status write returns through the informer as an update -- and decides
+// whether ShouldCheckHealth reports the check as due.
+func patchHealthChecked(t *testing.T, helper *common.ProvisioningTestHelper, name string, checked time.Time) {
 	t.Helper()
 	statusPatch, err := json.Marshal(map[string]any{
 		"status": map[string]any{
-			"health": map[string]any{"checked": time.Now().Add(-2 * time.Minute).UnixMilli()},
+			"health": map[string]any{"checked": checked.UnixMilli()},
 		},
 	})
 	require.NoError(t, err)
