@@ -7253,7 +7253,7 @@
     },
     "drilldown-migration-suggestion-banner": {
       "body": "Some variables on this dashboard look like they could be replaced with ad hoc filters or group by. Ask the Grafana Assistant to review and migrate them for you.",
-      "dismiss-globally": "Don't suggest this again",
+      "dismiss-globally": "Don't suggest this again anywhere",
       "migrate-button": "Ask Assistant to migrate",
       "title": "This dashboard may benefit from filters and group by"
     },

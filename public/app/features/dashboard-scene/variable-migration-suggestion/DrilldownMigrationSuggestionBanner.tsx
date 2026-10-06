@@ -17,7 +17,11 @@ import { detectDrilldownMigrationCandidates, type MigrationSuggestionCandidate }
 // investigatePanelErrorsWithAssistant() in setDashboardPanelContext.ts): it's an instruction to
 // the LLM, not rendered UI copy, so it stays in English regardless of UI locale.
 const MIGRATION_PROMPT =
-  'look at this dashboard and see if any variables can be migrated to filters and group by and do it';
+  'Migrate the variables on this dashboard that can become filters or group by into a single filters ' +
+  'variable with group by enabled. Filters and group by apply to queries automatically, so remove migrated ' +
+  'variables from queries. Elsewhere (titles, descriptions, links, text), $job becomes ${filters["job"]}, ' +
+  'keeping any format. Carry current selections over as default filters and default group by with dashboard origin. ' +
+  'A variable set to All becomes operator =| with value $__all';
 
 const GLOBAL_DISMISS_KEY = 'grafana.dashboard.drilldownMigrationAssistantSuggestion.dismissedGlobally';
 
@@ -31,7 +35,9 @@ interface Props {
 
 export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
   const flagEnabled = useFlagGrafanaDrilldownMigrationAssistantSuggestion();
-  const { uid, meta } = dashboard.useState();
+  // `$variables` is replaced wholesale by every variable mutation (incl. the Assistant's), so it
+  // doubles as the signal to re-detect - e.g. to hide the banner once the migration is done.
+  const { uid, meta, $variables } = dashboard.useState();
   const styles = useStyles2(getStyles);
 
   const [assistantAvailable, setAssistantAvailable] = useState(false);
@@ -42,20 +48,6 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
     const subscription = isAssistantAvailable().subscribe(setAssistantAvailable);
     return () => subscription.unsubscribe();
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    detectDrilldownMigrationCandidates(dashboard).then((result) => {
-      if (!cancelled) {
-        setCandidates(result);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [dashboard]);
 
   const canEdit = Boolean(meta?.canEdit || meta?.canSave);
   const dismissedGlobally = store.getBool(GLOBAL_DISMISS_KEY, false);
@@ -68,17 +60,37 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
   // eslint-disable-next-line @grafana/no-config-feature-toggles -- dashboardUnifiedDrilldownControls is LegacyFrontend-only, no OpenFeature accessor exists for it
   const drilldownControlsEnabled = config.featureToggles.dashboardUnifiedDrilldownControls;
 
-  if (
-    !flagEnabled ||
-    !drilldownControlsEnabled ||
-    !assistantAvailable ||
-    !canEdit ||
-    !uid ||
-    dismissed ||
-    dismissedGlobally ||
-    dismissedForDashboard ||
-    candidates.length === 0
-  ) {
+  // Detection resolves datasource instances (possibly loading plugin code), so only run it once
+  // every other gate passes - otherwise every dashboard load would pay for it.
+  const shouldDetect =
+    flagEnabled &&
+    Boolean(drilldownControlsEnabled) &&
+    assistantAvailable &&
+    canEdit &&
+    Boolean(uid) &&
+    !dismissed &&
+    !dismissedGlobally &&
+    !dismissedForDashboard;
+
+  useEffect(() => {
+    if (!shouldDetect) {
+      return;
+    }
+
+    let cancelled = false;
+
+    detectDrilldownMigrationCandidates(dashboard).then((result) => {
+      if (!cancelled) {
+        setCandidates(result);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dashboard, shouldDetect, $variables]);
+
+  if (!shouldDetect || !uid || candidates.length === 0) {
     return null;
   }
 
@@ -87,7 +99,7 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
 
     openAssistant({
       origin: 'grafana/dashboard-scene/drilldown-migration-suggestion',
-      mode: 'assistant',
+      mode: 'dashboarding',
       prompt: MIGRATION_PROMPT,
       autoSend: true,
       appendContext: true,
@@ -95,6 +107,8 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
       context: [
         createAssistantContextItem('structured', {
           data: {
+            // The assistant derives the context pill's label from `name` and crashes rendering it without one.
+            name: 'Drilldown migration candidates',
             dashboardUid: uid,
             candidates: highConfidenceCandidates,
           },
@@ -143,7 +157,7 @@ export function DrilldownMigrationSuggestionBanner({ dashboard }: Props) {
           className={styles.dismissGlobally}
         >
           <Trans i18nKey="dashboard-scene.drilldown-migration-suggestion-banner.dismiss-globally">
-            Don&apos;t suggest this again
+            Don&apos;t suggest this again anywhere
           </Trans>
         </Button>
       </div>

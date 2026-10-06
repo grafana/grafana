@@ -2,7 +2,7 @@ import { of } from 'rxjs';
 import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { SceneTimeRange } from '@grafana/scenes';
+import { SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -63,6 +63,13 @@ async function renderBanner(dashboard = buildDashboard()) {
   return result;
 }
 
+// For gated-off cases, where detection must never run: just let effects settle.
+async function renderGatedOffBanner(dashboard = buildDashboard()) {
+  const result = render(<DrilldownMigrationSuggestionBanner dashboard={dashboard} />);
+  await act(async () => {});
+  return result;
+}
+
 function enableOurFlag(enabled = true) {
   return act(async () => {
     setTestFlags({ 'grafana.drilldownMigrationAssistantSuggestion': enabled });
@@ -90,32 +97,36 @@ afterEach(async () => {
 describe('DrilldownMigrationSuggestionBanner', () => {
   it('does not render when the flag is disabled', async () => {
     await enableOurFlag(false);
-    await renderBanner();
+    await renderGatedOffBanner();
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+    expect(mockDetect).not.toHaveBeenCalled();
   });
 
   it('does not render when dashboardUnifiedDrilldownControls is off', async () => {
     await enableOurFlag(true);
     config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    await renderBanner();
+    await renderGatedOffBanner();
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+    expect(mockDetect).not.toHaveBeenCalled();
   });
 
   it('does not render when the assistant is not available', async () => {
     await enableOurFlag(true);
     mockIsAssistantAvailable.mockReturnValue(of(false));
-    await renderBanner();
+    await renderGatedOffBanner();
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+    expect(mockDetect).not.toHaveBeenCalled();
   });
 
   it('does not render when the user cannot edit the dashboard', async () => {
     await enableOurFlag(true);
-    await renderBanner(buildDashboard({ canEdit: false, canSave: false }));
+    await renderGatedOffBanner(buildDashboard({ canEdit: false, canSave: false }));
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+    expect(mockDetect).not.toHaveBeenCalled();
   });
 
   it('does not render when there are no candidates', async () => {
@@ -131,6 +142,22 @@ describe('DrilldownMigrationSuggestionBanner', () => {
     await renderBanner();
 
     expect(await screen.findByText(/may benefit from filters and group by/)).toBeInTheDocument();
+  });
+
+  it('re-detects and hides once the dashboard variables change and no candidates remain', async () => {
+    await enableOurFlag(true);
+    const dashboard = buildDashboard();
+    await renderBanner(dashboard);
+    await screen.findByText(/may benefit from filters and group by/);
+
+    // Mutation commands (incl. the Assistant's) replace the whole variable set.
+    mockDetect.mockResolvedValue([]);
+    await act(async () => {
+      dashboard.setState({ $variables: new SceneVariableSet({ variables: [] }) });
+    });
+
+    await waitFor(() => expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument());
+    expect(mockDetect).toHaveBeenCalledTimes(2);
   });
 
   it('does not render once dismissed for this dashboard, including on a fresh mount', async () => {
@@ -152,12 +179,14 @@ describe('DrilldownMigrationSuggestionBanner', () => {
     const { user } = await renderBanner(buildDashboard({ uid: 'dash-a' }));
 
     await screen.findByText(/may benefit from filters and group by/);
-    await user.click(screen.getByRole('button', { name: "Don't suggest this again" }));
+    await user.click(screen.getByRole('button', { name: "Don't suggest this again anywhere" }));
 
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
 
     await renderBanner(buildDashboard({ uid: 'dash-b' }));
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+    // Only dash-a ran detection; the globally dismissed dash-b never did.
+    expect(mockDetect).toHaveBeenCalledTimes(1);
   });
 
   it('opens the assistant with the expected prompt/context/mode/autoSend/chatId when the CTA is clicked', async () => {
@@ -172,8 +201,8 @@ describe('DrilldownMigrationSuggestionBanner', () => {
     expect(mockOpenAssistant).toHaveBeenCalledTimes(1);
     expect(mockOpenAssistant).toHaveBeenCalledWith({
       origin: 'grafana/dashboard-scene/drilldown-migration-suggestion',
-      mode: 'assistant',
-      prompt: 'look at this dashboard and see if any variables can be migrated to filters and group by and do it',
+      mode: 'dashboarding',
+      prompt: expect.stringContaining('single filters '),
       autoSend: true,
       appendContext: true,
       chatId: 'chat-1',
@@ -181,7 +210,13 @@ describe('DrilldownMigrationSuggestionBanner', () => {
         {
           node: {
             type: 'structured',
-            params: { data: { dashboardUid: 'dash-cta', candidates: [HIGH_CONFIDENCE_CANDIDATE] } },
+            params: {
+              data: {
+                name: 'Drilldown migration candidates',
+                dashboardUid: 'dash-cta',
+                candidates: [HIGH_CONFIDENCE_CANDIDATE],
+              },
+            },
           },
         },
       ],
