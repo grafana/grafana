@@ -374,6 +374,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, goneError(name)
 	}
 
+	if resource.Spec.TimeEnd == nil {
+		resource.Spec.TimeEnd = new(resource.Spec.Time)
+	}
+
 	if err := validateUpdate(existing, resource); err != nil {
 		return nil, false, err
 	}

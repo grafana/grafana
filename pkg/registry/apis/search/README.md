@@ -434,9 +434,34 @@ deployment, these settings belong to the same Grafana process.
 After rollout, create or update a resource. The first write event processed by
 the reconciler initializes its vector collection and schedules a backfill of
 existing resources. Later writes keep embeddings up to date. Check generation
-and backfill metrics for your group/resource; an increase in
-`vector_storage_embed_skipped_versions_total` indicates that stored objects
-lack a matching API-version declaration.
+and backfill metrics as described below.
+
+### Monitor backfills
+
+Use the existing storage-api metric to see resource processing attempts per second
+by outcome. Scope the query to your deployment and select your group/resource:
+
+```promql
+sum by (status) (
+  rate(grafana_vector_storage_backfill_item_duration_seconds_count{group="folder.grafana.app", resource="folders"}[5m])
+)
+```
+
+`embedded` shows successful processing; `error` shows failed attempts. Check
+`skipped_*` outcomes for objects that were skipped. When activity stops, check
+storage-api logs for `backfill: job complete` or `backfill: job failed`.
+
+For example, in the **Grafana Logging Dev** Loki datasource:
+
+```logql
+{cluster="dev-us-central-0", namespace="unified-storage-dev-002", container="storage-api"} |= "backfill: job complete"
+```
+
+Adjust the cluster and namespace for your deployment and use a time range covering
+your backfill. Each entry includes `job_id` and `model`.
+
+An increase in `grafana_vector_storage_embed_skipped_versions_total` indicates
+missing API-version declarations; filter by `group`, `resource`, and `version`.
 
 ### Custom embedding builders
 

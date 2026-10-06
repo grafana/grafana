@@ -335,18 +335,10 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("paused", perKindOpIn, "true"))))
 	})
 
 	t.Run("alert rules: panelID filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"cpu usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("panelID", perKindOpIn, "1234"))))
 	})
 

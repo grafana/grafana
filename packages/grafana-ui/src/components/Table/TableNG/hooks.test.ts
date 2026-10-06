@@ -21,6 +21,8 @@ import {
   useRowCompiler,
   useScrollShadows,
   useScrollbarWidth,
+  useTextWrapFallback,
+  useFlatRowHeight,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
@@ -62,6 +64,172 @@ describe('useScrollbarWidth', () => {
 });
 
 describe('TableNG hooks', () => {
+  describe('oversized wrapped text', () => {
+    const typographyCtx = createTypographyContext(14, 'sans-serif');
+    const columnWidths = [300, 300, 300];
+    const data = createDataFrame({
+      fields: ['first', 'second', 'unaffected'].map((name) => ({
+        name,
+        type: FieldType.string,
+        config: { custom: { wrapText: true } },
+        values: [],
+      })),
+    });
+    const fields = data.fields;
+
+    it('returns a constant height without reading values when no fields wrap, including after refresh', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'message', type: FieldType.string, values: ['x'.repeat(28_000)] }],
+      });
+      const values = frame.fields[0].values;
+      const readValues = jest.fn(() => values);
+      Object.defineProperty(frame.fields[0], 'values', { get: readValues });
+      const { result, rerender } = renderHook(
+        ({ frame }) => {
+          const wrapFallback = useTextWrapFallback(frame);
+          return useFlatRowHeight({
+            fields: frame.fields,
+            columnWidths,
+            defaultHeight: 34,
+            typographyCtx,
+            wrapFallback,
+          });
+        },
+        { initialProps: { frame } }
+      );
+
+      expect(result.current).toBe(34);
+      rerender({ frame: { ...frame } });
+      expect(result.current).toBe(34);
+      expect(readValues).not.toHaveBeenCalled();
+    });
+
+    it('calculates unwrapped nested height from the row count without visiting nested rows or values', () => {
+      const frame = createDataFrame({
+        fields: [{ name: 'message', type: FieldType.string, values: ['x'.repeat(28_000), 'short'] }],
+      });
+      const values = frame.fields[0].values;
+      const readValues = jest.fn(() => values);
+      Object.defineProperty(frame.fields[0], 'values', { get: readValues });
+      const nestedRecords = [
+        { __index: 0, __depth: 0, __parentIndex: 0 },
+        { __index: 1, __depth: 0, __parentIndex: 0 },
+      ];
+      const firstRow = nestedRecords[0];
+      const readRow = jest.fn(() => firstRow);
+      Object.defineProperty(nestedRecords, '0', { get: readRow });
+      const entry = {
+        raw: [],
+        final: nestedRecords,
+        filterResult: emptyFilterResult,
+      };
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(frame);
+        const rowHeight = useRowHeight({
+          fields: frame.fields,
+          nestedFields: frame.fields,
+          columnWidths,
+          nestedColWidths: columnWidths,
+          defaultHeight: 34,
+          defaultNestedHeight: 34,
+          typographyCtx,
+          wrapFallback,
+          nestedWrapFallback: wrapFallback,
+          hasNestedFrames: true,
+          visibleNestedRowCounts: [2],
+          nestedRows: [entry],
+        });
+        return typeof rowHeight === 'function' ? rowHeight({ __index: 0, __depth: 1 }) : rowHeight;
+      });
+
+      expect(result.current).toBe(114);
+      expect(readRow).not.toHaveBeenCalled();
+      expect(readValues).not.toHaveBeenCalled();
+    });
+
+    it('collects multiple columns in one scan and repairs earlier cached heights once', () => {
+      const measureHeight = jest.fn((value: unknown) => String(value).split('\n').length * 22);
+      const typography = { ...typographyCtx, measureHeight };
+      const rows: TableRow[] = [
+        { __index: 0, __depth: 0, first: 'a\nb\nc', second: 'a\nb', unaffected: 'x\ny' },
+        { __index: 1, __depth: 0, first: 'a'.repeat(10_001), second: 'a', unaffected: 'x' },
+        { __index: 2, __depth: 0, first: 'a', second: 'b'.repeat(10_001), unaffected: 'x' },
+      ];
+      const scans: unknown[][] = [];
+      const { result, rerender } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({
+          fields,
+          columnWidths,
+          defaultHeight: 34,
+          typographyCtx: typography,
+          wrapFallback,
+        });
+        const heights = rows.map((row) => (typeof rowHeight === 'function' ? rowHeight(row) : rowHeight));
+        scans.push(heights);
+        return { wrapFallback, rowHeight };
+      });
+
+      expect(scans).toEqual([
+        [78, 34, 34],
+        [56, 34, 34],
+      ]);
+      expect([...result.current.wrapFallback.disabledFields]).toEqual(['first', 'second']);
+      expect(measureHeight.mock.calls.map(([value]) => value)).toEqual(['a\nb\nc', 'x\ny']);
+      const repairedHeight = result.current.rowHeight;
+      rerender();
+      expect(result.current.rowHeight).toBe(repairedHeight);
+      expect(measureHeight).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([9_999, 10_000, 10_001])('checks all %i characters before the single-line estimate shortcut', (length) => {
+      const value = 'a'.repeat(length);
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({ fields, columnWidths, defaultHeight: 34, typographyCtx, wrapFallback });
+        const height =
+          typeof rowHeight === 'function' ? rowHeight({ __index: 0, __depth: 0, first: value }) : rowHeight;
+        return { height, disabled: [...wrapFallback.disabledFields] };
+      });
+
+      expect(result.current).toEqual({ height: 34, disabled: length > 10_000 ? ['first'] : [] });
+    });
+
+    it('recalculates pagination from repaired heights after a late discovery in its sample', () => {
+      const rows: TableRow[] = Array.from({ length: 101 }, (_, index) => ({
+        __index: index,
+        __depth: 0,
+        first: index === 99 ? 'x'.repeat(10_001) : 'a\nb\nc',
+      }));
+      const typography = {
+        ...typographyCtx,
+        measureHeight: (value: unknown) => String(value).split('\n').length * 22,
+      };
+      const { result } = renderHook(() => {
+        const wrapFallback = useTextWrapFallback(data);
+        const rowHeight = useFlatRowHeight({
+          fields,
+          columnWidths,
+          defaultHeight: 34,
+          typographyCtx: typography,
+          wrapFallback,
+        });
+        return usePaginatedRows(rows, {
+          height: 200,
+          width: 800,
+          headerHeight: 34,
+          footerHeight: 0,
+          rowHeight,
+          enabled: true,
+        });
+      });
+
+      expect(result.current.rowsPerPage).toBe(3);
+      expect(result.current.numPages).toBe(34);
+      expect(result.current.pageRangeEnd).toBe(3);
+    });
+  });
+
   function setupData() {
     // Mock data for testing
     const fields: Field[] = [

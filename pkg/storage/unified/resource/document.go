@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/fieldpath"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -570,7 +571,7 @@ const (
 	SEARCH_FIELD_KIND               = "kind"          // resource ( for federated index filtering )
 	SEARCH_FIELD_GROUP_RESOURCE     = "groupResource" // {group}/{resource}
 	SEARCH_FIELD_NAMESPACE          = "namespace"
-	SEARCH_FIELD_NAME               = "name"
+	SEARCH_FIELD_NAME               = resourceutil.SEARCH_FIELD_NAME
 	SEARCH_FIELD_RV                 = "rv"
 	SEARCH_FIELD_TITLE              = "title"        // standard-analyzed title for full-token search; indexed terms are lowercased by the analyzer
 	SEARCH_FIELD_TITLE_PHRASE       = "title_phrase" // keyword-analyzed title for exact matching/sorting; value is lowercased in UpdateCopyFields
