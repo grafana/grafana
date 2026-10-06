@@ -9,17 +9,14 @@ import { Input, Text, useStyles2 } from '@grafana/ui';
 import { type NotebookCellItem } from './NotebookCellItem';
 
 /**
- * A panel's title while the notebook is being edited: click it to open a field, blur to close it
- * again - the same mechanics as NotebookTitleEditor (the notebook's own title), scoped to one panel.
+ * A panel's title: click to open a field, blur to close it - same mechanics as NotebookTitleEditor
+ * (the notebook's own title), scoped to one panel. Rendered into `titleItems` rather than `title` -
+ * see NotebookCellItemState.panelTitle for why.
  *
- * Rendered into the panel's `titleItems` rather than its `title` — see NotebookCellItemState.panelTitle
- * for why — so this is the only thing that ever shows where a title would otherwise be. Unlike the
- * notebook's own title, an empty panel title is a valid, normal state (shown as a placeholder), not an
- * error: a panel is already labelled by the prose around it, so there's nothing here to validate.
- *
- * `isEditing` is the notebook's edit mode, not this control's own open/closed state (`renaming`
- * below) — a reader can't rename a panel, so in view mode this renders the title as plain text, or
- * nothing at all rather than an "Add a title" prompt that has nothing to invite them to click.
+ * Unlike the notebook's own title, an empty one is valid (shown as a placeholder), not an error - a
+ * panel is already labelled by the prose around it. `isEditing` is the notebook's edit mode, not this
+ * control's own open/closed state (`renaming`): a reader can't rename a panel, so view mode renders
+ * plain text or nothing, never the "Add a title" prompt.
  */
 export function NotebookPanelTitleEditor({ cell, isEditing }: { cell: NotebookCellItem; isEditing: boolean }) {
   const styles = useStyles2(getStyles);
@@ -142,9 +139,8 @@ export function NotebookPanelTitleEditor({ cell, isEditing }: { cell: NotebookCe
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  // PanelChrome's own header padding alone reads as flush against the panel's edge. Kept separate
-  // from the trigger's own padding below, which only needs to be big enough for its hover tint - a
-  // wider left pad there would stretch that tint into an odd, asymmetric shape instead.
+  // Separate from the trigger's own padding, which only needs room for its hover tint - putting the
+  // edge spacing there too would stretch that tint into an odd, asymmetric shape.
   wrapper: css({
     paddingLeft: theme.spacing(1),
   }),

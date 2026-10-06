@@ -109,16 +109,9 @@ function PanelCell({
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
   // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
-  // panels, so this notebook-only chrome is layered on here instead.
-  //
-  // hoverHeader: false keeps the title always visible rather than fading in only on hover -
-  // otherwise PanelChrome only shows header content inside a floating HoverWidget on hover, and a
-  // panel's title (or "Add a title") should read the same as everything else in the notebook, not
-  // appear only on mouseover.
-  //
-  // title/titleItems are left untouched for a library panel: its title belongs to the shared library
-  // panel, not to this notebook, and NotebookCellItemState.panelTitle is never populated for one (see
-  // deserializeNotebookLayout) - there is nothing here for NotebookPanelTitleEditor to show or edit.
+  // panels, so this notebook-only chrome is layered on here instead. hoverHeader: false keeps the
+  // title always visible, not just on hover. Skipped for a library panel: its title belongs to the
+  // shared panel, and panelTitle is never populated for one (see deserializeNotebookLayout).
   useEffect(() => {
     if (isLibraryPanel(panel)) {
       return;

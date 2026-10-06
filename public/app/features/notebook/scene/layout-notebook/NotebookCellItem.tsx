@@ -24,10 +24,8 @@ export interface NotebookCellItemState extends SceneObjectState {
   // override at all.
   $timeRange?: SceneTimeRangeLike;
   // The panel's title, held here rather than on `body.state.title`: VizPanelRenderer always
-  // interpolates `title` to a plain string before PanelChrome sees it, so there is no way to hand
-  // PanelChrome a clickable title. `body.state.title` is kept at '' instead (see
-  // NotebookCellRenderer), and this is what NotebookPanelTitleEditor reads and writes, and what
-  // getElements (transformNotebookSceneToSaveModel) writes back into the saved panel spec.
+  // interpolates `title` to a plain string, so there's no way to hand PanelChrome a clickable one.
+  // `body.state.title` stays '' instead (see NotebookCellRenderer); this is the real value.
   panelTitle?: string;
 }
 
