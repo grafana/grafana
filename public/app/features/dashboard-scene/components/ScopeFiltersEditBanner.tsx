@@ -2,7 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { sceneGraph, SceneDataTransformer, SceneQueryRunner, VizPanel, type SceneObject } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneDataTransformer,
+  SceneObjectStateChangedEvent,
+  SceneQueryRunner,
+  VizPanel,
+  type SceneObject,
+} from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -48,9 +55,17 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
   const scopes = useScopes();
   // Scopes without filters do not affect queries, so they are not a concern here.
   const hasScopeWithFilters = Boolean(scopes?.state.value.some((scope) => (scope.spec.filters?.length ?? 0) > 0));
-  // Subscribing to the layout manager's state re-renders this banner when panels are added or
-  // removed while already editing, not just when edit mode is first entered.
-  dashboard.state.body.useState();
+
+  // The layout manager's own setState doesn't fire for a change deep in its subtree (grid
+  // children, row/tab contents, a panel's query runner) — those call setState on the nested
+  // object itself. SceneObjectStateChangedEvent bubbles from every descendant, so subscribing to
+  // it here is what actually catches a panel being added/removed/changed while already editing.
+  const body = dashboard.state.body;
+  const [, forceRender] = useState(0);
+  useEffect(() => {
+    const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, () => forceRender((n) => n + 1));
+    return () => sub.unsubscribe();
+  }, [body]);
 
   const [dismissed, setDismissed] = useState(false);
   useEffect(() => {

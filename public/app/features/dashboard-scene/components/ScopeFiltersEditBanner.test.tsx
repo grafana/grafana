@@ -144,6 +144,29 @@ describe('ScopeFiltersEditBanner', () => {
     expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
   });
 
+  it('renders once a Loki panel is added to the grid after edit mode has already started', async () => {
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['mysql'] });
+
+    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+
+    const grid = (dashboard.state.body as DefaultGridLayoutManager).state.grid;
+    const newPanel = new VizPanel({
+      key: 'panel-new',
+      pluginId: 'timeseries',
+      title: 'New panel',
+      $data: new SceneQueryRunner({ datasource: { type: 'loki', uid: 'loki-ds' }, queries: [{ refId: 'A' }] }),
+    });
+    act(() => {
+      grid.setState({
+        children: [...grid.state.children, new DashboardGridItem({ key: 'grid-item-new', body: newPanel })],
+      });
+    });
+
+    expect(await screen.findByText(BANNER_TEXT)).toBeInTheDocument();
+  });
+
   it('renders when at least one of several panels uses Prometheus', () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['mysql', 'prometheus'] });
