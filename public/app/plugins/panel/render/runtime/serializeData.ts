@@ -30,6 +30,7 @@ import {
   type SerializedLoadingState,
   type SerializedPanelData,
   type SerializedValue,
+  type VariableSnapshot,
 } from './protocol';
 import { serializeTheme } from './theme';
 import { snapshotVariables } from './variables';
@@ -89,6 +90,8 @@ export function buildRenderInput(params: {
   width: number;
   height: number;
   isRenderTarget: boolean;
+  /** A snapshot the caller already took, so the variables are resolved once per render. */
+  variables?: VariableSnapshot;
 }): BuildInputResult {
   const serialized = serializePanelData(params.data, params.theme);
   if (!serialized.ok) {
@@ -103,7 +106,7 @@ export function buildRenderInput(params: {
       raw: { from: rawTimeText(timeRange.raw.from), to: rawTimeText(timeRange.raw.to) },
     },
     timeZone: resolveTimeZone(params.timeZone),
-    variables: snapshotVariables(params.replaceVariables),
+    variables: params.variables ?? snapshotVariables(params.replaceVariables),
     theme: serializeTheme(params.theme),
     size: { width: toSize(params.width), height: toSize(params.height) },
     isRenderTarget: params.isRenderTarget,
