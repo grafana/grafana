@@ -279,6 +279,10 @@ type StorageBackend interface {
 
 	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
 	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
+
+	// ListResourceLastImportTimes returns the latest import times using the same age limit as single lookups.
+	// On failure, it may return times collected before the error so scans can still use them.
+	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
 type ModifiedResource struct {
