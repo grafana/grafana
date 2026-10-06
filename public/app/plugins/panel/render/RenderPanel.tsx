@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import { type SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type GrafanaTheme2, LoadingState, type PanelData, type PanelProps, urlUtil } from '@grafana/data';
+import { type GrafanaTheme2, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Alert, Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
+import { followLink } from './followLink';
 import {
   MAX_HEIGHT_HINT_PX,
   RENDER_FRAME_SANDBOX,
@@ -21,7 +22,6 @@ import {
   type RenderFrameController,
   type RenderFrameError,
   type RenderFrameErrorKind,
-  type RenderLinkTarget,
   type RenderReadinessHold,
 } from './runtime';
 import { type Options } from './types';
@@ -129,7 +129,7 @@ function RenderFrameHost({
     }
     const target = validateRenderLink(href);
     if (target) {
-      followLink(target);
+      void followLink(target);
     }
   }, []);
 
@@ -365,20 +365,6 @@ function useVariablesVersion(): number {
     return () => subscription.unsubscribe();
   }, []);
   return version;
-}
-
-function followLink(target: RenderLinkTarget) {
-  switch (target.kind) {
-    case 'view-panel':
-      locationService.partial({ viewPanel: `panel-${target.panelId}` });
-      return;
-    case 'dashboard-state':
-      locationService.partial(target.params);
-      return;
-    case 'dashboard':
-      locationService.push(urlUtil.renderUrl(target.path, target.params));
-      return;
-  }
 }
 
 function limitErrorMessage({ reason, actual, limit }: LimitError): string {

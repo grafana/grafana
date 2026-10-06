@@ -59,6 +59,14 @@ jest.mock('./runtime', () => ({
   },
 }));
 
+const mockFollowLink = jest.fn();
+jest.mock('./followLink', () => ({
+  followLink: (...args: unknown[]) => {
+    mockFollowLink(...args);
+    return jest.requireActual('./followLink').followLink(...args);
+  },
+}));
+
 const CODE = "panel.onRender(({ root }) => { root.textContent = 'hi'; });";
 
 function makeData(values: number[], state = LoadingState.Done): PanelData {
@@ -99,6 +107,7 @@ describe('RenderPanel', () => {
   beforeEach(() => {
     mockControllers.length = 0;
     mockHolds.length = 0;
+    mockFollowLink.mockClear();
     config.publicDashboardAccessToken = undefined;
     jest.spyOn(locationService, 'partial').mockImplementation(() => {});
     jest.spyOn(locationService, 'push').mockImplementation(() => {});
@@ -373,12 +382,28 @@ describe('RenderPanel', () => {
     expect(locationService.push).not.toHaveBeenCalled();
   });
 
-  it('ignores every link on public dashboards', () => {
-    config.publicDashboardAccessToken = 'token';
-    setup();
-    act(() => latestController().handlers.onLink('#panel-4'));
+  it.each(['#panel-4', '?editPanel=panel-4', '#explore-panel-4', '#focus-panel-4'])(
+    'ignores %s on public dashboards',
+    (href) => {
+      config.publicDashboardAccessToken = 'token';
+      setup();
+      act(() => latestController().handlers.onLink(href));
 
-    expect(locationService.partial).not.toHaveBeenCalled();
+      expect(mockFollowLink).not.toHaveBeenCalled();
+      expect(locationService.partial).not.toHaveBeenCalled();
+      expect(locationService.push).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ['?editPanel=panel-4', { kind: 'dashboard-state', params: { editPanel: 'panel-4' } }],
+    ['#explore-panel-4', { kind: 'explore-panel', panelId: 4 }],
+    ['#focus-panel-4', { kind: 'focus-panel', panelId: 4 }],
+  ])('follows %s', (href, target) => {
+    setup();
+    act(() => latestController().handlers.onLink(href));
+
+    expect(mockFollowLink).toHaveBeenCalledWith(target);
   });
 
   it('shows a limit message instead of sending data over the cell limit', () => {
