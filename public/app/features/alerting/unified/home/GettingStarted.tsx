@@ -120,8 +120,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
 });
 
 export function WelcomeHeader() {
-  const styles = useStyles2(getWelcomeHeaderStyles);
-
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} gap={2}>
       {config.featureToggles.alertingTriage && (
