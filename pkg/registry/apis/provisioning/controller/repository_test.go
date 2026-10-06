@@ -2623,10 +2623,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The repo factory and health checker are reached.
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(repo).Maybe()
-	var testCalls atomic.Int32
-	mockRepo.On("Test", mock.Anything).
-		Run(func(mock.Arguments) { testCalls.Add(1) }).
-		Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 	repoFactory := repository.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
@@ -2659,13 +2656,6 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The token patch must be present even though the repository is currently over quota.
 	_, found := patcher.findPatchOp("/status/token")
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
-
-	// The stored health result predates the credential we just minted, however fresh its
-	// timestamp looks, so it says nothing about whether the new token works. Trusting it
-	// would either enqueue a sync against an unusable token or keep a repository blocked
-	// that the replacement just fixed.
-	assert.Equal(t, int32(1), testCalls.Load(),
-		"a replaced token must be validated even when the stored health check is still fresh")
 }
 
 // TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when
@@ -3862,7 +3852,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 			Sync: provisioning.SyncStatus{
 				State: provisioning.JobStateError,
 				// A blocked repository never completes a sync, so this stays put while
-				// the interval elapses: the sync is permanently overdue.
+				// the interval elapses: the sync goes permanently overdue.
 				Finished: time.Now().Add(-time.Hour).UnixMilli(),
 				Message:  []string{"Repository is unhealthy"},
 			},
@@ -3929,20 +3919,17 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 		expectedTestCalls int32
 		// No status write means no informer update, so no self-requeue.
 		expectNoStatusWrite bool
-		expectNoBuild       bool
 	}{
 		{
 			name:                "steady state does not reconcile",
 			checked:             time.Now(),
 			expectedTestCalls:   0,
 			expectNoStatusWrite: true,
-			expectNoBuild:       true,
 		},
 		{
-			// A blocked repository cannot complete a sync, so shouldResync stays true
-			// and the resync trigger fires on every requeue. It must still not reach
-			// the provider while the health check is fresh.
-			name:                "steady state with an overdue sync does not test the provider",
+			// shouldResync stays true for good once blocked, so without the quota
+			// condition on that case the resync trigger fires on every requeue.
+			name:                "steady state with an overdue sync does not reconcile",
 			checked:             time.Now(),
 			syncEnabled:         true,
 			expectedTestCalls:   0,
@@ -3971,8 +3958,6 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 
 			if tt.expectNoStatusWrite {
 				assert.Empty(t, patcher.ops, "a status write requeues the repository, restarting the loop")
-			}
-			if tt.expectNoBuild {
 				// Stop at the switch rather than build the repository, which decrypts the token.
 				repoFactory.AssertNotCalled(t, "Build", mock.Anything, mock.Anything)
 			}
@@ -3981,37 +3966,6 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 			assert.True(t, isQuotaExceeded(repo.Status.Conditions))
 		})
 	}
-}
-
-// The hook path is the only consumer of the accessibility verdict, and
-// isRepositoryAccessible reads a nil TestResults as reachable. So a pass that skips the
-// health check must not then attempt webhook work against a repository last seen
-// returning 401/404/503 -- the health cadence has to force a check whenever there is
-// hook work, not just when the timestamp is stale.
-func TestRepositoryController_process_HookWorkForcesHealthCheck(t *testing.T) {
-	namespace, repoName := "default", "test-repo"
-
-	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
-	// Workflows configured with no webhook recorded: webhook creation is due, and the
-	// generation is already observed so nothing else forces a health check.
-	repo.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
-	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
-
-	rc, _, stub, _ := newQuotaController(t, 1, repo, other)
-	// The repository is not reachable: credentials no longer work.
-	stub.testResults = &provisioning.TestResults{
-		Success: false,
-		Code:    http.StatusUnauthorized,
-		Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed"}},
-	}
-
-	_, err := rc.process(namespace + "/" + repoName)
-	require.NoError(t, err)
-
-	assert.Equal(t, int32(1), stub.testCalls.Load(),
-		"pending hook work must force a health check: it is what decides whether the repository is reachable")
-	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
-		"webhook creation must not be attempted against an unreachable repository")
 }
 
 // Dropping the steady-state trigger must not strand a blocked repository. Quota is

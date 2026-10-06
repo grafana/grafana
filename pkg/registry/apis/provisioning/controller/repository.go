@@ -1050,9 +1050,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
-	// Set when this pass mints a credential, from either of the two sites that can.
-	// Stored health predates it and so says nothing about whether it works.
-	var tokenReplaced bool
 	var patchOperations []map[string]interface{}
 
 	// applyPatches flushes any patches not yet written
@@ -1105,17 +1102,23 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Determine the main triggering condition
 	var reason string
 	switch {
-	// Each case is a change to act on. Already blocked and still over quota is a steady
-	// state, so it is not one: it matched on every requeue, and since a reconcile patches
-	// its own status and the informer turns that into another requeue, it self-sustained.
-	// Nothing is stranded -- token refresh, recovery, new limits and health each trigger.
+	// Each case is a change to act on, and a quota-blocked repository presents two
+	// things that look like changes but are not. It is already blocked and still over
+	// quota, which is a steady state. And it can never complete a sync, so Sync.Finished
+	// never advances and shouldResync stays true for good. Both matched on every
+	// requeue, and since a reconcile patches its own status and the informer turns that
+	// into another requeue, the controller fed itself.
+	//
+	// Nothing is stranded: token refresh, recovery, a new limit and health upkeep each
+	// have their own trigger, and determineSyncStrategy already refuses to sync a
+	// blocked repository, so the resync trigger had nothing to do anyway.
 	case !isCurrentlyBlocked && isOverQuota:
 		reason = "over_quota"
 		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
 	case hasSpecChanged:
 		reason = "spec_changed"
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	case shouldResync:
+	case shouldResync && !isOverQuota:
 		reason = "resync_interval"
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:
@@ -1178,7 +1181,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		obj.Secure.Token.Create = token
-		tokenReplaced = true
 	}
 
 	phase = reconcilePhaseBuild
@@ -1230,7 +1232,6 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// overwrite the whole value so the stale reference name is cleared too.
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
-			tokenReplaced = true
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
@@ -1311,57 +1312,15 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Run before processHooks to avoid attempting to hit webhooks if repo is already known to be unhealthy
-	//
-	// Gated on the health cadence, not on the reconcile trigger. Test() is the only
-	// call this path makes against the git provider, and it spends the customer's rate
-	// limit, shared with their syncs and every repository on the same token. Triggers
-	// can fire on every requeue -- an overdue sync on a blocked repository does, since
-	// it can never complete one -- so gating per trigger bounds nothing. Everything
-	// below still runs each reconcile.
 	phase = reconcilePhaseHealth
-	var (
-		healthResult HealthResultWithPatchOps
-		testResults  *provisioning.TestResults
-		// Carried forward when the check is skipped: stored health is still the best we
-		// know, and leaving it be is what keeps a skipped pass free of status writes.
-		healthStatus = obj.Status.Health
-		// Nil until something has a fresh verdict; a skipped check must not rewrite the
-		// Ready condition from stale data.
-		readyCondition *v1.Condition
-	)
-	// Pending hook work needs the accessibility verdict the check produces, and
-	// isRepositoryAccessible reads a nil result as reachable -- so without this,
-	// webhook create/rotate would be attempted against a repository last seen
-	// returning 401/404/503. A spec change already forces a check via ShouldCheckHealth.
-	_, webhookCapable := repo.(repository.WebhookRepository)
-	hookWorkPending := webhookCapable &&
-		((len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty()) ||
-			shouldRotateWebhookSecret)
-
-	// Three cases force a check the cadence would skip, each because stored health does
-	// not describe the repository as it now is, or is not the thing being asked about:
-	//
-	// forceProcessForUnblock -- while blocked, stored health is the quota override, not
-	// a real Test() result, so on recovery it is stale by construction. Without this a
-	// recovered repository keeps reporting the quota failure, and keeps skipping sync
-	// for being unhealthy, until the cadence next comes round.
-	//
-	// tokenReplaced -- the credential changed this pass, so a fresh-looking healthy
-	// result could enqueue a sync against an unusable token, and a fresh-looking
-	// unhealthy one could keep a repository blocked that the replacement just fixed.
-	//
-	// hookWorkPending -- see above; the verdict is read, so it has to be real.
-	if shouldCheckHealth || forceProcessForUnblock || tokenReplaced || hookWorkPending {
-		healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
-		healthResult, err = rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
-		healthSpan.End()
-		if err != nil {
-			return repoType, fmt.Errorf("update health status: %w", err)
-		}
-		testResults = healthResult.TestResults
-		healthStatus = healthResult.HealthStatus
-		readyCondition = &healthResult.ReadyCondition
+	healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
+	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
+	healthSpan.End()
+	if err != nil {
+		return repoType, fmt.Errorf("update health status: %w", err)
 	}
+	testResults := healthResult.TestResults
+	healthStatus := healthResult.HealthStatus
 	// Captured before the over-quota override status below. We only block hooks being run if the repo is
 	// not accessible. Also not every failed Test() means the repo is inaccessible: e.g. branch protection
 	// blocking direct pushes is reported. Hooks should still be able to run, so an accessibility-specific
@@ -1377,8 +1336,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			Message: []string{quotaCondition.Message},
 		}
 
-		quotaReady := buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
-		readyCondition = &quotaReady
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
 		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
 	} else if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
@@ -1391,8 +1349,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	if hookFailureStatus != nil {
 		healthStatus = *hookFailureStatus
-		hookReady := buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
-		readyCondition = &hookReady
+		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
 	}
 	if hookErr != nil {
 		if rc.isUserCaused(hookErr) {
@@ -1422,12 +1379,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Build ALL condition patches together to avoid one overwriting another.
-	conditions := []v1.Condition{quotaCondition}
-	if readyCondition != nil {
-		conditions = append(conditions, *readyCondition)
-	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), conditions...,
+		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}

@@ -117,12 +117,6 @@ func (hc *ConnectionHealthChecker) hasHealthStatusChanged(old, new provisioning.
 // Shared by Repository and Connection health checks.
 // Returns one of: Available, InvalidSpec, AuthenticationFailed, or ServiceUnavailable.
 func classifyTestResultReason(testResults *provisioning.TestResults) string {
-	// Nil means the health check was skipped, so there is no fresh evidence of a
-	// problem. Mirrors isRepositoryAccessible, which also reads nil as "nothing known".
-	if testResults == nil {
-		return provisioning.ReasonAvailable
-	}
-
 	if testResults.Success {
 		return provisioning.ReasonAvailable
 	}
