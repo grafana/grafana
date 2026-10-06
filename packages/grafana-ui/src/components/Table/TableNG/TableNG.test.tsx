@@ -33,6 +33,8 @@ beforeAll(() => {
   // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
   mockBoundingClientRect({ width: 800, height: 600 });
   mockClientSize({ width: 800, height: 600 });
+  // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
+  mockBoundingClientRect({ width: 800, height: 600 });
 });
 
 // Shared helpers for test data frame construction
