@@ -11,6 +11,7 @@ import {
 import { calculateFontSize } from '../../utils/measureText';
 
 import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
+import { hasRenderableSparkline } from './utils';
 
 interface RadialTextProps {
   displayValue: DisplayValue;
@@ -110,7 +111,7 @@ export const RadialText = memo(
       // we render from the center of the gauge, so move up by half of half of the total height
       yOffset += (valueHeight + nameHeight) / 4;
     }
-    if (sparkline) {
+    if (hasRenderableSparkline(sparkline)) {
       yOffset += SPARKLINE_SPACING;
     }
 

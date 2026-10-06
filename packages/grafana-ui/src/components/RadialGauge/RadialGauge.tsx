@@ -23,7 +23,7 @@ import { buildGradientColors, colorAtGradientPercent } from './colors';
 import { ARC_END, ARC_START, DEFAULT_DECIMALS } from './constants';
 import { GlowGradient, MiddleCircleGlow, SpotlightGradient } from './effects';
 import { type RadialShape, type RadialTextMode } from './types';
-import { calculateDimensions, getValueAngleForValue, getFormattedThresholds } from './utils';
+import { calculateDimensions, getValueAngleForValue, getFormattedThresholds, hasRenderableSparkline } from './utils';
 
 export interface RadialGaugeProps {
   values: FieldDisplay[];
@@ -277,7 +277,7 @@ export function RadialGauge(props: RadialGaugeProps) {
         }
       }
 
-      if (fieldDisplay.sparkline) {
+      if (hasRenderableSparkline(fieldDisplay.sparkline)) {
         sparklineElement = (
           <RadialSparkline
             sparkline={fieldDisplay.sparkline}

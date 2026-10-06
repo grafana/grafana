@@ -6,6 +6,7 @@ import { type GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@gr
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { type RadialShape, type RadialTextMode, type RadialGaugeDimensions } from './types';
+import { hasRenderableSparkline } from './utils';
 
 interface RadialSparklineProps {
   color?: string;
@@ -61,7 +62,7 @@ export const RadialSparkline = memo(
       [color]
     );
 
-    if (!sparkline) {
+    if (!hasRenderableSparkline(sparkline)) {
       return null;
     }
 

@@ -1,6 +1,7 @@
 import {
   type FieldConfig,
   type FieldDisplay,
+  type FieldSparkline,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
   getActiveThreshold,
@@ -21,6 +22,11 @@ const DEFAULT_THRESHOLDS: ThresholdsConfig = {
     { value: 80, color: 'red' },
   ],
 };
+
+// A single point paints nothing, so gauge shouldn't reserve space for it
+export function hasRenderableSparkline(sparkline: FieldSparkline | undefined): sparkline is FieldSparkline {
+  return sparkline != null && sparkline.y.values.length > 1;
+}
 
 export function getFieldDisplayProcessor(displayValue: FieldDisplay) {
   if (displayValue.view && displayValue.colIndex != null) {
