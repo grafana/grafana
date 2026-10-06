@@ -18,12 +18,11 @@ import (
 )
 
 // Provider supplies the provider-specific pieces of an OAuth app connection
-// (e.g. GitLab, Bitbucket): its OAuth application settings and health check.
+// (e.g. GitLab, Bitbucket): its OAuth application settings.
 //
 //go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock.go --with-expecter
 type Provider interface {
 	Endpoint() oauth2.Endpoint
-	Test(ctx context.Context) (*provisioning.TestResults, error)
 }
 
 type oauthConnection struct {
@@ -44,7 +43,8 @@ func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg 
 	}
 }
 
-// Test validates the stored access token, then checks it against the provider.
+// Test validates the stored access token, then checks it against the provider
+// when the provider can list repositories.
 func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, error) {
 	token, err := parseToken(c.token)
 	if err != nil || token.AccessToken == "" {
@@ -69,7 +69,10 @@ func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, 
 		), nil
 	}
 
-	return c.provider.Test(ctx)
+	if lister, ok := c.provider.(connection.RepositoryLister); ok {
+		return testByListingRepositories(ctx, lister)
+	}
+	return connection.SuccessTestResults(), nil
 }
 
 // GenerateRepositoryToken returns an access token usable for git operations on
@@ -97,7 +100,7 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
-func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) (*provisioning.TestResults, error) {
+func testByListingRepositories(ctx context.Context, lister connection.RepositoryLister) (*provisioning.TestResults, error) {
 	// TODO: use a lighter endpoint than listing repositories to check the token.
 	if _, err := lister.ListRepositories(ctx); err != nil {
 		if errors.Is(err, connection.ErrAuthentication) {

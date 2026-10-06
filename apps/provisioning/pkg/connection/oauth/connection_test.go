@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,26 +21,35 @@ import (
 
 func TestConnection_Test(t *testing.T) {
 	tests := []struct {
-		name            string
-		token           common.RawSecureValue
-		providerResults *provisioning.TestResults
-		expectedCode    int
-		expectedErrors  []provisioning.ErrorDetails
-		expectSuccess   bool
+		name           string
+		token          common.RawSecureValue
+		withoutLister  bool
+		expectList     bool
+		listErr        error
+		expectedCode   int
+		expectedErrors []provisioning.ErrorDetails
+		expectSuccess  bool
 	}{
 		{
-			name:            "success - token accepted by provider",
-			token:           marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
-			providerResults: connection.SuccessTestResults(),
-			expectedCode:    http.StatusOK,
-			expectSuccess:   true,
+			name:          "success - token accepted by provider",
+			token:         marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			expectList:    true,
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
 		},
 		{
-			name:            "success - token not expired yet",
-			token:           marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: time.Now().Add(time.Hour)}),
-			providerResults: connection.SuccessTestResults(),
-			expectedCode:    http.StatusOK,
-			expectSuccess:   true,
+			name:          "success - token not expired yet",
+			token:         marshalTestToken(t, &oauth2.Token{AccessToken: "access", Expiry: time.Now().Add(time.Hour)}),
+			expectList:    true,
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
+		},
+		{
+			name:          "success - provider cannot list repositories",
+			token:         marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			withoutLister: true,
+			expectedCode:  http.StatusOK,
+			expectSuccess: true,
 		},
 		{
 			name:         "failure - token expired",
@@ -89,13 +99,10 @@ func TestConnection_Test(t *testing.T) {
 			},
 		},
 		{
-			name:  "failure - provider results are returned as is",
-			token: marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
-			providerResults: connection.FailedTestResults(http.StatusUnauthorized, []provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeFieldValueInvalid,
-				Field:  "secure.token",
-				Detail: "The provider rejected the connection's access token",
-			}}),
+			name:         "failure - provider rejects token",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			expectList:   true,
+			listErr:      connection.ErrAuthentication,
 			expectedCode: http.StatusUnauthorized,
 			expectedErrors: []provisioning.ErrorDetails{
 				{
@@ -105,13 +112,30 @@ func TestConnection_Test(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:         "failure - provider returns other error",
+			token:        marshalTestToken(t, &oauth2.Token{AccessToken: "access"}),
+			expectList:   true,
+			listErr:      errors.New("boom"),
+			expectedCode: http.StatusUnprocessableEntity,
+			expectedErrors: []provisioning.ErrorDetails{
+				{
+					Type:   metav1.CauseTypeInternal,
+					Detail: "failed to list repositories: boom",
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			provider := newMockProvider(t, "")
-			if tt.providerResults != nil {
-				provider.EXPECT().Test(mock.Anything).Return(tt.providerResults, nil)
+			var provider Provider = newMockProvider(t, "")
+			if !tt.withoutLister {
+				lister := connection.NewMockRepositoryLister(t)
+				if tt.expectList {
+					lister.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.listErr)
+				}
+				provider = listingProvider{newMockProvider(t, ""), lister}
 			}
 			conn := newConnection(provider, provisioning.GitLabRepositoryType, testOAuthConfig, "", tt.token)
 
@@ -446,6 +470,11 @@ func TestConnection_ValidateToken(t *testing.T) {
 }
 
 var testOAuthConfig = provisioning.ConnectionOAuthConfig{ClientID: "client-id"}
+
+type listingProvider struct {
+	*MockProvider
+	*connection.MockRepositoryLister
+}
 
 func newMockProvider(t *testing.T, tokenURL string) *MockProvider {
 	provider := NewMockProvider(t)

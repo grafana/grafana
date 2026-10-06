@@ -2,7 +2,6 @@ package githuboauth
 
 import (
 	"errors"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,36 +14,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/github"
 )
-
-func TestProvider_Test(t *testing.T) {
-	tests := []struct {
-		name          string
-		clientErr     error
-		expectedCode  int
-		expectSuccess bool
-		errorContains string
-	}{
-		{name: "token accepted", expectedCode: http.StatusOK, expectSuccess: true},
-		{name: "token rejected", clientErr: repository.ErrUnauthorized, expectedCode: http.StatusUnauthorized, errorContains: "rejected the connection's access token"},
-		{name: "other error", clientErr: errors.New("boom"), expectedCode: http.StatusUnprocessableEntity, errorContains: "failed to list repositories: boom"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client := github.NewMockClient(t)
-			client.EXPECT().ListRepositories(mock.Anything).Return(nil, tt.clientErr)
-
-			results, err := (&provider{client: client}).Test(t.Context())
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectSuccess, results.Success)
-			assert.Equal(t, tt.expectedCode, results.Code)
-			if tt.errorContains != "" {
-				require.Len(t, results.Errors, 1)
-				assert.Contains(t, results.Errors[0].Detail, tt.errorContains)
-			}
-		})
-	}
-}
 
 func TestProvider_ListRepositories(t *testing.T) {
 	repos := []provisioning.ExternalRepository{
