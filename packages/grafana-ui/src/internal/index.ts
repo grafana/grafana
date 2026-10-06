@@ -114,10 +114,7 @@ export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
 export { getVisibleFields } from '../components/Table/TableNG/utils';
 export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
-export {
-  getSourceFrameIndex,
-  supportsColumnManagement,
-} from '../components/Table/TableNG/transformations/columnContext';
+export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';

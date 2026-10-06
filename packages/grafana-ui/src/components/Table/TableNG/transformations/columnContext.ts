@@ -1,4 +1,4 @@
-import { cacheFieldDisplayNames, FieldType, FrameMatcherID, type DataFrame, type MatcherConfig } from '@grafana/data';
+import { cacheFieldDisplayNames, FrameMatcherID, type DataFrame, type MatcherConfig } from '@grafana/data';
 
 import { getDisplayName, getVisibleFields } from '../utils';
 
@@ -41,25 +41,6 @@ export function frameFilterFor(frames: readonly DataFrame[], frameIndex: number)
 
   // An unresolvable frame matcher is dropped, which would apply the transform to every frame.
   return refId ? { id: FrameMatcherID.byRefId, options: refId } : undefined;
-}
-
-export function supportsColumnManagement(frame: DataFrame | undefined): boolean {
-  return Boolean(frame && !frame.fields.some((field) => field.type === FieldType.nestedFrames));
-}
-
-export function resolveColumnSourceIndex(
-  frames: readonly DataFrame[],
-  frameIndex: number,
-  sourceSeries: readonly DataFrame[] | undefined
-): number | undefined {
-  if (!sourceSeries || !supportsColumnManagement(frames[frameIndex])) {
-    return undefined;
-  }
-  const sourceIndex = getSourceFrameIndex(frames, frameIndex, sourceSeries);
-  if (sourceIndex === undefined || !supportsColumnManagement(sourceSeries[sourceIndex])) {
-    return undefined;
-  }
-  return sourceIndex;
 }
 
 export function prepareColumnContext(
