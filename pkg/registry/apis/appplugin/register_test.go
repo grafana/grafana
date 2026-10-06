@@ -86,33 +86,16 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 				}
 				_, err := RegisterAPIService(registrar, nil, nil, sources, nil,
 					roles, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
-				if !tc.router && !tc.register {
-					require.NoError(t, err)
-					require.Empty(t, registrar.builders)
-					require.Empty(t, roles.roles)
-					return
-				}
-				if roleErr != nil {
-					require.ErrorIs(t, err, roleErr)
-					require.Empty(t, registrar.builders)
-					return
-				}
 				require.NoError(t, err)
-				registeredRoles := byName(t, roles.roles)
-				require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:reader")
-				require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:writer")
+				require.Empty(t, roles.roles, "the settings API must not declare manifest roles")
 				groups := make([]string, 0, len(registrar.builders))
 				for _, b := range registrar.builders {
 					groups = append(groups, builder.GetGroupVersions(b)[0].Group)
 				}
-				if tc.router {
-					require.Empty(t, groups)
-					for _, group := range []string{"example.ext.grafana.app", "legacy-app"} {
-						require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app."+group].DualWriterMode,
-							"the shared dual-write service must see the resolved settings configuration for %s", group)
-					}
+				if tc.register {
+					require.Equal(t, []string{"example-app", "legacy-app"}, groups)
 				} else {
-					require.Equal(t, []string{"legacy-app"}, groups)
+					require.Empty(t, groups)
 				}
 			})
 		}

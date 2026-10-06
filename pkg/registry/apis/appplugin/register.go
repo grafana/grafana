@@ -28,7 +28,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -101,7 +100,7 @@ func NewAppPluginAPIBuilder(
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
 	return &AppPluginAPIBuilder{
-		group:           apiGroupForPlugin(plugin),
+		group:           plugin.JSONData.ID,
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		contextProvider: contextProvider,
@@ -132,8 +131,7 @@ func RegisterAPIService(
 	getflag := func(f string) bool {
 		return openfeature.NewDefaultClient().Boolean(ctx, f, false, openfeature.TransactionContext(ctx))
 	}
-	routed := getflag(featuremgmt.FlagGrafanaUseRouterMiddleware)
-	if !routed && !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
+	if !getflag(featuremgmt.FlagApppluginsRegisterAPIServer) {
 		return nil, nil
 	}
 
@@ -150,9 +148,8 @@ func RegisterAPIService(
 			}
 			return false
 		},
-		Schemas: true,
-		// Manifest plugins are served exclusively by the router.
-		AppManifest: true,
+		Schemas:     true,
+		AppManifest: false, // Manifest plugins are served exclusively by the router.
 	})
 
 	if err != nil {
@@ -161,12 +158,6 @@ func RegisterAPIService(
 
 	var last *AppPluginAPIBuilder
 	for _, plugin := range pluginDefs {
-		if err := declareManifestRoles(acService, apiGroupForPlugin(plugin), plugin.JSONData.Name, plugin.Manifest); err != nil {
-			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
-		}
-		if plugin.Manifest != nil && !routed {
-			continue
-		}
 		b, err := NewAppPluginAPIBuilder(plugin,
 			pluginClient, // scoped to a single plugin!
 			contextProvider,
@@ -174,7 +165,7 @@ func RegisterAPIService(
 			NewPluginAccessChecker(accessControl),
 			AppPluginRunnerOptions{
 				RegisterProxy: getflag(featuremgmt.FlagApppluginsHandleProxyRequests),
-				LegacyStore:   NewLegacySettingsStore(apiGroupForPlugin(plugin), plugin.JSONData.ID, pluginSettings),
+				LegacyStore:   NewLegacySettingsStore(plugin.JSONData.ID, plugin.JSONData.ID, pluginSettings),
 				AccessControl: accessControl,
 
 				DataProxyLogging:         cfg.DataProxyLogging,
@@ -188,38 +179,10 @@ func RegisterAPIService(
 			return nil, err
 		}
 
-		// Routed plugins still need their roles declared before startup registers them.
-		if routed {
-			// The handler copies storage options; resolve defaults here so the shared
-			// dual-write service observes them before requests start using the config.
-			b.applyDefaultStorageConfig(builder.APIGroupOptions{
-				StorageOpts: &options.StorageOptions{UnifiedStorageConfig: cfg.UnifiedStorage},
-			}, apppluginV0.SettingsResourceInfo.WithGroupAndShortName(b.group, plugin.JSONData.ID))
-			continue
-		}
-
 		apiRegistrar.RegisterAPI(b)
 		last = b
 	}
 	return last, nil
-}
-
-// apiGroupForPlugin returns the API group the plugin is served under: the group
-// declared in the manifest when it has one, otherwise the plugin id.
-func apiGroupForPlugin(plugin definition.PluginDefinition) string {
-	if plugin.Manifest != nil {
-		group := plugin.Manifest.Group
-
-		// Unified storage only always-enforces RBAC on groups ending in
-		// .ext.grafana.app (alwaysEnforced in pkg/storage/unified/resource), so
-		// a group with any other suffix serves the plugin's kinds with no access
-		// check at all in the default configuration.
-		if !strings.HasSuffix(group, ".ext.grafana.app") {
-			panic(fmt.Sprintf("invalid manifest group %q for plugin %s: must end with .ext.grafana.app (otherwise RBAC never runs)", group, plugin.JSONData.ID))
-		}
-		return group
-	}
-	return plugin.JSONData.ID
 }
 
 // GetGroupVersions returns the settings API version.

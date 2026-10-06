@@ -26,7 +26,7 @@ func TestAppPluginAPIBuilderOnlyServesSettings(t *testing.T) {
 		Manifest: manifest,
 	}, struct{ PluginClient }{}, struct{ PluginContextWrapper }{}, nil, nil, AppPluginRunnerOptions{}, nil, nil)
 	require.NoError(t, err)
-	gv := schema.GroupVersion{Group: manifest.Group, Version: apppluginV0.VERSION}
+	gv := schema.GroupVersion{Group: "example-app", Version: apppluginV0.VERSION}
 	require.Equal(t, []schema.GroupVersion{gv}, b.GetGroupVersions())
 	scheme := builder.ProvideScheme()
 	require.NoError(t, b.InstallSchema(scheme))

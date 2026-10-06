@@ -14,6 +14,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
@@ -163,6 +164,26 @@ func ProvidePluginLoaderDependenciesWithClients(
 }
 
 func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
+	// Declare roles during dependency construction, before startup registers fixed
+	// roles. Reconciliation must not append the same declarations on every load.
+	ctx := context.Background()
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources)
+	if err != nil {
+		return nil, err
+	}
+	for _, plugin := range pluginDefs {
+		if plugin.Manifest == nil {
+			continue
+		}
+		group := plugin.Manifest.Group
+		if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
+			continue
+		}
+		if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, plugin.Manifest); err != nil {
+			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+		}
+	}
 	return &PluginLoader{deps: deps}, nil
 }
 
@@ -170,12 +191,11 @@ type PluginLoader struct {
 	deps PluginLoaderDependencies
 }
 
-func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
-	pluginDefs, err := definition.LoadPluginDefinition(ctx, pl.deps.PluginSources, definition.Options{
+func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry) ([]definition.PluginDefinition, error) {
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				// TODO? should we fail more loudly
-				if !isPluginAPIGroup(jsonData.ID) || jsonData.ID == "v1" {
+				if jsonData.ID == "v1" || !strings.HasSuffix(jsonData.ID, "-app") {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -189,6 +209,14 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
+	}
+	return pluginDefs, nil
+}
+
+func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources)
+	if err != nil {
+		return nil, err
 	}
 
 	backends := make([]Backend, 0, len(pluginDefs))
