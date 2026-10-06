@@ -27,6 +27,37 @@ func newSearchAuthObservation(metrics *resource.BleveIndexMetrics) *searchAuthOb
 	return &searchAuthObservation{metrics: metrics.SearchAuth}
 }
 
+func withSearchAuthObservation(ctx context.Context, access authlib.AccessClient, metrics *resource.BleveIndexMetrics) (context.Context, authlib.AccessClient, *searchAuthObservation) {
+	observation := newSearchAuthObservation(metrics)
+	if observation == nil {
+		return ctx, access, nil
+	}
+	ctx = context.WithValue(ctx, searchAuthObservationKey{}, observation)
+	if access != nil {
+		access = &observedSearchAccessClient{AccessClient: access, observation: observation}
+	}
+	return ctx, access, observation
+}
+
+func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRank, cursorFallback bool) func(*resourcepb.ResourceSearchResponse, error) {
+	if o == nil {
+		return func(*resourcepb.ResourceSearchResponse, error) {}
+	}
+	mode := "pre_rank"
+	if access == nil {
+		mode = "none"
+	} else if postRank {
+		mode = "post_rank"
+	}
+	if cursorFallback {
+		o.event("cursor_fallback")
+	}
+	started := time.Now()
+	return func(result *resourcepb.ResourceSearchResponse, err error) {
+		o.observe(mode, searchAuthQueryType(req), started, result, err)
+	}
+}
+
 func searchAuthObservationFromContext(ctx context.Context) *searchAuthObservation {
 	observation, _ := ctx.Value(searchAuthObservationKey{}).(*searchAuthObservation)
 	return observation

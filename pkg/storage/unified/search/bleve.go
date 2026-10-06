@@ -2369,13 +2369,7 @@ func (b *bleveIndex) Search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
-	authMetrics := newSearchAuthObservation(b.indexMetrics)
-	if authMetrics != nil {
-		ctx = context.WithValue(ctx, searchAuthObservationKey{}, authMetrics)
-		if access != nil {
-			access = &observedSearchAccessClient{AccessClient: access, observation: authMetrics}
-		}
-	}
+	ctx, access, authMetrics := withSearchAuthObservation(ctx, access, b.indexMetrics)
 	cursorFallback := false
 
 	// A trash search replaces the read check with the trash rule on whichever authz
@@ -2458,19 +2452,8 @@ func (b *bleveIndex) Search(
 			}, nil
 		}
 	}
-	if authMetrics != nil {
-		mode := "pre_rank"
-		if access == nil {
-			mode = "none"
-		} else if postRank {
-			mode = "post_rank"
-		}
-		if cursorFallback {
-			authMetrics.event("cursor_fallback")
-		}
-		started := time.Now()
-		defer func() { authMetrics.observe(mode, searchAuthQueryType(req), started, response, resultErr) }()
-	}
+	observeAuth := authMetrics.start(req, access, postRank, cursorFallback)
+	defer func() { observeAuth(response, resultErr) }()
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
