@@ -42,10 +42,10 @@ type MockResourceIndex struct {
 	buildInfo IndexBuildInfo
 	docCount  int64
 
-	// Import times recorded through RecordImportTime, and an error to fail reading
-	// them with.
-	importTimes    map[schema.GroupResource]time.Time
-	importTimesErr error
+	// Types recorded through RecordCompletedTypeBuild, and an error to fail
+	// reading them with.
+	completedTypeBuilds    map[schema.GroupResource]TypeBuild
+	completedTypeBuildsErr error
 
 	// What the index reports holding, for reconciliation tests.
 	documentRefs    map[schema.GroupResource][]DocumentRef
@@ -123,22 +123,22 @@ func (m *MockResourceIndex) DocCount(_ context.Context, _ string, _ *SearchStats
 	return m.docCount, nil
 }
 
-func (m *MockResourceIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
+func (m *MockResourceIndex) CompletedTypeBuilds() (map[schema.GroupResource]TypeBuild, error) {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	if m.importTimesErr != nil {
-		return nil, m.importTimesErr
+	if m.completedTypeBuildsErr != nil {
+		return nil, m.completedTypeBuildsErr
 	}
-	return maps.Clone(m.importTimes), nil
+	return maps.Clone(m.completedTypeBuilds), nil
 }
 
-func (m *MockResourceIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+func (m *MockResourceIndex) RecordCompletedTypeBuild(gr schema.GroupResource, build TypeBuild) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	if m.importTimes == nil {
-		m.importTimes = map[schema.GroupResource]time.Time{}
+	if m.completedTypeBuilds == nil {
+		m.completedTypeBuilds = map[schema.GroupResource]TypeBuild{}
 	}
-	m.importTimes[gr] = t
+	m.completedTypeBuilds[gr] = build
 	return nil
 }
 
@@ -177,7 +177,7 @@ func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
 func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()
-	delete(m.importTimes, gr)
+	delete(m.completedTypeBuilds, gr)
 	delete(m.documentTypes, gr)
 	delete(m.documentRefs, gr)
 	return nil
@@ -318,6 +318,14 @@ func (m *mockStorageBackend) GetResourceLastImportTime(ctx context.Context, nsr 
 		}
 	}
 	return time.Time{}, nil
+}
+
+func (m *mockStorageBackend) ListResourceLastImportTimes(context.Context) (map[NamespacedResource]time.Time, error) {
+	result := make(map[NamespacedResource]time.Time)
+	for _, entry := range m.lastImportTimes {
+		result[entry.NamespacedResource] = entry.LastImportTime
+	}
+	return result, nil
 }
 
 // featuresForTestIndex describes an index that does or does not keep deleted
@@ -1082,6 +1090,149 @@ func TestShouldRebuildIndex(t *testing.T) {
 	}
 }
 
+type countingImportTimeBackend struct {
+	StorageBackend
+	listCalls      int
+	singleCalls    int
+	readErr        error
+	failBeforeRead bool
+}
+
+func (b *countingImportTimeBackend) ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	b.listCalls++
+	if b.failBeforeRead {
+		return nil, b.readErr
+	}
+	times, err := b.StorageBackend.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		return times, err
+	}
+	return times, b.readErr
+}
+
+func (b *countingImportTimeBackend) GetResourceLastImportTime(ctx context.Context, key NamespacedResource) (time.Time, error) {
+	b.singleCalls++
+	return b.StorageBackend.GetResourceLastImportTime(ctx, key)
+}
+
+func TestScanForIndexesToRebuildReadsImportTimesOnce(t *testing.T) {
+	for _, namespaces := range []int{0, 1, 840} {
+		t.Run(fmt.Sprintf("%d namespaces", namespaces), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			storage := &countingImportTimeBackend{StorageBackend: backend}
+			now := time.Now().UTC().Truncate(time.Second)
+			importTime := now.Add(-time.Minute)
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: dashboardType("ns-0"), LastImportTime: importTime,
+			}))
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: folderType("ns-0"), LastImportTime: now.Add(-10 * time.Minute),
+			}))
+			search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+			server := globalTestServer(t, storage, search)
+			for i := range namespaces {
+				ns := fmt.Sprintf("ns-%d", i)
+				for _, key := range []NamespacedResource{dashboardType(ns), GlobalSearchKey(ns)} {
+					fields, hash, _ := server.searchFields.ForKey(key)
+					idx := &MockResourceIndex{
+						buildInfo:           IndexBuildInfo{BuildTime: now.Add(-5 * time.Minute), SelectableFields: fields, SearchFieldsHash: hash},
+						completedTypeBuilds: heldAt(time.Time{}, time.Time{}),
+						reconciledAt:        now,
+					}
+					if i == 0 {
+						idx.completedTypeBuilds = heldAt(now.Add(-10*time.Minute), now.Add(-10*time.Minute))
+					}
+					search.openIndexes = append(search.openIndexes, key)
+					search.cache[key] = idx
+				}
+			}
+
+			server.scanForIndexesToRebuild(t.Context(), true)
+
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls)
+			queued := server.rebuildQueue.Elements()
+			if namespaces == 0 {
+				require.Empty(t, queued)
+				return
+			}
+			require.Len(t, queued, 2)
+			for _, req := range queued {
+				if req.IsGlobal() {
+					require.Equal(t, GlobalSearchKey("ns-0"), req.NamespacedResource)
+					require.Equal(t, []schema.GroupResource{dashboardsGroupResource}, req.staleTypes)
+				} else {
+					require.Equal(t, dashboardType("ns-0"), req.NamespacedResource)
+					require.Equal(t, importTime, req.lastImportTime)
+				}
+			}
+		})
+	}
+}
+
+func TestScanForIndexesToRebuildContinuesAfterImportTimeReadError(t *testing.T) {
+	for _, failBeforeRead := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fail before read=%t", failBeforeRead), func(t *testing.T) {
+			backend := setupTestStorageBackend(t)
+			now := time.Now().UTC().Truncate(time.Second)
+			require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+				NamespacedResource: dashboardType("namespace"), LastImportTime: now,
+			}))
+			storage := &countingImportTimeBackend{
+				StorageBackend: backend, readErr: errors.New("storage unavailable"), failBeforeRead: failBeforeRead,
+			}
+			search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+			server := globalTestServer(t, storage, search)
+			server.maxIndexAge = time.Hour
+			for _, key := range []NamespacedResource{dashboardType("namespace"), GlobalSearchKey("namespace"), folderType("namespace")} {
+				fields, hash, _ := server.searchFields.ForKey(key)
+				search.openIndexes = append(search.openIndexes, key)
+				search.cache[key] = &MockResourceIndex{
+					buildInfo:           IndexBuildInfo{BuildTime: now.Add(-2 * time.Hour), SelectableFields: fields, SearchFieldsHash: hash},
+					completedTypeBuilds: heldAt(time.Time{}, time.Time{}),
+					reconciledAt:        now,
+				}
+			}
+
+			server.scanForIndexesToRebuild(t.Context(), true)
+
+			require.Equal(t, 1, storage.listCalls)
+			require.Zero(t, storage.singleCalls, "a failed batch must not cause per-type reads")
+			queued := server.rebuildQueue.Elements()
+			if failBeforeRead {
+				require.Len(t, queued, 1, "age-based rebuilds still run without import times")
+				require.Equal(t, folderType("namespace"), queued[0].NamespacedResource)
+			} else {
+				require.Len(t, queued, 3, "available import times still trigger both kinds of index rebuild")
+			}
+		})
+	}
+}
+
+func TestStartupScanDoesNotQueueFullRebuilds(t *testing.T) {
+	storage := &mockStorageBackend{lastImportTimes: importedAt(importTuesday, importMonday)}
+	search := &mockSearchBackend{
+		openIndexes: []NamespacedResource{dashboardType("ns"), GlobalSearchKey("ns")},
+		cache: map[NamespacedResource]ResourceIndex{
+			dashboardType("ns"): &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importMonday}},
+			GlobalSearchKey("ns"): &MockResourceIndex{
+				buildInfo:           IndexBuildInfo{BuildTime: importMonday},
+				completedTypeBuilds: heldAt(importMonday, importMonday),
+				reconciledAt:        time.Now(),
+			},
+		},
+	}
+	server := globalTestServer(t, storage, search)
+
+	server.scanForIndexesToRebuild(t.Context(), false)
+
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	require.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+	require.Equal(t, []schema.GroupResource{dashboardsGroupResource}, queued[0].staleTypes)
+	require.True(t, queued[0].lastImportTime.IsZero(), "only the imported type is queued, not a full rebuild")
+}
+
 func TestFindIndexesForRebuild(t *testing.T) {
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
@@ -1223,6 +1374,47 @@ func TestFindIndexesForRebuild(t *testing.T) {
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
 	}
+}
+
+func TestRebuildIndexesIgnoresUnrelatedInvalidImportTime(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	storage := &countingImportTimeBackend{StorageBackend: backend}
+	now := time.Now().UTC().Truncate(time.Second)
+	importTime := now.Add(-time.Minute)
+	require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+		NamespacedResource: dashboardType("namespace"), LastImportTime: importTime,
+	}))
+	writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, "unrelated~invalid-key")
+	require.NoError(t, err)
+	_, err = writer.Write([]byte{1})
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
+	_, err = backend.ListResourceLastImportTimes(t.Context())
+	require.Error(t, err, "a whole-store read fails on the unrelated record")
+
+	search := &mockSearchBackend{cache: make(map[NamespacedResource]ResourceIndex)}
+	server := globalTestServer(t, storage, search)
+	keys := make([]*resourcepb.ResourceKey, 0, 2)
+	for _, key := range []NamespacedResource{dashboardType("namespace"), GlobalSearchKey("namespace")} {
+		fields, hash, _ := server.searchFields.ForKey(key)
+		search.cache[key] = &MockResourceIndex{
+			buildInfo:           IndexBuildInfo{BuildTime: now, SelectableFields: fields, SearchFieldsHash: hash},
+			completedTypeBuilds: heldAt(importTime, time.Time{}),
+		}
+		keys = append(keys, &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	}
+
+	response, err := server.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+		Namespace: "namespace", Keys: keys,
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, response.Error)
+	require.Zero(t, response.RebuildCount, "both requested indexes have caught up with their imports")
+	require.Len(t, response.BuildTimes, len(keys))
+	require.Zero(t, storage.listCalls, "explicit rebuilds must not read unrelated records")
+	require.Equal(t, len(keys)+len(GlobalSearchResourceTypes()), storage.singleCalls)
 }
 
 func TestRebuildIndexes(t *testing.T) {

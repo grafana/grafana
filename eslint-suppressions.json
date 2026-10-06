@@ -1612,6 +1612,11 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/actions/layout/duplicateDefaultGridPanel.ts": {
+    "@grafana/no-config-feature-toggles": {
+      "count": 1
+    }
+  },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1708,11 +1713,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/dashboard-controls-menu/DashboardControlsMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1756,7 +1756,7 @@
   },
   "public/app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 7
+      "count": 6
     }
   },
   "public/app/features/dashboard-scene/scene/layout-default/row-actions/RowOptionsForm.tsx": {
@@ -1881,11 +1881,6 @@
   "public/app/features/dashboard-scene/settings/TimePickerSettings.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {
