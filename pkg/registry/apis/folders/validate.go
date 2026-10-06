@@ -194,7 +194,7 @@ func validateOnUpdate(ctx context.Context,
 		return folder.ErrNameExists.Errorf("a folder with that name already exists")
 	}
 
-	if folderObj.GetFolder() == oldFolder.GetFolder() {
+	if folder.ToLegacyFolderUID(folderObj.GetFolder()) == folder.ToLegacyFolderUID(oldFolder.GetFolder()) {
 		return nil
 	}
 

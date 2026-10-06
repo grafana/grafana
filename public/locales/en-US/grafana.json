@@ -5177,6 +5177,7 @@
       "dashboard-search-results": "Dashboards",
       "deep-search": "Dashboards deep search",
       "folder-search-results": "Folders",
+      "notebook-search-results": "Notebooks",
       "pages": "Pages",
       "preferences": "Preferences",
       "recent-dashboards": "Recent dashboards",
@@ -13137,6 +13138,14 @@
       "failed-to-load": "Failed to load notebook",
       "not-found-title": "Not found"
     },
+    "leave-prompt": {
+      "conflict-body": "Your changes could not be saved because someone else updated this notebook first. If you leave now, those changes will be lost.",
+      "conflict-title": "Someone else has updated this notebook",
+      "leave": "Leave anyway",
+      "saving-body": "Your most recent changes are still being saved. If you leave now, they might not be saved.",
+      "saving-title": "This notebook is still saving",
+      "stay": "Stay"
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
@@ -13183,6 +13192,13 @@
       "target-label": "Target notebook",
       "target-new": "New notebook",
       "title": "Add panel to notebook"
+    },
+    "autosave": {
+      "conflict-cancel": "Cancel",
+      "conflict-confirm": "Save and overwrite",
+      "conflict-text": "Would you still like to save this notebook?",
+      "conflict-title": "Someone else has updated this notebook",
+      "error-conflict": "Someone else saved this notebook first."
     },
     "delete": {
       "body": "Are you sure you want to delete \"{{title}}\"?",
