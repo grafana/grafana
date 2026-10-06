@@ -4,6 +4,7 @@ import { type SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState 
 import { type GrafanaTheme2, LoadingState, type PanelData, type PanelProps, urlUtil } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
+import { type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
 import { Alert, Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
@@ -15,6 +16,7 @@ import {
   createRenderFrameController,
   holdRenderReadiness,
   readHostNonce,
+  snapshotVariables,
   validateRenderLink,
   type RenderFrameController,
   type RenderFrameError,
@@ -173,18 +175,37 @@ function RenderFrameHost({
     }
   }, []);
 
+  // A variable that no query or option uses changes nothing else, so the panel is not re-rendered.
+  const variablesVersion = useVariablesVersion();
+
   // Push data to the frame. A change of size alone becomes a resize so the frame reuses its input.
-  const sentRef = useRef<{ controller: RenderFrameController; sources: unknown[] } | null>(null);
+  const sentRef = useRef<{
+    controller: RenderFrameController;
+    sources: unknown[];
+    variablesKey: string;
+    width: number;
+    height: number;
+  } | null>(null);
   useEffect(() => {
     if (!controller) {
       return;
     }
     const sources = [data, timeRange, timeZone, theme, replaceVariables];
+    // The interpolation function keeps its identity when a variable changes, so compare the values.
+    const variables = snapshotVariables(replaceVariables);
+    const variablesKey = JSON.stringify(variables);
     const sent = sentRef.current;
     const sameSources =
-      sent !== null && sent.controller === controller && sent.sources.every((value, i) => value === sources[i]);
+      sent !== null &&
+      sent.controller === controller &&
+      sent.variablesKey === variablesKey &&
+      sent.sources.every((value, i) => value === sources[i]);
 
     if (sameSources) {
+      if (sent.width === width && sent.height === height) {
+        return;
+      }
+      sentRef.current = { ...sent, width, height };
       const seq = controller.resize({ width, height });
       if (seq >= 0) {
         finalBySeqRef.current.set(seq, lastInputFinalRef.current);
@@ -201,6 +222,7 @@ function RenderFrameHost({
       width,
       height,
       isRenderTarget: renderTarget,
+      variables,
     });
     if (!result.ok) {
       setLimitError({ reason: result.reason, actual: result.actual, limit: result.limit });
@@ -209,13 +231,26 @@ function RenderFrameHost({
       return;
     }
     setLimitError(null);
-    sentRef.current = { controller, sources };
+    sentRef.current = { controller, sources, variablesKey, width, height };
     lastInputFinalRef.current = isFinalData(data);
     const seq = controller.render(result.input);
     if (seq >= 0) {
       finalBySeqRef.current.set(seq, lastInputFinalRef.current);
     }
-  }, [controller, data, timeRange, timeZone, theme, replaceVariables, width, height, renderTarget, releaseHold]);
+    // variablesVersion only re-runs the effect; the snapshot is what is compared.
+  }, [
+    controller,
+    data,
+    timeRange,
+    timeZone,
+    theme,
+    replaceVariables,
+    variablesVersion,
+    width,
+    height,
+    renderTarget,
+    releaseHold,
+  ]);
 
   // Pause drawing while the panel is scrolled out of view. Render targets always draw.
   useEffect(() => {
@@ -308,6 +343,20 @@ function releasesReadiness(error: RenderFrameError, finalBySeq: Map<number, bool
     default:
       return false;
   }
+}
+
+/** Counts variable value changes in the dashboard scene, which bubble up to its root. */
+function useVariablesVersion(): number {
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    const scene: SceneObject | undefined = window.__grafanaSceneContext;
+    if (!scene) {
+      return undefined;
+    }
+    const subscription = scene.subscribeToEvent(SceneVariableValueChangedEvent, () => setVersion((v) => v + 1));
+    return () => subscription.unsubscribe();
+  }, []);
+  return version;
 }
 
 function followLink(target: RenderLinkTarget) {

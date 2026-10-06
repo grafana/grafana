@@ -153,6 +153,78 @@ describe('RenderPanel', () => {
     expect(latestController().resize).toHaveBeenLastCalledWith({ width: 500, height: 200 });
   });
 
+  describe('variables', () => {
+    const values: Record<string, string> = {};
+    let variableListeners: Array<() => void> = [];
+    const replaceVariables = (value: string) =>
+      value.replace(/\$\{(\w+):(json|text)\}/g, (_, name: string, format: string) =>
+        format === 'json' ? JSON.stringify(values[name] ?? '') : (values[name] ?? '')
+      );
+
+    beforeEach(() => {
+      values.env = 'prod';
+      variableListeners = [];
+      setTemplateSrv({ getVariables: () => [{ name: 'env' }] } as unknown as TemplateSrv);
+      const scene = {
+        subscribeToEvent: (_type: unknown, listener: () => void) => {
+          variableListeners.push(listener);
+          return { unsubscribe: () => (variableListeners = variableListeners.filter((l) => l !== listener)) };
+        },
+      };
+      Object.defineProperty(window, '__grafanaSceneContext', { value: scene, configurable: true, writable: true });
+    });
+
+    afterEach(() => {
+      Reflect.deleteProperty(window, '__grafanaSceneContext');
+      setTemplateSrv({ getVariables: () => [] } as unknown as TemplateSrv);
+    });
+
+    const changeVariable = (value: string) =>
+      act(() => {
+        values.env = value;
+        variableListeners.forEach((listener) => listener());
+      });
+
+    it('redraws when only a variable changes, with the same data and time range', () => {
+      setup({ replaceVariables });
+      expect(latestController().render).toHaveBeenCalledTimes(1);
+      expect(latestController().render.mock.lastCall![0].variables).toEqual({ env: { value: 'prod', text: 'prod' } });
+
+      changeVariable('dev');
+
+      expect(latestController().render).toHaveBeenCalledTimes(2);
+      expect(latestController().render.mock.lastCall![0].variables).toEqual({ env: { value: 'dev', text: 'dev' } });
+      expect(latestController().resize).not.toHaveBeenCalled();
+    });
+
+    it('sends a full render, not a resize, when a variable changed along with the size', () => {
+      const { rerender } = setup({ replaceVariables });
+      values.env = 'staging';
+      rerender({ replaceVariables, width: 500, height: 200 });
+
+      expect(latestController().resize).not.toHaveBeenCalled();
+      const input = latestController().render.mock.lastCall![0];
+      expect(input.variables).toEqual({ env: { value: 'staging', text: 'staging' } });
+      expect(input.size).toEqual({ width: 500, height: 200 });
+    });
+
+    it('does not redraw when a variable event leaves the values unchanged', () => {
+      const { rerender } = setup({ replaceVariables });
+      changeVariable('prod');
+      rerender({ replaceVariables, width: 500, height: 200 });
+
+      expect(latestController().render).toHaveBeenCalledTimes(1);
+      expect(latestController().resize).toHaveBeenCalledTimes(1);
+    });
+
+    it('stops listening when the panel unmounts', () => {
+      const { unmount } = setup({ replaceVariables });
+      expect(variableListeners).toHaveLength(1);
+      unmount();
+      expect(variableListeners).toHaveLength(0);
+    });
+  });
+
   it('holds image rendering until a draw of final data completes', () => {
     const { rerender } = setup({ data: makeData([1], LoadingState.Loading) });
     act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 3, nodeCount: 4 }));
