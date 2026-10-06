@@ -369,9 +369,9 @@ To add a data link, follow these steps:
 
 If you add multiple data links or actions, you can control the order in which they appear in the visualization. To do this, click and drag the data link or action to the desired position.
 
-## Panel-to-panel filtering
+## Cross-filtering {#panel-to-panel-filtering}
 
-You can use data links to link back to the dashboard you are currently on. This enables "panel-to-panel filtering," where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
+You can use data links to link back to the dashboard you are currently on. This enables _cross-filtering_, where clicking a data point in one panel updates the dashboard variables and filters the rest of the dashboard.
 
 To preserve the context of the current dashboard:
 
