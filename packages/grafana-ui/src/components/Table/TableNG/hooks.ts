@@ -832,24 +832,35 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ * React state updates only when shadow visibility or geometry changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
   const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+  const offsetStyles = useStyles2(
+    getScrollShadowOffsetStyles,
+    topOffset,
+    bottomOffset + visibility.scrollbarHeight,
+    visibility.width
+  );
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
-    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight, clientWidth } = el;
+    // The grid fills the panel even when its columns don't. Read resolved tracks so resized and
+    // auto-sized columns, including virtualized ones, bound the shadows rather than the panel.
+    const columnWidth = getComputedStyle(el)
+      .gridTemplateColumns.split(' ')
+      .reduce((total, track) => total + (parseFloat(track) || 0), 0);
+    const width = Math.min(columnWidth, clientWidth);
     // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
     // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
     // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
@@ -861,9 +872,10 @@ export function useScrollShadows(
     if (
       visibilityRef.current.top !== top ||
       visibilityRef.current.bottom !== bottom ||
-      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight ||
+      visibilityRef.current.width !== width
     ) {
-      const nextVisibility = { top, bottom, scrollbarHeight };
+      const nextVisibility = { top, bottom, scrollbarHeight, width };
       visibilityRef.current = nextVisibility;
       setVisibility(nextVisibility);
     }
@@ -883,7 +895,14 @@ export function useScrollShadows(
     // Panel resizing changes what fits without moving the scroll position.
     const resizeObserver = new ResizeObserver(sync);
     resizeObserver.observe(el);
-    return () => resizeObserver.disconnect();
+    // Column resizing inside react-data-grid changes its tracks without resizing the viewport
+    // or necessarily rendering this hook's owner.
+    const mutationObserver = new MutationObserver(sync);
+    mutationObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
   }, [ref, enabled, sync]);
 
   return {
