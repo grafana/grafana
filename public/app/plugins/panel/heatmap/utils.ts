@@ -592,13 +592,11 @@ const CRISP_EDGES_GAP_MIN = 4;
 export function heatmapPathsDense(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity, xAlign = 1, yAlign = 1, ySizeDivisor = 1 } = opts;
 
-  const pxRatio = devicePixelRatio;
-
   const round = gap! >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
 
-  const cellGap = Math.round(gap! * pxRatio);
-
   return (u: uPlot, seriesIdx: number) => {
+    const cellGap = Math.round(gap! * uPlot.pxRatio);
+
     uPlot.orient(
       u,
       seriesIdx,
@@ -753,8 +751,8 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 
           let x = valToPosX(dataX[i], scaleX, xDim, xOff);
           let y = valToPosY(yVal, scaleY, yDim, yOff);
-          let w = 4 * uPlot.pxRatio;
-          let h = 4 * uPlot.pxRatio;
+          let w = 6 * uPlot.pxRatio;
+          let h = 6 * uPlot.pxRatio;
 
           rect(points, x - w / 2, y - h / 2, w, h);
 
@@ -780,13 +778,11 @@ export function heatmapPathsPoints(opts: PointsBuilderOpts, exemplarColor: strin
 export function heatmapPathsSparse(opts: PathbuilderOpts) {
   const { disp, each, gap = 1, hideLE = -Infinity, hideGE = Infinity } = opts;
 
-  const pxRatio = devicePixelRatio;
-
   const round = gap! >= CRISP_EDGES_GAP_MIN ? Math.round : (v: number) => v;
 
-  const cellGap = Math.round(gap! * pxRatio);
-
   return (u: uPlot, seriesIdx: number) => {
+    const cellGap = Math.round(gap! * uPlot.pxRatio);
+
     uPlot.orient(
       u,
       seriesIdx,
