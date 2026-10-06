@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
-import { CoreApp } from '@grafana/data';
+import { AppEvents, CoreApp } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -955,13 +955,18 @@ describe('NotebookLayoutManager', () => {
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
     });
 
-    it('still applies the query when the suggestion lookup fails', async () => {
+    // A toast inviting a retry here would be wrong — the query is applied regardless (asserted
+    // below), so retrying from the menu would insert or convert a second cell.
+    it('still applies the query when the suggestion lookup fails, warning rather than erroring', async () => {
       mockGetVizSuggestionForQuery.mockRejectedValue(new Error('datasource unreachable'));
+      const emit = jest.spyOn(appEvents, 'emit');
       const manager = buildManager(buildNarrativeCells(['a']));
 
       const cell = await manager.addCellFromSavedQuery(1, query);
 
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+      expect(emit).toHaveBeenCalledWith(AppEvents.alertWarning, expect.anything());
+      expect(emit).not.toHaveBeenCalledWith(AppEvents.alertError, expect.anything());
     });
 
     // Same clamp addCell applies, for the same trailing-slot reason.

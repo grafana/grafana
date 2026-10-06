@@ -704,29 +704,28 @@ export class NotebookLayoutManager
       return;
     }
 
+    // Shared by "no suggestion returned" and "suggestion lookup/apply threw" below: either way the
+    // query still gets applied with the panel's default viz, so this is a warning, not an error — an
+    // "apply failed, try again" toast would invite a retry that inserts or converts a second cell.
+    const warnNoSuggestion = () =>
+      appEvents.emit(AppEvents.alertWarning, [
+        t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
+        t(
+          'notebook.add-block.saved-query-no-suggestion-detail',
+          'The query did not return enough data to suggest a visualization type.'
+        ),
+      ]);
+
     try {
       const timeRange = sceneGraph.getTimeRange(this).state.value;
       const suggestion = await getVizSuggestionForQuery(query, timeRange);
       if (suggestion) {
         await panel.changePluginType(suggestion.pluginId, suggestion.options ?? {}, suggestion.fieldConfig);
       } else {
-        appEvents.emit(AppEvents.alertWarning, [
-          t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
-          t(
-            'notebook.add-block.saved-query-no-suggestion-detail',
-            'The query did not return enough data to suggest a visualization type.'
-          ),
-        ]);
+        warnNoSuggestion();
       }
     } catch {
-      // Covers both the suggestion lookup and panel.changePluginType, so the wording can't name either.
-      appEvents.emit(AppEvents.alertError, [
-        t('notebook.add-block.saved-query-apply-error', 'Failed to apply saved query'),
-        t(
-          'notebook.add-block.saved-query-apply-error-detail',
-          'An error occurred while applying the saved query. Please try again.'
-        ),
-      ]);
+      warnNoSuggestion();
     }
 
     if (title) {
