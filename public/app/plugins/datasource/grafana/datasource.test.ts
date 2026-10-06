@@ -4,6 +4,7 @@ import {
   type DataSourceInstanceSettings,
   dateTime,
 } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { GrafanaDatasource } from './datasource';
@@ -88,7 +89,7 @@ describe('grafana data source', () => {
         { rendering: true, annotationType: GrafanaAnnotationType.Tags },
         { rendering: false, annotationType: GrafanaAnnotationType.Tags },
       ])(
-        'filters alert events only when rendering=$rendering for $annotationType queries',
+        'keeps alert events when rendering=$rendering for $annotationType queries without the URL parameter',
         async ({ rendering, annotationType }) => {
           if (rendering) {
             window.__grafanaImageRendererMessageChannel = jest.fn();
@@ -108,12 +109,36 @@ describe('grafana data source', () => {
               ...(annotationType === GrafanaAnnotationType.Dashboard
                 ? { dashboardUID: 'DSNdW0gVk' }
                 : { tags: ['tag1'] }),
-              ...(rendering ? { type: 'annotation' } : {}),
             },
             'grafana-data-source-annotations-undefined-DSNdW0gVk'
           );
         }
       );
+    });
+
+    describe('with the disableAlertHistory URL parameter', () => {
+      afterEach(() => {
+        locationService.replace('/');
+      });
+
+      it.each([
+        { value: 'true', expectedType: 'annotation' },
+        { value: 'false', expectedType: undefined },
+        { value: '', expectedType: undefined },
+      ])('uses annotation type $expectedType when value is "$value"', async ({ value, expectedType }) => {
+        locationService.replace(`/d/dashboard-uid/test?disableAlertHistory=${value}`);
+
+        await ds.getAnnotations(
+          setupAnnotationQueryOptions({ type: GrafanaAnnotationType.Dashboard }, { uid: 'dashboard-uid' })
+        );
+
+        expect(getMock).toHaveBeenCalledWith(
+          '/api/annotations',
+          expect.objectContaining({ dashboardUID: 'dashboard-uid' }),
+          'grafana-data-source-annotations-undefined-dashboard-uid'
+        );
+        expect(calledBackendSrvParams?.type).toBe(expectedType);
+      });
     });
 
     describe('with tags that have template variables', () => {

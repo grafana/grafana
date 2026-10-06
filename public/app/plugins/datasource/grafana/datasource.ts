@@ -17,11 +17,16 @@ import {
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
-import { DataSourceWithBackend, getGrafanaLiveSrv, getTemplateSrv, type StreamingFrameOptions } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  locationService,
+  type StreamingFrameOptions,
+} from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
-import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/DashboardMigrator';
 
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
@@ -250,8 +255,8 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
       params.tags = tags;
     }
 
-    // Screenshots retain manual annotations without fetching alert state history.
-    if (isRenderTarget()) {
+    // Keep manual annotations when alert state history is explicitly disabled.
+    if (locationService.getSearch().get('disableAlertHistory') === 'true') {
       params.type = 'annotation';
     }
 
