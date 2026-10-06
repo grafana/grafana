@@ -10,13 +10,13 @@ import {
 } from './solutionsMatrix';
 
 function state(m: SignalStatus, l: SignalStatus, t: SignalStatus, k: SignalStatus): SolutionState {
-  // spanMetrics/synthetics/irm inactive = App Observability / Synthetic Monitoring / IRM not in use; cases override.
+  // App Observability / Synthetics / IRM inactive = not in use; cases override.
   return {
     metrics: m,
     logs: l,
     traces: t,
     kubernetes: k,
-    spanMetrics: 'inactive',
+    'app-observability': 'inactive',
     synthetics: 'inactive',
     irm: 'inactive',
   };
@@ -53,26 +53,26 @@ describe('selectRecommendations', () => {
     });
   });
 
-  it('leads with IRM when span metrics show App Observability is already in use', () => {
-    expect(selectRecommendations({ ...state(on, on, on, off), spanMetrics: 'active' })).toEqual({
+  it('leads with IRM when App Observability is already in use', () => {
+    expect(selectRecommendations({ ...state(on, on, on, off), 'app-observability': 'active' })).toEqual({
       cards: ['irm', 'kubernetes-monitoring'],
       baseRow: 'mlt',
     });
-    expect(selectRecommendations({ ...state(on, on, on, on), spanMetrics: 'active' })).toEqual({
+    expect(selectRecommendations({ ...state(on, on, on, on), 'app-observability': 'active' })).toEqual({
       cards: ['irm'],
       baseRow: 'fully_active',
     });
   });
 
-  it('fails the App Observability card toward hiding on an unknown span-metrics probe, without blanking', () => {
-    expect(selectRecommendations({ ...state(on, on, on, off), spanMetrics: 'unknown' })).toEqual({
+  it('fails the App Observability card toward hiding on an unknown App Observability signal, without blanking', () => {
+    expect(selectRecommendations({ ...state(on, on, on, off), 'app-observability': 'unknown' })).toEqual({
       cards: ['kubernetes-monitoring', 'irm'],
       baseRow: 'mlt',
     });
   });
 
-  it('ignores span metrics outside the M+L+T rows', () => {
-    expect(selectRecommendations({ ...state(on, on, off, off), spanMetrics: 'active' })).toEqual({
+  it('ignores the App Observability signal outside the M+L+T rows', () => {
+    expect(selectRecommendations({ ...state(on, on, off, off), 'app-observability': 'active' })).toEqual({
       cards: ['hosted-traces', 'kubernetes-monitoring'],
       baseRow: 'ml_no_traces',
     });
@@ -121,7 +121,7 @@ describe('selectRecommendations', () => {
       cards: ['application-observability', 'kubernetes-monitoring'],
       baseRow: 'mlt',
     });
-    expect(selectRecommendations({ ...state(on, on, on, on), irm: 'active', spanMetrics: 'active' })).toEqual({
+    expect(selectRecommendations({ ...state(on, on, on, on), irm: 'active', 'app-observability': 'active' })).toEqual({
       cards: [],
       baseRow: 'fully_active',
     });
@@ -132,10 +132,12 @@ describe('selectRecommendations', () => {
       cards: ['hosted-traces', 'synthetic-monitoring'],
       baseRow: 'mlk_no_traces',
     });
-    expect(selectRecommendations({ ...state(on, on, on, off), irm: 'unknown', spanMetrics: 'active' })).toEqual({
-      cards: ['kubernetes-monitoring'],
-      baseRow: 'mlt',
-    });
+    expect(selectRecommendations({ ...state(on, on, on, off), irm: 'unknown', 'app-observability': 'active' })).toEqual(
+      {
+        cards: ['kubernetes-monitoring'],
+        baseRow: 'mlt',
+      }
+    );
   });
 });
 
@@ -180,6 +182,17 @@ describe('orderCardsForSolution', () => {
 
     expect(orderCardsForSolution(cards, 'kubernetes')).toEqual(['enable-logs-k8s', 'irm', 'synthetic-monitoring']);
     expect(orderCardsForSolution(cards, 'synthetics')).toEqual(['irm', 'enable-logs-k8s', 'synthetic-monitoring']);
+  });
+
+  it('leads mlt with IRM for the App Observability view, demoting its own card', () => {
+    const { cards } = selectRecommendations(state(on, on, on, off));
+
+    expect(cards).toEqual(['application-observability', 'kubernetes-monitoring', 'irm']);
+    expect(orderCardsForSolution(cards, 'app-observability')).toEqual([
+      'irm',
+      'kubernetes-monitoring',
+      'application-observability',
+    ]);
   });
 
   it('only reorders: every solution view yields a permutation of every reachable selection', () => {

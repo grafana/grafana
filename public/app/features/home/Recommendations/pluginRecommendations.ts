@@ -8,9 +8,11 @@ import { type LocalPlugin } from 'app/features/plugins/admin/types';
 
 import {
   APP_OBSERVABILITY_APP_ID,
+  APP_OBSERVABILITY_SETUP_PATH,
   HOSTED_TRACES_APP_ID,
   SYNTHETIC_MONITORING_APP_ID,
   SYNTHETIC_MONITORING_CHECKS_WRITE,
+  SYNTHETIC_MONITORING_SETUP_PATH,
 } from '../solutions/appPluginIds';
 import { KUBERNETES_APP_ID } from '../solutions/kubernetesData';
 import { createTtlCachedPromise, PROBE_TIMEOUT_MS, PROBE_TTL_MS, withDeadline } from '../solutions/probeUtils';
@@ -95,7 +97,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
     'application-observability': pluginCard({
       id: 'application-observability',
       pluginId: APP_OBSERVABILITY_APP_ID,
-      appPath: '',
+      appPath: APP_OBSERVABILITY_SETUP_PATH,
       icon: 'application-observability',
       color: 'green',
       title: t('home.recommendations.application-observability.title', 'Explore your service map'),
@@ -163,7 +165,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
     'synthetic-monitoring': pluginCard({
       id: 'synthetic-monitoring',
       pluginId: SYNTHETIC_MONITORING_APP_ID,
-      appPath: '/checks/choose-type',
+      appPath: SYNTHETIC_MONITORING_SETUP_PATH,
       icon: 'globe',
       color: 'blue',
       title: t('home.recommendations.synthetic-monitoring.title', 'Monitor uptime from the outside'),

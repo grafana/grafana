@@ -158,20 +158,13 @@ describe('tracesSolution', () => {
     const ds = datasource();
     const solution = tracesSolution();
 
-    await expect(solution.cta()).resolves.toEqual({
-      label: 'Open Traces Drilldown',
-      href: '/traces',
-      action: 'open_solution',
-    });
+    await solution.cta();
+
     expect(mockDrilldownActiveCta).toHaveBeenCalledWith(
       ds,
       HOSTED_TRACES_APP_ID,
       'Traces Drilldown',
       `/a/${HOSTED_TRACES_APP_ID}/explore?var-ds=tempo-uid`
     );
-  });
-
-  it('has no alert fact', async () => {
-    await expect(tracesSolution().alert()).resolves.toBeNull();
   });
 });

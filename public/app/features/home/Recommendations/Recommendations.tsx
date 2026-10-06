@@ -112,6 +112,7 @@ function selectRecommendationState(inventory: LocalPlugin[], signals: SolutionSt
     metrics: forSolution('metrics'),
     logs: forSolution('logs'),
     traces: forSolution('traces'),
+    'app-observability': forSolution('app-observability'),
     synthetics: forSolution('synthetics'),
   };
 
@@ -175,5 +176,6 @@ const EMPTY_BY_SOLUTION: Record<SolutionId, RecommendationItem[]> = {
   metrics: [],
   logs: [],
   traces: [],
+  'app-observability': [],
   synthetics: [],
 };

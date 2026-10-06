@@ -32,7 +32,7 @@ const DEFAULT_STATE: SolutionState = {
   logs: 'active',
   traces: 'inactive',
   kubernetes: 'inactive',
-  spanMetrics: 'inactive',
+  'app-observability': 'inactive',
   synthetics: 'inactive',
   irm: 'inactive',
 };

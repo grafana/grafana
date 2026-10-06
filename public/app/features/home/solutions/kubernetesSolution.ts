@@ -1,6 +1,6 @@
 import memoize from 'micro-memoize';
 
-import { formattedValueToString, getValueFormat, locationUtil, type DataSourceInstanceListItem } from '@grafana/data';
+import { locationUtil, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import {
@@ -18,9 +18,8 @@ import { datasourceFact } from './probeUtils';
 import { scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
+import { formatCount } from './solutionStats';
 import { type Solution } from './types';
-
-const formatUsageNumber = getValueFormat('short');
 
 async function accessibleAppHref(path: string, ds: DataSourceInstanceListItem): Promise<string | null> {
   const bridgePath = await accessibleAppPage(KUBERNETES_APP_ID, path);
@@ -86,7 +85,7 @@ export function kubernetesSolution(
         alertsFiring > 0
           ? t('home.solutions.kubernetes.alerts-firing', '', {
               count: Math.ceil(alertsFiring),
-              value: formattedValueToString(formatUsageNumber(Math.ceil(alertsFiring))),
+              value: formatCount(Math.ceil(alertsFiring)),
               defaultValue_one: '{{value}} alert firing',
               defaultValue_other: '{{value}} alerts firing',
             })
@@ -149,13 +148,13 @@ export function kubernetesSolution(
       return {
         primary: t('home.solutions.kubernetes.clusters', '', {
           count: clusterCount,
-          value: formattedValueToString(formatUsageNumber(clusterCount)),
+          value: formatCount(clusterCount),
           defaultValue_one: '{{value}} cluster',
           defaultValue_other: '{{value}} clusters',
         }),
         secondary: t('home.solutions.kubernetes.pods', '', {
           count: podCount,
-          value: formattedValueToString(formatUsageNumber(podCount)),
+          value: formatCount(podCount),
           defaultValue_one: '{{value}} pod',
           defaultValue_other: '{{value}} pods',
         }),

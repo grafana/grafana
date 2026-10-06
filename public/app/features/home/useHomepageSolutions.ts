@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 
 import { useStoredString } from 'app/core/hooks/useStored';
 
+import { appObservabilitySolution } from './solutions/appObservabilitySolution';
 import { SOLUTION_IDS } from './solutions/constants';
 import { detectIrmSignal } from './solutions/irmSignal';
 import { parseKubernetesFilter } from './solutions/kubernetesFilter';
@@ -11,8 +12,7 @@ import { logsSolution } from './solutions/logsSolution';
 import { parseMetricsFilter } from './solutions/metricsFilter';
 import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
 import { solutionFilterStorageKey } from './solutions/solutionFilter';
-import { detectSignal, settleSignals, type SolutionState } from './solutions/solutionState';
-import { probeSpanMetrics } from './solutions/spanMetricsSignal';
+import { settleSignals, type SolutionState } from './solutions/solutionState';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution } from './solutions/types';
@@ -32,19 +32,19 @@ export function useHomepageSolutions(): HomepageSolutions {
   const [rawKubernetesFilter] = useStoredString(solutionFilterStorageKey('kubernetes'), '');
   const [rawMetricsFilter] = useStoredString(solutionFilterStorageKey('metrics'), '');
 
-  // Built once: the filter-independent solutions, the span-metrics probe, the detections every
-  // recreated filtered solution shares, and the signal snapshot read from them.
+  // Built once: the filter-independent solutions, the IRM probe, the detections every recreated
+  // filtered solution shares, and the signal snapshot read from them.
   const shared = useMemo(() => {
     const detectKubernetes = kubernetesDetection();
     const detectMetrics = metricsDetection();
     const solutions = {
       traces: tracesSolution(),
       logs: logsSolution(),
+      'app-observability': appObservabilitySolution(),
       synthetics: syntheticsSolution(),
     };
 
-    // App Observability and IRM are not homepage solutions; only the recommendation matrix reads these signals.
-    const spanMetricsSignal = memoize(() => detectSignal(probeSpanMetrics));
+    // IRM is not a homepage solution; only the recommendation matrix reads its signal.
     const irmSignal = memoize(detectIrmSignal);
 
     // Core signals come from their solutions; the filtered ones from the detection their solutions
@@ -55,7 +55,7 @@ export function useHomepageSolutions(): HomepageSolutions {
         logs: solutions.logs.signal(),
         traces: solutions.traces.signal(),
         kubernetes: detectKubernetes().then(({ status }) => status),
-        spanMetrics: spanMetricsSignal().then(({ status }) => status),
+        'app-observability': solutions['app-observability'].signal(),
         synthetics: solutions.synthetics.signal(),
         irm: irmSignal(),
       });

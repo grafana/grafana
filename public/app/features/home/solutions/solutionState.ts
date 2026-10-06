@@ -1,24 +1,18 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
 
 import { withDeadline } from './probeUtils';
+import { type SolutionId } from './types';
 
 /** Hard ceiling on one signal's detection; past it the signal settles unknown. */
 export const SIGNAL_BUDGET_MS = 30_000;
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 
-export interface SolutionState {
-  metrics: SignalStatus;
-  logs: SignalStatus;
-  traces: SignalStatus;
-  kubernetes: SignalStatus;
-  /** Span metrics prove App Observability use. Unlike core signals, `unknown` does not blank recommendations. */
-  spanMetrics: SignalStatus;
-  /** Gates only the Synthetics card; like spanMetrics, 'unknown' never blanks recommendations. */
-  synthetics: SignalStatus;
+/** Every solution's settled signal, keyed by solution id, plus the signals only the matrix reads. */
+export type SolutionState = Record<SolutionId, SignalStatus> & {
   /** Grafana Alerting routing into IRM. Gates only the IRM card; 'unknown' never blanks recommendations. */
   irm: SignalStatus;
-}
+};
 
 /** The signals that pick a matrix row; any of them `unknown` blanks the recommendations. */
 export const CORE_SIGNALS = ['metrics', 'logs', 'traces', 'kubernetes'] as const satisfies ReadonlyArray<

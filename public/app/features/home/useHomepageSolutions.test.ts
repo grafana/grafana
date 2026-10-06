@@ -2,12 +2,12 @@ import { act, renderHook } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem, store } from '@grafana/data';
 
+import { appObservabilitySolution } from './solutions/appObservabilitySolution';
 import { detectIrmSignal } from './solutions/irmSignal';
 import { kubernetesDetection, kubernetesSolution } from './solutions/kubernetesSolution';
 import { logsSolution } from './solutions/logsSolution';
 import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
 import { solutionFilterStorageKey } from './solutions/solutionFilter';
-import { probeSpanMetrics } from './solutions/spanMetricsSignal';
 import { syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution, type SolutionId } from './solutions/types';
@@ -18,7 +18,7 @@ jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
 jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
 jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
-jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
+jest.mock('./solutions/appObservabilitySolution', () => ({ appObservabilitySolution: jest.fn() }));
 jest.mock('./solutions/irmSignal', () => ({ detectIrmSignal: jest.fn() }));
 
 // `satisfies` keeps every solution present; `jest.mocked` keeps each factory's own signature.
@@ -27,9 +27,9 @@ const mockFactories = jest.mocked({
   traces: tracesSolution,
   metrics: metricsSolution,
   logs: logsSolution,
+  'app-observability': appObservabilitySolution,
   synthetics: syntheticsSolution,
 } satisfies Record<SolutionId, (...args: never[]) => Solution>);
-const mockProbeSpanMetrics = jest.mocked(probeSpanMetrics);
 const mockDetectIrmSignal = jest.mocked(detectIrmSignal);
 
 const datasource: DataSourceInstanceListItem = {
@@ -69,6 +69,7 @@ beforeEach(() => {
     traces: solution('traces', 'unknown'),
     metrics: solution('metrics', 'active'),
     logs: solution('logs', 'inactive'),
+    'app-observability': solution('app-observability', 'active'),
     synthetics: solution('synthetics'),
   };
   for (const id of Object.keys(mockFactories) as SolutionId[]) {
@@ -78,7 +79,6 @@ beforeEach(() => {
   detectMetrics.mockClear();
   jest.mocked(kubernetesDetection).mockReset().mockReturnValue(detectKubernetes);
   jest.mocked(metricsDetection).mockReset().mockReturnValue(detectMetrics);
-  mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
   mockDetectIrmSignal.mockReset().mockResolvedValue('inactive');
 });
 
@@ -102,7 +102,6 @@ describe('useHomepageSolutions', () => {
         expect(getter).not.toHaveBeenCalled();
       }
     }
-    expect(mockProbeSpanMetrics).not.toHaveBeenCalled();
     expect(mockDetectIrmSignal).not.toHaveBeenCalled();
     expect(detectKubernetes).not.toHaveBeenCalled();
     expect(detectMetrics).not.toHaveBeenCalled();
@@ -116,6 +115,7 @@ describe('useHomepageSolutions', () => {
       'metrics',
       'logs',
       'traces',
+      'app-observability',
       'synthetics',
     ]);
   });
@@ -140,7 +140,7 @@ describe('useHomepageSolutions', () => {
       logs: 'inactive',
       traces: 'unknown',
       kubernetes: 'active',
-      spanMetrics: 'active',
+      'app-observability': 'active',
       synthetics: 'inactive',
       irm: 'inactive',
     });
@@ -152,16 +152,15 @@ describe('useHomepageSolutions', () => {
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
-    expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
+    expect(fixtures['app-observability'].signal).toHaveBeenCalledTimes(1);
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
-  it('shares the memoized span-metrics and IRM probes between repeated snapshot reads', async () => {
+  it('shares the memoized IRM probe between repeated snapshot reads', async () => {
     const { result } = renderHook(() => useHomepageSolutions());
 
     await Promise.all([result.current.signals(), result.current.signals()]);
 
-    expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
 
@@ -176,7 +175,7 @@ describe('useHomepageSolutions', () => {
       logs: 'unknown',
       traces: 'unknown',
       kubernetes: 'active',
-      spanMetrics: 'active',
+      'app-observability': 'active',
       synthetics: 'inactive',
       irm: 'inactive',
     });

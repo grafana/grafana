@@ -12,10 +12,6 @@ import {
 // "Seen recently" lookback shared by all data probes, tolerating scrape/ingest gaps.
 export const DATA_LOOKBACK_HOURS = 24;
 
-// Span metrics prove App Observability is in use, under both supported emitter namings:
-// the spanmetrics connector emits traces_spanmetrics_*, OTel/Alloy emits traces_span_metrics_*.
-export const SPAN_METRICS_PROBE = `count(last_over_time(traces_spanmetrics_calls_total[${DATA_LOOKBACK_HOURS}h])) or count(last_over_time(traces_span_metrics_calls_total[${DATA_LOOKBACK_HOURS}h]))`;
-
 // Platform telemetry, never the org's product data: excluded unconditionally.
 export const CLOUD_UTILITY_PROM_DATASOURCE_UIDS: ReadonlySet<string> = new Set([
   'grafanacloud-usage',
