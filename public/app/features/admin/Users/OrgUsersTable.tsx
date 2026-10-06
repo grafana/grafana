@@ -126,6 +126,7 @@ export const OrgUsersTable = ({
       {
         id: 'role',
         header: 'Role',
+        minWidth: 120,
         cell: ({ cell: { value }, row: { original } }: Cell<'role'>) => {
           const basicRoleDisabled = getBasicRoleDisabled(original);
           const onUserRolesUpdate = async (newRoles: Role[], userId: number, orgId: number | undefined) => {
