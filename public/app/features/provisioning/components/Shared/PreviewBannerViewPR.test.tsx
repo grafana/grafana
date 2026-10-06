@@ -25,7 +25,14 @@ const mockTextUtil = jest.mocked(textUtil);
 const mockUsePullRequestParam = jest.mocked(usePullRequestParam);
 
 function setup(
-  options: { prURL: string; isNewPr?: boolean; repoType?: RepoType; action?: string; prTitle?: string } = {
+  options: {
+    prURL?: string;
+    isNewPr?: boolean;
+    repoType?: RepoType;
+    action?: string;
+    prTitle?: string;
+    repoUrl?: string;
+  } = {
     prURL: 'test-url',
     repoType: 'github',
   }
@@ -33,6 +40,7 @@ function setup(
   const componentProps = {
     prURL: options.prURL,
     isNewPr: options.isNewPr || false,
+    repoUrl: options.repoUrl,
   };
 
   mockUsePullRequestParam.mockReturnValue({
@@ -61,6 +69,22 @@ describe('PreviewBannerViewPR', () => {
     windowOpenSpy = jest.spyOn(window, 'open');
   });
 
+  it.each([
+    { name: 'repository fallback', repoUrl: 'https://git.example.com/team/repo' },
+    { name: 'folder repository fallback passed as prURL', prURL: 'https://git.example.com/team/repo' },
+  ])('labels the $name as Open repository', async (props) => {
+    setup({ ...props, repoType: 'git', isNewPr: true });
+
+    expect(screen.getByRole('button', { name: /close alert/i })).toHaveTextContent('Open repository');
+    expect(
+      screen.getByText('Open the repository and create a pull or merge request from the branch you saved to.')
+    ).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: /close alert/i }));
+
+    expect(windowOpenSpy).toHaveBeenCalledWith('https://git.example.com/team/repo', '_blank');
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockTextUtil.sanitizeUrl.mockImplementation((url) => url);
@@ -80,6 +104,9 @@ describe('PreviewBannerViewPR', () => {
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
+      expect(
+        screen.queryByText('Open the repository and create a pull or merge request from the branch you saved to.')
+      ).not.toBeInTheDocument();
     });
 
     it('should render correct text for existing PR dashboard', () => {

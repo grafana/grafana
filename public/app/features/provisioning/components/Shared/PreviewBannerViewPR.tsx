@@ -53,6 +53,8 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the
   // PR/compare URL carries it. Returns prURL unchanged when no title was threaded through.
   const prLink = appendPullRequestTitleParam(prURL, repoType, prTitle);
+  // Folder flows also pass repository fallbacks through prURL; pure Git has no PR links.
+  const hasPullRequestLink = Boolean(prLink) && repoType !== 'git';
   const linkUrl = prLink || branchInfo?.repoBaseUrl || repoUrl;
 
   const actionText =
@@ -99,13 +101,23 @@ export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, bra
       title={actionText.title}
       buttonContent={
         <Stack alignItems="center">
-          {actionText.button}
+          {hasPullRequestLink
+            ? actionText.button
+            : t('provisioned-resource-preview-banner.preview-banner.open-repository', 'Open repository')}
           <Icon name="external-link-alt" />
         </Stack>
       }
       onRemove={linkUrl ? () => window.open(textUtil.sanitizeUrl(linkUrl), '_blank') : undefined}
     >
       {actionText.body}
+
+      {repoType === 'git' && (
+        <Box marginTop={1}>
+          <Trans i18nKey="provisioned-resource-preview-banner.preview-banner.create-pull-request-in-repository">
+            Open the repository and create a pull or merge request from the branch you saved to.
+          </Trans>
+        </Box>
+      )}
 
       {/* when the repo type is a valid provider, we show branch information */}
       {showBranchInfo(repoType, branchInfo) && (
