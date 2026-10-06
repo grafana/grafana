@@ -43,8 +43,11 @@ export interface Props {
   onOptionsChange: (options: QueryGroupOptions) => void;
 }
 
-async function loadQueriesAndDatasource(options: QueryGroupOptions) {
+async function loadQueriesAndDatasource(options: QueryGroupOptions, currentDataSource?: DataSourceApi) {
   const ds = await getDataSourceInstance(options.dataSource);
+  if (ds.uid === currentDataSource?.uid) {
+    return undefined;
+  }
   const dsSettings = await getDataSourceInstanceSettings(options.dataSource);
 
   const defaultDataSource = await getDataSourceInstance();
@@ -92,27 +95,17 @@ export const QueryGroup = memo(function QueryGroup({
   useEffect(() => {
     let ignore = false;
 
-    (async () => {
-      try {
-        if (dataSource) {
-          const currentDS = await getDataSourceInstance(options.dataSource);
-          if (ignore || currentDS.uid === dataSource.uid) {
-            return;
-          }
-        }
-
-        const result = await loadQueriesAndDatasource(options);
-        if (ignore) {
+    loadQueriesAndDatasource(options, dataSource)
+      .then((result) => {
+        if (ignore || !result) {
           return;
         }
         setQueries(result.queries);
         setDataSource(result.ds);
         setDsSettings(result.dsSettings);
         setDefaultDataSource(result.defaultDataSource);
-      } catch (error) {
-        console.error('failed to load data source', error);
-      }
-    })();
+      })
+      .catch((error) => console.error('failed to load data source', error));
 
     return () => {
       ignore = true;
