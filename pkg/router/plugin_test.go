@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -69,6 +70,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 					ContextProvider: struct{ appplugin.PluginContextWrapper }{},
 					Unified:         &resource.MockResourceClient{},
 					AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
+					Features:        featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
 				},
 			})
 			require.NoError(t, err)
@@ -346,7 +348,7 @@ func (s *recordingManifestRoleService) DeclareFixedRoles(roles ...accesscontrol.
 	return s.err
 }
 
-func TestPluginLoaderRoleDeclarationFailure(t *testing.T) {
+func TestInitPluginRolesDeclarationFailure(t *testing.T) {
 	failure := errors.New("role registration failed")
 	for _, missingService := range []bool{false, true} {
 		t.Run(fmt.Sprintf("missingService=%t", missingService), func(t *testing.T) {
@@ -364,8 +366,7 @@ func TestPluginLoaderRoleDeclarationFailure(t *testing.T) {
 			if missingService {
 				service = nil
 			}
-			loader, err := newPluginLoader(PluginLoaderDependencies{PluginSources: source, ACService: service})
-			require.Nil(t, loader)
+			err := initPluginRoles(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service})
 			require.ErrorContains(t, err, "error declaring roles for manifest-app")
 			if !missingService {
 				require.ErrorIs(t, err, failure)
@@ -390,4 +391,72 @@ func TestPluginBackendManifestGroupValidation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
+	for _, tc := range []struct {
+		name            string
+		targets         []string
+		features        []any
+		initializeRoles bool
+	}{
+		{name: "disabled"},
+		{name: "unrelated target", targets: []string{"all"}},
+		{name: "middleware", features: []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, initializeRoles: true},
+		{name: "router target without middleware", targets: []string{"router"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			failure := errors.New("plugin discovery failed")
+			calls := 0
+			source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+				calls++
+				return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+					return nil, failure
+				}}}
+			}}
+			cfg := setting.NewCfg()
+			cfg.Target = tc.targets
+			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
+				PluginSources:      source,
+				PluginDependencies: PluginDependencies{Features: featuremgmt.WithFeatures(tc.features...)},
+			})
+			if tc.initializeRoles {
+				require.ErrorIs(t, err, failure)
+				require.Nil(t, loader)
+				require.Equal(t, 1, calls)
+			} else {
+				require.NoError(t, err)
+				require.Zero(t, calls, "without middleware, construction must not touch plugin sources")
+				_, err = loader.Load(t.Context())
+				require.ErrorIs(t, err, failure, "discovery remains deferred until Load")
+				require.Equal(t, 1, calls)
+			}
+		})
+	}
+}
+
+func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
+	ctx := t.Context()
+	roles := &recordingManifestRoleService{}
+	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(got context.Context) []plugins.PluginSource {
+		require.Same(t, ctx, got)
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
+				JSONData: plugins.JSONData{ID: "manifest-app", Type: plugins.TypeApp},
+				FS: plugins.NewInMemoryFS(map[string][]byte{
+					"schema/v0alpha1.json":  []byte(`{"targetApiVersion":`),
+					"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"manifest","group":"manifest.ext.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`),
+				}),
+			}}}, nil
+		}}}
+	}}
+	deps := PluginLoaderDependencies{PluginSources: source, ACService: roles}
+	err := initPluginRoles(ctx, deps)
+	require.NoError(t, err, "schema failures must not prevent role declaration")
+	require.Equal(t, 1, roles.calls)
+	require.Len(t, roles.roles, 2)
+	loader := &PluginLoader{deps: deps}
+	_, err = loader.Load(ctx)
+	require.ErrorContains(t, err, "error loading schema manifest-app")
+	require.Equal(t, 1, roles.calls, "Load must not redeclare roles")
 }

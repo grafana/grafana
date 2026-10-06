@@ -163,13 +163,12 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
+func initPluginRoles(ctx context.Context, deps PluginLoaderDependencies) error {
 	// Declare roles during dependency construction, before startup registers fixed
 	// roles. Reconciliation must not append the same declarations on every load.
-	ctx := context.Background()
-	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources)
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources, false)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, plugin := range pluginDefs {
 		if plugin.Manifest == nil {
@@ -181,17 +180,17 @@ func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
 			continue
 		}
 		if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, plugin.Manifest); err != nil {
-			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+			return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
 		}
 	}
-	return &PluginLoader{deps: deps}, nil
+	return nil
 }
 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
 }
 
-func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry) ([]definition.PluginDefinition, error) {
+func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
@@ -203,7 +202,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry) 
 			}
 			return false
 		},
-		Schemas:     true,
+		Schemas:     schemas,
 		AppManifest: true, // Load manifests
 	})
 
@@ -214,7 +213,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry) 
 }
 
 func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
-	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources)
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
 	if err != nil {
 		return nil, err
 	}
