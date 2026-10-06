@@ -15,18 +15,46 @@ message LegacyCheckRequest {
   string namespace = 1;
   // Subject in authlib TypeID format, for example "user:1" or "service-account:uid".
   string subject = 2;
-  // Legacy RBAC action, for example "dashboards:read".
+  // Legacy RBAC action, for example "dashboards:read". Used when expression is absent.
   string action = 3;
-  // Legacy RBAC scope, for example "dashboards:uid:abc123".
+  // Legacy RBAC scope, for example "dashboards:uid:abc123". Used when expression is absent.
   string scope = 4;
   // Optional contextual team UIDs (used when external-group based team grants are in effect).
   repeated string teams = 5;
   // Bypass server-side caches when true.
   bool skip_cache = 6;
+  // Complete check expression. When set, action and scope must be empty.
+  LegacyExpression expression = 7;
+  // Evaluate without resolving scope attributes or inherited resource scopes,
+  // corresponding to AccessControl.WithoutResolvers.
+  bool skip_scope_resolution = 8;
 }
 
 message LegacyCheckResponse {
   bool allowed = 1;
   // Populated when evaluation failed. Failures always deny.
   string error = 2;
+}
+
+message LegacyExpression {
+  // Exactly one node must be set. Lists may contain nested expressions.
+  oneof node {
+    LegacyPermission permission = 1;
+    // All children must match. An empty list is satisfied.
+    LegacyExpressionList all = 2;
+    // At least one child must match. An empty list is not satisfied.
+    LegacyExpressionList any = 3;
+  }
+}
+
+message LegacyPermission {
+  string action = 1;
+  // Alternative target scopes: matching any scope satisfies this permission.
+  // An empty list checks only whether the action is granted. A list containing
+  // an empty string is an explicit scope check, not an action-only check.
+  repeated string scopes = 2;
+}
+
+message LegacyExpressionList {
+  repeated LegacyExpression expressions = 1;
 }
