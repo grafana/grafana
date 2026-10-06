@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   check:
-    name: Require FIELD_VALUES for new direct Go search clients
+    name: Guard resource search result formats
     runs-on: ubuntu-x64-small
     timeout-minutes: 5
     container:
@@ -60,6 +60,42 @@ jobs:
           echo "Comparing against base commit $base_sha"
           semgrep scan --strict --error \
             --config pkg/storage/unified/semgrep/resource-search-field-values.yaml \
+            --baseline-commit "$base_sha" \
+            "${files[@]}"
+
+      - name: Test table producer rule
+        run: semgrep test --strict --config pkg/storage/unified/semgrep/resource-search-no-table-producers.yaml pkg/storage/unified/semgrep/resource-search-no-table-producers.go
+
+      - name: Check new ResourceTable search producers
+        env:
+          SEMGREP_SEND_METRICS: 'off'
+        shell: bash
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          targets_file=$(mktemp)
+          git grep -lz -E 'ResourceSearchResponse|ResourceTable' -- '*.go' \
+            ':(exclude)**/*_test.go' \
+            ':(exclude)**/*.pb.go' \
+            ':(exclude)pkg/storage/unified/testing/**' \
+            ':(exclude)pkg/storage/unified/semgrep/**' > "$targets_file"
+
+          files=()
+          while IFS= read -r -d '' file; do
+            files+=("$file")
+          done < "$targets_file"
+
+          if (( ${#files[@]} == 0 )); then
+            echo "::error::No ResourceSearchResponse or ResourceTable usage found"
+            exit 1
+          fi
+          echo "Scanning ${#files[@]} files containing ResourceSearchResponse or ResourceTable usage"
+
+          base_sha=$(git rev-parse HEAD^1)
+          echo "Comparing against base commit $base_sha"
+          # No --strict: semgrep can't parse Go 1.26 new(expr) yet, and partial parsing is enough to find these patterns.
+          semgrep scan --error \
+            --config pkg/storage/unified/semgrep/resource-search-no-table-producers.yaml \
             --baseline-commit "$base_sha" \
             "${files[@]}"
 

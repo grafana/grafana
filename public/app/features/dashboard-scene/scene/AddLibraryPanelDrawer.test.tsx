@@ -1,6 +1,9 @@
+import { testWithFeatureToggles } from 'test/test-utils';
+
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 
+import { replacePanel } from '../actions/panel/replacePanel';
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { AddLibraryPanelDrawer } from './AddLibraryPanelDrawer';
@@ -23,9 +26,13 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
 }));
 
+jest.mock('../actions/panel/replacePanel');
+
 describe('AddLibraryPanelWidget', () => {
   let dashboard: DashboardScene;
   let addLibPanelDrawer: AddLibraryPanelDrawer;
+
+  testWithFeatureToggles({ disable: ['dashboardNewLayouts'] });
 
   beforeEach(async () => {
     const result = await buildTestScene();
@@ -145,6 +152,37 @@ describe('AddLibraryPanelWidget', () => {
     expect(behavior.state.name).toBe('new_name');
     expect(panels[0].state.title).toBe('model title');
     expect(panels[0].state.key).toBe('panel-1'); // Key should be preserved from original panel
+  });
+
+  describe('with new layouts', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+    it('delegates replacement to the action with the prepared library panel', async () => {
+      const oldPanel = new VizPanel({ key: 'panel-1', title: 'Original', pluginId: 'table' });
+      const drawer = new AddLibraryPanelDrawer({ panelToReplaceRef: oldPanel.getRef() });
+      const dashboard = new DashboardScene({
+        body: DefaultGridLayoutManager.fromVizPanels([oldPanel]),
+        overlay: drawer,
+      });
+      const source = oldPanel.parent;
+      const panelInfo: LibraryPanel = {
+        uid: 'library-1',
+        name: 'Library panel',
+        version: 1,
+        type: 'timeseries',
+        model: { title: 'Library title', type: 'timeseries' },
+      };
+
+      await drawer.onAddLibraryPanel(panelInfo);
+
+      expect(replacePanel).toHaveBeenCalledTimes(1);
+      expect(replacePanel).toHaveBeenCalledWith({ source, oldPanel, newPanel: expect.any(VizPanel) });
+      const { newPanel } = jest.mocked(replacePanel).mock.calls[0][0];
+      expect(newPanel.state).toMatchObject({ title: 'Library title', hoverHeader: false });
+      const behavior = newPanel.state.$behaviors?.[0] as LibraryPanelBehavior;
+      expect(behavior.state).toMatchObject({ uid: 'library-1', name: 'Library panel' });
+      expect(dashboard.state.body.getVizPanels()).toEqual([oldPanel]);
+    });
   });
 
   it('should set hoverHeader to true if the library panel title is empty', async () => {

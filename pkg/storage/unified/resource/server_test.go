@@ -1463,12 +1463,13 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
-		Backend:           store,
-		WatchExpiry:       watchExpiry,
-		BookmarkFrequency: opts.BookmarkFrequency,
-		StorageMetrics:    opts.StorageMetrics,
-		AccessClient:      opts.AccessClient,
-		NatsWatchMaxAge:   opts.NatsWatchMaxAge,
+		Backend:              store,
+		WatchExpiry:          watchExpiry,
+		BookmarkFrequency:    opts.BookmarkFrequency,
+		SeededWatchesEnabled: true,
+		StorageMetrics:       opts.StorageMetrics,
+		AccessClient:         opts.AccessClient,
+		NatsWatchMaxAge:      opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1736,6 +1737,29 @@ func advanceBookmarkClock() time.Time {
 	// synctest's clock starts before the Snowflake epoch.
 	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
 	return time.Now()
+}
+
+func TestWatchPreviousReadError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &internalReadBackend{failure: &resourcepb.ErrorResult{
+				Code: http.StatusInternalServerError, Message: "previous version read failed",
+			}}
+		})
+		event := bookmarkWrittenEvent(200)
+		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = 150
+		events <- event
+		synctest.Wait()
+
+		require.Empty(t, done, "watch should remain open after the previous version read fails")
+		require.Len(t, stream.events, 1)
+		got := <-stream.events
+		require.Equal(t, event.Type, got.Type)
+		require.Equal(t, event.ResourceVersion, got.Resource.Version)
+		require.Equal(t, event.Value, got.Resource.Value)
+		require.Nil(t, got.Previous)
+	})
 }
 
 func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
@@ -2290,6 +2314,12 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
 	defer cancel()
 
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	since, err := srv.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+		Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+	}}, func(ListIterator) error { return nil })
+	require.NoError(t, err)
+
 	// Create two resources before the watch starts. The broadcaster will absorb
 	// these events into its replay cache and hand them to any future subscriber.
 	require.NoError(t, createTestPlaylist(ctx, srv))
@@ -2299,9 +2329,9 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV. Delay each Send so the component
-	// metrics can prove that transport scheduling time is separated from the
-	// upstream commit-to-send-start latency.
+	// Resume from the LIST taken before both writes. Delay each Send so the
+	// component metrics can prove that transport scheduling time is separated
+	// from the upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
 	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
@@ -2310,7 +2340,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: since,
 		}, mock)
 	})
 
@@ -3181,6 +3211,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 // assert that the authz gate short-circuits or delegates.
 type stubBlobSupport struct {
 	putReached bool
+	getReached bool
 }
 
 func (s *stubBlobSupport) SupportsSignedURLs() bool { return false }
@@ -3191,6 +3222,7 @@ func (s *stubBlobSupport) PutResourceBlob(_ context.Context, _ *resourcepb.PutBl
 }
 
 func (s *stubBlobSupport) GetResourceBlob(_ context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	s.getReached = true
 	return &resourcepb.GetBlobResponse{}, nil
 }
 
@@ -3286,11 +3318,78 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		require.False(t, blob.putReached)
 	})
 
-	t.Run("returns 404 when parent resource does not exist", func(t *testing.T) {
-		srv, _, blob := newBlobAuthzTestServer(t, nil)
+	t.Run("checks create permission when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
 		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, utils.VerbCreate, capturedReq.Verb)
+		require.Empty(t, capturedReq.Name)
+		require.Empty(t, capturedFolder)
+	})
+
+	folderOnlyCreate := func(allowed string) func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+		return func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == utils.VerbCreate && folder == allowed {
+				return allow()
+			}
+			return deny()
+		}
+	}
+
+	t.Run("checks create permission in the requested folder when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+	})
+
+	t.Run("rejects with 403 when create is only allowed in a folder the request does not name", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("ignores the requested folder when parent resource exists", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+
+		var capturedFolder string
+		ac.fn = func(_ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedFolder = folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, "", capturedFolder)
+	})
+
+	t.Run("rejects with 403 when access.Check denies create for a missing parent", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3439,6 +3538,146 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	rsp, err := srv.GetBlob(ctxWithUserInNs("org-1"), &resourcepb.GetBlobRequest{Uid: "blob-uid"})
 	require.NoError(t, err)
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+}
+
+func TestGetBlobReferenceChecks(t *testing.T) {
+	const namespace = "default"
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "test-resource"}
+	ctx := ctxWithUserInNs(namespace)
+	playlist := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	create := func(t *testing.T, srv *server, blobs string) int64 {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: playlist(blobs)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		return rsp.ResourceVersion
+	}
+	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) *resourcepb.GetBlobResponse {
+		t.Helper()
+		rsp, err := srv.GetBlob(ctx, req)
+		require.NoError(t, err)
+		return rsp
+	}
+
+	t.Run("rejects a request without a resource name", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		noName := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: namespace}
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: noName, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns a blob the resource references", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a","size":2,"contentType":"application/json"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects a blob the resource does not reference", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource has no blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects any blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("rejects a detached blob once the last reference is removed", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("returns a blob referenced by the requested older version", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{"dashboard":{"uid":"blob-b"}}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	withAnnotation := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default","annotations":{"` + utils.AnnoKeyBlob + `":"legacy-blob; size=2"}},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	createWithAnnotation := func(t *testing.T, srv *server, blobs string) {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withAnnotation(blobs)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	}
+
+	t.Run("returns the annotation blob by uid when the resource also has a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects an unreferenced blob when the resource has an annotation and a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns only the annotation blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{}`)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource only has the annotation", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "older-legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
 }
 
 func TestClassifyAuthError(t *testing.T) {

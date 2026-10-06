@@ -72,6 +72,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables tabular numerals for visualization legend values */
+  DatavizTabularNums: "dataviz.tabularNums",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -437,10 +439,10 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
+  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
 };
 
 /**
@@ -573,6 +575,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables tabular numerals for visualization legend values
+ *
+ * **Details:**
+ * - flag key: `dataviz.tabularNums`
+ * - default value: `false`
+ */
+export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.tabularNums", false, options).value;
 };
 
 /**

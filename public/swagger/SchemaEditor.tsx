@@ -1,8 +1,11 @@
 import { type EditorView, ViewPlugin } from '@codemirror/view';
 import { getJSONSchema, jsonSchema, updateSchema } from 'codemirror-json-schema';
-import { useMemo, useState } from 'react';
+import { useCallback, useContext, useMemo, useRef, useState } from 'react';
 
 import { CodeMirrorEditor, type CodeMirrorExtension } from '@grafana/ui/unstable';
+
+import { NamespaceContext } from './contexts';
+import { schemaAnnotations } from './schemaAnnotations';
 
 interface Props {
   schema: Record<string, unknown>;
@@ -14,6 +17,7 @@ interface Props {
 }
 
 export default function SchemaEditor({ schema, ...props }: Props) {
+  const namespace = useContext(NamespaceContext);
   const incomingValue = props.value ?? props.defaultValue ?? '';
   const [previousValue, setPreviousValue] = useState(incomingValue);
   const [draft, setDraft] = useState(incomingValue);
@@ -24,6 +28,12 @@ export default function SchemaEditor({ schema, ...props }: Props) {
     setPreviousValue(incomingValue);
     setDraft(incomingValue);
   }
+  const { onChange } = props;
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+  const flush = useCallback((text: string) => onChangeRef.current({ target: { value: text } }), []);
+  const annotations = useMemo(() => schemaAnnotations(namespace, flush), [namespace, flush]);
+
   const extensions = useMemo<CodeMirrorExtension[]>(() => {
     // Reconfiguration retains state fields, so update the schema in this editor's view.
     const schemaUpdate = ViewPlugin.fromClass(
@@ -43,10 +53,8 @@ export default function SchemaEditor({ schema, ...props }: Props) {
         }
       }
     );
-    return [...jsonSchema(schema), schemaUpdate];
-  }, [schema]);
-
-  const flush = (text: string) => props.onChange({ target: { value: text } });
+    return [...jsonSchema(schema), schemaUpdate, annotations];
+  }, [schema, annotations]);
 
   return (
     <CodeMirrorEditor
