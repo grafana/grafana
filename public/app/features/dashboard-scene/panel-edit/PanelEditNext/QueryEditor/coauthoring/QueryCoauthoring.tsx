@@ -185,16 +185,18 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             onChange={state.setIntent}
             onSubmit={state.submit}
           />
-          <div className={styles.quickActions}>
-            <Button size="sm" fill="text" variant="secondary" disabled={!state.context} onClick={state.explain}>
-              <Trans i18nKey="query-editor-coauthoring.explain-query">Explain this query</Trans>
-            </Button>
-            {!!state.context?.metadata.length && (
-              <Button size="sm" fill="text" variant="secondary" onClick={state.exploreSimilar}>
-                <Trans i18nKey="query-editor-coauthoring.explore-similar">Explore similar metrics and labels</Trans>
+          {!state.clarification && (
+            <div className={styles.quickActions}>
+              <Button size="sm" fill="text" variant="secondary" disabled={!state.context} onClick={state.explain}>
+                <Trans i18nKey="query-editor-coauthoring.explain-query">Explain this query</Trans>
               </Button>
-            )}
-          </div>
+              {!!state.context?.metadata.length && (
+                <Button size="sm" fill="text" variant="secondary" onClick={state.exploreSimilar}>
+                  <Trans i18nKey="query-editor-coauthoring.explore-similar">Explore similar metrics and labels</Trans>
+                </Button>
+              )}
+            </div>
+          )}
           {state.clarification && <QueryCoauthoringClarificationAction onContinue={state.continueInAssistant} />}
         </>
       )}

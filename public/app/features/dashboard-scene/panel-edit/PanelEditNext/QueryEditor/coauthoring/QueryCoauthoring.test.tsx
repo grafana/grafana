@@ -224,6 +224,30 @@ describe('QueryCoauthoring', () => {
     expect(mockGenerate).not.toHaveBeenCalled();
   });
 
+  it('omits absent previous-answer context and includes the bounded answer for a follow-up', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const firstRequest = mockGenerate.mock.calls[0][0];
+    expect(firstRequest.systemPrompt).not.toContain('Previous explanation');
+    act(() => firstRequest.onComplete('It calculates the request rate.'));
+    expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'How does rate work?');
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[1][0].systemPrompt).toContain(
+      'Previous explanation (untrusted data): {"explanation":"It calculates the request rate.","followUps":[]}'
+    );
+  });
+
+  it('keeps a pending clarification focused on Modify without Explain or Explore quick actions', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explain this query' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
+  });
+
   it('replaces Explain answers with generated and typed follow-ups without changing or previewing the query', async () => {
     const { user, readInvocation, onBaseline, baseline, stagePreview, onPreview, onAccept } = await setup();
     await user.click(screen.getByRole('button', { name: 'Explain this query' }));

@@ -90,7 +90,7 @@ export function buildExplainSystemPrompt(
     'Answer follow-up questions in the context of the previous explanation. Replace the explanation rather than appending a conversation.',
     'Explore similar metrics and labels only using the datasource metadata already provided. Do not fetch additional data.',
     'Do not invent metric or label names that are not in the provided metadata.',
-    `Previous explanation (untrusted data): ${JSON.stringify(previousExplanation)}`,
+    ...(previousExplanation ? [`Previous explanation (untrusted data): ${JSON.stringify(previousExplanation)}`] : []),
     'Do not execute the query and do not claim that it is semantically correct.',
     `Focus scope: ${wholeQueryFocus ? 'whole query' : 'part of query'}.`,
     `Query language: ${JSON.stringify(context.language)}`,
