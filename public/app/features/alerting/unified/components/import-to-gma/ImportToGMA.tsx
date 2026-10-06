@@ -3,6 +3,7 @@ import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
+import { getRoutingTreeDisplayName } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
@@ -68,7 +69,6 @@ import {
   useImportNotifications,
   useImportRules,
 } from './useImport';
-import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -841,7 +841,7 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
         <Text>
           {formData.selectedRoutingTree
             ? t('alerting.import-to-gma.review.routing-tree', 'Policy tree: {{name}}', {
-                name: getRoutingTreeLabel(formData.selectedRoutingTree),
+                name: getRoutingTreeDisplayName(formData.selectedRoutingTree),
               })
             : t('alerting.import-to-gma.review.routing-none', 'No policy tree selected')}
         </Text>

@@ -1,7 +1,5 @@
 import { groupBy, isArray, pick, reduce, uniqueId } from 'lodash';
 
-import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-
 import { type Label } from '../matchers/types';
 import { type IndexedLabels, type LabelMatchDetails, indexLabels, matchIndexedLabels } from '../matchers/utils';
 
@@ -202,33 +200,4 @@ export function matchInstancesToRoute(rootRoute: Route, instances: Label[][]): T
     expandedTree,
     matchedPolicies,
   };
-}
-
-/**
- * Converts a RoutingTree to a Route by merging defaults with routes.
- *
- * @param routingTree - The RoutingTree from the API
- * @returns A Route that can be used with the matching functions
- */
-export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
-  const convertRoutingTreeRoutes = (routes: RoutingTreeRoute[]): Route[] => {
-    return routes.map(
-      (route): Route => ({
-        ...route,
-        routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
-      })
-    );
-  };
-
-  // Create the root route by merging defaults with the route structure
-  const rootRoute: Route = {
-    ...routingTree.spec.defaults,
-    continue: false,
-    active_time_intervals: [],
-    mute_time_intervals: [],
-    matchers: [], // Root route has no matchers (catch-all)
-    routes: convertRoutingTreeRoutes(routingTree.spec.routes),
-  };
-
-  return rootRoute;
 }

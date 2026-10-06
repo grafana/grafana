@@ -39,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -181,6 +182,7 @@ func newClient(opts options.StorageOptions,
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:                 backend,
+			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
 			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
@@ -264,9 +266,15 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
+		var blobBackend resource.BlobSupport
+		if cfg.EnableSQLKVBackend {
+			blobBackend = resource.NewKVBlobSupport(kvStore)
+		}
+
 		serverOptions := sql.ServerOptions{
 			WatchExpiry:    watchExpiry,
 			Backend:        backend,
+			BlobBackend:    blobBackend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
 			Reranker:       rerankerInstance,
@@ -483,7 +491,7 @@ func forwardSearchUnaryInterceptor(ctx context.Context, method string, req, repl
 	if err != nil {
 		return err
 	}
-	resource.RecordForwardedClientIdentity()
+	resourceclient.RecordForwardedClientIdentity()
 	return invoker(ctx, method, req, reply, cc, opts...)
 }
 
@@ -492,7 +500,7 @@ func forwardSearchStreamInterceptor(ctx context.Context, desc *grpc.StreamDesc, 
 	if err != nil {
 		return nil, err
 	}
-	resource.RecordForwardedClientIdentity()
+	resourceclient.RecordForwardedClientIdentity()
 	return streamer(ctx, desc, cc, method, opts...)
 }
 

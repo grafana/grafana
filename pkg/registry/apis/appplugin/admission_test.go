@@ -63,7 +63,7 @@ func TestBuilderAdmissionDispatch(t *testing.T) {
 			Mutation:   &app.MutationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 			Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationAny}},
 		},
-	}, client, kindstore.Options{
+	}, client, nil, kindstore.Options{
 		StorageOptsGetter: builder.APIGroupOptions{
 			Scheme:     scheme,
 			OptsGetter: apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
