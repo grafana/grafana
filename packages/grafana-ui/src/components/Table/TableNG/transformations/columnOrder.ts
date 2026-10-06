@@ -25,11 +25,15 @@ export function encodeColumnOrder(
   );
 }
 
-export const columnOrder: TableTransformation<string[] | undefined, string[], ColumnContext> = {
+export const columnOrder = {
   read(configs, { catalog, frameFilter }) {
     const { indexByName = {} } = findColumnsEntry(configs, frameFilter)?.options ?? {};
     // Leave source order live until the user explicitly reorders.
-    return Object.keys(indexByName).length ? [...catalog].sort(createOrderFieldsComparer(indexByName)) : undefined;
+    return {
+      columnOrder: Object.keys(indexByName).length
+        ? [...catalog].sort(createOrderFieldsComparer(indexByName))
+        : undefined,
+    };
   },
   write: (configs, order, { frameFilter }) => encodeColumnOrder(configs, order, frameFilter),
-};
+} satisfies TableTransformation<{ columnOrder: string[] | undefined }, string[], ColumnContext>;
