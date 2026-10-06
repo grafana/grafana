@@ -5,8 +5,10 @@ import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 import * as runtime from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
+import { dashboardAPIv0alpha1 } from 'app/api/clients/dashboard/v0alpha1';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { configureStore } from 'app/store/configureStore';
 
 import { type DashboardViewItem } from '../../../features/search/types';
 
@@ -85,7 +87,8 @@ describe('useFoldersQuery', () => {
     it.each(['general', 'parent-folder', 'sharedwithme'])(
       'loads every page under %s without replacing earlier folders',
       async (parent) => {
-        const requests: number[] = [];
+        const requests: Array<Record<string, string>> = [];
+        const store = configureStore();
         const hits = Array.from({ length: 103 }, (_, index) => ({
           name: `folder-${index}`,
           title: `Folder ${String(index).padStart(3, '0')}`,
@@ -95,17 +98,15 @@ describe('useFoldersQuery', () => {
         server.use(
           http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
             const params = new URL(request.url).searchParams;
-            expect(params.get('folder')).toBe(parent);
-            expect(params.get('permission')).toBe('edit');
             const offset = Number(params.get('offset') ?? 0);
             const limit = Number(params.get('limit') ?? 50);
-            requests.push(offset);
+            requests.push(Object.fromEntries(params));
             return HttpResponse.json({ hits: hits.slice(offset, offset + limit), totalHits: 103, offset });
           })
         );
         const { result, unmount } = renderHook(
           () => useFoldersQuery({ isBrowsing: true, openFolders: {}, rootFolderUID: parent, permission: 'edit' }),
-          { wrapper }
+          { wrapper: getWrapper({ store, renderWithRouter: true }) }
         );
         const load = () => act(() => result.current.requestNextPage(parent));
         load();
@@ -118,11 +119,115 @@ describe('useFoldersQuery', () => {
         expect(result.current.items[1].item).toMatchObject({ title: 'Folder 000' });
         expect(result.current.items.at(-1)?.item).toMatchObject({ title: 'Folder 102' });
         expect(result.current.items.some(({ item }) => item.kind === 'ui')).toBe(false);
-        load();
-        expect(requests).toEqual([0, 50, 100]);
+        await act(async () => {
+          result.current.requestNextPage(parent);
+          await Promise.all(store.dispatch(dashboardAPIv0alpha1.util.getRunningQueriesThunk()));
+        });
+        expect(result.current.isLoading).toBe(false);
+        expect(requests).toEqual(
+          ['0', '50', '100'].map((offset) => ({
+            folder: parent,
+            permission: 'edit',
+            type: 'folder',
+            sort: 'title',
+            limit: '50',
+            offset,
+          }))
+        );
         unmount();
       }
     );
+
+    it('preserves server order when another page contains accented titles', async () => {
+      server.use(
+        http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
+          const offset = Number(new URL(request.url).searchParams.get('offset') ?? 0);
+          return HttpResponse.json({
+            hits:
+              offset === 0
+                ? [
+                    { name: 'zulu', title: 'Zulu', resource: 'folder', folder: 'general' },
+                    { name: 'angstrom', title: 'Ångström', resource: 'folder', folder: 'general' },
+                  ]
+                : [{ name: 'omega', title: 'Ömega', resource: 'folder', folder: 'general' }],
+            totalHits: 3,
+            offset,
+          });
+        })
+      );
+      const { result } = renderHook(
+        () => useFoldersQuery({ isBrowsing: true, openFolders: {}, rootFolderUID: 'general' }),
+        { wrapper }
+      );
+      act(() => result.current.requestNextPage('general'));
+      await waitFor(() => expect(result.current.items.some(({ item }) => item.uid === 'angstrom')).toBe(true));
+      expect(result.current.items.flatMap(({ item }) => (item.kind === 'folder' ? [item.title] : []))).toEqual([
+        'Dashboards',
+        'Zulu',
+        'Ångström',
+      ]);
+      act(() => result.current.requestNextPage('general'));
+      await waitFor(() => expect(result.current.items.some(({ item }) => item.uid === 'omega')).toBe(true));
+      expect(result.current.items.flatMap(({ item }) => (item.kind === 'folder' ? [item.title] : []))).toEqual([
+        'Dashboards',
+        'Zulu',
+        'Ångström',
+        'Ömega',
+      ]);
+    });
+
+    it('marks a parent as empty only after a successful child response', async () => {
+      let failChildren = true;
+      server.use(
+        http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', ({ request }) => {
+          if (new URL(request.url).searchParams.get('folder') === 'general') {
+            return HttpResponse.json({
+              hits: [{ name: 'parent', title: 'Parent', resource: 'folder' }],
+              totalHits: 1,
+            });
+          }
+          if (failChildren) {
+            failChildren = false;
+            return HttpResponse.json({ message: 'Search unavailable' }, { status: 500 });
+          }
+          return HttpResponse.json({ hits: [], totalHits: 0 });
+        })
+      );
+      const { result } = renderHook(() => useFoldersQuery({ isBrowsing: true, openFolders: { parent: true } }), {
+        wrapper,
+      });
+      act(() => result.current.requestNextPage(undefined));
+      await waitFor(() => expect(result.current.items.some(({ item }) => item.uid === 'parent')).toBe(true));
+      expect(result.current.emptyFolders.has('parent')).toBe(false);
+      act(() => result.current.requestNextPage('parent'));
+      await waitFor(() => expect(result.current.error?.message).toBe('Search unavailable'));
+      expect(result.current.emptyFolders.has('parent')).toBe(false);
+      act(() => result.current.requestNextPage('parent'));
+      await waitFor(() => expect(result.current.emptyFolders.has('parent')).toBe(true));
+      expect(result.current.error).toBeUndefined();
+      expect(result.current.items.some(({ item, parentUID }) => item.kind === 'ui' && parentUID === 'parent')).toBe(
+        false
+      );
+    });
+
+    it('includes Shared with me at the root and normalizes the general parent', async () => {
+      server.use(
+        http.get('/apis/dashboard.grafana.app/v0alpha1/namespaces/:namespace/search', () =>
+          HttpResponse.json({
+            hits: [{ name: 'repo-root', title: 'Repo root', folder: 'general', resource: 'folder' }],
+            totalHits: 1,
+          })
+        )
+      );
+      const { result } = renderHook(() => useFoldersQuery({ isBrowsing: true, openFolders: {} }), { wrapper });
+      act(() => result.current.requestNextPage(undefined));
+      await waitFor(() => expect(result.current.items.some(({ item }) => item.uid === 'repo-root')).toBe(true));
+      expect(result.current.items).toMatchObject([
+        { item: { kind: 'folder', uid: '' } },
+        { level: 1, disabled: true, item: { uid: 'sharedwithme', title: 'Shared with me' } },
+        { level: 1, item: { uid: 'repo-root', parentUID: undefined } },
+      ]);
+    });
   });
 
   describe.each([
