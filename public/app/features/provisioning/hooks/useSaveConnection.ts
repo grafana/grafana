@@ -6,7 +6,7 @@ import { isFetchError } from '@grafana/runtime';
 import { extractErrorMessage } from 'app/api/utils';
 
 import { type ConnectionFormData } from '../types';
-import { connectionSpecFromForm, parseScopes } from '../utils/connectionData';
+import { connectionSpecFromForm } from '../utils/connectionData';
 import { isOAuthConnectionType } from '../utils/connectionOAuth';
 import { extractFormErrors, getConnectionFormErrors } from '../utils/getFormErrors';
 
@@ -90,7 +90,7 @@ export function useSaveConnection(onAuthorized: (connectionName: string) => void
             name,
             serverUrl: form.serverUrl,
             authURL: form.authURL,
-            scopes: parseScopes(form.scopes),
+            scopes: form.scopes,
           })
         ) {
           return {

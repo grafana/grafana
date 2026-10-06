@@ -52,7 +52,7 @@ type ConnectionFormDataBase = {
   workspace?: string;
   authURL?: string;
   tokenURL?: string;
-  scopes?: string;
+  scopes?: string[];
   webhookDisabled?: boolean;
 };
 

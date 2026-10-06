@@ -123,7 +123,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
       (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
       (form.type === 'gitOAuth' &&
         (form.authURL !== data?.spec?.gitOAuth?.authURL ||
-          (form.scopes ?? '') !== (data?.spec?.gitOAuth?.scopes?.join(' ') ?? ''))) ||
+          (form.scopes ?? []).join(' ') !== (data?.spec?.gitOAuth?.scopes ?? []).join(' '))) ||
       reauthorizeRef.current);
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Button, Field, Input, SecretInput, Stack, TagsInput } from '@grafana/ui';
 
 import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
 import { validateHttpUrl } from '../../utils/validators';
@@ -132,12 +132,16 @@ export function OAuthConnectionFields({
             label={t('provisioning.connection-form.label-scopes', 'Scopes')}
             description={t(
               'provisioning.connection-form.description-scopes',
-              'Space-separated OAuth scopes that grant read and write access to your repositories'
+              'OAuth scopes that grant read and write access to your repositories'
             )}
-            invalid={!!errors.scopes}
-            error={errors.scopes?.message}
           >
-            <Input id="scopes" {...register('scopes')} />
+            <Controller
+              name="scopes"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <TagsInput id="scopes" tags={value ?? []} onChange={onChange} addOnBlur autoColors={false} />
+              )}
+            />
           </Field>
         </>
       )}

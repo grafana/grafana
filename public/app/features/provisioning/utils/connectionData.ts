@@ -44,7 +44,7 @@ export function getConnectionFormDefaults(type: string | undefined, data?: Conne
       serverUrl: data?.spec?.githubEnterpriseOAuth?.serverUrl || (type === 'gitlabOAuth' && data?.spec?.url) || '',
       authURL: data?.spec?.gitOAuth?.authURL || '',
       tokenURL: data?.spec?.gitOAuth?.tokenURL || '',
-      scopes: data?.spec?.gitOAuth?.scopes?.join(' ') || '',
+      scopes: data?.spec?.gitOAuth?.scopes ?? [],
     };
   }
 
@@ -66,10 +66,6 @@ export function getConnectionFormDefaults(type: string | undefined, data?: Conne
     installationID: data?.spec?.github?.installationID || '',
     privateKey: '',
   };
-}
-
-export function parseScopes(scopes?: string): string[] {
-  return (scopes ?? '').split(/[\s,]+/).filter(Boolean);
 }
 
 export function connectionSpecFromForm(form: ConnectionFormData): ConnectionSpec {
@@ -114,7 +110,7 @@ export function connectionSpecFromForm(form: ConnectionFormData): ConnectionSpec
               gitOAuth: {
                 authURL: form.authURL ?? '',
                 tokenURL: form.tokenURL ?? '',
-                scopes: parseScopes(form.scopes),
+                scopes: form.scopes ?? [],
               },
             }
           : {}),
