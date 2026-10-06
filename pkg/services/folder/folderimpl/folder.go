@@ -328,7 +328,7 @@ func SplitFullpath(s string) []string {
 }
 
 func toFolderError(err error) error {
-	if apierrors.IsForbidden(err) {
+	if apierrors.IsForbidden(resource.StatusError(resource.AsErrorResult(err))) {
 		return folder.ErrAccessDenied
 	}
 
