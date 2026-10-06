@@ -17,6 +17,7 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SafeSerializableSceneObject,
   type SceneDataProviderResult,
@@ -30,6 +31,7 @@ import {
   ConstantVariable,
   VizPanel,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -926,6 +928,24 @@ describe('DashboardDatasource', () => {
   });
 
   describe('Source attribution', () => {
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('leaves series meta unchanged for a render panel consumer when the renderPanel flag is off', async () => {
+      setTestFlags({});
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'render');
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      expect(rsp?.data[0].meta).toEqual({ executedQueryString: 'up', custom: { existing: 'kept' } });
+    });
+
     it('annotates series for a render panel consumer with the source panel id and interpolated title', async () => {
       const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'render');
 

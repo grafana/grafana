@@ -21,6 +21,7 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   isSceneObject,
   sceneGraph,
@@ -46,6 +47,9 @@ interface DashboardSourceMeta {
 const SOURCE_ATTRIBUTION_CONSUMERS: ReadonlySet<string> = new Set(['render']);
 
 function wantsSourceAttribution(consumer: SceneObject): boolean {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaRenderPanel, false)) {
+    return false;
+  }
   let current: SceneObject | undefined = consumer;
   while (current) {
     if (current instanceof VizPanel) {
