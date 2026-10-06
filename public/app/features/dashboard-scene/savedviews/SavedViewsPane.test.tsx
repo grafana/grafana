@@ -11,6 +11,7 @@ import { DashboardScene } from '../scene/DashboardScene';
 
 import { SavedViewsPane } from './SavedViewsPane';
 import { savedDashboardViewsApi, type SavedDashboardView } from './api';
+import { getDefaultSavedView, setDefaultSavedView } from './defaultView';
 
 jest.mock('./api', () => ({
   savedDashboardViewsApi: {
@@ -21,12 +22,19 @@ jest.mock('./api', () => ({
   },
 }));
 
+jest.mock('./defaultView', () => ({
+  getDefaultSavedView: jest.fn(),
+  setDefaultSavedView: jest.fn(),
+}));
+
 const mockUseGetDisplayMappingQuery = jest.fn().mockReturnValue({ data: undefined });
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: (...args: unknown[]) => mockUseGetDisplayMappingQuery(...args),
 }));
 
 const api = jest.mocked(savedDashboardViewsApi);
+const mockGetDefaultSavedView = jest.mocked(getDefaultSavedView);
+const mockSetDefaultSavedView = jest.mocked(setDefaultSavedView);
 
 function buildView(
   name: string,
@@ -72,6 +80,11 @@ describe('SavedViewsPane', () => {
   afterEach(() => {
     jest.clearAllMocks();
     mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined });
+    mockGetDefaultSavedView.mockResolvedValue(undefined);
+  });
+
+  beforeEach(() => {
+    mockGetDefaultSavedView.mockResolvedValue(undefined);
   });
 
   it('shows a loading state and fetches views when not yet loaded', async () => {
@@ -150,8 +163,10 @@ describe('SavedViewsPane', () => {
     partialSpy.mockRestore();
   });
 
-  it('disables Overwrite until a view is active for the dashboard, then enables it', () => {
+  it('disables Overwrite until a view is active for the dashboard, then enables it', async () => {
     const { scene } = renderPane([buildView('view-1', { name: 'My view' })]);
+    // Flush the pane's own getDefaultSavedView() effect so its resolution doesn't land outside act().
+    await act(() => Promise.resolve());
 
     expect(screen.getByRole('button', { name: 'Overwrite' })).toHaveAttribute('aria-disabled', 'true');
 
@@ -269,6 +284,61 @@ describe('SavedViewsPane', () => {
 
     expect(screen.queryByRole('heading', { name: 'Save new view' })).not.toBeInTheDocument();
     expect(api.create).not.toHaveBeenCalled();
+  });
+
+  describe('default view', () => {
+    it('offers "Set as default" for a view that is not the current default', async () => {
+      mockGetDefaultSavedView.mockResolvedValue(undefined);
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      const item = await screen.findByRole('menuitem', { name: 'Set as default' });
+      await userEvent.click(item);
+
+      expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', 'view-1');
+    });
+
+    it('offers "Remove as default" for the current default, and clears it on click', async () => {
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      const item = await screen.findByRole('menuitem', { name: 'Remove as default' });
+      await userEvent.click(item);
+
+      expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined);
+    });
+
+    it('shows the default indicator for the default view in both compact and expanded mode', async () => {
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' }), buildView('view-2', { name: 'Other view' })]);
+
+      await waitFor(() => expect(screen.getByTitle('Your default view for this dashboard')).toBeInTheDocument());
+
+      await toggleExpanded();
+      expect(screen.getByTitle('Your default view for this dashboard')).toBeInTheDocument();
+    });
+
+    it('shows no indicator when there is no stored default', async () => {
+      mockGetDefaultSavedView.mockResolvedValue(undefined);
+      renderPane([buildView('view-1', { name: 'My view' })]);
+
+      await waitFor(() => expect(mockGetDefaultSavedView).toHaveBeenCalled());
+      expect(screen.queryByTitle('Your default view for this dashboard')).not.toBeInTheDocument();
+    });
+
+    it('clears the stored default when the default view itself is deleted', async () => {
+      api.remove.mockResolvedValue(undefined);
+      mockGetDefaultSavedView.mockResolvedValue('view-1');
+      renderPane([buildView('view-1', { name: 'My view' })]);
+      await waitFor(() => expect(screen.getByTitle('Your default view for this dashboard')).toBeInTheDocument());
+
+      await userEvent.click(screen.getByRole('button', { name: 'Actions' }));
+      await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }));
+      await userEvent.click(screen.getByTestId('data-testid Confirm Modal Danger Button'));
+
+      await waitFor(() => expect(mockSetDefaultSavedView).toHaveBeenCalledWith('dash-1', undefined));
+    });
   });
 
   describe('compact/expanded toggle', () => {
