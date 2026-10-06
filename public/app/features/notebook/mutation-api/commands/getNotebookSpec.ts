@@ -30,7 +30,10 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
   description:
     'Return the entire notebook as one NotebookSpec JSON object: settings, elements (markdown, code, ' +
     'panel and library panel cells) and the ordered NotebookLayout that places them. Panel elements ' +
-    'use the same shape as a dashboard v2 spec.',
+    'use the same shape as a dashboard v2 spec. The result also reports pendingViewOnlyChanges: panel ' +
+    'elements whose current look is an unsaved tweak the person reading made, not yet confirmed as part ' +
+    'of the notebook. If present and you plan to call APPLY_NOTEBOOK_SPEC, ask the person whether to ' +
+    "keep or discard those changes first, and pass their answer as that call's viewOnlyChanges.",
 
   payloadSchema: getNotebookSpecPayloadSchema,
   permission: requiresNotebookRead,
@@ -52,9 +55,14 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
         warnings = result.warnings;
       }
 
+      const pendingViewOnlyChanges = scene.autosave.viewOnlyVizChanges();
+
       return {
         success: true,
-        data: { spec: notebook },
+        data: {
+          spec: notebook,
+          pendingViewOnlyChanges: pendingViewOnlyChanges.length > 0 ? pendingViewOnlyChanges : undefined,
+        },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };

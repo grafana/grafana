@@ -1,4 +1,6 @@
-import { SceneObjectBase } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneObjectBase, type VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -22,6 +24,11 @@ jest.mock('../../api/notebookResource', () => ({
   ...jest.requireActual('../../api/notebookResource'),
   updateNotebook: jest.fn(),
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 /** Concrete stand-in: SceneObjectBase is abstract, and overlay just needs a SceneObject. */
 class TestOverlay extends SceneObjectBase {}
@@ -383,5 +390,116 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('insufficient permissions');
     expect(cellNamesOf(scene)).toEqual(before);
+  });
+
+  describe('when the reader has an unsaved view-only panel change', () => {
+    function recolour(panel: VizPanel, color = 'red') {
+      panel.setState({
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'up' },
+              properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: color } }],
+            },
+          ],
+        },
+      });
+    }
+
+    /** `latency-panel` recoloured while the notebook is in view mode, mirroring a reader using it. */
+    async function sceneWithPendingChange() {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel');
+
+      const panel = cell!.state.body as VizPanel;
+      const stopPanel = panel.activate();
+
+      recolour(panel);
+
+      return { scene, client, panel, stopPanel };
+    }
+
+    it('is refused and leaves the notebook untouched when the change is not resolved', async () => {
+      const { scene, client, stopPanel } = await sceneWithPendingChange();
+      const before = cellNamesOf(scene);
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('latency-panel');
+      expect(cellNamesOf(scene)).toEqual(before);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(updateNotebook).not.toHaveBeenCalled();
+
+      stopPanel();
+    });
+
+    it('saves the reader’s look when told to keep it', async () => {
+      const { client, stopPanel } = await sceneWithPendingChange();
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec(), viewOnlyChanges: 'keep' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toHaveLength(1);
+      }
+
+      stopPanel();
+    });
+
+    // The assistant may have read this same recoloured look through a prior GET_NOTEBOOK_SPEC and
+    // carried it into its own spec: discard has to win over that, not just over an untouched one. The
+    // title change is an unrelated real edit, so the write actually happens rather than being skipped
+    // as a no-op against the baseline.
+    it('discards the reader’s look when told to, even if the caller’s own spec still carries it', async () => {
+      const { client, stopPanel } = await sceneWithPendingChange();
+
+      const taintedSpec = notebookSpec({ title: 'Renamed by assistant' });
+      const taintedElement = taintedSpec.elements['latency-panel'];
+      if (taintedElement.kind === 'Panel') {
+        taintedElement.spec.vizConfig = {
+          ...taintedElement.spec.vizConfig,
+          spec: {
+            options: {},
+            fieldConfig: {
+              defaults: {},
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'up' },
+                  properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+                },
+              ],
+            },
+          },
+        };
+      }
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: taintedSpec, viewOnlyChanges: 'discard' },
+      });
+
+      expect(result.success).toBe(true);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toEqual([]);
+      }
+
+      stopPanel();
+    });
   });
 });
