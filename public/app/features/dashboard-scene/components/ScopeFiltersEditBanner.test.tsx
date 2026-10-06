@@ -3,6 +3,7 @@ import { act, render, screen } from 'test/test-utils';
 import { type Scope } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -15,7 +16,15 @@ jest.mock('@grafana/runtime', () => ({
   useScopes: jest.fn(),
 }));
 
+jest.mock('app/features/scopes/dashboards/scopeFilteredDatasources', () => ({
+  ...jest.requireActual('app/features/scopes/dashboards/scopeFilteredDatasources'),
+  hasScopeFilteredDatasource: jest.fn(
+    jest.requireActual('app/features/scopes/dashboards/scopeFilteredDatasources').hasScopeFilteredDatasource
+  ),
+}));
+
 const mockUseScopes = jest.mocked(useScopes);
+const mockHasScopeFilteredDatasource = jest.mocked(hasScopeFilteredDatasource);
 
 const BANNER_TEST_ID = 'scope-filters-edit-banner';
 
@@ -167,6 +176,30 @@ describe('ScopeFiltersEditBanner', () => {
     });
 
     expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+  });
+
+  it('does not re-walk the scene for a panel data refresh, but does for a structural change', () => {
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+    const gridItem = (dashboard.state.body as DefaultGridLayoutManager).state.grid.state
+      .children[0] as DashboardGridItem;
+    const panel = gridItem.state.body as VizPanel;
+    const queryRunner = panel.state.$data as SceneQueryRunner;
+
+    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    const callsAfterMount = mockHasScopeFilteredDatasource.mock.calls.length;
+
+    // A data refresh only ever touches `data` (and `_hasFetchedData`) on the query runner.
+    act(() => {
+      queryRunner.setState({ data: undefined });
+    });
+    expect(mockHasScopeFilteredDatasource.mock.calls.length).toBe(callsAfterMount);
+
+    // Changing what the query actually targets is a structural change and must be picked up.
+    act(() => {
+      queryRunner.setState({ datasource: { type: 'mysql', uid: 'mysql-ds' } });
+    });
+    expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount);
   });
 
   it('renders when at least one of several panels uses Prometheus', () => {

@@ -2,11 +2,23 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { SceneObjectStateChangedEvent } from '@grafana/scenes';
+import { SceneObjectStateChangedEvent, SceneQueryRunner, type SceneObject } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+
+// A SceneQueryRunner setState carrying only these keys is a data refresh (poll, panel in/out of
+// view, etc.), not a change to what the query actually targets — ignoring it is what keeps a
+// dashboard with N panels from re-walking the whole scene on every panel's every refresh tick.
+const QUERY_RUNNER_DATA_ONLY_KEYS = new Set(['data', '_hasFetchedData']);
+
+function isQueryRunnerDataOnlyUpdate(event: SceneObjectStateChangedEvent): boolean {
+  return (
+    event.payload.changedObject instanceof SceneQueryRunner &&
+    Object.keys(event.payload.partialUpdate).every((key) => QUERY_RUNNER_DATA_ONLY_KEYS.has(key))
+  );
+}
 
 export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScene }) {
   const { isEditing } = dashboard.useState();
@@ -14,16 +26,30 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
   // Scopes without filters do not affect queries, so they are not a concern here.
   const hasScopeWithFilters = Boolean(scopes?.state.value.some((scope) => (scope.spec.filters?.length ?? 0) > 0));
 
+  const body: SceneObject = dashboard.state.body;
+  const [hasFilteredDatasource, setHasFilteredDatasource] = useState(() => hasScopeFilteredDatasource(dashboard));
+
   // The layout manager's own setState doesn't fire for a change deep in its subtree (grid
   // children, row/tab contents, a panel's query runner) — those call setState on the nested
   // object itself. SceneObjectStateChangedEvent bubbles from every descendant, so subscribing to
   // it here is what actually catches a panel being added/removed/changed while already editing.
-  const body = dashboard.state.body;
-  const [, forceRender] = useState(0);
+  // Only relevant while editing (the banner can't show otherwise), and the scene is re-walked
+  // only for structural changes, not every data refresh, so this stays cheap on a busy dashboard.
   useEffect(() => {
-    const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, () => forceRender((n) => n + 1));
+    if (!isEditing) {
+      return;
+    }
+
+    setHasFilteredDatasource(hasScopeFilteredDatasource(dashboard));
+
+    const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, (event) => {
+      if (isQueryRunnerDataOnlyUpdate(event)) {
+        return;
+      }
+      setHasFilteredDatasource(hasScopeFilteredDatasource(dashboard));
+    });
     return () => sub.unsubscribe();
-  }, [body]);
+  }, [dashboard, body, isEditing]);
 
   const [dismissed, setDismissed] = useState(false);
   useEffect(() => {
@@ -32,7 +58,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
     }
   }, [isEditing]);
 
-  const shouldRender = Boolean(isEditing) && hasScopeWithFilters && hasScopeFilteredDatasource(dashboard);
+  const shouldRender = Boolean(isEditing) && hasScopeWithFilters && hasFilteredDatasource;
 
   if (dismissed || !shouldRender) {
     return null;
