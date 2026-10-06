@@ -2761,11 +2761,6 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	name := req.Resource.Name
 	folder := ""
 	switch {
-	case parent == nil:
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "parent resource not found",
-			Code:    http.StatusNotFound,
-		}}, nil
 	case parent.Error != nil && parent.Error.Code == http.StatusNotFound:
 		verb = utils.VerbCreate
 		name = ""
