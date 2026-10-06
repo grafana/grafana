@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -142,6 +143,7 @@ type Service struct {
 	registrations             accesscontrol.RegistrationList
 	rolesMu                   sync.RWMutex
 	roles                     map[string]*accesscontrol.RoleDTO
+	roleCatalog               *legacypermissions.RoleCatalog
 	store                     accesscontrol.Store
 	seeder                    *seeding.Seeder
 	permRegistry              permreg.PermissionRegistry
@@ -653,6 +655,7 @@ func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Per
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
 // Must be called with s.rolesMu locked.
 func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
+	defer s.publishRoleCatalogLocked()
 	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 		if basicRole, ok := s.roles[br]; ok {
 			for _, p := range registration.Role.Permissions {
