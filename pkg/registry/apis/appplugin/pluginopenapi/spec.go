@@ -48,7 +48,8 @@ type Options struct {
 }
 
 // Versions returns the versions the plugin serves, preferred version first.
-// Settings are included for legacy plugins and when the compatibility flag is enabled.
+// Definitions with a manifest expose only manifest versions; definitions without
+// one expose the settings version under the plugin ID.
 func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error) {
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
@@ -81,8 +82,7 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		return nil, err
 	}
 
-	// All served versions share the plugin's API group. A manifest can override
-	// the default group derived from the plugin ID.
+	// Manifest versions use the manifest group; settings use the plugin ID.
 	gvs := b.GetGroupVersions()
 	if len(gvs) == 0 {
 		return nil, fmt.Errorf("plugin %s has no served versions", plugin.JSONData.ID)
