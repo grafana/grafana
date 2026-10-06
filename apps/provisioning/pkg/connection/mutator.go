@@ -90,7 +90,7 @@ func oauthAppChanged(new, old *provisioning.Connection) bool {
 	if new.Spec.Type != old.Spec.Type || new.Spec.URL != old.Spec.URL || new.Spec.OAuth.ClientID != old.Spec.OAuth.ClientID {
 		return true
 	}
-	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) {
+	if githubEnterpriseServerURL(new) != githubEnterpriseServerURL(old) || gitOAuthTokenURL(new) != gitOAuthTokenURL(old) {
 		return true
 	}
 	return !new.Secure.ClientSecret.Create.IsZero() ||
@@ -102,6 +102,13 @@ func githubEnterpriseServerURL(c *provisioning.Connection) string {
 		return ""
 	}
 	return c.Spec.GitHubEnterpriseOAuth.ServerURL
+}
+
+func gitOAuthTokenURL(c *provisioning.Connection) string {
+	if c.Spec.GitOAuth == nil {
+		return ""
+	}
+	return c.Spec.GitOAuth.TokenURL
 }
 
 /*
