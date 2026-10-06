@@ -12,6 +12,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookPanelTitleEditor } from './NotebookPanelTitleEditor';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -106,6 +107,31 @@ function PanelCell({
   // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
+
+  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
+  // panels, so this notebook-only chrome is layered on here instead.
+  //
+  // hoverHeader: false keeps the title always visible rather than fading in only on hover -
+  // otherwise PanelChrome only shows header content inside a floating HoverWidget on hover, and a
+  // panel's title (or "Add a title") should read the same as everything else in the notebook, not
+  // appear only on mouseover.
+  //
+  // title/titleItems are left untouched for a library panel: its title belongs to the shared library
+  // panel, not to this notebook, and NotebookCellItemState.panelTitle is never populated for one (see
+  // deserializeNotebookLayout) - there is nothing here for NotebookPanelTitleEditor to show or edit.
+  useEffect(() => {
+    if (isLibraryPanel(panel)) {
+      return;
+    }
+
+    panel.setState({
+      hoverHeader: false,
+      title: '',
+      // VizPanelRenderer renders this inside a list alongside its own title items (links, series
+      // limit, ...), so it needs a key even though it isn't written as a list here.
+      titleItems: <NotebookPanelTitleEditor key="panel-title" cell={cell} isEditing={isEditing} />,
+    });
+  }, [panel, cell, isEditing]);
 
   return (
     <Stack direction="column" gap={1}>

@@ -54,7 +54,7 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
   // The same cells the layout writes, or the block the editor keeps at the bottom would leave an
   // element behind with nothing referencing it.
   for (const cell of scene.state.body.contentCells()) {
-    const { elementName, body: panel, content, $timeRange } = cell.state;
+    const { elementName, body: panel, content, $timeRange, panelTitle } = cell.state;
 
     if (panel) {
       // Both optional args must stay omitted. A dsReferencesMapping routes vizPanelToSchemaV2
@@ -63,7 +63,12 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
       // the dashboard's snapshot identifier rather than by elementName, so it would not round-trip
       // here either. Neither constraint is visible in the signature, and the save PR is where
       // someone would thread a mapping through to preserve datasource references.
-      const built = vizPanelToSchemaV2(panel);
+      let built = vizPanelToSchemaV2(panel);
+      // panel.state.title is kept blank (see NotebookCellItemState.panelTitle) - the cell's own
+      // field is the real value, and a library panel's built.kind is 'LibraryPanel', never reached here.
+      if (built.kind === 'Panel') {
+        built = { ...built, spec: { ...built.spec, title: panelTitle ?? '' } };
+      }
       elements[elementName] =
         built.kind === 'Panel' && $timeRange
           ? withQueryOptionsTimeRange(built, buildCellTimeRangeSpec($timeRange))

@@ -22,6 +22,7 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -96,6 +97,16 @@ interface PendingQueriesEdit {
   timer?: ReturnType<typeof setTimeout>;
 }
 
+// Scoped by elementName rather than cell identity, like PendingContentEdit: two cells can legally
+// reference the same panel element, and both need to show the rename as it's typed.
+interface PendingPanelTitleEdit {
+  elementName: string;
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 export class NotebookLayoutManager
   extends SceneObjectBase<NotebookLayoutManagerState>
   implements DashboardLayoutManager<{}, NotebookLayoutKind>
@@ -123,6 +134,7 @@ export class NotebookLayoutManager
 
   private pendingContentEdit?: PendingContentEdit;
   private pendingQueriesEdit?: PendingQueriesEdit;
+  private pendingPanelTitleEdit?: PendingPanelTitleEdit;
 
   public constructor(state: NotebookLayoutManagerState) {
     super(state);
@@ -358,6 +370,97 @@ export class NotebookLayoutManager
       // Panel cells carry no content and must not gain any.
       if (cell.state.content && cell.state.elementName === elementName) {
         cell.setState({ content });
+      }
+    }
+  }
+
+  /**
+   * Records a panel title edit, coalescing a run of keystrokes the same way setCellContent does.
+   * Stored on the cell rather than `body.state.title` — see NotebookCellItemState.panelTitle.
+   */
+  public setPanelTitle(target: NotebookCellItem, title: string): void {
+    const panel = target.state.body;
+    if (!panel || isLibraryPanel(panel) || (target.state.panelTitle ?? '') === title) {
+      return;
+    }
+
+    const elementName = target.state.elementName;
+    const pending = this.pendingPanelTitleEdit;
+    if (pending?.elementName === elementName) {
+      this.extendPanelTitleEdit(pending, title);
+    } else {
+      this.commitPanelTitleEdit();
+      this.startPanelTitleEdit(elementName, target.state.panelTitle ?? '', title);
+    }
+  }
+
+  private extendPanelTitleEdit(edit: PendingPanelTitleEdit, title: string): void {
+    this.applyPanelTitle(edit.elementName, title);
+    edit.after = title;
+
+    if (edit.before === edit.after) {
+      this.editHistory?.discard(edit.action);
+      this.finishPanelTitleEdit(edit);
+      return;
+    }
+
+    this.schedulePanelTitleEditCommit(edit);
+  }
+
+  private startPanelTitleEdit(elementName: string, before: string, title: string): void {
+    const history = this.editHistory;
+    if (!history) {
+      this.applyPanelTitle(elementName, title);
+      return;
+    }
+
+    // perform and undo read `edit` when they run, not now - see startContentEdit's own comment.
+    const edit: PendingPanelTitleEdit = {
+      elementName,
+      before,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename-panel', 'Rename panel'),
+        kind: NOTEBOOK_EDIT_KIND.EDIT,
+        perform: () => {
+          this.finishPanelTitleEdit(edit);
+          this.applyPanelTitle(edit.elementName, edit.after);
+        },
+        undo: () => {
+          this.finishPanelTitleEdit(edit);
+          this.applyPanelTitle(edit.elementName, edit.before);
+        },
+      },
+    };
+
+    this.pendingPanelTitleEdit = edit;
+    this.applyPanelTitle(elementName, title);
+    history.record(edit.action);
+    this.schedulePanelTitleEditCommit(edit);
+  }
+
+  public commitPanelTitleEdit(): void {
+    if (this.pendingPanelTitleEdit) {
+      this.finishPanelTitleEdit(this.pendingPanelTitleEdit);
+    }
+  }
+
+  private schedulePanelTitleEditCommit(edit: PendingPanelTitleEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishPanelTitleEdit(edit), CONTENT_EDIT_COALESCE_MS);
+  }
+
+  private finishPanelTitleEdit(edit: PendingPanelTitleEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingPanelTitleEdit === edit) {
+      this.pendingPanelTitleEdit = undefined;
+    }
+  }
+
+  private applyPanelTitle(elementName: string, title: string): void {
+    for (const cell of this.state.cells) {
+      if (cell.state.body && cell.state.elementName === elementName) {
+        cell.setState({ panelTitle: title });
       }
     }
   }
@@ -758,11 +861,12 @@ export class NotebookLayoutManager
     }
   }
 
-  // Flushes both coalescing edit kinds before a discrete action starts, so neither is left sitting
+  // Flushes every coalescing edit kind before a discrete action starts, so none is left sitting
   // underneath it on the undo stack, still open.
   public commitPendingEdits(): void {
     this.commitContentEdits();
     this.commitQueriesEdits();
+    this.commitPanelTitleEdit();
   }
 
   private insertCell(cell: NotebookCellItem, index: number): void {

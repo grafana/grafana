@@ -86,7 +86,9 @@ function buildScene() {
         new NotebookCellItem({
           elementName: 'latency-panel',
           source: 'user',
-          body: new VizPanel({ key: 'panel-1', title: 'p95 latency', pluginId: 'timeseries' }),
+          // The real title lives here, not on the panel - see NotebookCellItemState.panelTitle.
+          panelTitle: 'p95 latency',
+          body: new VizPanel({ key: 'panel-1', pluginId: 'timeseries' }),
         }),
       ],
     }),

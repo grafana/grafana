@@ -23,6 +23,12 @@ export interface NotebookCellItemState extends SceneObjectState {
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
   // override at all.
   $timeRange?: SceneTimeRangeLike;
+  // The panel's title, held here rather than on `body.state.title`: VizPanelRenderer always
+  // interpolates `title` to a plain string before PanelChrome sees it, so there is no way to hand
+  // PanelChrome a clickable title. `body.state.title` is kept at '' instead (see
+  // NotebookCellRenderer), and this is what NotebookPanelTitleEditor reads and writes, and what
+  // getElements (transformNotebookSceneToSaveModel) writes back into the saved panel spec.
+  panelTitle?: string;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
@@ -61,6 +67,14 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public onTimeRangeChange(spec: CellTimeRangeSpec | undefined): void {
     this.getParentLayout().setCellTimeRange(this, spec);
+  }
+
+  public onPanelTitleChange(title: string): void {
+    this.getParentLayout().setPanelTitle(this, title);
+  }
+
+  public onPanelTitleCommit(): void {
+    this.getParentLayout().commitPanelTitleEdit();
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */

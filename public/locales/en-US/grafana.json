@@ -13127,6 +13127,11 @@
         "tooltip-numbered-list": "Numbered list",
         "tooltip-strikethrough": "Strikethrough"
       },
+      "panel": {
+        "title-edit": "Edit panel title",
+        "title-label": "Panel title",
+        "title-placeholder": "Add a title"
+      },
       "query": {
         "add": "Add query",
         "run": "Run query"
@@ -13236,6 +13241,7 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "rename-panel": "Rename panel",
       "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
       "set-cell-time-range": "Set panel time range",
