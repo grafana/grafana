@@ -49,7 +49,11 @@ it('disables the button while gathering pages and enables it after the download'
 
   await act(async () => finish({ users: [], totalCount: 0 }));
 
-  expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true });
+  expect(saveAs).toHaveBeenCalledWith(
+    expect.any(Blob),
+    expect.stringMatching(/^all-users-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.csv$/),
+    { autoBom: true }
+  );
   expect(screen.getByRole('button', { name: 'Download table as CSV' })).toHaveAttribute('aria-disabled', 'false');
 });
 
@@ -68,5 +72,11 @@ it('reports a failed export and allows retrying the download', async () => {
 
   await userEvent.click(screen.getByRole('button', { name: 'Download table as CSV' }));
 
-  await waitFor(() => expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true }));
+  await waitFor(() =>
+    expect(saveAs).toHaveBeenCalledWith(
+      expect.any(Blob),
+      expect.stringMatching(/^all-users-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.csv$/),
+      { autoBom: true }
+    )
+  );
 });

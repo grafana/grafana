@@ -47,7 +47,13 @@ it('exports all users from the toolbar between filters and New user using the cu
 
   await user.click(button);
 
-  await waitFor(() => expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true }));
+  await waitFor(() =>
+    expect(saveAs).toHaveBeenCalledWith(
+      expect.any(Blob),
+      expect.stringMatching(/^all-users-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.csv$/),
+      { autoBom: true }
+    )
+  );
   expect(get).toHaveBeenCalledWith(
     '/api/users/search?perpage=1000&page=1&query=alice&activeLast30Days=true&sort=email-desc'
   );
@@ -63,7 +69,11 @@ it('exports organization users with the current search and hides the button for 
   await user.click(screen.getByRole('button', { name: 'Download table as CSV' }));
 
   await waitFor(() =>
-    expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'organization-users.csv', { autoBom: true })
+    expect(saveAs).toHaveBeenCalledWith(
+      expect.any(Blob),
+      expect.stringMatching(/^organization-users-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z\.csv$/),
+      { autoBom: true }
+    )
   );
   expect(get).toHaveBeenCalledWith('/api/org/users/search', {
     perpage: 1000,

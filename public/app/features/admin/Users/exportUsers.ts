@@ -37,7 +37,8 @@ export async function exportUsers({ scope, ...options }: UserExportOptions): Pro
     });
     csv = orgUsersToCsv(users);
   }
-  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${scope}-users.csv`, { autoBom: true });
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${scope}-users-${timestamp}.csv`, { autoBom: true });
 }
 
 // Never-logged-in users carry a placeholder lastSeenAt, so leave the cell blank for them.

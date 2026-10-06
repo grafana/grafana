@@ -40,12 +40,16 @@ const get = jest.fn();
 const post = jest.fn();
 
 beforeEach(() => {
+  jest.useFakeTimers({ now: new Date('2026-10-06T14:30:00.000Z') });
   jest.clearAllMocks();
   jest.mocked(getBackendSrv).mockReturnValue({ ...getBackendSrv(), get, post });
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
 
 async function savedCsv() {
   const [blob] = jest.mocked(saveAs).mock.calls[0];
@@ -82,7 +86,7 @@ it('downloads every page of all users with the same search, filters and sort', a
       'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,SAML,,\r\n' +
       'bob,bob@example.com,Bob,2026-09-27T12:00:00Z,SAML,,'
   );
-  expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true });
+  expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users-2026-10-06T14-30-00-000Z.csv', { autoBom: true });
 });
 
 it('downloads every organization user page including permitted custom roles', async () => {
@@ -111,7 +115,9 @@ it('downloads every organization user page including permitted custom roles', as
       'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,Viewer; Custom:Reports,SAML,,\r\n' +
       'bob,bob@example.com,Bob,2026-09-27T12:00:00Z,Editor,SAML,,'
   );
-  expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'organization-users.csv', { autoBom: true });
+  expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'organization-users-2026-10-06T14-30-00-000Z.csv', {
+    autoBom: true,
+  });
 });
 
 it('exports basic roles without requesting custom roles when permission is missing', async () => {
