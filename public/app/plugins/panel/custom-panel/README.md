@@ -377,7 +377,8 @@ image renderer) would show the panel empty. For those, the host can ask the fram
 drawing: the frame copies its document into an SVG `foreignObject`, turns canvases into images,
 draws that on a canvas and returns the data URL. The host accepts only a `data:image/png` URL of at
 most 8 MiB, within 3 seconds. A browser that refuses to rasterize `foreignObject` (Safari) returns
-an error instead.
+an error instead. The capture is filled with the drawing's background (or the theme's panel
+background when the drawing is transparent), so it reads on its own.
 
 ## Draw status
 

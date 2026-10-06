@@ -101,6 +101,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var SafeXMLSerializer = window.XMLSerializer;
   var SafeImage = window.Image;
   var encodeComponent = window.encodeURIComponent;
+  var safeComputedStyle = window.getComputedStyle;
 
   var root = document.getElementById('root');
   var port = null;
@@ -422,6 +423,30 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     element.textContent = '';
     if (element.parentNode) {
       element.parentNode.removeChild(element);
+    }
+  }
+
+  function isTransparentColor(value) {
+    var color = String(value || '').split(' ').join('');
+    return color === '' || color === 'transparent' || color.slice(-3) === ',0)';
+  }
+
+  /** The drawing's own background, else the theme's panel background. */
+  function captureBackground(html) {
+    try {
+      var candidates = [document.body, html];
+      for (var i = 0; i < candidates.length; i++) {
+        if (candidates[i]) {
+          var color = safeComputedStyle.call(window, candidates[i]).backgroundColor;
+          if (!isTransparentColor(color)) {
+            return color;
+          }
+        }
+      }
+      var themed = String(safeComputedStyle.call(window, html).getPropertyValue('--gf-color-bg-primary')).trim();
+      return themed || null;
+    } catch (e) {
+      return null;
     }
   }
 
@@ -805,6 +830,15 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
         }
         copies[c].parentNode.replaceChild(image, copies[c]);
       }
+      // Links lose their page styling inside the image; carry the computed look over.
+      var anchors = html.getElementsByTagName('a');
+      var anchorCopies = copy.getElementsByTagName('a');
+      for (var a = 0; a < anchorCopies.length && a < anchors.length; a++) {
+        var look = safeComputedStyle.call(window, anchors[a]);
+        anchorCopies[a].style.color = look.color;
+        anchorCopies[a].style.textDecoration = look.textDecoration;
+      }
+      var background = captureBackground(html);
       var markup = new SafeXMLSerializer().serializeToString(copy);
       var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
         '<foreignObject x="0" y="0" width="100%" height="100%">' + markup + '</foreignObject></svg>';
@@ -814,7 +848,14 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
           var canvas = document.createElement('canvas');
           canvas.width = width;
           canvas.height = height;
-          canvas.getContext('2d').drawImage(picture, 0, 0, width, height);
+          var context = canvas.getContext('2d');
+          // A capture is read on its own, away from the panel behind the frame, so it gets the
+          // panel background instead of staying transparent.
+          if (background) {
+            context.fillStyle = background;
+            context.fillRect(0, 0, width, height);
+          }
+          context.drawImage(picture, 0, 0, width, height);
           var url = canvas.toDataURL('image/png');
           if (url.length > MAX_CAPTURE_LENGTH) {
             postCapture(id, null, 'The captured drawing is larger than ' + MAX_CAPTURE_LENGTH + ' characters.');
