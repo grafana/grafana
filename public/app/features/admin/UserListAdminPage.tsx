@@ -104,7 +104,13 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
-          <ExportUsersButton scope="all" query={query} filters={filters} sort={sort} />
+          <ExportUsersButton
+            scope="all"
+            query={query}
+            filters={filters}
+            sort={sort}
+            className={styles.exportButton}
+          />
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
               <Trans i18nKey="admin.users-list.create-button">New user</Trans>
@@ -139,6 +145,12 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin: 0,
       },
     }),
+    exportButton: css({
+      marginRight: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: {
+        marginRight: 0,
+      },
+    }),
     actionBar: css({
       marginBottom: theme.spacing(2),
       display: 'flex',
@@ -151,7 +163,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     row: css({
       display: 'flex',
       alignItems: 'flex-start',
-      gap: theme.spacing(1),
       textAlign: 'left',
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,

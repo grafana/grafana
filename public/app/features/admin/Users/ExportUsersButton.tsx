@@ -7,7 +7,11 @@ import { appEvents } from 'app/core/app_events';
 
 import { exportUsers, type UserExportOptions } from './exportUsers';
 
-export function ExportUsersButton(options: UserExportOptions) {
+interface Props extends UserExportOptions {
+  className?: string;
+}
+
+export function ExportUsersButton({ className, ...options }: Props) {
   const [isExporting, setIsExporting] = useState(false);
   const downloadLabel = t('admin.users-export.download', 'Download table as CSV');
 
@@ -26,6 +30,7 @@ export function ExportUsersButton(options: UserExportOptions) {
 
   return (
     <Button
+      className={className}
       variant="secondary"
       icon={isExporting ? 'spinner' : 'download-alt'}
       tooltip={downloadLabel}
