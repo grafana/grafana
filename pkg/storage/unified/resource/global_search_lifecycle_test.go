@@ -908,7 +908,7 @@ func TestImportQueuesARebuildOfOnlyTheImportedType(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importMonday, importMonday)
 
-	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")})
+	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns"), dashboardType("ns")}, nil)
 	require.NoError(t, err)
 
 	queued := server.rebuildQueue.Elements()
@@ -924,7 +924,7 @@ func TestImportQueuesNothingWhenCaughtUp(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importMonday, time.Time{})
 
-	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")}, nil)
 	require.NoError(t, err)
 	assert.Zero(t, server.rebuildQueue.Len())
 }
@@ -1033,7 +1033,7 @@ func TestImportCheckIgnoresAnOlderImportTime(t *testing.T) {
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importTuesday, time.Time{})
 
-	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	completeChs, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")}, nil)
 	require.NoError(t, err)
 	assert.Empty(t, completeChs)
 	assert.Zero(t, server.rebuildQueue.Len())
@@ -1442,7 +1442,7 @@ func TestScanQueuesCoverageChanges(t *testing.T) {
 	// Holds dashboards, and a type no longer covered, but not folders.
 	idx.completedTypeBuilds = map[schema.GroupResource]TypeBuild{dashboardsGroupResource: {}, playlistsGroupResource: {}}
 
-	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")})
+	_, err := server.queueTypeSyncs(t.Context(), []NamespacedResource{GlobalSearchKey("ns")}, nil)
 	require.NoError(t, err)
 
 	queued := server.rebuildQueue.Elements()
