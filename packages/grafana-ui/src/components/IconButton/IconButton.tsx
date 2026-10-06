@@ -13,6 +13,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { type PopoverContent, type TooltipPlacement } from '../Tooltip/types';
 
 export type IconButtonVariant = 'primary' | 'secondary' | 'destructive';
+export type IconButtonFill = 'solid' | 'text';
 
 type LimitedIconSize = ComponentSize | 'xl';
 
@@ -25,6 +26,8 @@ interface BaseProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 
   iconType?: IconType;
   /** Variant to change the color of the Icon */
   variant?: IconButtonVariant;
+  /** Fill style. `solid` renders a filled background matching the solid Button of the same variant */
+  fill?: IconButtonFill;
 }
 
 export interface BasePropsWithTooltip extends BaseProps {
@@ -54,7 +57,7 @@ export type Props = BasePropsWithTooltip | BasePropsWithAriaLabel | BasePropsWit
  * https://developers.grafana.com/ui/latest/index.html?path=/docs/inputs-iconbutton--docs
  */
 export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref) => {
-  const { size = 'md', variant = 'secondary' } = props;
+  const { size = 'md', variant = 'secondary', fill = 'text' } = props;
   let limitedIconSize: LimitedIconSize;
 
   // very large icons (xl to xxxl) are unified to size xl
@@ -65,7 +68,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
     limitedIconSize = size;
   }
 
-  const styles = useStyles2(getStyles, limitedIconSize, variant);
+  const styles = useStyles2(getStyles, limitedIconSize, variant, fill);
 
   let ariaLabel: string | undefined;
   let buttonRef: typeof ref | undefined;
@@ -81,7 +84,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
   // When using tooltip, ref is forwarded to Tooltip component instead for https://github.com/grafana/grafana/issues/65632
   if ('tooltip' in props) {
-    const { name, iconType, className, tooltip, tooltipPlacement, type, ...restProps } = props;
+    const { name, iconType, className, tooltip, tooltipPlacement, type, fill: _fill, ...restProps } = props;
     return (
       <Tooltip ref={ref} content={tooltip} placement={tooltipPlacement}>
         <button
@@ -96,7 +99,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
       </Tooltip>
     );
   } else {
-    const { name, iconType, className, type, ...restProps } = props;
+    const { name, iconType, className, type, fill: _fill, ...restProps } = props;
     return (
       <button
         {...restProps}
@@ -113,19 +116,47 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>((props, ref
 
 IconButton.displayName = 'IconButton';
 
-const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant) => {
+function getRichColorForVariant(theme: GrafanaTheme2, variant: IconButtonVariant) {
+  switch (variant) {
+    case 'secondary':
+      return theme.colors.secondary;
+    case 'destructive':
+      return theme.colors.error;
+    case 'primary':
+    default:
+      return theme.colors.primary;
+  }
+}
+
+const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVariant, fill: IconButtonFill) => {
   // overall size of the IconButton on hover
   // theme.spacing.gridSize originates from 2*4px for padding and letting the IconSize generally decide on the hoverSize
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
-  const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
+  let activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
 
   let iconColor = theme.colors.primary.text;
+  let hoverIconColor = iconColor;
+  let restingBackground = 'transparent';
   let hoverColor = theme.colors.action.hover;
 
-  if (variant === 'secondary') {
+  if (fill === 'solid') {
+    const richColor = getRichColorForVariant(theme, variant);
+    iconColor = richColor.contrastText;
+    hoverIconColor = richColor.contrastText;
+    restingBackground = richColor.main;
+    hoverColor = richColor.mainEmphasis;
+    activeButtonStyle = getActiveButtonStyles(richColor, 'solid', theme.flags.visualDesignRefresh);
+  } else if (variant === 'primary' && theme.flags.visualDesignRefresh) {
+    // Mirrors the visual refresh primary button: tinted background with the primary text color
+    hoverIconColor = theme.colors.primary.textEmphasis;
+    restingBackground = theme.colors.primary.background;
+    hoverColor = theme.colors.primary.backgroundEmphasis;
+  } else if (variant === 'secondary') {
     iconColor = theme.colors.secondary.text;
+    hoverIconColor = iconColor;
   } else if (variant === 'destructive') {
     iconColor = theme.colors.error.text;
+    hoverIconColor = iconColor;
     hoverColor = theme.colors.error.transparent;
   }
 
@@ -154,7 +185,7 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
         cursor: 'not-allowed',
         color: theme.colors.action.disabledText,
         opacity: 0.65,
-        '&:hover:before': {
+        '&:before, &:hover:before': {
           backgroundColor: 'transparent',
         },
       },
@@ -162,7 +193,8 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       '&:before': {
         zIndex: -1,
         position: 'absolute',
-        opacity: 0,
+        backgroundColor: restingBackground,
+        opacity: restingBackground === 'transparent' ? 0 : 1,
         width: `${hoverSize}px`,
         height: `${hoverSize}px`,
         borderRadius: theme.shape.radius.default,
@@ -177,6 +209,10 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
       '&:focus, &:focus-visible': getFocusStyles(theme),
 
       '&:focus:not(:focus-visible)': getMouseFocusStyles(theme),
+
+      '&:not(:disabled):hover': {
+        color: hoverIconColor,
+      },
 
       '&:hover:before': {
         backgroundColor: hoverColor,

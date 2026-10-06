@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Alert, type AlertVariant } from '../Alert/Alert';
 import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
@@ -22,9 +23,11 @@ import { InlineField } from '../Forms/InlineField';
 import { InlineFieldRow } from '../Forms/InlineFieldRow';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Icon } from '../Icon/Icon';
+import { IconButton, type IconButtonFill, type IconButtonVariant } from '../IconButton/IconButton';
 import { Input } from '../Input/Input';
 import { type BackgroundColor, type BorderColor, Box, type BoxShadow } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
+import { Modal } from '../Modal/Modal';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 import { Switch } from '../Switch/Switch';
 import { Text, type TextProps } from '../Text/Text';
@@ -301,6 +304,26 @@ export const ThemeDemo = () => {
             </Stack>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Icon buttons" isOpen={true}>
+          <Stack direction="column" gap={2}>
+            <DemoBox bg="primary">
+              <IconButtonsDemo />
+            </DemoBox>
+            <DemoBox bg="secondary">
+              <IconButtonsDemo />
+            </DemoBox>
+          </Stack>
+        </CollapsableSection>
+        <CollapsableSection label="Alerts" isOpen={true}>
+          <DemoBox bg="primary">
+            <AlertsDemo />
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Modal" isOpen={true}>
+          <DemoBox bg="primary">
+            <ModalDemo />
+          </DemoBox>
+        </CollapsableSection>
         <CollapsableSection label="Actions" isOpen={true}>
           <ActionsDemo />
         </CollapsableSection>
@@ -488,5 +511,123 @@ function ActionsDemo() {
         </Stack>
       </DemoBox>
     </Stack>
+  );
+}
+
+const iconButtonVariants: Array<{ label: string; variant: IconButtonVariant; fill?: IconButtonFill }> = [
+  { label: 'primary', variant: 'primary' },
+  { label: 'primary (solid)', variant: 'primary', fill: 'solid' },
+  { label: 'secondary', variant: 'secondary' },
+];
+const iconButtonSizes = ['xs', 'sm', 'md', 'lg', 'xl'] as const;
+
+function IconButtonsDemo() {
+  const t = useTheme2();
+  return (
+    <table className={iconButtonsTableStyle(t)}>
+      <thead>
+        <tr>
+          <td>variant</td>
+          {iconButtonSizes.map((size) => (
+            <td key={size}>{size}</td>
+          ))}
+          <td>disabled</td>
+        </tr>
+      </thead>
+      <tbody>
+        {iconButtonVariants.map(({ label, variant, fill }) => (
+          <tr key={label}>
+            <td>{label}</td>
+            {iconButtonSizes.map((size) => (
+              <td key={size}>
+                <IconButton name="cog" variant={variant} fill={fill} size={size} tooltip={`${label} ${size}`} />
+              </td>
+            ))}
+            <td>
+              <IconButton name="cog" variant={variant} fill={fill} disabled tooltip={`${label} disabled`} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const iconButtonsTableStyle = (theme: GrafanaTheme2) =>
+  css({
+    td: {
+      padding: theme.spacing(1, 2),
+      textAlign: 'center',
+      verticalAlign: 'middle',
+    },
+    'td:first-child': {
+      textAlign: 'left',
+    },
+  });
+
+const alertSeverities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
+
+function AlertsDemo() {
+  return (
+    <Stack direction="column" gap={3}>
+      <Stack direction="column" gap={0}>
+        <Text variant="h6">With title and body</Text>
+        {alertSeverities.map((severity) => (
+          <Alert key={severity} severity={severity} title={`${severity} alert`}>
+            Body text for the {severity} alert.
+          </Alert>
+        ))}
+      </Stack>
+      <Stack direction="column" gap={0}>
+        <Text variant="h6">Title only, dismissible</Text>
+        {alertSeverities.map((severity) => (
+          <Alert key={severity} severity={severity} title={`${severity} alert`} onRemove={() => {}} />
+        ))}
+      </Stack>
+      <Stack direction="column" gap={0}>
+        <Text variant="h6">With custom button</Text>
+        {alertSeverities.map((severity) => (
+          <Alert
+            key={severity}
+            severity={severity}
+            title={`${severity} alert`}
+            buttonContent="Action"
+            onRemove={() => {}}
+          >
+            Body text for the {severity} alert.
+          </Alert>
+        ))}
+      </Stack>
+      <Stack direction="column" gap={0}>
+        <Text variant="h6">Elevated</Text>
+        {alertSeverities.map((severity) => (
+          <Alert key={severity} severity={severity} title={`${severity} alert`} elevated onRemove={() => {}}>
+            Body text for the {severity} alert.
+          </Alert>
+        ))}
+      </Stack>
+    </Stack>
+  );
+}
+
+function ModalDemo() {
+  const [isOpen, setIsOpen] = useState(false);
+  const close = () => setIsOpen(false);
+
+  return (
+    <>
+      <Button onClick={() => setIsOpen(true)}>Open modal</Button>
+      <Modal title="Modal title" isOpen={isOpen} onDismiss={close}>
+        Modal body content. Use the buttons below to confirm or cancel.
+        <Modal.ButtonRow>
+          <Button variant="secondary" onClick={close}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={close}>
+            Confirm
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
+    </>
   );
 }
