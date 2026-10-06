@@ -100,6 +100,31 @@ describe('VizSuggestionsButton', () => {
     await waitFor(() => expect(screen.getByText('Could not load visualization suggestions.')).toBeInTheDocument());
   });
 
+  // A resolved hasErrors with nothing to show should read the same as a rejected promise.
+  it('reports a load failure when every suggestion failed, even though the promise resolved', async () => {
+    const { panel, cell } = setup();
+    withData(panel);
+    mockGetAllSuggestions.mockResolvedValue({ suggestions: [], hasErrors: true });
+
+    const { user } = render(<VizSuggestionsButton cell={cell} panel={panel} />);
+    await user.click(screen.getByRole('button', { name: 'Change visualization' }));
+
+    expect(await screen.findByText('Could not load visualization suggestions.')).toBeInTheDocument();
+  });
+
+  // Partial failure: some suggestions loaded, others didn't - show both, not just the good ones.
+  it('shows the suggestions that did load, with a note that some could not', async () => {
+    const { panel, cell } = setup();
+    withData(panel);
+    mockGetAllSuggestions.mockResolvedValue({ suggestions: [suggestion('Table', 'table')], hasErrors: true });
+
+    const { user } = render(<VizSuggestionsButton cell={cell} panel={panel} />);
+    await user.click(screen.getByRole('button', { name: 'Change visualization' }));
+
+    expect(await screen.findByRole('button', { name: 'Table' })).toBeInTheDocument();
+    expect(screen.getByText('Some visualization suggestions could not be loaded.')).toBeInTheDocument();
+  });
+
   it('says so when nothing suggests a visualization for this data', async () => {
     const { panel, cell } = setup();
     withData(panel);

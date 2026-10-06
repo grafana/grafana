@@ -36,15 +36,22 @@ export function VizSuggestionsButton({ cell, panel }: { cell: NotebookCellItem; 
   );
 }
 
+interface SuggestionsResult {
+  suggestions: PanelPluginVisualizationSuggestion[];
+  // getAllSuggestions resolves with this rather than rejecting when a plugin fails to load or throws
+  // while building its suggestions - a rejection only happens for something unrelated going wrong.
+  hasErrors: boolean;
+}
+
 function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; panel: VizPanel; onPick: () => void }) {
   const styles = useStyles2(getStyles);
   const { data } = sceneGraph.getData(panel).useState();
-  const [suggestions, setSuggestions] = useState<PanelPluginVisualizationSuggestion[]>();
+  const [result, setResult] = useState<SuggestionsResult>();
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let current = true;
-    setSuggestions(undefined);
+    setResult(undefined);
     setFailed(false);
 
     if (!data?.series.length) {
@@ -52,9 +59,9 @@ function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; pane
     }
 
     getAllSuggestions(data.series)
-      .then((result) => {
+      .then((loaded) => {
         if (current) {
-          setSuggestions(result.suggestions.slice(0, MAX_SUGGESTIONS));
+          setResult({ suggestions: loaded.suggestions.slice(0, MAX_SUGGESTIONS), hasErrors: loaded.hasErrors });
         }
       })
       .catch(() => {
@@ -76,7 +83,9 @@ function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; pane
     );
   }
 
-  if (failed) {
+  // Treated the same as a rejection: either nothing loaded at all, or every plugin that might have
+  // suggested something failed to.
+  if (failed || (result && result.hasErrors && result.suggestions.length === 0)) {
     return (
       <Text color="secondary">
         {t('notebook.cell.panel.suggestions-error', 'Could not load visualization suggestions.')}
@@ -84,11 +93,11 @@ function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; pane
     );
   }
 
-  if (!suggestions) {
+  if (!result) {
     return <Spinner />;
   }
 
-  if (suggestions.length === 0) {
+  if (result.suggestions.length === 0) {
     return (
       <Text color="secondary">
         {t('notebook.cell.panel.suggestions-empty', 'No visualization suggestions for this data.')}
@@ -97,10 +106,17 @@ function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; pane
   }
 
   return (
-    <div className={styles.grid}>
-      {suggestions.map((suggestion) => (
-        <SuggestionCard key={suggestion.hash} cell={cell} data={data} suggestion={suggestion} onPick={onPick} />
-      ))}
+    <div>
+      {result.hasErrors && (
+        <Text color="secondary" variant="bodySmall">
+          {t('notebook.cell.panel.suggestions-partial-error', 'Some visualization suggestions could not be loaded.')}
+        </Text>
+      )}
+      <div className={styles.grid}>
+        {result.suggestions.map((suggestion) => (
+          <SuggestionCard key={suggestion.hash} cell={cell} data={data} suggestion={suggestion} onPick={onPick} />
+        ))}
+      </div>
     </div>
   );
 }

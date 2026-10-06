@@ -502,14 +502,12 @@ export class NotebookLayoutManager
   }
 
   /**
-   * Switches a panel to a suggested visualization. A single discrete action rather than a coalesced
-   * one — unlike typing, picking a suggestion is already one deliberate gesture, so there's nothing to
-   * group it with.
+   * Switches a panel to a suggested visualization - one discrete action, not coalesced.
    *
-   * Clears the previous visualization's custom field config rather than carrying it over (the standard
-   * overrides - unit, decimals, etc. - are kept), matching how the panel editor's own "Suggestions" tab
-   * applies a pick. `changePluginType` itself is not awaited: nothing here reads its result, and the
-   * editor does the same.
+   * Clears custom field config but keeps standard overrides (unit, decimals, ...), merging the
+   * suggestion's own fieldConfig on top rather than substituting it: PanelPlugin.getSuggestions
+   * defaultsDeep's every suggestion to a (possibly empty) fieldConfig, so it's never actually
+   * undefined - replacing with it directly would wipe the panel's existing config on every pick.
    */
   public changePanelVisualization(cell: NotebookCellItem, suggestion: PanelPluginVisualizationSuggestion): void {
     const panel = cell.state.body;
@@ -522,18 +520,29 @@ export class NotebookLayoutManager
       options: panel.state.options,
       fieldConfig: panel.state.fieldConfig,
     };
+
+    // Against the raw suggestion, not the cleaned/merged `after` below - cleaning always adds a
+    // `custom: {}` key, which would make this never match even when nothing would actually change.
+    if (
+      before.pluginId === suggestion.pluginId &&
+      isEqual(before.options, suggestion.options ?? before.options) &&
+      isEqual(before.fieldConfig, suggestion.fieldConfig ?? before.fieldConfig)
+    ) {
+      return;
+    }
+
+    const cleanedFieldConfig = {
+      defaults: { ...before.fieldConfig.defaults, custom: {} },
+      overrides: filterFieldConfigOverrides(before.fieldConfig.overrides, isStandardFieldProp),
+    };
     const after = {
       pluginId: suggestion.pluginId,
       options: suggestion.options ?? {},
-      fieldConfig: suggestion.fieldConfig ?? {
-        defaults: { ...before.fieldConfig.defaults, custom: {} },
-        overrides: filterFieldConfigOverrides(before.fieldConfig.overrides, isStandardFieldProp),
+      fieldConfig: {
+        defaults: { ...cleanedFieldConfig.defaults, ...suggestion.fieldConfig?.defaults },
+        overrides: [...cleanedFieldConfig.overrides, ...(suggestion.fieldConfig?.overrides ?? [])],
       },
     };
-
-    if (isEqual(before, after)) {
-      return;
-    }
 
     this.executeEdit({
       label: t('notebooks.history.change-visualization', 'Change visualization'),

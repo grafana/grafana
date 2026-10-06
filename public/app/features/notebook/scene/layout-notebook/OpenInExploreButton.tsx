@@ -7,9 +7,8 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 
 /**
- * A notebook panel has no kebab menu — buildVizPanelState leaves `menu` unset, since the dashboard
- * chrome it would normally come from assumes a DashboardScene ancestor a notebook cell doesn't have.
- * This is the icon-row replacement: a direct link rather than a menu item.
+ * A notebook panel has no kebab menu (buildVizPanelState leaves `menu` unset - it assumes a
+ * DashboardScene ancestor a notebook cell doesn't have), so this is its Explore link instead.
  */
 export function OpenInExploreButton({ panel }: { panel: VizPanel }) {
   // A library panel starts with no $data and attaches its runner later via a setState on the panel —

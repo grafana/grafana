@@ -96,9 +96,8 @@ import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
 
-// changePanelVisualization (see 'edit history' below) re-applies a real plugin's defaults through the
-// panel's own changePluginType, so it needs a plugin that actually loads rather than throwing on
-// "Grafana instance has started" like an unconfigured one would.
+// changePanelVisualization calls the panel's real changePluginType, which needs a plugin that
+// actually loads rather than throwing on "Grafana instance has started".
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
@@ -1687,6 +1686,72 @@ describe('NotebookLayoutManager', () => {
               matcher: { id: 'byName', options: 'latency' },
               properties: [{ id: 'unit', value: 's' }],
             },
+          ],
+        }
+      );
+    });
+
+    // A real suggestion's fieldConfig is never undefined - PanelPlugin.getSuggestions defaultsDeep's
+    // it to this shape even when the plugin supplied nothing of its own.
+    it('keeps standard field overrides when the suggestion only carries the empty fieldConfig default', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms', custom: { drawStyle: 'line' } },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        fieldConfig: { defaults: {}, overrides: [] },
+      });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'table',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {} },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        }
+      );
+    });
+
+    it("merges a suggestion's own field defaults and overrides onto the cleaned existing config, rather than replacing it", () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms' },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Bar gauge',
+        pluginId: 'bargauge',
+        hash: 'bargauge',
+        fieldConfig: {
+          defaults: { max: 100 },
+          overrides: [{ matcher: { id: 'byName', options: 'error rate' }, properties: [{ id: 'max', value: 1 }] }],
+        },
+      });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'bargauge',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {}, max: 100 },
+          overrides: [
+            { matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] },
+            { matcher: { id: 'byName', options: 'error rate' }, properties: [{ id: 'max', value: 1 }] },
           ],
         }
       );

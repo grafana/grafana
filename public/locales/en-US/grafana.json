@@ -13120,7 +13120,8 @@
         "open-in-explore": "Open in Explore",
         "suggestions-empty": "No visualization suggestions for this data.",
         "suggestions-error": "Could not load visualization suggestions.",
-        "suggestions-no-data": "Run a query to see visualization suggestions."
+        "suggestions-no-data": "Run a query to see visualization suggestions.",
+        "suggestions-partial-error": "Some visualization suggestions could not be loaded."
       },
       "query": {
         "add": "Add query",
