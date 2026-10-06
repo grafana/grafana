@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
+import { type TableNGProps } from '../types';
 
 import { prepareColumnContext } from './columnContext';
-import { tableTransformations } from './registry';
+import { columnTransformations, tableTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
@@ -29,15 +30,20 @@ export function useColumnTransformations(
     [context, update]
   );
 
-  return useMemo(
-    () =>
-      context
-        ? {
-            ...tableTransformations.columnVisibility.read(transformations, context),
-            columnCatalog: context.catalog,
-            onHiddenColumnsChange,
-          }
-        : undefined,
-    [context, transformations, onHiddenColumnsChange]
-  );
+  return useMemo(() => {
+    if (!context) {
+      return undefined;
+    }
+
+    const state = columnTransformations.reduce<Pick<TableNGProps, 'hiddenColumns'>>(
+      (state, transformation) => ({ ...state, ...transformation.read(transformations, context) }),
+      {}
+    );
+
+    return {
+      ...state,
+      columnCatalog: context.catalog,
+      onHiddenColumnsChange,
+    };
+  }, [context, transformations, onHiddenColumnsChange]);
 }
