@@ -9,7 +9,7 @@ import { isGitProvider } from '../../utils/repositoryTypes';
 import { getGitProviderFields } from '../fields';
 import { type WizardFormData } from '../types';
 
-export function RepositoryTokenInput({ tokenUserOnly = false }: { tokenUserOnly?: boolean }) {
+export function RepositoryTokenInput() {
   const [tokenConfigured, setTokenConfigured] = useState(false);
   const {
     register,
@@ -30,43 +30,37 @@ export function RepositoryTokenInput({ tokenUserOnly = false }: { tokenUserOnly?
     return null;
   }
 
-  if (tokenUserOnly && !gitFields.tokenUserConfig) {
-    return null;
-  }
-
   return (
     <>
-      {hasTokenInstructions && !tokenUserOnly && <TokenPermissionsInfo type={type} url={url} />}
-      {!tokenUserOnly && (
-        <Field
-          noMargin
-          label={gitFields.tokenConfig.label}
-          required={gitFields.tokenConfig.required}
-          description={gitFields.tokenConfig.description}
-          error={errors?.repository?.token?.message}
-          invalid={!!errors?.repository?.token?.message}
-        >
-          <Controller
-            name="repository.token"
-            control={control}
-            rules={gitFields.tokenConfig.validation}
-            render={({ field: { ref, ...field } }) => (
-              <SecretInput
-                {...field}
-                id="token"
-                placeholder={gitFields.tokenConfig.placeholder}
-                isConfigured={tokenConfigured}
-                revealable
-                invalid={!!errors?.repository?.token?.message}
-                onReset={() => {
-                  setValue('repository.token', '');
-                  setTokenConfigured(false);
-                }}
-              />
-            )}
-          />
-        </Field>
-      )}
+      {hasTokenInstructions && <TokenPermissionsInfo type={type} url={url} />}
+      <Field
+        noMargin
+        label={gitFields.tokenConfig.label}
+        required={gitFields.tokenConfig.required}
+        description={gitFields.tokenConfig.description}
+        error={errors?.repository?.token?.message}
+        invalid={!!errors?.repository?.token?.message}
+      >
+        <Controller
+          name="repository.token"
+          control={control}
+          rules={gitFields.tokenConfig.validation}
+          render={({ field: { ref, ...field } }) => (
+            <SecretInput
+              {...field}
+              id="token"
+              placeholder={gitFields.tokenConfig.placeholder}
+              isConfigured={tokenConfigured}
+              revealable
+              invalid={!!errors?.repository?.token?.message}
+              onReset={() => {
+                setValue('repository.token', '');
+                setTokenConfigured(false);
+              }}
+            />
+          )}
+        />
+      </Field>
 
       {gitFields.tokenUserConfig && (
         <Field
@@ -84,7 +78,7 @@ export function RepositoryTokenInput({ tokenUserOnly = false }: { tokenUserOnly?
           />
         </Field>
       )}
-      {gitFields.emailConfig && !tokenUserOnly && (
+      {gitFields.emailConfig && (
         <Field
           noMargin
           label={gitFields.emailConfig.label}
