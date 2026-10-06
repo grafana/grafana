@@ -42,7 +42,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
     case 'dashboards/variables':
-      return t('nav.global-variables.title', 'Variables');
+      return t('nav.global-variables.title', 'Cross-dashboard variables');
     case 'reports':
       return t('nav.reporting.title', 'Reporting');
     case 'dashboards/public':

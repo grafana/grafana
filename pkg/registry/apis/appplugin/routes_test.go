@@ -25,10 +25,10 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -49,12 +49,14 @@ type stubIndexClient struct {
 // found for path".
 func TestGetAPIRoutesRegistration(t *testing.T) {
 	manifest := testManifest(t)
+	hybrid := true
+	manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
 	b := &AppPluginAPIBuilder{
 		group:      manifest.Group,
 		manifest:   manifest,
 		pluginJSON: plugins.JSONData{ID: "example-app"},
 		search:     stubIndexClient{},
-		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true},
+		opts:       AppPluginRunnerOptions{SearchAPIEnabled: true, HybridAPIEnabled: true},
 	}
 
 	container := restful.NewContainer()
@@ -81,6 +83,7 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	// same resource name and is the route most likely to collide with it once it
 	// is wired up, which is what the duplicate check above is guarding.
 	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search")
+	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search/hybrid")
 	require.NotContains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/trash",
 		"trash is not wired up to search yet")
 }
@@ -341,7 +344,7 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 
 func TestRouteHandlerRouteInfo(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
-	newBuilder := func(client v3.ClientV3, get getter) *AppPluginAPIBuilder {
+	newBuilder := func(client appclientv3.Client, get getter) *AppPluginAPIBuilder {
 		return &AppPluginAPIBuilder{
 			group:      "example.ext.grafana.app",
 			pluginJSON: plugins.JSONData{ID: "example-app"},
@@ -388,7 +391,7 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 
 		newBuilder(client, get.get).routeHandler(gv, "testkinds", "reload")(httptest.NewRecorder(), req)
 
-		require.Equal(t, []string{"kind-token"}, client.req.GetHeaders()[proxyutil.IDHeaderName].GetValues())
+		require.NotContains(t, client.req.GetHeaders(), proxyutil.IDHeaderName, "the ID token must not be forwarded")
 
 		// Looked up under this version's own resource, not a hardcoded one.
 		require.Equal(t, gv.WithResource("testkinds"), get.gotGVR)
@@ -491,16 +494,14 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 	})
 }
 
-func TestRouteHandlerForwardID(t *testing.T) {
+func TestRouteHandlerDoesNotForwardCredentials(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
 		requester identity.Requester
-		wantToken string
 	}{
 		{
-			name:      "replaces untrusted identity with requester token",
+			name:      "does not forward the requester's ID token",
 			requester: &identity.StaticRequester{IDToken: "verified-token"},
-			wantToken: "verified-token",
 		},
 		{
 			name: "removes untrusted identity without a requester",
@@ -520,6 +521,8 @@ func TestRouteHandlerForwardID(t *testing.T) {
 			req := httptest.NewRequest(http.MethodGet, "/foobar", nil)
 			req.Header.Add(proxyutil.IDHeaderName, "untrusted-token")
 			req.Header.Add(proxyutil.IDHeaderName, "another-untrusted-token")
+			req.Header.Set("Authorization", "Bearer user-token")
+			req.Header.Set("Cookie", "grafana_session=secret")
 			req.Header.Set("X-Request-Id", "request-id")
 			originalHeaders := req.Header.Clone()
 			if tc.requester != nil {
@@ -532,12 +535,10 @@ func TestRouteHandlerForwardID(t *testing.T) {
 			require.Equal(t, http.StatusOK, rec.Code)
 			require.NotNil(t, client.req)
 			headers := client.req.GetHeaders()
-			if tc.wantToken == "" {
-				require.NotContains(t, headers, proxyutil.IDHeaderName)
-			} else {
-				require.Equal(t, []string{tc.wantToken}, headers[proxyutil.IDHeaderName].GetValues())
-			}
+			require.NotContains(t, headers, proxyutil.IDHeaderName)
 			require.NotContains(t, headers, "X-Access-Token")
+			require.NotContains(t, headers, "Authorization")
+			require.NotContains(t, headers, "Cookie")
 			require.Equal(t, []string{"request-id"}, headers["X-Request-Id"].GetValues())
 			require.Equal(t, originalHeaders, req.Header)
 		})
@@ -546,12 +547,12 @@ func TestRouteHandlerForwardID(t *testing.T) {
 
 // fakeRouteClient records the request and returns an empty response stream.
 type fakeRouteClient struct {
-	v3.ClientV3
+	appclientv3.Client
 	req *pluginv3.CallRouteRequest
 	err error
 }
 
-func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest, _ ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (f *fakeRouteClient) CallRoute(_ context.Context, req *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -625,6 +626,41 @@ func TestSearchRouteGates(t *testing.T) {
 
 	t.Run("the config toggle turns it off", func(t *testing.T) {
 		require.Empty(t, searchPaths(newBuilder(AppPluginRunnerOptions{})))
+	})
+
+	t.Run("hybrid requires manifest opt-in", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{SearchAPIEnabled: true, HybridAPIEnabled: true})
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(b))
+
+		hybrid := true
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search", "testkinds/search/hybrid"}, searchPaths(b))
+	})
+
+	t.Run("hybrid serves with lexical search and trash disabled", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid, endpoint := true, false
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search/hybrid"}, searchPaths(b))
+
+		b.opts.HybridAPIEnabled = false
+		require.Empty(t, searchPaths(b))
+	})
+
+	t.Run("hybrid follows the served group when it differs from the manifest", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid := true
+		b.manifest.Group = "other.ext.grafana.app"
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		require.Equal(t, []string{"testkinds/search/hybrid"}, searchPaths(b))
+	})
+
+	t.Run("hybrid is not served for cluster scoped kinds", func(t *testing.T) {
+		b := newBuilder(AppPluginRunnerOptions{HybridAPIEnabled: true})
+		hybrid := true
+		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
+		b.manifest.Versions[1].Kinds[0].Scope = kindstore.ClusterScope
+		require.Empty(t, searchPaths(b))
 	})
 
 	// Search over the fields every resource has works without declared fields,

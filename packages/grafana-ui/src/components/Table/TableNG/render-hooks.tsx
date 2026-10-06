@@ -171,12 +171,14 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   theme: GrafanaTheme2;
   timeRange?: TimeRange;
   typographyCtx: TypographyCtx;
@@ -260,6 +262,7 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onCellAddToAssistant,
     frozenColumns,
     numFrozenColsFullyInView,
     maxRowHeight,
@@ -268,6 +271,7 @@ function buildColumnsFromFields(
     disableSanitizeHtml,
     showTypeIcons,
     tableRefreshEnabled,
+    jsonSyntaxHighlightingEnabled,
     timeRange,
     firstColumnExtraPadding = 0,
     lastColumnExtraPadding = 0,
@@ -343,7 +347,8 @@ function buildColumnsFromFields(
 
     const cellInspect = isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showActions = cellInspect || showFilters;
+    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
+    const showActions = cellInspect || showFilters || showAssistant;
     const width = widths[i];
     const contentWidth =
       width -
@@ -353,7 +358,7 @@ function buildColumnsFromFields(
 
     // helps us avoid string cx and emotion per-cell
     const cellActionClassName = showActions
-      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign))
+      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled))
       : undefined;
 
     const shouldOverflow =
@@ -468,10 +473,12 @@ function buildColumnsFromFields(
             showFilters={showFilters}
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
+            jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
           {showActions && (
             <TableCellActions
+              tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
               displayName={displayName}
@@ -480,6 +487,7 @@ function buildColumnsFromFields(
               className={cellActionClassName}
               setInspectCell={setInspectCell}
               onCellFilterAdded={onCellFilterAdded}
+              onAddToAssistant={showAssistant ? () => onCellAddToAssistant?.(frame, field, rowIdx) : undefined}
             />
           )}
         </>
@@ -543,6 +551,7 @@ function buildColumnsFromFields(
           ),
           data: frame,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field: tooltipField,
           getActions: getCellActions,
           getTextColorForBackground,
@@ -601,7 +610,7 @@ function buildColumnsFromFields(
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
           selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
           }}
         />
       ),

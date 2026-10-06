@@ -25,8 +25,8 @@ import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/Dashboard
 
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getTestDashboardSceneFromSaveModel } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { V1DashboardSerializer, V2DashboardSerializer } from './DashboardSceneSerializer';
 import nestedDashboard from './testfiles/nested_dashboard.json';

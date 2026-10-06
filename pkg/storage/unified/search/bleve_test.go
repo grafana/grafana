@@ -956,45 +956,74 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	})
 }
 
+// An index built before deleted documents were kept cannot tell an empty trash
+// from one it never indexed, so the search fails instead of returning nothing.
 func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
-	tests := []struct {
-		name                  string
-		wantsDeletedDocuments bool
-		message               string
-	}{
-		{
-			name:    "indexing is disabled",
-			message: "trash is not available for this resource because indexing deleted documents is disabled",
-		},
-		{
-			name:                  "index is awaiting rebuild",
-			wantsDeletedDocuments: true,
-			message:               "trash is not available for this resource until its search index has been rebuilt",
-		},
+	idx := &bleveIndex{
+		fields:       resource.StandardSearchFields(),
+		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
+	searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
+		Options:   &resourcepb.ListOptions{},
+		Limit:     10,
+		IsDeleted: true,
+	}, nil, false, nil)
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			idx := &bleveIndex{
-				fields:                resource.StandardSearchFields(),
-				searchFields:          newKindSearchFields(nil, "", "", nil),
-				wantsDeletedDocuments: tc.wantsDeletedDocuments,
-			}
-			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
-				Options:   &resourcepb.ListOptions{},
-				Limit:     10,
-				IsDeleted: true,
-			}, nil, false, nil)
-
-			require.Nil(t, searchReq)
-			require.NotNil(t, errResult)
-			assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
-			assert.Equal(t, tc.message, errResult.Message)
-		})
-	}
+	require.Nil(t, searchReq)
+	require.NotNil(t, errResult)
+	assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+	assert.Equal(t, "trash is not available for this resource until its search index has been rebuilt", errResult.Message)
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
+func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
+	oldFeatures := []resource.IndexFeature{
+		resource.IndexFeatureDeletedMarker,
+		resource.IndexFeatureHoldsDeletedDocuments,
+		resource.IndexFeatureTrashFields,
+	}
+	newIndex := func(features []resource.IndexFeature) *bleveIndex {
+		return &bleveIndex{
+			features:              features,
+			fields:                resource.StandardSearchFields(),
+			searchFields:          newKindSearchFields(nil, "", "", nil),
+			keepsDeletedDocuments: true,
+		}
+	}
+	request := func(sort bool) *resourcepb.ResourceSearchRequest {
+		req := &resourcepb.ResourceSearchRequest{
+			Options:   &resourcepb.ListOptions{},
+			Limit:     10,
+			IsDeleted: true,
+		}
+		if sort {
+			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		}
+		return req
+	}
+
+	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+
+	t.Run("an older index refuses the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.Nil(t, searchReq)
+		require.NotNil(t, errResult)
+		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+		assert.Equal(t, "sorting trash by resource version is not available for this resource until its search index has been rebuilt", errResult.Message)
+	})
+
+	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
+		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+}
+
 func TestBleveSortCapabilityCheck(t *testing.T) {
 	const group, kindResource = "example.grafana.app", "widgets"
 	// v1 and v2 declare different fields on purpose: a request naming no version
@@ -1091,7 +1120,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
@@ -1099,7 +1128,6 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
 		idx := newIndex(true)
 		idx.keepsDeletedDocuments = true
-		idx.wantsDeletedDocuments = true
 		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
 		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
@@ -1403,7 +1431,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	newIndexWithoutFeatures := func(t *testing.T) bleve.Index {
 		t.Helper()
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 		require.NoError(t, err)
 		t.Cleanup(func() { _ = idx.Close() })
 		require.NoError(t, setRV(idx, 42))
@@ -1426,26 +1454,18 @@ func TestValidateDownloadedIndexChecksRequiredFeatures(t *testing.T) {
 	})
 }
 
-// The setting is read once, when the index is created, so later changes cannot
-// leave trash missing whatever was deleted while it was off.
+// Every index built now holds deleted documents, and says so, so a reader that
+// cannot filter them refuses it rather than serving them as live.
 func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
-	for _, keep := range []bool{true, false} {
-		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", keep)
-		require.NoError(t, err)
-		t.Cleanup(func() { _ = idx.Close() })
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = idx.Close() })
 
-		bi, err := getBuildInfo(idx)
-		require.NoError(t, err)
-		require.Equal(t, keep, slices.Contains(bi.Features, resource.IndexFeatureHoldsDeletedDocuments))
-		require.Equal(t, keep, slices.Contains(bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments))
-
-		// Only an index holding deleted documents needs a reader that filters them.
-		if keep {
-			require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
-		} else {
-			require.Empty(t, bi.ReaderRequirements)
-		}
-	}
+	bi, err := getBuildInfo(idx)
+	require.NoError(t, err)
+	require.Contains(t, bi.Features, resource.IndexFeatureHoldsDeletedDocuments)
+	require.Contains(t, bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments)
+	require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
 }
 
 // A local index whose build info cannot be read is discarded: there is no way to
@@ -1454,7 +1474,7 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 	newIndexOnDisk := func(t *testing.T, rawBuildInfo []byte) string {
 		t.Helper()
 		resourceDir := t.TempDir()
-		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+		idx, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 		require.NoError(t, err)
 		require.NoError(t, setRV(idx, 42))
 		if rawBuildInfo != nil {
@@ -1483,10 +1503,44 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 	})
 }
 
+func TestReuseFileIndexRequiresBuildAfterLastImport(t *testing.T) {
+	buildTime := time.Unix(1_700_000_000, 0)
+	logger := log.New("bleve-test")
+
+	for _, tt := range []struct {
+		name           string
+		lastImportTime time.Time
+		wantReuse      bool
+	}{
+		{name: "earlier import", lastImportTime: buildTime.Add(-time.Second), wantReuse: true},
+		{name: "equal import", lastImportTime: buildTime},
+		{name: "later import", lastImportTime: buildTime.Add(time.Second)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+			resourceDir := t.TempDir()
+			index, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), buildTime, buildVersion, nil, "")
+			require.NoError(t, err)
+			require.NoError(t, setRV(index, 42))
+			require.NoError(t, index.Close())
+
+			reopened, _, rv, err := backend.tryReuseFileIndex(resourceDir, tt.lastImportTime, logger)
+			require.NoError(t, err)
+			if tt.wantReuse {
+				require.NotNil(t, reopened)
+				require.Equal(t, int64(42), rv)
+				require.NoError(t, reopened.Close())
+			} else {
+				require.Nil(t, reopened)
+			}
+		})
+	}
+}
+
 // Stands in for an index written by a newer binary.
 func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
 	t.Helper()
-	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "", false)
+	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = idx.Close() })
 	require.NoError(t, setRV(idx, 42))
@@ -1528,7 +1582,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 
 	buildTime := time.Date(2026, 5, 18, 10, 0, 0, 0, time.UTC)
 	selectableFields := []string{"team"}
-	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "", false)
+	source, err := newBleveIndex("", mapper, buildTime, buildVersion, selectableFields, "")
 	require.NoError(t, err)
 	defer func() { require.NoError(t, source.Close()) }()
 
@@ -1781,7 +1835,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 	resourceDir := backend.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
-	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "", false)
+	unfinished, err := newBleveIndex(filepath.Join(resourceDir, formatIndexName(time.Now())), mapper, time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	rv, err := getRV(unfinished)
 	require.NoError(t, err)
@@ -1970,11 +2024,11 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} %d
-		index_server_open_indexes{index_storage="file"} %d
-	`, memory, file)), "index_server_open_indexes"))
+		# HELP grafana_index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE grafana_index_server_open_indexes gauge
+		grafana_index_server_open_indexes{index_storage="memory"} %d
+		grafana_index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "grafana_index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {
@@ -2909,7 +2963,7 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T) {
 	mapper, err := GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "", false)
+	raw, err := newBleveIndex("", mapper, time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = raw.Close() })
 

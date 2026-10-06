@@ -7,7 +7,30 @@ import (
 
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestResourceVersionMaxWait(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		want  time.Duration
+	}{
+		{name: "default", want: time.Second},
+		{name: "custom", value: "100ms", want: 100 * time.Millisecond},
+		{name: "backend default", value: "0s"},
+		{name: "disabled", value: "-1s", want: -time.Second},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("resource_version_max_wait").SetValue(tc.value)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.ResourceVersionMaxWait)
+		})
+	}
+}
 
 func TestKVLeaseTTLBounds(t *testing.T) {
 	for _, tc := range []struct {
@@ -31,6 +54,70 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 			cfg.setUnifiedStorageConfig()
 
 			assert.Equal(t, tc.expected, cfg.KVLeaseTTL)
+		})
+	}
+}
+
+func TestSeededWatchesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("seeded_watches_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_SEEDED_WATCHES_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
+func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+
+	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+}
+
+func TestSearchClientForwardAuthEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		env   bool
+		want  bool
+	}{
+		{name: "default"},
+		{name: "enabled", value: "true", want: true},
+		{name: "disabled", value: "false"},
+		{name: "environment override", value: "false", env: true, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("search_client_forward_auth_enabled").SetValue(tc.value)
+			}
+			if tc.env {
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_CLIENT_FORWARD_AUTH_ENABLED", "true")
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SearchClientForwardAuthEnabled)
 		})
 	}
 }
@@ -106,6 +193,18 @@ func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 		// Test that index settings are correctly parsed
 		assert.Equal(t, 5, cfg.IndexMinCount)
 		assert.Equal(t, []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, cfg.SearchBackedListResources)
+	})
+
+	t.Run("authorize_before_fetch_enabled", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		assert.NoError(t, err)
+		cfg.setUnifiedStorageConfig()
+		assert.False(t, cfg.AuthorizeBeforeFetchEnabled)
+
+		cfg.Raw.Section("unified_storage").Key("authorize_before_fetch_enabled").SetValue("true")
+		cfg.setUnifiedStorageConfig()
+		assert.True(t, cfg.AuthorizeBeforeFetchEnabled)
 	})
 
 	t.Run("search_ring_extend_replica_set", func(t *testing.T) {

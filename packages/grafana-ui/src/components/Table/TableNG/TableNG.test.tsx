@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -83,6 +83,40 @@ const createBasicDataFrame = (): DataFrame =>
     })
   );
 
+it.each([false, true])('adds the original cell to Assistant after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom.filterable = true;
+  const onCellAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onCellAddToAssistant={onCellAddToAssistant}
+    />
+  );
+  if (filtered) {
+    await userEvent.click(
+      screen.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+    );
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  }
+  const firstRow = screen.getAllByRole('row')[1];
+  expect(within(firstRow).getByText(filtered ? 'A2' : 'A3')).toBeInTheDocument();
+  within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onCellAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+    filtered ? 1 : 2
+  );
+});
+
 // A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
 const createJsonDataFrame = (wrapText: boolean): DataFrame =>
   withFieldOverrides(
@@ -108,6 +142,33 @@ const createJsonDataFrame = (wrapText: boolean): DataFrame =>
       ],
     })
   );
+
+it.each([false, true])('highlights Auto JSON independently of table.refresh=%s', async (tableRefreshEnabled) => {
+  const theme = createTheme();
+  const { rerender } = render(
+    <TableNG
+      data={createJsonDataFrame(true)}
+      width={800}
+      height={400}
+      tableRefreshEnabled={tableRefreshEnabled}
+      jsonSyntaxHighlightingEnabled
+    />
+  );
+  expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+  expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  rerender(
+    <TableNG data={createJsonDataFrame(true)} width={800} height={400} tableRefreshEnabled={tableRefreshEnabled} />
+  );
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  expect(screen.queryByText('"us-east-1"')).not.toBeInTheDocument();
+});
 
 // Field has a raw `name` distinct from its configured `displayName`, and no pre-cached
 // `field.state.displayName` (applyFieldOverrides explicitly nulls it out). This lets tests
@@ -2431,11 +2492,11 @@ describe('TableNG', () => {
 
       // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
-      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
-        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(
+        new RegExp(`^repeat\\(1, ${TABLE.HEADER_HEIGHT}px\\)\\s*${expectedRowHeight}px$`)
       );
     });
 
@@ -2603,6 +2664,30 @@ describe('TableNG', () => {
   });
 
   describe('Cell inspection', () => {
+    it('opens the refreshed cell menu by keyboard and applies a filter from the grid', async () => {
+      const data = createBasicDataFrame();
+      data.fields[0].config.filterable = true;
+      data.fields[0].config.custom = { ...data.fields[0].config.custom, inspect: true };
+      const onCellFilterAdded = jest.fn();
+      render(
+        <TableNG data={data} width={800} height={600} tableRefreshEnabled onCellFilterAdded={onCellFilterAdded} />
+      );
+
+      const cell = screen.getByRole('gridcell', { name: 'A1' });
+      const trigger = within(cell).getByTestId(
+        selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton
+      );
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+      await user.keyboard('{Escape}');
+      expect(trigger).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Filter for value' }));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Column A', operator: '=', value: 'A1' });
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
+
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),

@@ -48,6 +48,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
@@ -66,6 +67,7 @@ export function TableFlat(props: TableNGProps) {
     disableKeyboardEvents,
     hoverOverflow,
     disableSanitizeHtml,
+    jsonSyntaxHighlightingEnabled,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
@@ -77,6 +79,7 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
     onSortByChange,
@@ -293,12 +296,14 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
       tableRefreshEnabled,
@@ -315,12 +320,14 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       setFilter,
       showTypeIcons,
       timeRange,
@@ -368,9 +375,9 @@ export function TableFlat(props: TableNGProps) {
       onCellClick={onCellClick}
       className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {

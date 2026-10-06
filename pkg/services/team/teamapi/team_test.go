@@ -15,10 +15,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -259,7 +263,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 
 	t.Run("Prevents deleting a team that owns folders when only the teams redirect is enabled", func(t *testing.T) {
-		setTeamRedirectFlags(t, true, false)
+		setTeamRedirectFlag(t, true)
 		server := SetupAPITestServer(t, &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}, func(tapi *TeamAPI) {
 			tapi.folderSearcher = &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{TotalHits: 1}}
 		})
@@ -276,7 +280,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 
 	t.Run("Returns conflict when the Kubernetes admission check prevents deletion", func(t *testing.T) {
-		setTeamRedirectFlags(t, true, true)
+		setTeamRedirectFlag(t, true)
 		searcher := &teamFolderSearchClient{response: &resourcepb.ResourceSearchResponse{}}
 		server := SetupAPITestServer(t, &deleteTeamService{
 			FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}},
@@ -287,6 +291,7 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 			),
 		}, func(tapi *TeamAPI) {
 			tapi.folderSearcher = searcher
+			tapi.iamFeatures = iamapi.Features{UsersAPI: true}
 		})
 		req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
 		req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
@@ -323,6 +328,56 @@ func TestTeamAPIEndpoint_DeleteTeam(t *testing.T) {
 	})
 }
 
+func TestDeleteTeamPreservesFolderSearchErrorStatus(t *testing.T) {
+	for _, redirected := range []bool{false, true} {
+		for name, input := range map[string]struct {
+			resp *resourcepb.ResourceSearchResponse
+			err  error
+			code int
+		}{
+			"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+				Code: http.StatusTooManyRequests, Message: "index busy",
+			}}, code: http.StatusTooManyRequests},
+			"transport": {err: status.Error(codes.Unavailable, "index unavailable"), code: http.StatusServiceUnavailable},
+			"plain":     {err: errors.New("private database failure"), code: http.StatusInternalServerError},
+		} {
+			t.Run(fmt.Sprintf("redirected=%t/%s", redirected, name), func(t *testing.T) {
+				setTeamRedirectFlag(t, redirected)
+				searcher := &teamFolderSearchClient{response: input.resp, err: input.err}
+				service := &deleteTeamService{FakeService: &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{ID: 1, UID: "a00001"}}}
+				if redirected {
+					service.err = resource.StatusErrorFromResponse(input.resp.GetError(), input.err)
+				}
+				server := SetupAPITestServer(t, service, func(tapi *TeamAPI) {
+					tapi.folderSearcher = searcher
+					tapi.iamFeatures = iamapi.Features{UsersAPI: true}
+				})
+				req := server.NewRequest(http.MethodDelete, fmt.Sprintf(detailTeamURL, 1), http.NoBody)
+				req = webtest.RequestWithSignedInUser(req, authedUserWithPermissions(1, 1, []accesscontrol.Permission{
+					{Action: accesscontrol.ActionTeamsDelete, Scope: "teams:id:1"},
+				}))
+				res, err := server.Send(req)
+				require.NoError(t, err)
+				defer func() { require.NoError(t, res.Body.Close()) }()
+				require.Equal(t, input.code, res.StatusCode)
+				var body struct {
+					Message string `json:"message"`
+				}
+				require.NoError(t, json.NewDecoder(res.Body).Decode(&body))
+				if redirected {
+					require.Nil(t, searcher.request)
+					require.Equal(t, 1, service.calls)
+					require.Equal(t, "Failed to delete Team", body.Message)
+				} else {
+					require.NotNil(t, searcher.request)
+					require.Zero(t, service.calls)
+					require.Equal(t, "Failed to check if team owns folders", body.Message)
+				}
+			})
+		}
+	}
+}
+
 type teamFolderSearchClient struct {
 	resourcepb.ResourceIndexClient
 	request  *resourcepb.ResourceSearchRequest
@@ -332,10 +387,12 @@ type teamFolderSearchClient struct {
 
 type deleteTeamService struct {
 	*teamtest.FakeService
-	err error
+	err   error
+	calls int
 }
 
 func (s *deleteTeamService) DeleteTeam(_ context.Context, _ *team.DeleteTeamCommand) error {
+	s.calls++
 	return s.err
 }
 
@@ -344,18 +401,13 @@ func (s *teamFolderSearchClient) Search(_ context.Context, request *resourcepb.R
 	return s.response, s.err
 }
 
-func setTeamRedirectFlags(t *testing.T, teamsRedirect, usersAPI bool) {
+func setTeamRedirectFlag(t *testing.T, teamsRedirect bool) {
 	t.Helper()
 	provider := memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
 		featuremgmt.FlagKubernetesTeamsRedirect: {
 			Key:            featuremgmt.FlagKubernetesTeamsRedirect,
 			DefaultVariant: "default",
 			Variants:       map[string]any{"default": teamsRedirect},
-		},
-		featuremgmt.FlagKubernetesUsersApi: {
-			Key:            featuremgmt.FlagKubernetesUsersApi,
-			DefaultVariant: "default",
-			Variants:       map[string]any{"default": usersAPI},
 		},
 	})
 	require.NoError(t, openfeature.SetProviderAndWait(provider))

@@ -135,16 +135,14 @@ function setSearchRouteMissing(status = 404) {
   setSearch([], { error: { status, data: { message: 'not found' }, config: { url: '' } } });
 }
 
-function makeNotebook(
-  overrides: {
-    name: string;
-    title: string;
-    tags?: string[];
-    createdBy?: string;
-    created?: string;
-    updated?: string;
-  } // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
-): Notebook {
+function makeNotebook(overrides: {
+  name: string;
+  title: string;
+  tags?: string[];
+  createdBy?: string;
+  created?: string;
+  updated?: string;
+}): Notebook {
   return {
     metadata: {
       name: overrides.name,

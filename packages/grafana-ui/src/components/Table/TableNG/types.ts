@@ -129,6 +129,7 @@ interface BaseTableProps {
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -175,6 +176,7 @@ interface BaseTableProps {
   preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
 }
@@ -185,6 +187,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -210,6 +213,8 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  onAddToAssistant?: () => void;
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
@@ -317,6 +322,15 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
+  /**
+   * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
+   * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
+   * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   * Only applied when `dataviz.tabularNums` is enabled, otherwise set to `normal`.
+   */
+  numericCharWidth: number;
+  /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
+  monoCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
   /**
