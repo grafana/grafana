@@ -403,7 +403,7 @@ func applyUnsupportedPath(
 		WithPreviousPath(change.PreviousPath)
 	unsupported := &resources.UnsupportedPathError{Path: change.Path, Err: pathErr}
 
-	if !renamedFromResourceFile(change) {
+	if !renamedFromResourceFile(change) || resources.IsFolderMetadataFile(change.PreviousPath) {
 		return result.WithWarning(unsupported).Build()
 	}
 
@@ -433,11 +433,7 @@ func renamedFromResourceFile(change repository.VersionedFileChange) bool {
 func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderMetadataEnabled bool) []repository.VersionedFileChange {
 	rewritten := make([]repository.VersionedFileChange, 0, len(diff))
 	for _, change := range diff {
-		// with folder metadata off a _folder.json is not synced at all, so there is nothing to remove
-		if !renamedFromResourceFile(change) || safepath.IsDir(change.Path) ||
-			(!folderMetadataEnabled && resources.IsFolderMetadataFile(change.PreviousPath)) ||
-			resources.IsPathSupported(change.Path) == nil ||
-			(!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path)) {
+		if !splitsRename(change, folderMetadataEnabled) {
 			rewritten = append(rewritten, change)
 			continue
 		}
@@ -457,6 +453,21 @@ func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderM
 			})
 	}
 	return rewritten
+}
+
+// splitsRename reports whether a rename has to become a deletion and a creation.
+func splitsRename(change repository.VersionedFileChange, folderMetadataEnabled bool) bool {
+	if !renamedFromResourceFile(change) || safepath.IsDir(change.Path) {
+		return false
+	}
+	if resources.IsFolderMetadataFile(change.PreviousPath) {
+		// With folder metadata off a _folder.json is not synced, so there is nothing to remove. With it
+		// on, the folder is reverted by the deletion of the file, wherever the file went (a metadata
+		// file moved onto another _folder.json is the metadata builder's own case).
+		return folderMetadataEnabled && !resources.IsFolderMetadataFile(change.Path)
+	}
+	return resources.IsPathSupported(change.Path) != nil &&
+		(safepath.IsHidden(change.Path) || !resources.HasResourceExtension(change.Path))
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource
