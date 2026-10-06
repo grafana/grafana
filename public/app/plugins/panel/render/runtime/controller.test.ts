@@ -49,6 +49,24 @@ function setup() {
   return { port, transferred, handlers, controller, iframe, postMessage, fromFrame, connect };
 }
 
+function lastPingId(port: FakeHostPort): number {
+  const pings = port.sent.filter((message) => Reflect.get(Object(message), 'type') === 'ping');
+  return pings.length === 0 ? 0 : Number(Reflect.get(Object(pings[pings.length - 1]), 'id'));
+}
+
+/** Advances time like a frame that answers every ping but may never finish a draw. */
+function advanceAnswering(ms: number, port: FakeHostPort, fromFrame: (data: unknown) => void) {
+  let answered = lastPingId(port);
+  for (let elapsed = 0; elapsed < ms; elapsed += HEARTBEAT_MS) {
+    jest.advanceTimersByTime(Math.min(HEARTBEAT_MS, ms - elapsed));
+    const id = lastPingId(port);
+    if (id > answered) {
+      fromFrame({ type: 'pong', id });
+      answered = id;
+    }
+  }
+}
+
 const input = (width = 100) => ({ size: { width, height: 50 } }) as unknown as RenderInput;
 
 describe('createRenderFrameController', () => {
@@ -108,26 +126,74 @@ describe('createRenderFrameController', () => {
     expect(controller.render(input())).toBe(-1);
   });
 
-  it('judges a frame unresponsive only after it answered a ping', () => {
-    const { handlers, port, fromFrame, connect } = setup();
+  it('fails a frame that never answers its first ping, stuck in its first draw', () => {
+    const { controller, handlers, port, connect } = setup();
     connect();
-    // Never answering: no verdict, however long it takes.
-    jest.advanceTimersByTime(UNRESPONSIVE_MS * 3);
+    controller.render(input());
+    jest.advanceTimersByTime(UNRESPONSIVE_MS);
     expect(handlers.onError).not.toHaveBeenCalled();
 
-    const pings = port.sent.filter((message) => Reflect.get(Object(message), 'type') === 'ping');
-    const lastPing = pings[pings.length - 1];
-    fromFrame({ type: 'pong', id: Reflect.get(Object(lastPing), 'id') });
+    jest.advanceTimersByTime(HEARTBEAT_MS * 2);
+    expect(handlers.onError).toHaveBeenCalledTimes(1);
+    expect(handlers.onError).toHaveBeenCalledWith({
+      kind: 'unresponsive',
+      message: `The panel code stopped responding for more than ${UNRESPONSIVE_MS / 1000} seconds, for example because of a loop that never ends.`,
+      fatal: true,
+    });
+    expect(controller.getState()).toBe('failed');
+    expect(port.closed).toBe(true);
+    expect(port.onmessage).toBeNull();
+    // Nothing is left running that could fire a second verdict or wedge the host.
+    expect(jest.getTimerCount()).toBe(0);
+    expect(controller.render(input())).toBe(-1);
+  });
+
+  it('fails a frame that answered and then stopped answering', () => {
+    const { handlers, port, fromFrame, connect } = setup();
+    connect();
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    fromFrame({ type: 'pong', id: lastPingId(port) });
     jest.advanceTimersByTime(UNRESPONSIVE_MS + HEARTBEAT_MS * 2);
     expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'unresponsive', fatal: true }));
     expect(port.closed).toBe(true);
   });
 
-  it('reports a render timeout as non-fatal and keeps the controller ready', () => {
+  it('keeps a frame that answers every ping', () => {
+    const { controller, handlers, port, fromFrame, connect } = setup();
+    connect();
+    advanceAnswering(UNRESPONSIVE_MS * 4, port, fromFrame);
+    expect(handlers.onError).not.toHaveBeenCalled();
+    expect(controller.getState()).toBe('ready');
+  });
+
+  it('does not judge the frame while the host document is hidden', () => {
+    const hidden = jest.spyOn(document, 'hidden', 'get').mockReturnValue(true);
     const { controller, handlers, connect } = setup();
     connect();
+    jest.advanceTimersByTime(UNRESPONSIVE_MS * 3);
+    expect(handlers.onError).not.toHaveBeenCalled();
+    expect(controller.getState()).toBe('ready');
+
+    hidden.mockReturnValue(false);
+    jest.advanceTimersByTime(UNRESPONSIVE_MS + HEARTBEAT_MS * 2);
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'unresponsive', fatal: true }));
+    hidden.mockRestore();
+  });
+
+  it('fails a frame that never loads', () => {
+    const { controller, handlers } = setup();
+    expect(controller.getState()).toBe('idle');
+    jest.advanceTimersByTime(STARTUP_TIMEOUT_MS);
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'startup-timeout', fatal: true }));
+    expect(controller.getState()).toBe('failed');
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('reports a render timeout as non-fatal and keeps the controller ready', () => {
+    const { controller, handlers, connect, port, fromFrame } = setup();
+    connect();
     const seq = controller.render(input());
-    jest.advanceTimersByTime(RENDER_TIMEOUT_MS);
+    advanceAnswering(RENDER_TIMEOUT_MS, port, fromFrame);
     expect(handlers.onError).toHaveBeenCalledWith({
       kind: 'render-timeout',
       message: 'The panel code did not finish drawing within 10 seconds.',
@@ -322,7 +388,7 @@ describe('createRenderFrameController', () => {
   });
 
   it('stops the heartbeat and render timer while paused and resumes them', () => {
-    const { controller, port, connect, handlers } = setup();
+    const { controller, port, connect, handlers, fromFrame } = setup();
     connect();
     controller.render(input());
     controller.pause();
@@ -334,7 +400,7 @@ describe('createRenderFrameController', () => {
 
     controller.resume();
     expect(port.sent[port.sent.length - 1]).toEqual({ type: 'resume' });
-    jest.advanceTimersByTime(RENDER_TIMEOUT_MS);
+    advanceAnswering(RENDER_TIMEOUT_MS, port, fromFrame);
     expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'render-timeout' }));
   });
 

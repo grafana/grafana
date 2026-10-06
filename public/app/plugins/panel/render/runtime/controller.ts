@@ -61,7 +61,11 @@ export interface RenderFrameControllerOptions {
 }
 
 export interface RenderFrameController {
-  /** Bind to <iframe onLoad>. The first load connects; a second load on the same element is fatal. */
+  /**
+   * Bind to <iframe onLoad>. The first load connects; a second load on the same element is fatal.
+   * Every fatal error means the host must remove the iframe, which tears its document down, and
+   * create a new element with a new controller to try again.
+   */
   handleLoad(iframe: HTMLIFrameElement): void;
   /** Returns the seq; before ready only the latest render is kept; -1 once failed or disposed. */
   render(input: RenderInput): number;
@@ -117,7 +121,6 @@ export function createRenderFrameController(
 
   let pingId = 0;
   let pingedAt: number | undefined;
-  let answered = false;
   let tickAt = 0;
 
   let recentMessages: Array<{ at: number; type: string }> = [];
@@ -191,7 +194,8 @@ export function createRenderFrameController(
     if (pingedAt === undefined) {
       pingedAt = at;
       send({ type: 'ping', id: ++pingId });
-    } else if (answered && at - pingedAt > UNRESPONSIVE_MS) {
+    } else if (at - pingedAt > UNRESPONSIVE_MS) {
+      // Judged from the first ping: a frame stuck in its first draw never answers at all.
       fail(
         'unresponsive',
         `The panel code stopped responding for more than ${UNRESPONSIVE_MS / 1000} seconds, for example because of a loop that never ends.`
@@ -326,7 +330,6 @@ export function createRenderFrameController(
       }
       case 'pong':
         if (message.id === pingId && pingedAt !== undefined) {
-          answered = true;
           pingedAt = undefined;
           return;
         }
@@ -349,6 +352,12 @@ export function createRenderFrameController(
     }
   };
 
+  // Armed on creation, not on load, so a frame that never loads cannot hold the panel either.
+  startupTimer = setTimeout(() => {
+    startupTimer = undefined;
+    fail('startup-timeout', `The panel frame did not start within ${STARTUP_TIMEOUT_MS / 1000} seconds.`);
+  }, STARTUP_TIMEOUT_MS);
+
   return {
     handleLoad(iframe) {
       if (isClosed()) {
@@ -369,10 +378,6 @@ export function createRenderFrameController(
       port = channel.port1;
       port.onmessage = onPortMessage;
       port.start?.();
-      startupTimer = setTimeout(() => {
-        startupTimer = undefined;
-        fail('startup-timeout', `The panel frame did not start within ${STARTUP_TIMEOUT_MS / 1000} seconds.`);
-      }, STARTUP_TIMEOUT_MS);
       // An opaque frame has a null origin, so '*' is the only target; the message carries no data.
       iframe.contentWindow?.postMessage({ type: RENDER_INIT_MESSAGE_TYPE, version: RENDER_PROTOCOL_VERSION }, '*', [
         channel.port2,

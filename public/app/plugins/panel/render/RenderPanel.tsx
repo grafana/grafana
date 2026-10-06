@@ -157,6 +157,13 @@ function RenderFrameHost({
     };
   }, [frameKey, handleLink]);
 
+  // A fatal error already removed the iframe, which tears its document down; a retry mounts a new
+  // element with a new controller.
+  const retry = useCallback(() => {
+    setFatalError(null);
+    setReloadCount((count) => count + 1);
+  }, []);
+
   const onLoad = useCallback((event: SyntheticEvent<HTMLIFrameElement>) => {
     const iframe = event.currentTarget;
     if (controllerRef.current) {
@@ -252,8 +259,8 @@ function RenderFrameHost({
       {fatalError ? (
         <div className={styles.message} role="alert">
           <p>{fatalErrorMessage(fatalError.kind)}</p>
-          <Button variant="secondary" icon="sync" onClick={() => setReloadCount((count) => count + 1)}>
-            <Trans i18nKey="render-panel.errors.reload">Reload</Trans>
+          <Button variant="secondary" icon="sync" onClick={retry}>
+            {t('render-panel.errors.retry', 'Retry')}
           </Button>
         </div>
       ) : (
