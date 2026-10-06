@@ -126,9 +126,8 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Response.Error is planned for deprecation soon. Keep this defensive check
-		// during the transition; once removed, ParseResults will only decode results
-		// and report decoding errors, with no storage-error checks.
+		// Keep this check until the response error field is removed.
+		// After removal, ParseResults will only decode results and report decoding errors.
 		return v0alpha1.SearchResults{}, resource.StatusError(result.Error)
 	}
 

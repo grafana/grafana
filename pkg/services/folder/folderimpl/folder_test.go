@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -55,6 +56,13 @@ func TestToFolderErrorStorageClassification(t *testing.T) {
 		for _, input := range []error{resource.ErrorFromResponse(result, nil), st.Err(), fmt.Errorf("search: %w", st.Err())} {
 			require.Same(t, input, toFolderError(input))
 		}
+	})
+	t.Run("namespace mismatch", func(t *testing.T) {
+		require.Same(t, folder.ErrAccessDenied, toFolderError(claims.ErrNamespaceMismatch))
+	})
+	t.Run("wrapped namespace mismatch", func(t *testing.T) {
+		err := fmt.Errorf("search: %w", claims.ErrNamespaceMismatch)
+		require.Same(t, folder.ErrAccessDenied, toFolderError(err))
 	})
 	t.Run("ordinary error unchanged", func(t *testing.T) {
 		err := errors.New("connection refused")
