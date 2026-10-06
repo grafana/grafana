@@ -143,6 +143,7 @@ Grafana is an open source platform for monitoring and observability that lets yo
 
 1. Open a new tab.
 1. Browse to [http://localhost:3000](http://localhost:3000).
+
 <!-- INTERACTIVE ignore END -->
 
 {{< docs/ignore >}}

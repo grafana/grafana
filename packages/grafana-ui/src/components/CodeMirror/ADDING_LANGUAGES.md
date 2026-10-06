@@ -46,7 +46,7 @@ Run the shared editor tests and formatting checks from the repository root:
 
 ```bash
 yarn jest --no-watch packages/grafana-ui/src/components/CodeMirror/languageLoader.test.ts packages/grafana-ui/src/components/CodeMirror/CodeEditor.test.tsx
-yarn prettier --check packages/grafana-ui/src/components/CodeMirror/ADDING_LANGUAGES.md
+yarn oxfmt --check packages/grafana-ui/src/components/CodeMirror/ADDING_LANGUAGES.md
 ```
 
 Use the CodeMirrorEditor Storybook story to confirm syntax highlighting and any language-specific behavior in the browser.

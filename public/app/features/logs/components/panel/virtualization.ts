@@ -149,7 +149,7 @@ export class LogLineVirtualization {
 
     const availableWidth = maxWidth - beforeWidth;
     for (const textLine of textLines) {
-      for (let start = 0; start < textLine.length; ) {
+      for (let start = 0; start < textLine.length;) {
         let testLogLine: string;
         let width = 0;
         let delta = 0;

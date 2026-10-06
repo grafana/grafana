@@ -8,8 +8,10 @@ import { InlineField } from '../Forms/InlineField';
 import { Box } from '../Layout/Box/Box';
 import { Stack } from '../Layout/Stack/Stack';
 
-export interface Props<T extends DataSourceJsonData>
-  extends Pick<DataSourcePluginOptionsEditorProps<T>, 'options' | 'onOptionsChange'> {}
+export interface Props<T extends DataSourceJsonData> extends Pick<
+  DataSourcePluginOptionsEditorProps<T>,
+  'options' | 'onOptionsChange'
+> {}
 
 export interface SecureSocksProxyConfig extends DataSourceJsonData {
   enableSecureSocksProxy?: boolean;

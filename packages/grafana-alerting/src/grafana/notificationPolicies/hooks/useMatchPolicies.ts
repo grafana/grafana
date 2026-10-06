@@ -28,8 +28,9 @@ export type InstanceMatchResult = {
   matchedRoutes: RouteMatch[];
 };
 
-interface UseMatchInstancesToRouteTreesReturnType
-  extends ReturnType<typeof notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery> {
+interface UseMatchInstancesToRouteTreesReturnType extends ReturnType<
+  typeof notificationsAPIv1beta1.endpoints.listRoutingTree.useQuery
+> {
   matchInstancesToRouteTrees: (instances: Label[][]) => InstanceMatchResult[];
 }
 

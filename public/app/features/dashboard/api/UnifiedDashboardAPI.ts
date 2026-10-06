@@ -51,9 +51,10 @@ function sortByGenerationDesc<T extends Resource<unknown>>(items: T[]): T[] {
   return [...items].sort((a, b) => (b.metadata.generation ?? 0) - (a.metadata.generation ?? 0));
 }
 
-export class UnifiedDashboardAPI
-  implements DashboardAPI<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>, Dashboard | DashboardV2Spec>
-{
+export class UnifiedDashboardAPI implements DashboardAPI<
+  DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec>,
+  Dashboard | DashboardV2Spec
+> {
   private v1Client: K8sDashboardAPI;
   private v2Client: K8sDashboardV2API;
 

@@ -61,9 +61,8 @@ export default (env: Env = {}): Configuration => ({
       // correctly we must alias this package to the correct file
       // the alternative to this alias is to copy-paste the file into our
       // source code and miss out in updates
-      '@locker/near-membrane-dom/custom-devtools-formatter': require.resolve(
-        '@locker/near-membrane-dom/custom-devtools-formatter.js'
-      ),
+      '@locker/near-membrane-dom/custom-devtools-formatter':
+        require.resolve('@locker/near-membrane-dom/custom-devtools-formatter.js'),
     },
     modules: [
       // default value

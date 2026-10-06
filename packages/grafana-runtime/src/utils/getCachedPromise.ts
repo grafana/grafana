@@ -53,8 +53,10 @@ interface LogErrorArgs {
   key: string;
 }
 
-interface GetCachedPromiseWithArgsOptions<T, TArgs extends unknown[]>
-  extends Pick<CachedPromiseOptions<T>, 'defaultValue' | 'invalidate' | 'onError'> {
+interface GetCachedPromiseWithArgsOptions<T, TArgs extends unknown[]> extends Pick<
+  CachedPromiseOptions<T>,
+  'defaultValue' | 'invalidate' | 'onError'
+> {
   cacheKeyFn?: (...args: TArgs) => string;
 }
 

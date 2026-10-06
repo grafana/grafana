@@ -150,7 +150,7 @@ You can then use the `severity` label to control how alerts are handled. For ins
 > - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
 > - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/).
 
-[//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
+[//]: <> '{{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
 
 ### Based on query label
 

@@ -92,8 +92,10 @@ export interface VisualizationSuggestion<TOptions = {}, TFieldConfig extends {} 
  * @internal
  * the internal interface that the PanelPlugin transforms the supplied suggestions into.
  */
-export interface PanelPluginVisualizationSuggestion<TOptions = {}, TFieldConfig extends {} = {}>
-  extends VisualizationSuggestion<TOptions, TFieldConfig> {
+export interface PanelPluginVisualizationSuggestion<
+  TOptions = {},
+  TFieldConfig extends {} = {},
+> extends VisualizationSuggestion<TOptions, TFieldConfig> {
   /** Name of suggestion */
   name: string;
   /** Panel plugin id */

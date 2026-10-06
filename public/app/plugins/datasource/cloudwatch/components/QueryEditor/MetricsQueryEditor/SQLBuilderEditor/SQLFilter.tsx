@@ -43,15 +43,13 @@ const SQLFilter = ({ query, onQueryChange, datasource }: SQLFilterProps) => {
 
   const onChange = (newItems: Array<Partial<QueryEditorOperatorExpression>>) => {
     // As new (empty object) items come in, with need to make sure they have the correct type
-    const cleaned = newItems.map(
-      (v): QueryEditorOperatorExpression => ({
-        type: QueryEditorExpressionType.Operator,
-        property: v.property ?? { type: QueryEditorPropertyType.String },
-        operator: v.operator ?? {
-          name: EQUALS,
-        },
-      })
-    );
+    const cleaned = newItems.map((v): QueryEditorOperatorExpression => ({
+      type: QueryEditorExpressionType.Operator,
+      property: v.property ?? { type: QueryEditorPropertyType.String },
+      operator: v.operator ?? {
+        name: EQUALS,
+      },
+    }));
 
     setFilters(cleaned);
 

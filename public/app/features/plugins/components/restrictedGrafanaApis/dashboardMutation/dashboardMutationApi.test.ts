@@ -14,12 +14,10 @@ import { dashboardMutationApi, setDashboardMutationClientForTests } from './dash
 
 function createMockClient(): MutationClient {
   return {
-    execute: jest.fn(
-      async (_mutation: MutationRequest): Promise<MutationResult> => ({
-        success: true,
-        changes: [],
-      })
-    ),
+    execute: jest.fn(async (_mutation: MutationRequest): Promise<MutationResult> => ({
+      success: true,
+      changes: [],
+    })),
     getAvailableCommands: jest.fn(() => []),
   };
 }

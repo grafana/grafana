@@ -74,8 +74,12 @@ export type FieldConfigEditorProps<TValue, TSettings extends {}> = StandardEdito
 /** @deprecated Use StandardEditorProps instead */
 export type FieldOverrideEditorProps<TValue, TSettings extends {}> = StandardEditorProps<TValue, TSettings>;
 
-export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any, TContextOptions = unknown>
-  extends OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
+export interface FieldConfigEditorConfig<
+  TOptions,
+  TSettings = any,
+  TValue = any,
+  TContextOptions = unknown,
+> extends OptionEditorConfig<TOptions, TSettings, TValue, TContextOptions> {
   /**
    * Function that allows specifying whether or not this field config should apply to a given field.
    * @param field

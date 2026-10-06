@@ -57,6 +57,8 @@ const config: ConfigFile = {
   schemaFile: '', // leave this empty, and instead populate the outputFiles object below
   apiFile: '', // leave this empty, and instead populate the outputFiles object below
   exportName: 'generatedAPI',
+  // oxfmt ignores *.gen.ts, so the codegen's own Prettier pass is the only formatting these files get
+  prettierConfigFile: path.join(basePath, '.oxfmtrc.json'),
 
   outputFiles: {
     // OpenAPI3 client with all endpoints

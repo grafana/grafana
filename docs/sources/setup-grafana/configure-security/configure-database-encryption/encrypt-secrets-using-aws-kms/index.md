@@ -33,12 +33,13 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
    <br><br>b. Fill in the section with the following values:
    <br>
    - `key_id`: a reference to a key stored in the KMS. This can be a key ID, a key Amazon Resource Name (ARN), an alias name, or an alias ARN. If you are using an alias, use the prefix `alias/`. To specify a KMS key in a different AWS account, use its ARN or alias. For more information about how to retrieve a key ID from AWS, refer to [Finding the key ID and key ARN](https://docs.aws.amazon.com/kms/latest/developerguide/find-cmk-id-arn.html).<br>
-     | `key_id` option | Example value |
-     | --- | --- |
-     | Key ID | `1234abcd-12ab-34cd-56ef-1234567890ab` |
-     | Key ARN | `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` |
-     | Alias name | `alias/ExampleAlias` |
-     | Alias ARN | `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias` |
+
+     | `key_id` option | Example value                                                                 |
+     | --------------- | ----------------------------------------------------------------------------- |
+     | Key ID          | `1234abcd-12ab-34cd-56ef-1234567890ab`                                        |
+     | Key ARN         | `arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab` |
+     | Alias name      | `alias/ExampleAlias`                                                          |
+     | Alias ARN       | `arn:aws:kms:us-east-2:111122223333:alias/ExampleAlias`                       |
 
    - `access_key_id`: The AWS Access Key ID that you previously generated.
    - `secret_access_key`: The AWS Secret Access Key you previously generated.

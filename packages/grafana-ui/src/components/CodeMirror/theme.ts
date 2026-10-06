@@ -9,9 +9,8 @@ import { getFocusStyles } from '../../themes/mixins';
 
 export function createCodeEditorTheme(theme: GrafanaTheme2, options?: { transparent?: boolean }): Extension {
   const background = options?.transparent ? 'transparent' : theme.components.input.background;
-  const selectionState = EditorView.editorAttributes.compute(
-    ['selection'],
-    (state): Record<string, string> => (state.selection.main.empty ? {} : { class: 'cm-hasSelection' })
+  const selectionState = EditorView.editorAttributes.compute(['selection'], (state): Record<string, string> =>
+    state.selection.main.empty ? {} : { class: 'cm-hasSelection' }
   );
   const editorTheme = EditorView.theme(
     {
