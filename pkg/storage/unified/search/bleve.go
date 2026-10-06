@@ -2388,9 +2388,7 @@ func (b *bleveIndex) Search(
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
 		}, func(err error) {
-			// Swallowed (the caller is treated as not an admin), so without this the
-			// failure would be invisible.
-			b.logger.FromContext(ctx).Error("trash folder admin check failed, treating user as not an admin", "error", err)
+			b.logger.FromContext(ctx).Error("Trash folder admin check failed", "error", err)
 		})
 	}
 

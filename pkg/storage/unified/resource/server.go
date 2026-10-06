@@ -2239,7 +2239,11 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 			}
 
 			// The deletion marker records the deleting user as the last updater.
-			if !authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy()) {
+			allowed, err := authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy())
+			if err != nil {
+				return err
+			}
+			if !allowed {
 				continue
 			}
 
