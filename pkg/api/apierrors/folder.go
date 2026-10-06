@@ -1,6 +1,7 @@
 package apierrors
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -32,6 +34,12 @@ var stableDashboardErrSentinels = []error{
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
+	var apiStatus k8sErrors.APIStatus
+	// Leave cancellation intact for ErrOrFallback's legacy response body.
+	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) {
+		err = resource.StatusErrorFromResponse(nil, err)
+	}
+
 	// --- Dashboard errors ---
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
@@ -85,7 +93,7 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	// --- Kubernetes status errors ---
-	if statusErr, ok := errors.AsType[*k8sErrors.StatusError](err); ok {
+	if statusErr, ok := storageStatusError(err); ok {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))

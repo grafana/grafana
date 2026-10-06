@@ -15,11 +15,18 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
+	var apiStatus apierrors.APIStatus
+	// Leave cancellation intact for ErrOrFallback's legacy response body.
+	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) {
+		err = resource.StatusErrorFromResponse(nil, err)
+	}
+
 	// --- Dashboard errors ---
 	if dashboardErr, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		if body := dashboardErr.Body(); body != nil {
@@ -53,7 +60,7 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 	}
 
 	// --- Kubernetes status errors ---
-	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
+	if statusErr, ok := storageStatusError(err); ok {
 		// The k8s dashboard apiserver returns NotFound on the folders resource when the
 		// referenced folder UID does not exist. Map that back to the legacy
 		// /api/dashboards/db contract (400 + "folder not found") so existing clients keep
