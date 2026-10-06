@@ -36,6 +36,11 @@ import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
 
+interface DashboardSourceMeta {
+  panelId: number;
+  title: string;
+}
+
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
   if (!a?.from || !a?.to || !b?.from || !b?.to) {
     return false;
@@ -95,6 +100,11 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Extract AdHoc filters from the request
     const adHocFilters = options.filters || [];
 
+    const source: DashboardSourceMeta = {
+      panelId,
+      title: sceneGraph.interpolate(sourcePanel, sourcePanel.state.title),
+    };
+
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
         sourceDataProvider?.setContainerWidth(500);
@@ -141,7 +151,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         }),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
+            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters, source),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -161,7 +171,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   private getDataFramesForQueryTopic(
     data: PanelData,
     query: DashboardQuery,
-    filters: AdHocVariableFilter[]
+    filters: AdHocVariableFilter[],
+    source: DashboardSourceMeta
   ): DataFrame[] {
     // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
@@ -179,6 +190,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
+        // Additive source attribution: refIds collide across source panels, so consumers
+        // (e.g. the render panel) can group frames by the panel they came from.
+        meta: {
+          ...s.meta,
+          custom: {
+            ...s.meta?.custom,
+            dashboardSourcePanelId: source.panelId,
+            dashboardSourcePanelTitle: source.title,
+          },
+        },
         fields: s.fields.map((field: Field) => ({
           ...field,
           config: {

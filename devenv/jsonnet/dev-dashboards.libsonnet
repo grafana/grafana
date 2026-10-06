@@ -96,6 +96,7 @@
     "postgres_unittest": (import '../dev-dashboards/datasource-postgres/postgres_unittest.json'),
     "regression-analysis": (import '../dev-dashboards/transforms/regression-analysis.json'),
     "relative_time_zone_support": (import '../dev-dashboards/scenarios/relative_time_zone_support.json'),
+    "render-landing": (import '../dev-dashboards/panel-render/render-landing.json'),
     "reuse": (import '../dev-dashboards/transforms/reuse.json'),
     "rows-to-fields": (import '../dev-dashboards/transforms/rows-to-fields.json'),
     "section-variables": (import '../dev-dashboards/section-variables/section-variables.json'),

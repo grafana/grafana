@@ -1,0 +1,19 @@
+{
+  "type": "panel",
+  "name": "Render",
+  "id": "render",
+  "state": "alpha",
+
+  "info": {
+    "description": "Draws panel data with sandboxed code stored in the dashboard",
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icon.svg",
+      "large": "img/icon.svg"
+    },
+    "links": [{ "name": "Raise issue", "url": "https://github.com/grafana/grafana/issues/new" }]
+  }
+}

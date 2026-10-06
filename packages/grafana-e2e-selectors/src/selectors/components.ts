@@ -64,6 +64,9 @@ export const versionedComponents = {
     pastePanel: {
       '12.1.0': 'data-testid CanvasGridAddActions paste-panel',
     },
+    addLandingTab: {
+      '13.3.0': 'data-testid CanvasGridAddActions add-landing-tab',
+    },
   },
   Card: {
     heading: {

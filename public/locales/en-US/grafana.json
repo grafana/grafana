@@ -5573,6 +5573,7 @@
       }
     },
     "canvas-actions": {
+      "add-landing-tab": "Add landing tab",
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to {{maxDepth}} levels",
@@ -6522,6 +6523,10 @@
       "description": "Organize panels into horizontal tabs",
       "edit": {
         "ungroup-tabs": "Ungroup tabs"
+      },
+      "landing": {
+        "panel-title": "Overview",
+        "title": "Overview"
       },
       "name": "Tabs",
       "scroll-tabs-left": "Scroll tabs left",
@@ -15656,6 +15661,55 @@
     "tooltip": {
       "interval-selected": "Set auto refresh interval",
       "turned-off": "Auto refresh off"
+    }
+  },
+  "render-panel": {
+    "editor": {
+      "help": "Call panel.onRender(draw). The code runs in a sandbox with no network access.",
+      "insert-template": "Insert template",
+      "replace-body": "The \"{{template}}\" template replaces the current drawing code. Your changes are lost.",
+      "replace-confirm": "Replace",
+      "replace-title": "Replace drawing code?"
+    },
+    "empty-code": "Add drawing code in the panel options to render this panel.",
+    "errors": {
+      "code-too-large": "The drawing code is {{bytes}} bytes, over the limit for this panel.",
+      "code-too-large-title": "Drawing code is too large",
+      "csp": "The drawing code tried something the sandbox does not allow",
+      "generic": "The drawing sandbox stopped.",
+      "limit-title": "Too much data to draw",
+      "navigated-away": "The drawing code tried to navigate away and was stopped.",
+      "output-limit": "The drawing produced too many elements",
+      "protocol": "The drawing sandbox sent an invalid message and was stopped.",
+      "rate-limit": "The drawing code sent too many messages and was stopped.",
+      "reload": "Reload",
+      "render-timeout": "The drawing code took too long to finish",
+      "runtime": "The drawing code failed",
+      "startup": "The drawing code failed to start",
+      "startup-timeout": "The drawing sandbox did not start in time.",
+      "too-large": "The data is {{actual}} bytes once serialized. The render panel sends at most {{limit}} bytes to the drawing code.",
+      "too-many-cells": "The queries returned {{actual}} values. The render panel draws at most {{limit}}. Reduce the time range or add a limit to the query.",
+      "too-many-frames": "The queries returned {{actual}} frames. The render panel draws at most {{limit}}.",
+      "unresponsive": "The drawing code stopped responding."
+    },
+    "frame-title": "Panel drawing",
+    "options": {
+      "code": "Drawing code",
+      "code-description": "JavaScript that draws the panel data. It is stored in the dashboard and runs in a sandbox."
+    },
+    "templates": {
+      "blank": {
+        "description": "A minimal starting point",
+        "label": "Blank"
+      },
+      "incident-layout": {
+        "description": "Switches to an incident view when a metric crosses its last threshold",
+        "label": "Incident layout"
+      },
+      "kpi-briefing": {
+        "description": "One card per source panel with the last value, a sparkline and the change over the time range",
+        "label": "KPI briefing"
+      }
     }
   },
   "return-to-previous": {
