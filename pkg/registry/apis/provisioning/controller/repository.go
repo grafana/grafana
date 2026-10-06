@@ -1329,8 +1329,17 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// Ready condition from stale data.
 		readyCondition *v1.Condition
 	)
-	// Two cases force a check the cadence would skip, both because stored health does
-	// not describe the repository as it now is:
+	// Pending hook work needs the accessibility verdict the check produces, and
+	// isRepositoryAccessible reads a nil result as reachable -- so without this,
+	// webhook create/rotate would be attempted against a repository last seen
+	// returning 401/404/503. A spec change already forces a check via ShouldCheckHealth.
+	_, webhookCapable := repo.(repository.WebhookRepository)
+	hookWorkPending := webhookCapable &&
+		((len(obj.Spec.Workflows) > 0 && repository.GetID(obj.Status.Webhook).IsEmpty()) ||
+			shouldRotateWebhookSecret)
+
+	// Three cases force a check the cadence would skip, each because stored health does
+	// not describe the repository as it now is, or is not the thing being asked about:
 	//
 	// forceProcessForUnblock -- while blocked, stored health is the quota override, not
 	// a real Test() result, so on recovery it is stale by construction. Without this a
@@ -1340,7 +1349,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// tokenReplaced -- the credential changed this pass, so a fresh-looking healthy
 	// result could enqueue a sync against an unusable token, and a fresh-looking
 	// unhealthy one could keep a repository blocked that the replacement just fixed.
-	if shouldCheckHealth || forceProcessForUnblock || tokenReplaced {
+	//
+	// hookWorkPending -- see above; the verdict is read, so it has to be real.
+	if shouldCheckHealth || forceProcessForUnblock || tokenReplaced || hookWorkPending {
 		healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
 		healthResult, err = rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 		healthSpan.End()

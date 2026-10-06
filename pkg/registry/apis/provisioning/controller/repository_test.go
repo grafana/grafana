@@ -3983,6 +3983,37 @@ func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t
 	}
 }
 
+// The hook path is the only consumer of the accessibility verdict, and
+// isRepositoryAccessible reads a nil TestResults as reachable. So a pass that skips the
+// health check must not then attempt webhook work against a repository last seen
+// returning 401/404/503 -- the health cadence has to force a check whenever there is
+// hook work, not just when the timestamp is stale.
+func TestRepositoryController_process_HookWorkForcesHealthCheck(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	// Workflows configured with no webhook recorded: webhook creation is due, and the
+	// generation is already observed so nothing else forces a health check.
+	repo.Spec.Workflows = []provisioning.Workflow{provisioning.WriteWorkflow}
+	other := blockedOverQuotaRepo(namespace, "other-repo", time.Now(), false)
+
+	rc, _, stub, _ := newQuotaController(t, 1, repo, other)
+	// The repository is not reachable: credentials no longer work.
+	stub.testResults = &provisioning.TestResults{
+		Success: false,
+		Code:    http.StatusUnauthorized,
+		Errors:  []provisioning.ErrorDetails{{Detail: "authentication failed"}},
+	}
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(),
+		"pending hook work must force a health check: it is what decides whether the repository is reachable")
+	assert.Equal(t, int32(0), stub.onCreateCalls.Load(),
+		"webhook creation must not be attempted against an unreachable repository")
+}
+
 // Dropping the steady-state trigger must not strand a blocked repository. Quota is
 // resolved before the trigger switch on every reconcile, and the informer re-lists
 // every repository on the resync interval, so the next resync after the namespace
