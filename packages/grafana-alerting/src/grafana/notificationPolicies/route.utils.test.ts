@@ -4,7 +4,6 @@ import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v1beta1/
 import { type Label } from '../matchers/types';
 import { type LabelMatchDetails, matchLabels } from '../matchers/utils';
 
-import { type Route } from './types';
 import {
   type InheritableProperties,
   type RouteMatchResult,
@@ -13,7 +12,8 @@ import {
   findMatchingRoutes,
   getInheritedProperties,
   matchInstancesToRoute,
-} from './utils';
+} from './route.utils';
+import { type Route } from './types';
 
 describe('findMatchingRoutes', () => {
   describe('basic matching', () => {
