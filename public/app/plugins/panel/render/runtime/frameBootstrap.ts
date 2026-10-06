@@ -86,6 +86,8 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var DEFAULT_TIME_FORMAT = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
   var ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 
+  hardenRealm();
+
   var root = document.getElementById('root');
   var port = null;
   var buffered = [];
@@ -101,6 +103,261 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var heightScheduled = false;
   var themeKey = '';
   var paletteCount = 0;
+
+  /*
+   * CSP does not govern WebRTC, so the constructors are replaced before the user code runs. A
+   * nested frame would hand the code a fresh realm with the original constructors, so frame-like
+   * elements cannot be created, inserted or parsed from markup, and their windows are never
+   * exposed. Every check uses references captured here, so the code cannot neutralize it by
+   * replacing globals or prototype methods later.
+   */
+  function hardenRealm() {
+    var reflectApply = Reflect.apply;
+    var defineProperty = Object.defineProperty;
+    var getOwnDescriptor = Object.getOwnPropertyDescriptor;
+    var SafeError = Error;
+    var regexpExec = RegExp.prototype.exec;
+    var FRAME_TAGS = Object.create(null);
+    var frameTagNames = ['iframe', 'frame', 'frameset', 'object', 'embed', 'portal', 'fencedframe'];
+    for (var t = 0; t < frameTagNames.length; t++) {
+      FRAME_TAGS[frameTagNames[t]] = true;
+    }
+    var FRAME_SELECTOR = frameTagNames.join(',');
+    var FRAME_MARKUP = /<(?:[a-z0-9_.-]+:)?(?:iframe|frame|frameset|object|embed|portal|fencedframe)(?=[\\s/>]|$)/i;
+    var NESTED_FRAME_MESSAGE = 'Nested frames, objects and embeds are not available in the render panel.';
+    var nodeTypeGetter = getOwnDescriptor(Node.prototype, 'nodeType').get;
+    var localNameGetter = getOwnDescriptor(Element.prototype, 'localName').get;
+    var elementQuery = Element.prototype.querySelector;
+    var fragmentQuery = DocumentFragment.prototype.querySelector;
+    var documentQueryAll = Document.prototype.querySelectorAll;
+    var elementRemove = Element.prototype.remove;
+
+    function lock(target, name, descriptor) {
+      try {
+        descriptor.configurable = false;
+        defineProperty(target, name, descriptor);
+      } catch (e) {
+        // A property the browser does not let us redefine keeps its native behavior.
+      }
+    }
+
+    function unavailable(name) {
+      return function () {
+        throw new SafeError(name + ' is not available in the render panel.');
+      };
+    }
+
+    var webrtc = [
+      'RTCPeerConnection', 'webkitRTCPeerConnection', 'mozRTCPeerConnection', 'RTCDataChannel',
+      'RTCRtpSender', 'RTCRtpReceiver', 'RTCRtpTransceiver', 'RTCIceTransport', 'RTCDtlsTransport',
+      'RTCSctpTransport', 'RTCIceCandidate', 'RTCSessionDescription', 'RTCCertificate', 'RTCDTMFSender',
+      'RTCRtpScriptTransform', 'RTCIdentityProvider'
+    ];
+    for (var w = 0; w < webrtc.length; w++) {
+      if (webrtc[w] in window) {
+        lock(window, webrtc[w], { value: unavailable(webrtc[w]), writable: false, enumerable: false });
+      }
+    }
+
+    function isFrameElement(node) {
+      try {
+        return FRAME_TAGS[reflectApply(localNameGetter, node, [])] === true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function containsFrame(node) {
+      var type;
+      try {
+        type = reflectApply(nodeTypeGetter, node, []);
+      } catch (e) {
+        return false;
+      }
+      if (type === 1) {
+        return isFrameElement(node) || reflectApply(elementQuery, node, [FRAME_SELECTOR]) !== null;
+      }
+      if (type === 11) {
+        return reflectApply(fragmentQuery, node, [FRAME_SELECTOR]) !== null;
+      }
+      return false;
+    }
+
+    // Markup is coerced once, so a value whose toString changes between calls cannot slip through.
+    function checkedMarkup(value) {
+      var text = '' + value;
+      if (reflectApply(regexpExec, FRAME_MARKUP, [text]) !== null) {
+        throw new SafeError(NESTED_FRAME_MESSAGE);
+      }
+      return text;
+    }
+
+    function guardMethod(proto, name, check) {
+      var original = proto && getOwnDescriptor(proto, name);
+      if (!original || typeof original.value !== 'function') {
+        return;
+      }
+      var method = original.value;
+      lock(proto, name, {
+        value: function () {
+          return reflectApply(method, this, check(arguments));
+        },
+        writable: false,
+        enumerable: original.enumerable
+      });
+    }
+
+    function noFrameNodes(args) {
+      var copy = [];
+      for (var i = 0; i < args.length; i++) {
+        if (containsFrame(args[i])) {
+          throw new SafeError(NESTED_FRAME_MESSAGE);
+        }
+        copy.push(args[i]);
+      }
+      return copy;
+    }
+
+    function markupAt(index) {
+      return function (args) {
+        var copy = [];
+        for (var i = 0; i < args.length; i++) {
+          copy.push(i === index || index < 0 ? checkedMarkup(args[i]) : args[i]);
+        }
+        return copy;
+      };
+    }
+
+    function guardMarkupSetter(proto, name) {
+      var original = proto && getOwnDescriptor(proto, name);
+      if (!original || typeof original.set !== 'function') {
+        return;
+      }
+      var set = original.set;
+      lock(proto, name, {
+        get: original.get,
+        set: function (value) {
+          reflectApply(set, this, [value === null ? '' : checkedMarkup(value)]);
+        },
+        enumerable: original.enumerable
+      });
+    }
+
+    function guardCreate(proto, name) {
+      var original = proto && getOwnDescriptor(proto, name);
+      if (!original || typeof original.value !== 'function') {
+        return;
+      }
+      var create = original.value;
+      lock(proto, name, {
+        value: function () {
+          var element = reflectApply(create, this, arguments);
+          if (isFrameElement(element)) {
+            throw new SafeError(NESTED_FRAME_MESSAGE);
+          }
+          return element;
+        },
+        writable: false,
+        enumerable: original.enumerable
+      });
+    }
+
+    guardCreate(Document.prototype, 'createElement');
+    guardCreate(Document.prototype, 'createElementNS');
+
+    var insertions = [
+      [Node.prototype, ['appendChild', 'insertBefore', 'replaceChild', 'moveBefore']],
+      [Element.prototype, ['append', 'prepend', 'before', 'after', 'replaceWith', 'replaceChildren', 'insertAdjacentElement']],
+      [CharacterData.prototype, ['before', 'after', 'replaceWith']],
+      [typeof DocumentType === 'function' ? DocumentType.prototype : null, ['before', 'after', 'replaceWith']],
+      [Document.prototype, ['append', 'prepend', 'replaceChildren']],
+      [DocumentFragment.prototype, ['append', 'prepend', 'replaceChildren']],
+      [typeof Range === 'function' ? Range.prototype : null, ['insertNode', 'surroundContents']]
+    ];
+    for (var p = 0; p < insertions.length; p++) {
+      for (var m = 0; m < insertions[p][1].length; m++) {
+        guardMethod(insertions[p][0], insertions[p][1][m], noFrameNodes);
+      }
+    }
+
+    var shadowProto = typeof ShadowRoot === 'function' ? ShadowRoot.prototype : null;
+    guardMarkupSetter(Element.prototype, 'innerHTML');
+    guardMarkupSetter(Element.prototype, 'outerHTML');
+    guardMarkupSetter(shadowProto, 'innerHTML');
+    guardMethod(Element.prototype, 'insertAdjacentHTML', markupAt(1));
+    guardMethod(Element.prototype, 'setHTMLUnsafe', markupAt(0));
+    guardMethod(Element.prototype, 'setHTML', markupAt(0));
+    guardMethod(shadowProto, 'setHTMLUnsafe', markupAt(0));
+    guardMethod(shadowProto, 'setHTML', markupAt(0));
+    guardMethod(typeof Range === 'function' ? Range.prototype : null, 'createContextualFragment', markupAt(0));
+    guardMethod(Document.prototype, 'write', markupAt(-1));
+    guardMethod(Document.prototype, 'writeln', markupAt(-1));
+    guardMethod(Document.prototype, 'execCommand', markupAt(2));
+
+    var windowGetters = [
+      [typeof HTMLIFrameElement === 'function' ? HTMLIFrameElement.prototype : null, ['contentWindow', 'contentDocument']],
+      [typeof HTMLFrameElement === 'function' ? HTMLFrameElement.prototype : null, ['contentWindow', 'contentDocument']],
+      [typeof HTMLObjectElement === 'function' ? HTMLObjectElement.prototype : null, ['contentWindow', 'contentDocument']]
+    ];
+    for (var g = 0; g < windowGetters.length; g++) {
+      for (var n = 0; n < windowGetters[g][1].length; n++) {
+        if (windowGetters[g][0] && getOwnDescriptor(windowGetters[g][0], windowGetters[g][1][n])) {
+          lock(windowGetters[g][0], windowGetters[g][1][n], { get: function () { return null; }, enumerable: true });
+        }
+      }
+    }
+    var svgDocumentOwners = [
+      typeof HTMLIFrameElement === 'function' ? HTMLIFrameElement.prototype : null,
+      typeof HTMLObjectElement === 'function' ? HTMLObjectElement.prototype : null,
+      typeof HTMLEmbedElement === 'function' ? HTMLEmbedElement.prototype : null
+    ];
+    for (var s = 0; s < svgDocumentOwners.length; s++) {
+      if (svgDocumentOwners[s] && getOwnDescriptor(svgDocumentOwners[s], 'getSVGDocument')) {
+        lock(svgDocumentOwners[s], 'getSVGDocument', { value: function () { return null; }, writable: false, enumerable: true });
+      }
+    }
+
+    // A customized built-in that extends a frame element is constructed without createElement.
+    if (typeof CustomElementRegistry === 'function') {
+      var registryDefine = getOwnDescriptor(CustomElementRegistry.prototype, 'define');
+      if (registryDefine && typeof registryDefine.value === 'function') {
+        var define = registryDefine.value;
+        lock(CustomElementRegistry.prototype, 'define', {
+          value: function (name, constructor, options) {
+            var extendsName = options === null || options === undefined ? undefined : options.extends;
+            if (extendsName === undefined) {
+              return reflectApply(define, this, [name, constructor]);
+            }
+            extendsName = '' + extendsName;
+            if (FRAME_TAGS[extendsName] === true) {
+              throw new SafeError(NESTED_FRAME_MESSAGE);
+            }
+            return reflectApply(define, this, [name, constructor, { extends: extendsName }]);
+          },
+          writable: false,
+          enumerable: registryDefine.enumerable
+        });
+      }
+    }
+
+    // Backstop for an insertion path the guards above miss: remove the element and report it.
+    if (typeof MutationObserver === 'function') {
+      try {
+        new MutationObserver(function () {
+          var found = reflectApply(documentQueryAll, document, [FRAME_SELECTOR]);
+          if (found.length === 0) {
+            return;
+          }
+          for (var i = found.length - 1; i >= 0; i--) {
+            reflectApply(elementRemove, found[i], []);
+          }
+          reportError('runtime', NESTED_FRAME_MESSAGE);
+        }).observe(document, { childList: true, subtree: true });
+      } catch (e) {
+        // The guards above still apply.
+      }
+    }
+  }
 
   function noop() {}
   var raf = typeof window.requestAnimationFrame === 'function'

@@ -1,4 +1,4 @@
-import { JSDOM, VirtualConsole } from 'jsdom';
+import { type DOMWindow, JSDOM, VirtualConsole } from 'jsdom';
 
 import { MAX_DOM_NODES, RENDER_INIT_MESSAGE_TYPE, RENDER_PROTOCOL_VERSION } from './constants';
 import { contentDocument } from './document';
@@ -21,10 +21,11 @@ function createPort(): FakePort {
   return port;
 }
 
-function mountFrame(code: string) {
+function mountFrame(code: string, beforeParse?: (window: DOMWindow) => void) {
   const dom = new JSDOM(contentDocument(code, 'testNonce', false), {
     runScripts: 'dangerously',
     pretendToBeVisual: true,
+    beforeParse,
     // Uncaught errors in user code are expected here; keep jsdom from printing them.
     virtualConsole: new VirtualConsole(),
   });
@@ -265,5 +266,152 @@ describe('content frame bootstrap', () => {
     await until(() => messagesOfType(port, 'render-complete').length > 0);
     const draws: Array<{ seq: number }> = Reflect.get(window, 'draws');
     expect(draws.map(({ seq }) => seq)).toEqual([2]);
+  });
+
+  describe('realm hardening', () => {
+    const WEBRTC_CONSTRUCTORS = [
+      'RTCPeerConnection',
+      'webkitRTCPeerConnection',
+      'RTCDataChannel',
+      'RTCRtpSender',
+      'RTCRtpReceiver',
+      'RTCIceTransport',
+      'RTCSctpTransport',
+    ];
+
+    // jsdom has no WebRTC, so native-looking constructors are installed before the bootstrap runs.
+    const withWebRtc = (window: DOMWindow) => {
+      for (const name of WEBRTC_CONSTRUCTORS) {
+        Object.defineProperty(window, name, {
+          value: function NativeConstructor() {},
+          writable: true,
+          configurable: true,
+        });
+      }
+    };
+
+    // The user code records what it could do; each probe catches its own error.
+    const PROBE_CODE = `
+      window.results = {};
+      function probe(name, fn) {
+        try { window.results[name] = fn(); } catch (e) { window.results[name] = 'threw: ' + e.message; }
+      }
+      var names = ${JSON.stringify(WEBRTC_CONSTRUCTORS)};
+      names.forEach(function (name) {
+        probe('new ' + name, function () { new window[name](); return 'constructed'; });
+        probe('call ' + name, function () { window[name](); return 'called'; });
+        probe('assign ' + name, function () { window[name] = function () {}; return 'assigned'; });
+        probe('redefine ' + name, function () { Object.defineProperty(window, name, { value: 1 }); return 'redefined'; });
+      });
+      probe('createElement iframe', function () { return String(document.createElement('iframe')); });
+      probe('createElement IFRAME', function () { return String(document.createElement('IFRAME')); });
+      probe('createElementNS iframe', function () {
+        return String(document.createElementNS('http://www.w3.org/1999/xhtml', 'iframe'));
+      });
+      ['frame', 'object', 'embed'].forEach(function (tag) {
+        probe('createElement ' + tag, function () { return String(document.createElement(tag)); });
+      });
+      probe('innerHTML iframe', function () { document.body.innerHTML += '<div><IFRAME src="about:blank"></IFRAME></div>'; return 'set'; });
+      probe('innerHTML svg iframe', function () { document.getElementById('root').innerHTML = '<svg><foreignObject><iframe/></foreignObject></svg>'; return 'set'; });
+      probe('insertAdjacentHTML embed', function () { document.body.insertAdjacentHTML('beforeend', '<embed src="data:,x">'); return 'set'; });
+      probe('outerHTML object', function () { document.getElementById('root').outerHTML = '<object data="x"></object>'; return 'set'; });
+      probe('toString swap', function () {
+        var calls = 0;
+        document.getElementById('root').innerHTML = { toString: function () { return calls++ === 0 ? '<b></b>' : '<iframe></iframe>'; } };
+        return 'set ' + calls;
+      });
+      var parsed = new DOMParser().parseFromString('<iframe></iframe><p><object></object></p>', 'text/html');
+      var parsedFrame = parsed.body.firstChild;
+      Object.defineProperty(parsedFrame, 'localName', { value: 'div' });
+      probe('appendChild parsed iframe', function () { document.body.appendChild(parsedFrame); return 'inserted'; });
+      probe('append nested object', function () { document.body.append(parsed.body.lastChild); return 'inserted'; });
+      probe('insertBefore parsed iframe', function () { document.body.insertBefore(parsedFrame, null); return 'inserted'; });
+      probe('replaceChild parsed iframe', function () { document.body.replaceChild(parsedFrame, document.getElementById('root')); return 'inserted'; });
+      probe('fragment with iframe', function () {
+        var fragment = document.createRange().createContextualFragment('<i></i>');
+        fragment.appendChild(parsedFrame);
+        return 'inserted';
+      });
+      probe('replace appendChild', function () { Node.prototype.appendChild = function () { return 'mine'; }; return document.body.appendChild(document.createTextNode('x')) === 'mine' ? 'replaced' : 'kept'; });
+      probe('frames', function () { return window.frames.length + window.length; });
+      probe('frame elements', function () { return document.querySelectorAll('iframe,frame,object,embed').length; });
+      panel.onRender(function () {});
+    `;
+
+    const results = (window: DOMWindow): Record<string, unknown> => Reflect.get(window, 'results');
+
+    it('replaces WebRTC constructors with locked stubs that throw', () => {
+      const { window } = mountFrame(PROBE_CODE, withWebRtc);
+      const recorded = results(window);
+      for (const name of WEBRTC_CONSTRUCTORS) {
+        expect(recorded['new ' + name]).toBe(`threw: ${name} is not available in the render panel.`);
+        expect(recorded['call ' + name]).toBe(`threw: ${name} is not available in the render panel.`);
+        // A strict-mode assignment to a read-only property throws; sloppy code would silently fail.
+        expect(recorded['assign ' + name]).toEqual(expect.stringMatching(/^(threw|assigned)/));
+        expect(recorded['redefine ' + name]).toEqual(expect.stringContaining('threw'));
+        const descriptor = Object.getOwnPropertyDescriptor(window, name);
+        expect(descriptor).toMatchObject({ writable: false, configurable: false });
+        expect(() => new (Reflect.get(window, name))()).toThrow(`${name} is not available in the render panel.`);
+      }
+    });
+
+    it('does not define WebRTC globals the browser does not have', () => {
+      const { window } = mountFrame('panel.onRender(function () {});');
+      expect('RTCPeerConnection' in window).toBe(false);
+    });
+
+    it('stops the code from creating, parsing or inserting nested frames', () => {
+      const { window } = mountFrame(PROBE_CODE, withWebRtc);
+      const recorded = results(window);
+      const blocked = 'threw: Nested frames, objects and embeds are not available in the render panel.';
+      for (const probe of [
+        'createElement iframe',
+        'createElement IFRAME',
+        'createElementNS iframe',
+        'createElement frame',
+        'createElement object',
+        'createElement embed',
+        'innerHTML iframe',
+        'innerHTML svg iframe',
+        'insertAdjacentHTML embed',
+        'outerHTML object',
+        'appendChild parsed iframe',
+        'append nested object',
+        'insertBefore parsed iframe',
+        'replaceChild parsed iframe',
+        'fragment with iframe',
+      ]) {
+        expect([probe, recorded[probe]]).toEqual([probe, blocked]);
+      }
+      // The value is read once, so the markup checked is the markup set.
+      expect(recorded['toString swap']).toBe('set 1');
+      // The guarded prototype methods cannot be swapped out.
+      expect(recorded['replace appendChild']).toEqual(expect.stringMatching(/^(threw|kept)/));
+      expect(recorded.frames).toBe(0);
+      expect(recorded['frame elements']).toBe(0);
+      expect(window.document.querySelectorAll('iframe,frame,object,embed')).toHaveLength(0);
+    });
+
+    it('never exposes the window of a frame element', () => {
+      const { window } = mountFrame('panel.onRender(function () {});');
+      const parsed = new window.DOMParser().parseFromString('<iframe></iframe>', 'text/html');
+      const frame = parsed.body.firstChild;
+      expect(Reflect.get(Object(frame), 'contentWindow')).toBeNull();
+      expect(Reflect.get(Object(frame), 'contentDocument')).toBeNull();
+    });
+
+    it('still lets the drawing use ordinary markup and elements', async () => {
+      const code = `panel.onRender(function (ctx) {
+        ctx.root.innerHTML = '<frame-chart></frame-chart><p class="objective">embedded</p>';
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        ctx.root.appendChild(svg);
+        ctx.root.insertAdjacentHTML('beforeend', '<span>&lt;iframe&gt;</span>');
+      });`;
+      const { port, send, window } = connect(code);
+      send({ type: 'render', seq: 1, input: makeInput() });
+      await until(() => messagesOfType(port, 'render-complete').length > 0);
+      expect(messagesOfType(port, 'error')).toEqual([]);
+      expect(window.document.getElementById('root')?.children).toHaveLength(4);
+    });
   });
 });

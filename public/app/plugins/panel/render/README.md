@@ -97,9 +97,11 @@ per second is followed, and only right after a user click. Links to an element i
 
 ### Not available
 
-Network access (`fetch`, XHR, WebSocket, remote images and fonts), `eval` and `new Function`,
-popups, forms, storage, workers, nested frames and inline event attributes (`onclick="..."`; use
-`addEventListener`). Images and fonts must be `data:` or `blob:` URLs.
+Network access (`fetch`, XHR, WebSocket, WebRTC, remote images and fonts), `eval` and
+`new Function`, popups, forms, storage, workers, nested frames, `<object>` and `<embed>`, and inline
+event attributes (`onclick="..."`; use `addEventListener`). Images and fonts must be `data:` or
+`blob:` URLs. Creating or inserting an `iframe`, `frame`, `object` or `embed` element, or setting
+markup that contains one, throws.
 
 ## Limits
 
@@ -129,8 +131,21 @@ invalid messages or too many messages is stopped; the panel then offers **Reload
   `allow-same-origin`. Both documents are `srcdoc` documents with an opaque origin: they cannot
   read Grafana's DOM, cookies, storage or session.
 - Each document has a Content Security Policy with `default-src 'none'` and `connect-src 'none'`,
-  so the frame has no network access. The outer document also sets `frame-src 'none'`, which stops
-  the inner frame from navigating itself to an external URL to leak data.
+  so the frame has no network access through fetch, XHR, WebSocket or resource loads. The outer
+  document also sets `frame-src 'none'`, which stops the inner frame from navigating itself to an
+  external URL to leak data.
+- CSP does not govern WebRTC, so before the code runs the content frame replaces
+  `RTCPeerConnection`, `webkitRTCPeerConnection`, `RTCDataChannel`, `RTCRtpSender`,
+  `RTCRtpReceiver`, `RTCIceTransport`, `RTCSctpTransport` and the other WebRTC constructors with
+  read-only, non-configurable stubs that throw.
+- A nested frame would give the code a fresh realm with the original constructors. The content
+  document sets `frame-src 'none'` and `child-src 'none'`, and the bootstrap makes `createElement`,
+  `createElementNS`, every node insertion method and every markup sink (`innerHTML`, `outerHTML`,
+  `insertAdjacentHTML`, `setHTMLUnsafe`, `createContextualFragment`, `document.write`) throw for
+  `iframe`, `frame`, `object` and `embed`. Frame elements never expose `contentWindow` or
+  `contentDocument`, and a mutation observer removes any frame element that still gets inserted.
+  The guards use references captured before the code runs, so replacing globals or prototype
+  methods later does not disable them.
 - The code is never spliced into HTML. It is embedded as an escaped JSON string and inserted as a
   script that carries the CSP nonce. The panel never allows `unsafe-eval`.
 - The frame talks to Grafana only over a versioned message channel. Grafana validates every message
@@ -168,3 +183,16 @@ comment at the top.
 - There is no Markdown or Handlebars rendering and no parity with the Dynamic text panel beyond
   simple field placeholders.
 - The code cannot call the network, run queries or trigger actions; it can only draw and link.
+
+## Remaining risks
+
+- The WebRTC and nested-frame guards are JavaScript, not a browser boundary. They cover the APIs
+  listed above in current browsers; a new DOM API that creates a browsing context or a network
+  channel would need a new guard. The mutation observer backstop runs after the insertion, not
+  before, so it narrows but does not close such a gap.
+- The CSP `webrtc 'block'` directive would enforce the WebRTC restriction in the browser, but
+  Chromium does not recognize it today (it logs an unrecognized directive), so it is not set.
+- DNS prefetch and preconnect hints (`<link rel="dns-prefetch">`) are not governed by CSP in every
+  browser, so a drawing could leak a few bytes through DNS lookups of attacker-chosen host names.
+- `window.length` and `window[0]` cannot be intercepted from script. They stay empty only because
+  no frame element can be inserted.
