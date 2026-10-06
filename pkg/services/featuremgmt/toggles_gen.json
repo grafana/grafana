@@ -1601,6 +1601,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.libraryPanelRepeatFromSceneVersion",
+        "resourceVersion": "1791238438983",
+        "creationTimestamp": "2026-10-05T22:13:58Z"
+      },
+      "spec": {
+        "description": "Decides library panel repeat migration from the scene's schema version instead of from dashboard sharing state",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -3785,6 +3799,20 @@
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "libraryPanelRepeatFromSceneVersion",
+        "resourceVersion": "1791238414130",
+        "creationTimestamp": "2026-10-05T22:13:34Z",
+        "deletionTimestamp": "2026-10-05T22:13:58Z"
+      },
+      "spec": {
+        "description": "Decides library panel repeat migration from the scene's schema version instead of from dashboard sharing state",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true
       }
     },
     {

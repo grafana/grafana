@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
@@ -47,6 +48,20 @@ jest.mock('@grafana/runtime', () => ({
       getInstanceSettings: jest.fn().mockResolvedValue({ uid: 'ds1' }),
     };
   },
+}));
+
+const mockGetBooleanValue = jest.fn((key: string, defaultValue: boolean) => defaultValue);
+
+function setRepeatFromSceneVersion(enabled: boolean) {
+  mockGetBooleanValue.mockImplementation((key, defaultValue) =>
+    key === FlagKeys.DashboardsLibraryPanelRepeatFromSceneVersion ? enabled : defaultValue
+  );
+}
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  getFeatureFlagClient: jest.fn(() => ({
+    getBooleanValue: mockGetBooleanValue,
+  })),
 }));
 
 const runRequestMock = jest.fn().mockReturnValue(
@@ -253,12 +268,39 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
+    it('migrates on a v2 scene when dashboardNewLayouts is disabled', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        // apiserver already resolves the repeat for a v2 dashboard that diverges from the repeat on library panel
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      // differ from apiserver resolved value
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
     it('skips the migration when dashboardNewLayouts is enabled', async () => {
       config.featureToggles.dashboardNewLayouts = true;
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
       expect(gridItem.state.variableName).toBeUndefined();
+    });
+
+    it('skips the migration on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        // apiserver already resolves the repeat for a v2 dashboard that diverges from the repeat on library panel
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
     });
 
     it('still migrates for a public dashboard when dashboardNewLayouts is enabled', async () => {
@@ -270,6 +312,23 @@ describe('LibraryPanelBehavior', () => {
       });
 
       expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('migrates for a public dashboard on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        // apiserver already resolves the repeat for a v2 dashboard that diverges from the repeat on library panel
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+        meta: { publicDashboardEnabled: true },
+      });
+
+      // differ from apiserver resolved value
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
     });
 
     it('still migrates for a scripted dashboard when dashboardNewLayouts is enabled', async () => {
@@ -281,6 +340,23 @@ describe('LibraryPanelBehavior', () => {
       });
 
       expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('migrates for a scripted dashboard on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        // apiserver already resolves the repeat for a v2 dashboard that diverges from the repeat on library panel
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+        meta: { fromScript: true },
+      });
+
+      // differ from apiserver resolved value
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
     });
 
     it('leaves the grid item alone when the library panel has no repeat', async () => {
@@ -322,6 +398,118 @@ describe('LibraryPanelBehavior', () => {
       ).not.toThrow();
     });
   });
+
+  // When DashboardsLibraryPanelRepeatFromSceneVersion is enabled, only migrate when it's a v1 scene.
+  describe('repeat migration with dashboards.libraryPanelRepeatFromSceneVersion enabled', () => {
+    beforeEach(() => {
+      setRepeatFromSceneVersion(true);
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+      mockGetBooleanValue.mockImplementation((key, defaultValue) => defaultValue);
+    });
+
+    it('migrates repeat onto the grid item for legacy dashboards', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration on a v2 scene when dashboardNewLayouts is disabled', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        // apiserver already resolves the repeat for a v2 dashboard that diverges from the repeat on library panel
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('migrates on a v1 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+    });
+
+    it('skips the migration on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a public dashboard on a v1 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a public dashboard on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+        meta: { publicDashboardEnabled: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a scripted dashboard on a v1 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a scripted dashboard on a v2 scene when dashboardNewLayouts is enabled', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        serializerVersion: 'v2',
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+        meta: { fromScript: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('leaves the grid item alone when the library panel has no repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+  });
 });
 
 interface BuildTestSceneOptions {
@@ -330,12 +518,27 @@ interface BuildTestSceneOptions {
   timeFrom?: string;
   /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
   repeat?: string;
+  /**
+   * Seeded on the grid item the way DefaultGridLayoutSerializer builds it from
+   * GridLayoutItemKind.spec.repeat, standing in for a repeat the apiserver already resolved.
+   */
+  resolvedRepeat?: { variableName: string; repeatDirection?: 'h' | 'v'; maxPerRow?: number };
   /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
   meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean };
+  /** Which scene builder's output to imitate; DashboardScene defaults to 'v1'. */
+  serializerVersion?: 'v1' | 'v2';
 }
 
 async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {}) {
-  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom, repeat, meta } = options;
+  const {
+    vizPanelTitle = 'Panel A',
+    libPanelModelTitle = 'LibraryPanel A title',
+    timeFrom,
+    repeat,
+    meta,
+    resolvedRepeat,
+    serializerVersion = 'v1',
+  } = options;
 
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
@@ -373,21 +576,25 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     width: 10,
     height: 12,
     body: vizPanel,
+    ...resolvedRepeat,
   });
 
-  const scene = new DashboardScene({
-    title: 'hello',
-    uid: 'dash-1',
-    meta: {
-      canEdit: true,
-      ...meta,
-    },
-    body: new DefaultGridLayoutManager({
-      grid: new SceneGridLayout({
-        children: [gridItem],
+  const scene = new DashboardScene(
+    {
+      title: 'hello',
+      uid: 'dash-1',
+      meta: {
+        canEdit: true,
+        ...meta,
+      },
+      body: new DefaultGridLayoutManager({
+        grid: new SceneGridLayout({
+          children: [gridItem],
+        }),
       }),
-    }),
-  });
+    },
+    serializerVersion
+  );
 
   activateFullSceneTree(scene);
 
