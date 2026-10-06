@@ -14,9 +14,81 @@ export interface StarterTemplate {
 // so this file can hold it in a single TypeScript template string without escaping.
 
 const KPI_BRIEFING_CODE = `// KPI briefing: one card per source panel with its last value, a sparkline and the change
-// since the start of the time range. The drawing API (ctx fields, helpers, CSS variables, limits)
-// is described in the custom panel README.
+// since the start of the time range. ctx mirrors Grafana's PanelProps; the drawing API, the CSS
+// variables and the limits are described in the custom panel README.
 const MAX_SPARKLINE_POINTS = 200;
+
+function escapeHtml(value) {
+  const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => escapes[c]);
+}
+
+function lastNotNull(values) {
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (values[i] != null) {
+      return values[i];
+    }
+  }
+  return null;
+}
+
+// Frames that came from another panel through "-- Dashboard --" carry it in meta.custom. Frames of
+// one source panel share a group; any other frame gets a group of its own.
+function groupBySource(series) {
+  const groups = [];
+  const byPanel = new Map();
+  for (const frame of series) {
+    const custom = (frame.meta && frame.meta.custom) || {};
+    const panelId = typeof custom.dashboardSourcePanelId === 'number' ? custom.dashboardSourcePanelId : null;
+    if (panelId === null) {
+      groups.push({ panelId, title: null, frames: [frame] });
+      continue;
+    }
+    let group = byPanel.get(panelId);
+    if (!group) {
+      group = { panelId, title: custom.dashboardSourcePanelTitle || null, frames: [] };
+      byPanel.set(panelId, group);
+      groups.push(group);
+    }
+    group.frames.push(frame);
+  }
+  return groups;
+}
+
+// One metric per group: the first number field, with its last value as Grafana formats it
+// (unit, decimals, mappings, thresholds color).
+function collectMetrics(series) {
+  const metrics = [];
+  for (const group of groupBySource(series)) {
+    let frame = null;
+    let field = null;
+    for (const candidate of group.frames) {
+      field = candidate.fields.find((f) => f.type === 'number') || null;
+      if (field) {
+        frame = candidate;
+        break;
+      }
+    }
+    if (!field) {
+      continue;
+    }
+    const display = field.state.lastNotNullDisplay;
+    const last = lastNotNull(field.values);
+    metrics.push({
+      panelId: group.panelId,
+      title: group.title || frame.name || field.state.displayName || field.name || frame.refId || '',
+      field,
+      last,
+      text: display ? (display.prefix || '') + display.text + (display.suffix || '') : last == null ? '–' : String(last),
+      color: (display && display.color) || 'var(--gf-color-text-primary)',
+    });
+  }
+  return metrics;
+}
+
+function formatTime(ms, timeZone) {
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone }).format(ms);
+}
 
 function sparklinePoints(values) {
   const points = values.filter((v) => typeof v === 'number');
@@ -41,34 +113,6 @@ function firstAndLast(values) {
   return numbers.length ? { first: numbers[0], last: numbers[numbers.length - 1] } : null;
 }
 
-function collectMetrics(helpers) {
-  const metrics = [];
-  for (const group of helpers.bySource()) {
-    // Frames with a known source panel give one card per panel; other frames give one card each.
-    const sets = group.panelId != null ? [group.frames] : group.frames.map((frame) => [frame]);
-    for (const frames of sets) {
-      let frame = null;
-      let field = null;
-      for (const candidate of frames) {
-        field = helpers.field(candidate, 'number') || null;
-        if (field) {
-          frame = candidate;
-          break;
-        }
-      }
-      if (!field) {
-        continue;
-      }
-      metrics.push({
-        panelId: group.panelId,
-        title: group.title || frame.name || field.displayName || field.name || frame.refId || '',
-        field,
-      });
-    }
-  }
-  return metrics;
-}
-
 const STYLE =
   '<style>' +
   '#root{padding:var(--gf-spacing);box-sizing:border-box}' +
@@ -85,11 +129,11 @@ const STYLE =
   '.delta.up{color:var(--gf-color-success)}.delta.down{color:var(--gf-color-error)}' +
   '</style>';
 
-panel.onRender(({ root, data, timeRange, helpers }) => {
-  const { escapeHtml, formatTime, last } = helpers;
-  const metrics = collectMetrics(helpers);
+panel.onRender(({ root, data, timeRange, timeZone }) => {
+  const metrics = collectMetrics(data.series);
   const header =
-    '<header class="range">' + escapeHtml(formatTime(timeRange.from)) + ' – ' + escapeHtml(formatTime(timeRange.to)) + '</header>';
+    '<header class="range">' + escapeHtml(formatTime(timeRange.from, timeZone)) + ' – ' +
+    escapeHtml(formatTime(timeRange.to, timeZone)) + '</header>';
 
   if (metrics.length === 0) {
     const message = data.state === 'Loading' ? 'Loading…' : 'No data to show';
@@ -99,10 +143,7 @@ panel.onRender(({ root, data, timeRange, helpers }) => {
 
   let up = 0;
   const cards = metrics.map((metric) => {
-    const { field } = metric;
-    const lastValue = last(field);
-    const text = field.lastDisplay != null ? field.lastDisplay : lastValue == null ? '–' : String(lastValue);
-    const color = field.lastColor || 'var(--gf-color-text-primary)';
+    const { field, color } = metric;
     const ends = firstAndLast(field.values);
     let delta = '<span class="delta">–</span>';
     if (ends) {
@@ -123,7 +164,7 @@ panel.onRender(({ root, data, timeRange, helpers }) => {
       : '';
     const body =
       '<span class="title">' + escapeHtml(metric.title) + '</span>' +
-      '<span class="value" style="color:' + escapeHtml(color) + '">' + escapeHtml(text) + '</span>' +
+      '<span class="value" style="color:' + escapeHtml(color) + '">' + escapeHtml(metric.text) + '</span>' +
       sparkline + delta;
     return metric.panelId != null
       ? '<a class="card" href="#panel-' + metric.panelId + '">' + body + '</a>'
@@ -137,52 +178,87 @@ panel.onRender(({ root, data, timeRange, helpers }) => {
 `;
 
 const INCIDENT_LAYOUT_CODE = `// Incident layout: switches between a calm summary and an incident view.
-// A metric is critical when its thresholds have more than one step and its last value is at or
-// above the last step. The dashboard variable "incident_mode" ("on" / "off") forces the mode.
-// The drawing API (ctx fields, helpers, CSS variables, limits) is described in the custom panel README.
+// A metric is critical when its absolute thresholds have more than one step and its last value is
+// at or above the last step. The dashboard variable "incident_mode" ("on" / "off"), read from the
+// URL, forces the mode. ctx mirrors Grafana's PanelProps; see the custom panel README.
 
-function collectMetrics(helpers) {
-  const metrics = [];
-  for (const group of helpers.bySource()) {
-    const sets = group.panelId != null ? [group.frames] : group.frames.map((frame) => [frame]);
-    for (const frames of sets) {
-      let frame = null;
-      let field = null;
-      for (const candidate of frames) {
-        field = helpers.field(candidate, 'number') || null;
-        if (field) {
-          frame = candidate;
-          break;
-        }
-      }
-      if (!field) {
-        continue;
-      }
-      const lastValue = helpers.last(field);
-      const steps = field.thresholds || [];
-      const limit = steps.length > 1 ? steps[steps.length - 1].value : null;
-      const critical = typeof lastValue === 'number' && typeof limit === 'number' && lastValue >= limit;
-      metrics.push({
-        panelId: group.panelId,
-        title: group.title || frame.name || field.displayName || field.name || frame.refId || '',
-        text: field.lastDisplay != null ? field.lastDisplay : lastValue == null ? '–' : String(lastValue),
-        color: field.lastColor || 'var(--gf-color-text-primary)',
-        critical,
-        limit,
-        // How far past its limit the metric is, relative to the limit when that is meaningful.
-        severity: critical ? (limit > 0 ? lastValue / limit : lastValue - limit + 1) : 0,
-      });
+function escapeHtml(value) {
+  const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => escapes[c]);
+}
+
+function lastNotNull(values) {
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (values[i] != null) {
+      return values[i];
     }
+  }
+  return null;
+}
+
+// Frames that came from another panel through "-- Dashboard --" carry it in meta.custom. Frames of
+// one source panel share a group; any other frame gets a group of its own.
+function groupBySource(series) {
+  const groups = [];
+  const byPanel = new Map();
+  for (const frame of series) {
+    const custom = (frame.meta && frame.meta.custom) || {};
+    const panelId = typeof custom.dashboardSourcePanelId === 'number' ? custom.dashboardSourcePanelId : null;
+    if (panelId === null) {
+      groups.push({ panelId, title: null, frames: [frame] });
+      continue;
+    }
+    let group = byPanel.get(panelId);
+    if (!group) {
+      group = { panelId, title: custom.dashboardSourcePanelTitle || null, frames: [] };
+      byPanel.set(panelId, group);
+      groups.push(group);
+    }
+    group.frames.push(frame);
+  }
+  return groups;
+}
+
+// One metric per group: the first number field, with its last value as Grafana formats it
+// (unit, decimals, mappings, thresholds color).
+function collectMetrics(series) {
+  const metrics = [];
+  for (const group of groupBySource(series)) {
+    let frame = null;
+    let field = null;
+    for (const candidate of group.frames) {
+      field = candidate.fields.find((f) => f.type === 'number') || null;
+      if (field) {
+        frame = candidate;
+        break;
+      }
+    }
+    if (!field) {
+      continue;
+    }
+    const display = field.state.lastNotNullDisplay;
+    const last = lastNotNull(field.values);
+    metrics.push({
+      panelId: group.panelId,
+      title: group.title || frame.name || field.state.displayName || field.name || frame.refId || '',
+      field,
+      last,
+      text: display ? (display.prefix || '') + display.text + (display.suffix || '') : last == null ? '–' : String(last),
+      color: (display && display.color) || 'var(--gf-color-text-primary)',
+    });
   }
   return metrics;
 }
 
-function forcedMode(variables) {
-  const variable = variables.incident_mode;
-  if (!variable) {
-    return null;
-  }
-  const value = String(Array.isArray(variable.value) ? variable.value[0] : variable.value).toLowerCase();
+function criticalLimit(field) {
+  const thresholds = field.config.thresholds;
+  const steps = thresholds && thresholds.mode === 'absolute' ? thresholds.steps : [];
+  return steps.length > 1 ? steps[steps.length - 1].value : null;
+}
+
+// Dashboard variables are URL-synced as var-<name>.
+function forcedMode(location) {
+  const value = String(new URLSearchParams(location.search).get('var-incident_mode') || '').toLowerCase();
   return value === 'on' || value === 'off' ? value : null;
 }
 
@@ -211,11 +287,16 @@ const STYLE =
   '.tile .value{font-size:1.25em}' +
   '</style>';
 
-panel.onRender(({ root, data, variables, helpers }) => {
-  const { escapeHtml } = helpers;
-  const metrics = collectMetrics(helpers);
+panel.onRender(({ root, data, location }) => {
+  const metrics = collectMetrics(data.series).map((m) => {
+    const limit = criticalLimit(m.field);
+    const critical = typeof m.last === 'number' && typeof limit === 'number' && m.last >= limit;
+    // How far past its limit the metric is, relative to the limit when that is meaningful.
+    const severity = critical ? (limit > 0 ? m.last / limit : m.last - limit + 1) : 0;
+    return Object.assign({}, m, { limit, critical, severity });
+  });
   const critical = metrics.filter((m) => m.critical).sort((a, b) => b.severity - a.severity);
-  const forced = forcedMode(variables);
+  const forced = forcedMode(location);
   const incident = forced ? forced === 'on' : critical.length > 0;
 
   if (metrics.length === 0 && !incident) {
@@ -261,14 +342,14 @@ panel.onRender(({ root, data, variables, helpers }) => {
 `;
 
 const BLANK_CODE = `// Custom panel drawing code. Data comes from this panel's queries; this code only draws it.
-// panel.onRender(draw) runs draw(ctx) on every data, time range, variable, theme or size change.
-// ctx: root, seq, data, timeRange, timeZone, variables, theme, size, isRenderTarget, helpers.
-// See the custom panel README for the full API, the CSS variables (var(--gf-...)) and the limits.
+// panel.onRender(draw) runs draw(ctx) on every change of data, time range, URL, theme or size.
+// ctx mirrors Grafana's PanelProps: id, title, data, timeRange, timeZone, options, fieldConfig,
+// width, height, transparent, fitContent, plus root (the element to draw in) and location (the
+// dashboard URL, which carries the variables). See the custom panel README for the full API.
 // The code runs in a sandbox: no network, no eval, no popups. Links (<a href="#panel-2">) are
 // validated by Grafana before they navigate.
-panel.onRender(({ root, data, helpers }) => {
-  const frames = helpers.frames();
-  root.textContent = frames.length + ' frame(s), state: ' + data.state;
+panel.onRender(({ root, data }) => {
+  root.textContent = data.series.length + ' frame(s), state: ' + data.state;
 });
 `;
 

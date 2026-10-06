@@ -1,10 +1,12 @@
 import {
+  DRAWING_API_VERSION,
   MAX_DIAGNOSTIC_LENGTH,
   MAX_DOM_NODES,
   MAX_HEIGHT_HINT_PX,
   MAX_HREF_LENGTH,
   RENDER_INIT_MESSAGE_TYPE,
   RENDER_PROTOCOL_VERSION,
+  RENDER_TARGET_CLASS,
 } from './constants';
 
 /**
@@ -20,6 +22,7 @@ export const BOOTSTRAP_CODE_PLACEHOLDER = '__RENDER_CODE__';
 export const BOOTSTRAP_CONTENT_PLACEHOLDER = '__RENDER_CONTENT_DOCUMENT__';
 
 const INIT_TYPE = JSON.stringify(RENDER_INIT_MESSAGE_TYPE);
+const TARGET_CLASS = JSON.stringify(RENDER_TARGET_CLASS);
 
 /**
  * Runs in the wrapper document. It owns navigation containment: its frame-src 'none' blocks the
@@ -78,6 +81,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var CODE = ${BOOTSTRAP_CODE_PLACEHOLDER};
   var INIT_TYPE = ${INIT_TYPE};
   var VERSION = ${RENDER_PROTOCOL_VERSION};
+  var API_VERSION = ${DRAWING_API_VERSION};
   var MAX_DIAGNOSTIC_LENGTH = ${MAX_DIAGNOSTIC_LENGTH};
   var MAX_DOM_NODES = ${MAX_DOM_NODES};
   var MAX_HEIGHT = ${MAX_HEIGHT_HINT_PX};
@@ -85,8 +89,9 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var MAX_BUFFERED_ERRORS = 20;
   var RESIZE_OBSERVER_LOOP = 'ResizeObserver loop';
   var XLINK = 'http://www.w3.org/1999/xlink';
-  var DEFAULT_TIME_FORMAT = { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
-  var ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  var CSS_VARIABLE = /^--gf-[a-z0-9-]+$/;
+  // Read before the user code runs, which could remove the class.
+  var IS_RENDER_TARGET = document.documentElement.classList.contains(${TARGET_CLASS});
 
   hardenRealm();
 
@@ -104,7 +109,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var lastHeight = -1;
   var heightScheduled = false;
   var themeKey = '';
-  var paletteCount = 0;
+  var appliedVars = [];
 
   /*
    * CSP does not govern WebRTC, so the constructors are replaced before the user code runs. A
@@ -515,80 +520,8 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     reportError('csp', text);
   }, true);
 
-  function escapeHtml(value) {
-    if (value === null || value === undefined) {
-      return '';
-    }
-    return String(value).replace(/[&<>"']/g, function (character) { return ESCAPES[character]; });
-  }
-
-  function makeHelpers(input) {
-    var series = input.data && Array.isArray(input.data.series) ? input.data.series : [];
-    var timeZone = input.timeZone;
-    return {
-      escapeHtml: escapeHtml,
-      frames: function () {
-        return series.slice();
-      },
-      bySource: function () {
-        var groups = [];
-        var index = Object.create(null);
-        for (var i = 0; i < series.length; i++) {
-          var frame = series[i];
-          var source = frame && frame.source;
-          var panelId = source && typeof source.panelId === 'number' ? source.panelId : null;
-          var key = panelId === null ? 'none' : 'panel-' + panelId;
-          var group = index[key];
-          if (!group) {
-            group = { panelId: panelId, title: panelId !== null && typeof source.title === 'string' ? source.title : null, frames: [] };
-            index[key] = group;
-            groups.push(group);
-          }
-          group.frames.push(frame);
-        }
-        return groups;
-      },
-      field: function (frame, nameOrType) {
-        var fields = frame && Array.isArray(frame.fields) ? frame.fields : [];
-        var i;
-        for (i = 0; i < fields.length; i++) {
-          if (fields[i].name === nameOrType || fields[i].displayName === nameOrType) {
-            return fields[i];
-          }
-        }
-        for (i = 0; i < fields.length; i++) {
-          if (fields[i].type === nameOrType) {
-            return fields[i];
-          }
-        }
-        return undefined;
-      },
-      last: function (field) {
-        var values = field && Array.isArray(field.values) ? field.values : [];
-        for (var i = values.length - 1; i >= 0; i--) {
-          if (values[i] !== null && values[i] !== undefined) {
-            return values[i];
-          }
-        }
-        return null;
-      },
-      formatTime: function (ms, options) {
-        var format = Object.assign({ timeZone: timeZone }, options || DEFAULT_TIME_FORMAT);
-        try {
-          return new Intl.DateTimeFormat(undefined, format).format(ms);
-        } catch (e) {
-          try {
-            return new Intl.DateTimeFormat(undefined, options || DEFAULT_TIME_FORMAT).format(ms);
-          } catch (e2) {
-            return String(ms);
-          }
-        }
-      }
-    };
-  }
-
   function applyTheme(theme) {
-    if (!theme || !theme.colors) {
+    if (!theme || !theme.vars || typeof theme.vars !== 'object') {
       return;
     }
     var key;
@@ -602,59 +535,37 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     themeKey = key;
     var style = document.documentElement.style;
-    var colors = theme.colors;
-    var typography = theme.typography || {};
-    var vars = [
-      ['--gf-color-text-primary', colors.text && colors.text.primary],
-      ['--gf-color-text-secondary', colors.text && colors.text.secondary],
-      ['--gf-color-text-link', colors.text && colors.text.link],
-      ['--gf-color-bg-canvas', colors.background && colors.background.canvas],
-      ['--gf-color-bg-primary', colors.background && colors.background.primary],
-      ['--gf-color-bg-secondary', colors.background && colors.background.secondary],
-      ['--gf-color-border-weak', colors.border && colors.border.weak],
-      ['--gf-color-border-medium', colors.border && colors.border.medium],
-      ['--gf-color-primary', colors.primary && colors.primary.main],
-      ['--gf-color-success', colors.success && colors.success.main],
-      ['--gf-color-warning', colors.warning && colors.warning.main],
-      ['--gf-color-error', colors.error && colors.error.main],
-      ['--gf-color-info', colors.info && colors.info.main],
-      ['--gf-font-family', typography.fontFamily],
-      ['--gf-font-family-mono', typography.fontFamilyMonospace],
-      ['--gf-font-size', typeof typography.fontSize === 'number' ? typography.fontSize + 'px' : undefined],
-      ['--gf-spacing', typeof theme.spacingGridSize === 'number' ? theme.spacingGridSize + 'px' : undefined],
-      ['--gf-radius', theme.borderRadius]
-    ];
-    var palette = Array.isArray(theme.palette) ? theme.palette : [];
-    for (var i = 0; i < palette.length; i++) {
-      vars.push(['--gf-palette-' + i, palette[i]]);
+    for (var i = 0; i < appliedVars.length; i++) {
+      style.removeProperty(appliedVars[i]);
     }
-    for (var j = palette.length; j < paletteCount; j++) {
-      style.removeProperty('--gf-palette-' + j);
-    }
-    paletteCount = palette.length;
-    for (var k = 0; k < vars.length; k++) {
-      if (typeof vars[k][1] === 'string') {
-        style.setProperty(vars[k][0], vars[k][1]);
-      } else {
-        style.removeProperty(vars[k][0]);
+    appliedVars = [];
+    var names = Object.keys(theme.vars);
+    for (var j = 0; j < names.length; j++) {
+      var value = theme.vars[names[j]];
+      if (CSS_VARIABLE.test(names[j]) && typeof value === 'string') {
+        style.setProperty(names[j], value);
+        appliedVars.push(names[j]);
       }
     }
-    style.colorScheme = theme.mode === 'light' ? 'light' : 'dark';
+    style.colorScheme = theme.colorScheme === 'light' ? 'light' : 'dark';
   }
 
-  function makeContext(job) {
-    var input = job.input;
+  // ctx mirrors PanelProps; root is the only addition. The theme reaches the code as CSS only.
+  function makeContext(input) {
     return {
       root: root,
-      seq: job.seq,
-      data: input.data || { state: 'NotStarted', series: [], errors: [] },
+      id: input.id,
+      title: input.title,
+      data: input.data,
       timeRange: input.timeRange,
       timeZone: input.timeZone,
-      variables: input.variables || {},
-      theme: input.theme,
-      size: input.size,
-      isRenderTarget: input.isRenderTarget === true,
-      helpers: makeHelpers(input)
+      options: input.options,
+      fieldConfig: input.fieldConfig,
+      width: input.width,
+      height: input.height,
+      transparent: input.transparent === true,
+      fitContent: input.fitContent === true,
+      location: input.location
     };
   }
 
@@ -662,9 +573,9 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     return new Promise(function (resolve) { raf(function () { resolve(); }); });
   }
 
-  function waitForPaint(isRenderTarget) {
+  function waitForPaint() {
     return nextFrame().then(nextFrame).then(function () {
-      if (!isRenderTarget) {
+      if (!IS_RENDER_TARGET) {
         return undefined;
       }
       var waits = [];
@@ -719,7 +630,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     var result;
     try {
-      result = draw(makeContext(job));
+      result = draw(makeContext(job.input));
     } catch (error) {
       reportError('runtime', error, job.seq);
       finish();
@@ -742,7 +653,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
       return;
     }
     scheduleHeight();
-    waitForPaint(job.input.isRenderTarget === true).then(function () {
+    waitForPaint().then(function () {
       post({ type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount });
       finish();
     });
@@ -852,7 +763,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
         if (typeof message.seq !== 'number' || !message.size || !lastInput) {
           return;
         }
-        lastInput = Object.assign({}, lastInput, { size: message.size });
+        lastInput = Object.assign({}, lastInput, { width: message.size.width, height: message.size.height });
         pending = { seq: message.seq, input: lastInput };
         schedule();
         return;
@@ -896,6 +807,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   });
 
   var api = {
+    apiVersion: API_VERSION,
     onRender: function (callback) {
       if (typeof callback !== 'function') {
         throw new TypeError('panel.onRender(draw) expects a function.');

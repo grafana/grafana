@@ -4,13 +4,6 @@ import { convertDynamicTextOptions, customPanelChangeHandler } from './migration
 import { getBlankDrawingCode } from './templates';
 import { type Options } from './types';
 
-const escapeHtml = (value: unknown) =>
-  String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-
 // Runs drawing code the way the frame bootstrap does, against one frame with `host` and `cpu` fields.
 function drawConverted(code: string, rows: Array<{ host: string; cpu: number }>) {
   let registered: ((ctx: unknown) => void) | undefined;
@@ -21,13 +14,25 @@ function drawConverted(code: string, rows: Array<{ host: string; cpu: number }>)
         {
           length: rows.length,
           fields: [
-            { name: 'host', displayName: 'Host', type: 'string', values: rows.map((row) => row.host) },
-            { name: 'cpu', displayName: 'cpu', type: 'number', values: rows.map((row) => row.cpu) },
+            {
+              name: 'host',
+              type: 'string',
+              values: rows.map((row) => row.host),
+              config: {},
+              state: { displayName: 'Host' },
+            },
+            {
+              name: 'cpu',
+              type: 'number',
+              values: rows.map((row) => row.cpu),
+              config: {},
+              state: { displayName: 'cpu' },
+            },
           ],
         },
       ]
     : [];
-  registered!({ root, data: { state: 'Done', series, errors: [] }, helpers: { escapeHtml } });
+  registered!({ root, data: { state: 'Done', series, errors: [] } });
   return root;
 }
 

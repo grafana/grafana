@@ -67,7 +67,7 @@ function advanceAnswering(ms: number, port: FakeHostPort, fromFrame: (data: unkn
   }
 }
 
-const input = (width = 100) => ({ size: { width, height: 50 } }) as unknown as RenderInput;
+const input = (width = 100) => ({ width, height: 50 }) as unknown as RenderInput;
 
 describe('createRenderFrameController', () => {
   beforeEach(() => {
@@ -98,7 +98,7 @@ describe('createRenderFrameController', () => {
     fromFrame({ type: 'ready', version: 1 });
     expect(handlers.onReady).toHaveBeenCalledTimes(1);
     expect(controller.getState()).toBe('ready');
-    expect(port.sent).toEqual([{ type: 'render', seq: 3, input: { size: { width: 3, height: 4 } } }]);
+    expect(port.sent).toEqual([{ type: 'render', seq: 3, input: { width: 3, height: 4 } }]);
   });
 
   it('sends resize with a shared, increasing seq after ready', () => {

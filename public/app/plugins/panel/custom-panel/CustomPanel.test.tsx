@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, FieldType, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
-import { config, locationService, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { getPanelProps } from '../test-utils';
 
@@ -100,10 +100,6 @@ function fail(kind: RenderFrameError['kind'], fatal: boolean) {
 }
 
 describe('CustomPanel', () => {
-  beforeAll(() => {
-    setTemplateSrv({ getVariables: () => [] } as unknown as TemplateSrv);
-  });
-
   beforeEach(() => {
     mockControllers.length = 0;
     mockHolds.length = 0;
@@ -149,7 +145,7 @@ describe('CustomPanel', () => {
     expect(mockControllers).toHaveLength(1);
     const input = latestController().render.mock.lastCall![0];
     expect(input.data.series[0].fields[0].values).toEqual([4, 5, 6]);
-    expect(input.size).toEqual({ width: 320, height: 400 });
+    expect(input).toMatchObject({ width: 320, height: 400 });
   });
 
   it('resizes without re-sending the data when only the size changes', () => {
@@ -162,75 +158,44 @@ describe('CustomPanel', () => {
     expect(latestController().resize).toHaveBeenLastCalledWith({ width: 500, height: 200 });
   });
 
-  describe('variables', () => {
-    const values: Record<string, string> = {};
-    let variableListeners: Array<() => void> = [];
-    const replaceVariables = (value: string) =>
-      value.replace(/\$\{(\w+):(json|text)\}/g, (_, name: string, format: string) =>
-        format === 'json' ? JSON.stringify(values[name] ?? '') : (values[name] ?? '')
-      );
+  it('sends the PanelProps-shaped input, without the code in the options', () => {
+    setup({ id: 12, title: 'Overview', transparent: true });
+    const input = latestController().render.mock.lastCall![0];
 
+    expect(input).toMatchObject({ id: 12, title: 'Overview', transparent: true, fitContent: false, options: {} });
+    expect(input.data.series[0].fields[0]).toMatchObject({ name: 'value', type: 'number', values: [1, 2, 3] });
+  });
+
+  describe('location', () => {
     beforeEach(() => {
-      values.env = 'prod';
-      variableListeners = [];
-      setTemplateSrv({ getVariables: () => [{ name: 'env' }] } as unknown as TemplateSrv);
-      const scene = {
-        subscribeToEvent: (_type: unknown, listener: () => void) => {
-          variableListeners.push(listener);
-          return { unsubscribe: () => (variableListeners = variableListeners.filter((l) => l !== listener)) };
-        },
-      };
-      Object.defineProperty(window, '__grafanaSceneContext', { value: scene, configurable: true, writable: true });
+      locationService.replace('/d/abc/overview?var-env=prod');
     });
 
-    afterEach(() => {
-      Reflect.deleteProperty(window, '__grafanaSceneContext');
-      setTemplateSrv({ getVariables: () => [] } as unknown as TemplateSrv);
-    });
+    it('sends the dashboard pathname and search', () => {
+      setup();
 
-    const changeVariable = (value: string) =>
-      act(() => {
-        values.env = value;
-        variableListeners.forEach((listener) => listener());
+      expect(latestController().render.mock.lastCall![0].location).toEqual({
+        pathname: '/d/abc/overview',
+        search: '?var-env=prod',
       });
+    });
 
-    it('redraws when only a variable changes, with the same data and time range', () => {
-      setup({ replaceVariables });
-      expect(latestController().render).toHaveBeenCalledTimes(1);
-      expect(latestController().render.mock.lastCall![0].variables).toEqual({ env: { value: 'prod', text: 'prod' } });
-
-      changeVariable('dev');
+    it('redraws when only the URL changes, with the same data and time range', () => {
+      setup();
+      act(() => locationService.replace('/d/abc/overview?var-env=dev'));
 
       expect(latestController().render).toHaveBeenCalledTimes(2);
-      expect(latestController().render.mock.lastCall![0].variables).toEqual({ env: { value: 'dev', text: 'dev' } });
+      expect(latestController().render.mock.lastCall![0].location.search).toBe('?var-env=dev');
       expect(latestController().resize).not.toHaveBeenCalled();
     });
 
-    it('sends a full render, not a resize, when a variable changed along with the size', () => {
-      const { rerender } = setup({ replaceVariables });
-      values.env = 'staging';
-      rerender({ replaceVariables, width: 500, height: 200 });
-
-      expect(latestController().resize).not.toHaveBeenCalled();
-      const input = latestController().render.mock.lastCall![0];
-      expect(input.variables).toEqual({ env: { value: 'staging', text: 'staging' } });
-      expect(input.size).toEqual({ width: 500, height: 200 });
-    });
-
-    it('does not redraw when a variable event leaves the values unchanged', () => {
-      const { rerender } = setup({ replaceVariables });
-      changeVariable('prod');
-      rerender({ replaceVariables, width: 500, height: 200 });
+    it('does not redraw when the URL is set to the same value', () => {
+      const { rerender } = setup();
+      act(() => locationService.replace('/d/abc/overview?var-env=prod'));
+      rerender({ width: 500, height: 200 });
 
       expect(latestController().render).toHaveBeenCalledTimes(1);
       expect(latestController().resize).toHaveBeenCalledTimes(1);
-    });
-
-    it('stops listening when the panel unmounts', () => {
-      const { unmount } = setup({ replaceVariables });
-      expect(variableListeners).toHaveLength(1);
-      unmount();
-      expect(variableListeners).toHaveLength(0);
     });
   });
 

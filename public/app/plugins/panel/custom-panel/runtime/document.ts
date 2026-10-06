@@ -1,4 +1,4 @@
-import { MAX_CODE_BYTES } from './constants';
+import { MAX_CODE_BYTES, RENDER_TARGET_CLASS } from './constants';
 import {
   BOOTSTRAP_CODE_PLACEHOLDER,
   BOOTSTRAP_CONTENT_PLACEHOLDER,
@@ -75,8 +75,9 @@ export function contentDocument(code: string, nonce: string, isRenderTarget: boo
     () => scriptLiteral(code)
   );
   const style = isRenderTarget ? `${CONTENT_BASE_STYLE} ${RENDER_TARGET_STYLE}` : CONTENT_BASE_STYLE;
+  const htmlAttributes = isRenderTarget ? ` class="${RENDER_TARGET_CLASS}"` : '';
   return (
-    `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${contentDocumentCsp(nonce)}">` +
+    `<!doctype html><html${htmlAttributes}><head><meta http-equiv="Content-Security-Policy" content="${contentDocumentCsp(nonce)}">` +
     `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
     `<style>${style}</style></head><body><div id="root"></div>` +
     `<script nonce="${nonce}">${script}</script></body></html>`

@@ -1,5 +1,12 @@
 /** Version of the host <-> frame bridge. The frame bootstrap embeds the same value. */
 export const RENDER_PROTOCOL_VERSION = 1;
+/**
+ * Version of the drawing API the code sees as panel.apiVersion. Within a version, changes are
+ * additive only; a breaking change to ctx, the CSS variables or the links bumps it.
+ */
+export const DRAWING_API_VERSION = 1;
+/** Class on the content document's <html> while the image renderer captures the dashboard. */
+export const RENDER_TARGET_CLASS = 'gf-render-target';
 /** The only window message the host posts to the frame; it carries the port and no data. */
 export const RENDER_INIT_MESSAGE_TYPE = 'grafana-render:init';
 /** Never add allow-same-origin, allow-popups, allow-forms or allow-top-navigation. */
@@ -16,8 +23,6 @@ export const MAX_TRANSFER_FRAMES = 1000;
 export const MAX_STRING_CELL_LENGTH = 1024;
 export const MAX_DIAGNOSTIC_LENGTH = 4096;
 export const MAX_HREF_LENGTH = 2048;
-export const MAX_VARIABLES = 100;
-export const MAX_VARIABLE_VALUES = 1000;
 /** Frame -> host messages in a sliding one-second window. */
 export const MAX_FRAME_MESSAGES_PER_SECOND = 50;
 

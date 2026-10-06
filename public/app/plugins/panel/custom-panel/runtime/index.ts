@@ -6,8 +6,8 @@ export type {
   SerializedPanelData,
   SerializedFrame,
   SerializedField,
-  ThemeSnapshot,
-  VariableSnapshot,
+  RenderLocation,
+  ThemeVariables,
   HostMessage,
   FrameMessage,
 } from './protocol';
@@ -16,7 +16,6 @@ export { parseFrameMessage } from './protocol';
 export { buildRenderDocument, readHostNonce, type BuildDocumentResult } from './document';
 export { serializePanelData, buildRenderInput, type SerializeResult, type BuildInputResult } from './serializeData';
 export { serializeTheme } from './theme';
-export { snapshotVariables } from './variables';
 export { validateRenderLink, type RenderLinkTarget } from './links';
 export { holdRenderReadiness, type RenderReadinessHold } from './readiness';
 export {

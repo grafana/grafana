@@ -3,8 +3,7 @@ import { type SyntheticEvent, useCallback, useEffect, useMemo, useRef, useState 
 
 import { type GrafanaTheme2, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { type SceneObject, SceneVariableValueChangedEvent } from '@grafana/scenes';
+import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
 
@@ -13,12 +12,12 @@ import {
   MAX_HEIGHT_HINT_PX,
   RENDER_FRAME_SANDBOX,
   buildRenderDocument,
-  buildRenderInput,
   createRenderFrameController,
   holdRenderReadiness,
+  buildRenderInput,
   readHostNonce,
-  snapshotVariables,
   validateRenderLink,
+  type RenderLocation,
   type RenderFrameController,
   type RenderFrameError,
   type RenderFrameErrorKind,
@@ -60,12 +59,16 @@ function isFinalData(data: PanelData): boolean {
 
 function RenderFrameHost({
   code,
+  id,
+  title,
   data,
   timeRange,
   timeZone,
+  options,
+  fieldConfig,
   width,
   height,
-  replaceVariables,
+  transparent,
   fitContent,
 }: PanelProps<Options> & { code: string }) {
   const styles = useStyles2(getStyles);
@@ -199,14 +202,14 @@ function RenderFrameHost({
     }
   }, []);
 
-  // A variable that no query or option uses changes nothing else, so the panel is not re-rendered.
-  const variablesVersion = useVariablesVersion();
+  // Dashboard variables, time range and tabs are URL-synced: a URL change redraws, even when it
+  // changes nothing the queries use.
+  const location = useDashboardLocation();
 
   // Push data to the frame. A change of size alone becomes a resize so the frame reuses its input.
   const sentRef = useRef<{
     controller: RenderFrameController;
     sources: unknown[];
-    variablesKey: string;
     width: number;
     height: number;
   } | null>(null);
@@ -214,16 +217,22 @@ function RenderFrameHost({
     if (!controller) {
       return;
     }
-    const sources = [data, timeRange, timeZone, theme, replaceVariables];
-    // The interpolation function keeps its identity when a variable changes, so compare the values.
-    const variables = snapshotVariables(replaceVariables);
-    const variablesKey = JSON.stringify(variables);
+    const sources = [
+      data,
+      timeRange,
+      timeZone,
+      theme,
+      id,
+      title,
+      options,
+      fieldConfig,
+      transparent,
+      fitContent,
+      location,
+    ];
     const sent = sentRef.current;
     const sameSources =
-      sent !== null &&
-      sent.controller === controller &&
-      sent.variablesKey === variablesKey &&
-      sent.sources.every((value, i) => value === sources[i]);
+      sent !== null && sent.controller === controller && sent.sources.every((value, i) => value === sources[i]);
 
     if (sameSources) {
       if (sent.width === width && sent.height === height) {
@@ -238,15 +247,19 @@ function RenderFrameHost({
     }
 
     const result = buildRenderInput({
+      id,
+      title,
       data,
       timeRange,
       timeZone,
-      replaceVariables,
+      options,
+      fieldConfig,
       theme,
       width,
       height,
-      isRenderTarget: renderTarget,
-      variables,
+      transparent,
+      fitContent: fitContent === true,
+      location,
     });
     if (!result.ok) {
       setLimitError({ reason: result.reason, actual: result.actual, limit: result.limit });
@@ -255,24 +268,27 @@ function RenderFrameHost({
       return;
     }
     setLimitError(null);
-    sentRef.current = { controller, sources, variablesKey, width, height };
+    sentRef.current = { controller, sources, width, height };
     lastInputFinalRef.current = isFinalData(data);
     const seq = controller.render(result.input);
     if (seq >= 0 && lastInputFinalRef.current) {
       holdForSeq(seq);
     }
-    // variablesVersion only re-runs the effect; the snapshot is what is compared.
   }, [
     controller,
+    id,
+    title,
     data,
     timeRange,
     timeZone,
+    options,
+    fieldConfig,
     theme,
-    replaceVariables,
-    variablesVersion,
     width,
     height,
-    renderTarget,
+    transparent,
+    fitContent,
+    location,
     releaseHold,
     holdForSeq,
   ]);
@@ -353,18 +369,23 @@ function RenderFrameHost({
   );
 }
 
-/** Counts variable value changes in the dashboard scene, which bubble up to its root. */
-function useVariablesVersion(): number {
-  const [version, setVersion] = useState(0);
+/** The page URL, which carries the URL-synced dashboard state. Equal URLs keep the same object. */
+function useDashboardLocation(): RenderLocation {
+  const [location, setLocation] = useState<RenderLocation>(() => readLocation());
   useEffect(() => {
-    const scene: SceneObject | undefined = window.__grafanaSceneContext;
-    if (!scene) {
-      return undefined;
-    }
-    const subscription = scene.subscribeToEvent(SceneVariableValueChangedEvent, () => setVersion((v) => v + 1));
+    const subscription = locationService.getLocationObservable().subscribe(({ pathname, search }) => {
+      setLocation((previous) =>
+        previous.pathname === pathname && previous.search === search ? previous : { pathname, search }
+      );
+    });
     return () => subscription.unsubscribe();
   }, []);
-  return version;
+  return location;
+}
+
+function readLocation(): RenderLocation {
+  const { pathname, search } = locationService.getLocation();
+  return { pathname, search };
 }
 
 function limitErrorMessage({ reason, actual, limit }: LimitError): string {

@@ -4,72 +4,113 @@ import { MAX_DIAGNOSTIC_LENGTH, MAX_HEIGHT_HINT_PX, MAX_HREF_LENGTH, RENDER_PROT
 
 export type SerializedValue = string | number | boolean | null;
 
-export interface SerializedField {
-  name: string;
-  displayName: string;
-  /** A FieldType value. */
-  type: string;
+/**
+ * The FieldConfig keys the frame receives, with the FieldConfig shape. links, actions and custom are
+ * left out; named colors are resolved to CSS colors and -Infinity threshold steps become null.
+ */
+export interface SerializedFieldConfig {
+  displayName?: string;
+  displayNameFromDS?: string;
+  description?: string;
   unit?: string;
-  labels?: Record<string, string>;
-  /** Time values are epoch ms, NaN and Infinity become null, objects become (cut) JSON strings. */
-  values: SerializedValue[];
-  /** formattedValueToString(field.display(lastNonNull)), computed on the host. */
-  lastDisplay?: string;
-  lastColor?: string;
-  /** Absolute threshold steps with resolved colors; the base step has value null. */
-  thresholds?: Array<{ value: number | null; color: string }>;
+  decimals?: number | null;
+  min?: number | null;
+  max?: number | null;
+  interval?: number | null;
+  noValue?: string;
+  mappings?: unknown[];
+  thresholds?: { mode: string; steps: Array<{ value: number | null; color: string }> };
+  color?: { mode: string; fixedColor?: string; seriesBy?: string };
 }
 
+/** DisplayValue with NaN numeric values as null. */
+export interface SerializedDisplayValue {
+  text: string;
+  numeric: number | null;
+  prefix?: string;
+  suffix?: string;
+  color?: string;
+  percent?: number;
+}
+
+/** A Field without its functions (display, getLinks). */
+export interface SerializedField {
+  name: string;
+  /** A FieldType value. */
+  type: string;
+  /** Time values are epoch ms, NaN and Infinity become null, objects become (cut) JSON strings. */
+  values: SerializedValue[];
+  labels?: Record<string, string>;
+  config: SerializedFieldConfig;
+  state: {
+    displayName: string;
+    /** Addition: field.display(lastNotNull), computed on the host because display() cannot cross the frame. */
+    lastNotNullDisplay?: SerializedDisplayValue;
+  };
+}
+
+/** A DataFrame; meta only carries the dashboard source panel. */
 export interface SerializedFrame {
-  refId?: string;
   name?: string;
-  length: number;
-  /** The panel a "-- Dashboard --" frame came from. */
-  source?: { panelId: number; title?: string };
+  refId?: string;
+  meta?: { custom: { dashboardSourcePanelId: number; dashboardSourcePanelTitle?: string } };
   fields: SerializedField[];
+  length: number;
 }
 
 export type SerializedLoadingState = 'NotStarted' | 'Loading' | 'Streaming' | 'Done' | 'Error' | 'PartialResult';
 
+/** TimeRange with epoch ms instead of DateTime, which cannot cross the frame. */
+export interface SerializedTimeRange {
+  from: number;
+  to: number;
+  raw: { from: string; to: string };
+}
+
+/** PanelData without request and the deprecated error. */
 export interface SerializedPanelData {
   state: SerializedLoadingState;
   series: SerializedFrame[];
-  errors: string[];
+  timeRange: SerializedTimeRange;
+  errors: Array<{ message: string; refId?: string }>;
 }
 
-export interface ThemeSnapshot {
-  mode: 'light' | 'dark';
-  colors: {
-    text: { primary: string; secondary: string; disabled: string; link: string };
-    background: { canvas: string; primary: string; secondary: string };
-    border: { weak: string; medium: string; strong: string };
-    primary: { main: string; text: string; contrastText: string };
-    success: { main: string; text: string };
-    warning: { main: string; text: string };
-    error: { main: string; text: string };
-    info: { main: string; text: string };
-  };
-  palette: string[];
-  typography: { fontFamily: string; fontFamilyMonospace: string; fontSize: number; bodySmallFontSize: string };
-  spacingGridSize: number;
-  borderRadius: string;
+export interface SerializedFieldConfigSource {
+  defaults: SerializedFieldConfig;
+  overrides: Array<{ matcher: { id: string; options?: unknown }; properties: Array<{ id: string; value?: unknown }> }>;
 }
 
-export type VariableSnapshot = Record<string, { value: string | string[]; text: string | string[] }>;
+/** The theme as CSS custom properties; the frame sets them on :root. Not part of ctx. */
+export interface ThemeVariables {
+  colorScheme: 'light' | 'dark';
+  vars: Record<string, string>;
+}
+
+export interface RenderLocation {
+  pathname: string;
+  search: string;
+}
 
 export interface RenderSize {
   width: number;
   height: number;
 }
 
+/** Everything a draw receives. All of it but theme becomes ctx, with the PanelProps names. */
 export interface RenderInput {
+  id: number;
+  title: string;
   data: SerializedPanelData;
-  timeRange: { from: number; to: number; raw: { from: string; to: string } };
+  timeRange: SerializedTimeRange;
   timeZone: string;
-  variables: VariableSnapshot;
-  theme: ThemeSnapshot;
-  size: RenderSize;
-  isRenderTarget: boolean;
+  options: Record<string, unknown>;
+  fieldConfig: SerializedFieldConfigSource;
+  width: number;
+  height: number;
+  transparent: boolean;
+  fitContent: boolean;
+  location: RenderLocation;
+  theme: ThemeVariables;
 }
 
 /** Host -> frame messages, sent on the transferred port. seq is shared by render and resize. */

@@ -1,22 +1,23 @@
 import { getDefaultDrawingCode, getStarterTemplates, type StarterTemplateId } from './templates';
 
-// The shapes the sandbox hands to drawing code (see runtime/protocol.ts). Templates only run inside
-// the frame, so the tests drive them the same way the frame bootstrap does: install a `panel`
-// global, run the code, then call the registered draw with a context.
+// The ctx the sandbox hands to drawing code (see runtime/protocol.ts). Templates only run inside the
+// frame, so the tests drive them the same way the frame bootstrap does: install a `panel` global,
+// run the code, then call the registered draw with a context.
 interface Field {
   name: string;
-  displayName: string;
   type: string;
   values: Array<string | number | boolean | null>;
-  lastDisplay?: string;
-  lastColor?: string;
-  thresholds?: Array<{ value: number | null; color: string }>;
+  config: { thresholds?: { mode: string; steps: Array<{ value: number | null; color: string }> } };
+  state: {
+    displayName: string;
+    lastNotNullDisplay?: { text: string; numeric: number | null; color?: string; suffix?: string };
+  };
 }
 interface Frame {
   refId?: string;
   name?: string;
   length: number;
-  source?: { panelId: number; title?: string };
+  meta?: { custom: { dashboardSourcePanelId: number; dashboardSourcePanelTitle?: string } };
   fields: Field[];
 }
 
@@ -25,63 +26,66 @@ function makeFrame({
   title,
   frameName,
   values,
-  ...field
-}: { panelId?: number; title?: string; frameName?: string; values: number[] } & Partial<Field>): Frame {
+  display,
+  thresholds,
+}: {
+  panelId?: number;
+  title?: string;
+  frameName?: string;
+  values: number[];
+  display?: Field['state']['lastNotNullDisplay'];
+  thresholds?: Array<{ value: number | null; color: string }>;
+}): Frame {
   return {
     refId: 'A',
     name: frameName,
     length: values.length,
-    source: panelId === undefined ? undefined : { panelId, title },
+    meta:
+      panelId === undefined
+        ? undefined
+        : { custom: { dashboardSourcePanelId: panelId, dashboardSourcePanelTitle: title } },
     fields: [
-      { name: 'time', displayName: 'time', type: 'time', values: values.map((_, i) => 1_700_000_000_000 + i * 60_000) },
-      { name: 'value', displayName: 'value', type: 'number', values, ...field },
+      {
+        name: 'time',
+        type: 'time',
+        values: values.map((_, i) => 1_700_000_000_000 + i * 60_000),
+        config: {},
+        state: { displayName: 'time' },
+      },
+      {
+        name: 'value',
+        type: 'number',
+        values,
+        config: thresholds ? { thresholds: { mode: 'absolute', steps: thresholds } } : {},
+        state: { displayName: 'value', lastNotNullDisplay: display },
+      },
     ],
   };
 }
 
-const fakeHelpers = (series: Frame[]) => ({
-  escapeHtml: (value: unknown) =>
-    String(value ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;'),
-  frames: () => series,
-  bySource: () => {
-    const groups = new Map<number | null, { panelId: number | null; title: string | null; frames: Frame[] }>();
-    for (const frame of series) {
-      const panelId = frame.source?.panelId ?? null;
-      const group = groups.get(panelId) ?? { panelId, title: frame.source?.title ?? null, frames: [] };
-      group.frames.push(frame);
-      groups.set(panelId, group);
-    }
-    return [...groups.values()];
-  },
-  field: (frame: Frame, nameOrType: string) =>
-    frame.fields.find((f) => f.name === nameOrType || f.displayName === nameOrType) ??
-    frame.fields.find((f) => f.type === nameOrType),
-  last: (field: Field) => [...field.values].reverse().find((v) => v !== null) ?? null,
-  formatTime: (ms: number) => new Date(ms).toISOString(),
-});
+const TIME_RANGE = { from: Date.UTC(2026, 0, 1), to: Date.UTC(2026, 0, 2), raw: { from: 'now-1d', to: 'now' } };
 
 function draw(
   code: string,
-  { series = [], state = 'Done', variables = {} }: { series?: Frame[]; state?: string; variables?: object } = {}
+  { series = [], state = 'Done', search = '' }: { series?: Frame[]; state?: string; search?: string } = {}
 ) {
   let registered: ((ctx: unknown) => void) | undefined;
-  new Function('panel', code)({ onRender: (fn: (ctx: unknown) => void) => (registered = fn) });
+  new Function('panel', code)({ apiVersion: 1, onRender: (fn: (ctx: unknown) => void) => (registered = fn) });
   const root = document.createElement('div');
   registered!({
     root,
-    seq: 1,
-    data: { state, series, errors: [] },
-    timeRange: { from: Date.UTC(2026, 0, 1), to: Date.UTC(2026, 0, 2), raw: { from: 'now-1d', to: 'now' } },
-    timeZone: 'utc',
-    variables,
-    size: { width: 600, height: 300 },
-    isRenderTarget: false,
-    helpers: fakeHelpers(series),
+    id: 1,
+    title: 'Custom',
+    data: { state, series, timeRange: TIME_RANGE, errors: [] },
+    timeRange: TIME_RANGE,
+    timeZone: 'UTC',
+    options: {},
+    fieldConfig: { defaults: {}, overrides: [] },
+    width: 600,
+    height: 300,
+    transparent: false,
+    fitContent: false,
+    location: { pathname: '/d/abc', search },
   });
   return root;
 }
@@ -108,8 +112,13 @@ describe('starter templates', () => {
 
   describe('kpi-briefing', () => {
     const series = [
-      makeFrame({ panelId: 2, title: 'CPU', values: [10, 20, 30], lastDisplay: '30%', lastColor: 'rgb(0, 128, 0)' }),
-      makeFrame({ panelId: 3, title: 'Memory', values: [50, 40], lastDisplay: '40 MB' }),
+      makeFrame({
+        panelId: 2,
+        title: 'CPU',
+        values: [10, 20, 30],
+        display: { text: '30', suffix: '%', numeric: 30, color: 'rgb(0, 128, 0)' },
+      }),
+      makeFrame({ panelId: 3, title: 'Memory', values: [50, 40], display: { text: '40', suffix: ' MB', numeric: 40 } }),
     ];
 
     it('draws one linked card per source panel with its last value and change', () => {
@@ -127,7 +136,10 @@ describe('starter templates', () => {
       const root = draw(templateCode('kpi-briefing'), { series });
 
       expect(root.querySelector('.summary')!.textContent).toBe('1 of 2 metrics up since range start');
-      expect(root.querySelector('.range')!.textContent).toBe('2026-01-01T00:00:00.000Z – 2026-01-02T00:00:00.000Z');
+      const format = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short', timeZone: 'UTC' });
+      expect(root.querySelector('.range')!.textContent).toBe(
+        `${format.format(TIME_RANGE.from)} – ${format.format(TIME_RANGE.to)}`
+      );
     });
 
     it('caps the sparkline at 200 points', () => {
@@ -177,8 +189,20 @@ describe('starter templates', () => {
     it('shows the incident banner and the critical offenders by severity when a metric crosses its last threshold', () => {
       const root = draw(templateCode('incident-layout'), {
         series: [
-          makeFrame({ panelId: 2, title: 'Latency', values: [50, 90], lastDisplay: '90 ms', thresholds: critical }),
-          makeFrame({ panelId: 3, title: 'Errors', values: [10, 160], lastDisplay: '160', thresholds: critical }),
+          makeFrame({
+            panelId: 2,
+            title: 'Latency',
+            values: [50, 90],
+            display: { text: '90', suffix: ' ms', numeric: 90 },
+            thresholds: critical,
+          }),
+          makeFrame({
+            panelId: 3,
+            title: 'Errors',
+            values: [10, 160],
+            display: { text: '160', numeric: 160 },
+            thresholds: critical,
+          }),
           makeFrame({ panelId: 4, title: 'Traffic', values: [5, 6], thresholds: critical }),
         ],
       });
@@ -216,7 +240,7 @@ describe('starter templates', () => {
     ])('lets incident_mode=%s force the mode', (mode, values, banner) => {
       const root = draw(templateCode('incident-layout'), {
         series: [makeFrame({ panelId: 2, title: 'Latency', values, thresholds: critical })],
-        variables: { incident_mode: { value: mode, text: mode } },
+        search: `?orgId=1&var-incident_mode=${mode}`,
       });
 
       expect(root.querySelector('[role="alert"]') !== null).toBe(banner);

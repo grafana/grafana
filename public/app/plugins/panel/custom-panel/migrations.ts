@@ -88,10 +88,15 @@ const DEFAULT_CONTENT = ${JSON.stringify(defaultContent)};
 const STYLES = ${JSON.stringify(styles)};
 const EVERY_ROW = ${renderMode === 'everyRow'};
 
-panel.onRender(({ root, data, helpers }) => {
+function escapeHtml(value) {
+  const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+  return String(value == null ? '' : value).replace(/[&<>"']/g, (c) => escapes[c]);
+}
+
+panel.onRender(({ root, data }) => {
   const frame = data.series[0];
   const rowCount = frame ? frame.length : 0;
-  const lookup = (name) => frame && frame.fields.find((f) => f.name === name || f.displayName === name);
+  const lookup = (name) => frame && frame.fields.find((f) => f.name === name || f.state.displayName === name);
   const fill = (row) =>
     TEMPLATE.replace(/\\{\\{~?\\s*([^{}]*?)\\s*~?\\}\\}/g, (_, expression) => {
       if (expression.startsWith('!')) {
@@ -99,12 +104,12 @@ panel.onRender(({ root, data, helpers }) => {
       }
       const field = lookup(expression.replace(/^\\[(.*)\\]$/, '$1'));
       const value = field ? field.values[row] : null;
-      return value == null ? '' : helpers.escapeHtml(value);
+      return value == null ? '' : escapeHtml(value);
     });
 
   let html;
   if (rowCount === 0) {
-    html = helpers.escapeHtml(DEFAULT_CONTENT);
+    html = escapeHtml(DEFAULT_CONTENT);
   } else if (EVERY_ROW) {
     html = Array.from({ length: rowCount }, (_, row) => '<div class="row">' + fill(row) + '</div>').join('');
   } else {

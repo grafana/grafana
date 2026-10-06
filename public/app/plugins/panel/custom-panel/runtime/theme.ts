@@ -1,39 +1,36 @@
 import { type GrafanaTheme2 } from '@grafana/data';
 
-import { type ThemeSnapshot } from './protocol';
+import { type ThemeVariables } from './protocol';
 
-/** A plain-data copy of the theme for the frame. It never carries functions. */
-export function serializeTheme(theme: GrafanaTheme2): ThemeSnapshot {
+/** The theme as the --gf-* CSS custom properties the frame sets on :root. It never carries functions. */
+export function serializeTheme(theme: GrafanaTheme2): ThemeVariables {
   const { colors, typography, visualization } = theme;
-  return {
-    mode: theme.isLight ? 'light' : 'dark',
-    colors: {
-      text: {
-        primary: colors.text.primary,
-        secondary: colors.text.secondary,
-        disabled: colors.text.disabled,
-        link: colors.text.link,
-      },
-      background: {
-        canvas: colors.background.canvas,
-        primary: colors.background.primary,
-        secondary: colors.background.secondary,
-      },
-      border: { weak: colors.border.weak, medium: colors.border.medium, strong: colors.border.strong },
-      primary: { main: colors.primary.main, text: colors.primary.text, contrastText: colors.primary.contrastText },
-      success: { main: colors.success.main, text: colors.success.text },
-      warning: { main: colors.warning.main, text: colors.warning.text },
-      error: { main: colors.error.main, text: colors.error.text },
-      info: { main: colors.info.main, text: colors.info.text },
-    },
-    palette: visualization.palette.map((color) => visualization.getColorByName(color)),
-    typography: {
-      fontFamily: typography.fontFamily,
-      fontFamilyMonospace: typography.fontFamilyMonospace,
-      fontSize: typography.fontSize,
-      bodySmallFontSize: typography.bodySmall.fontSize,
-    },
-    spacingGridSize: theme.spacing.gridSize,
-    borderRadius: theme.shape.radius.default,
+  const vars: Record<string, string> = {
+    '--gf-color-text-primary': colors.text.primary,
+    '--gf-color-text-secondary': colors.text.secondary,
+    '--gf-color-text-disabled': colors.text.disabled,
+    '--gf-color-text-link': colors.text.link,
+    '--gf-color-bg-canvas': colors.background.canvas,
+    '--gf-color-bg-primary': colors.background.primary,
+    '--gf-color-bg-secondary': colors.background.secondary,
+    '--gf-color-border-weak': colors.border.weak,
+    '--gf-color-border-medium': colors.border.medium,
+    '--gf-color-border-strong': colors.border.strong,
+    '--gf-color-primary': colors.primary.main,
+    '--gf-color-primary-contrast': colors.primary.contrastText,
+    '--gf-color-success': colors.success.main,
+    '--gf-color-warning': colors.warning.main,
+    '--gf-color-error': colors.error.main,
+    '--gf-color-info': colors.info.main,
+    '--gf-font-family': typography.fontFamily,
+    '--gf-font-family-mono': typography.fontFamilyMonospace,
+    '--gf-font-size': `${typography.fontSize}px`,
+    '--gf-font-size-sm': typography.bodySmall.fontSize,
+    '--gf-spacing': `${theme.spacing.gridSize}px`,
+    '--gf-radius': theme.shape.radius.default,
   };
+  visualization.palette.forEach((color, i) => {
+    vars[`--gf-palette-${i}`] = visualization.getColorByName(color);
+  });
+  return { colorScheme: theme.isLight ? 'light' : 'dark', vars };
 }

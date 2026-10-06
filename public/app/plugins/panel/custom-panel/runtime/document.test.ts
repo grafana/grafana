@@ -57,9 +57,11 @@ describe('buildRenderDocument', () => {
     expect(content).not.toContain('<!--');
   });
 
-  it('adds the no-animation style only on render targets', () => {
+  it('adds the no-animation style and the render target class only on render targets', () => {
     expect(contentDocument('', NONCE, true)).toContain('*{animation:none!important;transition:none!important}');
+    expect(contentDocument('', NONCE, true)).toContain('<html class="gf-render-target">');
     expect(contentDocument('', NONCE, false)).not.toContain('animation:none');
+    expect(contentDocument('', NONCE, false)).toContain('<!doctype html><html><head>');
   });
 
   it('refuses code over the byte limit, counting UTF-8 bytes', () => {

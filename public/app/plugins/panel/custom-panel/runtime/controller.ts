@@ -405,7 +405,7 @@ export function createRenderFrameController(
       if (isClosed() || !lastInput) {
         return -1;
       }
-      lastInput = { ...lastInput, size };
+      lastInput = { ...lastInput, width: size.width, height: size.height };
       const next = ++seq;
       if (state === 'ready') {
         dispatch({ type: 'resize', seq: next, size });

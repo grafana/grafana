@@ -5,11 +5,11 @@ import {
   FieldType,
   getDisplayProcessor,
   LoadingState,
+  MappingType,
   type PanelData,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
-import { setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
 
 import {
   DASHBOARD_SOURCE_PANEL_ID_META_KEY,
@@ -57,7 +57,13 @@ describe('serializePanelData', () => {
       [1.5, null, null],
       ['{"a":1}', null, true],
     ]);
-    expect(data.series[0].fields[1]).toMatchObject({ type: 'number', unit: 'percent' });
+    expect(data.series[0].fields[1]).toMatchObject({
+      name: 'value',
+      type: 'number',
+      config: { unit: 'percent' },
+      state: { displayName: 'value' },
+    });
+    expect(data.timeRange).toEqual({ from: 1000, to: 2000, raw: { from: 'now-1h', to: 'now' } });
   });
 
   it('cuts long strings and marks the cut', () => {
@@ -68,10 +74,17 @@ describe('serializePanelData', () => {
     expect(values[1]).toBe('short');
   });
 
-  it('reads the dashboard source panel from frame meta', () => {
+  it('keeps only the dashboard source panel in frame meta', () => {
     const withSource = createDataFrame({
       refId: 'A',
-      meta: { custom: { [DASHBOARD_SOURCE_PANEL_ID_META_KEY]: 4, [DASHBOARD_SOURCE_PANEL_TITLE_META_KEY]: 'Errors' } },
+      meta: {
+        executedQueryString: 'SELECT secret',
+        custom: {
+          [DASHBOARD_SOURCE_PANEL_ID_META_KEY]: 4,
+          [DASHBOARD_SOURCE_PANEL_TITLE_META_KEY]: 'Errors',
+          other: 1,
+        },
+      },
       fields: [],
     });
     const invalidId = createDataFrame({
@@ -86,12 +99,14 @@ describe('serializePanelData', () => {
       fields: [],
     });
     const series = serialize(panelData([withSource, invalidId, longTitle])).data.series;
-    expect(series[0].source).toEqual({ panelId: 4, title: 'Errors' });
-    expect(series[1].source).toBeUndefined();
-    expect(series[2].source).toEqual({ panelId: 9, title: 't'.repeat(200) });
+    expect(series[0].meta).toEqual({ custom: { dashboardSourcePanelId: 4, dashboardSourcePanelTitle: 'Errors' } });
+    expect(series[1].meta).toBeUndefined();
+    expect(series[2].meta).toEqual({
+      custom: { dashboardSourcePanelId: 9, dashboardSourcePanelTitle: 't'.repeat(200) },
+    });
   });
 
-  it('takes the last display text and color from field.display', () => {
+  it('precomputes the display of the last value and keeps the FieldConfig display keys', () => {
     const frame = createDataFrame({
       fields: [
         {
@@ -109,6 +124,9 @@ describe('serializePanelData', () => {
               ],
             },
             color: { mode: 'thresholds' },
+            links: [{ title: 'x', url: 'https://example.com' }],
+            custom: { lineWidth: 2 },
+            mappings: [{ type: MappingType.ValueToText, options: { '1': { text: 'one' } } }],
           },
         },
       ],
@@ -117,33 +135,33 @@ describe('serializePanelData', () => {
     field.display = getDisplayProcessor({ field, theme });
 
     const serialized = serialize(panelData([frame])).data.series[0].fields[0];
-    expect(serialized.lastDisplay).toBe('95%');
-    expect(serialized.lastColor).toBe(theme.visualization.getColorByName('red'));
-    expect(serialized.thresholds).toEqual([
-      { value: null, color: theme.visualization.getColorByName('green') },
-      { value: 90, color: theme.visualization.getColorByName('red') },
-    ]);
-  });
-
-  it('omits thresholds in percentage mode', () => {
-    const frame = createDataFrame({
-      fields: [
-        {
-          name: 'value',
-          type: FieldType.number,
-          values: [1],
-          config: { thresholds: { mode: ThresholdsMode.Percentage, steps: [{ value: -Infinity, color: 'green' }] } },
-        },
-      ],
+    expect(serialized.state.lastNotNullDisplay).toEqual({
+      text: '95',
+      suffix: '%',
+      numeric: 95,
+      color: theme.visualization.getColorByName('red'),
+      percent: 1,
     });
-    expect(serialize(panelData([frame])).data.series[0].fields[0].thresholds).toBeUndefined();
+    expect(serialized.config).toEqual({
+      unit: 'percent',
+      decimals: 0,
+      thresholds: {
+        mode: 'absolute',
+        steps: [
+          { value: null, color: theme.visualization.getColorByName('green') },
+          { value: 90, color: theme.visualization.getColorByName('red') },
+        ],
+      },
+      color: { mode: 'thresholds' },
+      mappings: [{ type: 'value', options: { '1': { text: 'one' } } }],
+    });
   });
 
   it('carries query errors as messages', () => {
     const { data } = serialize(
       panelData([], { state: LoadingState.Error, errors: [{ refId: 'B', message: 'timeout' }, { message: 'other' }] })
     );
-    expect(data).toEqual({ state: 'Error', series: [], errors: ['B: timeout', 'other'] });
+    expect(data.errors).toEqual([{ refId: 'B', message: 'timeout' }, { message: 'other' }]);
   });
 
   it('refuses more frames than the limit', () => {
@@ -174,36 +192,59 @@ describe('serializePanelData', () => {
 });
 
 describe('buildRenderInput', () => {
-  beforeEach(() => {
-    setTemplateSrv({ getVariables: () => [{ name: 'env' }] } as unknown as TemplateSrv);
-  });
-
-  const replaceVariables = (value: string) =>
-    ({ '${env:json}': '["prod","dev"]', '${env:text}': 'prod + dev' })[value] ?? value;
-
   const params = (series: PanelData['series']) => ({
+    id: 7,
+    title: 'Overview',
     data: panelData(series),
     timeRange: { from: dateTime(1000), to: dateTime(2000), raw: { from: 'now-1h', to: 'now' } },
     timeZone: 'utc',
-    replaceVariables,
+    options: { code: 'panel.onRender(() => {})', mode: 'compact', fn: () => 1 },
+    fieldConfig: {
+      defaults: { unit: 'ms', links: [{ title: 'x', url: 'https://example.com' }] },
+      overrides: [
+        {
+          matcher: { id: 'byName', options: 'cpu' },
+          properties: [
+            { id: 'unit', value: 'percent' },
+            { id: 'links', value: [] },
+            { id: 'custom.width', value: 3 },
+          ],
+        },
+      ],
+    },
     theme,
     width: 320,
     height: 200,
-    isRenderTarget: true,
+    transparent: true,
+    fitContent: false,
+    location: { pathname: '/d/abc/overview', search: '?orgId=1&var-env=prod' },
   });
 
-  it('builds the full snapshot with resolved time zone and variables', () => {
+  it('builds a PanelProps-shaped snapshot with a resolved time zone and the dashboard URL', () => {
     const result = buildRenderInput(params([]));
     if (!result.ok) {
       throw new Error(result.reason);
     }
     expect(result.input).toMatchObject({
+      id: 7,
+      title: 'Overview',
       timeRange: { from: 1000, to: 2000, raw: { from: 'now-1h', to: 'now' } },
       timeZone: 'UTC',
-      variables: { env: { value: ['prod', 'dev'], text: 'prod + dev' } },
-      size: { width: 320, height: 200 },
-      isRenderTarget: true,
+      options: { mode: 'compact' },
+      fieldConfig: {
+        defaults: { unit: 'ms' },
+        overrides: [{ matcher: { id: 'byName', options: 'cpu' }, properties: [{ id: 'unit', value: 'percent' }] }],
+      },
+      width: 320,
+      height: 200,
+      transparent: true,
+      fitContent: false,
+      location: { pathname: '/d/abc/overview', search: '?orgId=1&var-env=prod' },
     });
+    expect(result.input.options).toEqual({ mode: 'compact' });
+    expect(result.input.fieldConfig.defaults).toEqual({ unit: 'ms' });
+    expect(result.input.theme.colorScheme).toBe(theme.isDark ? 'dark' : 'light');
+    expect(result.input.theme.vars['--gf-color-text-primary']).toBe(theme.colors.text.primary);
     expect(result.bytes).toBe(JSON.stringify(result.input).length);
   });
 

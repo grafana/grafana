@@ -68,47 +68,39 @@ function messagesOfType(port: FakePort, type: string): Array<Record<string, unkn
 }
 
 function makeInput(overrides: Partial<RenderInput> = {}): RenderInput {
+  const timeRange = { from: 0, to: 1000, raw: { from: 'now-1h', to: 'now' } };
   return {
+    id: 1,
+    title: 'Custom',
     data: {
       state: 'Done',
       errors: [],
-      series: [
-        { refId: 'A', length: 1, source: { panelId: 2, title: 'CPU' }, fields: [] },
-        { refId: 'A', length: 1, fields: [] },
-        { refId: 'B', length: 1, source: { panelId: 2, title: 'CPU' }, fields: [] },
-      ],
+      timeRange,
+      series: [{ refId: 'A', length: 1, fields: [] }],
     },
-    timeRange: { from: 0, to: 1000, raw: { from: 'now-1h', to: 'now' } },
+    timeRange,
     timeZone: 'UTC',
-    variables: { env: { value: 'prod', text: 'prod' } },
+    options: {},
+    fieldConfig: { defaults: {}, overrides: [] },
+    width: 400,
+    height: 300,
+    transparent: false,
+    fitContent: false,
+    location: { pathname: '/d/abc', search: '?var-env=prod' },
     theme: {
-      mode: 'dark',
-      colors: {
-        text: { primary: 'rgb(1, 2, 3)', secondary: 's', disabled: 'd', link: 'l' },
-        background: { canvas: 'c', primary: 'p', secondary: 's' },
-        border: { weak: 'w', medium: 'm', strong: 's' },
-        primary: { main: 'pm', text: 'pt', contrastText: 'pc' },
-        success: { main: 'sm', text: 'st' },
-        warning: { main: 'wm', text: 'wt' },
-        error: { main: 'em', text: 'et' },
-        info: { main: 'im', text: 'it' },
-      },
-      palette: ['red', 'blue'],
-      typography: { fontFamily: 'Inter', fontFamilyMonospace: 'Mono', fontSize: 14, bodySmallFontSize: '12px' },
-      spacingGridSize: 8,
-      borderRadius: '6px',
+      colorScheme: 'dark',
+      vars: { '--gf-color-text-primary': 'rgb(1, 2, 3)', '--gf-palette-1': 'blue', color: 'red' },
     },
-    size: { width: 400, height: 300 },
-    isRenderTarget: false,
     ...overrides,
   };
 }
 
+// Each draw records the title it got, which the tests use to tell renders apart.
 const RECORDING_CODE = `
   window.draws = [];
   panel.onRender(function (ctx) {
-    window.draws.push({ seq: ctx.seq, width: ctx.size.width, groups: ctx.helpers.bySource().map(function (g) { return [g.panelId, g.frames.length]; }) });
-    ctx.root.textContent = 'drawn ' + ctx.seq;
+    window.draws.push({ title: ctx.title, width: ctx.width });
+    ctx.root.textContent = 'drawn ' + ctx.title;
   });
 `;
 
@@ -157,27 +149,53 @@ describe('content frame bootstrap', () => {
 
   it('coalesces renders and draws only the latest seq', async () => {
     const { port, send, window } = connect(RECORDING_CODE);
-    send({ type: 'render', seq: 1, input: makeInput({ size: { width: 100, height: 1 } }) });
-    send({ type: 'render', seq: 2, input: makeInput({ size: { width: 200, height: 1 } }) });
-    send({ type: 'render', seq: 3, input: makeInput({ size: { width: 300, height: 1 } }) });
+    send({ type: 'render', seq: 1, input: makeInput({ title: '1', width: 100 }) });
+    send({ type: 'render', seq: 2, input: makeInput({ title: '2', width: 200 }) });
+    send({ type: 'render', seq: 3, input: makeInput({ title: '3', width: 300 }) });
     await until(() => messagesOfType(port, 'render-complete').length > 0);
 
-    expect(Reflect.get(window, 'draws')).toEqual([
-      {
-        seq: 3,
-        width: 300,
-        groups: [
-          [2, 2],
-          [null, 1],
-        ],
-      },
-    ]);
+    expect(Reflect.get(window, 'draws')).toEqual([{ title: '3', width: 300 }]);
     expect(messagesOfType(port, 'render-complete')).toEqual([
       { type: 'render-complete', seq: 3, durationMs: expect.any(Number), nodeCount: 0 },
     ]);
     expect(window.document.getElementById('root')?.textContent).toBe('drawn 3');
     expect(window.document.documentElement.style.getPropertyValue('--gf-color-text-primary')).toBe('rgb(1, 2, 3)');
     expect(window.document.documentElement.style.getPropertyValue('--gf-palette-1')).toBe('blue');
+    expect(window.document.documentElement.style.getPropertyValue('color')).toBe('');
+    expect(window.document.documentElement.style.colorScheme).toBe('dark');
+  });
+
+  it('hands the draw the PanelProps-shaped context and nothing else', async () => {
+    const { port, send, window } = connect(`
+      panel.onRender(function (ctx) {
+        window.ctx = ctx;
+        window.api = { apiVersion: panel.apiVersion, keys: Object.keys(panel) };
+      });
+    `);
+    const input = makeInput();
+    send({ type: 'render', seq: 1, input });
+    await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+    const { theme, ...expected } = input;
+    expect(Reflect.get(window, 'ctx')).toEqual({ ...expected, root: window.document.getElementById('root') });
+    expect(Reflect.get(window, 'api')).toEqual({ apiVersion: 1, keys: ['apiVersion', 'onRender'] });
+  });
+
+  it('removes the CSS variables of a previous theme', async () => {
+    const { port, send, window } = connect('panel.onRender(function () {});');
+    send({ type: 'render', seq: 1, input: makeInput() });
+    await until(() => messagesOfType(port, 'render-complete').length === 1);
+    send({
+      type: 'render',
+      seq: 2,
+      input: makeInput({ theme: { colorScheme: 'light', vars: { '--gf-color-text-primary': 'black' } } }),
+    });
+    await until(() => messagesOfType(port, 'render-complete').length === 2);
+
+    const style = window.document.documentElement.style;
+    expect(style.getPropertyValue('--gf-color-text-primary')).toBe('black');
+    expect(style.getPropertyValue('--gf-palette-1')).toBe('');
+    expect(style.colorScheme).toBe('light');
   });
 
   it('redraws the last input with the new size on resize', async () => {
@@ -187,11 +205,8 @@ describe('content frame bootstrap', () => {
     send({ type: 'resize', seq: 2, size: { width: 640, height: 480 } });
     await until(() => messagesOfType(port, 'render-complete').length === 2);
 
-    const draws: Array<{ seq: number; width: number }> = Reflect.get(window, 'draws');
-    expect(draws.map(({ seq, width }) => [seq, width])).toEqual([
-      [1, 400],
-      [2, 640],
-    ]);
+    const draws: Array<{ width: number; height: number }> = Reflect.get(window, 'draws');
+    expect(draws.map(({ width }) => width)).toEqual([400, 640]);
   });
 
   it('reports a throwing draw as a runtime error for that seq', async () => {
@@ -257,15 +272,15 @@ describe('content frame bootstrap', () => {
   it('holds the latest draw while paused and draws it on resume', async () => {
     const { port, send, window } = connect(RECORDING_CODE);
     send({ type: 'pause' });
-    send({ type: 'render', seq: 1, input: makeInput() });
-    send({ type: 'render', seq: 2, input: makeInput() });
+    send({ type: 'render', seq: 1, input: makeInput({ title: '1' }) });
+    send({ type: 'render', seq: 2, input: makeInput({ title: '2' }) });
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(Reflect.get(window, 'draws')).toEqual([]);
 
     send({ type: 'resume' });
     await until(() => messagesOfType(port, 'render-complete').length > 0);
-    const draws: Array<{ seq: number }> = Reflect.get(window, 'draws');
-    expect(draws.map(({ seq }) => seq)).toEqual([2]);
+    const draws: Array<{ title: string }> = Reflect.get(window, 'draws');
+    expect(draws.map(({ title }) => title)).toEqual(['2']);
   });
 
   describe('realm hardening', () => {

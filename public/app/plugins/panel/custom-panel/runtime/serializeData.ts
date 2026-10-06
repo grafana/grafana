@@ -1,15 +1,15 @@
 import {
   type DataFrame,
   type DataQueryError,
+  type DisplayValue,
   type Field,
+  type FieldConfig,
+  type FieldConfigSource,
   FieldType,
-  formattedValueToString,
   getFieldDisplayName,
   getTimeZone,
   type GrafanaTheme2,
-  type InterpolateFunction,
   type PanelData,
-  ThresholdsMode,
   type TimeRange,
   type TimeZone,
 } from '@grafana/data';
@@ -25,15 +25,18 @@ import {
 } from './constants';
 import {
   type RenderInput,
+  type RenderLocation,
+  type SerializedDisplayValue,
   type SerializedField,
+  type SerializedFieldConfig,
+  type SerializedFieldConfigSource,
   type SerializedFrame,
   type SerializedLoadingState,
   type SerializedPanelData,
+  type SerializedTimeRange,
   type SerializedValue,
-  type VariableSnapshot,
 } from './protocol';
 import { serializeTheme } from './theme';
-import { snapshotVariables } from './variables';
 
 const MAX_SOURCE_TITLE_LENGTH = 200;
 const LOADING_STATES: SerializedLoadingState[] = [
@@ -75,6 +78,7 @@ export function serializePanelData(data: PanelData, theme: GrafanaTheme2): Seria
     data: {
       state: isLoadingState(state) ? state : 'NotStarted',
       series: series.map((frame) => serializeFrame(frame, series, theme)),
+      timeRange: serializeTimeRange(data.timeRange),
       errors: readErrors(data),
     },
   };
@@ -82,34 +86,38 @@ export function serializePanelData(data: PanelData, theme: GrafanaTheme2): Seria
 
 /** The full snapshot sent with every render. bytes is the JSON length that the limit is checked against. */
 export function buildRenderInput(params: {
+  id: number;
+  title: string;
   data: PanelData;
   timeRange: TimeRange;
   timeZone: TimeZone;
-  replaceVariables: InterpolateFunction;
+  options: object;
+  fieldConfig: FieldConfigSource;
   theme: GrafanaTheme2;
   width: number;
   height: number;
-  isRenderTarget: boolean;
-  /** A snapshot the caller already took, so the variables are resolved once per render. */
-  variables?: VariableSnapshot;
+  transparent: boolean;
+  fitContent: boolean;
+  location: RenderLocation;
 }): BuildInputResult {
   const serialized = serializePanelData(params.data, params.theme);
   if (!serialized.ok) {
     return serialized;
   }
-  const { timeRange } = params;
   const input: RenderInput = {
+    id: params.id,
+    title: params.title,
     data: serialized.data,
-    timeRange: {
-      from: timeRange.from.valueOf(),
-      to: timeRange.to.valueOf(),
-      raw: { from: rawTimeText(timeRange.raw.from), to: rawTimeText(timeRange.raw.to) },
-    },
+    timeRange: serializeTimeRange(params.timeRange),
     timeZone: resolveTimeZone(params.timeZone),
-    variables: params.variables ?? snapshotVariables(params.replaceVariables),
+    options: serializeOptions(params.options),
+    fieldConfig: serializeFieldConfigSource(params.fieldConfig, params.theme),
+    width: toSize(params.width),
+    height: toSize(params.height),
+    transparent: params.transparent,
+    fitContent: params.fitContent,
+    location: { pathname: params.location.pathname, search: params.location.search },
     theme: serializeTheme(params.theme),
-    size: { width: toSize(params.width), height: toSize(params.height) },
-    isRenderTarget: params.isRenderTarget,
   };
   const bytes = JSON.stringify(input).length;
   if (bytes > MAX_TRANSFER_BYTES) {
@@ -135,25 +143,34 @@ export function resolveTimeZone(timeZone: TimeZone): string {
   }
 }
 
+function serializeTimeRange(timeRange: TimeRange): SerializedTimeRange {
+  return {
+    from: timeRange.from.valueOf(),
+    to: timeRange.to.valueOf(),
+    raw: { from: rawTimeText(timeRange.raw.from), to: rawTimeText(timeRange.raw.to) },
+  };
+}
+
 function serializeFrame(frame: DataFrame, allFrames: DataFrame[], theme: GrafanaTheme2): SerializedFrame {
   const serialized: SerializedFrame = {
-    length: frame.length,
     fields: frame.fields.map((field) => serializeField(field, frame, allFrames, theme)),
+    length: frame.length,
   };
-  if (frame.refId !== undefined) {
-    serialized.refId = frame.refId;
-  }
   if (frame.name !== undefined) {
     serialized.name = frame.name;
   }
-  const source = readSource(frame);
-  if (source) {
-    serialized.source = source;
+  if (frame.refId !== undefined) {
+    serialized.refId = frame.refId;
+  }
+  const meta = readSourceMeta(frame);
+  if (meta) {
+    serialized.meta = meta;
   }
   return serialized;
 }
 
-function readSource(frame: DataFrame): SerializedFrame['source'] {
+/** Only the dashboard source panel crosses: other meta (queries, stats, notices) stays on the host. */
+function readSourceMeta(frame: DataFrame): SerializedFrame['meta'] {
   const custom: unknown = frame.meta?.custom;
   if (!custom || typeof custom !== 'object') {
     return undefined;
@@ -163,7 +180,12 @@ function readSource(frame: DataFrame): SerializedFrame['source'] {
     return undefined;
   }
   const title: unknown = Reflect.get(custom, DASHBOARD_SOURCE_PANEL_TITLE_META_KEY);
-  return typeof title === 'string' ? { panelId, title: title.slice(0, MAX_SOURCE_TITLE_LENGTH) } : { panelId };
+  return {
+    custom:
+      typeof title === 'string'
+        ? { dashboardSourcePanelId: panelId, dashboardSourcePanelTitle: title.slice(0, MAX_SOURCE_TITLE_LENGTH) }
+        : { dashboardSourcePanelId: panelId },
+  };
 }
 
 function serializeField(field: Field, frame: DataFrame, allFrames: DataFrame[], theme: GrafanaTheme2): SerializedField {
@@ -179,31 +201,123 @@ function serializeField(field: Field, frame: DataFrame, allFrames: DataFrame[], 
   }
   const serialized: SerializedField = {
     name: field.name,
-    displayName: field.state?.displayName ?? getFieldDisplayName(field, frame, allFrames),
     type: field.type,
     values,
+    config: serializeFieldConfig(field.config, theme),
+    state: { displayName: field.state?.displayName ?? getFieldDisplayName(field, frame, allFrames) },
   };
-  if (field.config.unit) {
-    serialized.unit = field.config.unit;
-  }
   if (field.labels && Object.keys(field.labels).length > 0) {
     serialized.labels = { ...field.labels };
   }
   if (field.display && lastIndex >= 0) {
-    const display = field.display(field.values[lastIndex]);
-    serialized.lastDisplay = formattedValueToString(display);
-    if (typeof display.color === 'string') {
-      serialized.lastColor = display.color;
-    }
-  }
-  const thresholds = field.config.thresholds;
-  if (thresholds?.mode === ThresholdsMode.Absolute && thresholds.steps.length > 0) {
-    serialized.thresholds = thresholds.steps.map((step) => ({
-      value: Number.isFinite(step.value) ? step.value : null,
-      color: theme.visualization.getColorByName(step.color),
-    }));
+    serialized.state.lastNotNullDisplay = serializeDisplayValue(field.display(field.values[lastIndex]));
   }
   return serialized;
+}
+
+function serializeDisplayValue(display: DisplayValue): SerializedDisplayValue {
+  const serialized: SerializedDisplayValue = {
+    text: display.text,
+    numeric: Number.isFinite(display.numeric) ? display.numeric : null,
+  };
+  if (display.prefix) {
+    serialized.prefix = display.prefix;
+  }
+  if (display.suffix) {
+    serialized.suffix = display.suffix;
+  }
+  if (typeof display.color === 'string') {
+    serialized.color = display.color;
+  }
+  if (typeof display.percent === 'number' && Number.isFinite(display.percent)) {
+    serialized.percent = display.percent;
+  }
+  return serialized;
+}
+
+const FIELD_CONFIG_STRINGS = ['displayName', 'displayNameFromDS', 'description', 'unit', 'noValue'] as const;
+const FIELD_CONFIG_NUMBERS = ['decimals', 'min', 'max', 'interval'] as const;
+
+/**
+ * The display keys of a FieldConfig. links and actions are left out because the frame can only
+ * follow allowlisted links, and custom because it belongs to the panel plugin that set it.
+ */
+function serializeFieldConfig(config: FieldConfig, theme: GrafanaTheme2): SerializedFieldConfig {
+  const serialized: SerializedFieldConfig = {};
+  for (const key of FIELD_CONFIG_STRINGS) {
+    const value = config[key];
+    if (typeof value === 'string') {
+      serialized[key] = cut(value);
+    }
+  }
+  for (const key of FIELD_CONFIG_NUMBERS) {
+    const value = config[key];
+    if (value === null || (typeof value === 'number' && Number.isFinite(value))) {
+      serialized[key] = value;
+    }
+  }
+  if (Array.isArray(config.mappings) && config.mappings.length > 0) {
+    const mappings = toJson(config.mappings);
+    if (Array.isArray(mappings)) {
+      serialized.mappings = mappings;
+    }
+  }
+  const { thresholds, color } = config;
+  if (thresholds && Array.isArray(thresholds.steps)) {
+    serialized.thresholds = {
+      mode: String(thresholds.mode),
+      steps: thresholds.steps.map((step) => ({
+        value: Number.isFinite(step.value) ? step.value : null,
+        color: theme.visualization.getColorByName(step.color),
+      })),
+    };
+  }
+  if (color && typeof color.mode === 'string') {
+    serialized.color = { mode: color.mode };
+    if (typeof color.fixedColor === 'string') {
+      serialized.color.fixedColor = theme.visualization.getColorByName(color.fixedColor);
+    }
+    if (typeof color.seriesBy === 'string') {
+      serialized.color.seriesBy = color.seriesBy;
+    }
+  }
+  return serialized;
+}
+
+const OMITTED_OVERRIDE_PROPERTIES = new Set(['links', 'actions']);
+
+function serializeFieldConfigSource(source: FieldConfigSource, theme: GrafanaTheme2): SerializedFieldConfigSource {
+  const overrides = (source?.overrides ?? []).map((override) => ({
+    matcher: { id: String(override.matcher?.id), options: toJson(override.matcher?.options) },
+    properties: (override.properties ?? [])
+      .filter((property) => !OMITTED_OVERRIDE_PROPERTIES.has(property.id) && !property.id.startsWith('custom.'))
+      .map((property) => ({ id: property.id, value: toJson(property.value) })),
+  }));
+  return { defaults: serializeFieldConfig(source?.defaults ?? {}, theme), overrides };
+}
+
+/** Panel options without the drawing code, which the frame already runs. */
+function serializeOptions(options: object): Record<string, unknown> {
+  const copy = toJson(options);
+  if (!copy || typeof copy !== 'object' || Array.isArray(copy)) {
+    return {};
+  }
+  const result: Record<string, unknown> = { ...copy };
+  delete result.code;
+  return result;
+}
+
+/** A plain JSON copy: functions, undefined and cycles never reach the frame. */
+function toJson(value: unknown): unknown {
+  if (value === undefined) {
+    return undefined;
+  }
+  try {
+    const text = JSON.stringify(value);
+    return text === undefined ? undefined : JSON.parse(text);
+  } catch {
+    return undefined;
+  }
 }
 
 function toTimeValue(value: unknown): number | null {
@@ -253,12 +367,14 @@ function cut(value: string): string {
   return value.length > MAX_STRING_CELL_LENGTH ? `${value.slice(0, MAX_STRING_CELL_LENGTH)}…` : value;
 }
 
-function readErrors(data: PanelData): string[] {
+function readErrors(data: PanelData): SerializedPanelData['errors'] {
   const errors: DataQueryError[] = data.errors ?? (data.error ? [data.error] : []);
   return errors.map((error) => {
-    const message = error.message ?? error.data?.message ?? error.data?.error ?? 'Query error';
-    const text = error.refId ? `${error.refId}: ${message}` : message;
-    return text.slice(0, MAX_DIAGNOSTIC_LENGTH);
+    const message = (error.message ?? error.data?.message ?? error.data?.error ?? 'Query error').slice(
+      0,
+      MAX_DIAGNOSTIC_LENGTH
+    );
+    return error.refId ? { message, refId: error.refId } : { message };
   });
 }
 
