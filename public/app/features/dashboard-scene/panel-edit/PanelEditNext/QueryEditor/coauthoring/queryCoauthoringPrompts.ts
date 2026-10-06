@@ -297,9 +297,10 @@ export function workingFocusSummary(context: QueryEditorCoauthoringContextV1): s
 }
 
 export function workingContextSummary(context: QueryEditorCoauthoringContextV1): string {
-  const [item, ...remainingItems] = getMetadata(context);
+  const metrics = getMetadata(context).filter((item) => item.kind === 'metric');
+  const [item, ...remainingItems] = metrics;
   if (!item) {
-    return context.language.displayName;
+    return getMetadata(context)[0]?.name ?? context.language.displayName;
   }
   return remainingItems.length > 0 ? `${item.name} +${remainingItems.length}` : item.name;
 }

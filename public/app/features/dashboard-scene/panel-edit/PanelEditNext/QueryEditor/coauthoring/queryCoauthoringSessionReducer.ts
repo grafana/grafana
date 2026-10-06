@@ -85,7 +85,7 @@ type QueryCoauthoringAssistantStatus = 'loading' | 'unavailable' | 'ready';
 export function createQueryCoauthoringSessionState(
   assistantStatus: QueryCoauthoringAssistantStatus = 'ready'
 ): QueryCoauthoringReducerState {
-  const prompt: PromptSnapshot = { kind: 'prompt', intent: '', submittedIterationCount: 0 };
+  const prompt: PromptSnapshot = { kind: 'prompt', intent: '', submittedModifyCount: 0 };
   const state = {
     ...prompt,
     data: {
@@ -229,6 +229,7 @@ export function queryCoauthoringSessionReducer(
           state,
           updateSession(current, () => ({
             kind: 'working',
+            mode: 'explain',
             context: state.data.prompt.context,
             resume: state.data.requestResume ?? state.data.prompt,
           }))
@@ -237,7 +238,7 @@ export function queryCoauthoringSessionReducer(
       const prompt = {
         ...state.data.prompt,
         clarification: undefined,
-        submittedIterationCount: state.data.prompt.submittedIterationCount + 1,
+        submittedModifyCount: state.data.prompt.submittedModifyCount + 1,
       };
       const next = {
         ...state,
@@ -254,7 +255,14 @@ export function queryCoauthoringSessionReducer(
         updateSession(
           current,
           (view) =>
-            view.kind === 'working' ? view : { kind: 'working', context: state.data.prompt.context, resume: view },
+            view.kind === 'working'
+              ? view
+              : {
+                  kind: 'working',
+                  context: state.data.prompt.context,
+                  mode: state.data.requestMode ?? 'modify',
+                  resume: view,
+                },
           'assistant'
         )
       );
@@ -278,7 +286,7 @@ export function queryCoauthoringSessionReducer(
       const previousView = state.data.requestResume ?? next.data.prompt;
       const resume =
         previousView.kind === 'prompt'
-          ? { ...previousView, submittedIterationCount: next.data.prompt.submittedIterationCount }
+          ? { ...previousView, submittedModifyCount: next.data.prompt.submittedModifyCount }
           : previousView;
       return transition(
         next,
@@ -326,7 +334,7 @@ export function queryCoauthoringSessionReducer(
           const prompt = { ...state.data.prompt, intent: '', clarification: { message: event.outcome.message } };
           next.data.prompt = prompt;
           view =
-            prompt.submittedIterationCount >= 3 && !state.data.iterationNudgeDismissed && prompt.context
+            prompt.submittedModifyCount >= 3 && !state.data.iterationNudgeDismissed && prompt.context
               ? { kind: 'iteration-nudge' }
               : prompt;
           break;

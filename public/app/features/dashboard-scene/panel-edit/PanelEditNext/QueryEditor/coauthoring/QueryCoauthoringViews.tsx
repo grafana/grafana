@@ -249,43 +249,48 @@ export function QueryCoauthoringExplain({
 
 export function QueryCoauthoringWorking({
   context,
+  mode,
   onStop,
 }: {
   context?: QueryEditorCoauthoringContextV1;
+  mode: 'modify' | 'explain';
   onStop: () => void;
 }) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
-    <div className={styles.building}>
-      <QueryCoauthoringHeader onStop={onStop} pulse>
-        <QueryCoauthoringLiveStatus>
-          <Icon name="ai-sparkle" size="sm" />
+    <QueryCoauthoringHeader onStop={onStop}>
+      <QueryCoauthoringLiveStatus>
+        <div className={styles.workingStatus}>
           <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.building">Building query...</Trans>
+            {mode === 'explain' ? (
+              <Trans i18nKey="query-editor-coauthoring.explaining">Explaining query…</Trans>
+            ) : (
+              <Trans i18nKey="query-editor-coauthoring.building">Building query...</Trans>
+            )}
           </Text>
-        </QueryCoauthoringLiveStatus>
-      </QueryCoauthoringHeader>
-      {context && (
-        <div className={styles.workingFlow}>
-          <div className={styles.workingStep} aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.focus">FOCUS</Trans>
-            </Text>
-            <code>{workingFocusSummary(context)}</code>
-          </div>
-          <Icon className={styles.flowArrow} name="arrow-right" />
-          <div
-            className={cx(styles.workingStep, styles.workingStepDelayed)}
-            aria-label={t('query-editor-coauthoring.relevant-context', 'Relevant query context')}
-          >
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.context">CONTEXT</Trans>
-            </Text>
-            <code>{workingContextSummary(context)}</code>
-          </div>
+          {context && (
+            <div className={styles.workingChips}>
+              <div
+                className={styles.workingChip}
+                aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}
+              >
+                <Text variant="bodySmall" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.focus">Focus</Trans>
+                </Text>
+                <code>{workingFocusSummary(context)}</code>
+              </div>
+              <span className={styles.workingSweep} aria-hidden="true" />
+              <div
+                className={styles.workingChip}
+                aria-label={t('query-editor-coauthoring.relevant-context', 'Relevant query context')}
+              >
+                <code>{workingContextSummary(context)}</code>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </QueryCoauthoringLiveStatus>
+    </QueryCoauthoringHeader>
   );
 }
 

@@ -159,15 +159,15 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             </div>
           )}
           <QueryCoauthoringPromptInput
-            key={state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}
-            focusTrigger={`${state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}-${
+            key={state.clarification ? `clarification-${state.submittedModifyCount}` : 'initial'}
+            focusTrigger={`${state.clarification ? `clarification-${state.submittedModifyCount}` : 'initial'}-${
               state.context ? 'ready' : 'reading'
             }`}
             userGestureRef={state.promptUserGestureRef}
             value={state.intent}
             placeholder={
               state.clarification
-                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail...')
+                ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail…')
                 : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
             }
             ariaLabel={
@@ -210,29 +210,22 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           onClose={session.dismiss}
         />
       )}
-      {state.kind === 'working' && <QueryCoauthoringWorking context={state.context} onStop={state.stop} />}
+      {state.kind === 'working' && (
+        <QueryCoauthoringWorking context={state.context} mode={state.mode} onStop={state.stop} />
+      )}
       {state.kind === 'context-error' && (
-        <>
+        <div className={styles.contextError} role="alert">
           <QueryCoauthoringHeader onClose={session.dismiss}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.context-error">Could not read the selected query context</Trans>
-            </Text>
+            <div className={styles.headerCopy}>
+              <Text variant="bodySmall" color="secondary">
+                <Trans i18nKey="query-editor-coauthoring.context-error">Context failed to load</Trans>
+              </Text>
+            </div>
+            <Button size="sm" variant="secondary" onClick={state.retry}>
+              <Trans i18nKey="query-editor-coauthoring.retry-context">Retry</Trans>
+            </Button>
           </QueryCoauthoringHeader>
-          <Stack direction="column" gap={1}>
-            <Alert
-              severity="error"
-              title={t('query-editor-coauthoring.context-error', 'Could not read the selected query context')}
-            />
-            <Stack gap={1} justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={session.dismiss}>
-                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-              </Button>
-              <Button size="sm" variant="secondary" onClick={state.retry}>
-                <Trans i18nKey="query-editor-coauthoring.retry">Try again</Trans>
-              </Button>
-            </Stack>
-          </Stack>
-        </>
+        </div>
       )}
       {state.kind === 'error' && (
         <>
