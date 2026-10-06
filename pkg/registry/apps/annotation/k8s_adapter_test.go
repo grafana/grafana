@@ -567,6 +567,17 @@ func TestK8sAdapter_Update(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "updated text", updated.(*annotationV0.Annotation).Spec.Text)
 	})
+
+	t.Run("treats omitted timeEnd on a point annotation as unchanged", func(t *testing.T) {
+		adapter, ctx := seedWithData(t)
+		incoming := &annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000},
+		}
+		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
+		require.NoError(t, err)
+		assert.Equal(t, ptr.To(int64(1000)), updated.(*annotationV0.Annotation).Spec.TimeEnd)
+	})
 }
 
 func TestK8sAdapter_Delete(t *testing.T) {
