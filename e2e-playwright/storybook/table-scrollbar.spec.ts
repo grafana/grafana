@@ -1,6 +1,36 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Table scrollbar geometry', () => {
+  for (const refreshed of [false, true]) {
+    test(`nested grids do not reserve an unused gutter (refreshed ${refreshed})`, async ({ page }) => {
+      await page.goto(
+        `/iframe.html?id=plugins-table-ng--nested-scrollbar&viewMode=story&args=tableRefreshEnabled:${refreshed}`
+      );
+      await page.addStyleTag({
+        content: `
+        [role="grid"] { scrollbar-width: auto !important; scrollbar-color: auto !important; }
+        [role="grid"]::-webkit-scrollbar { display: block !important; width: 15px !important; height: 15px !important; }
+      `,
+      });
+      await page.getByRole('button', { name: 'Expand row', exact: true }).click();
+      const nested = page.getByRole('treegrid').getByRole('grid');
+      await expect(nested.getByRole('gridcell', { name: 'Last nested row', exact: true })).toBeVisible();
+      await expect
+        .poll(() =>
+          nested.evaluate((element) => ({
+            gutter:
+              element.offsetWidth -
+              element.clientWidth -
+              parseFloat(getComputedStyle(element).borderLeftWidth) -
+              parseFloat(getComputedStyle(element).borderRightWidth),
+            horizontalOverflow: element.scrollWidth > element.clientWidth,
+            verticalOverflow: element.scrollHeight > element.clientHeight,
+          }))
+        )
+        .toEqual({ gutter: 0, horizontalOverflow: false, verticalOverflow: false });
+    });
+  }
+
   for (const { zoom, refreshed, width = 800.5, wrapText = false, footer = true, rowCount = 8 } of [
     { zoom: 1, refreshed: false },
     { zoom: 0.75, refreshed: false },

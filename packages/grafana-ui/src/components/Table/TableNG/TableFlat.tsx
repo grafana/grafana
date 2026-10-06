@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -383,7 +384,7 @@ export function TableFlat(props: TableNGProps) {
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
-      className={noPanelPadding ? styles.firstColumnInset : undefined}
+      className={clsx(styles.gridFlat, noPanelPadding && styles.firstColumnInset)}
       onCellKeyDown={({ column, row }, event) => {
         if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();

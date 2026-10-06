@@ -148,12 +148,6 @@ export const getGridStyles = memoize(
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
-        ...(!IS_SAFARI_26 && {
-          // Flat tables subtract the scrollbar gutter from their auto column widths. Keep that
-          // gutter independent of overflow so column sizing cannot toggle the scrollbar in a loop.
-          '&[role="grid"]': { scrollbarGutter: 'stable' },
-        }),
-
         border: 'none',
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
@@ -365,6 +359,11 @@ export const getGridStyles = memoize(
       }),
       lastRowWithoutBorder: css({
         '& > .rdg-cell': { borderBlockEnd: 'none' },
+      }),
+      // Only flat tables subtract the gutter from their auto column widths. Nested grids
+      // must keep their full width, even though they also use role="grid".
+      gridFlat: css({
+        ...(!IS_SAFARI_26 && { scrollbarGutter: 'stable' }),
       }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no

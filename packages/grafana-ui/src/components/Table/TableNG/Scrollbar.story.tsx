@@ -86,4 +86,37 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
   );
 };
 
+export const NestedScrollbar: StoryFn<Args> = ({ width, height, tableRefreshEnabled }) => {
+  const theme = useTheme2();
+  const data = useMemo(() => {
+    const nested = prepDataForStorybook(
+      [
+        createDataFrame({
+          fields: [
+            { name: 'Nested name', type: FieldType.string, values: ['First nested row', 'Last nested row'] },
+            { name: 'Nested value', type: FieldType.number, values: [1, 2] },
+          ],
+        }),
+      ],
+      theme
+    )[0];
+    return prepDataForStorybook(
+      [
+        createDataFrame({
+          fields: [
+            { name: 'Name', type: FieldType.string, values: ['Parent row'] },
+            { name: '__nestedFrames', type: FieldType.nestedFrames, values: [[nested]] },
+          ],
+        }),
+      ],
+      theme
+    )[0];
+  }, [theme]);
+  return (
+    <div style={{ width, height }}>
+      <TableNG data={data} width={width} height={height} tableRefreshEnabled={tableRefreshEnabled} />
+    </div>
+  );
+};
+
 export default meta;
