@@ -617,7 +617,7 @@ func TestConversionSerializerBatch(t *testing.T) {
 	recorder := &warningRecorder{}
 	ctx := warning.WithWarningRecorder(t.Context(), recorder)
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
-	var data [][]byte
+	data := make([][]byte, 0, 5)
 	for i, version := range []string{"v1", "v2", "v0", "v2", "v1"} {
 		obj := conversionTestObject(t)
 		obj.SetAPIVersion("example-app/" + version)
@@ -634,7 +634,7 @@ func TestConversionSerializerBatch(t *testing.T) {
 		require.Equal(t, "v2", req.GetTargetVersion())
 		require.Equal(t, "example-app", req.GetApi().GetGroup())
 		require.NotEmpty(t, req.GetUid())
-		var converted []*pluginv3.ConvertObjectsResponse_Object
+		converted := make([]*pluginv3.ConvertObjectsResponse_Object, 0, 3)
 		for i, idx := range []int{0, 2, 4} {
 			require.Equal(t, data[idx], req.GetObjects()[i].GetRaw())
 			obj := &unstructured.Unstructured{}
