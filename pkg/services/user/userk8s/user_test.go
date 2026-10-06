@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,9 +25,25 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+func enableDeterministicUID(t *testing.T) {
+	t.Helper()
+	flag, err := setting.ParseFlag(featuremgmt.FlagKubernetesUsersDeterministicUID, "true")
+	require.NoError(t, err)
+	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagKubernetesUsersDeterministicUID: flag,
+	})
+	require.NoError(t, err)
+	require.NoError(t, openfeature.SetProviderAndWait(provider))
+	t.Cleanup(func() {
+		_ = openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(nil))
+	})
+}
 
 func TestUserK8sService_Create(t *testing.T) {
 	tests := []struct {
@@ -346,6 +364,44 @@ func TestUserK8sService_Create(t *testing.T) {
 			assert.Equal(t, tt.expectUser.ExternalAuthInfo, result.ExternalAuthInfo)
 		})
 	}
+}
+
+func TestUserK8sService_Create_DeterministicUID(t *testing.T) {
+	sentName := func(t *testing.T, serverResponse func(w http.ResponseWriter, r *http.Request)) string {
+		t.Helper()
+		var got string
+		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
+			requesterOrgID: 2,
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				var body map[string]any
+				_ = json.NewDecoder(r.Body).Decode(&body)
+				got = body["metadata"].(map[string]any)["name"].(string)
+				serverResponse(w, r)
+			},
+		})
+		_, err := svc.Create(ctx, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"})
+		require.NoError(t, err)
+		return got
+	}
+
+	respond := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(v0alpha1.User{
+			ObjectMeta: metav1.ObjectMeta{Name: "ignored-in-this-test", Namespace: "org-2"},
+		})
+	}
+
+	t.Run("disabled by default: falls back to a random short UID", func(t *testing.T) {
+		name := sentName(t, respond)
+		assert.True(t, util.IsValidShortUID(name))
+		assert.NotEqual(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
+	})
+
+	t.Run("enabled: uses the deterministic hash of namespace, email and login", func(t *testing.T) {
+		enableDeterministicUID(t)
+		name := sentName(t, respond)
+		assert.Equal(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
+	})
 }
 
 func TestUserK8sService_GetByID(t *testing.T) {
