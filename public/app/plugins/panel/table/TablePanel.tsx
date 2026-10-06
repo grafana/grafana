@@ -8,6 +8,7 @@ import {
   getFrameDisplayName,
   type PanelProps,
   type SelectableValue,
+  useDataLinksContext,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
@@ -50,11 +51,10 @@ export function TablePanel(props: Props) {
     fitContent,
   } = props;
 
-  useCacheFieldDisplayNames(data.series);
-
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
+  const { dataLinkPostProcessor } = useDataLinksContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
@@ -70,23 +70,25 @@ export function TablePanel(props: Props) {
   const sourceSeries = tableRefreshNewFeaturesEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
-  const sourceMain = sourceSeries?.[currentIndex];
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
-  // Rebuild display processors and link closures against original rows, before ad-hoc selection.
-  const rawMain = useMemo(
+  // Rebuild against original rows while retaining cross-frame display and data-link context.
+  const displayFrames = useMemo(
     () =>
-      sourceMain
+      sourceSeries
         ? applyFieldOverrides({
-            data: [sourceMain],
+            data: [...sourceSeries],
             fieldConfig,
             fieldConfigRegistry: getPluginImportUtils().getPanelPluginFromCache('table')?.fieldConfigRegistry,
             theme,
             timeZone: props.timeZone,
             replaceVariables,
-          })[0]
-        : outputMain,
-    [sourceMain, outputMain, fieldConfig, theme, props.timeZone, replaceVariables]
+            dataLinkPostProcessor,
+          })
+        : frames,
+    [sourceSeries, frames, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
   );
+  useCacheFieldDisplayNames(displayFrames);
+  const rawMain = displayFrames[currentIndex] ?? outputMain;
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
   const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
   const main = useMemo(
