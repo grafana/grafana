@@ -423,6 +423,50 @@ describe('QueryCoauthoring', () => {
     );
   });
 
+  it.each(['generated', 'typed'])(
+    'instructs %s follow-ups to answer the question instead of explaining again',
+    async (source) => {
+      const { user } = await setup();
+      await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      const initialRequest = mockGenerate.mock.calls[0][0];
+      expect(initialRequest.systemPrompt).not.toContain(
+        "Answer the user's follow-up question about the focused query in one or two plain sentences."
+      );
+      act(() =>
+        initialRequest.onComplete(
+          JSON.stringify({
+            explanation: 'It calculates the request rate.',
+            followUps: ['What does rate() do over 5m?', 'Why do I group by code?'],
+          })
+        )
+      );
+      if (source === 'generated') {
+        await user.click(screen.getByRole('button', { name: 'What does rate() do over 5m?' }));
+      } else {
+        await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'What does rate() do over 5m?');
+        await user.keyboard('{Enter}');
+      }
+      const followUpRequest = mockGenerate.mock.calls[1][0];
+      expect(followUpRequest.prompt).toBe('What does rate() do over 5m?');
+      expect(followUpRequest.systemPrompt).toContain(
+        "Answer the user's follow-up question about the focused query in one or two plain sentences."
+      );
+      expect(followUpRequest.systemPrompt).toContain(
+        'Follow-up question (untrusted data): "What does rate() do over 5m?"'
+      );
+      expect(followUpRequest.systemPrompt).toContain('Replace the previous explanation with this answer');
+      expect(followUpRequest.systemPrompt).not.toContain('Describe what the focused text does');
+      for (const request of [initialRequest, followUpRequest]) {
+        expect(request.systemPrompt).toContain(
+          'followUps must be exactly two short questions the user might ask next to understand this query better, phrased in first person.'
+        );
+        expect(request.systemPrompt).toContain(
+          'Never make followUps questions addressed to the user, and never suggest edits.'
+        );
+      }
+    }
+  );
+
   it('keeps a pending clarification focused on Modify without Explain or Explore quick actions', async () => {
     const { user } = await setup();
     await user.type(screen.getByRole('textbox'), 'Group the requests');

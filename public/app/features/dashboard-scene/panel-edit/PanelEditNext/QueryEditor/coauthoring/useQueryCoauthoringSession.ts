@@ -372,7 +372,13 @@ export function useQueryCoauthoringSession({
         agentName: 'query-coauthor-explain',
         agentId: 'grafana.query.coauthor.explain.v1',
         prompt: trimmedIntent,
-        systemPrompt: buildExplainSystemPrompt(submittedContext, datasourceType, timeRange, previousExplanation),
+        systemPrompt: buildExplainSystemPrompt(
+          submittedContext,
+          datasourceType,
+          source === undefined ? { kind: 'initial' } : { kind: 'follow-up', question: trimmedIntent },
+          timeRange,
+          previousExplanation
+        ),
         onComplete: (text) =>
           send({
             type: 'explanation-completed',
