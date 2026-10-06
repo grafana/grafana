@@ -47,3 +47,4 @@ export const LINK_MIN_INTERVAL_MS = 1_000;
 /** Written by the dashboard datasource into frame.meta.custom. */
 export const DASHBOARD_SOURCE_PANEL_ID_META_KEY = 'dashboardSourcePanelId';
 export const DASHBOARD_SOURCE_PANEL_TITLE_META_KEY = 'dashboardSourcePanelTitle';
+export const DASHBOARD_SOURCE_REF_ID_META_KEY = 'dashboardSourceRefId';

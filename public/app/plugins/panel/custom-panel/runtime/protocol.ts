@@ -59,7 +59,9 @@ export interface SerializedField {
 export interface SerializedFrame {
   name?: string;
   refId?: string;
-  meta?: { custom: { dashboardSourcePanelId: number; dashboardSourcePanelTitle?: string } };
+  meta?: {
+    custom: { dashboardSourcePanelId: number; dashboardSourcePanelTitle?: string; dashboardSourceRefId?: string };
+  };
   fields: SerializedField[];
   length: number;
 }

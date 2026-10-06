@@ -17,6 +17,7 @@ import {
 import {
   DASHBOARD_SOURCE_PANEL_ID_META_KEY,
   DASHBOARD_SOURCE_PANEL_TITLE_META_KEY,
+  DASHBOARD_SOURCE_REF_ID_META_KEY,
   MAX_DIAGNOSTIC_LENGTH,
   MAX_STRING_CELL_LENGTH,
   MAX_TRANSFER_BYTES,
@@ -195,11 +196,13 @@ function readSourceMeta(frame: DataFrame): SerializedFrame['meta'] {
     return undefined;
   }
   const title: unknown = Reflect.get(custom, DASHBOARD_SOURCE_PANEL_TITLE_META_KEY);
+  const refId: unknown = Reflect.get(custom, DASHBOARD_SOURCE_REF_ID_META_KEY);
   return {
-    custom:
-      typeof title === 'string'
-        ? { dashboardSourcePanelId: panelId, dashboardSourcePanelTitle: title.slice(0, MAX_SOURCE_TITLE_LENGTH) }
-        : { dashboardSourcePanelId: panelId },
+    custom: {
+      dashboardSourcePanelId: panelId,
+      ...(typeof title === 'string' && { dashboardSourcePanelTitle: title.slice(0, MAX_SOURCE_TITLE_LENGTH) }),
+      ...(typeof refId === 'string' && { dashboardSourceRefId: refId.slice(0, MAX_SOURCE_TITLE_LENGTH) }),
+    },
   };
 }
 

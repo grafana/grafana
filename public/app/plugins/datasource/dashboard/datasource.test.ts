@@ -12,6 +12,7 @@ import {
   FieldType,
   type DataFrame,
   type Field,
+  type FieldConfigSource,
   type AdHocVariableFilter,
   DataTopic,
 } from '@grafana/data';
@@ -29,6 +30,7 @@ import {
   SceneTimeRange,
   SceneVariableSet,
   ConstantVariable,
+  CustomVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -953,7 +955,7 @@ describe('DashboardDatasource', () => {
       observable.subscribe({ next: (data) => (rsp = data) });
 
       expect(rsp?.data).toHaveLength(1);
-      expect(rsp?.data[0].refId).toBe('A');
+      expect(rsp?.data[0].refId).toBe('B');
       expect(rsp?.data[0].fields.map((field: Field) => [field.name, field.values])).toEqual([
         ['time', [1000, 2000]],
         ['value', [10, 20]],
@@ -964,8 +966,32 @@ describe('DashboardDatasource', () => {
           existing: 'kept',
           dashboardSourcePanelId: 7,
           dashboardSourcePanelTitle: 'CPU on server-1',
+          dashboardSourceRefId: 'A',
         },
       });
+    });
+
+    it('fills unset standard options of non-time fields from the source panel defaults', async () => {
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU', 'custom-panel', {
+        defaults: { unit: 'percent', decimals: 1, max: 100, custom: { lineWidth: 2 } },
+        overrides: [],
+      });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      const [time, value] = rsp?.data[0].fields ?? [];
+      expect(time.config).toEqual({ filterable: undefined });
+      expect(value.config).toEqual({ unit: 'percent', decimals: 1, max: 100, min: 0, filterable: undefined });
+    });
+
+    it('interpolates the source title the way the panel header does', async () => {
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${env}', 'custom-panel');
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      expect(rsp?.data[0].meta?.custom?.dashboardSourcePanelTitle).toBe('CPU on prod + dev');
     });
 
     it.each(['timeseries', undefined])(
@@ -1206,12 +1232,17 @@ function setupWithControllableUpstream(
 }
 
 /** consumerPluginId undefined means the query comes from a scene object outside any panel. */
-function setupWithSourcePanel(query: DashboardQuery, title: string, consumerPluginId?: string) {
+function setupWithSourcePanel(
+  query: DashboardQuery,
+  title: string,
+  consumerPluginId?: string,
+  fieldConfig?: FieldConfigSource
+) {
   const sourceFrame: DataFrame = {
     refId: 'A',
     fields: [
       { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
-      { name: 'value', type: FieldType.number, values: [10, 20], config: {} },
+      { name: 'value', type: FieldType.number, values: [10, 20], config: { min: 0 } },
     ],
     length: 2,
     meta: { executedQueryString: 'up', custom: { existing: 'kept' } },
@@ -1227,13 +1258,23 @@ function setupWithSourcePanel(query: DashboardQuery, title: string, consumerPlug
 
   const scene = new SceneFlexLayout({
     $variables: new SceneVariableSet({
-      variables: [new ConstantVariable({ name: 'host', value: 'server-1' })],
+      variables: [
+        new ConstantVariable({ name: 'host', value: 'server-1' }),
+        new CustomVariable({
+          name: 'env',
+          query: 'prod,dev',
+          value: ['prod', 'dev'],
+          text: ['prod', 'dev'],
+          isMulti: true,
+        }),
+      ],
     }),
     children: [
       new SceneFlexItem({
         body: new VizPanel({
           key: getVizPanelKeyForPanelId(query.panelId!),
           title,
+          ...(fieldConfig && { fieldConfig }),
           $data: new SceneDataNode({
             data: { series: [sourceFrame], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
           }),

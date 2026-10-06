@@ -91,23 +91,31 @@ incident view when a metric crosses its last threshold, or when the `incident_mo
   **Overrides** (unit, decimals, min, max, display name, color scheme, thresholds, value mappings,
   no value) are applied, as in every core panel: a value the datasource set on the field wins over
   the panel default, and an override wins over both. Frames from a `-- Dashboard --` query are the
-  source panel's query results, so they carry what the datasource set but not the source panel's
-  standard options or overrides; the Custom panel's own defaults and overrides apply to them like
-  to any other frame.
+  source panel's query results, with the source panel's standard options (unit, decimals, min,
+  max, no value, thresholds, value mappings, color scheme) filled in on each non-time field the
+  datasource left unset, so they read as on the source panel. They come in like values the
+  datasource set: they win over the Custom panel's defaults, and its overrides still win over them.
+  The source panel's overrides are not carried.
 - `state.displayName`: the display name other panels show, as core computes it.
 - `state.lastNotNullDisplay` (addition): `field.display(lastNotNull)` as a `DisplayValue`
   `{ text, numeric, prefix?, suffix?, color?, percent? }`, with `numeric` `null` for non-numbers.
   Time fields only get `text` and `numeric`: a time has no place on a min/max scale or a threshold.
 - `data.errors` are `{ message, refId? }`, as `DataQueryError`.
 - `meta` only carries the source panel of a `-- Dashboard --` frame, where core puts it:
-  `meta.custom.dashboardSourcePanelId` and `meta.custom.dashboardSourcePanelTitle`. Other meta
-  (executed query, stats, notices) is not sent.
+  `meta.custom.dashboardSourcePanelId`, `meta.custom.dashboardSourcePanelTitle` (interpolated as the
+  panel header shows it) and `meta.custom.dashboardSourceRefId`. Other meta (executed query, stats,
+  notices) is not sent.
+- A `-- Dashboard --` frame has the `refId` of the Custom panel's own query that asked for it, so a
+  `byFrameRefID` override or a `refId` check in the code matches it. The `refId` it had on the source
+  panel, which collides across source panels, is in `meta.custom.dashboardSourceRefId`.
 
 ```json
 {
   "name": "cpu",
-  "refId": "A",
-  "meta": { "custom": { "dashboardSourcePanelId": 2, "dashboardSourcePanelTitle": "CPU usage" } },
+  "refId": "B",
+  "meta": {
+    "custom": { "dashboardSourcePanelId": 2, "dashboardSourcePanelTitle": "CPU usage", "dashboardSourceRefId": "A" }
+  },
   "length": 2,
   "fields": [
     {
