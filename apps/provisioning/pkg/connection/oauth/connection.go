@@ -98,8 +98,11 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
+// TestByListingRepositories checks a provider's access token by listing the
+// repositories it can access.
+//
+// TODO: use a lighter endpoint than listing repositories to check the token.
 func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) *provisioning.TestResults {
-	// TODO: use a lighter endpoint than listing repositories to check the token.
 	if _, err := lister.ListRepositories(ctx); err != nil {
 		if errors.Is(err, connection.ErrAuthentication) {
 			return connection.FailedTestResults(
