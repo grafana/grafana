@@ -212,12 +212,54 @@ describe('QueryCoauthoring', () => {
     focusRanges: [{ from: 0, to: 4 }],
     language: { id: 'promql', displayName: 'PromQL' },
     metadata: [
-      { kind: 'metric', name: 'http_inflight_requests' },
-      { kind: 'metric', name: 'pending_requests_total' },
-      { kind: 'label', name: 'instance' },
-      { kind: 'label', name: 'origin' },
+      { kind: 'metric', name: 'http_inflight_requests', attributes: { labels: ['instance', 'origin'] } },
+      { kind: 'metric', name: 'pending_requests_total', attributes: { labels: ['instance', 'origin'] } },
     ],
   };
+
+  it('shows the nested code label with its tag icon for @co', async () => {
+    const { user } = await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        {
+          kind: 'metric',
+          name: 'prometheus_http_requests_total',
+          attributes: { labels: ['code', 'handler'] },
+        },
+      ],
+    });
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Group by @co');
+    const option = await screen.findByRole('option', { name: 'code (Label)' });
+    expect(within(option).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(input).toHaveValue('Group by code ');
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('keeps metrics first, deduplicates nested and top-level labels, and ignores non-array labels', async () => {
+    const { user } = await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        { kind: 'label', name: 'job' },
+        { kind: 'label', name: 'code' },
+        { kind: 'metric', name: 'http_requests_total', attributes: { labels: ['code', 'instance'] } },
+        { kind: 'metric', name: 'http_request_duration_seconds', attributes: { labels: ['code', 'instance'] } },
+        { kind: 'metric', name: 'up', attributes: { labels: 'invalid_label' } },
+      ],
+    });
+    await user.type(screen.getByRole('textbox'), '@');
+    const options = await screen.findAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual([
+      'http_requests_total',
+      'http_request_duration_seconds',
+      'up',
+      'job',
+      'code',
+      'instance',
+    ]);
+    expect(within(options[3]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+  });
 
   it('matches metric and label substrings with their icons and caps suggestions at six', async () => {
     const { user, unmount } = await setup(0, true, mentionContext);
@@ -237,24 +279,20 @@ describe('QueryCoauthoring', () => {
     await setup(0, true, {
       ...mentionContext,
       metadata: [
-        { kind: 'metric', name: 'in_a' },
-        { kind: 'metric', name: 'in_b' },
-        { kind: 'label', name: 'in_c' },
-        { kind: 'label', name: 'in_d' },
-        { kind: 'metric', name: 'in_e' },
-        { kind: 'label', name: 'in_f' },
-        { kind: 'metric', name: 'in_g' },
-        { kind: 'label', name: 'in_h' },
+        { kind: 'metric', name: 'in_a', attributes: { labels: ['in_c', 'in_d'] } },
+        { kind: 'metric', name: 'in_b', attributes: { labels: ['in_c', 'in_d'] } },
+        { kind: 'metric', name: 'in_e', attributes: { labels: ['in_f'] } },
+        { kind: 'metric', name: 'in_g', attributes: { labels: ['in_h'] } },
       ],
     });
     await user.type(screen.getByRole('textbox'), '@in');
     expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
       'in_a',
       'in_b',
+      'in_e',
+      'in_g',
       'in_c',
       'in_d',
-      'in_e',
-      'in_f',
     ]);
   });
 
@@ -791,11 +829,9 @@ describe('QueryCoauthoring', () => {
       focusRanges: [{ from: 0, to: 4 }],
       language: { id: 'promql', displayName: 'PromQL' },
       metadata: [
-        { kind: 'label', name: 'handler' },
-        { kind: 'metric', name: 'http_requests_total' },
-        { kind: 'metric', name: 'http_request_duration_seconds' },
-        { kind: 'label', name: 'job' },
-        { kind: 'metric', name: 'http_requests_failed_total' },
+        { kind: 'metric', name: 'http_requests_total', attributes: { labels: ['handler', 'job'] } },
+        { kind: 'metric', name: 'http_request_duration_seconds', attributes: { labels: ['handler', 'job'] } },
+        { kind: 'metric', name: 'http_requests_failed_total', attributes: { labels: ['handler', 'job'] } },
       ],
     };
     const { user, rerender, queryCoauthoringProps } = await setup(0, true, context);

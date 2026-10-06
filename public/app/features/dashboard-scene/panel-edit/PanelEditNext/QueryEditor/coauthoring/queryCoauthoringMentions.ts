@@ -25,24 +25,41 @@ export function findQueryCoauthoringMention(intent: string, caret: number): Quer
   return match ? { from: prefix.lastIndexOf('@'), to: caret, query: match[1], selectedIndex: 0 } : undefined;
 }
 
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
 export function queryCoauthoringMentionOptions(
   context: QueryEditorCoauthoringContextV1 | undefined,
   query: string
 ): QueryCoauthoringMentionOption[] {
+  const metadata = context?.metadata ?? [];
+  const needle = query.toLowerCase();
   const options: QueryCoauthoringMentionOption[] = [];
   const seen = new Set<string>();
-  for (const item of context?.metadata ?? []) {
-    if ((item.kind !== 'metric' && item.kind !== 'label') || !item.name.toLowerCase().includes(query.toLowerCase())) {
-      continue;
-    }
-    const key = `${item.kind}:${item.name}`;
-    if (!seen.has(key)) {
-      options.push({ kind: item.kind, name: item.name });
+  const addOption = (kind: QueryCoauthoringMentionOption['kind'], name: string) => {
+    const key = `${kind}:${name}`;
+    if (name.toLowerCase().includes(needle) && !seen.has(key)) {
+      options.push({ kind, name });
       seen.add(key);
     }
-    if (options.length === 6) {
-      break;
+  };
+  for (const item of metadata) {
+    if (item.kind === 'metric') {
+      addOption('metric', item.name);
     }
   }
-  return options;
+  for (const item of metadata) {
+    if (item.kind === 'label') {
+      addOption('label', item.name);
+    } else if (item.kind === 'metric') {
+      const labels = item.attributes?.labels;
+      if (isStringArray(labels)) {
+        for (const name of labels) {
+          addOption('label', name);
+        }
+      }
+    }
+  }
+  return options.slice(0, 6);
 }
