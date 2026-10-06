@@ -58,6 +58,30 @@ function setup(
 }
 
 describe('PreviewBannerViewPR', () => {
+  it.each([
+    { name: 'repository fallback', repoUrl: 'https://git.example.com/team/repo' },
+    { name: 'folder repository fallback passed as prURL', prURL: 'https://git.example.com/team/repo' },
+    {
+      name: 'branch fallback',
+      branchInfo: {
+        repoBaseUrl: 'https://git.example.com/team/repo.git',
+        targetBranch: 'dashboard/update',
+        configuredBranch: 'main',
+      },
+    },
+  ])('labels the $name as Open repository', (props) => {
+    setup({ ...props, repoType: 'git', isNewPr: true });
+
+    expect(screen.getByRole('link', { name: 'Open repository' })).toHaveAttribute(
+      'href',
+      'https://git.example.com/team/repo'
+    );
+    expect(
+      screen.getByText('Open the repository and create a pull or merge request from the branch you saved to.')
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /pull request/i })).not.toBeInTheDocument();
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -72,6 +96,9 @@ describe('PreviewBannerViewPR', () => {
 
       expect(screen.getByRole('status')).toBeInTheDocument();
       expect(screen.getByText('A new resource has been created in a branch in GitHub.')).toBeInTheDocument();
+      expect(
+        screen.queryByText('Open the repository and create a pull or merge request from the branch you saved to.')
+      ).not.toBeInTheDocument();
     });
 
     it('should render correct text for existing PR dashboard', () => {
@@ -88,13 +115,13 @@ describe('PreviewBannerViewPR', () => {
     it('should render correct button text for new PR dashboard', () => {
       setup({ prURL: 'test-url', isNewPr: true });
 
-      expect(screen.getByText('Open pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Open pull request in GitHub' })).toHaveAttribute('href', 'test-url');
     });
 
     it('should render correct button text for existing PR dashboard', () => {
       setup({ prURL: 'test-url', isNewPr: false });
 
-      expect(screen.getByText('View pull request in GitHub')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'View pull request in GitHub' })).toHaveAttribute('href', 'test-url');
     });
   });
 
