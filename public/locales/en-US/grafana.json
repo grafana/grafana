@@ -6303,10 +6303,6 @@
       },
       "cross-dashboard-variables": {
         "description": "Choose which global and folder-scoped variables this dashboard receives.",
-        "empty-folder": "No folder variables in this folder.",
-        "empty-folder-filters": "No folder filters in this folder.",
-        "empty-global": "No global variables in this organization.",
-        "empty-global-filters": "No global filters in this organization.",
         "filters-description": "Choose which global and folder-scoped filters this dashboard receives.",
         "folder-section": "Folder",
         "global-section": "Global",

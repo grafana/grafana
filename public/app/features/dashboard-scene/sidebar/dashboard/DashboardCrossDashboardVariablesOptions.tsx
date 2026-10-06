@@ -161,17 +161,6 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
             limitSelectionToShown={filtersOnly}
             selection={selection}
             canEdit={canEditSelection}
-            emptyLabel={
-              filtersOnly
-                ? t(
-                    'dashboard.sidebar.cross-dashboard-variables.empty-global-filters',
-                    'No global filters in this organization.'
-                  )
-                : t(
-                    'dashboard.sidebar.cross-dashboard-variables.empty-global',
-                    'No global variables in this organization.'
-                  )
-            }
             sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.global-section', 'Global')}
             dashboard={dashboard}
           />
@@ -182,14 +171,6 @@ export function DashboardCrossDashboardVariablesOptions({ dashboard, filtersOnly
             limitSelectionToShown={filtersOnly}
             selection={selection}
             canEdit={canEditSelection}
-            emptyLabel={
-              filtersOnly
-                ? t(
-                    'dashboard.sidebar.cross-dashboard-variables.empty-folder-filters',
-                    'No folder filters in this folder.'
-                  )
-                : t('dashboard.sidebar.cross-dashboard-variables.empty-folder', 'No folder variables in this folder.')
-            }
             sectionLabel={t('dashboard.sidebar.cross-dashboard-variables.folder-section', 'Folder')}
             dashboard={dashboard}
           />
@@ -208,7 +189,6 @@ interface ScopeCheckboxSectionProps {
   limitSelectionToShown: boolean;
   selection: UseCrossDashboardVariables | undefined;
   canEdit: boolean;
-  emptyLabel: string;
   sectionLabel: string;
   dashboard: CrossDashboardVariablesDashboard;
 }
@@ -220,7 +200,6 @@ function ScopeCheckboxSection({
   limitSelectionToShown,
   selection,
   canEdit,
-  emptyLabel,
   sectionLabel,
   dashboard,
 }: ScopeCheckboxSectionProps) {
@@ -236,8 +215,7 @@ function ScopeCheckboxSection({
       <OptionsPaneCategory
         id={categoryId}
         title={sectionLabel}
-        // itemsCount=0 collapses the category; undefined keeps the empty-state copy visible.
-        itemsCount={variables.length || undefined}
+        itemsCount={variables.length}
         headerActionPlacement="left"
         compactIcons
         isNested
@@ -250,11 +228,7 @@ function ScopeCheckboxSection({
           </span>
         )}
       >
-        {variables.length === 0 ? (
-          <Text variant="bodySmall" color="secondary">
-            {emptyLabel}
-          </Text>
-        ) : (
+        {variables.length > 0 && (
           <ul className={styles.list}>
             <li className={styles.listItem}>
               <Checkbox

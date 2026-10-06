@@ -211,7 +211,6 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
     expect(screen.queryByRole('checkbox', { name: 'env' })).not.toBeInTheDocument();
-    expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
 
     await act(async () => {
       fetch.resolve([makeCandidate('env', 'global'), makeCandidate('cluster', 'folder')]);
@@ -225,23 +224,31 @@ describe('DashboardCrossDashboardVariablesOptions', () => {
     expect(screen.getByText('cluster')).toBeVisible();
   });
 
-  it('shows empty-state copy when Global and Folder have no variables', async () => {
+  it('shows a zero count and stays closed when Global and Folder have no variables', async () => {
     mockFetchPredefinedVariables.mockResolvedValue([]);
 
     render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
-    expect(await screen.findByText('No global variables in this organization.')).toBeVisible();
-    expect(screen.getByText('No folder variables in this folder.')).toBeVisible();
+    expect(await screen.findByText('Global')).toBeInTheDocument();
+    expect(screen.getByText('Folder')).toBeInTheDocument();
+    expect(screen.getAllByText('0')).toHaveLength(2);
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Expand Global category' }));
+
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
   });
 
-  it('shows a load error instead of the empty copy when the list fetch fails', async () => {
+  it('shows a load error and no sections when the list fetch fails', async () => {
     mockFetchPredefinedVariables.mockResolvedValue(null);
 
     render(<DashboardCrossDashboardVariablesOptions dashboard={createDashboard()} />);
 
     expect(await screen.findByText('Could not load global and folder variables.')).toBeInTheDocument();
-    expect(screen.queryByText('No global variables in this organization.')).not.toBeInTheDocument();
-    expect(screen.queryByText('No folder variables in this folder.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Global')).not.toBeInTheDocument();
+    expect(screen.queryByText('Folder')).not.toBeInTheDocument();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
