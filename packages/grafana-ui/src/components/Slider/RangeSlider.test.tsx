@@ -1,81 +1,45 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
 
 import { RangeSlider } from './RangeSlider';
-import { type RangeSliderProps } from './types';
-
-const sliderProps: RangeSliderProps = {
-  min: 10,
-  max: 20,
-};
 
 describe('RangeSlider', () => {
-  it('updates controlled handle values when bounds are edited externally', () => {
-    const { rerender } = render(
-      <RangeSlider {...sliderProps} value={[11, 18]} ariaLabelForHandle={['Minimum', 'Maximum']} />
-    );
-    expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '11');
-    rerender(<RangeSlider {...sliderProps} value={[13, 17]} ariaLabelForHandle={['Minimum', 'Maximum']} />);
-    expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '13');
-    expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '17');
-  });
-
-  it('reports keyboard changes without moving a controlled handle until the owner updates it', async () => {
+  it.each([
+    { name: 'legacy value', initial: { value: [12, 18] }, updated: { value: [11, 19] } },
+    { name: 'defaultValue', initial: { defaultValue: [12, 18] }, updated: { defaultValue: [11, 19] } },
+    {
+      name: 'defaultValue over legacy value',
+      initial: { defaultValue: [12, 18], value: [11, 19] },
+      updated: { defaultValue: [11, 19], value: [14, 16] },
+    },
+  ])('initializes from $name and preserves user changes across prop updates', async ({ initial, updated }) => {
     const onChange = jest.fn();
-    const user = userEvent.setup();
-    render(
-      <RangeSlider {...sliderProps} value={[12, 18]} onChange={onChange} ariaLabelForHandle={['Minimum', 'Maximum']} />
-    );
-    await user.tab();
-    // rc-slider reads legacy keyCode, which userEvent.keyboard does not populate.
-    // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.keyDown(screen.getByRole('slider', { name: 'Minimum' }), { key: 'ArrowRight', keyCode: 39 });
-    expect(onChange).toHaveBeenCalledWith([13, 18]);
-    expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '12');
-  });
-
-  it('preserves uncontrolled keyboard changes across prop rerenders', async () => {
-    const user = userEvent.setup();
-    const { rerender } = render(
-      <RangeSlider {...sliderProps} defaultValue={[12, 18]} ariaLabelForHandle={['Minimum', 'Maximum']} />
-    );
-    expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '12');
-    await user.tab();
-    // rc-slider reads legacy keyCode, which userEvent.keyboard does not populate.
-    // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.keyDown(screen.getByRole('slider', { name: 'Minimum' }), { key: 'ArrowRight', keyCode: 39 });
-    rerender(<RangeSlider {...sliderProps} defaultValue={[11, 19]} ariaLabelForHandle={['Minimum', 'Maximum']} />);
-    expect(screen.getByRole('slider', { name: 'Minimum' })).toHaveAttribute('aria-valuenow', '13');
-    expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '18');
-  });
-
-  it('moves controlled handles when the parent accepts changes and reports completion', async () => {
     const onAfterChange = jest.fn();
     const user = userEvent.setup();
-    function ControlledSlider() {
-      const [value, setValue] = useState([12, 18]);
-      return (
-        <RangeSlider
-          {...sliderProps}
-          value={value}
-          onChange={setValue}
-          onAfterChange={onAfterChange}
-          ariaLabelForHandle={['Minimum', 'Maximum']}
-        />
-      );
-    }
-    render(<ControlledSlider />);
+    const props = {
+      min: 10,
+      max: 20,
+      onChange,
+      onAfterChange,
+      ariaLabelForHandle: ['Minimum', 'Maximum'],
+    };
+    const { rerender } = render(<RangeSlider {...props} {...initial} />);
+    const minimum = screen.getByRole('slider', { name: 'Minimum' });
+    expect(minimum).toHaveAttribute('aria-valuenow', '12');
+    expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '18');
     await user.tab();
-    const handle = screen.getByRole('slider', { name: 'Minimum' });
     // rc-slider reads legacy keyCode, which userEvent.keyboard does not populate.
     // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.keyDown(handle, { key: 'ArrowRight', keyCode: 39 });
-    expect(handle).toHaveAttribute('aria-valuenow', '13');
+    fireEvent.keyDown(minimum, { key: 'ArrowRight', keyCode: 39 });
+    expect(minimum).toHaveAttribute('aria-valuenow', '13');
+    expect(onChange).toHaveBeenCalledWith([13, 18]);
     expect(onAfterChange).not.toHaveBeenCalled();
     // eslint-disable-next-line testing-library/prefer-user-event
-    fireEvent.keyUp(handle, { key: 'ArrowRight', keyCode: 39 });
+    fireEvent.keyUp(minimum, { key: 'ArrowRight', keyCode: 39 });
     expect(onAfterChange).toHaveBeenCalledTimes(1);
     expect(onAfterChange).toHaveBeenCalledWith([13, 18]);
+    rerender(<RangeSlider {...props} {...updated} />);
+    expect(minimum).toHaveAttribute('aria-valuenow', '13');
+    expect(screen.getByRole('slider', { name: 'Maximum' })).toHaveAttribute('aria-valuenow', '18');
   });
 });

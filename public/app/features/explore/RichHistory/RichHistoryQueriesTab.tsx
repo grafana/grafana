@@ -6,7 +6,8 @@ import { type DataSourceApi, type GrafanaTheme2, type SelectableValue } from '@g
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { Alert, Button, FilterInput, MultiSelect, RangeSlider, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, FilterInput, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import { RangeSliderG14 as RangeSlider } from '@grafana/ui/unstable';
 import { mapNumbertoTimeInSlider, mapQueriesToHeadings } from 'app/core/utils/richHistory';
 import {
   type SortOrder,

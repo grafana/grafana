@@ -9,12 +9,18 @@ The `Range-slider` component is an input element where users can manipulate two 
 
 `Range-slider` can be implemented in horizontal or vertical orientation.
 
-Use `value` for a controlled slider and update it in `onChange`. Handle positions follow the supplied value, including external updates. If the parent does not update `value`, user interaction does not change the positions.
-
-Use `defaultValue` to set the initial positions of an uncontrolled slider. Later changes to `defaultValue` do not reset the positions. Use `onAfterChange` to handle completed interactions, such as applying a filter after dragging.
+Use `defaultValue` to set the initial handle positions. The deprecated `value` prop also sets initial positions; `defaultValue` takes precedence when both are supplied. Later changes to either prop do not reset the positions. Use `onAfterChange` to handle completed interactions, such as applying a filter after dragging.
 
 ## Migrating existing usage
 
-Previously, `value` set only the initial positions. Replace `value` with `defaultValue` to preserve that behavior. To control the slider, keep `value` and update it through `onChange`; `onAfterChange` alone does not keep a controlled slider's positions in sync during interaction. No separate `controlled` prop is required.
+`value` is now `defaultValue`. A controlled version of `RangeSlider` will release as a breaking change in Grafana 14. It can be used temporarily until then via the unstable API:
+
+```tsx
+import { RangeSliderG14 as RangeSlider } from '@grafana/ui/unstable';
+```
+
+For `RangeSliderG14`, use `value` for a controlled slider and update it in `onChange`. Handle positions follow the supplied value, including external updates. If the parent does not update `value`, user interaction does not change the positions. `onAfterChange` alone does not keep controlled positions in sync during interaction.
+
+Use `defaultValue` for an uncontrolled `RangeSliderG14`. Later changes to `defaultValue` do not reset the positions.
 
 <ArgTypes of={RangeSlider} />

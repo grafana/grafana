@@ -26,7 +26,7 @@ export interface SliderProps extends CommonSliderProps {
   inputId?: string;
 }
 
-export interface RangeSliderProps extends CommonSliderProps {
+export interface RangeSliderG14Props extends CommonSliderProps {
   /** Initial handle positions for an uncontrolled slider. */
   defaultValue?: number[];
   ariaLabelForHandle?: string[];
@@ -35,4 +35,11 @@ export interface RangeSliderProps extends CommonSliderProps {
   onChange?: (value: number[]) => void;
   onAfterChange?: (value?: number[]) => void;
   formatTooltipResult?: (value: number) => number | string;
+}
+
+export interface RangeSliderProps extends Omit<RangeSliderG14Props, 'value'> {
+  /**
+   * @deprecated `value` is now `defaultValue`. A controlled version of `RangeSlider` will release as a breaking change in Grafana 14. It can be used temporarily until then via the unstable API (`import { RangeSliderG14 as RangeSlider } from '@grafana/ui/unstable';`)
+   */
+  value?: number[];
 }
