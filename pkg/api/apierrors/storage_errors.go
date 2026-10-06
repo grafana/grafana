@@ -9,15 +9,17 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// Legacy converters already inspect StatusError beneath operation-specific wrappers.
-// Recover the equivalent gRPC status here without flattening those wrappers before
-// the converters have applied their legacy error mappings.
-func storageStatusError(err error) (*apierrors.StatusError, bool) {
+// Callers still need the original error to preserve existing dashboard and folder responses.
+func storageStatusError(err error) *apierrors.StatusError {
 	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
-		return statusErr, true
+		return statusErr
 	}
-	if st, ok := status.FromError(err); ok {
-		return errors.AsType[*apierrors.StatusError](resource.StatusErrorFromResponse(nil, st.Err()))
+	var grpcErr interface{ GRPCStatus() *status.Status }
+	if errors.As(err, &grpcErr) {
+		if st := grpcErr.GRPCStatus(); st != nil {
+			statusErr, _ := errors.AsType[*apierrors.StatusError](resource.StatusErrorFromResponse(nil, st.Err()))
+			return statusErr
+		}
 	}
-	return nil, false
+	return nil
 }

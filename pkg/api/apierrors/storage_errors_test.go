@@ -14,27 +14,44 @@ import (
 	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func TestStorageErrorResponseCompatibility(t *testing.T) {
-	wrap := func(err error) error { return fmt.Errorf("search: %w", err) }
-	operation := func(err error) error { return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err) }
-	canceled := response.JSON(499, errutil.PublicError{StatusCode: 499, MessageID: "api.requestCanceled", Message: "Request canceled"})
-
-	for name, convert := range map[string]func(error) response.Response{
+func storageErrorConverters() map[string]func(error) response.Response {
+	return map[string]func(error) response.Response{
 		"Folder": ToFolderErrorResponse,
 		"Dashboard": func(err error) response.Response {
 			return ToDashboardErrorResponse(context.Background(), nil, err)
 		},
-	} {
+	}
+}
+
+func expectedErrorResponse(code int, message string) func(error) response.Response {
+	return func(err error) response.Response {
+		return response.Error(code, message, err)
+	}
+}
+
+func TestStorageErrorResponseCompatibility(t *testing.T) {
+	wrap := func(err error) error { return fmt.Errorf("search: %w", err) }
+	operation := func(err error) error { return folder.ErrInternal.Errorf("failed to fetch dashboards: %w", err) }
+	rateLimited := status.Error(codes.ResourceExhausted, "rate limit exceeded")
+	canceled := func(err error) response.Response {
+		return response.Err(errutil.ClientClosedRequest("api.requestCanceled", errutil.WithPublicMessage("Request canceled")).Errorf("request canceled: %w", err))
+	}
+	operationError := func(err error) response.Response { return response.Err(err) }
+
+	for name, convert := range storageErrorConverters() {
 		t.Run(name, func(t *testing.T) {
 			for _, tc := range []struct {
 				code int
@@ -54,7 +71,7 @@ func TestStorageErrorResponseCompatibility(t *testing.T) {
 					require.NoError(t, err)
 					for encoding, input := range map[string]error{"embedded": resource.StatusError(result), "grpc": st.Err()} {
 						t.Run(encoding, func(t *testing.T) {
-							assertLegacyHTTPResponse(t, convert, tc.wrap(input), response.Error(tc.code, "storage failure", nil))
+							assertLegacyHTTPResponse(t, convert, tc.wrap(input), expectedErrorResponse(tc.code, "storage failure"))
 						})
 					}
 				})
@@ -62,21 +79,25 @@ func TestStorageErrorResponseCompatibility(t *testing.T) {
 			for _, tc := range []struct {
 				name string
 				err  error
-				want response.Response
+				want func(error) response.Response
 			}{
-				{"unstructured grpc", status.Error(codes.Unavailable, "private details"), response.Error(503, "Service Unavailable", nil)},
-				{"ordinary transport", errors.New("connection refused"), response.Error(500, name+" API error: connection refused", nil)},
-				{"operation error", operation(errors.New("connection refused")), response.Err(operation(errors.New("connection refused")))},
+				{"unstructured grpc", status.Error(codes.Unavailable, "private details"), expectedErrorResponse(503, "Service Unavailable")},
+				{"grpc resource exhausted", rateLimited, expectedErrorResponse(429, rateLimited.Error())},
+				{"wrapped grpc resource exhausted", wrap(rateLimited), expectedErrorResponse(429, rateLimited.Error())},
+				{"operation grpc resource exhausted", operation(rateLimited), expectedErrorResponse(429, rateLimited.Error())},
+				{"wrapped operation grpc resource exhausted", wrap(operation(rateLimited)), expectedErrorResponse(429, rateLimited.Error())},
+				{"ordinary transport", errors.New("connection refused"), expectedErrorResponse(500, name+" API error: connection refused")},
+				{"operation error", operation(errors.New("connection refused")), operationError},
 				{"canceled", context.Canceled, canceled},
 				{"wrapped canceled", wrap(context.Canceled), canceled},
-				{"operation canceled", operation(context.Canceled), response.Err(operation(context.Canceled))},
-				{"wrapped operation canceled", wrap(operation(context.Canceled)), response.Err(operation(context.Canceled))},
-				{"deadline exceeded", context.DeadlineExceeded, response.Error(500, name+" API error: context deadline exceeded", nil)},
-				{"wrapped deadline exceeded", wrap(context.DeadlineExceeded), response.Error(500, name+" API error: search: context deadline exceeded", nil)},
-				{"operation deadline exceeded", operation(context.DeadlineExceeded), response.Err(operation(context.DeadlineExceeded))},
-				{"wrapped operation deadline exceeded", wrap(operation(context.DeadlineExceeded)), response.Err(operation(context.DeadlineExceeded))},
-				{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "private details"), response.Error(504, "Gateway Timeout", nil)},
-				{"wrapped grpc deadline exceeded", wrap(status.Error(codes.DeadlineExceeded, "private details")), response.Error(504, "Gateway Timeout", nil)},
+				{"operation canceled", operation(context.Canceled), operationError},
+				{"wrapped operation canceled", wrap(operation(context.Canceled)), operationError},
+				{"deadline exceeded", context.DeadlineExceeded, expectedErrorResponse(500, name+" API error: context deadline exceeded")},
+				{"wrapped deadline exceeded", wrap(context.DeadlineExceeded), expectedErrorResponse(500, name+" API error: search: context deadline exceeded")},
+				{"operation deadline exceeded", operation(context.DeadlineExceeded), operationError},
+				{"wrapped operation deadline exceeded", wrap(operation(context.DeadlineExceeded)), operationError},
+				{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "private details"), expectedErrorResponse(504, "Gateway Timeout")},
+				{"wrapped grpc deadline exceeded", wrap(status.Error(codes.DeadlineExceeded, "private details")), expectedErrorResponse(504, "Gateway Timeout")},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					assertLegacyHTTPResponse(t, convert, tc.err, tc.want)
@@ -86,7 +107,27 @@ func TestStorageErrorResponseCompatibility(t *testing.T) {
 	}
 }
 
-func assertLegacyHTTPResponse(t *testing.T, convert func(error) response.Response, input error, want response.Response) {
+func TestStorageErrorResponsePreservesOriginalErrorForLogging(t *testing.T) {
+	original := folder.ErrInternal.Errorf("private operation details: %w", status.Error(codes.ResourceExhausted, "rate limit exceeded"))
+	for name, convert := range storageErrorConverters() {
+		t.Run(name, func(t *testing.T) {
+			recorder := httptest.NewRecorder()
+			ctx := &contextmodel.ReqContext{
+				Context: &web.Context{
+					Req:  httptest.NewRequestWithContext(errutil.SetUnifiedLogging(context.Background()), http.MethodGet, "/", nil),
+					Resp: web.NewResponseWriter(http.MethodGet, recorder),
+				},
+				Logger: log.New("test"),
+			}
+			convert(original).WriteTo(ctx)
+			require.Equal(t, http.StatusTooManyRequests, recorder.Code)
+			require.NotContains(t, recorder.Body.String(), "private operation details")
+			require.Equal(t, original, ctx.Error)
+		})
+	}
+}
+
+func assertLegacyHTTPResponse(t *testing.T, convert func(error) response.Response, input error, want func(error) response.Response) {
 	t.Helper()
 	// WriteTo may add traceID to the body when unified logging is disabled.
 	for _, unifiedLogging := range []bool{false, true} {
@@ -94,21 +135,22 @@ func assertLegacyHTTPResponse(t *testing.T, convert func(error) response.Respons
 		if unifiedLogging {
 			ctx = errutil.SetUnifiedLogging(ctx)
 		}
-		recorder := httptest.NewRecorder()
-		convert(input).WriteTo(&contextmodel.ReqContext{
-			Context: &web.Context{
-				Req:  httptest.NewRequestWithContext(ctx, http.MethodGet, "/", nil),
-				Resp: web.NewResponseWriter(http.MethodGet, recorder),
-			},
-			Logger: log.New("test"),
-		})
-		var expected, actual map[string]any
-		require.NoError(t, json.Unmarshal(want.Body(), &expected))
-		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &actual))
-		if !unifiedLogging {
-			expected["traceID"] = ""
+		render := func(resp response.Response) *httptest.ResponseRecorder {
+			recorder := httptest.NewRecorder()
+			resp.WriteTo(&contextmodel.ReqContext{
+				Context: &web.Context{
+					Req:  httptest.NewRequestWithContext(ctx, http.MethodGet, "/", nil),
+					Resp: web.NewResponseWriter(http.MethodGet, recorder),
+				},
+				Logger: log.New("test"),
+			})
+			return recorder
 		}
-		require.Equal(t, want.Status(), recorder.Code)
+		expectedResponse, actualResponse := render(want(input)), render(convert(input))
+		var expected, actual map[string]any
+		require.NoError(t, json.Unmarshal(expectedResponse.Body.Bytes(), &expected))
+		require.NoError(t, json.Unmarshal(actualResponse.Body.Bytes(), &actual))
+		require.Equal(t, expectedResponse.Code, actualResponse.Code)
 		require.Equal(t, expected, actual, "unified logging=%t", unifiedLogging)
 	}
 }
@@ -117,9 +159,59 @@ func TestFolderStorageAlreadyExistsResponse(t *testing.T) {
 	result := &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists)}
 	st, err := status.New(codes.AlreadyExists, "exists").WithDetails(result)
 	require.NoError(t, err)
-	for _, input := range []error{resource.StatusError(result), st.Err(), fmt.Errorf("search: %w", st.Err())} {
-		got := ToFolderErrorResponse(input)
-		require.Equal(t, http.StatusPreconditionFailed, got.Status())
-		require.JSONEq(t, fmt.Sprintf(`{"status":"version-mismatch","message":%q}`, folder.ErrVersionMismatch.Error()), string(got.Body()))
+	for _, input := range []error{resource.StatusError(result), st.Err()} {
+		for _, wrapped := range []error{input, fmt.Errorf("search: %w", input), folder.ErrInternal.Errorf("operation failed: %w", input)} {
+			assertLegacyHTTPResponse(t, ToFolderErrorResponse, wrapped, func(error) response.Response {
+				return response.JSON(http.StatusPreconditionFailed, map[string]any{
+					"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error(),
+				})
+			})
+		}
+	}
+}
+
+func TestDashboardStorageStatusMappings(t *testing.T) {
+	convert := storageErrorConverters()["Dashboard"]
+	for _, tc := range []struct {
+		name   string
+		result *resourcepb.ErrorResult
+		want   func(error) response.Response
+	}{
+		{
+			name: "folder not found",
+			result: &resourcepb.ErrorResult{
+				Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing folder",
+				Details: &resourcepb.ErrorDetails{Group: folderv1.APIGroup, Kind: folderv1.RESOURCE},
+			},
+			want: func(error) response.Response {
+				return response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil)
+			},
+		},
+		{
+			name: "payload too large",
+			result: &resourcepb.ErrorResult{
+				Code: http.StatusRequestEntityTooLarge, Reason: string(metav1.StatusReasonRequestEntityTooLarge), Message: "storage failure",
+			},
+			want: expectedErrorResponse(http.StatusRequestEntityTooLarge, fmt.Sprintf("Dashboard is too large, max is %d MB", apiserver.MaxRequestBodyBytes/1024/1024)),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			st, err := status.New(codes.Unknown, "transport message").WithDetails(tc.result)
+			require.NoError(t, err)
+			for encoding, input := range map[string]error{"embedded": resource.StatusError(tc.result), "grpc": st.Err()} {
+				t.Run(encoding, func(t *testing.T) {
+					for name, wrapped := range map[string]error{
+						"bare":              input,
+						"wrapped":           fmt.Errorf("search: %w", input),
+						"operation":         folder.ErrInternal.Errorf("operation failed: %w", input),
+						"wrapped operation": fmt.Errorf("search: %w", folder.ErrInternal.Errorf("operation failed: %w", input)),
+					} {
+						t.Run(name, func(t *testing.T) {
+							assertLegacyHTTPResponse(t, convert, wrapped, tc.want)
+						})
+					}
+				})
+			}
+		})
 	}
 }

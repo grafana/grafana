@@ -1,7 +1,6 @@
 package apierrors
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -34,12 +32,6 @@ var stableDashboardErrSentinels = []error{
 
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
-	var apiStatus k8sErrors.APIStatus
-	// Leave local context errors intact for ErrOrFallback's legacy status and response body.
-	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-		err = resource.StatusErrorFromResponse(nil, err)
-	}
-
 	// --- Dashboard errors ---
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
@@ -86,14 +78,16 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 412 Precondition Failed ---
 	if errors.Is(err, folder.ErrVersionMismatch) ||
-		k8sErrors.IsAlreadyExists(err) {
+		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr)) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
 	// --- Kubernetes status errors ---
-	if statusErr, ok := storageStatusError(err); ok {
+	if statusErr != nil {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
