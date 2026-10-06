@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -30,6 +31,7 @@ export function ExportUsersButton({ className, ...options }: Props) {
 
   return (
     <Button
+      data-testid={selectors.components.ExportUsersButton.downloadButton}
       className={className}
       variant="secondary"
       icon={isExporting ? 'spinner' : 'download-alt'}

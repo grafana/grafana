@@ -26,6 +26,7 @@ afterEach(() => jest.restoreAllMocks());
 it('shows the download label in a tooltip instead of inside the button', async () => {
   render(<ExportUsersButton scope="all" query="" />);
   const button = screen.getByRole('button', { name: 'Download table as CSV' });
+  expect(button).toHaveAttribute('data-testid', 'data-testid ExportUsersButton download button');
 
   await userEvent.hover(button);
 
@@ -41,6 +42,7 @@ it('disables the button while gathering pages and enables it after the download'
   await userEvent.click(screen.getByRole('button', { name: 'Download table as CSV' }));
 
   const exportingButton = screen.getByRole('button', { name: 'Exporting…' });
+  expect(exportingButton).toHaveAttribute('data-testid', 'data-testid ExportUsersButton download button');
   expect(exportingButton).toHaveAttribute('aria-disabled', 'true');
   await userEvent.click(exportingButton);
   expect(get).toHaveBeenCalledTimes(1);

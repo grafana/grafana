@@ -136,7 +136,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     searchInput: css({
       flex: '1 1 0',
-      minWidth: theme.spacing(40),
+      minWidth: `min(${theme.spacing(40)}, 100%)`,
     }),
     filter: css({
       flexShrink: 0,
