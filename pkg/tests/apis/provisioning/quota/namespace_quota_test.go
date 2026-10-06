@@ -329,11 +329,12 @@ func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *
 	require.NoError(t, os.RemoveAll(subjectPath))
 	require.NoError(t, os.RemoveAll(controlPath))
 
-	// Requeue the subject with its health check stamped well into the future, so it
-	// stays not-due for the rest of the test however long the control's wait takes.
-	for range 3 {
-		patchHealthChecked(t, helper, subject, time.Now().Add(freshHealthMargin))
-	}
+	// One requeue of the subject, with its health check stamped well into the future so
+	// it stays not-due for the rest of the test however long the control's wait takes.
+	// One is the whole claim -- a steady-state requeue must not test the repository --
+	// and repeating it would not add reconciles anyway, since the work queue drops an
+	// Add for a key that is already queued.
+	patchHealthChecked(t, helper, subject, time.Now().Add(freshHealthMargin))
 
 	// Age only the control's health, so its check is genuinely due.
 	patchHealthChecked(t, helper, control, time.Now().Add(-2*time.Minute))
