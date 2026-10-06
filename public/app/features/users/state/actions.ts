@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { type FetchDataArgs } from '@grafana/ui';
-import { canShowRoles, getOrgUsers, getUserRoles } from 'app/features/admin/Users/utils';
+import { canLoadUserRoles, getOrgUsers, withUserRoles } from 'app/features/admin/Users/utils';
 import { type ThunkResult } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
 
@@ -23,18 +23,16 @@ export function loadUsers(): ThunkResult<void> {
       dispatch(usersFetchBegin());
       const { perPage, page, searchQuery, sort } = getState().users;
       const users = await getOrgUsers({ perPage, page, query: searchQuery, sort });
-      if (canShowRoles() && users.orgUsers.length > 0) {
+      let { orgUsers } = users;
+      if (canLoadUserRoles(orgUsers)) {
         dispatch(rolesFetchBegin());
         try {
-          const roles = await getUserRoles(users.orgUsers.map((user) => user.userId));
-          users.orgUsers.forEach((user) => {
-            user.roles = roles?.[user.userId] ?? [];
-          });
+          orgUsers = await withUserRoles(orgUsers);
         } finally {
           dispatch(rolesFetchEnd());
         }
       }
-      dispatch(usersLoaded(users));
+      dispatch(usersLoaded({ ...users, orgUsers }));
     } catch (error) {
       dispatch(usersFetchEnd());
     }

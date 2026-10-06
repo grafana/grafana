@@ -35,15 +35,30 @@ export function getOrgUsers({
   return getBackendSrv().get('/api/org/users/search', accessControlQueryParam({ perpage: perPage, page, query, sort }));
 }
 
-export function canShowRoles(): boolean {
+function canShowRoles(): boolean {
   return contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
 }
 
-export function getUserRoles(userIds: number[]): Promise<Record<number, Role[]>> {
+function getUserRoles(userIds: number[]): Promise<Record<number, Role[]>> {
   return getBackendSrv().post('/api/access-control/users/roles/search?includeMapped=true', {
     userIds,
     orgId: contextSrv.user.orgId,
   });
+}
+
+/** Whether `withUserRoles` would request roles for these users. */
+export function canLoadUserRoles(users: OrgUser[]): boolean {
+  return users.length > 0 && canShowRoles();
+}
+
+/** Returns copies of the users with their custom roles, or the users unchanged when roles can't be shown. */
+export async function withUserRoles(users: OrgUser[]): Promise<OrgUser[]> {
+  if (!canLoadUserRoles(users)) {
+    return users;
+  }
+
+  const roles = await getUserRoles(users.map((user) => user.userId));
+  return users.map((user) => ({ ...user, roles: roles?.[user.userId] ?? [] }));
 }
 
 function getUsersSearchUrl({ query, sort, filters = [], page, perPage }: UserPageOptions) {

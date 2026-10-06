@@ -4,14 +4,7 @@ import Papa from 'papaparse';
 import { t } from '@grafana/i18n';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
-import {
-  canShowRoles,
-  getOrgUsers,
-  getUserRoles,
-  getUsersPage,
-  isNeverLoggedIn,
-  type UserSearchOptions,
-} from './utils';
+import { getOrgUsers, getUsersPage, isNeverLoggedIn, type UserSearchOptions, withUserRoles } from './utils';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
 
@@ -40,13 +33,7 @@ export async function exportUsers({ scope, ...options }: UserExportOptions): Pro
   } else {
     const users = await loadAllPages(async (page) => {
       const result = await getOrgUsers({ ...options, page, perPage });
-      if (canShowRoles() && result.orgUsers.length > 0) {
-        const roles = await getUserRoles(result.orgUsers.map((user) => user.userId));
-        result.orgUsers.forEach((user) => {
-          user.roles = roles?.[user.userId] ?? [];
-        });
-      }
-      return { users: result.orgUsers, totalCount: result.totalCount };
+      return { users: await withUserRoles(result.orgUsers), totalCount: result.totalCount };
     });
     csv = orgUsersToCsv(users);
   }
