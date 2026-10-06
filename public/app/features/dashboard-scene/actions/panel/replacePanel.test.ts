@@ -3,7 +3,7 @@ import { testWithFeatureToggles } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { VizPanel } from '@grafana/scenes';
+import { CustomVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
 import * as libraryPanelApi from 'app/features/library-panels/state/api';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -11,6 +11,8 @@ import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
+import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
+import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { replacePanel } from './replacePanel';
@@ -71,6 +73,54 @@ describe('replacePanel', () => {
     expect(sidebar.getSelectedObject()).toBe(oldPanel);
     expect(sidebar.state.undoStack).toHaveLength(0);
     expect(sidebar.state.redoStack).toHaveLength(1);
+  });
+
+  it('updates repeat clones when replacing a panel, undoing, and redoing', () => {
+    const oldPanel = new VizPanel({ key: 'panel-1', title: 'Original', pluginId: 'table' });
+    const newPanel = new VizPanel({ key: 'new-panel', title: 'Replacement', pluginId: 'timeseries' });
+    const source = new DashboardGridItem({ body: oldPanel, variableName: 'server' });
+    const dashboard = new DashboardScene({
+      isEditing: true,
+      $variables: new SceneVariableSet({
+        variables: [
+          new CustomVariable({
+            name: 'server',
+            query: 'A,B,C',
+            isMulti: true,
+            value: ['A', 'B', 'C'],
+            text: ['A', 'B', 'C'],
+          }),
+        ],
+      }),
+      body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [source] }) }),
+    });
+    deactivate = activateFullSceneTree(dashboard);
+
+    expect(source.state.repeatedPanels).toMatchObject([
+      { state: { title: 'Original', pluginId: 'table' } },
+      { state: { title: 'Original', pluginId: 'table' } },
+    ]);
+
+    replacePanel({ source, oldPanel, newPanel });
+
+    expect(source.state.repeatedPanels).toMatchObject([
+      { state: { title: 'Replacement', pluginId: 'timeseries' } },
+      { state: { title: 'Replacement', pluginId: 'timeseries' } },
+    ]);
+
+    dashboard.state.sidebar.undoAction();
+
+    expect(source.state.repeatedPanels).toMatchObject([
+      { state: { title: 'Original', pluginId: 'table' } },
+      { state: { title: 'Original', pluginId: 'table' } },
+    ]);
+
+    dashboard.state.sidebar.redoAction();
+
+    expect(source.state.repeatedPanels).toMatchObject([
+      { state: { title: 'Replacement', pluginId: 'timeseries' } },
+      { state: { title: 'Replacement', pluginId: 'timeseries' } },
+    ]);
   });
 
   it('redoes library panel replacement without fetching the library panel again', async () => {
