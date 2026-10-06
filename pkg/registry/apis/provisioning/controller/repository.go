@@ -1306,15 +1306,39 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Run before processHooks to avoid attempting to hit webhooks if repo is already known to be unhealthy
+	//
+	// Gated on the health cadence, not on the reconcile trigger. Test() is the only
+	// call this path makes against the git provider, and it spends the customer's rate
+	// limit, shared with their syncs and every repository on the same token. Triggers
+	// can fire on every requeue -- an overdue sync on a blocked repository does, since
+	// it can never complete one -- so gating per trigger bounds nothing. Everything
+	// below still runs each reconcile.
 	phase = reconcilePhaseHealth
-	healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
-	healthResult, err := rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
-	healthSpan.End()
-	if err != nil {
-		return repoType, fmt.Errorf("update health status: %w", err)
+	var (
+		healthResult HealthResultWithPatchOps
+		testResults  *provisioning.TestResults
+		// Carried forward when the check is skipped: stored health is still the best we
+		// know, and leaving it be is what keeps a skipped pass free of status writes.
+		healthStatus = obj.Status.Health
+		// Nil until something has a fresh verdict; a skipped check must not rewrite the
+		// Ready condition from stale data.
+		readyCondition *v1.Condition
+	)
+	// forceProcessForUnblock: while blocked, stored health is the quota override rather
+	// than a real Test() result, so on recovery it is stale by construction. Without
+	// this a recovered repository keeps reporting the quota failure -- and keeps
+	// skipping sync for being unhealthy -- until the cadence next comes round.
+	if shouldCheckHealth || forceProcessForUnblock {
+		healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
+		healthResult, err = rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
+		healthSpan.End()
+		if err != nil {
+			return repoType, fmt.Errorf("update health status: %w", err)
+		}
+		testResults = healthResult.TestResults
+		healthStatus = healthResult.HealthStatus
+		readyCondition = &healthResult.ReadyCondition
 	}
-	testResults := healthResult.TestResults
-	healthStatus := healthResult.HealthStatus
 	// Captured before the over-quota override status below. We only block hooks being run if the repo is
 	// not accessible. Also not every failed Test() means the repo is inaccessible: e.g. branch protection
 	// blocking direct pushes is reported. Hooks should still be able to run, so an accessibility-specific
@@ -1330,7 +1354,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			Message: []string{quotaCondition.Message},
 		}
 
-		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
+		quotaReady := buildReadyConditionWithReason(healthStatus, provisioning.ReasonQuotaExceeded)
+		readyCondition = &quotaReady
 		patchOperations = append(patchOperations, rc.healthPatchIfChanged(obj, healthStatus)...)
 	} else if len(healthResult.PatchOps) > 0 {
 		patchOperations = append(patchOperations, healthResult.PatchOps...)
@@ -1343,7 +1368,8 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 	if hookFailureStatus != nil {
 		healthStatus = *hookFailureStatus
-		healthResult.ReadyCondition = buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
+		hookReady := buildReadyConditionWithReason(healthStatus, classifyHookFailureReason(hookErr))
+		readyCondition = &hookReady
 	}
 	if hookErr != nil {
 		if rc.isUserCaused(hookErr) {
@@ -1373,8 +1399,12 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	// Build ALL condition patches together to avoid one overwriting another.
+	conditions := []v1.Condition{quotaCondition}
+	if readyCondition != nil {
+		conditions = append(conditions, *readyCondition)
+	}
 	if conditionPatchOps := BuildConditionPatchOpsFromExisting(
-		obj.Status.Conditions, obj.GetGeneration(), quotaCondition, healthResult.ReadyCondition,
+		obj.Status.Conditions, obj.GetGeneration(), conditions...,
 	); conditionPatchOps != nil {
 		patchOperations = append(patchOperations, conditionPatchOps...)
 	}
