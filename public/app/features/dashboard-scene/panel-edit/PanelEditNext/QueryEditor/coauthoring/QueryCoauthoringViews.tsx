@@ -11,7 +11,7 @@ import {
   type QueryEditorCoauthoringChangeV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
-import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
+import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
   children?: ReactNode;
@@ -193,6 +193,57 @@ export function QueryCoauthoringClarificationAction({ onContinue }: { onContinue
         <Trans i18nKey="query-editor-coauthoring.continue-in-assistant-chat">Continue in Assistant chat</Trans>
       </Button>
     </div>
+  );
+}
+
+export function QueryCoauthoringExplain({
+  answer,
+  intent,
+  onIntentChange,
+  onFollowUp,
+  onModify,
+  onClose,
+}: {
+  answer: QueryExplanation;
+  intent: string;
+  onIntentChange: (intent: string) => void;
+  onFollowUp: (question?: string) => void;
+  onModify: () => void;
+  onClose: () => void;
+}) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <>
+      <QueryCoauthoringHeader onClose={onClose}>
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+        </Text>
+      </QueryCoauthoringHeader>
+      <div className={styles.body}>
+        <Text variant="body">{answer.explanation}</Text>
+        <div className={styles.quickActions}>
+          {answer.followUps.map((question, index) => (
+            <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
+              {question}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <QueryCoauthoringPromptInput
+        value={intent}
+        placeholder={t('query-editor-coauthoring.follow-up-placeholder', 'Ask a follow up…')}
+        ariaLabel={t('query-editor-coauthoring.follow-up-label', 'Ask a follow up')}
+        actionLabel={t('query-editor-coauthoring.submit-follow-up', 'Ask')}
+        disabled={!intent.trim()}
+        onChange={onIntentChange}
+        onSubmit={() => onFollowUp()}
+      />
+      <div className={styles.footer}>
+        <Button size="sm" variant="secondary" fill="text" onClick={onModify}>
+          <Trans i18nKey="query-editor-coauthoring.modify-query">Modify this query</Trans>
+        </Button>
+      </div>
+    </>
   );
 }
 

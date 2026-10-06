@@ -9,6 +9,7 @@ import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { QueryCoauthoringFeedback } from './QueryCoauthoringFeedback';
 import {
   QueryCoauthoringClarificationAction,
+  QueryCoauthoringExplain,
   QueryCoauthoringFallback,
   QueryCoauthoringHeader,
   QueryCoauthoringIterationNudge,
@@ -121,8 +122,8 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'prompt' && (
         <>
-          <QueryCoauthoringHeader onClose={session.dismiss} pulse={!state.context || state.isIdentifying}>
-            {!state.context || state.isIdentifying ? (
+          <QueryCoauthoringHeader onClose={session.dismiss} pulse={!state.context}>
+            {!state.context ? (
               <QueryCoauthoringLiveStatus>
                 <Icon name="ai-sparkle" size="sm" />
                 <Text variant="bodySmall" color="secondary">
@@ -141,7 +142,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
               </Text>
             )}
           </QueryCoauthoringHeader>
-          {state.context && !state.isIdentifying && (
+          {state.context && (
             <div
               className={styles.body}
               data-testid={selectors.components.QueryEditorCoauthoring.container}
@@ -153,14 +154,14 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
               }
             >
               <Text id={promptMessageId} variant="body">
-                {state.clarification?.message ?? state.selectionExplanation ?? selectionSummary(state.context)}
+                {state.clarification?.message ?? selectionSummary(state.context)}
               </Text>
             </div>
           )}
           <QueryCoauthoringPromptInput
             key={state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}
             focusTrigger={`${state.clarification ? `clarification-${state.submittedIterationCount}` : 'initial'}-${
-              state.selectionExplanation ? 'identified' : 'reading'
+              state.context ? 'ready' : 'reading'
             }`}
             userGestureRef={state.promptUserGestureRef}
             value={state.intent}
@@ -174,7 +175,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
                 ? t('query-editor-coauthoring.clarification-label', 'Add extra detail')
                 : t('query-editor-coauthoring.prompt-label', 'Describe a query change')
             }
-            ariaDescribedBy={state.context && !state.isIdentifying ? promptMessageId : undefined}
+            ariaDescribedBy={state.context ? promptMessageId : undefined}
             actionLabel={
               state.clarification
                 ? t('query-editor-coauthoring.continue', 'Continue')
@@ -184,8 +185,28 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             onChange={state.setIntent}
             onSubmit={state.submit}
           />
+          <div className={styles.quickActions}>
+            <Button size="sm" fill="text" variant="secondary" disabled={!state.context} onClick={state.explain}>
+              <Trans i18nKey="query-editor-coauthoring.explain-query">Explain this query</Trans>
+            </Button>
+            {!!state.context?.metadata.length && (
+              <Button size="sm" fill="text" variant="secondary" onClick={state.exploreSimilar}>
+                <Trans i18nKey="query-editor-coauthoring.explore-similar">Explore similar metrics and labels</Trans>
+              </Button>
+            )}
+          </div>
           {state.clarification && <QueryCoauthoringClarificationAction onContinue={state.continueInAssistant} />}
         </>
+      )}
+      {state.kind === 'explain' && (
+        <QueryCoauthoringExplain
+          answer={state.answer}
+          intent={state.intent}
+          onIntentChange={state.setIntent}
+          onFollowUp={state.submitFollowUp}
+          onModify={state.modify}
+          onClose={session.dismiss}
+        />
       )}
       {state.kind === 'working' && <QueryCoauthoringWorking context={state.context} onStop={state.stop} />}
       {state.kind === 'context-error' && (

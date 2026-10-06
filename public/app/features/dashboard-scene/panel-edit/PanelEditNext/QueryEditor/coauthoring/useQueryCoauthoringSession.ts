@@ -15,6 +15,11 @@ import {
   buildAssistantHandoffInstructions,
   buildAssistantHandoffPrompt,
   buildCoauthoringSystemPrompt,
+  buildExplainPrompt,
+  buildExplainSystemPrompt,
+  parseQueryExplanation,
+  selectionSummary,
+  type QueryExplanation,
   type QueryFallback,
   type QueryProposal,
 } from './queryCoauthoringPrompts';
@@ -33,6 +38,8 @@ import {
   type QueryCoauthoringHandoffSource,
   trackQueryCoauthoringContinuedInAssistant,
   trackQueryCoauthoringDismissed,
+  trackQueryCoauthoringExplainFollowUpSubmitted,
+  trackQueryCoauthoringExploreSimilarUsed,
   trackQueryCoauthoringGenerationStopped,
   trackQueryCoauthoringOpened,
   trackQueryCoauthoringPromptSubmitted,
@@ -58,19 +65,28 @@ interface PromptSessionState {
   clarification?: QueryClarification;
   context?: QueryEditorCoauthoringContextV1;
   intent: string;
-  isIdentifying: boolean;
   promptUserGestureRef: MutableRefObject<boolean>;
-  selectionExplanation?: string;
   submittedIterationCount: number;
   continueInAssistant(): void;
   setIntent(intent: string): void;
   submit(): void;
+  explain(): void;
+  exploreSimilar(): void;
 }
 
 export type QueryCoauthoringSessionState =
   | { kind: 'assistant-loading' }
   | { kind: 'assistant-unavailable' }
   | PromptSessionState
+  | {
+      kind: 'explain';
+      context: QueryEditorCoauthoringContextV1;
+      answer: QueryExplanation;
+      intent: string;
+      setIntent(intent: string): void;
+      submitFollowUp(question?: string): void;
+      modify(): void;
+    }
   | { kind: 'working'; context?: QueryEditorCoauthoringContextV1; stop(): void }
   | { kind: 'context-error'; retry(): void }
   | { kind: 'error'; error: QueryCoauthoringRequestError; retry?(): void }
@@ -119,20 +135,15 @@ export function useQueryCoauthoringSession({
     openAssistant: openAvailableAssistant,
   } = useAssistant();
   const {
-    cancelIdentification,
     clear: clearInvocation,
     context,
     contextError,
-    isIdentifying,
     loadContext,
     readContext,
-    selectionExplanation,
   } = useQueryCoauthoringInvocation({
     adapter,
     invocationId,
     isAssistantAvailable,
-    datasourceType,
-    timeRange,
     onBaseline,
   });
   const { generate, isGenerating, cancel, reset } = useInlineAssistant();
@@ -167,8 +178,8 @@ export function useQueryCoauthoringSession({
   }, [assistantStatus, send]);
 
   useEffect(() => {
-    send({ type: 'invocation-updated', context, isIdentifying, selectionExplanation });
-  }, [context, isIdentifying, selectionExplanation, send]);
+    send({ type: 'invocation-updated', context });
+  }, [context, send]);
 
   useEffect(() => {
     send({ type: contextError ? 'context-failed' : 'context-retried' });
@@ -246,31 +257,47 @@ export function useQueryCoauthoringSession({
     revertQueryPreview();
   };
 
-  const submit = async (nextIntent = intent) => {
+  const beginRequest = async (nextIntent: string, mode: 'modify' | 'explain') => {
     const trimmedIntent = nextIntent.trim();
-    if (!trimmedIntent || isGenerating || !isAssistantAvailable) {
+    if (
+      !trimmedIntent ||
+      isGenerating ||
+      !isAssistantAvailable ||
+      sessionRef.current.data.activeRequestId !== undefined
+    ) {
       return;
     }
-    cancelIdentification();
-    send({ type: 'submission-started' });
+    send({ type: 'submission-started', mode, intent: trimmedIntent });
     const requestId = sessionRef.current.data.requestId;
 
     let submittedContext: QueryEditorCoauthoringContextV1;
     try {
       submittedContext = await readContext();
     } catch {
+      if (isCurrentQueryCoauthoringRequest(sessionRef.current, requestId)) {
+        send({ type: 'request-invalidated' });
+      }
       return;
     }
     if (!send({ type: 'submission-ready', requestId, intent: trimmedIntent })) {
       return;
     }
 
+    promptUserGestureRef.current = false;
+    return { trimmedIntent, requestId, submittedContext };
+  };
+
+  const submit = async (nextIntent = intent) => {
+    const submission = await beginRequest(nextIntent, 'modify');
+    if (!submission || !isCurrentQueryCoauthoringRequest(sessionRef.current, submission.requestId)) {
+      return;
+    }
+    const { trimmedIntent, requestId, submittedContext } = submission;
+
     trackQueryCoauthoringPromptSubmitted({
       datasourceType,
       promptStage: clarification ? 'clarification' : 'initial',
     });
-    promptUserGestureRef.current = false;
-
     const request = createQueryCoauthoringRequest({
       adapter,
       invocationId,
@@ -309,6 +336,51 @@ export function useQueryCoauthoringSession({
       tools: request.tools,
       onComplete: (completionText) => handleOutcome(request.complete(completionText)),
       onError: () => handleOutcome(request.fail()),
+    });
+  };
+
+  const explain = async (nextIntent: string, source?: 'generated' | 'typed', exploreSimilar = false) => {
+    const previousExplanation = session.kind === 'explain' ? session.answer : undefined;
+    const submission = await beginRequest(nextIntent, 'explain');
+    if (!submission || !isCurrentQueryCoauthoringRequest(sessionRef.current, submission.requestId)) {
+      return;
+    }
+    const { trimmedIntent, requestId, submittedContext } = submission;
+    if (source) {
+      trackQueryCoauthoringExplainFollowUpSubmitted(source);
+    }
+    if (exploreSimilar) {
+      trackQueryCoauthoringExploreSimilarUsed();
+    }
+    await generate({
+      origin: 'grafana/panel-edit-next/query-coauthoring/explain',
+      agentName: 'query-coauthor-explain',
+      agentId: 'grafana.query.coauthor.explain.v1',
+      prompt: trimmedIntent,
+      systemPrompt: buildExplainSystemPrompt(submittedContext, datasourceType, timeRange, previousExplanation),
+      onComplete: (text) =>
+        send({
+          type: 'explanation-completed',
+          requestId,
+          context: submittedContext,
+          answer: parseQueryExplanation(text, selectionSummary(submittedContext)),
+        }),
+      onError: () =>
+        send({
+          type: 'request-completed',
+          requestId,
+          context: submittedContext,
+          outcome: {
+            status: 'error',
+            error: {
+              message: t(
+                'query-editor-coauthoring.explain-failed',
+                'Assistant could not explain this query. Try again.'
+              ),
+              retryable: true,
+            },
+          },
+        }),
     });
   };
 
@@ -379,6 +451,18 @@ export function useQueryCoauthoringSession({
     case 'working':
       state = { kind: 'working', context, stop };
       break;
+    case 'explain':
+      state = {
+        kind: 'explain',
+        context: session.context,
+        answer: session.answer,
+        intent: session.intent,
+        setIntent: (intent) => send({ type: 'follow-up-changed', intent }),
+        submitFollowUp: (question) =>
+          void explain(question ?? session.intent, question === undefined ? 'typed' : 'generated'),
+        modify: () => send({ type: 'modify-started' }),
+      };
+      break;
     case 'context-error':
       state = { kind: 'context-error', retry: loadContext };
       break;
@@ -421,6 +505,16 @@ export function useQueryCoauthoringSession({
         continueInAssistant: () => continueInAssistant('clarification', clarification?.message),
         setIntent,
         submit: () => void submit(),
+        explain: () => {
+          if (context) {
+            void explain(buildExplainPrompt(context));
+          }
+        },
+        exploreSimilar: () => {
+          if (context?.metadata.length) {
+            void explain('Explore similar metrics and labels from the provided context.', undefined, true);
+          }
+        },
       };
   }
 

@@ -1,5 +1,6 @@
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import { type QueryExplanation } from './queryCoauthoringPrompts';
 import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
 import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
 
@@ -12,7 +13,11 @@ type SessionAction =
   | 'setIntent'
   | 'stop'
   | 'submit'
-  | 'promptUserGestureRef';
+  | 'promptUserGestureRef'
+  | 'explain'
+  | 'exploreSimilar'
+  | 'modify'
+  | 'submitFollowUp';
 
 type SessionSnapshot<T = QueryCoauthoringSessionState> = T extends QueryCoauthoringSessionState
   ? Omit<T, SessionAction> &
@@ -31,6 +36,8 @@ interface SessionData {
   requestId: number;
   isPreviewRunning: boolean;
   activeRequestId?: number;
+  requestMode?: 'modify' | 'explain';
+  requestResume?: SessionSnapshot;
 }
 
 export type QueryCoauthoringReducerState = SessionSnapshot & { data: SessionData };
@@ -45,16 +52,22 @@ export type QueryCoauthoringSessionEvent =
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
-      isIdentifying: boolean;
-      selectionExplanation?: string;
     }
   | { type: 'context-failed' }
   | { type: 'context-retried' }
-  | { type: 'submission-started' }
+  | { type: 'submission-started'; mode: 'modify' | 'explain'; intent: string }
   | { type: 'submission-ready'; requestId: number; intent: string }
   | { type: 'generation-started' }
   | { type: 'generation-settled' }
   | { type: 'generation-stopped' }
+  | { type: 'follow-up-changed'; intent: string }
+  | { type: 'modify-started' }
+  | {
+      type: 'explanation-completed';
+      requestId: number;
+      context: QueryEditorCoauthoringContextV1;
+      answer: QueryExplanation;
+    }
   | {
       type: 'request-completed';
       requestId: number;
@@ -72,7 +85,7 @@ type QueryCoauthoringAssistantStatus = 'loading' | 'unavailable' | 'ready';
 export function createQueryCoauthoringSessionState(
   assistantStatus: QueryCoauthoringAssistantStatus = 'ready'
 ): QueryCoauthoringReducerState {
-  const prompt: PromptSnapshot = { kind: 'prompt', intent: '', isIdentifying: false, submittedIterationCount: 0 };
+  const prompt: PromptSnapshot = { kind: 'prompt', intent: '', submittedIterationCount: 0 };
   const state = {
     ...prompt,
     data: {
@@ -90,7 +103,7 @@ export function createQueryCoauthoringSessionState(
 }
 
 function transition(state: QueryCoauthoringReducerState, view: SessionSnapshot): QueryCoauthoringReducerState {
-  return { ...view, data: state.data };
+  return { ...view, data: view.kind === 'prompt' ? { ...state.data, prompt: view } : state.data };
 }
 
 // Temporary views retain the session they cover, so settling generation or retrying
@@ -98,7 +111,7 @@ function transition(state: QueryCoauthoringReducerState, view: SessionSnapshot):
 function updateSession(
   view: SessionSnapshot,
   update: (view: SessionSnapshot) => SessionSnapshot,
-  through: 'assistant' | 'working' | 'context-error' | 'error' = 'context-error'
+  through: 'assistant' | 'working' | 'context-error' | 'error' | 'request' = 'context-error'
 ): SessionSnapshot {
   switch (view.kind) {
     case 'error':
@@ -112,7 +125,7 @@ function updateSession(
       }
       break;
     case 'working':
-      if (through === 'assistant') {
+      if (through === 'assistant' || through === 'request') {
         return update(view);
       }
       break;
@@ -169,8 +182,6 @@ export function queryCoauthoringSessionReducer(
       const prompt = {
         ...state.data.prompt,
         context: event.context,
-        isIdentifying: event.isIdentifying,
-        selectionExplanation: event.selectionExplanation,
       };
       const next = { ...state, data: { ...state.data, prompt } };
       return transition(
@@ -194,11 +205,34 @@ export function queryCoauthoringSessionReducer(
       );
     case 'submission-started': {
       const requestId = state.data.requestId + 1;
-      return { ...state, data: { ...state.data, engaged: true, requestId, activeRequestId: requestId } };
+      const requestResume = updateSession(current, (view) =>
+        view.kind === 'prompt' || view.kind === 'explain' ? { ...view, intent: event.intent } : view
+      );
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          engaged: true,
+          requestId,
+          activeRequestId: requestId,
+          requestMode: event.mode,
+          requestResume,
+        },
+      };
     }
     case 'submission-ready': {
       if (!isCurrentQueryCoauthoringRequest(state, event.requestId)) {
         return state;
+      }
+      if (state.data.requestMode === 'explain') {
+        return transition(
+          state,
+          updateSession(current, () => ({
+            kind: 'working',
+            context: state.data.prompt.context,
+            resume: state.data.requestResume ?? state.data.prompt,
+          }))
+        );
       }
       const prompt = {
         ...state.data.prompt,
@@ -225,6 +259,9 @@ export function queryCoauthoringSessionReducer(
         )
       );
     case 'generation-settled':
+      if (state.data.activeRequestId !== undefined) {
+        return state;
+      }
       return transition(
         state,
         updateSession(current, (view) => (view.kind === 'working' ? view.resume : view), 'assistant')
@@ -241,7 +278,42 @@ export function queryCoauthoringSessionReducer(
       };
       return transition(
         next,
-        updateSession(current, () => next.data.prompt)
+        updateSession(
+          current,
+          () =>
+            state.data.requestMode === 'explain' ? (state.data.requestResume ?? next.data.prompt) : next.data.prompt,
+          state.data.requestMode === 'explain' ? 'request' : 'context-error'
+        )
+      );
+    }
+    case 'follow-up-changed':
+      return transition(
+        state,
+        updateSession(current, (view) => (view.kind === 'explain' ? { ...view, intent: event.intent } : view))
+      );
+    case 'modify-started': {
+      const prompt = { ...state.data.prompt, intent: '', clarification: undefined };
+      return transition(
+        { ...state, data: { ...state.data, prompt } },
+        updateSession(current, () => prompt)
+      );
+    }
+    case 'explanation-completed': {
+      if (!isCurrentQueryCoauthoringRequest(state, event.requestId)) {
+        return state;
+      }
+      return transition(
+        { ...state, data: { ...state.data, activeRequestId: undefined } },
+        updateSession(
+          current,
+          () => ({
+            kind: 'explain',
+            context: event.context,
+            answer: event.answer,
+            intent: '',
+          }),
+          'request'
+        )
       );
     }
     case 'request-completed': {
@@ -264,7 +336,14 @@ export function queryCoauthoringSessionReducer(
           view = { kind: 'fallback', fallback: { ...event.outcome.fallback, context: event.context } };
           break;
         case 'error':
-          view = { kind: 'error', error: event.outcome.error, resume: state.data.prompt };
+          view = {
+            kind: 'error',
+            error: event.outcome.error,
+            resume:
+              state.data.requestMode === 'explain'
+                ? (state.data.requestResume ?? state.data.prompt)
+                : state.data.prompt,
+          };
           break;
         case 'proposal':
           view = {
@@ -275,7 +354,7 @@ export function queryCoauthoringSessionReducer(
       }
       return transition(
         next,
-        updateSession(current, () => view)
+        updateSession(current, () => view, state.data.requestMode === 'explain' ? 'request' : 'context-error')
       );
     }
     case 'preview-failed':

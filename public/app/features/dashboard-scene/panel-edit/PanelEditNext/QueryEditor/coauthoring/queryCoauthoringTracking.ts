@@ -49,3 +49,11 @@ export function trackQueryCoauthoringDismissed({ datasourceType }: QueryCoauthor
     datasource_type: datasourceType,
   });
 }
+
+export function trackQueryCoauthoringExplainFollowUpSubmitted(source: 'generated' | 'typed') {
+  reportInteraction('grafana_query_coauthoring_explain_follow_up_submitted', { source });
+}
+
+export function trackQueryCoauthoringExploreSimilarUsed() {
+  reportInteraction('grafana_query_coauthoring_explore_similar_used', {});
+}

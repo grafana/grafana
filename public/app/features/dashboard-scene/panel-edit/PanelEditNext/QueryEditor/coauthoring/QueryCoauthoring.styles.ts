@@ -109,6 +109,14 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
     }),
+    quickActions: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0, 1, 0.5),
+      button: { maxWidth: '100%', whiteSpace: 'normal', height: 'auto', textAlign: 'left' },
+    }),
     status: css({
       display: 'flex',
       alignItems: 'center',

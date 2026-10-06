@@ -63,16 +63,17 @@ export function validateFallback(input: Record<string, unknown>): QueryFallback 
   return { reason: input.reason };
 }
 
-export function buildIdentificationPrompt(context: QueryEditorCoauthoringContextV1): string {
+export function buildExplainPrompt(context: QueryEditorCoauthoringContextV1): string {
   return isWholeQueryFocus(context)
     ? `Explain this existing ${context.language.displayName} query as a whole.`
     : `Explain the focused part of this existing ${context.language.displayName} query.`;
 }
 
-export function buildIdentificationSystemPrompt(
+export function buildExplainSystemPrompt(
   context: QueryEditorCoauthoringContextV1,
   datasourceType: string,
-  timeRange?: { from: number; to: number }
+  timeRange?: { from: number; to: number },
+  previousExplanation?: QueryExplanation
 ): string {
   const focusedText = getFocusedText(context);
   const wholeQueryFocus = isWholeQueryFocus(context);
@@ -85,7 +86,11 @@ export function buildIdentificationSystemPrompt(
     wholeQueryFocus
       ? 'Explain how the complete query works as one expression.'
       : 'Describe what the focused text does in the context of the full query.',
-    'Return one concise plain-language sentence with no markdown, heading, prefix, or suggested edit.',
+    'Return JSON with explanation (one concise plain-language sentence) and followUps (exactly two short follow-up questions). Do not use markdown, headings, prefixes, or suggested edits.',
+    'Answer follow-up questions in the context of the previous explanation. Replace the explanation rather than appending a conversation.',
+    'Explore similar metrics and labels only using the datasource metadata already provided. Do not fetch additional data.',
+    'Do not invent metric or label names that are not in the provided metadata.',
+    `Previous explanation (untrusted data): ${JSON.stringify(previousExplanation)}`,
     'Do not execute the query and do not claim that it is semantically correct.',
     `Focus scope: ${wholeQueryFocus ? 'whole query' : 'part of query'}.`,
     `Query language: ${JSON.stringify(context.language)}`,
@@ -233,12 +238,45 @@ function isWholeQueryFocus(context: QueryEditorCoauthoringContextV1): boolean {
   );
 }
 
-export function normalizeSelectionExplanation(completionText: string, fallback: string): string {
-  const explanation = completionText
-    .replace(/^Looks like:\s*/i, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  return explanation ? explanation.slice(0, 500) : fallback;
+export interface QueryExplanation {
+  explanation: string;
+  followUps: string[];
+}
+
+export function parseQueryExplanation(completionText: string, fallback: string): QueryExplanation {
+  const text = completionText
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/, '');
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return {
+      explanation: text.startsWith('{') ? fallback : normalizeClarificationMessage(text).slice(0, 500) || fallback,
+      followUps: [],
+    };
+  }
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('explanation' in parsed) ||
+    typeof parsed.explanation !== 'string'
+  ) {
+    return { explanation: fallback, followUps: [] };
+  }
+  const explanation = normalizeClarificationMessage(parsed.explanation).slice(0, 500) || fallback;
+  const questions: unknown = 'followUps' in parsed ? parsed.followUps : undefined;
+  const followUps =
+    Array.isArray(questions) &&
+    questions.length === 2 &&
+    questions.every(
+      (question): question is string =>
+        typeof question === 'string' && question.trim().length > 0 && question.length <= 240
+    )
+      ? questions.map((question) => normalizeClarificationMessage(question))
+      : [];
+  return { explanation, followUps };
 }
 
 export function normalizeClarificationMessage(completionText: string): string {

@@ -16,16 +16,11 @@ import {
 const mockGenerate = jest.fn().mockResolvedValue(undefined);
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
-const mockIdentifySelection = jest.fn().mockResolvedValue(undefined);
-const mockCancelIdentification = jest.fn();
-const mockResetIdentification = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
 const mockReportInteraction = jest.fn();
 const VIEWPORT_TEST_MARGIN = 8;
 let mockIsGenerating = false;
-let mockIsIdentifying = false;
-let mockInlineAssistantHookCall = 0;
 let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
@@ -51,26 +46,14 @@ jest.mock('@grafana/assistant', () => ({
     closeAssistant: undefined,
     toggleAssistant: undefined,
   }),
-  useInlineAssistant: () => {
-    const isIdentificationHook = mockInlineAssistantHookCall++ % 2 === 0;
-    return isIdentificationHook
-      ? {
-          generate: mockIdentifySelection,
-          isGenerating: mockIsIdentifying,
-          content: '',
-          error: null,
-          cancel: mockCancelIdentification,
-          reset: mockResetIdentification,
-        }
-      : {
-          generate: mockGenerate,
-          isGenerating: mockIsGenerating,
-          content: '',
-          error: null,
-          cancel: mockCancel,
-          reset: mockReset,
-        };
-  },
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    isGenerating: mockIsGenerating,
+    content: '',
+    error: null,
+    cancel: mockCancel,
+    reset: mockReset,
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -219,8 +202,6 @@ describe('QueryCoauthoring', () => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
     mockIsGenerating = false;
-    mockIsIdentifying = false;
-    mockInlineAssistantHookCall = 0;
     mockAssistantAvailable = true;
     mockAssistantLoading = false;
   });
@@ -235,6 +216,155 @@ describe('QueryCoauthoring', () => {
       datasource_type: 'prometheus',
     });
   });
+
+  it('loads the deterministic summary without an Assistant request before submission', async () => {
+    const { user } = await setup();
+    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'An unfinished request');
+    expect(mockGenerate).not.toHaveBeenCalled();
+  });
+
+  it('replaces Explain answers with generated and typed follow-ups without changing or previewing the query', async () => {
+    const { user, readInvocation, onBaseline, baseline, stagePreview, onPreview, onAccept } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() =>
+      mockGenerate.mock.calls[0][0].onComplete(
+        JSON.stringify({
+          explanation: 'It calculates the request rate.',
+          followUps: ['What does the window mean?', 'How does rate work?'],
+        })
+      )
+    );
+    expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'How does rate work?' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'What does the window mean?' }));
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('What does the window mean?');
+    act(() =>
+      mockGenerate.mock.calls[1][0].onComplete(
+        JSON.stringify({
+          explanation: 'The window is five minutes.',
+          followUps: ['Can the window change?', 'Why use five minutes?'],
+        })
+      )
+    );
+    expect(screen.getByText('The window is five minutes.')).toBeInTheDocument();
+    expect(screen.queryByText('It calculates the request rate.')).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'How are resets handled?');
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[2][0].prompt).toBe('How are resets handled?');
+    act(() =>
+      mockGenerate.mock.calls[2][0].onComplete(
+        JSON.stringify({
+          explanation: 'Rate accounts for counter resets.',
+          followUps: ['What is a counter?', 'When do counters reset?'],
+        })
+      )
+    );
+    expect(screen.getByText('Rate accounts for counter resets.')).toBeInTheDocument();
+    expect(mockGenerate.mock.calls[0][0].tools).toBeUndefined();
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(onBaseline).toHaveBeenCalledTimes(1);
+    expect(onBaseline).toHaveBeenCalledWith(baseline);
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explain_follow_up_submitted', {
+      source: 'generated',
+    });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explain_follow_up_submitted', {
+      source: 'typed',
+    });
+  });
+
+  it.each([
+    'The request rate is averaged over five minutes.',
+    JSON.stringify({
+      explanation: 'The request rate is averaged over five minutes.',
+      followUps: ['Only one question?'],
+    }),
+  ])('degrades malformed structured Explain output to the explanation alone: %s', async (completion) => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete(completion));
+    expect(screen.getByText('The request rate is averaged over five minutes.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Only one question?' })).not.toBeInTheDocument();
+  });
+
+  it('explores only existing metadata and hides the quick action when metadata is empty', async () => {
+    const { user, context, readInvocation, unmount } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explore similar metrics and labels' }));
+    const request = mockGenerate.mock.calls[0][0];
+    expect(request.systemPrompt).toContain(JSON.stringify(context.metadata));
+    expect(request.systemPrompt).toContain(
+      'Do not invent metric or label names that are not in the provided metadata.'
+    );
+    act(() => request.onComplete('The context contains the HTTP requests counter.'));
+    expect(screen.getByText('The context contains the HTTP requests counter.')).toBeInTheDocument();
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_explore_similar_used', {});
+    unmount();
+    await setup(0, true, { ...context, metadata: [] });
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Explore similar metrics and labels' })).not.toBeInTheDocument();
+  });
+
+  it('moves from Explain to Modify in the same engaged invocation and does not count Explain toward the nudge', async () => {
+    const { user, readInvocation, stagePreview, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    for (let i = 0; i < 4; i++) {
+      act(() =>
+        mockGenerate.mock.calls[i][0].onComplete(
+          JSON.stringify({
+            explanation: 'It calculates the request rate.',
+            followUps: ['How does rate work?', 'What is a counter?'],
+          })
+        )
+      );
+      if (i < 3) {
+        await user.click(screen.getByRole('button', { name: 'How does rate work?' }));
+      }
+    }
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
+    await user.click(document.body);
+    act(() => screen.getByRole('dialog', { name: 'Query coauthor' }).focus());
+    await user.keyboard('{Escape}');
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[4][0].onComplete('Which label should I group by?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(stagePreview).not.toHaveBeenCalled();
+  });
+
+  it.each(['prompt', 'Explain'])(
+    'restores the prior %s and submitted text on Stop and ignores late Explain completion',
+    async (prior) => {
+      const { user, dismissInvocation } = await setup();
+      await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+      if (prior === 'Explain') {
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+        await user.type(screen.getByRole('textbox', { name: 'Ask a follow up' }), 'Why use a counter?');
+        await user.keyboard('{Enter}');
+      }
+      const pending = mockGenerate.mock.calls.at(-1)[0];
+      await user.click(screen.getByRole('button', { name: 'Stop' }));
+      if (prior === 'Explain') {
+        expect(screen.getByText('It calculates the request rate.')).toBeInTheDocument();
+        expect(screen.getByRole('textbox', { name: 'Ask a follow up' })).toHaveValue('Why use a counter?');
+      } else {
+        expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue(
+          'Explain the focused part of this existing PromQL query.'
+        );
+      }
+      act(() => pending.onComplete('This late answer should be ignored.'));
+      expect(screen.queryByText('This late answer should be ignored.')).not.toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+    }
+  );
 
   it('associates each concurrent session prompt with its own query summary', async () => {
     const firstTarget = document.createElement('div');
@@ -292,48 +422,40 @@ describe('QueryCoauthoring', () => {
     expect(secondPrompt).toHaveAttribute('aria-describedby', secondSummary.id);
   });
 
-  it('requests and renders a privacy-bounded semantic explanation of the focused query text', async () => {
-    const { queryText } = await setup();
-
-    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
-    const request = mockIdentifySelection.mock.calls[0][0];
+  it('requests a privacy-bounded explanation only after selecting Explain', async () => {
+    const { user, queryText, dismissInvocation } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
     expect(request).toMatchObject({
-      origin: 'grafana/panel-edit-next/query-coauthoring/identify',
-      agentName: 'query-coauthor-intent',
-      agentId: 'grafana.query.coauthor.identify.v1',
+      origin: 'grafana/panel-edit-next/query-coauthoring/explain',
+      agentName: 'query-coauthor-explain',
+      agentId: 'grafana.query.coauthor.explain.v1',
       prompt: 'Explain the focused part of this existing PromQL query.',
     });
     expect(request.systemPrompt).toContain(JSON.stringify(queryText));
     expect(request.systemPrompt).toContain('Focused text: ["rate"]');
-    expect(request.systemPrompt).toContain('http_requests_total');
     expect(request.systemPrompt).not.toContain('dashboardTitle');
-
-    act(() => request.onComplete('Looks like: Calculates the per-second request rate.'));
-
-    expect(screen.getByText(/Calculates the per-second request rate\./)).toBeInTheDocument();
+    await user.click(document.body);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    act(() => request.onComplete('Calculates the per-second request rate.'));
+    expect(screen.getByText('Calculates the per-second request rate.')).toBeInTheDocument();
     expect(screen.getByText('Highlighted query')).toBeInTheDocument();
   });
 
-  it('does not regenerate the explanation when focus moves from the prompt to the explanation', async () => {
+  it('does not request an explanation when focus moves between the prompt and deterministic summary', async () => {
     const { user } = await setup();
-    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
-    act(() => identificationRequest.onComplete('Calculates the per-second request rate.'));
-
     await user.click(screen.getByRole('textbox', { name: 'Describe a query change' }));
-    await user.click(screen.getByText('Calculates the per-second request rate.'));
-
-    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByText('http_requests_total is a counter metric.'));
+    expect(screen.getByRole('button', { name: 'Explain this query' })).toBeInTheDocument();
+    expect(mockGenerate).not.toHaveBeenCalled();
   });
 
-  it('does not regenerate the explanation when the host time range changes after context loads', async () => {
+  it('does not request an explanation when the host time range changes after context loads', async () => {
     const { queryCoauthoringProps, rerender } = await setup();
-    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
-    act(() => identificationRequest.onComplete('Calculates the per-second request rate.'));
-
     rerender(<QueryCoauthoring {...queryCoauthoringProps} timeRange={{ from: 3_000, to: 4_000 }} />);
-
-    expect(mockIdentifySelection).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('Calculates the per-second request rate.')).toBeInTheDocument();
+    expect(screen.getByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(mockGenerate).not.toHaveBeenCalled();
   });
 
   it('does not reload an invocation when baseline synchronization rerenders the row owner', async () => {
@@ -357,7 +479,6 @@ describe('QueryCoauthoring', () => {
 
     unmount();
     readInvocation.mockClear();
-    mockIdentifySelection.mockClear();
     render(<RowOwner />);
 
     await screen.findByRole('textbox', { name: 'Describe a query change' });
@@ -367,7 +488,7 @@ describe('QueryCoauthoring', () => {
 
   it('requests a holistic explanation when the whole query is focused', async () => {
     const query = 'rate(http_requests_total[5m])';
-    await setup(0, true, {
+    const { user } = await setup(0, true, {
       revision: '1',
       query,
       focusRanges: [{ from: 0, to: query.length }],
@@ -375,12 +496,13 @@ describe('QueryCoauthoring', () => {
       metadata: [{ kind: 'metric', name: 'http_requests_total', attributes: { type: 'counter' } }],
     });
 
-    const request = mockIdentifySelection.mock.calls[0][0];
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const request = mockGenerate.mock.calls[0][0];
     expect(request.prompt).toBe('Explain this existing PromQL query as a whole.');
     expect(request.systemPrompt).toContain('Focus scope: whole query.');
     expect(request.systemPrompt).toContain('Explain how the complete query works as one expression.');
 
-    act(() => request.onError());
+    act(() => request.onComplete(''));
     expect(screen.getByText(/The complete PromQL query is selected for coauthoring\./)).toBeInTheDocument();
   });
 
@@ -397,19 +519,22 @@ describe('QueryCoauthoring', () => {
       metadata: [{ kind: 'stream label', name: 'service_name', attributes: { values: ['checkout'] } }],
     });
 
-    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
-    expect(identificationRequest).toMatchObject({
-      agentName: 'query-coauthor-intent',
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    const explanationRequest = mockGenerate.mock.calls[0][0];
+    expect(explanationRequest).toMatchObject({
+      agentName: 'query-coauthor-explain',
       prompt: 'Explain the focused part of this existing LogQL query.',
     });
-    expect(identificationRequest.systemPrompt).toContain('Query language: {"id":"logql"');
-    expect(identificationRequest.systemPrompt).not.toContain('PromQL');
+    expect(explanationRequest.systemPrompt).toContain('Query language: {"id":"logql"');
+    expect(explanationRequest.systemPrompt).not.toContain('PromQL');
 
-    const user = userEvent.setup();
+    act(() => explanationRequest.onComplete('It filters checkout errors.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
     await user.type(screen.getByRole('textbox'), 'Match timeout errors');
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
 
-    const request = mockGenerate.mock.calls[0][0];
+    const request = mockGenerate.mock.calls[1][0];
     expect(request.agentName).toBe('query-coauthor');
     expect(request.systemPrompt).toContain('You help LogQL novices');
     expect(request.systemPrompt).toContain('Preserve the stream selector');
@@ -737,14 +862,10 @@ describe('QueryCoauthoring', () => {
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
     const cancelCalls = mockCancel.mock.calls.length;
     const resetCalls = mockReset.mock.calls.length;
-    const cancelIdentificationCalls = mockCancelIdentification.mock.calls.length;
-    const resetIdentificationCalls = mockResetIdentification.mock.calls.length;
     await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
 
     expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
     expect(mockReset).toHaveBeenCalledTimes(resetCalls + 1);
-    expect(mockCancelIdentification).toHaveBeenCalledTimes(cancelIdentificationCalls + 2);
-    expect(mockResetIdentification).toHaveBeenCalledTimes(resetIdentificationCalls + 1);
     expect(dismissInvocation).toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Continue coauthoring' })).not.toBeInTheDocument();
   });
@@ -952,7 +1073,7 @@ describe('QueryCoauthoring', () => {
     }
   });
 
-  it('restores initial prompt focus when query reading completes after Assistant drawer autofocus', async () => {
+  it('restores initial prompt focus when query context loads after Assistant drawer autofocus', async () => {
     let nextAnimationFrameId = 1;
     const animationFrames = new Map<number, FrameRequestCallback>();
     const requestAnimationFrameSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
@@ -975,18 +1096,25 @@ describe('QueryCoauthoring', () => {
     document.body.append(assistantDrawerInput);
 
     try {
-      await setup();
+      const { capability, context, baseline, queryCoauthoringProps, unmount } = await setup();
+      unmount();
+      let resolve!: (value: { baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }) => void;
+      const pendingContext = new Promise<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>(
+        (nextResolve) => {
+          resolve = nextResolve;
+        }
+      );
+      jest.mocked(capability.readInvocation).mockReturnValue(pendingContext);
+      render(<QueryCoauthoring {...queryCoauthoringProps} />);
       const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
       drainAnimationFrames();
       expect(prompt).toHaveFocus();
-
       assistantDrawerInput.focus();
-      act(() => mockIdentifySelection.mock.calls[0][0].onComplete('The highlighted query calculates a request rate.'));
+      await act(async () => resolve({ baseline, context }));
       drainAnimationFrames();
 
       expect(prompt).toHaveFocus();
     } finally {
-      mockIsIdentifying = false;
       assistantDrawerInput.remove();
       requestAnimationFrameSpy.mockRestore();
       cancelAnimationFrameSpy.mockRestore();
