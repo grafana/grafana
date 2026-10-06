@@ -18,11 +18,12 @@ import (
 )
 
 // Provider supplies the provider-specific pieces of an OAuth app connection
-// (e.g. GitLab, Bitbucket): its OAuth application settings.
+// (e.g. GitLab, Bitbucket): its OAuth application settings and health check.
 //
 //go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock.go --with-expecter
 type Provider interface {
 	Endpoint() oauth2.Endpoint
+	Test(ctx context.Context) *provisioning.TestResults
 }
 
 type oauthConnection struct {
@@ -69,10 +70,7 @@ func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, 
 		), nil
 	}
 
-	if lister, ok := c.provider.(connection.RepositoryLister); ok {
-		return testByListingRepositories(ctx, lister)
-	}
-	return connection.SuccessTestResults(), nil
+	return c.provider.Test(ctx), nil
 }
 
 // GenerateRepositoryToken returns an access token usable for git operations on
@@ -100,7 +98,7 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
-func testByListingRepositories(ctx context.Context, lister connection.RepositoryLister) (*provisioning.TestResults, error) {
+func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) *provisioning.TestResults {
 	// TODO: use a lighter endpoint than listing repositories to check the token.
 	if _, err := lister.ListRepositories(ctx); err != nil {
 		if errors.Is(err, connection.ErrAuthentication) {
@@ -111,7 +109,7 @@ func testByListingRepositories(ctx context.Context, lister connection.Repository
 					Field:  field.NewPath("secure", "token").String(),
 					Detail: "The provider rejected the connection's access token",
 				}},
-			), nil
+			)
 		}
 		return connection.FailedTestResults(
 			http.StatusUnprocessableEntity,
@@ -119,9 +117,9 @@ func testByListingRepositories(ctx context.Context, lister connection.Repository
 				Type:   metav1.CauseTypeInternal,
 				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
 			}},
-		), nil
+		)
 	}
-	return connection.SuccessTestResults(), nil
+	return connection.SuccessTestResults()
 }
 
 type listingConnection struct {
