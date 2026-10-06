@@ -133,6 +133,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				map[string]common.OpenAPIDefinition{},
 				tt.setupStorageMock(t),
 				dashboardService,
+				nil,
 			)
 
 			// Find the create handler (first namespace route)
@@ -189,6 +190,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 		map[string]common.OpenAPIDefinition{},
 		func() rest.Storage { return mockStorage },
 		dashboardService,
+		nil,
 	)
 
 	require.NotEmpty(t, routes.Namespace)
@@ -271,6 +273,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 				map[string]common.OpenAPIDefinition{},
 				func() rest.Storage { return mockStorage },
 				dashboardService,
+				nil,
 			)
 
 			bodyBytes, err := json.Marshal(tt.body)
@@ -314,6 +317,7 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		map[string]common.OpenAPIDefinition{},
 		func() rest.Storage { return mockStorage },
 		dashboardService,
+		nil,
 	)
 
 	body := map[string]any{
@@ -387,6 +391,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -447,6 +452,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -491,6 +497,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -523,6 +530,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -574,6 +582,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -649,6 +658,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -702,6 +712,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return nil },
 			dashboardService,
+			nil,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -828,6 +839,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/"+deleteKey, nil)
@@ -852,6 +864,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/missing-key", nil)
@@ -874,6 +887,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			map[string]common.OpenAPIDefinition{},
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
+			nil,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/some-key", nil)
