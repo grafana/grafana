@@ -944,7 +944,7 @@ var (
 			Name:         "dashboardUnifiedDrilldownControls",
 			Description:  "Renders ad hoc filters and group by in a single unified control",
 			Stage:        FeatureStageGeneralAvailability,
-			Generate:     Generate{LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true},
 			Owner:        grafanaDashboardsSquad,
 			HideFromDocs: true,
 			Expression:   "true",

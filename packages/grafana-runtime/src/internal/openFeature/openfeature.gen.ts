@@ -84,8 +84,6 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
-  /** Renders ad hoc filters and group by in a single unified control */
-  DashboardUnifiedDrilldownControls: "dashboardUnifiedDrilldownControls",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -683,17 +681,6 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
-};
-
-/**
- * Renders ad hoc filters and group by in a single unified control
- *
- * **Details:**
- * - flag key: `dashboardUnifiedDrilldownControls`
- * - default value: `true`
- */
-export const useFlagDashboardUnifiedDrilldownControls = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboardUnifiedDrilldownControls", true, options).value;
 };
 
 /**

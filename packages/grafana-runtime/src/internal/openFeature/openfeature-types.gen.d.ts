@@ -43,7 +43,6 @@ declare module "@openfeature/core" {
     | "sqlExpressions"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
-    | "dashboardUnifiedDrilldownControls"
     | "grafana.filterablePanels"
     | "queryLibrary"
     | "grafana.savedQueriesPage"
