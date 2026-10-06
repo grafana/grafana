@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -897,6 +898,12 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
+
+	if err := s.checkSearchServicePermissions(ctx, req); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+	}
 
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
