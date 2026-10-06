@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package authz.extention.v1;
+
+option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
+
+// Embedded-only legacy Access Control compatibility, separate from the existing
+// AuthzExtentionService so this service and its messages can be retired together.
+// Servers authenticate the service caller separately from the asserted target
+// and validate instance scope. Standalone servers must not register this service.
+service LegacyAuthzService {
+  // No HTTP route is exposed.
+  rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse);
+}
+
+// Trusted assertions from Grafana authentication, not end-user input. The caller
+// is authenticated by the transport, independently of this target identity.
+message LegacyPermissionIdentity {
+  string type = 1;
+  // Untyped UID; type supplies its identity type. Never parse this as an ID.
+  string uid = 2;
+  optional int64 internal_id = 3;
+  bool has_unique_id = 4;
+  string org_role = 5;
+  bool is_grafana_admin = 6;
+  // Numeric legacy RBAC memberships and contextual groups are distinct inputs.
+  repeated int64 team_ids = 7;
+  repeated string groups = 8;
+  // Preserve the trusted requester's shared-cache key, including empty values.
+  optional string cache_key = 9;
+  // Original namespace for legacy resolution, not a tenant scope override.
+  // When nonempty it must match the request namespace. Empty differs from absent.
+  optional string requester_namespace = 10;
+}
+
+message LegacyGetUserPermissionsRequest {
+  LegacyPermissionIdentity identity = 1;
+  // Concrete tenant namespace, also required for global-only evaluation.
+  string namespace = 2;
+  // True selects instance-global legacy grants (org zero). False, including
+  // when omitted, uses the namespace's organization. Never crosses tenants.
+  bool global_org = 3;
+  bool reload_cache = 4;
+  // Bypass Zanzana cache reads AND writes without refreshing legacy caches.
+  bool skip_zanzana_cache = 5;
+}
+
+message LegacyPermission {
+  string action = 1;
+  string scope = 2;
+}
+
+message LegacyGetUserPermissionsResponse {
+  // Preserve duplicates. Clients publish results only after successful EOF.
+  repeated LegacyPermission permissions = 1;
+}

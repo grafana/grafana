@@ -10,6 +10,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -17,17 +18,17 @@ import (
 )
 
 type contractEmbeddedClient struct {
-	get func() types.LegacyAuthzService
+	get func() legacyclient.Service
 }
 
-func (c contractEmbeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req types.LegacyGetUserPermissionsRequest) (types.LegacyGetUserPermissionsResponse, error) {
+func (c contractEmbeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
 	return c.get().LegacyGetUserPermissions(ctx, caller, req)
 }
 
 func wireContractEmbeddedClient(s *Service) {
 	// Tests finish configuring the service before its first public enumeration.
 	// Thereafter the actual loader, transport and client live for the whole fixture.
-	s.legacyClient = contractEmbeddedClient{get: sync.OnceValue(func() types.LegacyAuthzService {
+	s.legacyClient = contractEmbeddedClient{get: sync.OnceValue(func() legacyclient.Service {
 		var migrated legacypermissions.MigratedPermissions
 		if s.zanzanaResolver != nil {
 			migrated = s.zanzanaResolver

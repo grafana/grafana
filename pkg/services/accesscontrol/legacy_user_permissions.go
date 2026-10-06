@@ -11,6 +11,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,7 +31,7 @@ func LegacyPermissionCaller(namespace string) authlib.AuthInfo {
 	})
 }
 
-func GetLegacyUserPermissions(ctx context.Context, client authlib.LegacyAuthzService, usr identity.Requester, options Options, cfg *setting.Cfg) ([]Permission, error) {
+func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, usr identity.Requester, options Options, cfg *setting.Cfg) ([]Permission, error) {
 	if client == nil {
 		return nil, fmt.Errorf("embedded legacy AuthZ client is not configured")
 	}
@@ -60,9 +61,9 @@ func GetLegacyUserPermissions(ctx context.Context, client authlib.LegacyAuthzSer
 	if cfg.IDUseExternalGroupsForGroupsClaim {
 		groups = usr.GetExternalGroups()
 	}
-	response, err := client.LegacyGetUserPermissions(ctx, LegacyPermissionCaller(namespace), authlib.LegacyGetUserPermissionsRequest{
+	response, err := client.LegacyGetUserPermissions(ctx, LegacyPermissionCaller(namespace), legacyclient.LegacyGetUserPermissionsRequest{
 		Namespace: namespace, GlobalOrg: global, ReloadCache: options.ReloadCache, SkipZanzanaCache: options.SkipZanzanaCache,
-		Identity: authlib.LegacyPermissionIdentity{
+		Identity: legacyclient.LegacyPermissionIdentity{
 			Type: usr.GetIdentityType(), UID: usr.GetIdentifier(), InternalID: internalID,
 			HasUniqueID: usr.HasUniqueId(), OrgRole: string(usr.GetOrgRole()), IsGrafanaAdmin: usr.GetIsGrafanaAdmin(),
 			TeamIDs: slices.Clone(usr.GetTeams()), Groups: slices.Clone(groups),

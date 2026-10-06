@@ -1,12 +1,11 @@
 package legacypermissions
 
 import (
-	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -16,7 +15,7 @@ import (
 func ProvideClient(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing, zanzanaClient zanzana.Client, restConfig restcfg.RestConfigProvider,
-) types.LegacyAuthzService {
+) legacyclient.Service {
 	var migrated MigratedPermissions
 	// Preserve the independent enumeration-merge gate, not the Check/List engine selection.
 	//nolint:staticcheck // The existing merge toggle is not migrated by this rollout.

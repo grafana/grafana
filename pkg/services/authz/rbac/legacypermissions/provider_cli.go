@@ -1,11 +1,10 @@
 package legacypermissions
 
 import (
-	"github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,6 +15,6 @@ import (
 func ProvideClientForCLI(sql db.DB, catalog *RoleCatalog, actions ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	license licensing.Licensing,
-) types.LegacyAuthzService {
+) legacyclient.Service {
 	return NewEmbeddedClient(NewLoader(sql, catalog, actions, cache, cfg, features, license, nil), cfg)
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -66,7 +67,7 @@ func ProvideService(
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
-	legacyClient claims.LegacyAuthzService, roleCatalog *legacypermissions.RoleCatalog,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -112,7 +113,7 @@ func ProvideOSSService(
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 	iamFeatures IAMFeatures,
-	legacyClient claims.LegacyAuthzService, roleCatalog *legacypermissions.RoleCatalog,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
 ) *Service {
 	s := &Service{
 		actionResolver:            actionResolver,
@@ -157,7 +158,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
-	legacyClient              claims.LegacyAuthzService
+	legacyClient              legacyclient.Service
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
 }

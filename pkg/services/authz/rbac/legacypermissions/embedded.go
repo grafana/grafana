@@ -6,8 +6,6 @@ import (
 	"strconv"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
@@ -16,6 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,7 +37,7 @@ type embeddedServer struct {
 
 // NewEmbeddedClient owns a private in-process channel. The legacy handler is
 // deliberately never registered on a network server or the Check/List channel.
-func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) types.LegacyAuthzService {
+func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) legacyclient.Service {
 	guard := new(int)
 	server := &embeddedServer{loader: loader, cfg: cfg, guard: guard}
 	channel := (&inprocgrpc.Channel{}).WithServerStreamInterceptor(func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
@@ -50,7 +50,7 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) types.LegacyAuthzServic
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return authzlib.NewLegacyClient(channel)
+	return legacyclient.NewLegacyClient(channel)
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
