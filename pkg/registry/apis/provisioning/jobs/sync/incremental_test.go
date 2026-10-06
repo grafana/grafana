@@ -492,6 +492,105 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 	})
 }
 
+func TestSplitRenamesOntoNonResources(t *testing.T) {
+	rename := func(previousPath, path string) repository.VersionedFileChange {
+		return repository.VersionedFileChange{
+			Action: repository.FileActionRenamed, Path: path, PreviousPath: previousPath, Ref: "new-ref", PreviousRef: "old-ref",
+		}
+	}
+
+	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+		t.Run("a rename onto "+path+" becomes a deletion and a creation", func(t *testing.T) {
+			got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("dashboard.json", path)})
+			require.Equal(t, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "new-ref", PreviousRef: "old-ref"},
+				{Action: repository.FileActionCreated, Path: path, Ref: "new-ref"},
+			}, got)
+		})
+	}
+
+	for name, change := range map[string]repository.VersionedFileChange{
+		"a rename between resource paths":                rename("a.json", "b.json"),
+		"a rename onto a path that cannot sync":          rename("a.json", "folder/Backend & UI.json"),
+		"a rename of a non-resource onto a non-resource": rename("README.md", "NOTES.md"),
+		"a rename of a resource that never synced":       rename(".a.json", "README.md"),
+		"a rename of a folder":                           rename("old/", "new/"),
+		"a creation":                                     {Action: repository.FileActionCreated, Path: "README.md", Ref: "new-ref"},
+		"a deletion":                                     {Action: repository.FileActionDeleted, Path: "a.json", PreviousRef: "old-ref"},
+	} {
+		t.Run(name+" is left alone", func(t *testing.T) {
+			require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}))
+		})
+	}
+}
+
+// A resource file renamed onto a path that is not a resource is gone for a full sync of the
+// same commit, so the incremental sync removes the resource and treats the new path as the
+// non-resource file it is, without reporting anything about it.
+func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
+	permissiveQt := newPermissiveMockQuotaTracker(t)
+
+	renameOnto := func(name, path string, removal func(*resources.MockRepositoryResources), expectDeletion func(jobs.JobResourceResult) bool) incrementalSyncTestCase {
+		return incrementalSyncTestCase{
+			name:         name,
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{{
+					Action:       repository.FileActionRenamed,
+					Path:         path,
+					PreviousPath: "dashboard.json",
+					Ref:          "new-ref",
+					PreviousRef:  "old-ref",
+				}}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				// one rename is a deletion plus a creation once rewritten
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				progress.On("HasDirPathFailedCreation", path).Return(false)
+
+				removal(repoResources)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(expectDeletion)).Return().Once()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionIgnored && result.Path() == path &&
+						result.Error() == nil && result.Warning() == nil
+				})).Return().Once()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		}
+	}
+
+	tests := make([]incrementalSyncTestCase, 0, 5)
+	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+		tests = append(tests, renameOnto(
+			"a dashboard renamed onto "+path+" is removed without a warning",
+			path,
+			func(repoResources *resources.MockRepositoryResources) {
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
+					Return("removed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+			},
+			func(result jobs.JobResourceResult) bool {
+				return result.Action() == repository.FileActionDeleted && result.Path() == "dashboard.json" &&
+					result.Name() == "removed-dashboard" && result.Error() == nil && result.Warning() == nil
+			}))
+	}
+	tests = append(tests, renameOnto(
+		"a failed removal on rename onto a non-resource path is an error",
+		"README.md",
+		func(repoResources *resources.MockRepositoryResources) {
+			repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
+				Return("", "", schema.GroupVersionKind{}, 0, errors.New("boom"))
+		},
+		func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionDeleted && result.Path() == "dashboard.json" &&
+				result.Error() != nil && result.Warning() == nil
+		}))
+	runIncrementalSyncTests(t, tests)
+}
+
 func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{
