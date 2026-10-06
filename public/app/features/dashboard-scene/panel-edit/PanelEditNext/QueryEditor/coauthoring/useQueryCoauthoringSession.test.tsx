@@ -17,15 +17,10 @@ import {
 const mockGenerate = jest.fn().mockResolvedValue(undefined);
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
-const mockIdentifySelection = jest.fn().mockResolvedValue(undefined);
-const mockCancelIdentification = jest.fn();
-const mockResetIdentification = jest.fn();
 const mockOpenAssistant = jest.fn();
 const mockPost = jest.fn();
 const mockReportInteraction = jest.fn();
 let mockIsGenerating = false;
-let mockIsIdentifying = false;
-let mockInlineAssistantHookCall = 0;
 let mockAssistantAvailable = true;
 let mockAssistantLoading = false;
 
@@ -59,26 +54,14 @@ jest.mock('@grafana/assistant', () => ({
     closeAssistant: undefined,
     toggleAssistant: undefined,
   }),
-  useInlineAssistant: () => {
-    const isIdentificationHook = mockInlineAssistantHookCall++ % 2 === 0;
-    return isIdentificationHook
-      ? {
-          generate: mockIdentifySelection,
-          isGenerating: mockIsIdentifying,
-          content: '',
-          error: null,
-          cancel: mockCancelIdentification,
-          reset: mockResetIdentification,
-        }
-      : {
-          generate: mockGenerate,
-          isGenerating: mockIsGenerating,
-          content: '',
-          error: null,
-          cancel: mockCancel,
-          reset: mockReset,
-        };
-  },
+  useInlineAssistant: () => ({
+    generate: mockGenerate,
+    isGenerating: mockIsGenerating,
+    content: '',
+    error: null,
+    cancel: mockCancel,
+    reset: mockReset,
+  }),
 }));
 
 jest.mock('@grafana/runtime', () => ({
@@ -201,8 +184,6 @@ describe('useQueryCoauthoringSession', () => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
     mockIsGenerating = false;
-    mockIsIdentifying = false;
-    mockInlineAssistantHookCall = 0;
     mockAssistantAvailable = true;
     mockAssistantLoading = false;
   });
@@ -227,20 +208,19 @@ describe('useQueryCoauthoringSession', () => {
     expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
     expect(readInvocation).toHaveBeenCalledTimes(2);
   });
-  it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
-    mockIsIdentifying = true;
-    const { user } = await setup();
-    const identificationRequest = mockIdentifySelection.mock.calls[0][0];
-
-    expect(screen.getByRole('status')).toHaveTextContent('Reading highlighted query...');
-    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Use increase');
-    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
-
-    expect(mockCancelIdentification).toHaveBeenCalled();
-    expect(mockGenerate).toHaveBeenCalledTimes(1);
-
-    act(() => identificationRequest.onComplete('This late explanation should be ignored.'));
-    expect(screen.queryByText(/late explanation/i)).not.toBeInTheDocument();
+  it('preserves entered text when invocation loading finishes without an Assistant request', async () => {
+    const initial = await setup();
+    initial.unmount();
+    const invocation = deferred<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>();
+    initial.readInvocation.mockReturnValue(invocation.promise);
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    const input = screen.getByRole('textbox', { name: 'Describe a query change' });
+    await initial.user.type(input, 'Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await act(async () => invocation.resolve({ baseline: initial.baseline, context: initial.context }));
+    expect(input).toHaveValue('Use increase');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+    expect(mockGenerate).not.toHaveBeenCalled();
   });
 
   it('does not start generation after dismissal wins the context-read race', async () => {
