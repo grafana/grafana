@@ -323,6 +323,30 @@ SQL expressions that use regular expression functions have limitations such as:
 
 There may be other minor differences as well.
 
+### Reserved keywords in column names
+
+SQL expressions parse your query with a MySQL-compatible parser before Grafana runs it. Words such as `plan`, `group`, `order`, `select`, and `interval` are reserved in that parser. If a column from your data source has one of these names, the query fails with a parse error that names the word:
+
+```text
+syntax error at position 12 near 'plan'
+```
+
+To use the column anyway, wrap it in backticks every time you reference it, including in the select list, table-qualified names, aliases, `WHERE`, `ORDER BY`, and `GROUP BY` clauses:
+
+```sql
+SELECT
+  A.`plan`,
+  count(*) AS `count`
+FROM A
+WHERE `plan` = 'deploy'
+GROUP BY `plan`
+ORDER BY `plan`
+```
+
+Aliases need backticks too: `` `plan` AS `plan` `` works, `` `plan` AS plan `` doesn't.
+
+The reserved word list comes from the parser Grafana uses, not from your data source, so a column name that works in MySQL or PostgreSQL can still fail in a SQL expression. For the full set, refer to the [vitess SQL parser keyword list](https://github.com/dolthub/vitess/blob/main/go/vt/sqlparser/keywords.go). As an alternative to quoting, rename the column in the base data source query.
+
 ### Schema changes and missing data
 
 SQL expressions have known limitations that may cause queries to fail or return unexpected results. These constraints are inherent to how the feature works, so keep them in mind when you build queries.
