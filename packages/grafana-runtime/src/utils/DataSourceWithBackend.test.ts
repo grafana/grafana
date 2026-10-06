@@ -875,6 +875,13 @@ describe('DataSourceWithBackend', () => {
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
 
+    test.each([true, false])('strips leading slashes from the path (new APIs: %s)', (enabled) => {
+      mockGetBooleanValue.mockReturnValue(enabled);
+      const { ds } = createMockDatasource();
+      expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).toBe(ds.buildResourcesDatasourceUrl('api/v1/labels'));
+      expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).not.toContain('//api');
+    });
+
     test('prefers meta.id over type when meta is present', () => {
       mockGetBooleanValue.mockReturnValue(true);
       const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
