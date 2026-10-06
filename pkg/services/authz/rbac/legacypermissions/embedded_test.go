@@ -5,13 +5,14 @@ import (
 	"testing"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -39,8 +40,8 @@ func TestEmbeddedLegacyNamespaceValidation(t *testing.T) {
 			cfg.StackID = tc.stack
 			client := NewEmbeddedClient(nil, cfg) // Rejection must happen before any load.
 			for _, global := range []bool{false, true} {
-				result, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("*"), types.LegacyGetUserPermissionsRequest{
-					Namespace: tc.namespace, GlobalOrg: global, Identity: types.LegacyPermissionIdentity{Type: types.TypeUser, UID: "one"},
+				result, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("*"), legacyclient.LegacyGetUserPermissionsRequest{
+					Namespace: tc.namespace, GlobalOrg: global, Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeUser, UID: "one"},
 				})
 				require.Equal(t, codes.PermissionDenied, status.Code(err))
 				require.Empty(t, result.Permissions)

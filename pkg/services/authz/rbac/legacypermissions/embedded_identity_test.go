@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -34,9 +35,9 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 	client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &licensing.OSSLicensingService{}, migrated), cfg)
 	empty, namespace, cacheKey, id := "", "stacks-12", "caller-cache-key", int64(7)
 	for _, original := range []*string{nil, &empty, &namespace} {
-		_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), types.LegacyGetUserPermissionsRequest{
+		_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
 			Namespace: "stacks-12", GlobalOrg: true,
-			Identity: types.LegacyPermissionIdentity{
+			Identity: legacyclient.LegacyPermissionIdentity{
 				Type: types.TypeUser, UID: "8", InternalID: &id, HasUniqueID: true,
 				OrgRole: "None", IsGrafanaAdmin: true, TeamIDs: []int64{10}, Groups: []string{"external-group"},
 				CacheKey: &cacheKey, RequesterNamespace: original,
@@ -57,8 +58,8 @@ func TestIntegrationEmbeddedLegacyRequesterAssertions(t *testing.T) {
 		require.True(t, migrated.requester.GetIsGrafanaAdmin())
 	}
 	wrongNamespace := "stacks-13"
-	_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), types.LegacyGetUserPermissionsRequest{
-		Namespace: "stacks-12", Identity: types.LegacyPermissionIdentity{RequesterNamespace: &wrongNamespace},
+	_, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("stacks-12"), legacyclient.LegacyGetUserPermissionsRequest{
+		Namespace: "stacks-12", Identity: legacyclient.LegacyPermissionIdentity{RequesterNamespace: &wrongNamespace},
 	})
 	require.ErrorContains(t, err, "requester namespace does not match tenant scope")
 }
