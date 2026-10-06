@@ -501,7 +501,7 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 
 	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
 		t.Run("a rename onto "+path+" becomes a deletion and a creation", func(t *testing.T) {
-			got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("dashboard.json", path)})
+			got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("dashboard.json", path)}, false)
 			require.Equal(t, []repository.VersionedFileChange{
 				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "new-ref", PreviousRef: "old-ref"},
 				{Action: repository.FileActionCreated, Path: path, Ref: "new-ref"},
@@ -509,18 +509,29 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 		})
 	}
 
+	t.Run("a folder metadata file renamed away is rewritten when folder metadata is on", func(t *testing.T) {
+		got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("team/_folder.json", "team/README.md")}, true)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionDeleted, Path: "team/_folder.json", PreviousPath: "team/_folder.json", Ref: "new-ref", PreviousRef: "old-ref"},
+			{Action: repository.FileActionCreated, Path: "team/README.md", Ref: "new-ref"},
+		}, got)
+	})
+	t.Run("a folder metadata file renamed away is left alone when folder metadata is off", func(t *testing.T) {
+		change := rename("team/_folder.json", "team/README.md")
+		require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}, false))
+	})
+
 	for name, change := range map[string]repository.VersionedFileChange{
 		"a rename between resource paths":                rename("a.json", "b.json"),
 		"a rename onto a path that cannot sync":          rename("a.json", "folder/Backend & UI.json"),
 		"a rename of a non-resource onto a non-resource": rename("README.md", "NOTES.md"),
 		"a rename of a resource that never synced":       rename(".a.json", "README.md"),
 		"a rename of a folder":                           rename("old/", "new/"),
-		"a rename of a folder metadata file":             rename("team/_folder.json", "team/README.md"),
 		"a creation":                                     {Action: repository.FileActionCreated, Path: "README.md", Ref: "new-ref"},
 		"a deletion":                                     {Action: repository.FileActionDeleted, Path: "a.json", PreviousRef: "old-ref"},
 	} {
 		t.Run(name+" is left alone", func(t *testing.T) {
-			require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}))
+			require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}, false))
 		})
 	}
 }

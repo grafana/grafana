@@ -55,7 +55,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
-	diff = splitRenamesOntoNonResources(diff)
+	diff = splitRenamesOntoNonResources(diff, folderMetadataEnabled)
 
 	var replaced []replacedFolder
 	var relocations map[string][]string
@@ -420,22 +420,22 @@ func applyUnsupportedPath(
 }
 
 // renamedFromResourceFile reports whether the change moves a resource file away from a
-// path that is synced, which leaves the resource it held without a file. A folder metadata
-// file (_folder.json) holds no resource of its own.
+// path that is synced, which leaves the resource it held without a file.
 func renamedFromResourceFile(change repository.VersionedFileChange) bool {
 	return change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
-		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil &&
-		!resources.IsFolderMetadataFile(change.PreviousPath)
+		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
 }
 
 // splitRenamesOntoNonResources rewrites the rename of a resource file onto a path that is not a
 // resource (README.md, another extension, a hidden file or folder) into the deletion of the old
 // path and the creation of the new one. That is what a full sync of the same commit sees, and the
-// deletion removes the resource like any other.
-func splitRenamesOntoNonResources(diff []repository.VersionedFileChange) []repository.VersionedFileChange {
+// deletion removes the resource like any other (or, for a _folder.json, reverts the folder).
+func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderMetadataEnabled bool) []repository.VersionedFileChange {
 	rewritten := make([]repository.VersionedFileChange, 0, len(diff))
 	for _, change := range diff {
+		// with folder metadata off a _folder.json is not synced at all, so there is nothing to remove
 		if !renamedFromResourceFile(change) || safepath.IsDir(change.Path) ||
+			(!folderMetadataEnabled && resources.IsFolderMetadataFile(change.PreviousPath)) ||
 			resources.IsPathSupported(change.Path) == nil ||
 			(!safepath.IsHidden(change.Path) && resources.HasResourceExtension(change.Path)) {
 			rewritten = append(rewritten, change)
