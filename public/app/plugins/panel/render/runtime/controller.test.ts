@@ -216,6 +216,7 @@ describe('createRenderFrameController', () => {
   it('forwards frame errors as non-fatal', () => {
     const { handlers, connect, fromFrame, controller } = setup();
     connect();
+    controller.render(input());
     fromFrame({ type: 'error', kind: 'csp', message: 'connect-src https://x', seq: 1 });
     expect(handlers.onError).toHaveBeenCalledWith({
       kind: 'csp',
@@ -312,6 +313,19 @@ describe('createRenderFrameController', () => {
       message: `The panel frame answered a heartbeat that was not sent (id ${id}).`,
       fatal: true,
     });
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it.each([
+    ['a completion', { type: 'render-complete', seq: 2, durationMs: 1, nodeCount: 1 }],
+    ['an error', { type: 'error', kind: 'runtime', message: 'boom', seq: 2 }],
+  ])('fails with a protocol error on %s for a seq that was never sent', (_, message) => {
+    const { handlers, connect, fromFrame, controller } = setup();
+    connect();
+    controller.render(input());
+    fromFrame(message);
+    expect(handlers.onRenderComplete).not.toHaveBeenCalled();
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
     expect(controller.getState()).toBe('failed');
   });
 

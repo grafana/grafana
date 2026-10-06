@@ -280,6 +280,15 @@ export function createRenderFrameController(
   };
 
   function handle(message: FrameMessage) {
+    // A draw the host never asked for would settle the image renderer's wait early.
+    if (
+      (message.type === 'render-complete' || message.type === 'error') &&
+      message.seq !== undefined &&
+      message.seq > seq
+    ) {
+      fail('protocol', `The panel frame reported a draw that was not sent (seq ${message.seq}).`);
+      return;
+    }
     switch (message.type) {
       case 'ready':
         if (state !== 'connecting') {
