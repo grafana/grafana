@@ -20,9 +20,7 @@ type BleveIndexMetrics struct {
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
-	GlobalUpdateRoundDuration prometheus.Histogram
-	GlobalUpdateRoundIndexes  prometheus.Gauge
-	GlobalReconcileDuration   *prometheus.HistogramVec
+	GlobalReconcileDuration *prometheus.HistogramVec
 
 	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
@@ -36,8 +34,9 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations *prometheus.CounterVec
-	SearchResultFormats        *prometheus.CounterVec
+	SearchCapabilityViolations      *prometheus.CounterVec
+	SearchResultFormats             *prometheus.CounterVec
+	SearchServicePermissionFailures *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -139,17 +138,6 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
-		GlobalUpdateRoundDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:                            "grafana_index_server_global_update_round_duration_seconds",
-			Help:                            "Time to update every open global search index once in the background. A round close to the update interval means the indexes fall behind.",
-			NativeHistogramBucketFactor:     1.1,
-			NativeHistogramMaxBucketNumber:  160,
-			NativeHistogramMinResetDuration: time.Hour,
-		}),
-		GlobalUpdateRoundIndexes: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "grafana_index_server_global_update_round_indexes",
-			Help: "Number of global search indexes the last background update round covered",
-		}),
 		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
 			Help:                            "Time to compare one global search index with storage and repair what differs",
@@ -225,6 +213,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_capability_violations_total",
 			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
 		}, []string{"resource", "capability"}),
+		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_service_permission_failures_total",
+			Help: "Search requests rejected before scanning because the service token lacks a required direct or delegated permission.",
+		}, []string{"mode"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",
@@ -238,6 +230,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
 	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
 	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
+	m.SearchServicePermissionFailures.WithLabelValues("direct").Add(0)
+	m.SearchServicePermissionFailures.WithLabelValues("delegated").Add(0)
 	return m
 }
 

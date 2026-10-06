@@ -178,6 +178,7 @@ func newClient(opts options.StorageOptions,
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:                 backend,
+			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
 			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
@@ -261,9 +262,15 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
+		var blobBackend resource.BlobSupport
+		if cfg.EnableSQLKVBackend {
+			blobBackend = resource.NewKVBlobSupport(kvStore)
+		}
+
 		serverOptions := sql.ServerOptions{
 			WatchExpiry:    watchExpiry,
 			Backend:        backend,
+			BlobBackend:    blobBackend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
 			Reranker:       rerankerInstance,

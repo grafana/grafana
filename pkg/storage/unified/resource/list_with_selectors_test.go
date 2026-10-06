@@ -311,6 +311,21 @@ func TestShouldUseSearchForList(t *testing.T) {
 	}
 }
 
+func TestSearchBackedListConfigAllowed(t *testing.T) {
+	config := SearchBackedListConfig{AllowedResources: map[string]bool{
+		"dashboard.grafana.app/dashboards": true,
+		"*.ext.grafana.app":                true,
+		"disabled.ext.grafana.app":         false,
+		"[invalid":                         true,
+	}}
+
+	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
+	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
+	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
+}
+
 func TestFilterSelectors(t *testing.T) {
 	tests := map[string]struct {
 		req           *resourcepb.ListRequest
@@ -1133,7 +1148,7 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
 	require.Equal(t, 1, backend.batchCalls)
-	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, readChunkSize, backend.batchReqs)
 	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
@@ -1341,10 +1356,10 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 		opts.KvStore = kvWrapper
 	})
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize+1)
-	denied := make(map[string]struct{}, searchReadChunkSize)
+	rows := make([]*resourcepb.ResourceTableRow, 0, readChunkSize+1)
+	denied := make(map[string]struct{}, readChunkSize)
 	var listRV int64
-	for i := range searchReadChunkSize + 1 {
+	for i := range readChunkSize + 1 {
 		name := fmt.Sprintf("cross-batch-%02d", i)
 		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
 		rows = append(rows, &resourcepb.ResourceTableRow{
@@ -1352,7 +1367,7 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 			ResourceVersion: listRV,
 			SortFields:      []string{name},
 		})
-		if i < searchReadChunkSize {
+		if i < readChunkSize {
 			denied[name] = struct{}{}
 		}
 	}

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"path"
 	"slices"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -309,7 +311,9 @@ func (s *server) consumeSearchRows(
 	return nil
 }
 
-const searchReadChunkSize = 10
+// readChunkSize is how many objects one batch read asks storage for, which
+// bounds how many bodies are fetched together.
+const readChunkSize = 10
 
 func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
@@ -319,7 +323,7 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.
 			ResourceVersion: row.resourceVersion,
 		}
 	}
-	return readResourcesInChunks(ctx, s.backend, requests, searchReadChunkSize)
+	return readResourcesInChunks(ctx, s.backend, requests, readChunkSize)
 }
 
 // readResourcesInChunks reads the requests a chunk at a time, falling back to one
@@ -433,7 +437,26 @@ type SearchBackedListConfig struct {
 }
 
 func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return c.AllowedResources[group+"/"+resource]
+	return resourceAllowed(c.AllowedResources, group, resource)
+}
+
+func resourceAllowed(allowed map[string]bool, group, resource string) bool {
+	if enabled, ok := allowed[group+"/"+resource]; ok {
+		return enabled
+	}
+	if enabled, ok := allowed[group]; ok {
+		return enabled
+	}
+	for pattern, enabled := range allowed {
+		if !enabled || strings.Contains(pattern, "/") {
+			continue
+		}
+		matched, err := path.Match(pattern, group)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {

@@ -78,14 +78,16 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 412 Precondition Failed ---
 	if errors.Is(err, folder.ErrVersionMismatch) ||
-		k8sErrors.IsAlreadyExists(err) {
+		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr)) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
 	// --- Kubernetes status errors ---
-	if statusErr, ok := errors.AsType[*k8sErrors.StatusError](err); ok {
+	if statusErr != nil {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))

@@ -130,9 +130,10 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 		{
 			// Without this an informer over the kind cannot start, and the watch
 			// the reader role grants is dead.
-			name:     "a user-readable cluster-scoped kind can be watched",
+			name:     "a user-readable cluster-scoped kind cannot be watched",
 			attr:     authorizer.AttributesRecord{Resource: "settings", Verb: "watch"},
-			decision: authorizer.DecisionAllow,
+			decision: authorizer.DecisionDeny,
+			reason:   "verb not permitted for cluster-scoped resource",
 		},
 		{
 			// The route is served by the plugin, not unified storage, so app
