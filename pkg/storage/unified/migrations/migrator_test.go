@@ -354,7 +354,7 @@ const (
 	shorturlsID            = "shorturls migration"
 	starsID                = "stars migration"
 	preferencesID          = "preferences migration"
-	datasourceID           = "datasource migrations"
+	datasourceID           = "datasources migration"
 	snapshotsID            = "snapshots migration"
 )
 
