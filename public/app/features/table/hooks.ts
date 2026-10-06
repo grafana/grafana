@@ -21,7 +21,6 @@ import { type TableOptions } from '@grafana/schema';
 import { useAdHocTransformations, usePanelContext } from '@grafana/ui';
 import { getVisibleFields } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
-import { useStructureRev } from 'app/core/hooks/useStructureRev';
 
 import { decodeAdHocColumns, encodeColumnOrder, encodeHiddenColumns, frameFilterFor } from './adHocColumns';
 import { supportsColumnManagement } from './tableCapabilities';
@@ -30,16 +29,6 @@ import { getCellActions } from './utils';
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
 export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
-
-/** Scope runtime state to a query position and invalidate it when source structure changes. */
-export function useTableFrameScope(sourceSeries: readonly DataFrame[]) {
-  const frames = useMemo(() => [...sourceSeries], [sourceSeries]);
-  const structureRev = useStructureRev(frames);
-  return useCallback(
-    (frameIndex: number) => JSON.stringify([frames[frameIndex]?.refId, frameIndex, structureRev]),
-    [frames, structureRev]
-  );
-}
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -154,11 +143,12 @@ export function useTableRefreshNewFeatures(): boolean {
   return newFeaturesEnabled && refreshEnabled;
 }
 
-/** Returns controlled TableNG column state when the current frame can use the ad-hoc stage. */
+/** Returns column state when column controls are supported for the selected frame. */
 export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
   const adHoc = useAdHocTransformations(TABLE_TRANSFORMATIONS_OWNER);
   const api = usePanelContext().adHocTransformations;
-  const stage = adHoc?.transformations;
+  const transformations = adHoc?.transformations;
+  // With multiple frames, we need a unique refId so changes affect only the selected frame.
   const refId = frames[frameIndex]?.refId;
   const hasSafeScope =
     frames.length === 1 || Boolean(refId && frames.filter((frame) => frame.refId === refId).length === 1);
@@ -172,7 +162,7 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
       return undefined;
     }
 
-    // Source frames have not had field config or overrides applied.
+    // Use the source data so hidden columns stay in the list. Copy it before caching display names.
     const source = adHoc.sourceSeries.map((frame) => ({
       ...frame,
       fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
@@ -186,11 +176,11 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
 
     // Display names are the column identity, so duplicates cannot be managed independently.
     return new Set(names).size === names.length ? names : undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adHoc, sourceFrame]);
+  }, [adHoc, sourceFrame, frameIndex]);
 
   const frameFilter = useMemo(() => frameFilterFor(frames, frameIndex), [frames, frameIndex]);
 
+  // Read the latest transformations on each change so quick successive edits do not overwrite each other.
   const onColumnOrderChange = useCallback(
     (order: string[]) =>
       adHoc?.setTransformations(encodeColumnOrder(api?.get(TABLE_TRANSFORMATIONS_OWNER) ?? [], order, frameFilter)),
@@ -204,11 +194,11 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
   );
 
   return useMemo(() => {
-    if (!catalog || !stage) {
+    if (!catalog || !transformations) {
       return undefined;
     }
 
-    const { columnOrder, hiddenColumns } = decodeAdHocColumns(stage, catalog, frameFilter);
+    const { columnOrder, hiddenColumns } = decodeAdHocColumns(transformations, catalog, frameFilter);
 
     return {
       columnOrder,
@@ -217,5 +207,5 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
       onColumnOrderChange,
       onHiddenColumnsChange,
     };
-  }, [catalog, stage, frameFilter, onColumnOrderChange, onHiddenColumnsChange]);
+  }, [catalog, transformations, frameFilter, onColumnOrderChange, onHiddenColumnsChange]);
 }

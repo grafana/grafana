@@ -30,7 +30,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
         hideFromDefaults: false,
       },
       [FieldConfigProperty.DisplayName]: {
-        // Keep the editor available so existing default display names can be cleared.
+        // A defaults-level display name renames every column to the same thing, which breaks the
+        // table. Panels that already have one keep the editor so the value stays visible and can be
+        // cleared; everyone else is steered to a per-column override or a Rename transformation.
         showIf: (defaults) => Boolean(defaults.displayName),
       },
       [FieldConfigProperty.NoValue]: {
@@ -42,8 +44,6 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
     useCustomConfig: (builder) => {
       addTableCustomConfig(builder, {
         filters: true,
-        // Evaluate per render because the feature flag may resolve after module initialization.
-        filtersShowIf: () => !getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefreshNewFeatures, false),
         wrapHeaderText: true,
         hideFields: true,
       });
@@ -148,7 +148,9 @@ export const plugin = new PanelPlugin<Options, FieldConfig>(TablePanel)
   })
   .setSuggestionsSupplier(tableSuggestionsSupplier);
 
-// The refreshed table aligns its own content below an edge-to-edge header.
+// `table.refresh` gives the header its own surface, which reads as a chrome element of the panel
+// rather than of the table — so it runs edge to edge, with the panel's own padding out of the way.
+// TablePanel then passes `noPanelPadding` down so the table can re-align its content itself.
 if (getFeatureFlagClient().getBooleanValue(FlagKeys.TableRefresh, false)) {
   plugin.setNoPadding();
 }

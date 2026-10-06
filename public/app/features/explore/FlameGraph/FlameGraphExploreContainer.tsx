@@ -5,7 +5,6 @@ import { FlameGraph } from '@grafana/flamegraph';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useFlagFlameGraphTableNg, useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { useStyles2, useTheme2 } from '@grafana/ui';
-import { useTableRefreshNewFeatures } from 'app/features/table/hooks';
 
 interface Props {
   dataFrames: DataFrame[];
@@ -23,7 +22,6 @@ export const FlameGraphExploreContainer = (props: Props) => {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const useTableNG = useFlagFlameGraphTableNg();
-  const rowTransformationsEnabled = useTableRefreshNewFeatures();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
 
@@ -35,7 +33,6 @@ export const FlameGraphExploreContainer = (props: Props) => {
         getTheme={() => theme}
         useTableNG={useTableNG}
         tableRefreshEnabled={tableRefreshEnabled}
-        rowTransformationsEnabled={rowTransformationsEnabled}
         contentAwareWidthsEnabled={contentAwareWidthsEnabled}
         onTableSymbolClick={() => interaction('table_item_selected')}
         onViewSelected={(view: string) => interaction('view_selected', { view })}
