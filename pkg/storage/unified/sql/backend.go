@@ -1516,7 +1516,7 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 
 // WatchWrittenKeys is not supported: only the KV backend reads written keys
 // from NATS.
-func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func()) (<-chan *resourcepb.ResourceKey, error) {
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
 	return nil, resource.ErrWrittenKeysUnsupported
 }
 

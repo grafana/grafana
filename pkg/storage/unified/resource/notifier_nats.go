@@ -294,7 +294,7 @@ func (n *natsNotifier) Publish(_ Event) {}
 
 // ErrWrittenKeysUnsupported is returned by WatchWrittenKeys from a backend, or a
 // configuration, that cannot report written keys.
-var ErrWrittenKeysUnsupported = errors.New("watching written keys needs the KV backend with the NATS subscriber ([nats] enabled, with notifier or notifier_shadow)")
+var ErrWrittenKeysUnsupported = errors.New("watching written keys needs the KV backend with the NATS notifier ([nats] enabled and notifier = true)")
 
 // writtenKeysBufferSize is how many keys can wait for the consumer before more
 // are dropped.
@@ -302,8 +302,8 @@ const writtenKeysBufferSize = 10000
 
 // WatchWrittenKeys subscribes to NATS directly, one subscription per type, so
 // other types' notifications are never received.
-func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onReconnect func()) (<-chan *resourcepb.ResourceKey, error) {
-	if k.eventSubscriber == nil || !k.eventSubscriber.Enabled() {
+func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error) {
+	if k.keysSubscriber == nil || !k.keysSubscriber.Enabled() {
 		return nil, ErrWrittenKeysUnsupported
 	}
 
@@ -329,6 +329,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 			if suppressed, ok := dropLog.next("full"); ok {
 				k.log.Warn("dropped written keys, the consumer is not keeping up", "subject", subject, "alsoDropped", suppressed)
 			}
+			onLost(key.Namespace)
 		}
 	}
 
@@ -351,7 +352,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 	}
 	for _, gr := range types {
 		subject := resourcewatch.Subject(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}, "")
-		sub, err := k.eventSubscriber.Subscribe(ctx, subject, handler, signal)
+		sub, err := k.keysSubscriber.Subscribe(ctx, subject, handler, signal)
 		if err != nil {
 			unsubscribe()
 			return nil, err
@@ -369,7 +370,7 @@ func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.
 		}
 	}
 	context.AfterFunc(ctx, unsubscribe)
-	go reportReconnects(ctx, subs, reconnected, onReconnect)
+	go reportReconnects(ctx, subs, reconnected, func() { onLost("") })
 	return keys, nil
 }
 

@@ -72,7 +72,7 @@ func (UnimplementedStorageBackend) WatchWriteEvents(context.Context) (<-chan *Wr
 	return make(chan *WrittenEvent), nil
 }
 
-func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func()) (<-chan *resourcepb.ResourceKey, error) {
+func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
 	return nil, ErrWrittenKeysUnsupported
 }
 

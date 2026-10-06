@@ -1064,20 +1064,20 @@ type watchStorage struct {
 	events chan *WrittenEvent
 	// Types asked for, and the reconnect callback, so a test can check them,
 	// guarded by mu: the watch runs in its own goroutine.
-	mu          sync.Mutex
-	types       []schema.GroupResource
-	onReconnect func()
-	err         error
+	mu     sync.Mutex
+	types  []schema.GroupResource
+	onLost func(namespace string)
+	err    error
 }
 
-func (m *watchStorage) WatchWrittenKeys(_ context.Context, types []schema.GroupResource, onReconnect func()) (<-chan *resourcepb.ResourceKey, error) {
+func (m *watchStorage) WatchWrittenKeys(_ context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.types = types
-	m.onReconnect = onReconnect
+	m.onLost = onLost
 	return m.keys, nil
 }
 
@@ -1088,7 +1088,7 @@ func (m *watchStorage) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, 
 func (m *watchStorage) onReconnectSet() bool {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.onReconnect != nil
+	return m.onLost != nil
 }
 
 func (m *watchStorage) watchedTypes() []schema.GroupResource {
@@ -1099,9 +1099,9 @@ func (m *watchStorage) watchedTypes() []schema.GroupResource {
 
 func (m *watchStorage) reconnect() {
 	m.mu.Lock()
-	onReconnect := m.onReconnect
+	onLost := m.onLost
 	m.mu.Unlock()
-	onReconnect()
+	onLost("")
 }
 
 func writtenKey(key NamespacedResource, name string) *resourcepb.ResourceKey {
@@ -1730,4 +1730,22 @@ func TestWatchWritesWhatAnImportRestored(t *testing.T) {
 	items := idx.indexedItems()
 	require.Len(t, items, 1)
 	assert.Equal(t, "From the backup", items[0].Doc.Title)
+}
+
+// Keys dropped for one namespace reconcile only that namespace's index, if this
+// instance owns it and has it open; an empty namespace reconciles every one.
+func TestLostKeysReconcileTheirNamespace(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	search := server.search.(*mockSearchBackend)
+	search.cache[GlobalSearchKey("other")] = &MockResourceIndex{}
+	search.openIndexes = []NamespacedResource{GlobalSearchKey("ns"), GlobalSearchKey("other"), dashboardType("ns")}
+
+	server.queueReconcileAfterLostKeys("ns")
+	server.queueReconcileAfterLostKeys("not-open")
+	queued := server.rebuildQueue.Elements()
+	require.Len(t, queued, 1)
+	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
+
+	server.queueReconcileAfterLostKeys("")
+	assert.Equal(t, 2, server.rebuildQueue.Len(), "every open global index, merged with the one already queued")
 }

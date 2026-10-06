@@ -745,7 +745,7 @@ func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 		} else {
 			// Writes made before the watch was ready, as while the bus was
 			// unreachable, were not delivered.
-			s.queueReconcileOfOwnedGlobalIndexes()
+			s.queueReconcileAfterLostKeys("")
 			for {
 				batch, ok := nextWrittenKeysBatch(ctx, keys)
 				if !ok {
@@ -768,7 +768,7 @@ func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 // can, and otherwise takes them from the watch stream, which is a few seconds
 // slower but needs no bus.
 func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb.ResourceKey, error) {
-	keys, err := s.storage.WatchWrittenKeys(ctx, GlobalSearchResourceTypes(), s.queueReconcileOfOwnedGlobalIndexes)
+	keys, err := s.storage.WatchWrittenKeys(ctx, GlobalSearchResourceTypes(), s.queueReconcileAfterLostKeys)
 	if !errors.Is(err, ErrWrittenKeysUnsupported) {
 		return keys, err
 	}
@@ -804,11 +804,20 @@ func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb
 	return out, nil
 }
 
-// queueReconcileOfOwnedGlobalIndexes queues a reconcile of every open global
-// index this instance owns, for when written keys may have been lost: once a
-// watch is ready, and after a reconnect. It only queues, so it does not block
-// the bus's callback.
-func (s *searchServer) queueReconcileOfOwnedGlobalIndexes() {
+// queueReconcileAfterLostKeys queues a reconcile of the open global index this
+// instance owns for a namespace that may have lost written keys, or of every one
+// for an empty namespace: once a watch is ready, after a reconnect, and when
+// keys were dropped. It only queues, and the queue merges repeated requests for
+// an index, so it does not block the bus's callback and a burst of drops costs
+// one reconcile.
+func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
+	if namespace != "" {
+		key := GlobalSearchKey(namespace)
+		if s.ownsGlobalIndex(key) && s.search.GetIndex(key) != nil {
+			s.queueReconcile(key)
+		}
+		return
+	}
 	for _, key := range s.search.GetOpenIndexes() {
 		if key.IsGlobal() && s.ownsGlobalIndex(key) {
 			s.queueReconcile(key)
