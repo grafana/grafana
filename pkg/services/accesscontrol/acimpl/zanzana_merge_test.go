@@ -297,7 +297,7 @@ func setupServiceWithFakeStore(t *testing.T, store accesscontrol.Store, zClient 
 	svc := ProvideOSSService(
 		cfg, store, resourcepermissions.NewActionSetService(), localcache.ProvideService(),
 		featuremgmt.WithFeatures(featuremgmt.FlagZanzanaMergeUserPermissions), tracing.InitializeTracerForTest(),
-		nil, permreg.ProvidePermissionRegistry(), nil, iam.Features{},
+		nil, permreg.ProvidePermissionRegistry(), nil, iam.Features{}, nil, nil,
 	)
 	if zClient != nil {
 		svc.zanzanaResolver = NewZanzanaPermissionResolver(zClient, userSvc, nil, false)

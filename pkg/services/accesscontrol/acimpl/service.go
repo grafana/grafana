@@ -66,6 +66,7 @@ func ProvideService(
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
+	legacyClient claims.LegacyAuthzService, roleCatalog *legacypermissions.RoleCatalog,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -78,6 +79,7 @@ func ProvideService(
 		permRegistry,
 		lock,
 		iamFeatures,
+		legacyClient, roleCatalog,
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
@@ -110,6 +112,7 @@ func ProvideOSSService(
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 	iamFeatures IAMFeatures,
+	legacyClient claims.LegacyAuthzService, roleCatalog *legacypermissions.RoleCatalog,
 ) *Service {
 	s := &Service{
 		actionResolver:            actionResolver,
@@ -123,7 +126,10 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
+		legacyClient:              legacyClient,
+		roleCatalog:               roleCatalog,
 	}
+	s.publishRoleCatalogLocked()
 
 	if backend, ok := store.(*database.AccessControlStore); ok {
 		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
@@ -151,6 +157,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
+	legacyClient              claims.LegacyAuthzService
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
 }
@@ -173,6 +180,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if accesscontrol.LegacyUserPermissionsEnabled(ctx) {
+		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	}
 	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
