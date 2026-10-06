@@ -650,42 +650,34 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	results := make([]resultSlot, len(rsp.Items))
 
 	if decoder, ok := s.serializer.(BatchDecoder); ok {
-		// Bound both the object count and raw bytes sent to an external decoder.
-		const maxBatchItems = 200
-		const maxBatchBytes = (1 << 20) * 2 // 2MB
-		for start := 0; start < len(rsp.Items); {
-			if err := ctx.Err(); err != nil {
-				return err
-			}
-			var data [][]byte
-			size := 0
-			for end := start; end < len(rsp.Items) && len(data) < maxBatchItems; end++ {
-				value := rsp.Items[end].Value
-				if len(data) > 0 && size+len(value) > maxBatchBytes {
-					break
-				}
-				data = append(data, value)
-				size += len(value)
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if len(rsp.Items) > 0 {
+			data := make([][]byte, len(rsp.Items))
+			for i, item := range rsp.Items {
+				data[i] = item.Value
 			}
 			objects, err := decoder.DecodeBatch(ctx, data)
 			if err != nil {
 				return err
 			}
+			if err := ctx.Err(); err != nil {
+				return err
+			}
 			if len(objects) != len(data) {
 				return fmt.Errorf("batch decoder returned %d objects, expected %d", len(objects), len(data))
 			}
-			for offset, obj := range objects {
+			for idx, obj := range objects {
 				if obj == nil {
-					return fmt.Errorf("batch decoder returned nil object at index %d", start+offset)
+					return fmt.Errorf("batch decoder returned nil object at index %d", idx)
 				}
-				idx := start + offset
 				obj, appendItem, err := s.processDecodedItem(obj, rsp.Items[idx].ResourceVersion, opts, predicate)
 				if err != nil {
 					return err
 				}
 				results[idx] = resultSlot{obj: obj, shouldAppend: appendItem}
 			}
-			start += len(data)
 		}
 	} else {
 		// Concurrently process items as some may be large and take a while to process.

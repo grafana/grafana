@@ -68,9 +68,12 @@ func TestGetListBatchDecoding(t *testing.T) {
 		want           []int
 	}{
 		{"empty", 0, 0, nil},
-		{"count bound", 205, 0, []int{100, 100, 5}},
-		{"byte bound", 3, 600 * 1024, []int{1, 1, 1}},
-		{"oversized individual item", 2, 2 * 1024 * 1024, []int{1, 1}},
+		{"small page", 5, 0, []int{5}},
+		{"default page", 500, 0, []int{500}},
+		{"larger requested page", 1000, 0, []int{1000}},
+		{"large objects", 3, 600 * 1024, []int{3}},
+		{"page exceeding byte budget by one item", 4, 600 * 1024, []int{4}},
+		{"oversized individual item", 1, 2 * 1024 * 1024, []int{1}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			s := testStorage(t, batchListClient{response: listBatchResponse(t, tc.count, tc.padding)})
@@ -129,19 +132,20 @@ func TestGetListBatchDecodingFailure(t *testing.T) {
 			failure := errors.New("conversion failed")
 			s.serializer = batchListSerializer{batch: func(ctx context.Context, data [][]byte) ([]runtime.Object, error) {
 				calls++
-				if calls == 1 {
-					if mode == "canceled" {
-						cancel()
-					}
-					return decodeListBatch(ctx, data)
-				}
+
 				switch mode {
 				case "error":
 					return nil, failure
+				case "canceled":
+					cancel()
+					return decodeListBatch(ctx, data)
 				case "wrong count":
 					return []runtime.Object{}, nil
 				default:
-					return make([]runtime.Object, len(data)), nil
+					objects, err := decodeListBatch(ctx, data)
+					require.NoError(t, err)
+					objects[len(objects)-1] = nil
+					return objects, nil
 				}
 			}}
 			list := &unstructured.UnstructuredList{}
@@ -152,10 +156,8 @@ func TestGetListBatchDecodingFailure(t *testing.T) {
 			}
 			if mode == "canceled" {
 				require.ErrorIs(t, err, context.Canceled)
-				require.Equal(t, 1, calls)
-			} else {
-				require.Equal(t, 2, calls)
 			}
+			require.Equal(t, 1, calls)
 			require.Empty(t, list.Items, "failed batches must not expose a partial result")
 			require.Empty(t, list.GetResourceVersion())
 		})
