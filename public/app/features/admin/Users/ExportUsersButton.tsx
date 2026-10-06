@@ -9,6 +9,7 @@ import { exportUsers, type UserExportOptions } from './exportUsers';
 
 export function ExportUsersButton(options: UserExportOptions) {
   const [isExporting, setIsExporting] = useState(false);
+  const downloadLabel = t('admin.users-export.download', 'Download table as CSV');
 
   const onExport = async () => {
     setIsExporting(true);
@@ -27,10 +28,10 @@ export function ExportUsersButton(options: UserExportOptions) {
     <Button
       variant="secondary"
       icon={isExporting ? 'spinner' : 'download-alt'}
+      tooltip={downloadLabel}
+      aria-label={isExporting ? t('admin.users-export.exporting', 'Exporting…') : downloadLabel}
       disabled={isExporting}
       onClick={onExport}
-    >
-      {isExporting ? t('admin.users-export.exporting', 'Exporting…') : t('admin.users-export.download', 'Download CSV')}
-    </Button>
+    />
   );
 }

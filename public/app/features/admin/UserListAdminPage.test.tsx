@@ -39,7 +39,7 @@ it('exports all users from the toolbar between filters and New user using the cu
     },
   });
 
-  const button = screen.getByRole('button', { name: 'Download CSV' });
+  const button = screen.getByRole('button', { name: 'Download as CSV' });
   const filter = screen.getByRole('radio', { name: 'Active last 30 days' });
   const newUser = screen.getByRole('link', { name: 'New user' });
   expect(filter.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -60,7 +60,7 @@ it('exports organization users with the current search and hides the button for 
     preloadedState: { users: { ...initialState.users, searchQuery: 'saml', sort: 'login-desc' } },
   });
 
-  await user.click(screen.getByRole('button', { name: 'Download CSV' }));
+  await user.click(screen.getByRole('button', { name: 'Download as CSV' }));
 
   await waitFor(() =>
     expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'organization-users.csv', { autoBom: true })
@@ -74,5 +74,5 @@ it('exports organization users with the current search and hides the button for 
   });
 
   rerender(<UsersActionBar showInvites={true} onShowInvites={jest.fn()} />);
-  expect(screen.queryByRole('button', { name: 'Download CSV' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Download as CSV' })).not.toBeInTheDocument();
 });
