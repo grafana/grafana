@@ -11,13 +11,13 @@ import { mergeWith, cloneDeep, isArray } from 'lodash';
 import type * as z from 'zod';
 
 import { type FieldConfigSource } from '@grafana/data';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
 import { getElements, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 
 import { serializeResultLayoutItem } from './panelSerialization';

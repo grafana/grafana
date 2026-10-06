@@ -25,7 +25,6 @@ import {
   type VariableModel,
   VariableRefresh,
 } from '@grafana/schema';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
@@ -47,6 +46,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { calculateGridItemDimensions, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 

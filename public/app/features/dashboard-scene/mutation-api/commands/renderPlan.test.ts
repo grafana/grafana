@@ -2,7 +2,6 @@ import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
@@ -12,6 +11,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import * as planningSampleData from '../../scene/planningSampleData';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture } from './renderPlanContractFixture';

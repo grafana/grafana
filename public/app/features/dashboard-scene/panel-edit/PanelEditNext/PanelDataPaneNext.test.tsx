@@ -63,7 +63,7 @@ const mockQueryRunner = {
 // Mockable getDashboardSceneFor for localStorage tests
 const mockGetDashboardSceneFor = jest.fn();
 
-jest.mock('app/core/utils/getQueryRunnerFor', () => ({
+jest.mock('../../utils/getQueryRunnerFor', () => ({
   getQueryRunnerFor: () => mockQueryRunner,
 }));
 

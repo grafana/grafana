@@ -20,7 +20,6 @@ import {
 import { type LibraryPanel } from '@grafana/schema';
 import { Alert, Button, Field, Select, useStyles2 } from '@grafana/ui';
 import { CodeMirrorEditor } from '@grafana/ui/unstable';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -37,6 +36,7 @@ import { buildGridItemForPanel } from '../serialization/transformSaveModelToScen
 import { gridItemToPanel, vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
 import { vizPanelToSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { isGridLayoutItemKind, isPanelKindV2 } from '../v2schema/validation';

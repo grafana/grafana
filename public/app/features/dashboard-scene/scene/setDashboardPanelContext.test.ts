@@ -22,13 +22,13 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';

@@ -26,8 +26,8 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { NOTEBOOK_EDIT_SESSION_SOURCE } from '../analytics/types';

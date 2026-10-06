@@ -12,11 +12,11 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { gridItemToPanel, vizPanelToPanel } from '../../serialization/transformSceneToSaveModel';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { isLibraryPanel } from '../../utils/utils';
 
 import { type Randomize, randomizeData } from './randomizer';

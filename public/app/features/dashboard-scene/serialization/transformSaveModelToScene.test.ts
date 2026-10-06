@@ -23,7 +23,6 @@ import {
 } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { createPanelSaveModel } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
@@ -39,6 +38,7 @@ import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior
 import { type RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { NEW_LINK } from '../settings/links/utils';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
 import { buildNewDashboardSaveModel } from './buildNewDashboardSaveModel';
 import { GRAFANA_DATASOURCE_REF } from './const';

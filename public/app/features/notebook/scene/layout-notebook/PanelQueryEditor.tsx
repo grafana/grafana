@@ -7,8 +7,8 @@ import { t } from '@grafana/i18n';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, Stack } from '@grafana/ui';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { addQuery } from 'app/core/utils/query';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/getVizSuggestionForQuery';
 
 import { type NotebookCellItem } from './NotebookCellItem';

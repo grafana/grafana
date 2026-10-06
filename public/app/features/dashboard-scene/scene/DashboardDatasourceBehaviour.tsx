@@ -8,11 +8,11 @@ import {
   SceneQueryRunner,
   VizPanel,
 } from '@grafana/scenes';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import { findVizPanelByKey } from '../utils/findVizPanel';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getDashboardSceneFor, getLibraryPanelBehavior } from '../utils/utils';
 import { getVizPanelKeyForPanelId } from '../utils/utils-panels';
 

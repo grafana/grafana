@@ -14,7 +14,6 @@ import { config, setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
@@ -23,6 +22,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
   EXTRACT_FIELDS_FIXTURE,
   frameWithLabels,

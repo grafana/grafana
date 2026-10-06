@@ -20,7 +20,6 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { addQuery } from 'app/core/utils/query';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { storeLastUsedDataSourceInLocalStorage } from 'app/features/datasources/components/picker/utils';
@@ -29,6 +28,7 @@ import { type QueryGroupOptions } from 'app/types/query';
 
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { QueryEditorContent } from './QueryEditor/QueryEditorContent';

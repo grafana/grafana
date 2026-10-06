@@ -1,7 +1,7 @@
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { sceneGraph, VizPanel, type SceneObject } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 
 // Data sources whose queries are affected by scope filters.
 const SCOPE_FILTERED_DATASOURCE_TYPES = ['loki', 'prometheus'];

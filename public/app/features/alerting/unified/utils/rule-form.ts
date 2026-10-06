@@ -16,7 +16,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';

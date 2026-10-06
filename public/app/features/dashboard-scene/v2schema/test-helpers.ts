@@ -12,12 +12,12 @@ import {
   type VizPanel,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { type VizPanelLinks } from '../scene/PanelLinks';
 import { type TypedVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
+import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getLibraryPanelBehavior } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 

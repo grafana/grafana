@@ -5,7 +5,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -27,6 +26,7 @@ import {
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 

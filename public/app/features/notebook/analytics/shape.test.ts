@@ -1,7 +1,7 @@
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
+import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import {
   defaultLibraryPanelKind,
   defaultPanelKind,
