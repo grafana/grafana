@@ -4883,9 +4883,9 @@
       },
       "spec": {
         "description": "Enables heatmap visualization support for Pyroscope profiles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
