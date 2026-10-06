@@ -2623,7 +2623,10 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The repo factory and health checker are reached.
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(repo).Maybe()
-	mockRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true}, nil).Maybe()
+	var testCalls atomic.Int32
+	mockRepo.On("Test", mock.Anything).
+		Run(func(mock.Arguments) { testCalls.Add(1) }).
+		Return(&provisioning.TestResults{Success: true}, nil).Maybe()
 
 	repoFactory := repository.NewMockFactory(t)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
@@ -2656,6 +2659,13 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	// The token patch must be present even though the repository is currently over quota.
 	_, found := patcher.findPatchOp("/status/token")
 	assert.True(t, found, "expected /status/token to be refreshed even when repository is quota-blocked")
+
+	// The stored health result predates the credential we just minted, however fresh its
+	// timestamp looks, so it says nothing about whether the new token works. Trusting it
+	// would either enqueue a sync against an unusable token or keep a repository blocked
+	// that the replacement just fixed.
+	assert.Equal(t, int32(1), testCalls.Load(),
+		"a replaced token must be validated even when the stored health check is still fresh")
 }
 
 // TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused verifies that when

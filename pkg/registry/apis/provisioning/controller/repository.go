@@ -1050,6 +1050,9 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	shouldResync := rc.shouldResync(ctx, obj)
 	shouldCheckHealth := rc.healthChecker.ShouldCheckHealth(obj)
 	hasSpecChanged := obj.Generation != obj.Status.ObservedGeneration
+	// Set when this pass mints a credential, from either of the two sites that can.
+	// Stored health predates it and so says nothing about whether it works.
+	var tokenReplaced bool
 	var patchOperations []map[string]interface{}
 
 	// applyPatches flushes any patches not yet written
@@ -1175,6 +1178,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		}
 
 		obj.Secure.Token.Create = token
+		tokenReplaced = true
 	}
 
 	phase = reconcilePhaseBuild
@@ -1226,6 +1230,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			// overwrite the whole value so the stale reference name is cleared too.
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
+			tokenReplaced = true
 
 			repo, err = rc.repoFactory.Build(ctx, obj)
 		}
@@ -1324,11 +1329,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 		// Ready condition from stale data.
 		readyCondition *v1.Condition
 	)
-	// forceProcessForUnblock: while blocked, stored health is the quota override rather
-	// than a real Test() result, so on recovery it is stale by construction. Without
-	// this a recovered repository keeps reporting the quota failure -- and keeps
-	// skipping sync for being unhealthy -- until the cadence next comes round.
-	if shouldCheckHealth || forceProcessForUnblock {
+	// Two cases force a check the cadence would skip, both because stored health does
+	// not describe the repository as it now is:
+	//
+	// forceProcessForUnblock -- while blocked, stored health is the quota override, not
+	// a real Test() result, so on recovery it is stale by construction. Without this a
+	// recovered repository keeps reporting the quota failure, and keeps skipping sync
+	// for being unhealthy, until the cadence next comes round.
+	//
+	// tokenReplaced -- the credential changed this pass, so a fresh-looking healthy
+	// result could enqueue a sync against an unusable token, and a fresh-looking
+	// unhealthy one could keep a repository blocked that the replacement just fixed.
+	if shouldCheckHealth || forceProcessForUnblock || tokenReplaced {
 		healthCtx, healthSpan := rc.tracer.Start(ctx, "provisioning.controller.health_check", repoSpanAttrs(obj))
 		healthResult, err = rc.healthChecker.RefreshHealthWithPatchOps(healthCtx, repo)
 		healthSpan.End()
