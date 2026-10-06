@@ -1,25 +1,25 @@
 import { FieldType, getFrameMatchers, toDataFrame, type DataTransformerConfig } from '@grafana/data';
 
-import { decodeAdHocColumns, encodeHiddenColumns, findColumnsEntry, frameFilterFor } from './adHocColumns';
-
-const CATALOG = ['A', 'B', 'C'];
+import { frameFilterFor } from './columnContext';
+import { readColumnVisibility, encodeHiddenColumns } from './columnVisibility';
+import { findColumnsEntry } from './organizeFields';
 
 const organize = (options: object): DataTransformerConfig => ({ id: 'organize', options });
 const unrelated: DataTransformerConfig = { id: 'filterByValue', options: { filters: [] } };
 
-describe('decodeAdHocColumns', () => {
+describe('readColumnVisibility', () => {
   it('treats an organize transformation without options as an unchanged view', () => {
-    expect(decodeAdHocColumns([{ id: 'organize', options: undefined }], CATALOG)).toEqual({
+    expect(readColumnVisibility([{ id: 'organize', options: undefined }])).toEqual({
       hiddenColumns: new Set(),
     });
   });
 
   it('reads an empty transformations as no ad-hoc view', () => {
-    expect(decodeAdHocColumns([], CATALOG)).toEqual({ hiddenColumns: new Set() });
+    expect(readColumnVisibility([])).toEqual({ hiddenColumns: new Set() });
   });
 
   it('reads an exclusion set to false as visible', () => {
-    const state = decodeAdHocColumns([organize({ excludeByName: { A: true, B: false } })], CATALOG);
+    const state = readColumnVisibility([organize({ excludeByName: { A: true, B: false } })]);
 
     expect(state.hiddenColumns).toEqual(new Set(['A']));
   });
@@ -87,14 +87,14 @@ describe('frame scoping', () => {
       frameB
     );
 
-    expect(decodeAdHocColumns(transformations, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
-    expect(decodeAdHocColumns(transformations, CATALOG, frameB).hiddenColumns).toEqual(new Set(['C']));
+    expect(readColumnVisibility(transformations, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(readColumnVisibility(transformations, frameB).hiddenColumns).toEqual(new Set(['C']));
   });
 
   it('does not read a frame-scoped entry as the unscoped one', () => {
     const transformations = encodeHiddenColumns([], new Set(['B']), frameA);
 
-    expect(decodeAdHocColumns(transformations, CATALOG).hiddenColumns).toEqual(new Set());
+    expect(readColumnVisibility(transformations).hiddenColumns).toEqual(new Set());
   });
 
   it('updates the entry for its own frame rather than another frame’s', () => {
@@ -106,8 +106,8 @@ describe('frame scoping', () => {
     const updated = encodeHiddenColumns(transformations, new Set(['B', 'C']), frameB);
 
     expect(updated).toHaveLength(2);
-    expect(decodeAdHocColumns(updated, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
-    expect(decodeAdHocColumns(updated, CATALOG, frameB).hiddenColumns).toEqual(new Set(['B', 'C']));
+    expect(readColumnVisibility(updated, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(readColumnVisibility(updated, frameB).hiddenColumns).toEqual(new Set(['B', 'C']));
   });
 
   it('removes only its own frame’s entry when it is emptied', () => {
