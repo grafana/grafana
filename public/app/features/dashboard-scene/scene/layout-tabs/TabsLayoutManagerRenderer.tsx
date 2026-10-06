@@ -210,7 +210,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 }
 
 function AddLandingTabButton({ manager }: { manager: TabsLayoutManager }) {
-  // The render panel is alpha, so it is only registered when alpha panels are enabled
+  // The render panel is only registered when alpha panels and the grafana.renderPanel flag are enabled
   const { value: renderPanelMeta } = usePanelPluginMeta('render');
 
   if (!renderPanelMeta) {

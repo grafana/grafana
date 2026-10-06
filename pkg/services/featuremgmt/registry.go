@@ -3358,6 +3358,15 @@ var (
 			Expression:  "true",
 		},
 		{
+			Name:         "grafana.renderPanel",
+			Description:  "Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDashboardsSquad,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+			HideFromDocs: true,
+		},
+		{
 			Name:         "saml.gosaml2Provider",
 			Description:  "Use the gosaml2 library instead of the crewjam SAML library for SAML authentication",
 			Stage:        FeatureStageExperimental,

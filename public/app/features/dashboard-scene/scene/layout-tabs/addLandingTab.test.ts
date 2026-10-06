@@ -5,7 +5,7 @@ import { type PanelPluginMeta } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setDataSourceSrv, setPluginImportUtils, type DataSourceSrv } from '@grafana/runtime';
-import { setPanelPluginMetas } from '@grafana/runtime/internal';
+import { FlagKeys, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneQueryRunner, type VizPanel } from '@grafana/scenes';
 import {
   type Spec as DashboardV2Spec,
@@ -13,6 +13,7 @@ import {
   type PanelKind,
   type PanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { getDefaultRenderCode } from 'app/plugins/panel/render/templates';
 
@@ -276,11 +277,27 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
   const renderPanelMeta = { id: 'render', name: 'Render' } as PanelPluginMeta;
 
   beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
     // The landing panel's query runner resolves its datasource once rendered; keep it pending.
     setDataSourceSrv({
       getInstanceSettings: () => undefined,
       get: () => new Promise(() => {}),
     } as unknown as DataSourceSrv);
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
+  it('hides the button while the render panel flag is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: false });
+    setPanelPluginMetas({ text: textPanelMeta, render: renderPanelMeta });
+    renderTabs(true);
+    await waitForEditableTabBar();
+    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+
+    expect(screen.getByTestId(selectors.components.CanvasGridAddActions.addTab)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.CanvasGridAddActions.addLandingTab)).not.toBeInTheDocument();
   });
 
   function renderTabs(isEditing: boolean) {

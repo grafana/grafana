@@ -735,3 +735,26 @@ describe('immutability', () => {
     expect(result!.info.links).toHaveLength(0);
   });
 });
+
+describe('render panel flag', () => {
+  const renderPanel = { ...panel, id: 'render', name: 'Render' };
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('leaves the render panel out while grafana.renderPanel is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: false });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, render: renderPanel });
+
+    expect(await getPanelPluginMeta('render')).toBeNull();
+    expect(Object.keys(await getPanelPluginMetasMap())).toEqual(['grafana-test-panel']);
+  });
+
+  it('keeps the render panel when grafana.renderPanel is on', async () => {
+    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, render: renderPanel });
+
+    expect(await getPanelPluginMeta('render')).toMatchObject({ id: 'render' });
+  });
+});

@@ -126,6 +126,7 @@ declare module "@openfeature/core" {
     | "grafana.panelPluginTransformations"
     | "grafana.dashboardsAutoHeightPanels"
     | "grafana.dashboardAutoGridDefault"
+    | "grafana.renderPanel"
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"

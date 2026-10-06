@@ -142,6 +142,8 @@ export const FlagKeys = {
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
+  /** Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled */
+  GrafanaRenderPanel: "grafana.renderPanel",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -960,6 +962,17 @@ export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
+};
+
+/**
+ * Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled
+ *
+ * **Details:**
+ * - flag key: `grafana.renderPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaRenderPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.renderPanel", false, options).value;
 };
 
 /**

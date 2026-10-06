@@ -46,6 +46,11 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
     input = { ...input, text: { ...input.text, skipDataQuery: false } };
   }
+  // The render panel runs code stored in the dashboard, so it stays unavailable until its flag is on.
+  if (input.render && !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaRenderPanel, false)) {
+    const { render, ...rest } = input;
+    input = rest;
+  }
   panels = input;
   panelsByAliasIDs = resolveAliasIDs(panels);
 }

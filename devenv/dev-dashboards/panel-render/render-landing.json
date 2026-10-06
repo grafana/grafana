@@ -7,7 +7,7 @@
   "spec": {
     "annotations": [],
     "cursorSync": "Off",
-    "description": "Render panel PoC: an Overview landing tab drawn from the Details tab panels. Requires enable_alpha.",
+    "description": "Render panel: an Overview landing tab drawn from the Details tab panels. Requires enable_alpha and the grafana.renderPanel feature flag.",
     "editable": true,
     "elements": {
       "panel-1": {

@@ -2856,6 +2856,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.renderPanel",
+        "resourceVersion": "1791299370833",
+        "creationTimestamp": "2026-10-06T15:09:30Z"
+      },
+      "spec": {
+        "description": "Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.rspackBuild",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -8,11 +8,15 @@ Because the code lives in the dashboard JSON it is diffable and reviewable like 
 option. The panel adds no schema: it is a regular panel with type `render` and an opaque options
 object, so it survives dashboard schema v2 to v1 to v2 conversion unchanged.
 
-The panel is in **alpha**. It is only listed when alpha panels are enabled:
+The panel is in **alpha**. It is only available when alpha panels and the `grafana.renderPanel`
+feature flag are both enabled:
 
 ```ini
 [plugins]
 enable_alpha = true
+
+[feature_toggles]
+grafana.renderPanel = true
 ```
 
 ## Writing drawing code
