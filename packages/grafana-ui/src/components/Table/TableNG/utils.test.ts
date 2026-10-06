@@ -57,6 +57,7 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
+  getHeaderAffordanceWidth,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
@@ -77,6 +78,26 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([
+    [true, false, 22],
+    [true, true, 22],
+    [false, false, 0],
+  ])('reserves Assistant menu space once (refresh=%s filterable=%s)', (tableRefreshEnabled, filterable, expected) => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.string, values: [], config: { custom: { sortable: false, filterable } } },
+      ],
+    });
+    expect(
+      getHeaderAffordanceWidth(frame.fields[0], {
+        showTypeIcons: false,
+        tableRefreshEnabled,
+        isFiltered: false,
+        hasAssistantAction: true,
+      })
+    ).toBe(expected);
+  });
+
   describe('inferPills', () => {
     it('returns an empty array for empty/nullish values', () => {
       expect(inferPills('')).toEqual([]);
@@ -1214,6 +1235,15 @@ describe('TableNG utils', () => {
     const lineCounter = (test: uWrap['test']): uWrap => ({ test, count: () => 1, each: () => {}, split: () => [] });
     const perCharWidths = lineCounter((text, width) => text.length * CHAR_W > width);
 
+    it('caps the total text passed to canvas and uwrap before splitting lines', () => {
+      const test = jest.fn(() => false);
+      const measureWidth = createFitWidthMeasurer(ctx, lineCounter(test));
+
+      expect(measureWidth('a'.repeat(10_000) + '\n' + 'b'.repeat(20_000))).toBe(79_998);
+      expect(test).toHaveBeenCalledTimes(1);
+      expect(test).toHaveBeenCalledWith('a'.repeat(10_000), 79_998);
+    });
+
     it('returns a width the line counter agrees keeps the text on one line', () => {
       const measureWidth = createFitWidthMeasurer(ctx, perCharWidths);
 
@@ -1245,6 +1275,14 @@ describe('TableNG utils', () => {
 
   describe('getTextHeightMeasurerFromUwrapCount', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
+
+    it.each([9_999, 10_000, 10_001, 28_000])('bounds a %i-character input before counting lines', (length) => {
+      const count = jest.fn(() => 2);
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(count);
+
+      expect(measureHeight('a'.repeat(length), 100, field, 0, 20)).toBe(40);
+      expect(count).toHaveBeenCalledWith('a'.repeat(Math.min(length, 10_000)), 100);
+    });
 
     it('wraps the uwrap count function', () => {
       const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));

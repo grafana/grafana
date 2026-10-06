@@ -24,6 +24,7 @@ import { getDisplayName, isColumnMenuVisible, isFieldFilterable, isFieldHideable
 import { HeaderCellMenu } from './HeaderCellMenu';
 
 interface HeaderCellProps {
+  onAddToAssistant?: () => void;
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
   field: Field;
@@ -65,6 +66,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   onHideColumn,
   canHideColumn,
   onOpenColumnPanel,
+  onAddToAssistant,
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -227,7 +229,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           {label}
         </Stack>
 
-        {isColumnMenuVisible(field, Boolean(hasColumnSidebar)) && (
+        {(isColumnMenuVisible(field, Boolean(hasColumnSidebar)) || onAddToAssistant) && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
@@ -237,6 +239,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
               onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
+              onAddToAssistant={onAddToAssistant}
             />
           </Stack>
         )}
