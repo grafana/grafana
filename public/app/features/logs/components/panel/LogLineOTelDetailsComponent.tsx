@@ -240,6 +240,7 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
   return {
     componentWrapper: css({
       background: theme.colors.background.primary,
+      padding: theme.spacing(0, 0.5, 0, 0.5),
     }),
     container: css({
       textOverflow: 'ellipsis',
