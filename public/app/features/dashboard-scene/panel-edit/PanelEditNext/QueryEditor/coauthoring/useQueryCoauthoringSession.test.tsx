@@ -226,8 +226,8 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
     mockAssistantAvailable = true;
     rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
-    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByText('Use an increase.')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
     expect(readInvocation).toHaveBeenCalledTimes(3);
@@ -272,8 +272,8 @@ describe('useQueryCoauthoringSession', () => {
     readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
     mockAssistantAvailable = true;
     rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
-    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
     await act(async () => {
       await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Late proposal.'] });
@@ -362,7 +362,7 @@ describe('useQueryCoauthoringSession', () => {
 
     render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
 
-    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
     expect(initial.onBaseline).not.toHaveBeenCalled();
   });
 

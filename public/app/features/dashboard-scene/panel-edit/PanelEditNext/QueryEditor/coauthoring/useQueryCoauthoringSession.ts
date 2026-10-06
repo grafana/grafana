@@ -66,7 +66,7 @@ interface PromptSessionState {
   context?: QueryEditorCoauthoringContextV1;
   intent: string;
   promptUserGestureRef: MutableRefObject<boolean>;
-  submittedIterationCount: number;
+  submittedModifyCount: number;
   continueInAssistant(): void;
   setIntent(intent: string): void;
   submit(): void;
@@ -87,7 +87,7 @@ export type QueryCoauthoringSessionState =
       submitFollowUp(question?: string): void;
       modify(): void;
     }
-  | { kind: 'working'; context?: QueryEditorCoauthoringContextV1; stop(): void }
+  | { kind: 'working'; context?: QueryEditorCoauthoringContextV1; mode: 'modify' | 'explain'; stop(): void }
   | { kind: 'context-error'; retry(): void }
   | { kind: 'error'; error: QueryCoauthoringRequestError; retry?(): void }
   | { kind: 'iteration-nudge'; continueHere(): void; continueInAssistant(): void }
@@ -452,7 +452,7 @@ export function useQueryCoauthoringSession({
       state = { kind: session.kind };
       break;
     case 'working':
-      state = { kind: 'working', context, stop };
+      state = { kind: 'working', context: session.context ?? context, mode: session.mode, stop };
       break;
     case 'explain':
       state = {

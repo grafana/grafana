@@ -637,6 +637,92 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).not.toHaveBeenCalled();
   });
 
+  it('shows the selected focus and only counts extra metrics in the working context chip, then restores text on Stop', async () => {
+    const context: QueryEditorCoauthoringContextV1 = {
+      revision: '1',
+      query: 'rate(http_requests_total[5m])',
+      focusRanges: [{ from: 0, to: 4 }],
+      language: { id: 'promql', displayName: 'PromQL' },
+      metadata: [
+        { kind: 'label', name: 'handler' },
+        { kind: 'metric', name: 'http_requests_total' },
+        { kind: 'metric', name: 'http_request_duration_seconds' },
+        { kind: 'label', name: 'job' },
+        { kind: 'metric', name: 'http_requests_failed_total' },
+      ],
+    };
+    const { user, rerender, queryCoauthoringProps } = await setup(0, true, context);
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
+    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total +2');
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    mockIsGenerating = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+  });
+
+  it('answers a clarification with the specified copy within the same invocation', async () => {
+    const { user, readInvocation, stagePreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    const input = screen.getByRole('textbox', { name: 'Add extra detail' });
+    expect(input).toHaveAttribute('placeholder', 'Add extra detail…');
+    expect(screen.getByRole('button', { name: 'Continue in Assistant chat' })).toBeInTheDocument();
+    await user.type(input, 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    const request = mockGenerate.mock.calls[1][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+        why: ['Group by handler.'],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(stagePreview).toHaveBeenCalledWith('1', 'sum by (handler) (rate(http_requests_total[5m]))');
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('counts initial Modify reached from Explain and clarification submissions for the nudge', async () => {
+    const { user } = await setup();
+    await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+    await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[1][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox'), 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => mockGenerate.mock.calls[2][0].onComplete('Which range should I use?'));
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Continue here' })).not.toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'Use ten minutes');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => mockGenerate.mock.calls[3][0].onComplete('Should I keep the labels?'));
+    expect(screen.getByRole('button', { name: 'Continue in Assistant' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Continue here' }));
+    expect(screen.getByText('Should I keep the labels?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toBeInTheDocument();
+  });
+
+  it('retries a context failure in the prompt slot without reopening the invocation', async () => {
+    const initial = await setup();
+    initial.unmount();
+    initial.readInvocation.mockClear();
+    initial.readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    expect(await screen.findByText('Context failed to load')).toBeInTheDocument();
+    await initial.user.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByText('http_requests_total is a counter metric.')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toHaveValue('');
+    expect(initial.readInvocation).toHaveBeenNthCalledWith(2, '1');
+    expect(initial.capability.invoke).not.toHaveBeenCalled();
+  });
+
   it.each(['Close coauthoring', 'Cancel'])('keeps the proposal preview until explicit %s', async (action) => {
     const { user, onPreview, onRevertPreview, dismissInvocation } = await setup();
     await user.type(screen.getByRole('textbox'), 'Use increase');
@@ -700,9 +786,8 @@ describe('QueryCoauthoring', () => {
     await setup(0, false);
 
     expect(screen.getByRole('status')).toHaveTextContent('Building query...');
-    expect(await screen.findByLabelText('Query focus')).toHaveTextContent('FOCUS');
+    expect(await screen.findByLabelText('Query focus')).toHaveTextContent('Focus');
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
-    expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('CONTEXT');
     expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
     expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
   });
