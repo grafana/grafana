@@ -256,7 +256,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             : undefined;
 
           let sparkline: FieldSparkline | undefined = undefined;
-          if (options.sparkline) {
+          if (options.sparkline && timeField) {
             sparkline = {
               y: dataFrame.fields[i],
               x: timeField,
