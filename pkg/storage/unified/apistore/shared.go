@@ -177,12 +177,14 @@ func (s *Storage) restrictSharedList(req *resourcepb.ListRequest) error {
 	if shared == nil {
 		return nil
 	}
-	// History requests carry the served name from the field selector
-	name, err := shared.storedName(req.Options.Key.Name)
-	if err != nil {
-		return err
+	if req.Source == resourcepb.ListRequest_HISTORY {
+		// toListRequest replaces the translated key name with the served field selector.
+		name, err := shared.storedName(req.Options.Key.Name)
+		if err != nil {
+			return err
+		}
+		req.Options.Key.Name = name
 	}
-	req.Options.Key.Name = name
 
 	if req.Source != resourcepb.ListRequest_STORE {
 		return nil

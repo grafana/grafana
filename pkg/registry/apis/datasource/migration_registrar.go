@@ -16,7 +16,7 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 
 	return migrations.MigrationDefinition{
 		ID:          "datasource",
-		MigrationID: "datasources migration",
+		MigrationID: "datasource migrations",
 		Resources: []migrations.ResourceInfo{
 			{
 				GroupResource: gr,

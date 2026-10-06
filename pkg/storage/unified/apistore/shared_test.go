@@ -20,6 +20,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	storagetesting "github.com/grafana/grafana/pkg/apiserver/storage/testing"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -199,6 +200,71 @@ func TestSharedStorageWithName(t *testing.T) {
 		require.Len(t, list.Items, 1)
 		require.Equal(t, "b."+sharedGroup+"/v1", list.Items[0].GetAPIVersion())
 	})
+
+	for _, named := range []bool{false, true} {
+		keyName := ""
+		if named {
+			keyName = "instance"
+		}
+		opts := storage.ListOptions{Recursive: !named, Predicate: storage.SelectionPredicate{
+			Label:    labels.Everything(),
+			Field:    fields.OneTermEqualSelector("metadata.name", "instance"),
+			GetAttrs: storage.DefaultNamespaceScopedAttr,
+		}}
+
+		t.Run("list key="+keyName, func(t *testing.T) {
+			list := &unstructured.UnstructuredList{}
+			require.NoError(t, storeA.GetList(ctx, sharedKey("a", keyName), opts, list))
+			require.Len(t, list.Items, 1)
+			require.Equal(t, "instance", list.Items[0].GetName())
+			require.Equal(t, "a."+sharedGroup+"/v1", list.Items[0].GetAPIVersion())
+		})
+
+		t.Run("watch key="+keyName, func(t *testing.T) {
+			list := &unstructured.UnstructuredList{}
+			require.NoError(t, storeA.GetList(ctx, sharedKey("a", ""), sharedListOptions(), list))
+			watchOpts := opts
+			watchOpts.ResourceVersion = list.GetResourceVersion()
+			w, err := storeA.Watch(ctx, sharedKey("a", keyName), watchOpts)
+			require.NoError(t, err)
+			defer w.Stop()
+
+			for _, entry := range []struct {
+				store  storage.Interface
+				prefix string
+			}{{storeB, "b"}, {storeA, "a"}} {
+				require.NoError(t, entry.store.GuaranteedUpdate(ctx, sharedKey(entry.prefix, "instance"), &unstructured.Unstructured{}, false, nil,
+					func(input runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
+						obj := input.(*unstructured.Unstructured)
+						obj.Object["spec"] = map[string]any{"value": t.Name()}
+						return obj, nil, nil
+					}, nil))
+			}
+
+			select {
+			case evt := <-w.ResultChan():
+				require.Equal(t, watch.Modified, evt.Type)
+				obj, err := meta.Accessor(evt.Object)
+				require.NoError(t, err)
+				require.Equal(t, "instance", obj.GetName())
+				require.Equal(t, "a."+sharedGroup+"/v1", evt.Object.GetObjectKind().GroupVersionKind().GroupVersion().String())
+			case <-time.After(5 * time.Second):
+				t.Fatal("timed out waiting for named watch event")
+			}
+		})
+
+		t.Run("history key="+keyName, func(t *testing.T) {
+			historyOpts := opts
+			historyOpts.Predicate.Label = labels.SelectorFromSet(labels.Set{utils.LabelKeyGetHistory: "true"})
+			list := &unstructured.UnstructuredList{}
+			require.NoError(t, storeA.GetList(ctx, sharedKey("a", keyName), historyOpts, list))
+			require.NotEmpty(t, list.Items)
+			for _, item := range list.Items {
+				require.Equal(t, "instance", item.GetName())
+				require.Equal(t, "a."+sharedGroup+"/v1", item.GetAPIVersion())
+			}
+		})
+	}
 
 	t.Run("delete removes only the served instance", func(t *testing.T) {
 		require.NoError(t, storeA.Delete(ctx, sharedKey("a", "instance"), &unstructured.Unstructured{}, nil, nil, nil, storage.DeleteOptions{}))

@@ -49,22 +49,30 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	shared, ok := reg.Get("datasource.grafana.app", "datasources", "")
-	require.True(t, ok)
-	plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", "")
-	require.True(t, ok)
+	for _, subresource := range []string{"", "query", "caching"} {
+		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
+		require.True(t, ok)
+		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
+		require.True(t, ok)
 
-	assert.Equal(t, plugin.Prefix(), shared.Prefix())
-	for _, verb := range []string{
-		utils.VerbGet, utils.VerbList, utils.VerbCreate, utils.VerbUpdate,
-		utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
-	} {
-		sharedAction, sharedOK := shared.Action(verb)
-		pluginAction, pluginOK := plugin.Action(verb)
-		assert.Equal(t, pluginOK, sharedOK, "verb %q", verb)
-		assert.Equal(t, pluginAction, sharedAction, "verb %q", verb)
-		assert.Equal(t, plugin.ActionSets(verb), shared.ActionSets(verb), "verb %q", verb)
+		assert.Equal(t, plugin.Prefix(), shared.Prefix())
+		for _, verb := range []string{
+			utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate,
+			utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+		} {
+			sharedAction, sharedOK := shared.Action(verb)
+			pluginAction, pluginOK := plugin.Action(verb)
+			assert.Equal(t, pluginOK, sharedOK, "subresource %q, verb %q", subresource, verb)
+			assert.Equal(t, pluginAction, sharedAction, "subresource %q, verb %q", subresource, verb)
+			assert.Equal(t, plugin.ActionSets(verb), shared.ActionSets(verb), "subresource %q, verb %q", subresource, verb)
+		}
 	}
+
+	query, ok := reg.Get("datasource.grafana.app", "query", "")
+	require.True(t, ok)
+	action, ok := query.Action(utils.VerbCreate)
+	require.True(t, ok)
+	assert.Equal(t, "datasources:query", action)
 }
 
 // App plugin settings are stored as plugins.grafana.app/app/{pluginID}, so the
@@ -91,7 +99,7 @@ func TestMapperRegistry_AppSettings(t *testing.T) {
 func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
 	reg := NewMapperRegistry()
 
-	for _, group := range []string{"prometheus.datasource.grafana.app", "loki.datasource.grafana.app"} {
+	for _, group := range []string{"datasource.grafana.app", "prometheus.datasource.grafana.app", "loki.datasource.grafana.app"} {
 		mapping, ok := reg.Get(group, "datasources", "caching")
 		require.True(t, ok, "Get(%q, \"datasources\", \"caching\") should find mapping", group)
 		require.NotNil(t, mapping)

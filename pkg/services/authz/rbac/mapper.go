@@ -739,9 +739,6 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
-		},
-		"*.datasource.grafana.app": {
-			"datasources": newDatasourceQueryTranslation(),
 			"datasources/query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -800,6 +797,12 @@ func NewMapperRegistry() MapperRegistry {
 			"settings": newSettingsTranslation(),
 		},
 	})
+
+	mapper["*.datasource.grafana.app"] = map[string]translation{
+		"datasources":         mapper["datasource.grafana.app"]["datasources"],
+		"datasources/query":   mapper["datasource.grafana.app"]["datasources/query"],
+		"datasources/caching": mapper["datasource.grafana.app"]["datasources/caching"],
+	}
 
 	return mapper
 }
