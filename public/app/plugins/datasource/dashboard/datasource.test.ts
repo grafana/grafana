@@ -11,6 +11,7 @@ import {
   standardTransformersRegistry,
   FieldType,
   type DataFrame,
+  type Field,
   type AdHocVariableFilter,
   DataTopic,
 } from '@grafana/data';
@@ -25,6 +26,8 @@ import {
   SceneFlexLayout,
   type SceneObject,
   SceneTimeRange,
+  SceneVariableSet,
+  ConstantVariable,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
@@ -922,6 +925,40 @@ describe('DashboardDatasource', () => {
     });
   });
 
+  describe('Source attribution', () => {
+    it('annotates series with the source panel id and interpolated title, keeping refIds and fields', async () => {
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}');
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      expect(rsp?.data).toHaveLength(1);
+      expect(rsp?.data[0].refId).toBe('A');
+      expect(rsp?.data[0].fields.map((field: Field) => [field.name, field.values])).toEqual([
+        ['time', [1000, 2000]],
+        ['value', [10, 20]],
+      ]);
+      expect(rsp?.data[0].meta).toEqual({
+        executedQueryString: 'up',
+        custom: {
+          existing: 'kept',
+          dashboardSourcePanelId: 7,
+          dashboardSourcePanelTitle: 'CPU on server-1',
+        },
+      });
+    });
+
+    it('leaves the annotations topic without source attribution', async () => {
+      const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1, topic: DataTopic.Annotations });
+
+      let rsp: DataQueryResponse | undefined;
+      observable.subscribe({ next: (data) => (rsp = data) });
+
+      expect(rsp?.data[0].name).toBe('Test Annotation');
+      expect(rsp?.data[0].meta).toEqual({ dataTopic: DataTopic.Series });
+    });
+  });
+
   describe('Annotation Handling', () => {
     it('should NOT include annotations from source panel in regular query response', async () => {
       const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
@@ -1133,6 +1170,53 @@ function setupWithControllableUpstream(
   });
 
   return { observable, upstreamStream, sourceData };
+}
+
+function setupWithSourcePanel(query: DashboardQuery, title: string) {
+  const sourceFrame: DataFrame = {
+    refId: 'A',
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      { name: 'value', type: FieldType.number, values: [10, 20], config: {} },
+    ],
+    length: 2,
+    meta: { executedQueryString: 'up', custom: { existing: 'kept' } },
+  };
+
+  const scene = new SceneFlexLayout({
+    $variables: new SceneVariableSet({
+      variables: [new ConstantVariable({ name: 'host', value: 'server-1' })],
+    }),
+    children: [
+      new SceneFlexItem({
+        body: new VizPanel({
+          key: getVizPanelKeyForPanelId(query.panelId!),
+          title,
+          $data: new SceneDataNode({
+            data: { series: [sourceFrame], state: LoadingState.Done, timeRange: getDefaultTimeRange() },
+          }),
+        }),
+      }),
+    ],
+  });
+
+  const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+  const observable = ds.query({
+    timezone: 'utc',
+    targets: [query],
+    requestId: '',
+    interval: '',
+    intervalMs: 0,
+    range: getDefaultTimeRange(),
+    scopedVars: {
+      __sceneObject: new SafeSerializableSceneObject(scene),
+    },
+    app: '',
+    startTime: 0,
+  });
+
+  return { observable };
 }
 
 function setup(query: DashboardQuery, requestId?: string) {

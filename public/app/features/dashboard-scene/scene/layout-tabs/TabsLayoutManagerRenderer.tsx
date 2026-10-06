@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
+import { usePanelPluginMeta } from '@grafana/runtime/internal';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -21,6 +22,7 @@ import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
 import { type TabsLayoutManager } from './TabsLayoutManager';
+import { addLandingTab } from './addLandingTab';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
@@ -173,6 +175,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
+                <AddLandingTabButton manager={model} />
                 {hasCopiedTab && (
                   <Button
                     icon="clipboard-alt"
@@ -203,6 +206,29 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
       {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
     </div>
+  );
+}
+
+function AddLandingTabButton({ manager }: { manager: TabsLayoutManager }) {
+  // The render panel is alpha, so it is only registered when alpha panels are enabled
+  const { value: renderPanelMeta } = usePanelPluginMeta('render');
+
+  if (!renderPanelMeta) {
+    return null;
+  }
+
+  return (
+    <Button
+      icon="apps"
+      variant="secondary"
+      size="sm"
+      onClick={() => addLandingTab(manager)}
+      onPointerUp={(evt) => evt.stopPropagation()}
+      onPointerDown={(evt) => evt.stopPropagation()}
+      data-testid={selectors.components.CanvasGridAddActions.addLandingTab}
+    >
+      <Trans i18nKey="dashboard.canvas-actions.add-landing-tab">Add landing tab</Trans>
+    </Button>
   );
 }
 
