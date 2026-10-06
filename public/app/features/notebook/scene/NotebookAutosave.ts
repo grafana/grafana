@@ -11,8 +11,8 @@ import {
 } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { ShowConfirmModalEvent } from 'app/types/events';
 import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
 import {
@@ -368,21 +368,25 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     }
 
     const saved = this.savedTimeSettings;
-    // A range edited this session is the notebook's own, and may still be waiting on the debounce, on a
-    // retry after a failed save (`saveNow` puts the flag back), or in the request itself. A save that
-    // carries something else is no reason to hold off: what it writes for the time settings is the
-    // saved value being put back here.
-    if (!saved || this.timeSettingsEdited || this.inFlightTimeSettingsEdited) {
+    // Nothing has been recorded as saved yet, so there is nothing to go back to. `recordWritten` sets
+    // this alongside the cell baselines, so its absence covers those too.
+    if (!saved) {
       return;
     }
 
-    // Rebuilt rather than patched, so every time setting comes back together and `value` is
-    // re-evaluated. Panels re-query on their next activation, where they see data for another range.
-    this.scene.setState({ $timeRange: buildSceneTimeRange(saved) });
+    // Held back separately from the cell ranges below, because they are tracked separately: a notebook
+    // range edited this session is the notebook's own and may still be waiting on the debounce, on a
+    // retry after a failed save (`saveNow` puts the flag back), or in the request itself. That says
+    // nothing about what a reader did to a cell.
+    if (!this.timeSettingsEdited && !this.inFlightTimeSettingsEdited) {
+      // Rebuilt rather than patched, so every time setting comes back together and `value` is
+      // re-evaluated. Panels re-query on their next activation, where they see data for another range.
+      this.scene.setState({ $timeRange: buildSceneTimeRange(saved) });
 
-    const { refreshPicker } = this.scene.state;
-    if (refreshPicker.state.refresh !== saved.autoRefresh) {
-      refreshPicker.setState({ refresh: saved.autoRefresh });
+      const { refreshPicker } = this.scene.state;
+      if (refreshPicker.state.refresh !== saved.autoRefresh) {
+        refreshPicker.setState({ refresh: saved.autoRefresh });
+      }
     }
 
     this.restoreSavedCellTimeRanges();
@@ -682,8 +686,13 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     const ranges: typeof this.savedPanelTimeRanges = new Map();
 
     for (const cell of cells) {
+      const panel = cell.state.body;
       const carried = !cellTimeRangesEdited.has(cell) ? previous.get(cell) : undefined;
-      ranges.set(cell, carried ?? { panel: cell.state.body, timeRange: cell.state.body?.state.$timeRange });
+      // Only the override is carried forward, never the panel, which has to keep tracking the scene: a
+      // cell converted to a panel since (`setElementBody`) is not in `cellTimeRangesEdited`, so a frozen
+      // entry would go on naming the panel it had before and the restore would skip that cell for good.
+      const keepSaved = carried !== undefined && carried.panel === panel;
+      ranges.set(cell, { panel, timeRange: keepSaved ? carried.timeRange : panel?.state.$timeRange });
     }
 
     return ranges;

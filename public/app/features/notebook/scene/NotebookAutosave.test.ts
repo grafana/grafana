@@ -982,6 +982,46 @@ describe('NotebookAutosave', () => {
       settle();
     });
 
+    // Converting a cell to a panel does not touch the cell's own range, so it is not in
+    // cellTimeRangesEdited and its entry is carried forward. Carrying the panel with it would leave the
+    // entry naming the panel the cell had before, and the identity check would skip it from then on.
+    it('still restores a cell whose panel was replaced after an earlier save', async () => {
+      const scene = buildScene();
+      deactivate = scene.activate();
+      const [cell] = scene.state.body.state.cells;
+
+      scene.onEnterEditMode();
+      cell.setElementBody(new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1)), 'md1');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      expect(scene.autosave.state.status).toBe('saved');
+      scene.onExitEditMode();
+
+      deactivate();
+      deactivate = undefined;
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+    });
+
+    // The notebook's own range and a cell's are tracked separately, so an unsaved edit to one must not
+    // decide the other.
+    it("discards a reader's cell range even while the notebook's own range is a writer's unsaved edit", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+      scene.state.$timeRange.setState({ from: 'now-12h', to: 'now' });
+
+      deactivate();
+      deactivate = undefined;
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      // The writer's own edit is still theirs, waiting to be written.
+      expect(scene.state.$timeRange.state.from).toBe('now-12h');
+    });
+
     // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a
     // restore that only put the cell range back would cost the notebook a timeFrom it has.
     it("puts back the panel's own one-sided override the reader's cell range displaced", () => {
