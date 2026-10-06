@@ -123,53 +123,48 @@ export function WelcomeHeader() {
   const styles = useStyles2(getWelcomeHeaderStyles);
 
   return (
-    <ContentBox>
-      <Stack direction={{ xs: 'column', lg: 'row' }} gap={4} justifyContent="space-between" wrap="wrap">
-        {config.featureToggles.alertingTriage && (
-          <>
-            <WelcomeCTABox
-              title={t('alerting.welcome-header.title-alert-activity', 'Alert activity')}
-              description={t(
-                'alerting.welcome-header.description-alert-activity',
-                'See what is currently alerting and explore historical data to investigate current or past issues.'
-              )}
-              href="/alerting/alerts"
-              hrefText={t('alerting.welcome-header.href-text-alert-activity', 'View alert activity')}
-            />
-            <div className={styles.separator} />
-          </>
+    <Stack direction={{ xs: 'column', md: 'row' }} gap={2}>
+      {config.featureToggles.alertingTriage && (
+        <WelcomeCTABox
+          title={t('alerting.welcome-header.title-alert-activity', 'Alert activity')}
+          description={t(
+            'alerting.welcome-header.description-alert-activity',
+            'See what is currently alerting and explore historical data to investigate current or past issues.'
+          )}
+          href="/alerting/alerts"
+          hrefText={t('alerting.welcome-header.href-text-alert-activity', 'View alert activity')}
+        />
+      )}
+      <WelcomeCTABox
+        title={t('alerting.welcome-header.title-alert-rules', 'Alert rules')}
+        description={t(
+          'alerting.welcome-header.description-alert-rules',
+          'Define the condition that must be met before an alert rule fires'
         )}
-        <WelcomeCTABox
-          title={t('alerting.welcome-header.title-alert-rules', 'Alert rules')}
-          description={t(
-            'alerting.welcome-header.description-alert-rules',
-            'Define the condition that must be met before an alert rule fires'
-          )}
-          href="/alerting/list"
-          hrefText="Manage alert rules"
-        />
-        <div className={styles.separator} />
-        <WelcomeCTABox
-          title={t('alerting.welcome-header.title-contact-points', 'Contact points')}
-          description={t(
-            'alerting.welcome-header.description-configure-receives-notifications',
-            'Configure who receives notifications and how they are sent'
-          )}
-          href="/alerting/notifications"
-          hrefText="Manage contact points"
-        />
-        <div className={styles.separator} />
-        <WelcomeCTABox
-          title={t('alerting.welcome-header.title-notification-policies', 'Notification policies')}
-          description={t(
-            'alerting.welcome-header.description-configure-firing-alert-instances-routed-contact',
-            'Configure how firing alert instances are routed to contact points'
-          )}
-          href="/alerting/routes"
-          hrefText="Manage notification policies"
-        />
-      </Stack>
-    </ContentBox>
+        href="/alerting/list"
+        hrefText="Manage alert rules"
+      />
+
+      <WelcomeCTABox
+        title={t('alerting.welcome-header.title-contact-points', 'Contact points')}
+        description={t(
+          'alerting.welcome-header.description-configure-receives-notifications',
+          'Configure who receives notifications and how they are sent'
+        )}
+        href="/alerting/notifications"
+        hrefText="Manage contact points"
+      />
+
+      <WelcomeCTABox
+        title={t('alerting.welcome-header.title-notification-policies', 'Notification policies')}
+        description={t(
+          'alerting.welcome-header.description-configure-firing-alert-instances-routed-contact',
+          'Configure how firing alert instances are routed to contact points'
+        )}
+        href="/alerting/routes"
+        hrefText="Manage notification policies"
+      />
+    </Stack>
   );
 }
 
@@ -195,19 +190,21 @@ function WelcomeCTABox({ title, description, href, hrefText }: WelcomeCTABoxProp
   const styles = useStyles2(getWelcomeCTAButtonStyles);
 
   return (
-    <div className={styles.container}>
-      <Text element="h2" variant="h4">
-        {title}
-      </Text>
-      <div className={styles.desc}>
-        <Text color="secondary">{description}</Text>
+    <ContentBox>
+      <div className={styles.container}>
+        <Text element="h2" variant="h4">
+          {title}
+        </Text>
+        <div className={styles.desc}>
+          <Text color="secondary">{description}</Text>
+        </div>
+        <div className={styles.actionRow}>
+          <TextLink href={href} data-testid={selectors.pages.Alerting.Home.welcomeCtaLink(href)}>
+            {hrefText}
+          </TextLink>
+        </div>
       </div>
-      <div className={styles.actionRow}>
-        <TextLink href={href} data-testid={selectors.pages.Alerting.Home.welcomeCtaLink(href)}>
-          {hrefText}
-        </TextLink>
-      </div>
-    </div>
+    </ContentBox>
   );
 }
 
