@@ -135,14 +135,6 @@ func (a denyFolderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req c
 // without a batched read returns ErrBatchReadUnsupported and takes the
 // per-resource fallback, which this still checks for correctness.
 func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts SearchBackedListOptions) {
-	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
-		Type:           claims.TypeUser,
-		UserID:         1,
-		UserUID:        "u1",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-	})
-
 	const (
 		ns           = "search-list-ns"
 		okFolder     = "folder-ok"
@@ -153,6 +145,15 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		unauthorized = 5
 		otherLabel   = 3
 	)
+
+	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
+		Type:           claims.TypeUser,
+		UserID:         1,
+		UserUID:        "u1",
+		Namespace:      ns,
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
 
 	counting := &countingBackend{StorageBackend: backend}
 
