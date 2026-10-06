@@ -67,3 +67,15 @@ func TestFederatedGetStatsLegacyLookupError(t *testing.T) {
 	_, err := client.GetStats(t.Context(), in)
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
+
+func TestFederatedGetStatsArchivedLegacyNamespace(t *testing.T) {
+	base := resource.NewMockResourceClient(t)
+	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
+	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
+	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceArchived)
+	}, nil)
+
+	_, err := client.GetStats(t.Context(), in)
+	require.ErrorIs(t, err, legacysql.ErrNamespaceArchived)
+}

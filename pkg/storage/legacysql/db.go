@@ -3,6 +3,7 @@ package legacysql
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -12,6 +13,11 @@ import (
 
 // ErrNamespaceNotFound indicates the namespace does not exist (e.g. deleted or archived).
 var ErrNamespaceNotFound = errors.New("namespace not found")
+
+// ErrNamespaceArchived indicates the namespace belongs to an archived stack whose legacy database
+// is offline but can be restored. It matches ErrNamespaceNotFound so callers that only check for
+// that keep working.
+var ErrNamespaceArchived = fmt.Errorf("%w: stack is archived", ErrNamespaceNotFound)
 
 // The database may depend on the request context
 type LegacyDatabaseProvider func(ctx context.Context) (*LegacyDatabaseHelper, error)
