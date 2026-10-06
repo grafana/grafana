@@ -69,7 +69,7 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'submission-started'; mode: 'modify' | 'explain'; intent: string }
   | { type: 'submission-ready'; requestId: number; intent: string }
   | { type: 'generation-started' }
-  | { type: 'generation-settled' }
+  | { type: 'generation-settled'; error: QueryCoauthoringRequestError }
   | { type: 'generation-stopped' }
   | { type: 'follow-up-changed'; intent: string; caret?: number }
   | { type: 'modify-started' }
@@ -327,6 +327,9 @@ export function queryCoauthoringSessionReducer(
       );
     }
     case 'generation-started':
+      if (state.data.activeRequestId === undefined) {
+        return state;
+      }
       return transition(
         state,
         updateSession(
@@ -345,7 +348,21 @@ export function queryCoauthoringSessionReducer(
       );
     case 'generation-settled':
       if (state.data.activeRequestId !== undefined) {
-        return state;
+        if (state.data.requestMode !== 'explain') {
+          return state;
+        }
+        return transition(
+          { ...state, data: { ...state.data, activeRequestId: undefined } },
+          updateSession(
+            current,
+            () => ({
+              kind: 'error',
+              error: event.error,
+              resume: state.data.requestResume ?? state.data.prompt,
+            }),
+            'request'
+          )
+        );
       }
       return transition(
         state,

@@ -120,6 +120,13 @@ export interface QueryCoauthoringSessionOptions {
   timeRange?: { from: number; to: number };
 }
 
+function explainFailure(): QueryCoauthoringRequestError {
+  return {
+    message: t('query-editor-coauthoring.explain-failed', 'Assistant could not explain this query. Try again.'),
+    retryable: true,
+  };
+}
+
 export function useQueryCoauthoringSession({
   adapter,
   invocationId,
@@ -188,7 +195,7 @@ export function useQueryCoauthoringSession({
   }, [contextError, send]);
 
   useEffect(() => {
-    send({ type: isGenerating ? 'generation-started' : 'generation-settled' });
+    send(isGenerating ? { type: 'generation-started' } : { type: 'generation-settled', error: explainFailure() });
   }, [isGenerating, send]);
 
   useEffect(() => {
@@ -264,12 +271,7 @@ export function useQueryCoauthoringSession({
 
   const beginRequest = async (nextIntent: string, mode: 'modify' | 'explain') => {
     const trimmedIntent = nextIntent.trim();
-    if (
-      !trimmedIntent ||
-      isGenerating ||
-      !isAssistantAvailable ||
-      sessionRef.current.data.activeRequestId !== undefined
-    ) {
+    if (!trimmedIntent || !isAssistantAvailable || sessionRef.current.data.activeRequestId !== undefined) {
       return;
     }
     send({ type: 'submission-started', mode, intent: trimmedIntent });
@@ -357,36 +359,37 @@ export function useQueryCoauthoringSession({
     if (exploreSimilar) {
       trackQueryCoauthoringExploreSimilarUsed();
     }
-    await generate({
-      origin: 'grafana/panel-edit-next/query-coauthoring/explain',
-      agentName: 'query-coauthor-explain',
-      agentId: 'grafana.query.coauthor.explain.v1',
-      prompt: trimmedIntent,
-      systemPrompt: buildExplainSystemPrompt(submittedContext, datasourceType, timeRange, previousExplanation),
-      onComplete: (text) =>
-        send({
-          type: 'explanation-completed',
-          requestId,
-          context: submittedContext,
-          answer: parseQueryExplanation(text, selectionSummary(submittedContext)),
-        }),
-      onError: () =>
-        send({
-          type: 'request-completed',
-          requestId,
-          context: submittedContext,
-          outcome: {
-            status: 'error',
-            error: {
-              message: t(
-                'query-editor-coauthoring.explain-failed',
-                'Assistant could not explain this query. Try again.'
-              ),
-              retryable: true,
-            },
-          },
-        }),
-    });
+    const fail = () =>
+      send({
+        type: 'request-completed',
+        requestId,
+        context: submittedContext,
+        outcome: { status: 'error', error: explainFailure() },
+      });
+    try {
+      await generate({
+        origin: 'grafana/panel-edit-next/query-coauthoring/explain',
+        agentName: 'query-coauthor-explain',
+        agentId: 'grafana.query.coauthor.explain.v1',
+        prompt: trimmedIntent,
+        systemPrompt: buildExplainSystemPrompt(submittedContext, datasourceType, timeRange, previousExplanation),
+        onComplete: (text) =>
+          send({
+            type: 'explanation-completed',
+            requestId,
+            context: submittedContext,
+            answer: parseQueryExplanation(text, selectionSummary(submittedContext)),
+          }),
+        onError: fail,
+      });
+    } catch {
+      fail();
+    } finally {
+      if (isCurrentQueryCoauthoringRequest(sessionRef.current, requestId)) {
+        fail();
+        cancel();
+      }
+    }
   };
 
   const accept = useCallback(() => {
