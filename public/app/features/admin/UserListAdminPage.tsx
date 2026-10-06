@@ -80,6 +80,7 @@ const UserListAdminPageUnConnected = ({
       <div className={styles.actionBar} data-testid={selectors.container}>
         <div className={styles.row}>
           <FilterInput
+            className={styles.searchInput}
             placeholder={t(
               'admin.user-list-admin-page-un-connected.placeholder-search-login-email',
               'Search user by login, email, or name.'
@@ -104,13 +105,7 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
-          <ExportUsersButton
-            scope="all"
-            query={query}
-            filters={filters}
-            sort={sort}
-            className={styles.exportButton}
-          />
+          <ExportUsersButton scope="all" query={query} filters={filters} sort={sort} className={styles.exportButton} />
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
               <Trans i18nKey="admin.users-list.create-button">New user</Trans>
@@ -139,7 +134,12 @@ export const UserListAdminPageContent = connector(UserListAdminPageUnConnected);
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    searchInput: css({
+      flex: '1 1 0',
+      minWidth: theme.spacing(40),
+    }),
     filter: css({
+      flexShrink: 0,
       margin: theme.spacing(0, 1),
       [theme.breakpoints.down('sm')]: {
         margin: 0,
@@ -162,13 +162,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     row: css({
       display: 'flex',
+      flexWrap: 'wrap',
+      rowGap: theme.spacing(2),
       alignItems: 'flex-start',
       textAlign: 'left',
       marginBottom: theme.spacing(0.5),
       flexGrow: 1,
 
       [theme.breakpoints.down('sm')]: {
-        flexWrap: 'wrap',
         gap: theme.spacing(2),
         width: '100%',
       },
