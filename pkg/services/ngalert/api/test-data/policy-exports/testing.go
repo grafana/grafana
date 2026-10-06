@@ -41,14 +41,14 @@ var Config = func() *v1.AMConfigV1 {
 			},
 		},
 		// Add receiver references to help tests avoid validation errors.
-		Receivers: []*v1.PostableApiReceiver{
+		Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 			{Name: "default-receiver"},
 			{Name: "lotsa-emails"},
 			{Name: "lotsa-emails-override"},
 			{Name: "slack-multi-channel"},
 			{Name: "provisioned-contact-point"},
 			{Name: "nested-receiver"},
-		},
+		}),
 		// Add time interval references to help tests avoid validation errors.
 		TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
 			v1.TimeIntervalUID("interval"):                        {Title: "interval"},

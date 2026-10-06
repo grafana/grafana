@@ -61,10 +61,11 @@ export interface DataSourcePluginOptionsEditorProps<
 }
 
 // Utility type to extract the query type TQuery from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, any> ? TQuery : never;
+export type DataSourceQueryType<DSType> = DSType extends DataSourceApi<infer TQuery, infer _TOptions> ? TQuery : never;
 
 // Utility type to extract the options type TOptions from a class extending DataSourceApi<TQuery, TOptions>
-export type DataSourceOptionsType<DSType> = DSType extends DataSourceApi<any, infer TOptions> ? TOptions : never;
+export type DataSourceOptionsType<DSType> =
+  DSType extends DataSourceApi<infer _TQuery, infer TOptions> ? TOptions : never;
 
 export class DataSourcePlugin<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -849,6 +850,7 @@ export interface DataSourceInstanceListItem {
   apiVersion?: string;
   name: string;
   meta: DataSourcePluginMeta;
+  /** @deprecated -- use `getDefaultDataSourceInstanceListItem()` */
   isDefault: boolean;
 }
 

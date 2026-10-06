@@ -4,16 +4,22 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
 	"net/http"
+	"path"
 	"slices"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"k8s.io/apimachinery/pkg/selection"
 )
+
+// errSearchCannotAnswerList asks the caller for the store scan instead. It never
+// reaches a client.
+var errSearchCannotAnswerList = errors.New("search cannot answer this list")
 
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
@@ -36,62 +42,32 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
-	var listRv int64
-	if req.NextPageToken != "" {
-		span.AddEvent("continue token present")
-		token, err := GetContinueToken(req.NextPageToken)
+	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
+	if errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
+	}
+	searchErr := err
+	if searchErr == nil {
+		searchErr = ErrorFromResponse(page.response.GetError(), nil)
+	}
+	if searchErr != nil {
+		result := AsErrorResult(searchErr)
+		// A later page carries a position in search results that the store cannot resume from.
+		if IsSelectableFieldNotIndexed(result) && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, searchErr)
+		}
 		if err != nil {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("invalid continue token"),
-			}, nil
+			return nil, err
 		}
-		if tokenFromOtherListPath(token, true) {
-			return &resourcepb.ListResponse{
-				Error: NewBadRequestError("continue token was not issued for a search-backed list"),
-			}, nil
-		}
-		listRv = token.ResourceVersion
-		srq.SearchAfter = token.SearchAfter
-		srq.SearchBefore = token.SearchBefore
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
+		return &resourcepb.ListResponse{Error: result}, nil
 	}
 
-	var searchResp *resourcepb.ResourceSearchResponse
-	var err error
-	if s.search != nil {
-		// Use local search service
-		searchResp, err = s.search.Search(ctx, srq)
-	} else {
-		// Use remote search service
-		// shouldUseSearchForList() already checks that either s.search or s.searchClient is set
-		searchResp, err = s.searchClient.Search(ctx, srq)
-	}
-	if err != nil {
-		return nil, err
-	}
-	// Logged as well as returned, because in environments where only logs are
-	// available an empty page and a failed search look the same.
-	if err := ErrorFromResponse(searchResp.GetError(), nil); err != nil {
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	rows, err := decodeListSearchRows(searchResp)
-	if err != nil {
-		s.log.Error("Invalid search response for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
-	}
-	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
-
-	// If it's the first page, set the listRv to the search response RV
-	if listRv <= 0 {
-		listRv = searchResp.GetResourceVersion()
-	}
-
-	pageBytes := 0
 	rsp := &resourcepb.ListResponse{
-		ResourceVersion: listRv,
+		ResourceVersion: page.resourceVersion,
 	}
 
-	s.log.Info("Search used for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", searchResp.GetTotalHits(), "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields, "labels", req.Options.Labels)
+	s.log.Info("Search used for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "search_hits", page.response.GetTotalHits(), "with_pagination", req.NextPageToken != "", "search_after", srq.SearchAfter, "selectable_fields", req.Options.Fields, "labels", req.Options.Labels)
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
@@ -101,61 +77,109 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
-	// Chunked so a large page neither buffers every body nor lets a later hit's
-	// error fail a page the client never reaches.
-	for chunk := range slices.Chunk(rows, searchReadChunkSize) {
-		values, batched, err := s.readSearchRows(ctx, chunk)
-		if err != nil {
-			return nil, err
-		}
+	if result := s.consumeSearchRows(ctx, user, req, page.rows, s.readSearchRows(ctx, page.rows), page.resourceVersion, rsp); result != nil {
+		return result, nil
+	}
 
-		for i, row := range chunk {
-			val := values[i]
-			if val == nil {
-				return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
-					Code:    http.StatusInternalServerError,
-					Message: "empty resource read response",
-				}}, nil
-			}
-			// The batched read did no authorization, so authorize each row here (the
-			// fallback path already authorized inside Read). Do it before surfacing a
-			// read error, so an unauthorized row is skipped, not revealed as errored.
-			// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
-			// read) without authorizing, like server.read.
-			if batched && row.key != nil {
-				if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
-					if errRes.Code == http.StatusForbidden {
-						continue
-					}
-					return &resourcepb.ListResponse{Error: errRes}, nil
-				}
-			}
-			if err := ErrorFromResponse(val.Error, nil); err != nil {
-				resErr := AsErrorResult(err)
-				if resErr.Code == http.StatusForbidden {
-					continue
-				}
-				return &resourcepb.ListResponse{Error: resErr}, nil
-			}
-			pageBytes += len(val.Value)
-			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
-				Value:           val.Value,
-				ResourceVersion: val.ResourceVersion,
-			})
-			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
-				token, err := NewSearchContinueToken(row.sortFields, listRv)
-				if err != nil {
-					return &resourcepb.ListResponse{
-						Error: NewBadRequestError("invalid continue token"),
-					}, nil
-				}
-				rsp.NextPageToken = token
-				return rsp, nil
-			}
-		}
+	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, false, rsp); errRes != nil {
+		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
 	return rsp, nil
+}
+
+type searchListPage struct {
+	response        *resourcepb.ResourceSearchResponse
+	rows            []listSearchRow
+	resourceVersion int64
+}
+
+func (s *server) executeSearchListPage(
+	ctx context.Context,
+	req *resourcepb.ListRequest,
+	searchReq *resourcepb.ResourceSearchRequest,
+	span trace.Span,
+) (*searchListPage, *resourcepb.ErrorResult, error) {
+	listRV, errRes := applyContinueToken(searchReq, req.NextPageToken, span)
+	if errRes != nil {
+		return nil, errRes, nil
+	}
+
+	var searchResp *resourcepb.ResourceSearchResponse
+	var err error
+	if s.search != nil {
+		searchResp, err = s.search.Search(ctx, searchReq)
+	} else {
+		searchResp, err = s.searchClient.Search(ctx, searchReq)
+	}
+	if err != nil {
+		return nil, nil, err
+	}
+
+	page := &searchListPage{response: searchResp, resourceVersion: listRV}
+	if searchResp.GetError() != nil {
+		return page, nil, nil
+	}
+
+	page.rows, err = decodeListSearchRows(searchResp)
+	if err != nil {
+		s.log.Error("Invalid search response for List", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
+		return nil, AsErrorResult(err), nil
+	}
+	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
+	// If it's the first page, set the listRV to the search response RV.
+	if page.resourceVersion <= 0 {
+		page.resourceVersion = searchResp.GetResourceVersion()
+	}
+	return page, nil, nil
+}
+
+func setSearchListContinueToken(
+	req *resourcepb.ListRequest,
+	searchResp *resourcepb.ResourceSearchResponse,
+	rows []listSearchRow,
+	listRV int64,
+	sortAscending bool,
+	rsp *resourcepb.ListResponse,
+) *resourcepb.ErrorResult {
+	if !searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
+		return nil
+	}
+	sortFields := rows[len(rows)-1].sortFields
+	if len(sortFields) == 0 {
+		return nil
+	}
+	token, err := newSearchContinueToken(sortFields, listRV, sortAscending)
+	if err != nil {
+		return NewBadRequestError("invalid continue token")
+	}
+	rsp.NextPageToken = token
+	return nil
+}
+
+func searchListNeedsContinue(limit int64, rowCount int, totalHitsExact bool) bool {
+	// Authorization can shrink a full page, and post-rank authorization can stop
+	// before filling one. An inexact total cannot rule out more matching rows.
+	return limit > 0 && rowCount > 0 && (rowCount >= int(limit) || !totalHitsExact)
+}
+
+// applyContinueToken resumes a paginated search from where the token left off,
+// and returns the resource version the whole list is pinned to.
+func applyContinueToken(srq *resourcepb.ResourceSearchRequest, nextPageToken string, span trace.Span) (int64, *resourcepb.ErrorResult) {
+	if nextPageToken == "" {
+		return 0, nil
+	}
+	span.AddEvent("continue token present")
+	token, err := GetContinueToken(nextPageToken)
+	if err != nil {
+		return 0, NewBadRequestError("invalid continue token")
+	}
+	if tokenFromOtherListPath(token, true) {
+		return 0, NewBadRequestError("continue token was not issued for a search-backed list")
+	}
+	srq.SearchAfter = token.SearchAfter
+	srq.SearchBefore = token.SearchBefore
+	return token.ResourceVersion, nil
 }
 
 type listSearchRow struct {
@@ -205,11 +229,93 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 	return rows, nil
 }
 
-// searchReadChunkSize caps the over-read to one chunk while keeping reads
-// batched. Kept small because BatchReadResource has no byte budget.
-const searchReadChunkSize = 10
+func (s *server) consumeSearchRows(
+	ctx context.Context,
+	user claims.AuthInfo,
+	req *resourcepb.ListRequest,
+	rows []listSearchRow,
+	values iter.Seq[*BackendReadResponse],
+	listRV int64,
+	rsp *resourcepb.ListResponse,
+) *resourcepb.ListResponse {
+	i := 0
+	pageBytes := 0
+	for val := range values {
+		if i >= len(rows) {
+			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "batch resource reader returned too many responses",
+			}}
+		}
+		row := rows[i]
+		i++
+		if val == nil {
+			return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+				Code:    http.StatusInternalServerError,
+				Message: "empty resource read response",
+			}}
+		}
+		// The storage reads do no authorization, so authorize each row before
+		// surfacing a row-scoped error. An unauthorized row must not reveal details.
+		// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
+		// read) without authorizing, like server.read.
+		if row.key != nil {
+			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
+				if errRes.Code == http.StatusForbidden {
+					if val.Error != nil {
+						s.log.Error("Failed to read unauthorized search result",
+							"group", row.key.Group,
+							"resource", row.key.Resource,
+							"namespace", row.key.Namespace,
+							"name", row.key.Name,
+							"code", val.Error.Code,
+							"error", val.Error.Message,
+						)
+						return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+							Code:    http.StatusInternalServerError,
+							Message: "failed to read resource",
+						}}
+					}
+					continue
+				}
+				return &resourcepb.ListResponse{Error: errRes}
+			}
+		}
+		if err := ErrorFromResponse(val.Error, nil); err != nil {
+			resErr := AsErrorResult(err)
+			if resErr.Code == http.StatusForbidden {
+				continue
+			}
+			return &resourcepb.ListResponse{Error: resErr}
+		}
+		pageBytes += len(val.Value)
+		rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
+			Value:           val.Value,
+			ResourceVersion: val.ResourceVersion,
+		})
+		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+			token, err := NewSearchContinueToken(row.sortFields, listRV)
+			if err != nil {
+				return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}
+			}
+			rsp.NextPageToken = token
+			return rsp
+		}
+	}
+	if i != len(rows) {
+		return &resourcepb.ListResponse{Error: &resourcepb.ErrorResult{
+			Code:    http.StatusInternalServerError,
+			Message: fmt.Sprintf("batch resource reader returned %d responses for %d requests", i, len(rows)),
+		}}
+	}
+	return nil
+}
 
-func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*BackendReadResponse, bool, error) {
+// readChunkSize is how many objects one batch read asks storage for, which
+// bounds how many bodies are fetched together.
+const readChunkSize = 10
+
+func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
 	for i, row := range rows {
 		requests[i] = &resourcepb.ReadRequest{
@@ -217,49 +323,75 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) ([]*B
 			ResourceVersion: row.resourceVersion,
 		}
 	}
+	return readResourcesInChunks(ctx, s.backend, requests, readChunkSize)
+}
 
-	// The caller applies the byte/count page cutoff: BatchReadResource has no byte budget.
-	values, err := s.backend.BatchReadResource(ctx, requests)
-	if err == nil {
-		if len(values) != len(rows) {
-			return nil, true, fmt.Errorf("batch resource reader returned %d responses for %d requests", len(values), len(rows))
-		}
-		return values, true, nil
-	}
-	if !errors.Is(err, ErrBatchReadUnsupported) {
-		return nil, true, err
-	}
+// readResourcesInChunks reads the requests a chunk at a time, falling back to one
+// read per object on a backend without batch reads. A backend that answers a
+// chunk with the wrong number of responses is reported as an error, because the
+// responses could no longer be matched to what was asked.
+func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
+	return func(yield func(*BackendReadResponse) bool) {
+		batchSupported := true
+		for chunk := range slices.Chunk(requests, chunkSize) {
+			if !batchSupported {
+				for _, request := range chunk {
+					if !yield(backend.ReadResource(ctx, request)) {
+						return
+					}
+				}
+				continue
+			}
 
-	// Read authorizes internally, so the caller does not re-check the fallback path.
-	values = make([]*BackendReadResponse, len(rows))
-	for i, row := range rows {
-		val, err := s.Read(ctx, &resourcepb.ReadRequest{
-			Key:             row.key,
-			ResourceVersion: row.resourceVersion,
-		})
-		if val == nil {
-			values[i] = &BackendReadResponse{Error: AsErrorResult(err)}
-			continue
-		}
-		values[i] = &BackendReadResponse{
-			Key:             row.key,
-			ResourceVersion: val.ResourceVersion,
-			Value:           val.Value,
-			Error:           val.Error,
+			values, err := backend.BatchReadResource(ctx, chunk, false)
+			if errors.Is(err, ErrBatchReadUnsupported) {
+				batchSupported = false
+				for _, request := range chunk {
+					if !yield(backend.ReadResource(ctx, request)) {
+						return
+					}
+				}
+				continue
+			}
+			if err != nil {
+				yield(&BackendReadResponse{Error: AsErrorResult(err)})
+				return
+			}
+
+			count := 0
+			for value := range values {
+				if count >= len(chunk) {
+					yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned too many responses"))})
+					return
+				}
+				count++
+				if !yield(value) {
+					return
+				}
+			}
+			if count != len(chunk) {
+				yield(&BackendReadResponse{Error: AsErrorResult(fmt.Errorf("batch resource reader returned %d responses for %d requests", count, len(chunk)))})
+				return
+			}
 		}
 	}
-	return values, false, nil
 }
 
 // tokenFromOtherListPath reports whether a continue token was issued by the other
 // list path. The two encode a position differently, sort values against the index
-// and a name against the store, so continuing with the wrong one would silently
-// restart from the first result.
+// and a name or a row offset against the store, so continuing with the wrong one
+// would silently restart from the first result.
+//
+// Only the search path records sort values, and every search page has at least one
+// sort field, so a token without them came from a store scan. Checking it this way
+// round also covers the SQL backend, whose token records an offset this type does
+// not even decode.
 func tokenFromOtherListPath(token *ContinueToken, searchPath bool) bool {
+	fromSearch := len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
 	if searchPath {
-		return token.Name != "" || token.Namespace != ""
+		return !fromSearch
 	}
-	return len(token.SearchAfter) > 0 || len(token.SearchBefore) > 0
+	return fromSearch
 }
 
 // filterSelectors drops the requirements the index cannot answer, so a request
@@ -305,7 +437,26 @@ type SearchBackedListConfig struct {
 }
 
 func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return c.AllowedResources[group+"/"+resource]
+	return resourceAllowed(c.AllowedResources, group, resource)
+}
+
+func resourceAllowed(allowed map[string]bool, group, resource string) bool {
+	if enabled, ok := allowed[group+"/"+resource]; ok {
+		return enabled
+	}
+	if enabled, ok := allowed[group]; ok {
+		return enabled
+	}
+	for pattern, enabled := range allowed {
+		if !enabled || strings.Contains(pattern, "/") {
+			continue
+		}
+		matched, err := path.Match(pattern, group)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
@@ -333,9 +484,43 @@ func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {
 		return false
 	}
 
-	// TODO have a way of including enterprise manifests
-	manifests := AppManifestsWithKinds(AppManifests()...)
-	return slices.ContainsFunc(manifests, func(m *app.ManifestData) bool {
-		return m.Group == req.Options.Key.Group
-	})
+	// A client that started paging on the store scan has to finish there, even if
+	// this gate would now pick search: its token records a position in the store,
+	// which search cannot resume from. Without this, a client paging while the gate
+	// changes would get its next page rejected.
+	if req.NextPageToken != "" {
+		if token, err := GetContinueToken(req.NextPageToken); err == nil && tokenFromOtherListPath(token, true) {
+			return false
+		}
+	}
+
+	// Labels are indexed for every kind, so a list filtered only by labels does not
+	// need to know the kind.
+	if len(req.Options.Fields) == 0 {
+		return true
+	}
+
+	return s.selectableFieldsDeclared(req.Options.Key.Group, req.Options.Key.Resource, req.Options.Fields)
+}
+
+// selectableFieldsDeclared reports whether the kind declares every field the
+// request filters on. Only a declared field is mapped into the index, and a
+// filter on anything else would find nothing there.
+//
+// The declarations come from the same registry the index mapping is built from,
+// which a manifest watcher keeps up to date, so a kind this binary was not
+// compiled with still gets its selectors pushed down. The index can still be
+// behind the registry, which the search side refuses rather than answers
+// (see IsSelectableFieldNotIndexed).
+func (s *server) selectableFieldsDeclared(group, resource string, fields []*resourcepb.Requirement) bool {
+	if s.manifestSearchFields == nil {
+		return false
+	}
+	declared, _, _ := s.manifestSearchFields.For(NewLowerGroupResource(group, resource))
+	for _, f := range fields {
+		if !slices.Contains(declared, f.Key) {
+			return false
+		}
+	}
+	return true
 }

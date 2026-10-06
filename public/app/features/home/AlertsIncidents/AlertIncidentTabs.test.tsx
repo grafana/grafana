@@ -27,9 +27,11 @@ import {
   INCIDENTS_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
+import { type IncidentFilterSelection } from './incidentFilter';
 import {
   ACTIVE_INCIDENTS_QUERY,
   GET_FIELDS_PATH,
+  mockIncidentFields,
   mockIncidentTeamField,
   mockIncidents,
   mockNoIncidentFields,
@@ -165,7 +167,7 @@ beforeEach(async () => {
   // The component probes the IRM plugin settings; absent by default.
   // Tests that need the incidents tab layer mockIrmPlugin() on top.
   mockNoIrmPlugin();
-  // No `team` custom field by default, so the incidents dropdown stays hidden.
+  // No custom fields by default, so the incidents dropdown stays hidden.
   mockNoIncidentFields();
   // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
   // so exercise it in the same flag state it renders in production.
@@ -186,19 +188,22 @@ afterEach(async () => {
   invalidateCachedPromisesCache();
 });
 
-function AlertIncidentTabsWithData({ switchRef }: { switchRef?: Ref<AlertIncidentSwitchHandle> } = {}) {
+function AlertIncidentTabsWithData({
+  switchRef,
+  initialIncidentsFilter = '',
+}: { switchRef?: Ref<AlertIncidentSwitchHandle>; initialIncidentsFilter?: IncidentFilterSelection } = {}) {
   const [alertsTeam, setAlertsTeam] = useState<TeamSelection>('');
-  const [incidentsTeam, setIncidentsTeam] = useState<TeamSelection>('');
+  const [incidentsFilter, setIncidentsFilter] = useState<IncidentFilterSelection>(initialIncidentsFilter);
   const alertsData = useFiringAlerts(alertsTeam);
-  const incidentsData = useIncidents(incidentsTeam);
+  const incidentsData = useIncidents(incidentsFilter);
   return (
     <AlertIncidentTabs
       alertsData={alertsData}
       incidentsData={incidentsData}
       alertsTeam={alertsTeam}
       onAlertsTeamChange={setAlertsTeam}
-      incidentsTeam={incidentsTeam}
-      onIncidentsTeamChange={setIncidentsTeam}
+      incidentsFilter={incidentsFilter}
+      onIncidentsFilterChange={setIncidentsFilter}
       switchRef={switchRef}
     />
   );
@@ -462,7 +467,7 @@ describe('AlertIncidentTabs', () => {
 
       const incidentsPanel = await screen.findByRole('tabpanel', { name: /incidents/i });
       expect(
-        await within(incidentsPanel).findByRole('combobox', { name: /filter incidents by team/i })
+        await within(incidentsPanel).findByRole('combobox', { name: /filter incidents by label/i })
       ).toBeInTheDocument();
     });
 
@@ -766,7 +771,7 @@ describe('AlertIncidentTabs', () => {
     });
   });
 
-  describe('incidents team filter dropdown', () => {
+  describe('incidents filter dropdown', () => {
     it("offers the org's team field values and filters incidents to the picked team", async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();
@@ -778,20 +783,97 @@ describe('AlertIncidentTabs', () => {
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
       expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
 
-      const combobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
-      expect(combobox).toHaveDisplayValue('All teams');
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      expect(combobox).toHaveDisplayValue('All incidents');
       await user.click(combobox);
 
-      // Incidents have no "your teams" scope, so "All teams" is the only default option,
-      // followed by the non-blank field values sorted by name.
+      // Incidents have no "your teams" scope, so "All incidents" is the only default option,
+      // followed by the field values sorted by name. A single field gets no header.
       const options = await screen.findAllByRole('option');
-      expect(options.map((option) => option.textContent)).toEqual(['All teams', 'Team A', 'Team B']);
+      expect(options.map((option) => option.textContent)).toEqual(['All incidents', 'Team A', 'Team B']);
+      expect(screen.queryByTestId('combobox-option-group')).not.toBeInTheDocument();
       await user.click(screen.getByRole('option', { name: 'Team B' }));
 
       // The pick becomes a custom-field clause on the incident query.
       await waitFor(() => expect(queries).toHaveLength(2));
       expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:team:"Team B"`);
       expect(combobox).toHaveDisplayValue('Team B');
+    });
+
+    // Two label fields, so the dropdown shows values under a header per field.
+    function mockTeamAndSquadFields() {
+      mockIncidentFields([
+        { slug: 'team', name: 'Team', domainName: 'labels', selectoptions: [{ value: 'Platform' }] },
+        {
+          slug: 'squad',
+          name: 'Squad',
+          domainName: 'labels',
+          selectoptions: [{ value: 'Frontend' }, { value: 'Backend' }],
+        },
+      ]);
+    }
+
+    it('groups values by field and filters by a non-team field when one of its values is picked', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockTeamAndSquadFields();
+      const queries = mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      await user.click(combobox);
+
+      // One dropdown for every label field: values sit under a header naming their field,
+      // fields sorted by name, values sorted within each.
+      const options = await screen.findAllByRole('option');
+      expect(options.map((option) => option.textContent)).toEqual(['All incidents', 'Backend', 'Frontend', 'Platform']);
+      expect(screen.getAllByTestId('combobox-option-group').map((header) => header.textContent)).toEqual([
+        'Squad',
+        'Team',
+      ]);
+      await user.click(screen.getByRole('option', { name: 'Frontend' }));
+
+      // The clause names the value's own field, not `team`.
+      await waitFor(() => expect(queries).toHaveLength(2));
+      expect(queries[1]).toBe(`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`);
+      expect(combobox).toHaveDisplayValue('Frontend');
+    });
+
+    it('lists every value of a field when its name is typed', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      mockTeamAndSquadFields();
+      mockIncidents([activeIncident]);
+
+      const { user } = render(<AlertIncidentTabsWithData />);
+
+      expect(await screen.findByText('Database outage')).toBeInTheDocument();
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      await user.click(combobox);
+      expect(await screen.findByRole('option', { name: 'Platform' })).toBeInTheDocument();
+
+      // "squ" matches no value, only the Squad header, so both squads stay and Platform goes.
+      // keyboard() rather than type(): type() re-clicks the input, which toggles the menu closed.
+      await user.keyboard('squ');
+      await waitFor(() => expect(screen.queryByRole('option', { name: 'Platform' })).not.toBeInTheDocument());
+      expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual(['Backend', 'Frontend']);
+    });
+
+    it('shows a stored pick by its value when its field is no longer offered', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+      mockIrmPlugin();
+      // The `squad` field the selection names has since been archived away.
+      mockIncidentTeamField(['Team A']);
+      const queries = mockIncidents([]);
+
+      render(<AlertIncidentTabsWithData initialIncidentsFilter="squad:Frontend" />);
+
+      // The filter still applies, and the combobox reads "Frontend", not "squad:Frontend".
+      await waitFor(() => expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]));
+      const combobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      expect(combobox).toHaveDisplayValue('Frontend');
     });
 
     it('keeps the Alerts and Incidents team selections independent', async () => {
@@ -814,8 +896,8 @@ describe('AlertIncidentTabs', () => {
       await user.click(screen.getByRole('tab', { name: /incidents/i }));
 
       // The alerts pick doesn't leak into incidents, which can't hold that value anyway.
-      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by team/i });
-      expect(incidentsCombobox).toHaveDisplayValue('All teams');
+      const incidentsCombobox = await screen.findByRole('combobox', { name: /filter incidents by label/i });
+      expect(incidentsCombobox).toHaveDisplayValue('All incidents');
       expect(queries).toEqual([ACTIVE_INCIDENTS_QUERY]);
 
       await user.click(incidentsCombobox);
@@ -838,28 +920,24 @@ describe('AlertIncidentTabs', () => {
       const { user } = render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
-      await user.click(await screen.findByRole('combobox', { name: /filter incidents by team/i }));
+      await user.click(await screen.findByRole('combobox', { name: /filter incidents by label/i }));
       await user.click(await screen.findByRole('option', { name: 'Team B' }));
 
       expect(await screen.findByText('No active incidents for Team B.')).toBeInTheDocument();
       expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
     });
 
-    it('hides the dropdown when the org has no team custom field', async () => {
+    it('hides the dropdown when the org has no label fields', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
       mockIrmPlugin();
-      // Only unrelated fields; the default handler's empty list is the other shape of "no team field".
-      server.use(
-        http.post(GET_FIELDS_PATH, () =>
-          HttpResponse.json({ fields: [{ slug: 'severity', selectoptions: [{ value: 'Critical' }] }] })
-        )
-      );
+      // Which fields count as labels is the API module's call (see incidentsApi.test.ts); here it's just "nothing to pick".
+      mockNoIncidentFields();
       mockIncidents([activeIncident]);
 
       render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
-      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by label/i })).not.toBeInTheDocument();
     });
 
     it('hides the dropdown but still lists incidents when the fields request fails', async () => {
@@ -871,7 +949,7 @@ describe('AlertIncidentTabs', () => {
       render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('Database outage')).toBeInTheDocument();
-      expect(screen.queryByRole('combobox', { name: /filter incidents by team/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter incidents by label/i })).not.toBeInTheDocument();
       expect(screen.queryByText('Could not load active incidents')).not.toBeInTheDocument();
     });
   });

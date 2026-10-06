@@ -81,6 +81,10 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 			services[s] = struct{}{}
 		}
 	}
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = ProvideVectorMetrics(nil)
+	}
 	return &VectorStoreServer{
 		store:           store,
 		embedder:        emb,
@@ -94,9 +98,6 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 // observe records one RPC observation. Wrap in defer at the top of each
 // handler: defer s.observe("upsert", time.Now(), &retErr).
 func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
-	if s.metrics == nil {
-		return
-	}
 	code := codes.OK
 	if errp != nil && *errp != nil {
 		code = status.Code(*errp)
@@ -106,7 +107,7 @@ func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
 
 // countRows adds written/deleted rows for one collection.
 func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
-	if s.metrics == nil || n == 0 {
+	if n == 0 {
 		return
 	}
 	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))

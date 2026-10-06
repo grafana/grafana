@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"reflect"
 	"testing"
 	"time"
@@ -64,7 +65,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 	defaultVersion := calculateRouteFingerprint(*rev.Config.AlertmanagerConfig.Route)
 
 	newRoute := definitions.Route{
-		Receiver: rev.Config.Receivers[0].Name,
+		Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 		Routes: []*definitions.Route{
 			{
 				Receiver: "",
@@ -73,7 +74,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 				},
 			},
 			{
-				Receiver: rev.Config.Receivers[0].Name,
+				Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 			},
 		},
 	}
@@ -84,7 +85,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.Receivers[0].Name,
+			Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 			MuteTimeIntervals: []string{
 				"not-existing",
 			},
@@ -99,7 +100,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.Receivers[0].Name,
+			Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 			ActiveTimeIntervals: []string{
 				"not-existing",
 			},
@@ -138,7 +139,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 
 		t.Run("including sub-routes", func(t *testing.T) {
 			newRoute := definitions.Route{
-				Receiver: rev.Config.Receivers[0].Name,
+				Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 				Routes: []*definitions.Route{
 					{Receiver: "unknown"},
 				},
@@ -155,7 +156,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 			return &rev, nil
 		}
 		newRoute := definitions.Route{
-			Receiver: rev.Config.Receivers[0].Name,
+			Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 		}
 		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, "wrong-version")
 		require.ErrorIs(t, err, ErrVersionConflict)
@@ -196,7 +197,7 @@ func TestUpdatePolicyTree(t *testing.T) {
 		rev.Config.ExtraConfigs = append(rev.Config.ExtraConfigs, extra)
 
 		route := definitions.Route{
-			Receiver: rev.Config.Receivers[0].Name,
+			Receiver: rev.Config.AlertmanagerConfig.Route.Receiver,
 			Routes: []*definitions.Route{
 				{
 					ObjectMatchers: definitions.ObjectMatchers{
@@ -301,7 +302,7 @@ func TestResetPolicyTree(t *testing.T) {
 	currentRevision.Config.TimeIntervals = map[v1.ResourceUID]v1.TimeInterval{
 		v1.TimeIntervalUID("test"): v1.NewTimeInterval("test", nil, models.ProvenanceNone),
 	}
-	currentRevision.Config.Receivers = []*v1.PostableApiReceiver{
+	currentRevision.Config.Receivers = v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 		{
 			Name: "receiver",
 			GrafanaManagedReceivers: []*v1.PostableGrafanaReceiver{
@@ -310,7 +311,7 @@ func TestResetPolicyTree(t *testing.T) {
 				},
 			},
 		},
-	}
+	})
 
 	t.Run("Error if default config is invalid", func(t *testing.T) {
 		sut, _, _ := createNotificationPolicyServiceSut()
@@ -359,9 +360,10 @@ func TestResetPolicyTree(t *testing.T) {
 			}, nil
 		}
 
-		expectedRev := currentRevision
+		expectedRev, err := store.GetFn(context.Background(), orgID)
+		require.NoError(t, err)
 		expectedRev.Config.AlertmanagerConfig.Route = getDefaultConfigRevision().Config.AlertmanagerConfig.Route
-		expectedRev.Config.Receivers = append(expectedRev.Config.Receivers, getDefaultConfigRevision().Config.Receivers[0])
+		maps.Copy(expectedRev.Config.Receivers, getDefaultConfigRevision().Config.Receivers)
 
 		tree, err := sut.ResetPolicyTree(context.Background(), orgID, models.ProvenanceNone)
 		require.NoError(t, err)
@@ -533,11 +535,11 @@ func getDefaultConfigRevision() legacy_storage.ConfigRevision {
 					InhibitRules: nil,
 				},
 			},
-			Receivers: []*v1.PostableApiReceiver{
+			Receivers: v1.ReceiversFromSlice([]*v1.PostableApiReceiver{
 				{
 					Name: "test-receiver",
 				},
-			},
+			}),
 			TimeIntervals: map[v1.ResourceUID]v1.TimeInterval{
 				v1.TimeIntervalUID("test-mute-interval"): v1.NewTimeInterval("test-mute-interval", nil, models.ProvenanceNone),
 			},

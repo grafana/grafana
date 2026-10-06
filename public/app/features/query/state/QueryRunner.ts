@@ -16,7 +16,7 @@ import {
   preProcessPanelData,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { getNextRequestId } from './PanelQueryRunner';
 import { setStructureRevision } from './processing/revision';
@@ -163,5 +163,5 @@ async function getDataSource(
     return datasource;
   }
 
-  return getDatasourceSrv().get(datasource, scopedVars);
+  return getDataSourceInstance(datasource, scopedVars);
 }

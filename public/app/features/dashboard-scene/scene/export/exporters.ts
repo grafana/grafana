@@ -1,6 +1,6 @@
 import { defaults, each, sortBy } from 'lodash';
 
-import { type DataSourceRef, type VariableOption, VariableRefresh } from '@grafana/data';
+import { type DataSourceRef, VariableRefresh } from '@grafana/data';
 import { getPanelPluginMeta } from '@grafana/runtime/internal';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { type Panel } from '@grafana/schema';
@@ -22,6 +22,7 @@ import { type PanelModel, type GridPos } from 'app/features/dashboard/state/Pane
 import { visitDashboardLayoutSections } from 'app/features/dashboard/utils/visitDashboardLayoutSections';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { variableRegexExec } from 'app/features/variables/utils';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { dispatch } from 'app/store/store';
 
 import { isPanelModelLibraryPanel } from '../../../library-panels/guard';
@@ -254,7 +255,7 @@ export async function makeExportableV1(dashboard: DashboardModel) {
       if (variable.type === 'query') {
         await templateizeDatasourceUsage(variable);
         variable.options = [];
-        variable.current = {} as unknown as VariableOption;
+        variable.current = {};
         variable.refresh =
           variable.refresh !== VariableRefresh.never ? variable.refresh : VariableRefresh.onDashboardLoad;
       } else if (variable.type === 'datasource') {
@@ -482,6 +483,11 @@ export async function makeExportableV2(dashboard: DashboardV2Spec, isSharingExte
     }
 
     const datasourceUid = dataQueryKind.datasource.name;
+
+    // Dashboard queries reference another panel, so their shared UID must survive export without remapping.
+    if (datasourceUid === SHARED_DASHBOARD_QUERY) {
+      return;
+    }
 
     if (isReferencingDsTemplateVariable(datasourceUid)) {
       // Keep $var on the query, but label it so external import can prompt for this DS type.

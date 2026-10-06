@@ -7,11 +7,12 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+	"uuid"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/google/uuid"
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
@@ -30,6 +31,10 @@ func NewAdmissionMutator(factory Factory) *AdmissionMutator {
 
 // Mutate applies mutations to Connection resources
 func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) error {
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
+	}
+
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
@@ -129,14 +134,7 @@ func generateShortUID() string {
 
 	// Use UUIDs if snowflake failed (should be never)
 	if node == nil {
-		uid, err := uuid.NewRandom()
-		if err != nil {
-			// This should never happen... but this seems better than a panic
-			for i := range uid {
-				uid[i] = byte(uidrand.Intn(255))
-			}
-		}
-		uuid := uid.String()
+		uuid := uuid.NewV4().String()
 		if rune(uuid[0]) < rune('a') {
 			uuid = string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 		}

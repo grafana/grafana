@@ -149,6 +149,30 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     expect(scene.state.body.state.tags).toEqual(['incident', 'checkout']);
   });
 
+  it("seeds autosave's savedResourceVersion from the resource this scene was loaded from", () => {
+    const resource = notebookResource();
+    resource.metadata.resourceVersion = '1755';
+    resource.metadata.generation = 4;
+
+    const scene = transformNotebookToScene(resource);
+
+    expect(scene.autosave.state.savedResourceVersion).toBe('1755');
+    expect(scene.autosave.state.savedGeneration).toBe(4);
+  });
+
+  // A blank/draft notebook has no resource yet, so there is nothing to protect before its first
+  // create lands — seeding `undefined` here is correct, not an oversight. Mirrors what
+  // notebookResourceFor(undefined, spec) actually produces: a metadata with no resourceVersion at all.
+  it('leaves savedResourceVersion unset for a notebook with no resourceVersion yet', () => {
+    const resource = notebookResource();
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- exercising metadata that genuinely lacks resourceVersion, same shape notebookResourceFor(undefined, spec) builds
+    const draft = { ...resource, metadata: { name: resource.metadata.name } } as Resource<NotebookSpec>;
+
+    const scene = transformNotebookToScene(draft);
+
+    expect(scene.autosave.state.savedResourceVersion).toBeUndefined();
+  });
+
   // V2PanelSpec.subtitle is deliberately absent from the fixture: neither buildVizPanelState nor
   // vizPanelToSchemaV2 handles it, so it would not survive. Add it here once they do.
   it('round-trips cells, order, source, panel config, timeSettings and metadata', () => {
@@ -158,6 +182,31 @@ describe('transformNotebookToScene / transformNotebookSceneToSaveModel', () => {
     const saveModel = transformNotebookSceneToSaveModel(scene);
 
     expect(saveModel).toEqual(spec);
+  });
+
+  it("round-trips a panel cell's own time range via queryOptions.timeFrom/.timeTo", () => {
+    const resource = notebookResource();
+    const panelElement = resource.spec.elements['latency-panel'];
+    if (panelElement.kind === 'Panel') {
+      panelElement.spec.data.spec.queryOptions = { timeFrom: 'now-24h', timeTo: 'now' };
+    }
+
+    const scene = transformNotebookToScene(resource);
+    const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!;
+
+    expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    expect(cell.state.$timeRange?.state.to).toBe('now');
+    // Confirms timeFrom/timeTo were stripped before buildVizPanelState ran: otherwise it would have
+    // auto-attached its own PanelTimeRange here, which would shadow this cell-level override via
+    // sceneGraph.getTimeRange's check-self-before-parent resolution order.
+    expect(cell.state.body?.state.$timeRange).toBeUndefined();
+
+    const saveModel = transformNotebookSceneToSaveModel(scene);
+    const savedElement = saveModel.elements['latency-panel'];
+    expect(savedElement.kind === 'Panel' && savedElement.spec.data.spec.queryOptions).toEqual({
+      timeFrom: 'now-24h',
+      timeTo: 'now',
+    });
   });
 
   // The save path borrows the dashboard's vizPanelToSchemaV2, which is only safe here because both

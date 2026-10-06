@@ -30,8 +30,9 @@ export declare global {
      * How the frontend handles reads of the legacy `config.featureToggles` map.
      * Controlled by the `grafana.frontendLegacyFeatureToggleHandling` feature flag.
      * - `off`: reads are left untouched
-     * - `log`: reads resolve normally but each toggle is reported once
-     * - `block`: reads resolve to undefined, and each toggle is reported once
+     * - `log`: reads resolve normally, and each toggle is warned about in the console once
+     * - `alert`: as `log`, and each toggle also raises a warning alert once
+     * - `block`: as `log`, and reads resolve to undefined
      */
     __grafanaLegacyFeatureToggleMode?: LegacyFeatureToggleMode;
 
