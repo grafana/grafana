@@ -53,7 +53,11 @@ export const ProvisioningWizard = memo(function ProvisioningWizard({
       migrate: {
         history: true,
       },
-      githubAuthType: isGitHubBased(type) ? 'github-app' : supportsConnections(type) ? 'oauth-app' : 'pat',
+      githubAuthType: isGitHubBased(type)
+        ? 'github-app'
+        : supportsConnections(type) && type !== 'git'
+          ? 'oauth-app'
+          : 'pat',
       githubAppMode: 'existing',
       githubApp: {},
     },
