@@ -143,7 +143,7 @@ export function createVariablesForSnapshot(oldModel: DashboardModel) {
             useQueriesAsFilterForOptions: true,
             applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
             supportsMultiValueOperators: false,
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls ? (v.enableGroupBy ?? false) : false,
+            enableGroupBy: v.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
           applySupportsMultiValueOperators(adhocVariable, v.datasource?.type);
@@ -242,12 +242,10 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       allowCustomValue: variable.allowCustomValue,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       supportsMultiValueOperators: false,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.enableGroupBy ?? false)
-        : false,
+      enableGroupBy: variable.enableGroupBy ?? false,
       $behaviors: [new ReportInteractionBehavior({})],
     });
     applySupportsMultiValueOperators(adhocVariable, variable.datasource?.type);
@@ -379,7 +377,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultValue: variable.defaultValue,
       allowCustomValue: variable.allowCustomValue,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
     });
     // Switch variable
     // In the old variable model we are storing the enabled and disabled values in the options:

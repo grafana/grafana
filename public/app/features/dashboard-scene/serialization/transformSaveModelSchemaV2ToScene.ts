@@ -381,15 +381,13 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       defaultKeys: variable.spec.defaultKeys.length ? variable.spec.defaultKeys : undefined,
       useQueriesAsFilterForOptions: true,
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
       $behaviors: [new ReportInteractionBehavior({})],
       supportsMultiValueOperators: Boolean(
         getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
       ),
-      collapsible: config.featureToggles.dashboardUnifiedDrilldownControls,
-      enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-        ? (variable.spec.enableGroupBy ?? false)
-        : false,
+      collapsible: true,
+      enableGroupBy: variable.spec.enableGroupBy ?? false,
     };
     if (variable.spec.allowCustomValue !== undefined) {
       adhocVariableState.allowCustomValue = variable.spec.allowCustomValue;
@@ -529,7 +527,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
       isMulti: variable.spec.multi,
       hide: transformVariableHideToEnumV1(variable.spec.hide),
       applicabilityEnabled: !!config.featureToggles.perPanelNonApplicableDrilldowns,
-      drilldownRecommendationsEnabled: config.featureToggles.dashboardUnifiedDrilldownControls,
+      drilldownRecommendationsEnabled: true,
       // @ts-expect-error
       defaultOptions: variable.options,
       defaultValue: variable.spec.defaultValue
@@ -616,9 +614,7 @@ function createVariablesForSnapshot(dashboard: DashboardV2Spec): SceneVariableSe
             supportsMultiValueOperators: Boolean(
               getDataSourceSrv().getInstanceSettings({ type: ds?.type })?.meta.multiValueFilterOperators
             ),
-            enableGroupBy: config.featureToggles.dashboardUnifiedDrilldownControls
-              ? (v.spec.enableGroupBy ?? false)
-              : false,
+            enableGroupBy: v.spec.enableGroupBy ?? false,
             $behaviors: [new ReportInteractionBehavior({})],
           });
         }

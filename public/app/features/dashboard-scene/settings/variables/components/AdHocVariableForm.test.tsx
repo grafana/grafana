@@ -154,13 +154,7 @@ describe('AdHocVariableForm', () => {
   });
 
   describe('enable group by', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
     it('should show Enable group by toggle as on when no datasource is selected', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
       const { renderer } = await setup({
         ...defaultProps,
         datasource: undefined,

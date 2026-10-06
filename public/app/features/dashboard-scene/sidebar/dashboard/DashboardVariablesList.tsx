@@ -3,7 +3,6 @@ import { useCallback, useMemo } from 'react';
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneVariableSet, type SceneVariable, sceneUtils } from '@grafana/scenes';
 import { useDragAndDrop } from '@grafana/ui/internal';
 
@@ -50,7 +49,7 @@ export function DashboardVariablesList({
   const resolvedTopPlacementLabel = topPlacementLabel ? topPlacementLabel : getDefaultTopPlacementLabel();
   const editable = useMemo(() => {
     const { editable } = partitionVariablesByEditability(listVariables);
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls || includeAdHoc) {
+    if (includeAdHoc) {
       return editable;
     }
     return editable.filter((v) => !sceneUtils.isAdHocVariable(v));

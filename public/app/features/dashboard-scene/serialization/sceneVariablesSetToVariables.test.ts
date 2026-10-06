@@ -1645,55 +1645,45 @@ describe('sceneVariablesSetToVariables', () => {
       expect(result).toHaveLength(0);
     });
 
-    describe('when the dashboardUnifiedDrilldownControls feature toggle is enabled', () => {
-      beforeAll(() => {
-        config.featureToggles.dashboardUnifiedDrilldownControls = true;
+    it('should persist enableGroupBy as enableGroupBy', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+        enableGroupBy: true,
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
 
-      afterAll(() => {
-        config.featureToggles.dashboardUnifiedDrilldownControls = false;
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
+    });
+
+    it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        label: 'test-label',
+        description: 'test-desc',
+        hide: VariableHide.inControlsMenu,
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [],
+        baseFilters: [],
+      });
+      const set = new SceneVariableSet({
+        variables: [variable],
       });
 
-      it('should persist enableGroupBy as enableGroupBy', () => {
-        const variable = new AdHocFiltersVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          filters: [],
-          baseFilters: [],
-          enableGroupBy: true,
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
+      const result = sceneVariablesSetToSchemaV2Variables(set);
 
-        const result = sceneVariablesSetToSchemaV2Variables(set);
-
-        expect(result).toHaveLength(1);
-        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(true);
-      });
-
-      it('should persist enableGroupBy as false when enableGroupBy is not set', () => {
-        const variable = new AdHocFiltersVariable({
-          name: 'test',
-          label: 'test-label',
-          description: 'test-desc',
-          hide: VariableHide.inControlsMenu,
-          datasource: { uid: 'fake-uid', type: 'fake-type' },
-          filters: [],
-          baseFilters: [],
-        });
-        const set = new SceneVariableSet({
-          variables: [variable],
-        });
-
-        const result = sceneVariablesSetToSchemaV2Variables(set);
-
-        expect(result).toHaveLength(1);
-        expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
-      });
+      expect(result).toHaveLength(1);
+      expect((result[0] as { spec: { enableGroupBy: boolean } }).spec.enableGroupBy).toBe(false);
     });
 
     describe('when the groupByVariable feature toggle is enabled', () => {

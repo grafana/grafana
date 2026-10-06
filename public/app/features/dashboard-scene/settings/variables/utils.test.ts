@@ -226,60 +226,30 @@ describe('getVariableTypeSelectOptions', () => {
     });
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
-
-    afterAll(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
-    it('should hide adhoc in the dashboard context', () => {
-      const values = getVariableTypeSelectOptions().map((o) => o.value);
-      expect(values).not.toContain('adhoc');
-    });
-
-    it('should show adhoc as "Filter and Group by" in the standalone context', () => {
-      const options = getVariableTypeSelectOptions({ standalone: true });
-      expect(options.map((o) => o.value)).toContain('adhoc');
-
-      const adhoc = options.find((o) => o.value === 'adhoc');
-      expect(adhoc?.label).toBe('Filter and Group by');
-      expect(adhoc?.description).toBe('Add key/value filters and group by keys on the fly');
-    });
+  it('should hide adhoc in the dashboard context', () => {
+    const values = getVariableTypeSelectOptions().map((o) => o.value);
+    expect(values).not.toContain('adhoc');
   });
 
-  describe('when dashboardUnifiedDrilldownControls is disabled', () => {
-    it('standalone context should match the dashboard context', () => {
-      const standaloneOptions = getVariableTypeSelectOptions({ standalone: true });
-      expect(standaloneOptions).toEqual(getVariableTypeSelectOptions());
+  it('should show adhoc as "Filter and Group by" in the standalone context', () => {
+    const options = getVariableTypeSelectOptions({ standalone: true });
+    expect(options.map((o) => o.value)).toContain('adhoc');
 
-      const adhoc = standaloneOptions.find((o) => o.value === 'adhoc');
-      expect(adhoc?.label).toBe('Filter');
-    });
+    const adhoc = options.find((o) => o.value === 'adhoc');
+    expect(adhoc?.label).toBe('Filter and Group by');
+    expect(adhoc?.description).toBe('Add key/value filters and group by keys on the fly');
   });
 });
 
 describe('getVariableTypeLabel', () => {
-  afterEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = false;
-  });
-
   it('returns the editable variable name by default', () => {
     expect(getVariableTypeLabel('adhoc')).toBe('Filter');
     expect(getVariableTypeLabel('custom')).toBe('Custom');
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
-
-    it('relabels adhoc in the standalone context only', () => {
-      expect(getVariableTypeLabel('adhoc', { standalone: true })).toBe('Filter and Group by');
-      expect(getVariableTypeLabel('adhoc')).toBe('Filter');
-    });
+  it('relabels adhoc in the standalone context only', () => {
+    expect(getVariableTypeLabel('adhoc', { standalone: true })).toBe('Filter and Group by');
+    expect(getVariableTypeLabel('adhoc')).toBe('Filter');
   });
 });
 
@@ -350,22 +320,10 @@ describe('getVariableScene', () => {
   });
 
   describe('adhoc enableGroupBy default', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
-    it('enables group by on new adhoc variables when dashboardUnifiedDrilldownControls is on', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
+    it('enables group by on new adhoc variables', async () => {
       const variable = await getVariableScene('adhoc', { name: 'filter0' });
 
       expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
-    });
-
-    it('does not enable group by on new adhoc variables when dashboardUnifiedDrilldownControls is off', async () => {
-      const variable = await getVariableScene('adhoc', { name: 'filter0' });
-
-      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBeUndefined();
     });
   });
 });
