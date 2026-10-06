@@ -95,7 +95,7 @@ export function getFieldConfigFromFrame(
 }
 
 interface FieldToConfigContext {
-  mappingValues?: any[];
+  mappingValues?: unknown[];
   mappingColors?: string[];
   mappingTexts?: string[];
 }
@@ -105,7 +105,7 @@ type FieldToConfigMapHandlerProcessor = (
   config: FieldConfig,
   context: FieldToConfigContext,
   handlerArguments: HandlerArguments
-) => any;
+) => unknown;
 
 export interface FieldToConfigMapHandler {
   key: string;

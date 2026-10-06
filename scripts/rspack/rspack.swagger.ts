@@ -39,6 +39,11 @@ export default (env: Env = {}): Configuration => {
         createSwcRule(),
         cssRule,
         {
+          // codemirror-json-schema publishes extensionless imports in its ESM build.
+          test: /node_modules[\\/]codemirror-json-schema[\\/].*\.js$/,
+          resolve: { fullySpecified: false },
+        },
+        {
           test: /\.(svg)(\?.*)?$/,
           type: 'asset/resource',
           generator: { filename: 'static/img/[name].[hash:8][ext]' },

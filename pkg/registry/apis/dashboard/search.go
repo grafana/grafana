@@ -582,10 +582,6 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if s.features != nil && s.features.IsEnabled(ctx, featuremgmt.FlagDashboardSearchFieldValueResults) { // nolint:staticcheck
-		searchRequest.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
-	}
-
 	result, err := s.client.Search(ctx, searchRequest)
 	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
@@ -666,11 +662,11 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -768,7 +764,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 
@@ -877,12 +873,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		offset = (page - 1) * limit
 	}
 
-	searchRequest := &resourcepb.ResourceSearchRequest{ // nosemgrep: direct-go-resource-search-requires-field-values -- the rollout flag still controls this format
-		Options: &resourcepb.ListOptions{},
-		Query:   queryParams.Get("query"),
-		Limit:   int64(limit),
-		Offset:  int64(offset),
-		Page:    int64(page), // for modes 0-2 (legacy)
+	searchRequest := &resourcepb.ResourceSearchRequest{
+		Options:      &resourcepb.ListOptions{},
+		Query:        queryParams.Get("query"),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Limit:        int64(limit),
+		Offset:       int64(offset),
+		Page:         int64(page), // for modes 0-2 (legacy)
 	}
 	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 	if queryParams.Has("field") {

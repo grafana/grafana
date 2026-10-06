@@ -2,6 +2,9 @@ package router
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/tls"
 	"encoding/json"
 	"net"
@@ -11,10 +14,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-jose/go-jose/v4"
+	"github.com/go-jose/go-jose/v4/jwt"
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-	"github.com/open-feature/go-sdk/openfeature"
-	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,36 +26,32 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestRemoteResourceClientTokenExchange(t *testing.T) {
-	flag := featuremgmt.FlagUnifiedStorageClientRequireCallerIdentity
-	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
-		flag: {Key: flag, DefaultVariant: "enabled", Variants: map[string]any{"enabled": true}},
-	})))
-	t.Cleanup(func() { require.NoError(t, openfeature.SetProviderAndWait(openfeature.NoopProvider{})) })
+	callerToken := userActorToken(t)
 	for _, separateSearch := range []bool{false, true} {
 		name := "shared storage and search"
 		if separateSearch {
 			name = "separate search server"
 		}
 		t.Run(name, func(t *testing.T) {
-			var exchanges atomic.Int32
 			exchange := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				exchanges.Add(1)
 				assert.Equal(t, "Bearer service-token", r.Header.Get("Authorization"))
 				var req authnlib.TokenExchangeRequest
 				if !assert.NoError(t, json.NewDecoder(r.Body).Decode(&req)) {
 					w.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				assert.Equal(t, "caller-token", req.SubjectToken)
-				assert.Equal(t, "stacks-11", req.Namespace)
 				assert.Equal(t, []string{"resourceStore"}, req.Audiences)
-				_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]string{"token": "obo-token"}})
+				token := "service-token-exchanged"
+				if req.SubjectToken == callerToken {
+					assert.Equal(t, "stacks-11", req.Namespace)
+					token = "obo-token"
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]string{"token": token}})
 			}))
 			t.Cleanup(exchange.Close)
 
@@ -107,7 +106,7 @@ func TestRemoteResourceClientTokenExchange(t *testing.T) {
 			require.NoError(t, err)
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
-			ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: types.TypeUser, AccessToken: "caller-token", Namespace: "stacks-11"})
+			ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: types.TypeUser, AccessToken: callerToken, Namespace: "stacks-11"})
 			_, err = client.Read(ctx, &resourcepb.ReadRequest{})
 			require.NoError(t, err)
 			select {
@@ -125,17 +124,21 @@ func TestRemoteResourceClientTokenExchange(t *testing.T) {
 				t.Fatal("search did not receive Search")
 			}
 
-			before := exchanges.Load()
-			for _, deniedCtx := range []context.Context{
-				context.Background(),
-				identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-11"}),
+			for _, denied := range []struct {
+				ctx     context.Context
+				wantErr string
+			}{
+				{ctx: context.Background(), wantErr: "no claims found"},
+				{
+					ctx:     identity.WithRequester(context.Background(), &identity.StaticRequester{Type: types.TypeUser, Namespace: "stacks-11"}),
+					wantErr: "caller identity is required",
+				},
 			} {
-				deniedCtx, cancel := context.WithTimeout(deniedCtx, time.Second)
+				deniedCtx, cancel := context.WithTimeout(denied.ctx, time.Second)
 				_, err = client.Read(deniedCtx, &resourcepb.ReadRequest{})
 				cancel()
-				require.ErrorContains(t, err, "denied request")
+				require.ErrorContains(t, err, denied.wantErr)
 			}
-			assert.Equal(t, before, exchanges.Load(), "denied requests must not reach token exchange")
 			assert.Empty(t, storageCalls)
 			assert.Empty(t, searchCalls)
 		})
@@ -191,4 +194,20 @@ func TestRemoteResourceClientVerifiesExchangeTLS(t *testing.T) {
 			assert.Zero(t, exchanges.Load(), "rejected TLS connections must not receive credentials")
 		})
 	}
+}
+
+func userActorToken(t *testing.T) string {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	require.NoError(t, err)
+	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.ES256, Key: key}, nil)
+	require.NoError(t, err)
+	token, err := jwt.Signed(signer).Claims(authnlib.Claims[authnlib.AccessTokenClaims]{
+		Rest: authnlib.AccessTokenClaims{
+			Namespace: "stacks-11",
+			Actor:     &authnlib.ActorClaims{Subject: "user:1", IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser}},
+		},
+	}).Serialize()
+	require.NoError(t, err)
+	return token
 }

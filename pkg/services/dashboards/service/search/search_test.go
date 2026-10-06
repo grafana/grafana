@@ -208,7 +208,7 @@ func TestParseResults(t *testing.T) {
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
 		require.True(t, apierrors.IsServiceUnavailable(err))
-		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.GetError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
+		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.StatusError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
 	})
 }
 

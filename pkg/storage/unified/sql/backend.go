@@ -26,8 +26,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -206,7 +204,7 @@ func NewStorageBackend(
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
 	kvBackendOpts.UseChannelNotifier = !isHA
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
 	// The KV backend has one switch for all background write jobs, so the older
@@ -245,7 +243,7 @@ func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disabl
 	kvBackendOpts := resource.NewKVBackendOptions(cfg)
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
 
@@ -262,8 +260,9 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	}
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
-		Log:                     log.New("storage-backend"),
+		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
 	})
 }
 
@@ -1103,7 +1102,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 
 // BatchReadResource is unsupported: the SQL backend is retiring, so batched
 // search-list reads live only on the KV backend.
-func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	return nil, resource.ErrBatchReadUnsupported
 }
 
