@@ -2,6 +2,7 @@ package folderimpl
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -60,7 +61,8 @@ func folderStorageFailures(t *testing.T) []folderStorageFailure {
 func requireFolderStorageError(t *testing.T, want, got error) {
 	t.Helper()
 	require.Equal(t, want, got)
-	if _, ok := want.(*apierrors.StatusError); ok {
+	var statusErr *apierrors.StatusError
+	if errors.As(want, &statusErr) {
 		require.IsType(t, &apierrors.StatusError{}, got)
 	} else {
 		require.Same(t, want, got)

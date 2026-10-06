@@ -271,7 +271,7 @@ func TestSearchAll_Errors(t *testing.T) {
 				results, err := SearchAll(context.Background(), 1, request, searchFn)
 
 				if tc.err != nil {
-					require.True(t, err == tc.err, "transport errors must be returned unchanged")
+					require.True(t, err == tc.err, "transport errors must be returned unchanged") //nolint:errorlint // Assert identity, not merely membership in the error chain.
 				} else {
 					requireDashboardSearchRateLimitStatus(t, err)
 				}
