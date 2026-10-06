@@ -1,6 +1,13 @@
 import * as z from 'zod';
 
-import { type DataSourceInstanceListItem } from '@grafana/data';
+import {
+  type AdHocVariableFilter,
+  type DataSourceInstanceListItem,
+  type MetricFindValue,
+  rangeUtil,
+} from '@grafana/data';
+import { type PromQuery } from '@grafana/prometheus';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { type SolutionId } from './types';
@@ -23,6 +30,11 @@ export const DatasourceBoundFilterSchema = z.object({
 });
 
 export type DatasourceBoundFilter = z.infer<typeof DatasourceBoundFilterSchema>;
+
+/** Stored string lists: entries trimmed, blanks dropped (a blank regex alternative would match series lacking the label). */
+export const TrimmedValues = z
+  .array(z.string())
+  .transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''));
 
 /**
  * Stored JSON → filter. Null for a missing/malformed value or one that selects nothing: both mean
@@ -52,4 +64,34 @@ export function scopeFor<T extends DatasourceBoundFilter>(
   ds: Pick<DataSourceInstanceListItem, 'uid'>
 ): T | null {
   return filter && filter.datasourceUid === ds.uid ? filter : null;
+}
+
+// Matches the cards' "seen recently" lookback (24h inventory / sm_check_info).
+const VALUES_RANGE = { from: 'now-24h', to: 'now' };
+
+/**
+ * Distinct `key` values carried by `metric` in datasource `uid` over the last 24h, narrowed by
+ * `filters`. The Prometheus datasource caches label values per snapped time range itself
+ * (1–60 min by cacheLevel), so reopening the dialog inside that window issues no request and a
+ * moved window refreshes the list.
+ */
+export async function fetchFilterLabelValues(
+  uid: string,
+  key: string,
+  metric: string,
+  filters: AdHocVariableFilter[] = []
+): Promise<string[]> {
+  const ds = await getDataSourceInstance({ uid });
+  if (!ds.getTagValues) {
+    return [];
+  }
+  const query: PromQuery = { refId: 'values', expr: metric };
+  const result = await ds.getTagValues({
+    key,
+    filters,
+    timeRange: rangeUtil.convertRawToRange(VALUES_RANGE),
+    queries: [query],
+  });
+  const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
+  return values.map((v) => String(v.value ?? v.text));
 }

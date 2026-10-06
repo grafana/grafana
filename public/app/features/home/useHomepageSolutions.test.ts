@@ -8,7 +8,7 @@ import { logsSolution } from './solutions/logsSolution';
 import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
 import { solutionFilterStorageKey } from './solutions/solutionFilter';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
-import { syntheticsSolution } from './solutions/syntheticsSolution';
+import { syntheticsDetection, syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution, type SolutionId } from './solutions/types';
 import { useHomepageSolutions } from './useHomepageSolutions';
@@ -17,7 +17,7 @@ jest.mock('./solutions/kubernetesSolution', () => ({ kubernetesSolution: jest.fn
 jest.mock('./solutions/logsSolution', () => ({ logsSolution: jest.fn() }));
 jest.mock('./solutions/metricsSolution', () => ({ metricsSolution: jest.fn(), metricsDetection: jest.fn() }));
 jest.mock('./solutions/tracesSolution', () => ({ tracesSolution: jest.fn() }));
-jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn() }));
+jest.mock('./solutions/syntheticsSolution', () => ({ syntheticsSolution: jest.fn(), syntheticsDetection: jest.fn() }));
 jest.mock('./solutions/spanMetricsSignal', () => ({ probeSpanMetrics: jest.fn() }));
 jest.mock('./solutions/irmSignal', () => ({ detectIrmSignal: jest.fn() }));
 
@@ -42,6 +42,7 @@ const datasource: DataSourceInstanceListItem = {
 // The detections the owner hands to every filtered solution it creates.
 const detectKubernetes = jest.fn(async () => ({ status: 'active' as const, datasource }));
 const detectMetrics = jest.fn(async () => ({ status: 'active' as const, datasource }));
+const detectSynthetics = jest.fn(async () => ({ status: 'inactive' as const, datasource: null }));
 
 function solution(id: SolutionId, status: 'active' | 'inactive' | 'unknown' = 'inactive'): Solution {
   return {
@@ -76,8 +77,10 @@ beforeEach(() => {
   }
   detectKubernetes.mockClear();
   detectMetrics.mockClear();
+  detectSynthetics.mockClear();
   jest.mocked(kubernetesDetection).mockReset().mockReturnValue(detectKubernetes);
   jest.mocked(metricsDetection).mockReset().mockReturnValue(detectMetrics);
+  jest.mocked(syntheticsDetection).mockReset().mockReturnValue(detectSynthetics);
   mockProbeSpanMetrics.mockReset().mockResolvedValue(datasource);
   mockDetectIrmSignal.mockReset().mockResolvedValue('inactive');
 });
@@ -106,6 +109,7 @@ describe('useHomepageSolutions', () => {
     expect(mockDetectIrmSignal).not.toHaveBeenCalled();
     expect(detectKubernetes).not.toHaveBeenCalled();
     expect(detectMetrics).not.toHaveBeenCalled();
+    expect(detectSynthetics).not.toHaveBeenCalled();
   });
 
   it('returns solutions in display order', () => {
@@ -147,11 +151,12 @@ describe('useHomepageSolutions', () => {
     // The filtered solutions' signals come from the shared detections, not from a solution instance.
     expect(detectMetrics).toHaveBeenCalledTimes(1);
     expect(detectKubernetes).toHaveBeenCalledTimes(1);
+    expect(detectSynthetics).toHaveBeenCalledTimes(1);
     expect(fixtures.metrics.signal).not.toHaveBeenCalled();
     expect(fixtures.kubernetes.signal).not.toHaveBeenCalled();
+    expect(fixtures.synthetics.signal).not.toHaveBeenCalled();
     expect(fixtures.logs.signal).toHaveBeenCalledTimes(1);
     expect(fixtures.traces.signal).toHaveBeenCalledTimes(1);
-    expect(fixtures.synthetics.signal).toHaveBeenCalledTimes(1);
     expect(mockProbeSpanMetrics).toHaveBeenCalledTimes(1);
     expect(mockDetectIrmSignal).toHaveBeenCalledTimes(1);
   });
@@ -194,6 +199,12 @@ describe('useHomepageSolutions', () => {
       index: 1,
       scope: { excludes: [{ label: 'instance', regex: 'cache-.*' }] },
       detect: detectMetrics,
+    },
+    {
+      solution: 'synthetics' as const,
+      index: 4,
+      scope: { jobs: ['canary'], instances: [], probes: [] },
+      detect: detectSynthetics,
     },
   ])('recreates only the $solution solution when its filter changes', ({ solution: id, index, scope, detect }) => {
     mockFactories[id].mockImplementation(() => solution(id, 'active'));

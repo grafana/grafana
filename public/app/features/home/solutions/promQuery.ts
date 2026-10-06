@@ -6,6 +6,7 @@ import {
   type DataQuery,
   type DataSourceInstanceSettings,
   dateTime,
+  escapeRegex,
   type Field,
   type FieldSparkline,
   FieldType,
@@ -35,6 +36,15 @@ export interface QueryRunOptions {
 /** PromQL string literal: PromQL only accepts Go escapes, so backslash, quote and newline are escaped. */
 export function quotePromString(value: string): string {
   return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+}
+
+/**
+ * Anchored RE2 alternation of literal values as a PromQL string literal: `"a|b\\.c"`. Values escape
+ * RE2 metacharacters first, so a dot renders as `\\.` in the query text (the string escape of the
+ * regex escape).
+ */
+export function quotePromAlternation(values: string[]): string {
+  return quotePromString(values.map(escapeRegex).join('|'));
 }
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
