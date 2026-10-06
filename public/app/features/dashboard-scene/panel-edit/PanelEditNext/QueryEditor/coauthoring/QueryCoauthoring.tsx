@@ -31,8 +31,19 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   const availableHeight = useQueryCoauthoringViewport(portalTarget);
   const containerRef = useRef<HTMLDivElement>(null);
   const session = useQueryCoauthoringSession(sessionOptions);
+  const { dismissUntouched } = session;
   const focusState = session.state.kind;
   const previousFocusStateRef = useRef(focusState);
+
+  useEffect(() => {
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+        dismissUntouched();
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointerDown);
+    return () => document.removeEventListener('pointerdown', onOutsidePointerDown);
+  }, [dismissUntouched]);
 
   useEffect(() => {
     const previousFocusState = previousFocusStateRef.current;
@@ -75,7 +86,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       if (session.feedback) {
         session.closeFeedback();
       } else {
-        session.dismiss();
+        session.dismissUntouched();
       }
     },
     [session]
@@ -102,28 +113,11 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
         </QueryCoauthoringHeader>
       )}
       {state.kind === 'assistant-unavailable' && (
-        <>
-          <QueryCoauthoringHeader onClose={session.dismiss}>
-            <Text variant="bodySmall" weight="medium">
-              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant is not available</Trans>
-            </Text>
-          </QueryCoauthoringHeader>
-          <Stack direction="column" gap={1}>
-            <Alert
-              severity="warning"
-              title={t('query-editor-coauthoring.assistant-unavailable', 'Assistant is not available')}
-            >
-              <Trans i18nKey="query-editor-coauthoring.assistant-unavailable-body">
-                Query coauthoring requires Grafana Assistant.
-              </Trans>
-            </Alert>
-            <Stack justifyContent="flex-end">
-              <Button size="sm" variant="secondary" onClick={session.dismiss}>
-                <Trans i18nKey="query-editor-coauthoring.dismiss">Dismiss</Trans>
-              </Button>
-            </Stack>
-          </Stack>
-        </>
+        <QueryCoauthoringHeader onClose={session.dismiss}>
+          <Text variant="bodySmall" weight="medium">
+            <Trans i18nKey="query-editor-coauthoring.assistant-unavailable">Assistant unavailable</Trans>
+          </Text>
+        </QueryCoauthoringHeader>
       )}
       {state.kind === 'prompt' && (
         <>

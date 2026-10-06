@@ -23,6 +23,7 @@ type SessionSnapshot<T = QueryCoauthoringSessionState> = T extends QueryCoauthor
 type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
 
 interface SessionData {
+  engaged: boolean;
   prompt: PromptSnapshot;
   feedback?: QueryCoauthoringFeedbackState;
   submittedIntents: string[];
@@ -74,7 +75,14 @@ export function createQueryCoauthoringSessionState(
   const prompt: PromptSnapshot = { kind: 'prompt', intent: '', isIdentifying: false, submittedIterationCount: 0 };
   const state = {
     ...prompt,
-    data: { prompt, submittedIntents: [], iterationNudgeDismissed: false, requestId: 0, isPreviewRunning: false },
+    data: {
+      engaged: false,
+      prompt,
+      submittedIntents: [],
+      iterationNudgeDismissed: false,
+      requestId: 0,
+      isPreviewRunning: false,
+    },
   };
   return assistantStatus === 'ready'
     ? state
@@ -186,7 +194,7 @@ export function queryCoauthoringSessionReducer(
       );
     case 'submission-started': {
       const requestId = state.data.requestId + 1;
-      return { ...state, data: { ...state.data, requestId, activeRequestId: requestId } };
+      return { ...state, data: { ...state.data, engaged: true, requestId, activeRequestId: requestId } };
     }
     case 'submission-ready': {
       if (!isCurrentQueryCoauthoringRequest(state, event.requestId)) {

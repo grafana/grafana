@@ -87,6 +87,21 @@ describe('QueryCoauthoringSurface', () => {
     );
   });
 
+  it.each(['outside click', 'Escape'])('dismisses the untouched entry pill on %s', async (action) => {
+    const portalTarget = document.createElement('div');
+    document.body.append(portalTarget);
+    const { adapter } = createAdapter({ mode: 'selection', portalTarget });
+    const user = userEvent.setup();
+    renderSurface(adapter);
+    expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+    if (action === 'outside click') {
+      await user.click(document.body);
+    } else {
+      await user.keyboard('{Escape}');
+    }
+    expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+  });
+
   it('replaces the toolbar with the Core session when the adapter publishes an invocation', () => {
     const portalTarget = document.createElement('div');
     document.body.append(portalTarget);
