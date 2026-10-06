@@ -71,6 +71,12 @@ func TestStorageErrorResponseCompatibility(t *testing.T) {
 				{"wrapped canceled", wrap(context.Canceled), canceled},
 				{"operation canceled", operation(context.Canceled), response.Err(operation(context.Canceled))},
 				{"wrapped operation canceled", wrap(operation(context.Canceled)), response.Err(operation(context.Canceled))},
+				{"deadline exceeded", context.DeadlineExceeded, response.Error(500, name+" API error: context deadline exceeded", nil)},
+				{"wrapped deadline exceeded", wrap(context.DeadlineExceeded), response.Error(500, name+" API error: search: context deadline exceeded", nil)},
+				{"operation deadline exceeded", operation(context.DeadlineExceeded), response.Err(operation(context.DeadlineExceeded))},
+				{"wrapped operation deadline exceeded", wrap(operation(context.DeadlineExceeded)), response.Err(operation(context.DeadlineExceeded))},
+				{"grpc deadline exceeded", status.Error(codes.DeadlineExceeded, "private details"), response.Error(504, "Gateway Timeout", nil)},
+				{"wrapped grpc deadline exceeded", wrap(status.Error(codes.DeadlineExceeded, "private details")), response.Error(504, "Gateway Timeout", nil)},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					assertLegacyHTTPResponse(t, convert, tc.err, tc.want)

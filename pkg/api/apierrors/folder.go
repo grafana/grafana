@@ -35,8 +35,8 @@ var stableDashboardErrSentinels = []error{
 // ToFolderErrorResponse returns a different response status according to the folder error type
 func ToFolderErrorResponse(err error) response.Response {
 	var apiStatus k8sErrors.APIStatus
-	// Leave cancellation intact for ErrOrFallback's legacy response body.
-	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) {
+	// Leave local context errors intact for ErrOrFallback's legacy status and response body.
+	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 		err = resource.StatusErrorFromResponse(nil, err)
 	}
 

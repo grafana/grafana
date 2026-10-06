@@ -22,8 +22,8 @@ import (
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
 	var apiStatus apierrors.APIStatus
-	// Leave cancellation intact for ErrOrFallback's legacy response body.
-	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) {
+	// Leave local context errors intact for ErrOrFallback's legacy status and response body.
+	if !errors.As(err, &apiStatus) && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
 		err = resource.StatusErrorFromResponse(nil, err)
 	}
 
