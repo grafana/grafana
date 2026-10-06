@@ -225,12 +225,13 @@ function serializeField(field: Field, frame: DataFrame, allFrames: DataFrame[], 
     serialized.labels = { ...field.labels };
   }
   if (field.display && lastIndex >= 0) {
-    serialized.state.lastNotNullDisplay = serializeDisplayValue(field.display(field.values[lastIndex]));
+    serialized.state.lastNotNullDisplay = serializeDisplayValue(field.display(field.values[lastIndex]), isTime);
   }
   return serialized;
 }
 
-function serializeDisplayValue(display: DisplayValue): SerializedDisplayValue {
+/** A time has no place on a min/max scale or a threshold, so it keeps only its text. */
+function serializeDisplayValue(display: DisplayValue, isTime: boolean): SerializedDisplayValue {
   const serialized: SerializedDisplayValue = {
     text: display.text,
     numeric: Number.isFinite(display.numeric) ? display.numeric : null,
@@ -240,6 +241,9 @@ function serializeDisplayValue(display: DisplayValue): SerializedDisplayValue {
   }
   if (display.suffix) {
     serialized.suffix = display.suffix;
+  }
+  if (isTime) {
+    return serialized;
   }
   if (typeof display.color === 'string') {
     serialized.color = display.color;
@@ -252,6 +256,32 @@ function serializeDisplayValue(display: DisplayValue): SerializedDisplayValue {
 
 const FIELD_CONFIG_STRINGS = ['displayName', 'displayNameFromDS', 'description', 'unit', 'noValue'] as const;
 const FIELD_CONFIG_NUMBERS = ['decimals', 'min', 'max', 'interval'] as const;
+
+/**
+ * Named colors in a value, range, regex or special mapping become CSS colors, like thresholds.
+ * Value mappings keep their results in options[value]; the others in options.result.
+ */
+function resolveMappingColors(mapping: unknown, theme: GrafanaTheme2): unknown {
+  if (!isRecord(mapping) || !isRecord(mapping.options)) {
+    return mapping;
+  }
+  const resolve = (result: unknown): unknown =>
+    isRecord(result) && typeof result.color === 'string'
+      ? { ...result, color: theme.visualization.getColorByName(result.color) }
+      : result;
+  const options = mapping.options;
+  if (mapping.type === 'value') {
+    return {
+      ...mapping,
+      options: Object.fromEntries(Object.entries(options).map(([key, result]) => [key, resolve(result)])),
+    };
+  }
+  return 'result' in options ? { ...mapping, options: { ...options, result: resolve(options.result) } } : mapping;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 /**
  * The display keys of a FieldConfig. links and actions are left out because the frame can only
@@ -274,7 +304,7 @@ function serializeFieldConfig(config: FieldConfig, theme: GrafanaTheme2): Serial
   if (Array.isArray(config.mappings) && config.mappings.length > 0) {
     const mappings = toJson(config.mappings);
     if (Array.isArray(mappings)) {
-      serialized.mappings = mappings;
+      serialized.mappings = mappings.map((mapping) => resolveMappingColors(mapping, theme));
     }
   }
   const { thresholds, color } = config;

@@ -157,6 +157,51 @@ describe('serializePanelData', () => {
     });
   });
 
+  it('resolves named colors in mappings', () => {
+    const frame = createDataFrame({
+      fields: [
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: [1],
+          config: {
+            mappings: [
+              { type: MappingType.ValueToText, options: { '1': { text: 'one', color: 'blue' }, '2': { text: 'two' } } },
+              { type: MappingType.RangeToText, options: { from: 0, to: 5, result: { color: 'red', index: 1 } } },
+            ],
+          },
+        },
+      ],
+    });
+
+    const serialized = serialize(panelData([frame])).data.series[0].fields[0];
+    expect(serialized.config.mappings).toEqual([
+      {
+        type: 'value',
+        options: { '1': { text: 'one', color: theme.visualization.getColorByName('blue') }, '2': { text: 'two' } },
+      },
+      {
+        type: 'range',
+        options: { from: 0, to: 5, result: { color: theme.visualization.getColorByName('red'), index: 1 } },
+      },
+    ]);
+  });
+
+  it('keeps only the text of a time field display', () => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000], config: { unit: 'bytes', min: 0, max: 10 } },
+      ],
+    });
+    const field = frame.fields[0];
+    field.display = getDisplayProcessor({ field, theme });
+
+    const display = serialize(panelData([frame])).data.series[0].fields[0].state.lastNotNullDisplay;
+    expect(display?.text).toBeDefined();
+    expect(display).not.toHaveProperty('percent');
+    expect(display).not.toHaveProperty('color');
+  });
+
   it('carries query errors as messages', () => {
     const { data } = serialize(
       panelData([], { state: LoadingState.Error, errors: [{ refId: 'B', message: 'timeout' }, { message: 'other' }] })

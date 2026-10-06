@@ -84,8 +84,9 @@ incident view when a metric crosses its last threshold, or when the `incident_mo
   JSON strings, strings over 1,024 characters are cut with `…`.
 - `config`: the `FieldConfig` keys `displayName`, `displayNameFromDS`, `description`, `unit`,
   `decimals`, `min`, `max`, `interval`, `noValue`, `mappings`, `thresholds` and `color`. Named
-  colors (`green`, `semi-dark-red`) are resolved to CSS colors, and the `-Infinity` base threshold
-  step is `null`, as in saved dashboards. `links`, `actions` and `custom` are not sent.
+  colors (`green`, `semi-dark-red`) in thresholds, the fixed color and value mappings are resolved
+  to CSS colors, and the `-Infinity` base threshold step is `null`, as in saved dashboards.
+  `links`, `actions` and `custom` are not sent.
   The values are the field config after the Custom panel's own **Standard options** and
   **Overrides** (unit, decimals, min, max, display name, color scheme, thresholds, value mappings,
   no value) are applied, as in every core panel: a value the datasource set on the field wins over
@@ -96,6 +97,7 @@ incident view when a metric crosses its last threshold, or when the `incident_mo
 - `state.displayName`: the display name other panels show, as core computes it.
 - `state.lastNotNullDisplay` (addition): `field.display(lastNotNull)` as a `DisplayValue`
   `{ text, numeric, prefix?, suffix?, color?, percent? }`, with `numeric` `null` for non-numbers.
+  Time fields only get `text` and `numeric`: a time has no place on a min/max scale or a threshold.
 - `data.errors` are `{ message, refId? }`, as `DataQueryError`.
 - `meta` only carries the source panel of a `-- Dashboard --` frame, where core puts it:
   `meta.custom.dashboardSourcePanelId` and `meta.custom.dashboardSourcePanelTitle`. Other meta
