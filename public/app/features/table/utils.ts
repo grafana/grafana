@@ -17,34 +17,6 @@ export function getCurrentFrameIndex(frames: DataFrame[], options: { frameIndex:
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
 
-/** Matches an output frame to its source without assuming transformations preserve frame order or count. */
-export function getSourceFrameIndex(
-  frames: readonly DataFrame[],
-  frameIndex: number,
-  sourceSeries: readonly DataFrame[]
-): number | undefined {
-  const frame = frames[frameIndex];
-  if (!frame) {
-    return undefined;
-  }
-
-  if (frames.length === 1 && sourceSeries.length === 1 && frame.refId === sourceSeries[0].refId) {
-    return 0;
-  }
-
-  // A shared or missing refId cannot identify which source frame the user selected.
-  const refId = frame.refId;
-  if (
-    !refId ||
-    frames.filter((frame) => frame.refId === refId).length !== 1 ||
-    sourceSeries.filter((frame) => frame.refId === refId).length !== 1
-  ) {
-    return undefined;
-  }
-
-  return sourceSeries.findIndex((frame) => frame.refId === refId);
-}
-
 /**
  * Persists a column width change as a `custom.width` field override, matched by field display name
  * and matcher scope. An unscoped override is treated as implicitly 'series'.

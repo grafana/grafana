@@ -33,7 +33,7 @@ import { type MatcherScope } from '@grafana/schema';
 import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
 
-import { useTableView, useIsFieldFiltered, transformTableFilters } from './TableViewContext';
+import { useTableView, useIsFieldFiltered } from './TableViewContext';
 import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
@@ -44,6 +44,7 @@ import {
   TABLE,
 } from './constants';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
+import { transformTableFilters } from './transformations/rowProjection';
 import {
   type FilterType,
   type FooterFieldState,

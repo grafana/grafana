@@ -1,92 +1,27 @@
 import { FieldType, getFrameMatchers, toDataFrame, type DataTransformerConfig } from '@grafana/data';
 
-import {
-  decodeAdHocColumns,
-  encodeColumnOrder,
-  encodeHiddenColumns,
-  findColumnsEntry,
-  frameFilterFor,
-} from './adHocColumns';
-
-const CATALOG = ['A', 'B', 'C'];
+import { frameFilterFor } from './columnContext';
+import { readColumnVisibility, encodeHiddenColumns } from './columnVisibility';
+import { findColumnsEntry } from './organizeFields';
 
 const organize = (options: object): DataTransformerConfig => ({ id: 'organize', options });
 const unrelated: DataTransformerConfig = { id: 'filterByValue', options: { filters: [] } };
 
-describe('decodeAdHocColumns', () => {
+describe('readColumnVisibility', () => {
   it('treats an organize transformation without options as an unchanged view', () => {
-    expect(decodeAdHocColumns([{ id: 'organize', options: undefined }], CATALOG)).toEqual({
-      columnOrder: undefined,
+    expect(readColumnVisibility([{ id: 'organize', options: undefined }])).toEqual({
       hiddenColumns: new Set(),
     });
   });
 
   it('reads an empty transformations as no ad-hoc view', () => {
-    expect(decodeAdHocColumns([], CATALOG)).toEqual({ columnOrder: undefined, hiddenColumns: new Set() });
-  });
-
-  it('leaves the order undefined when nothing has been reordered', () => {
-    expect(decodeAdHocColumns([organize({ excludeByName: { B: true } })], CATALOG).columnOrder).toBeUndefined();
-  });
-
-  it('orders the catalog by the index map', () => {
-    const state = decodeAdHocColumns([organize({ indexByName: { C: 0, A: 1, B: 2 } })], CATALOG);
-
-    expect(state.columnOrder).toEqual(['C', 'A', 'B']);
-  });
-
-  it('appends a column the index map does not mention, in catalog order', () => {
-    const state = decodeAdHocColumns([organize({ indexByName: { C: 0, A: 1 } })], ['A', 'B', 'C', 'D']);
-
-    expect(state.columnOrder).toEqual(['C', 'A', 'B', 'D']);
+    expect(readColumnVisibility([])).toEqual({ hiddenColumns: new Set() });
   });
 
   it('reads an exclusion set to false as visible', () => {
-    const state = decodeAdHocColumns([organize({ excludeByName: { A: true, B: false } })], CATALOG);
+    const state = readColumnVisibility([organize({ excludeByName: { A: true, B: false } })]);
 
     expect(state.hiddenColumns).toEqual(new Set(['A']));
-  });
-
-  it('does not mutate the catalog it was given', () => {
-    const catalog = [...CATALOG];
-
-    decodeAdHocColumns([organize({ indexByName: { C: 0, A: 1, B: 2 } })], catalog);
-
-    expect(catalog).toEqual(CATALOG);
-  });
-});
-
-describe('encodeColumnOrder', () => {
-  it('adds one entry carrying the whole order', () => {
-    const transformations = encodeColumnOrder([], ['C', 'A', 'B']);
-
-    expect(transformations).toEqual([
-      organize({ excludeByName: {}, renameByName: {}, indexByName: { C: 0, A: 1, B: 2 } }),
-    ]);
-  });
-
-  it('updates the existing entry rather than appending another', () => {
-    const first = encodeColumnOrder([], ['C', 'A', 'B']);
-    const second = encodeColumnOrder(first, ['A', 'B', 'C']);
-
-    expect(second).toHaveLength(1);
-    expect(findColumnsEntry(second)!.options.indexByName).toEqual({ A: 0, B: 1, C: 2 });
-  });
-
-  it('preserves hidden columns when updating the order', () => {
-    const hidden = encodeHiddenColumns([], new Set(['B']));
-    const reordered = encodeColumnOrder(hidden, ['C', 'A', 'B']);
-
-    expect(decodeAdHocColumns(reordered, CATALOG)).toEqual({
-      columnOrder: ['C', 'A', 'B'],
-      hiddenColumns: new Set(['B']),
-    });
-  });
-
-  it('preserves organize options it does not own', () => {
-    const withRename = [organize({ renameByName: { A: 'Alpha' } })];
-
-    expect(findColumnsEntry(encodeColumnOrder(withRename, CATALOG))!.options.renameByName).toEqual({ A: 'Alpha' });
   });
 });
 
@@ -108,16 +43,6 @@ describe('encodeHiddenColumns', () => {
 
     expect(findColumnsEntry(hidden)!.options.excludeByName).toEqual({ B: true });
     expect(encodeHiddenColumns(hidden, new Set())).toEqual([]);
-  });
-
-  it('preserves column order when updating visibility', () => {
-    const ordered = encodeColumnOrder([], ['C', 'A', 'B']);
-    const hidden = encodeHiddenColumns(ordered, new Set(['A']));
-
-    expect(decodeAdHocColumns(hidden, CATALOG)).toEqual({
-      columnOrder: ['C', 'A', 'B'],
-      hiddenColumns: new Set(['A']),
-    });
   });
 
   it('removes the entry once it says nothing, leaving other entries alone', () => {
@@ -162,14 +87,14 @@ describe('frame scoping', () => {
       frameB
     );
 
-    expect(decodeAdHocColumns(transformations, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
-    expect(decodeAdHocColumns(transformations, CATALOG, frameB).hiddenColumns).toEqual(new Set(['C']));
+    expect(readColumnVisibility(transformations, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(readColumnVisibility(transformations, frameB).hiddenColumns).toEqual(new Set(['C']));
   });
 
   it('does not read a frame-scoped entry as the unscoped one', () => {
     const transformations = encodeHiddenColumns([], new Set(['B']), frameA);
 
-    expect(decodeAdHocColumns(transformations, CATALOG).hiddenColumns).toEqual(new Set());
+    expect(readColumnVisibility(transformations).hiddenColumns).toEqual(new Set());
   });
 
   it('updates the entry for its own frame rather than another frame’s', () => {
@@ -181,8 +106,8 @@ describe('frame scoping', () => {
     const updated = encodeHiddenColumns(transformations, new Set(['B', 'C']), frameB);
 
     expect(updated).toHaveLength(2);
-    expect(decodeAdHocColumns(updated, CATALOG, frameA).hiddenColumns).toEqual(new Set(['B']));
-    expect(decodeAdHocColumns(updated, CATALOG, frameB).hiddenColumns).toEqual(new Set(['B', 'C']));
+    expect(readColumnVisibility(updated, frameA).hiddenColumns).toEqual(new Set(['B']));
+    expect(readColumnVisibility(updated, frameB).hiddenColumns).toEqual(new Set(['B', 'C']));
   });
 
   it('removes only its own frame’s entry when it is emptied', () => {
@@ -195,17 +120,6 @@ describe('frame scoping', () => {
 
     expect(cleared).toHaveLength(1);
     expect(cleared[0].filter).toEqual(frameA);
-  });
-});
-
-describe('round trip', () => {
-  it('round-trips column order and visibility', () => {
-    const transformations = encodeHiddenColumns(encodeColumnOrder([], ['B', 'C', 'A']), new Set(['C']));
-
-    expect(decodeAdHocColumns(transformations, CATALOG)).toEqual({
-      columnOrder: ['B', 'C', 'A'],
-      hiddenColumns: new Set(['C']),
-    });
   });
 });
 
