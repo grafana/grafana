@@ -2,52 +2,17 @@ import { useEffect, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import {
-  sceneGraph,
-  SceneDataTransformer,
-  SceneObjectStateChangedEvent,
-  SceneQueryRunner,
-  VizPanel,
-  type SceneObject,
-} from '@grafana/scenes';
+import { SceneObjectStateChangedEvent } from '@grafana/scenes';
 import { Alert } from '@grafana/ui';
 
 import { type DashboardScene } from '../scene/DashboardScene';
+import { getDsRefsFromScene } from '../utils/dashboardDsRefs';
 
 // Data sources whose queries are affected by scope filters.
 const SCOPE_FILTERED_DATASOURCE_TYPES = ['loki', 'prometheus'];
 
-// Mirrors the lookup in DownloadDashboardDiagnosticsRenderer: inlined here rather than imported
-// to avoid reaching into that module's import graph for a two-line helper.
-function getQueryRunnerFor(sceneObject: SceneObject | undefined): SceneQueryRunner | undefined {
-  if (!sceneObject) {
-    return undefined;
-  }
-  const dataProvider = sceneObject.state.$data ?? sceneObject.parent?.state.$data;
-  if (dataProvider instanceof SceneQueryRunner) {
-    return dataProvider;
-  }
-  if (dataProvider instanceof SceneDataTransformer) {
-    return getQueryRunnerFor(dataProvider);
-  }
-  return undefined;
-}
-
 function hasScopeFilteredDatasource(dashboard: DashboardScene): boolean {
-  const vizPanels = sceneGraph.findAllObjects(dashboard, (o) => o instanceof VizPanel);
-  return vizPanels.some((obj) => {
-    const runner = obj instanceof VizPanel ? getQueryRunnerFor(obj) : undefined;
-    if (!runner) {
-      return false;
-    }
-    const runnerType = runner.state.datasource?.type;
-    if (runnerType && SCOPE_FILTERED_DATASOURCE_TYPES.includes(runnerType)) {
-      return true;
-    }
-    return runner.state.queries.some(
-      (query) => query.datasource?.type && SCOPE_FILTERED_DATASOURCE_TYPES.includes(query.datasource.type)
-    );
-  });
+  return getDsRefsFromScene(dashboard).some((ref) => ref.type && SCOPE_FILTERED_DATASOURCE_TYPES.includes(ref.type));
 }
 
 export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScene }) {
