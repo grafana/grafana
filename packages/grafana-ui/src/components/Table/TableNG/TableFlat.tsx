@@ -26,7 +26,6 @@ import {
   useRowCompiler,
   useTypographyCtx,
   useHeaderTypographyCtx,
-  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -43,6 +42,7 @@ import {
   type TableRow,
   type TableSummaryRow,
 } from './types';
+import { useTextWrapFallback } from './useTextWrapFallback';
 import {
   calculateFooterHeight,
   getCellColorInlineStylesFactory,

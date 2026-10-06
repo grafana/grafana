@@ -2421,6 +2421,76 @@ describe('TableNG', () => {
 
   describe('Text wrapping', () => {
     const inspectButton = selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton;
+    it.each([false, true])(
+      'offers Inspect for oversized non-wrapping cells with hoverOverflow=%s',
+      async (hoverOverflow) => {
+        const value = 'x'.repeat(10_001) + 'END OF MESSAGE';
+        const data = withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', 'x'.repeat(10_000), value],
+                config: { custom: { wrapText: false, inspect: false, width: 300 } },
+              },
+            ],
+          })
+        );
+        render(<TableNG data={data} width={800} height={600} hoverOverflow={hoverOverflow} />);
+        expect(screen.getAllByTestId(inspectButton)).toHaveLength(1);
+        expect(screen.getByTestId(inspectButton).closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+        await user.click(screen.getByTestId(inspectButton));
+        expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+      }
+    );
+
+    it('offers Inspect for oversized formatted JSON with wrapping disabled', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      render(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      await user.click(screen.getByTestId(inspectButton));
+      await user.click(screen.getByRole('tab', { name: 'Plain text' }));
+      expect(screen.getByRole('dialog')).toHaveTextContent('x'.repeat(10_000));
+    });
+
+    it('gives clipped text an ellipsis container without changing its value', () => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['clipped message'],
+              config: { custom: { wrapText: false, width: 100 } },
+            },
+          ],
+        })
+      );
+      render(<TableNG data={data} width={800} height={600} />);
+      expect(screen.getByText('clipped message')).toHaveStyle({
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        minWidth: 0,
+      });
+    });
+
+    it('clamps the text container when wrapped rows have a maximum height', () => {
+      render(<TableNG data={wrappedFrame(['wrapped message'])} width={800} height={600} maxRowHeight={100} />);
+      const text = screen.getByText('wrapped message');
+      expect(text).toHaveStyle({ display: '-webkit-box' });
+      // jsdom omits vendor-prefixed properties from computed styles.
+      const clamp = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .find(
+          (rule): rule is CSSStyleRule =>
+            rule instanceof CSSStyleRule &&
+            rule.style.getPropertyValue('-webkit-line-clamp') === '4' &&
+            text.matches(rule.selectorText)
+        );
+      expect(clamp?.style.getPropertyValue('-webkit-box-orient')).toBe('vertical');
+    });
+
     function wrappedFrame(values: string[]) {
       return withFieldOverrides(
         toDataFrame({
@@ -2553,7 +2623,7 @@ describe('TableNG', () => {
       expect(screen.getAllByTestId(inspectButton)).toHaveLength(4);
       expect(getComputedStyle(screen.getByRole('gridcell', { name: 'parent one' })).whiteSpace).toBe('pre-line');
       for (const grid of screen.getAllByRole('grid')) {
-        expect(getComputedStyle(grid).gridTemplateRows).toBe('repeat(1, 34px) 34px 34px');
+        expect(getComputedStyle(grid).gridTemplateRows).toBe('repeat(1, 34px)repeat(2, 34px)');
       }
       expect(first.fields[0].config.custom?.wrapText).toBe(true);
 

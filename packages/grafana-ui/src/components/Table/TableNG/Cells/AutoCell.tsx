@@ -4,18 +4,19 @@ import memoize from 'micro-memoize';
 
 import { formattedValueToString } from '@grafana/data';
 
-import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { TABLE } from '../constants';
 import { getActiveCellSelector, isTableCellStylesKeyEqual } from '../styles';
 import { type AutoCellProps, type TableCellStyleOptions, type TableCellStyles } from '../types';
+
+import { TextCellContents, textCellClassName } from './TextCellContents';
 
 export function AutoCell({ value, field, rowIdx }: AutoCellProps) {
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
   return (
-    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+    <TextCellContents field={field} rowIdx={rowIdx}>
       {formattedValue}
-    </MaybeWrapWithLink>
+    </TextCellContents>
   );
 }
 
@@ -70,13 +71,18 @@ function buildAutoCellStyles(
       textWrap && {
         height: 'auto',
         overflowY: 'hidden',
-        display: '-webkit-box',
-        WebkitBoxOrient: 'vertical',
-        WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        [`> .${textCellClassName}`]: {
+          display: '-webkit-box',
+          WebkitBoxOrient: 'vertical',
+          WebkitLineClamp: Math.floor(maxHeight / TABLE.LINE_HEIGHT),
+        },
         [getActiveCellSelector(true, hoverOverflow)]: {
           display: 'flex',
-          WebkitLineClamp: 'none',
-          WebkitBoxOrient: 'unset',
+          [`> .${textCellClassName}`]: {
+            display: 'block',
+            WebkitLineClamp: 'none',
+            WebkitBoxOrient: 'unset',
+          },
           overflowY: 'auto',
           height: 'fit-content',
           ...(boundExpansion && expansionBounds),

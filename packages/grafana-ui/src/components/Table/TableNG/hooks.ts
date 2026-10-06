@@ -495,48 +495,6 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
-export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
-  // A new result may contain only short values despite having the same schema or value buffers.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
-  const [version, setVersion] = useState(0);
-
-  // Height callbacks run inside the grid's render, after columns have already been built. Collect
-  // discoveries without updating another component during render, then repair all heights and
-  // column styles together before paint. Finishing the scan batches discoveries across columns.
-  // Check every commit: pagination and expansion can expose new values without changing fields.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useLayoutEffect(() => {
-    if (epoch.pending.size > 0) {
-      for (const name of epoch.pending) {
-        epoch.disabled.add(name);
-      }
-      epoch.pending.clear();
-      setVersion((value) => value + 1);
-    }
-  });
-
-  return useMemo(
-    () => ({
-      disabledFields: new Set(epoch.disabled),
-      shouldDisable: (field: Field, value: unknown) => {
-        const name = getDisplayName(field);
-        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
-          return true;
-        }
-        if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
-          epoch.pending.add(name);
-          return true;
-        }
-        return false;
-      },
-    }),
-    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [epoch, version]
-  );
-}
-
 interface UseRowHeightOptions {
   wrapFallback?: TextWrapFallback;
   nestedWrapFallback?: TextWrapFallback;

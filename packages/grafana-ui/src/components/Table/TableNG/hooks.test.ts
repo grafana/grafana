@@ -19,10 +19,10 @@ import {
   useColWidths,
   useRowCompiler,
   useScrollShadows,
-  useTextWrapFallback,
   useFlatRowHeight,
 } from './hooks';
 import { type FilterType, type TableRow, type TypographyCtx } from './types';
+import { useTextWrapFallback } from './useTextWrapFallback';
 import { applyFilter, createTypographyContext, compileFrameToRecords, computeContentAwareColWidths } from './utils';
 
 const emptyFilterResult = applyFilter([], {}, []);

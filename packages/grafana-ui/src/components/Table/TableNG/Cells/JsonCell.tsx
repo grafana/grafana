@@ -3,8 +3,9 @@ import { lazy, Suspense, useMemo } from 'react';
 import { formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
-import { MaybeWrapWithLink } from '../components/MaybeWrapWithLink';
 import { type TableCellRendererProps } from '../types';
+
+import { TextCellContents } from './TextCellContents';
 
 const JsonSyntaxHighlight = lazy(() =>
   import('./JsonSyntaxHighlight').catch(() => ({ default: ({ text }: { text: string }) => <>{text}</> }))
@@ -36,7 +37,7 @@ export function JsonCell({
   }, [enabled, text]);
 
   return (
-    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+    <TextCellContents field={field} rowIdx={rowIdx}>
       {highlight ? (
         <span>
           <Suspense fallback={text}>
@@ -46,6 +47,6 @@ export function JsonCell({
       ) : (
         text
       )}
-    </MaybeWrapWithLink>
+    </TextCellContents>
   );
 }

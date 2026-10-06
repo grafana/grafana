@@ -40,12 +40,12 @@ import {
 
 import { type PanelContext } from '../../PanelChrome';
 
-import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { AutoCellRenderer, getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
-import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
+import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -353,7 +353,7 @@ function buildColumnsFromFields(
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
-    const showActions = cellInspect || showFilters || showAssistant;
+    const isTextCell = CellType === AutoCellRenderer || rendersAsJson(field, cellType);
     const width = widths[i];
     const contentWidth =
       width -
@@ -362,9 +362,7 @@ function buildColumnsFromFields(
       (i === fields.length - 1 ? lastColumnExtraPadding : 0);
 
     // helps us avoid string cx and emotion per-cell
-    const cellActionClassName = showActions
-      ? clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled))
-      : undefined;
+    const cellActionClassName = clsx('table-cell-actions', getCellActionStyles(theme, textAlign, tableRefreshEnabled));
 
     const shouldOverflow =
       !wrappingDisabled &&
@@ -430,13 +428,15 @@ function buildColumnsFromFields(
       }
       const value = props.row[props.column.key];
       const formattedValue = shouldOverflow ? formattedValueToString(field.display!(value)) : '';
+      const oversized = isTextCell && formattedValue.length > TABLE.MAX_WRAP_TEXT_LENGTH;
       let measuredWidth = textWidthCache.get(formattedValue);
-      if (measuredWidth == null && formattedValue !== '') {
+      if (!oversized && measuredWidth == null && formattedValue !== '') {
         measuredWidth = typographyCtx.measureWidth(formattedValue);
         textWidthCache.set(formattedValue, measuredWidth);
       }
       const hasOverflow =
         shouldOverflow &&
+        !oversized &&
         (maxRowHeight != null || rendersAsJson(field, cellType) || (measuredWidth ?? 0) > contentWidth);
 
       return (
@@ -459,6 +459,12 @@ function buildColumnsFromFields(
     const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
       const rowIdx = props.row.__index;
       const value = props.row[props.column.key];
+      // Only rendered text cells need this check; fixed-height tables still avoid scanning values.
+      const inspect =
+        cellInspect ||
+        (isTextCell &&
+          (field.display ? formattedValueToString(field.display(value)) : String(value ?? '')).length >
+            TABLE.MAX_WRAP_TEXT_LENGTH);
       // TODO: it would be nice to get rid of passing height down as a prop. but this value
       // is cached so the cost of calling for every cell is low.
       // NOTE: some cell types still require a height to be passed down, so that's why string-based
@@ -477,20 +483,20 @@ function buildColumnsFromFields(
             value={value}
             width={contentWidth}
             timeRange={timeRange}
-            cellInspect={cellInspect}
+            cellInspect={inspect}
             showFilters={showFilters}
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
             jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
-          {showActions && (
+          {(inspect || showFilters || showAssistant) && (
             <TableCellActions
               tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
               displayName={displayName}
-              cellInspect={cellInspect}
+              cellInspect={inspect}
               showFilters={showFilters}
               className={cellActionClassName}
               setInspectCell={setInspectCell}
