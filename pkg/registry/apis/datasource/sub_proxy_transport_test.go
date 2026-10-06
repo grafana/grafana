@@ -1,7 +1,6 @@
 package datasource
 
 import (
-	"context"
 	"crypto/sha256"
 	"errors"
 	"io"
@@ -16,13 +15,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 	krequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -150,17 +147,13 @@ func TestDatasourceLoaderTenantTimeouts(t *testing.T) {
 	}
 }
 
-type proxyTestUserTokens struct{}
-
-func (proxyTestUserTokens) GetCurrentOAuthToken(_ context.Context, who identity.Requester, _ *usertoken.UserToken) *oauth2.Token {
-	return &oauth2.Token{AccessToken: who.GetLogin(), TokenType: "Bearer"}
-}
-
-func TestSubProxyREST_ReusesConnectionsWithoutSharingUserCredentials(t *testing.T) {
+func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {
 	var connections atomic.Int32
 	var closed atomic.Int32
+	userHeaders := make(chan string, 1)
 	upstream := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.WriteString(w, r.Header.Get("Authorization"))
+		userHeaders <- r.Header.Get("X-Grafana-User")
+		_, _ = io.WriteString(w, "pong")
 	}))
 	upstream.Config.ConnState = func(_ net.Conn, state http.ConnState) {
 		if state == http.StateNew {
@@ -175,34 +168,35 @@ func TestSubProxyREST_ReusesConnectionsWithoutSharingUserCredentials(t *testing.
 	ds := &datasourceV0.DataSource{}
 	ds.Name = "ds-1"
 	ds.Spec.SetURL(upstream.URL)
-	ds.Spec.SetJSONData(map[string]any{"oauthPassThru": true})
 	provider := &proxyMockDatasourceProvider{ds: ds}
-	provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "ds-1", Type: "test", URL: upstream.URL, JSONData: []byte(`{"oauthPassThru":true}`)}
+	provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "ds-1", Type: "test", URL: upstream.URL, JSONData: []byte(`{}`)}
 	builder := newProxyTestBuilder(provider)
-	builder.proxyDeps.OAuthTokenService = proxyTestUserTokens{}
+	builder.proxyDeps.OAuthTokenService = nil
+	builder.proxyDeps.ProxyCfg.SendUserHeader = true
 	storage := &subProxyREST{builder: builder}
 	t.Cleanup(storage.Destroy)
 	for _, tc := range []struct {
-		namespace, token string
+		namespace, login string
 		config, secret   string
 		conns            int32
 	}{
-		{"stacks-1", "alice-token", "config-1", "first", 1},
-		{"stacks-1", "bob-token", "config-1", "first", 1},
-		{"stacks-1", "alice-refreshed-token", "config-1", "first", 1},
-		{"stacks-1", "alice-token", "config-2", "first", 2},
-		{"stacks-1", "alice-token", "config-2", "rotated", 3},
-		{"stacks-2", "carol-token", "config-2", "rotated", 4},
+		{"stacks-1", "alice", "config-1", "first", 1},
+		{"stacks-1", "bob", "config-1", "first", 1},
+		{"stacks-1", "alice-renamed", "config-1", "first", 1},
+		{"stacks-1", "alice", "config-2", "first", 2},
+		{"stacks-1", "alice", "config-2", "rotated", 3},
+		{"stacks-2", "carol", "config-2", "rotated", 4},
 	} {
 		builder.proxyDeps.TransportConfigKey = tc.config
 		provider.instanceSettings.DecryptedSecureJSONData = map[string]string{"password": tc.secret}
 		userID := int64(1)
-		if tc.token == "bob-token" {
+		switch tc.login {
+		case "bob":
 			userID = 2
-		} else if tc.token == "carol-token" {
+		case "carol":
 			userID = 3
 		}
-		ctx := identity.WithRequester(krequest.WithNamespace(t.Context(), tc.namespace), &user.SignedInUser{UserID: userID, OrgID: 1, Login: tc.token})
+		ctx := identity.WithRequester(krequest.WithNamespace(t.Context(), tc.namespace), &user.SignedInUser{UserID: userID, OrgID: 1, Login: tc.login})
 		responder := &resourceMockResponder{}
 		handler, err := storage.Connect(ctx, "ds-1", nil, responder)
 		require.NoError(t, err)
@@ -210,7 +204,8 @@ func TestSubProxyREST_ReusesConnectionsWithoutSharingUserCredentials(t *testing.
 		handler.ServeHTTP(rec, httptest.NewRequestWithContext(ctx, "GET", "/apis/test.datasource.grafana.app/v0alpha1/namespaces/"+tc.namespace+"/datasources/ds-1/proxy/query", nil))
 		require.NoError(t, responder.lastErr)
 		require.Equal(t, 200, rec.Code)
-		require.Equal(t, "Bearer "+tc.token, rec.Body.String())
+		require.Equal(t, "pong", rec.Body.String())
+		require.Equal(t, tc.login, <-userHeaders)
 		require.Equal(t, tc.conns, connections.Load())
 	}
 	storage.Destroy()

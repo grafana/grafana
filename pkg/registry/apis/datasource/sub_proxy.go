@@ -39,7 +39,7 @@ type ProxyDependencies struct {
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
 	TimeoutDefaults    *sdkhttpclient.TimeoutOptions
-	OAuthTokenService  pluginproxy.OAuthTokenProvider
+	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
 }
@@ -153,6 +153,12 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		if err := validate(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
 			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
+			return
+		}
+
+		if ds.Spec.IsOAuthPassThruEnabled() && deps.OAuthTokenService == nil {
+			m.SetError()
+			responder.Error(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
 			return
 		}
 

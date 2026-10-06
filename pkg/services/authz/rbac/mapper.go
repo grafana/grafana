@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/datasources"
 )
 
 // Mapping maps a verb to a RBAC action and a resource name to a RBAC scope.
@@ -257,8 +258,10 @@ func newFolderTranslation() translation {
 func newDatasourceQueryTranslation() translation {
 	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
 
-	dsTranslation.verbMapping[utils.VerbGetExternalRules] = accesscontrol.ActionAlertingRuleExternalRead
-	dsTranslation.verbMapping[utils.VerbSetExternalRules] = accesscontrol.ActionAlertingRuleExternalWrite
+	// Proxy routes carry existing RBAC actions as verbs and retain datasource UID scopes.
+	for _, action := range []string{datasources.ActionQuery, accesscontrol.ActionAlertingRuleExternalRead, accesscontrol.ActionAlertingRuleExternalWrite} {
+		dsTranslation.verbMapping[action] = action
+	}
 
 	dsTranslation.actionSetMapping = map[string][]string{
 		// utils.VerbWatch: {"datasources:query"},

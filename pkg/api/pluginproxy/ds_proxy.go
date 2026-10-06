@@ -14,7 +14,6 @@ import (
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/datasource/validation"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	pluginac "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -51,11 +51,6 @@ type HTTPContext struct {
 	UserToken *usertoken.UserToken
 }
 
-// OAuthTokenProvider resolves upstream credentials for the authenticated user.
-type OAuthTokenProvider interface {
-	GetCurrentOAuthToken(context.Context, identity.Requester, *usertoken.UserToken) *oauth2.Token
-}
-
 // RouteAccessChecker checks a plugin route action for the requested datasource.
 type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
 
@@ -77,7 +72,7 @@ type DataSourceProxy struct {
 	pluginRoutes       []*plugins.Route
 	settings           *DataSourceProxySettings
 	clientProvider     httpclient.Provider
-	oAuthTokenService  OAuthTokenProvider
+	oAuthTokenService  oauthtoken.OAuthTokenService
 	tracer             tracing.Tracer
 	features           featuremgmt.FeatureToggles
 }
@@ -90,7 +85,7 @@ type httpClient interface {
 func NewDataSourceProxy(dataSource DataSourceLoader,
 	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
-	oAuthTokenService OAuthTokenProvider,
+	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
 	opts ...DataSourceProxyOption,
 ) (*DataSourceProxy, error) {

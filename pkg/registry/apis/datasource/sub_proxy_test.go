@@ -60,6 +60,32 @@ func proxyTestContext() context.Context {
 }
 
 func TestSubProxyREST_Connect(t *testing.T) {
+	t.Run("rejects OAuth passthrough without a token service", func(t *testing.T) {
+		forwarded := false
+		target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			forwarded = true
+		}))
+		defer target.Close()
+		ds := &datasourceV0.DataSource{}
+		ds.Spec.SetURL(target.URL)
+		ds.Spec.SetJSONData(map[string]any{"oauthPassThru": true})
+		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{ds: ds})
+		resolved := builder.proxyDeps
+		resolved.OAuthTokenService = nil
+		builder.proxyDeps = &ProxyDependencies{Resolve: func(context.Context, *http.Request) (*ProxyDependencies, error) {
+			return resolved, nil
+		}}
+		storage := &subProxyREST{builder: builder}
+		t.Cleanup(storage.Destroy)
+		responder := &resourceMockResponder{}
+		handler, err := storage.Connect(proxyTestContext(), "test-ds", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/namespaces/default/datasources/test-ds/proxy/query", nil))
+		require.True(t, apierrors.IsBadRequest(responder.lastErr))
+		require.ErrorContains(t, responder.lastErr, "OAuth passthrough is not supported")
+		require.False(t, forwarded)
+	})
+
 	t.Run("responds NotFound when the datasource does not exist", func(t *testing.T) {
 		provider := &proxyMockDatasourceProvider{dsErr: datasources.ErrDataSourceNotFound}
 		r := &subProxyREST{builder: newProxyTestBuilder(provider)}
