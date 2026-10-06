@@ -86,6 +86,13 @@ incident view when a metric crosses its last threshold, or when the `incident_mo
   `decimals`, `min`, `max`, `interval`, `noValue`, `mappings`, `thresholds` and `color`. Named
   colors (`green`, `semi-dark-red`) are resolved to CSS colors, and the `-Infinity` base threshold
   step is `null`, as in saved dashboards. `links`, `actions` and `custom` are not sent.
+  The values are the field config after the Custom panel's own **Standard options** and
+  **Overrides** (unit, decimals, min, max, display name, color scheme, thresholds, value mappings,
+  no value) are applied, as in every core panel: a value the datasource set on the field wins over
+  the panel default, and an override wins over both. Frames from a `-- Dashboard --` query are the
+  source panel's query results, so they carry what the datasource set but not the source panel's
+  standard options or overrides; the Custom panel's own defaults and overrides apply to them like
+  to any other frame.
 - `state.displayName`: the display name other panels show, as core computes it.
 - `state.lastNotNullDisplay` (addition): `field.display(lastNotNull)` as a `DisplayValue`
   `{ text, numeric, prefix?, suffix?, color?, percent? }`, with `numeric` `null` for non-numbers.

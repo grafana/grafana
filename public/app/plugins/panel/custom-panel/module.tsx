@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { CustomPanel } from './CustomPanel';
@@ -12,6 +12,16 @@ export const plugin = new PanelPlugin<Options>(CustomPanel)
   .setFitContentSupport()
   .setPanelChangeHandler(customPanelChangeHandler)
   .setMigrationHandler(customPanelMigrationHandler, needsApiVersionPin)
+  // The drawing code gets the display keys of field.config and the host-formatted last value, so the
+  // standard options that shape them apply. Links and actions never reach the frame.
+  .useFieldConfig({
+    disableStandardOptions: [
+      FieldConfigProperty.Links,
+      FieldConfigProperty.Actions,
+      FieldConfigProperty.FieldMinMax,
+      FieldConfigProperty.Filterable,
+    ],
+  })
   .setPanelOptions((builder) => {
     builder
       .addCustomEditor({
