@@ -8939,6 +8939,9 @@
       "services": "Services: {{services}}",
       "services-span-filter-matches": "Services: {{total}}/{{services}}"
     },
+    "no-data": {
+      "message": "No data"
+    },
     "no-data-source-call-to-action": {
       "cta-element": {
         "add-data-source": "Add data source"
@@ -8946,7 +8949,8 @@
       "footer": {
         "learn-more": "Learn more",
         "pro-tip-define-sources-through-configuration-files": " ProTip: You can also define data sources through configuration files. "
-      }
+      },
+      "message": "Explore requires at least one data source. Once you have added a data source, you can query it here."
     },
     "pane": {
       "loading-placeholder": "Loading..."
