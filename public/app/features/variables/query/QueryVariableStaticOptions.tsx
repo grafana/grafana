@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 
+import { type SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type QueryVariable, type VariableValueOption } from '@grafana/scenes';
@@ -20,7 +21,7 @@ interface QueryVariableStaticOptionsProps {
   onStaticOptionsOrderChange: (staticOptionsOrder: StaticOptionsOrderType) => void;
 }
 
-const SORT_OPTIONS = [
+const SORT_OPTIONS: Array<SelectableValue<StaticOptionsOrderType>> = [
   { label: 'Before query values', value: 'before' },
   { label: 'After query values', value: 'after' },
   { label: 'Sorted with query values', value: 'sorted' },

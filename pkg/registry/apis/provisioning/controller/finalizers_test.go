@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -25,6 +27,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	metricutils "github.com/grafana/grafana/pkg/registry/apis/provisioning/utils"
 )
 
 var (
@@ -740,6 +743,55 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 	assert.Equal(t, []string{"folder-nested", "folder-root"}, order[2:], "folders should be deleted deepest first")
 }
 
+func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
+	items := provisioning.ResourceList{Items: []provisioning.ResourceListItem{
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "shared-folder", Title: "Shared folder", Path: "shared"},
+		{Group: folders.GroupVersion.Group, Resource: "folders", Name: "nested-folder", Title: "Nested folder", Path: "shared/nested", Folder: "shared-folder"},
+		{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "managed-dashboard", Path: "shared/nested/dashboard.json", Folder: "nested-folder"},
+	}}
+	resourceLister := resources.NewMockResourceLister(t)
+	resourceLister.On("List", mock.Anything, "default", "my-repo").Return(&items, nil)
+
+	clientFactory := resources.NewMockClientFactory(t)
+	clients := resources.NewMockResourceClients(t)
+	clientFactory.On("Clients", mock.Anything, "default").Return(clients, nil)
+
+	var deleted []string
+	client := &mockDynamicClient{
+		deleteFunc: func(_ context.Context, name string, _ metav1.DeleteOptions, _ ...string) error {
+			deleted = append(deleted, name)
+			if name == "managed-dashboard" {
+				return nil
+			}
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Code: http.StatusBadRequest, Details: &metav1.StatusDetails{UID: "folder.not-empty"},
+			}}
+		},
+	}
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: folders.GroupVersion.Group, Resource: "folders",
+	}).Return(client, schema.GroupVersionKind{}, nil).Twice()
+	clients.On("ForResource", mock.Anything, schema.GroupVersionResource{
+		Group: "dashboard.grafana.app", Resource: "dashboards",
+	}).Return(client, schema.GroupVersionKind{}, nil).Once()
+
+	f := &finalizer{
+		lister: resourceLister, clientFactory: clientFactory,
+		metrics:    func() *finalizerMetrics { m := registerFinalizerMetrics(prometheus.NewRegistry()); return &m }(),
+		maxWorkers: 1,
+	}
+	count, err := f.deleteExistingItems(context.Background(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+	})
+
+	require.Error(t, err)
+	assert.Equal(t, 1, count)
+	assert.Equal(t, []string{"managed-dashboard", "nested-folder", "shared-folder"}, deleted)
+	assert.ErrorContains(t, err, `"Nested folder" (UID: nested-folder)`)
+	assert.NotContains(t, err.Error(), "shared-folder")
+	assert.ErrorContains(t, err, "Grafana will retry automatically")
+}
+
 func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 	var order []string
 	var mu sync.Mutex
@@ -1282,6 +1334,13 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 	err := f.process(t.Context(), cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "create repository from configuration")
+
+	// The failure names the blocked finalizer so status.deletion can point the
+	// user at the finalizer to force-remove.
+	var fe *finalizerError
+	if assert.ErrorAs(t, err, &fe) {
+		assert.Equal(t, repository.CleanFinalizer, fe.finalizer)
+	}
 }
 
 // TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable verifies the
@@ -1297,6 +1356,55 @@ func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) 
 
 	err := f.process(t.Context(), cfg)
 	assert.NoError(t, err)
+}
+
+// TestProcess_CleanFinalizer_RecordsErrorCause verifies that a webhook-deletion
+// failure is classified into the finalizer metric's cause label the same way
+// as the reconcile-error metric, so SLOs can filter out user-caused failures
+// (e.g. revoked credentials) here too.
+func TestProcess_CleanFinalizer_RecordsErrorCause(t *testing.T) {
+	testCases := []struct {
+		name        string
+		deleteErr   error
+		expectCause string
+	}{
+		{
+			name:        "permission denied classifies as user",
+			deleteErr:   repository.ErrPermissionDenied,
+			expectCause: reconcileCauseUser,
+		},
+		{
+			name:        "generic failure classifies as system",
+			deleteErr:   assert.AnError,
+			expectCause: reconcileCauseSystem,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			repo := mockRepo{
+				name:      "my-repo",
+				namespace: "default",
+				onDeleteFunc: func(ctx context.Context) error {
+					return tc.deleteErr
+				},
+			}
+			factory := repository.NewMockFactory(t)
+			factory.EXPECT().Build(mock.Anything, mock.Anything).Return(repo, nil)
+
+			metrics := registerFinalizerMetrics(prometheus.NewRegistry())
+			f := &finalizer{repoFactory: factory, metrics: &metrics}
+
+			cfg := repo.Config()
+			cfg.Finalizers = []string{repository.CleanFinalizer}
+			err := f.process(context.Background(), cfg)
+			assert.Error(t, err)
+
+			assert.Equal(t, float64(1), testutil.ToFloat64(
+				metrics.finalizerProcessedTotal.WithLabelValues(repository.CleanFinalizer, metricutils.ErrorOutcome, tc.expectCause),
+			))
+		})
+	}
 }
 
 // nonWebhookRepo implements only repository.Repository (not WebhookRepository),

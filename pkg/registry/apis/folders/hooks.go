@@ -58,7 +58,7 @@ func (b *FolderAPIBuilder) beginUpdate(ctx context.Context, obj runtime.Object, 
 		return nil, err
 	}
 
-	if updatedMeta.GetFolder() == oldMeta.GetFolder() {
+	if folder.ToLegacyFolderUID(updatedMeta.GetFolder()) == folder.ToLegacyFolderUID(oldMeta.GetFolder()) {
 		// No change to parent folder, nothing to do.
 		log.Info("Skipping Zanzana folder propagation; no change in parent", "folder", oldMeta.GetName())
 		return func(ctx context.Context, success bool) {}, nil
@@ -120,8 +120,8 @@ func (b *FolderAPIBuilder) afterDelete(obj runtime.Object, _ *metav1.DeleteOptio
 	}
 }
 
-func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, folder utils.GrafanaMetaAccessor) {
-	err := b.permissionStore.SetFolderParent(ctx, folder.GetNamespace(), folder.GetName(), folder.GetFolder())
+func (b *FolderAPIBuilder) writeFolderToZanzana(ctx context.Context, meta utils.GrafanaMetaAccessor) {
+	err := b.permissionStore.SetFolderParent(ctx, meta.GetNamespace(), meta.GetName(), folder.ToLegacyFolderUID(meta.GetFolder()))
 	if err != nil {
 		logging.FromContext(ctx).Warn("failed to propagate folder to zanzana", "err", err)
 	}

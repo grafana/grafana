@@ -87,6 +87,11 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid polling notifier config: %w", err)
 	}
+	// Recording sites should not have to check for nil.
+	storageMetrics := cfg.storageMetrics
+	if storageMetrics == nil {
+		storageMetrics = resource.ProvideStorageMetrics(nil)
+	}
 	return &pollingNotifier{
 		dialect:         cfg.dialect,
 		pollingInterval: cfg.pollingInterval,
@@ -96,7 +101,7 @@ func newPollingNotifier(cfg *pollingNotifierConfig) (*pollingNotifier, error) {
 		listLatestRVs:   cfg.listLatestRVs,
 		historyPoll:     cfg.historyPoll,
 		done:            cfg.done,
-		storageMetrics:  cfg.storageMetrics,
+		storageMetrics:  storageMetrics,
 	}, nil
 }
 
@@ -173,9 +178,7 @@ func (p *pollingNotifier) poll(ctx context.Context, grp string, res string, sinc
 	if err != nil {
 		return 0, fmt.Errorf("poll history: %w", err)
 	}
-	if p.storageMetrics != nil {
-		p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
-	}
+	p.storageMetrics.PollerLatency.Observe(time.Since(start).Seconds())
 
 	var nextRV int64
 	for _, rec := range records {

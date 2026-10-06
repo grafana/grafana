@@ -6,7 +6,7 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole, byText } from 'testing-library-selector';
 
-import { setPluginLinksHook } from '@grafana/runtime';
+import { config, setPluginLinksHook } from '@grafana/runtime';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
@@ -156,6 +156,27 @@ describe('PolicyTreeSelector', () => {
 
       // Dropdown should NOT be visible in collapsed state
       expect(policyTreeUi.policySelector.query()).not.toBeInTheDocument();
+    });
+
+    describe('when Grafana is served from a sub path', () => {
+      const originalSubUrl = config.appSubUrl;
+
+      beforeEach(() => {
+        config.appSubUrl = '/grafana';
+      });
+
+      afterEach(() => {
+        config.appSubUrl = originalSubUrl;
+      });
+
+      it('prefixes the View policies link with the sub path', async () => {
+        const { user } = renderRuleEditor();
+
+        await user.type(await ui.inputs.name.find(), 'my great new rule');
+        await selectFolderAndGroup(user);
+
+        expect(await policyTreeUi.viewPoliciesLink.find()).toHaveAttribute('href', '/grafana/alerting/routes');
+      });
     });
 
     it('does not set notification_settings.policy or a legacy label when saving with default policy', async () => {

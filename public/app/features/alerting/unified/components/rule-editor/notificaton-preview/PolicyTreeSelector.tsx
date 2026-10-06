@@ -13,6 +13,7 @@ import { Badge, Box, Button, Field, Icon, Stack, Text, TextLink } from '@grafana
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
+import { createRelativeUrl } from '../../../utils/url';
 
 /**
  * PolicyTreeSelector - A component to select the notification policy tree for an alert rule.
@@ -113,7 +114,7 @@ export function PolicyTreeSelector() {
                 />
               </Field>
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >
@@ -158,7 +159,7 @@ export function PolicyTreeSelector() {
                 <Trans i18nKey="alerting.policy-tree-selector.change">Change</Trans>
               </Button>
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >

@@ -89,7 +89,9 @@ export function buildOAuthAuthorizeUrl(
     type === 'githubEnterpriseOAuth'
       ? // GHES hosts its OAuth endpoints at the server root; drop any path (e.g. /api/v3)
         `${getServerOrigin(serverUrl) || (serverUrl ?? '').replace(/\/+$/, '')}/login/oauth/authorize`
-      : AUTHORIZE_URLS[type];
+      : type === 'gitlabOAuth' && serverUrl
+        ? `${serverUrl.replace(/\/+$/, '')}/oauth/authorize`
+        : AUTHORIZE_URLS[type];
 
   return textUtil.sanitizeUrl(`${authorizeUrl}?${params.toString()}`);
 }

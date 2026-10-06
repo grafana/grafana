@@ -3,6 +3,10 @@ import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useAsync, useToggle } from 'react-use';
 
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '@grafana/alerting/internal';
 import { useRoutingTreeOptions } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,11 +31,7 @@ import { DataSourcePicker } from 'app/features/datasources/components/picker/Dat
 import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/components/Shared/ProvisioningAwareFolderPicker';
 import { type RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import {
-  DataSourceType,
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
-} from '../../../utils/datasource';
+import { DataSourceType } from '../../../utils/datasource';
 import { stringifyErrorLike } from '../../../utils/misc';
 import { CreateNewFolder } from '../../create-folder/CreateNewFolder';
 import { useGetNameSpacesByDatasourceName, useGetRulerRules } from '../../rule-editor/useAlertRuleSuggestions';

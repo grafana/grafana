@@ -106,6 +106,7 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       disableSanitizeHtml: getConfig().disableSanitizeHtml,
       contentAwareWidthsEnabled,
       tableRefreshEnabled,
+      jsonSyntaxHighlightingEnabled: refreshNewFeaturesEnabled,
     }),
     [
       options.showHeader,

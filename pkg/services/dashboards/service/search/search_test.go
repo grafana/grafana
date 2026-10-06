@@ -3,11 +3,16 @@ package dashboardsearch
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -41,6 +46,14 @@ func TestParseResults(t *testing.T) {
 						Name: "description",
 						Type: resourcepb.ResourceTableColumnDefinition_STRING,
 					},
+					{
+						Name: resource.SEARCH_FIELD_RV,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
+					{
+						Name: resource.SEARCH_FIELD_LEGACY_ID,
+						Type: resourcepb.ResourceTableColumnDefinition_INT64,
+					},
 				},
 				Rows: []*resourcepb.ResourceTableRow{
 					{
@@ -54,6 +67,8 @@ func TestParseResults(t *testing.T) {
 							[]byte("100"),
 							[]byte("25"),
 							[]byte("description"),
+							[]byte("123"),
+							[]byte("42"),
 						},
 					},
 				},
@@ -65,6 +80,8 @@ func TestParseResults(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, results.Hits, 1)
 		require.Equal(t, "description", results.Hits[0].Description)
+		assert.Equal(t, int64(123), results.Hits[0].Field.Object[resource.SEARCH_FIELD_RV])
+		assert.Equal(t, int64(42), results.Hits[0].Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("should parse field-value results", func(t *testing.T) {
@@ -81,10 +98,12 @@ func TestParseResults(t *testing.T) {
 				{Name: resource.SEARCH_FIELD_OWNER_REFERENCES, Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
 				{Name: builders.DASHBOARD_ERRORS_LAST_1_DAYS, Type: resourcepb.ResourceSearchField_INT64},
 				{Name: "customFlags", Type: resourcepb.ResourceSearchField_BOOLEAN, IsArray: true},
+				{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
 			},
 			Rows: []*resourcepb.ResourceSearchRow{{
-				Key:   &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
-				Score: &score,
+				Key:             &resourcepb.ResourceKey{Name: "uid", Resource: "dashboards"},
+				ResourceVersion: 9007199254740993,
+				Score:           &score,
 				Values: []*resourcepb.ResourceSearchValue{
 					{FieldIndex: 0, StringValues: []string{"Dashboard 1"}},
 					{FieldIndex: 1, StringValues: []string{"folder1"}},
@@ -95,6 +114,7 @@ func TestParseResults(t *testing.T) {
 					{FieldIndex: 6, StringValues: []string{"iam.grafana.app/Team/devops"}},
 					{FieldIndex: 7, Int64Values: []int64{100}},
 					{FieldIndex: 8, BooleanValues: []bool{true, false}},
+					{FieldIndex: 9, Int64Values: []int64{42}},
 				},
 			}},
 			TotalHits: 1,
@@ -115,6 +135,8 @@ func TestParseResults(t *testing.T) {
 		assert.Equal(t, score, hit.Score)
 		assert.Equal(t, int64(100), hit.Field.Object[builders.DASHBOARD_ERRORS_LAST_1_DAYS])
 		assert.Equal(t, []any{true, false}, hit.Field.Object["customFlags"])
+		assert.Equal(t, int64(9007199254740993), hit.Field.Object[resource.SEARCH_FIELD_RV])
+		assert.Equal(t, int64(42), hit.Field.Object[resource.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("should reject an invalid field-value index", func(t *testing.T) {
@@ -185,8 +207,8 @@ func TestParseResults(t *testing.T) {
 
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
-		// The 503 status must survive so retry classification can detect it.
 		require.True(t, apierrors.IsServiceUnavailable(err))
+		require.Equal(t, responsewriters.ErrorToAPIStatus(resource.StatusError(resSearchResp.Error)), responsewriters.ErrorToAPIStatus(err))
 	})
 }
 
@@ -214,6 +236,88 @@ func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchRes
 		},
 		TotalHits: totalHits,
 	}
+}
+
+func TestSearchAll_Errors(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: dashboardSearchRateLimitResult()}},
+		{name: "grpc", err: wrappedDashboardSearchRateLimitGRPCError(t)},
+		{name: "canceled", err: context.Canceled},
+		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
+		{name: "deadline exceeded", err: context.DeadlineExceeded},
+		{name: "other transport error", err: fmt.Errorf("connection refused")},
+	} {
+		for _, errorPage := range []int{1, 2} {
+			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
+				calls := 0
+				searchFn := func(_ context.Context, _ int64, _ *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
+					calls++
+					if calls < errorPage {
+						return makeResponse([]string{"dashboard-1"}, 2), nil
+					}
+					return tc.resp, tc.err
+				}
+				request := &resourcepb.ResourceSearchRequest{Limit: 1}
+
+				results, err := SearchAll(context.Background(), 1, request, searchFn)
+
+				if tc.err != nil {
+					require.ErrorIs(t, err, tc.err, "transport errors must retain their original chain and gRPC status")
+				} else {
+					requireDashboardSearchRateLimitStatus(t, err)
+				}
+				require.Empty(t, results.Hits, "partial results must not be returned as a complete result")
+				require.Equal(t, errorPage, calls)
+			})
+		}
+	}
+}
+
+func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {
+	return &resourcepb.ErrorResult{
+		Code:    http.StatusTooManyRequests,
+		Reason:  string(metav1.StatusReasonTooManyRequests),
+		Message: "search is busy",
+		Details: &resourcepb.ErrorDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			Uid:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}
+}
+
+func wrappedDashboardSearchRateLimitGRPCError(t *testing.T) error {
+	t.Helper()
+
+	grpcStatus, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(dashboardSearchRateLimitResult())
+	require.NoError(t, err)
+	return fmt.Errorf("search: %w", grpcStatus.Err())
+}
+
+func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
+	t.Helper()
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, err, &apiStatus)
+	require.Equal(t, metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusTooManyRequests,
+		Reason:  metav1.StatusReasonTooManyRequests,
+		Message: "search is busy",
+		Details: &metav1.StatusDetails{
+			Name:              "dashboard",
+			Group:             "dashboard.grafana.app",
+			Kind:              "dashboards",
+			UID:               "uid",
+			RetryAfterSeconds: 12,
+		},
+	}, apiStatus.Status())
 }
 
 func TestSearchAll(t *testing.T) {

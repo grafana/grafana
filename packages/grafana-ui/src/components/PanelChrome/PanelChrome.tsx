@@ -56,14 +56,11 @@ interface BaseProps {
    */
   statusItems?: PanelStatusItem[];
   /**
-   * Handle opening error details view (like inspect / error tab)
+   * Fired when the user clicks the status message/popover, alongside PanelContext's
+   * `onOpenInspector` which actually opens the error details view. Use for host-side side
+   * effects (e.g. telemetry).
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
-  /**
-   * Triggers an AI-assisted investigation of the panel's errors/notices, shown as an action in
-   * the status popover. Omit to hide the action.
-   */
-  onInvestigateErrors?: (e: React.SyntheticEvent) => void;
   /**
    * @deprecated use `actions' instead
    **/
@@ -162,7 +159,6 @@ export function PanelChrome({
   statusMessage,
   statusItems,
   statusMessageOnClick,
-  onInvestigateErrors,
   leftItems,
   actions,
   selectionId,
@@ -181,6 +177,7 @@ export function PanelChrome({
   minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -301,7 +298,7 @@ export function PanelChrome({
         <div className={styles.title}>
           <Text
             element="h2"
-            variant="h6"
+            variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
             id={panelTitleId}
@@ -314,7 +311,7 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6">
+          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'}>
             <button
               type="button"
               className={styles.clearButtonStyles}
@@ -334,7 +331,7 @@ export function PanelChrome({
                   !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
                 }
               />
-              <Text variant="h6" truncate id={panelTitleId}>
+              <Text variant={visualRefreshEnabled ? 'base' : 'h6'} truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>
@@ -434,7 +431,6 @@ export function PanelChrome({
                   items={statusItems}
                   onClick={statusMessageOnClick}
                   ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
-                  onInvestigateErrors={onInvestigateErrors}
                 />
               </div>
             )}
@@ -459,7 +455,6 @@ export function PanelChrome({
                     items={statusItems}
                     onClick={statusMessageOnClick}
                     ariaLabel={t('grafana-ui.panel-chrome.ariaLabel-panel-status', 'Panel status')}
-                    onInvestigateErrors={onInvestigateErrors}
                   />
                 </div>
               )}

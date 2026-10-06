@@ -292,6 +292,37 @@ describe('parsePromQLStyleMatcherLooseSafe', () => {
 });
 
 describe('parsePromQLStyleMatcherLoose', () => {
+  it('normalizes formatting whitespace for all operators when requested', () => {
+    expect(
+      parsePromQLStyleMatcherLoose(
+        '{ team = operations , severity != warning , service =~ api.* , region !~ test.* }',
+        { trimValue: true }
+      )
+    ).toEqual([
+      { name: 'team', value: 'operations', isEqual: true, isRegex: false },
+      { name: 'severity', value: 'warning', isEqual: false, isRegex: false },
+      { name: 'service', value: 'api.*', isEqual: true, isRegex: true },
+      { name: 'region', value: 'test.*', isEqual: false, isRegex: true },
+    ]);
+  });
+
+  it.each([
+    ['team = platform operations', 'platform operations'],
+    ['team = " operations "', ' operations '],
+    ['team = "platform, operations"', 'platform, operations'],
+    ['team = ""', ''],
+  ])('preserves the value in %s when normalizing formatting whitespace', (query, value) => {
+    expect(parsePromQLStyleMatcherLoose(query, { trimValue: true })).toEqual([
+      { name: 'team', value, isEqual: true, isRegex: false },
+    ]);
+  });
+
+  it('preserves leading value whitespace by default', () => {
+    expect(parsePromQLStyleMatcherLoose('team = operations')).toEqual([
+      { name: 'team', value: ' operations', isEqual: true, isRegex: false },
+    ]);
+  });
+
   it('should throw on invalid matcher', () => {
     expect(() => {
       parsePromQLStyleMatcherLoose('foo');
