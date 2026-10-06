@@ -1,10 +1,13 @@
+import { waitFor } from '@testing-library/react';
 import { testWithFeatureToggles } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import * as libraryPanelApi from 'app/features/library-panels/state/api';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { LibraryPanelBehavior } from '../../scene/LibraryPanelBehavior';
 import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../../scene/layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -70,20 +73,47 @@ describe('replacePanel', () => {
     expect(sidebar.state.redoStack).toHaveLength(1);
   });
 
-  it('redoes panel replacement', () => {
+  it('redoes library panel replacement without fetching the library panel again', async () => {
     const { source, oldPanel, newPanel, sidebar } = setup();
     const originalState = source.state;
-    replacePanel({ source, oldPanel, newPanel });
-    sidebar.undoAction();
+    const behavior = new LibraryPanelBehavior({ uid: 'library-1', name: 'Library panel' });
+    newPanel.setState({ $behaviors: [behavior] });
+    const getLibraryPanel = jest.spyOn(libraryPanelApi, 'getLibraryPanel').mockResolvedValue({
+      uid: 'library-1',
+      name: 'Library panel',
+      version: 1,
+      type: 'timeseries',
+      model: { type: 'timeseries', title: 'Library panel' },
+    });
 
-    sidebar.redoAction();
+    let deactivatePanel: (() => void) | undefined;
+    try {
+      replacePanel({ source, oldPanel, newPanel });
+      deactivatePanel = source.state.body.activate();
+      await waitFor(() => expect(behavior.state.isLoaded).toBe(true));
+      expect(getLibraryPanel).toHaveBeenCalledTimes(1);
+      expect(getLibraryPanel).toHaveBeenCalledWith('library-1', true);
+      deactivatePanel();
+      sidebar.undoAction();
 
-    expect(newPanel.state.key).toBe('panel-1');
-    expect(source.state.body).toBe(newPanel);
-    expect(newPanel.parent).toBe(source);
-    expect(source.state).toEqual({ ...originalState, body: newPanel });
-    expect(sidebar.getSelectedObject()).toBe(newPanel);
-    expect(sidebar.state.undoStack).toHaveLength(1);
-    expect(sidebar.state.redoStack).toHaveLength(0);
+      sidebar.redoAction();
+      deactivatePanel = source.state.body.activate();
+
+      expect(source.state.body.state.$behaviors).toEqual([behavior]);
+      expect(behavior.state.uid).toBe('library-1');
+      expect(behavior.state.isLoaded).toBe(true);
+      expect(getLibraryPanel).toHaveBeenCalledTimes(1);
+
+      expect(newPanel.state.key).toBe('panel-1');
+      expect(source.state.body).toBe(newPanel);
+      expect(newPanel.parent).toBe(source);
+      expect(source.state).toEqual({ ...originalState, body: newPanel });
+      expect(sidebar.getSelectedObject()).toBe(newPanel);
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    } finally {
+      deactivatePanel?.();
+      getLibraryPanel.mockRestore();
+    }
   });
 });
