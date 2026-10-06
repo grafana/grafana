@@ -3894,48 +3894,73 @@
         }
       ]
     },
-    "/searchRules": {
-      "post": {
-        "operationId": "createSearchRules",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSearchRulesRequestBody"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateSearchRulesRequestBody"
-              }
-            }
-          },
-          "required": true
-        },
+    "/search/hybrid": {
+      "get": {
+        "description": "Experimental hybrid search for alert rules",
+        "operationId": "getHybridSearchAlertRules",
         "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateSearchRulesResponse"
-                }
-              }
-            }
+          "default": {
+            "description": "Default Response."
           }
         }
       },
-      "parameters": []
+      "parameters": [
+        {
+          "name": "folder",
+          "in": "query",
+          "description": "Filter by the stored folder UID",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Maximum number of results (default 50)",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "minRelevance",
+          "in": "query",
+          "description": "Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "description": "Search text for lexical and semantic retrieval",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "semanticQuery",
+          "in": "query",
+          "description": "Optional text to embed for semantic retrieval instead of query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "skipRerank",
+          "in": "query",
+          "description": "Skip reranking and return the fused lexical and semantic ordering",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -3978,6 +4003,31 @@
       "AlertRuleAlertRuleHealth": {
         "type": "string",
         "enum": ["Unknown", "OK", "Paused", "Error", "NoData"]
+      },
+      "AlertRuleAlertRuleInstanceTotals": {
+        "description": "Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "integer"
+          },
+          "firing": {
+            "type": "integer"
+          },
+          "healthy": {
+            "type": "integer"
+          },
+          "nodata": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "recovering": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
       },
       "AlertRuleAlertRuleState": {
         "type": "string",
@@ -4309,6 +4359,9 @@
           },
           "stateReason": {
             "$ref": "#/components/schemas/AlertRuleAlertRuleStateReason"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AlertRuleAlertRuleInstanceTotals"
           }
         },
         "additionalProperties": false
@@ -4514,273 +4567,6 @@
           }
         },
         "additionalProperties": false
-      },
-      "CreateSearchRulesFacetValue": {
-        "description": "#FacetValue is a single value/count pair in a facet breakdown.",
-        "type": "object",
-        "required": ["value", "count"],
-        "properties": {
-          "count": {
-            "type": "integer"
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSearchRulesRequestBody": {
-        "type": "object",
-        "properties": {
-          "continue": {
-            "type": "string"
-          },
-          "facets": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "labelSelector": {
-            "type": "string"
-          },
-          "limit": {
-            "type": "integer"
-          },
-          "sort": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateSearchRulesSearchSortField"
-            }
-          },
-          "where": {
-            "$ref": "#/components/schemas/CreateSearchRulesSearchWhereNode"
-          }
-        }
-      },
-      "CreateSearchRulesResponse": {
-        "description": "listMeta is intentionally omitted: #SearchResults carries its\nown metadata (continue, totalHits).",
-        "type": "object",
-        "required": ["metadata", "items", "apiVersion", "kind"],
-        "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
-            "type": "string"
-          },
-          "facets": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/CreateSearchRulesFacetValue"
-              }
-            }
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateSearchRulesSearchResultHit"
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
-            "type": "string"
-          },
-          "metadata": {
-            "$ref": "#/components/schemas/CreateSearchRulesSearchResultsMetadata"
-          }
-        }
-      },
-      "CreateSearchRulesRuleSearchHitFields": {
-        "description": "#RuleSearchHitFields is the per-kind field payload returned on each hit.\nIt carries the union of alert- and recording-rule search fields; only the\nfields relevant to a hit's kind are populated. This maps to the kind's\ndeclared searchFields.",
-        "type": "object",
-        "properties": {
-          "annotations": {
-            "description": "Alert-rule fields.",
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "dashboardUID": {
-            "type": "string"
-          },
-          "datasourceUIDs": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "folder": {
-            "type": "string"
-          },
-          "for": {
-            "type": "string"
-          },
-          "interval": {
-            "type": "string"
-          },
-          "keepFiringFor": {
-            "type": "string"
-          },
-          "labels": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "metric": {
-            "description": "Recording-rule fields.",
-            "type": "string"
-          },
-          "notificationType": {
-            "type": "string"
-          },
-          "panelID": {
-            "type": "integer"
-          },
-          "paused": {
-            "type": "boolean"
-          },
-          "receiver": {
-            "type": "string"
-          },
-          "routingTree": {
-            "type": "string"
-          },
-          "targetDatasourceUID": {
-            "type": "string"
-          },
-          "title": {
-            "type": "string"
-          },
-          "type": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSearchRulesSearchFilterLeaf": {
-        "description": "#SearchFilterLeaf matches a single field against a set of values.",
-        "type": "object",
-        "required": ["field", "operator", "values"],
-        "properties": {
-          "field": {
-            "type": "string"
-          },
-          "operator": {
-            "type": "string",
-            "enum": ["In", "NotIn"]
-          },
-          "values": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "CreateSearchRulesSearchResultHit": {
-        "description": "#SearchResultHit is a single match: its identity, an optional relevance\nscore (present only when the query included free text), and the requested\nfields.",
-        "type": "object",
-        "required": ["resource", "fields"],
-        "properties": {
-          "fields": {
-            "$ref": "#/components/schemas/CreateSearchRulesRuleSearchHitFields"
-          },
-          "resource": {
-            "$ref": "#/components/schemas/CreateSearchRulesSearchResultResource"
-          },
-          "score": {
-            "type": "number"
-          }
-        }
-      },
-      "CreateSearchRulesSearchResultResource": {
-        "description": "#SearchResultResource is the full identity of a hit.",
-        "type": "object",
-        "required": ["group", "resource", "kind", "name"],
-        "properties": {
-          "group": {
-            "type": "string"
-          },
-          "kind": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "resource": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSearchRulesSearchResultsMetadata": {
-        "description": "#SearchResultsMetadata carries the paging token and total authorised match\ncount.",
-        "type": "object",
-        "properties": {
-          "continue": {
-            "type": "string"
-          },
-          "totalHits": {
-            "type": "integer"
-          },
-          "totalHitsRelation": {
-            "description": "Always read totalHits together with totalHitsRelation.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/CreateSearchRulesTotalHitsRelation"
-              }
-            ]
-          }
-        }
-      },
-      "CreateSearchRulesSearchSortField": {
-        "description": "#SearchSortField selects a result ordering. A leading \"-\" denotes\ndescending. Each field must be declared sortable in the kind's manifest.",
-        "type": "string"
-      },
-      "CreateSearchRulesSearchTextLeaf": {
-        "description": "#SearchTextLeaf is a free-text search across one or more text-capable\nfields. When fields is omitted, the kind's default text field set is used.\nA match requires every whitespace-separated term of value to appear in the\nfield, in any order. How very short terms, punctuation, and common words are\nmatched is backend-defined and may change.",
-        "type": "object",
-        "required": ["value"],
-        "properties": {
-          "fields": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "value": {
-            "type": "string"
-          }
-        }
-      },
-      "CreateSearchRulesSearchWhereNode": {
-        "description": "#SearchWhereNode is a single node of the where query tree. A node has\nexactly one key naming its type. v1 supports a top-level \"and\" combinator\nplus the \"text\" and \"filter\" leaves; \"or\"/\"not\"/nesting and the \"range\"/\n\"exists\" leaves are future, additive extensions.",
-        "type": "object",
-        "properties": {
-          "and": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/CreateSearchRulesSearchWhereNode"
-            }
-          },
-          "filter": {
-            "$ref": "#/components/schemas/CreateSearchRulesSearchFilterLeaf"
-          },
-          "text": {
-            "$ref": "#/components/schemas/CreateSearchRulesSearchTextLeaf"
-          }
-        }
-      },
-      "CreateSearchRulesTotalHitsRelation": {
-        "description": "#TotalHitsRelation says how totalHits relates to the real number of matching\nrules the caller may see: \"eq\" when it is exact, \"lte\" when it is an upper\nbound because authorisation was applied after the search ranked its results.",
-        "type": "string",
-        "enum": ["eq", "lte"]
       },
       "ListAlertRuleSearchRulesV0alpha1FacetValue": {
         "type": "object",
@@ -6011,13 +5797,13 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }

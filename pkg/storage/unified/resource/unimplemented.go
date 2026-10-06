@@ -45,7 +45,7 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
-func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*BackendReadResponse], error) {
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
 	return nil, ErrBatchReadUnsupported
 }
 
@@ -84,4 +84,8 @@ func (UnimplementedStorageBackend) ListStoredResources(context.Context, Namespac
 
 func (UnimplementedStorageBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	return time.Time{}, errUnimplemented
+}
+
+func (UnimplementedStorageBackend) ListResourceLastImportTimes(context.Context) (map[NamespacedResource]time.Time, error) {
+	return nil, errUnimplemented
 }

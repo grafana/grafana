@@ -27,8 +27,7 @@ import { TransformationEditor } from './TransformationEditor';
 import { TransformationEditorHelpDisplay } from './TransformationEditorHelpDisplay';
 import { TransformationFilter } from './TransformationFilter';
 import { TransformationOperationRowHeader } from './TransformationOperationRowHeader';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { type TransformationData, type TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
   id: string;

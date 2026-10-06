@@ -23,6 +23,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -795,6 +796,19 @@ func TestArtificialDelayAfterSuccessfulOperation(t *testing.T) {
 	check(t, false, &resourcepb.DeleteResponse{Error: AsErrorResult(errors.New("some error"))}, nil)
 }
 
+type fakeResourceIndexClient struct {
+	resourcepb.ResourceIndexClient
+	statsResponse *resourcepb.ResourceStatsResponse
+}
+
+func newFakeResourceIndexClient() *fakeResourceIndexClient {
+	return &fakeResourceIndexClient{}
+}
+
+func (f *fakeResourceIndexClient) GetStats(context.Context, *resourcepb.ResourceStatsRequest, ...grpc.CallOption) (*resourcepb.ResourceStatsResponse, error) {
+	return f.statsResponse, nil
+}
+
 func TestGetQuotaUsage(t *testing.T) {
 	ctx := t.Context()
 
@@ -1422,6 +1436,8 @@ func newWatchTestUser() *identity.StaticRequester {
 }
 
 type watchTestServerOpts struct {
+	EventSubscriber   EventSubscriber
+	EventPublisher    EventPublisher
 	BookmarkFrequency time.Duration
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
@@ -1436,18 +1452,25 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:      NewBadgerKV(db),
-		WatchOptions: WatchOptions{SettleDelay: 1 * time.Millisecond},
+		KvStore:            NewBadgerKV(db),
+		EventSubscriber:    opts.EventSubscriber,
+		EventPublisher:     opts.EventPublisher,
+		EnableNatsNotifier: opts.EventSubscriber != nil,
+		WatchInvalidator:   watchExpiry,
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
 	})
 	require.NoError(t, err)
 
 	srv, err := NewResourceServer(ResourceServerOptions{
-		Backend:           store,
-		BookmarkFrequency: opts.BookmarkFrequency,
-		StorageMetrics:    opts.StorageMetrics,
-		AccessClient:      opts.AccessClient,
-		NatsWatchMaxAge:   opts.NatsWatchMaxAge,
+		Backend:              store,
+		WatchExpiry:          watchExpiry,
+		BookmarkFrequency:    opts.BookmarkFrequency,
+		SeededWatchesEnabled: true,
+		StorageMetrics:       opts.StorageMetrics,
+		AccessClient:         opts.AccessClient,
+		NatsWatchMaxAge:      opts.NatsWatchMaxAge,
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -1715,6 +1738,29 @@ func advanceBookmarkClock() time.Time {
 	// synctest's clock starts before the Snowflake epoch.
 	time.Sleep(time.Until(time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC)))
 	return time.Now()
+}
+
+func TestWatchPreviousReadError(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		events, stream, done := startBookmarkWatch(t, bookmarkWatchRequest(), func(srv *server, _ *bookmarkWatchServer) {
+			srv.backend = &internalReadBackend{failure: &resourcepb.ErrorResult{
+				Code: http.StatusInternalServerError, Message: "previous version read failed",
+			}}
+		})
+		event := bookmarkWrittenEvent(200)
+		event.Type = resourcepb.WatchEvent_MODIFIED
+		event.PreviousRV = 150
+		events <- event
+		synctest.Wait()
+
+		require.Empty(t, done, "watch should remain open after the previous version read fails")
+		require.Len(t, stream.events, 1)
+		got := <-stream.events
+		require.Equal(t, event.Type, got.Type)
+		require.Equal(t, event.ResourceVersion, got.Resource.Version)
+		require.Equal(t, event.Value, got.Resource.Value)
+		require.Nil(t, got.Previous)
+	})
 }
 
 func TestWatchDeleteRetainsPreviousJobRevisionAfterPruning(t *testing.T) {
@@ -2176,12 +2222,12 @@ func TestWatchTerminationErrors(t *testing.T) {
 }
 
 func TestWatchExpiryGeneration(t *testing.T) {
-	expiry := newWatchExpiry()
-	first := expiry.current()
-	second := expiry.current()
+	expiry := NewWatchExpiry()
+	first := expiry.WatchInvalidation()
+	second := expiry.WatchInvalidation()
 	require.Equal(t, first, second)
 
-	expiry.expire()
+	expiry.Invalidate()
 
 	for _, generation := range []<-chan struct{}{first, second} {
 		select {
@@ -2191,7 +2237,7 @@ func TestWatchExpiryGeneration(t *testing.T) {
 		}
 	}
 	select {
-	case <-expiry.current():
+	case <-expiry.WatchInvalidation():
 		t.Fatal("new generation is already expired")
 	default:
 	}
@@ -2269,6 +2315,12 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), testUser))
 	defer cancel()
 
+	require.NoError(t, srv.watchStartup.broadcaster.waitReady(ctx))
+	since, err := srv.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: &resourcepb.ListOptions{
+		Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
+	}}, func(ListIterator) error { return nil })
+	require.NoError(t, err)
+
 	// Create two resources before the watch starts. The broadcaster will absorb
 	// these events into its replay cache and hand them to any future subscriber.
 	require.NoError(t, createTestPlaylist(ctx, srv))
@@ -2278,9 +2330,9 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 	// populated by the time we subscribe.
 	requireMetricEventually(t, metrics.Broadcaster.EventsReceivedTotal.WithLabelValues(watchTestResource), 2)
 
-	// Start a watch with a tiny Since RV. Delay each Send so the component
-	// metrics can prove that transport scheduling time is separated from the
-	// upstream commit-to-send-start latency.
+	// Resume from the LIST taken before both writes. Delay each Send so the
+	// component metrics can prove that transport scheduling time is separated
+	// from the upstream commit-to-send-start latency.
 	mock := newMockWatchServer(ctx)
 	mock.sendDelay = 20 * time.Millisecond
 	var eg errgroup.Group
@@ -2289,7 +2341,7 @@ func TestWatchEventMetricsWithSinceRV(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource},
 			},
-			Since: 42,
+			Since: since,
 		}, mock)
 	})
 
@@ -3160,6 +3212,7 @@ func TestFolderDeletePermissionChecks(t *testing.T) {
 // assert that the authz gate short-circuits or delegates.
 type stubBlobSupport struct {
 	putReached bool
+	getReached bool
 }
 
 func (s *stubBlobSupport) SupportsSignedURLs() bool { return false }
@@ -3170,6 +3223,7 @@ func (s *stubBlobSupport) PutResourceBlob(_ context.Context, _ *resourcepb.PutBl
 }
 
 func (s *stubBlobSupport) GetResourceBlob(_ context.Context, _ *resourcepb.ResourceKey, _ *utils.BlobInfo, _ bool) (*resourcepb.GetBlobResponse, error) {
+	s.getReached = true
 	return &resourcepb.GetBlobResponse{}, nil
 }
 
@@ -3265,11 +3319,78 @@ func TestPutBlobPermissionChecks(t *testing.T) {
 		require.False(t, blob.putReached)
 	})
 
-	t.Run("returns 404 when parent resource does not exist", func(t *testing.T) {
-		srv, _, blob := newBlobAuthzTestServer(t, nil)
+	t.Run("checks create permission when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+
+		var capturedReq authlib.CheckRequest
+		var capturedFolder string
+		ac.fn = func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedReq, capturedFolder = req, folder
+			return allow()
+		}
+
 		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
 		require.NoError(t, err)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, utils.VerbCreate, capturedReq.Verb)
+		require.Empty(t, capturedReq.Name)
+		require.Empty(t, capturedFolder)
+	})
+
+	folderOnlyCreate := func(allowed string) func(authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+		return func(req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			if req.Verb == utils.VerbCreate && folder == allowed {
+				return allow()
+			}
+			return deny()
+		}
+	}
+
+	t.Run("checks create permission in the requested folder when parent resource does not exist", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+	})
+
+	t.Run("rejects with 403 when create is only allowed in a folder the request does not name", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = folderOnlyCreate("folder-x")
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
+		require.False(t, blob.putReached)
+	})
+
+	t.Run("ignores the requested folder when parent resource exists", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		seedParent(t, srv, ac)
+
+		var capturedFolder string
+		ac.fn = func(_ authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
+			capturedFolder = folder
+			return allow()
+		}
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key, Folder: "folder-x"})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.putReached)
+		require.Equal(t, "", capturedFolder)
+	})
+
+	t.Run("rejects with 403 when access.Check denies create for a missing parent", func(t *testing.T) {
+		srv, ac, blob := newBlobAuthzTestServer(t, nil)
+		ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+
+		rsp, err := srv.PutBlob(ctxWithUser, &resourcepb.PutBlobRequest{Resource: key})
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusForbidden), rsp.Error.Code)
 		require.False(t, blob.putReached)
 	})
 
@@ -3420,6 +3541,168 @@ func TestGetBlob_RejectsMissingResourceKey(t *testing.T) {
 	require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
 }
 
+func TestGetBlobReferenceChecks(t *testing.T) {
+	const namespace = "default"
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: namespace, Name: "test-resource"}
+	ctx := ctxWithUserInNs(namespace)
+	playlist := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default"},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	create := func(t *testing.T, srv *server, blobs string) int64 {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: playlist(blobs)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		return rsp.ResourceVersion
+	}
+	getBlob := func(t *testing.T, srv *server, req *resourcepb.GetBlobRequest) *resourcepb.GetBlobResponse {
+		t.Helper()
+		rsp, err := srv.GetBlob(ctx, req)
+		require.NoError(t, err)
+		return rsp
+	}
+
+	t.Run("rejects a request without a resource name", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		noName := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: namespace}
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: noName, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusBadRequest), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns a blob the resource references", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a","size":2,"contentType":"application/json"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		bucket := memblob.OpenBucket(nil)
+		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
+		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
+		require.NoError(t, err)
+		srv.blob = blob
+
+		value := []byte(`{"title":"test"}`)
+		put, err := blob.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource: key, Method: resourcepb.PutBlobRequest_GRPC,
+			ContentType: "application/json; charset=utf-8", Value: value,
+		})
+		require.NoError(t, err)
+		create(t, srv, fmt.Sprintf(`,"blobs":{"dashboard":{"uid":%q,"contentType":"application/json; charset=utf-8"}}`, put.Uid))
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
+		require.Nil(t, rsp.Error)
+		require.Equal(t, value, rsp.Value)
+		require.Equal(t, "application/json; charset=utf-8", rsp.ContentType)
+	})
+
+	t.Run("rejects a blob the resource does not reference", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource has no blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects any blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		create(t, srv, `,"blobs":{}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("rejects a detached blob once the last reference is removed", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("returns a blob referenced by the requested older version", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		rv := create(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		updated, err := srv.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: playlist(`,"blobs":{"dashboard":{"uid":"blob-b"}}`), ResourceVersion: rv})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a", ResourceVersion: rv})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	withAnnotation := func(blobs string) []byte {
+		return []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"test-resource","namespace":"default","annotations":{"` + utils.AnnoKeyBlob + `":"legacy-blob; size=2"}},"spec":{"title":"t","interval":"5m","items":[]}` + blobs + `}`)
+	}
+	createWithAnnotation := func(t *testing.T, srv *server, blobs string) {
+		t.Helper()
+		rsp, err := srv.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withAnnotation(blobs)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+	}
+
+	t.Run("returns the annotation blob by uid when the resource also has a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("rejects an unreferenced blob when the resource has an annotation and a blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{"dashboard":{"uid":"blob-a"}}`)
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+	})
+
+	t.Run("returns only the annotation blob when the resource has an empty blobs field", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, `,"blobs":{}`)
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-b"})
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		require.False(t, blob.getReached)
+
+		rsp = getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+
+	t.Run("allows any blob when the resource only has the annotation", func(t *testing.T) {
+		srv, _, blob := newBlobAuthzTestServer(t, nil)
+		createWithAnnotation(t, srv, "")
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "older-legacy-blob"})
+		require.Nil(t, rsp.Error)
+		require.True(t, blob.getReached)
+	})
+}
+
 func TestClassifyAuthError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -3444,12 +3727,12 @@ func TestClassifyAuthError(t *testing.T) {
 
 // Admin identity, so per-item authz never filters anything out: paging is what is
 // under test here, not authorization.
-func newKeysOnlyTestServer(t *testing.T) (*server, context.Context) {
+func newKeysOnlyTestServer(t *testing.T, authorizeBeforeFetch bool) (*server, context.Context) {
 	t.Helper()
-	return newKeysOnlyTestServerWithMaxPageBytes(t, 0)
+	return newKeysOnlyTestServerWithMaxPageBytes(t, 0, authorizeBeforeFetch)
 }
 
-func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*server, context.Context) {
+func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int, authorizeBeforeFetch bool) (*server, context.Context) {
 	t.Helper()
 
 	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
@@ -3459,7 +3742,11 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*ser
 	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
 	require.NoError(t, err)
 
-	srv, err := NewResourceServer(ResourceServerOptions{Backend: store, MaxPageSizeBytes: maxPageBytes})
+	srv, err := NewResourceServer(ResourceServerOptions{
+		Backend:                     store,
+		MaxPageSizeBytes:            maxPageBytes,
+		AuthorizeBeforeFetchEnabled: authorizeBeforeFetch,
+	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -3478,6 +3765,165 @@ func newKeysOnlyTestServerWithMaxPageBytes(t *testing.T, maxPageBytes int) (*ser
 	})
 
 	return srv, ctx
+}
+
+func TestServerListKeysFetchesAtMostOneValueBatchAfterAuthorization(t *testing.T) {
+	kvStore := &countingKV{KV: setupBadgerKV(t)}
+	backend := setupTestStorageBackend(t, withKV(kvStore))
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+
+	for i := range dataBatchSize + 10 {
+		seedResource(t, backend, ctx, fmt.Sprintf("resource-%03d", i), "")
+	}
+
+	// server with the feature toggle disabled
+	disabledSrv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:          backend,
+		MaxPageSizeBytes: 1,
+	})
+	require.NoError(t, err)
+	t.Cleanup(disabledSrv.cancel)
+
+	tripsBefore, readsBefore := kvStore.stats()
+	disabledRsp, err := disabledSrv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, disabledRsp.Error)
+	require.Len(t, disabledRsp.Items, 1)
+	tripsAfter, readsAfter := kvStore.stats()
+	require.Equal(t, 2, tripsAfter-tripsBefore)
+	require.Equal(t, dataBatchSize+10, readsAfter-readsBefore)
+
+	// server with the feature toggle enabled
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+		MaxPageSizeBytes:            1,
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_ = srv.Stop(stopCtx)
+	})
+
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 1)
+	require.NotEmpty(t, rsp.NextPageToken)
+
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 1, tripsAfter-tripsBefore)
+	require.Equal(t, dataBatchSize, readsAfter-readsBefore)
+
+	limited := appsCollectionRequest(false)
+	limited.Limit = 1
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err = srv.List(ctx, limited)
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 1)
+	require.NotEmpty(t, rsp.NextPageToken)
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 1, tripsAfter-tripsBefore)
+	require.Equal(t, 1, readsAfter-readsBefore)
+
+	access := newNamespaceRecordingAccessClient()
+	for i := range dataBatchSize + 10 {
+		access.denied[fmt.Sprintf("resource-%03d", i)] = true
+	}
+	deniedSrv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AccessClient:                access,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(deniedSrv.cancel)
+	tripsBefore, readsBefore = kvStore.stats()
+	rsp, err = deniedSrv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Empty(t, rsp.Items)
+	tripsAfter, readsAfter = kvStore.stats()
+	require.Equal(t, 0, tripsAfter-tripsBefore)
+	require.Equal(t, 0, readsAfter-readsBefore)
+}
+
+func TestServerListRecordsInstrumentationPath(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type:      authlib.TypeUser,
+		UserID:    123,
+		UserUID:   "u123",
+		Namespace: appsNamespace.Namespace,
+	})
+	ctx, state := withRequestMetricsState(ctx)
+	seedResource(t, backend, ctx, "resource-000", "")
+
+	srv, err := NewUninitializedResourceServer(ResourceServerOptions{
+		Backend:                     backend,
+		AuthorizeBeforeFetchEnabled: true,
+	})
+	require.NoError(t, err)
+	t.Cleanup(srv.cancel)
+
+	rsp, err := srv.List(ctx, appsCollectionRequest(false))
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 1)
+	require.Equal(t, listPathStoreAuthorizeFirst, state.listPath)
+}
+
+func TestServerAuthorizeBeforeFetchKeysOnly(t *testing.T) {
+	srv, ctx := newKeysOnlyTestServer(t, true)
+	seedPlaylist(t, srv, ctx, "default", "aaa")
+	seedPlaylist(t, srv, ctx, "default", "bbb")
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default",
+		}},
+		KeysOnly: true,
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 2)
+	require.Equal(t, []string{"aaa", "bbb"}, []string{rsp.Items[0].Name, rsp.Items[1].Name})
+	for _, item := range rsp.Items {
+		require.Equal(t, "default", item.Namespace)
+		require.Empty(t, item.Value)
+	}
+}
+
+func TestServerAuthorizeBeforeFetchValues(t *testing.T) {
+	srv, ctx := newKeysOnlyTestServer(t, true)
+	seedPlaylist(t, srv, ctx, "default", "aaa")
+	seedPlaylist(t, srv, ctx, "default", "bbb")
+
+	rsp, err := srv.List(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+			Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default",
+		}},
+	})
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Items, 2)
+
+	names := make([]string, 0, len(rsp.Items))
+	for _, item := range rsp.Items {
+		require.NotEmpty(t, item.Value)
+		require.Empty(t, item.Name)
+		obj := &unstructured.Unstructured{}
+		require.NoError(t, obj.UnmarshalJSON(item.Value))
+		names = append(names, obj.GetName())
+	}
+	require.Equal(t, []string{"aaa", "bbb"}, names)
 }
 
 func TestServerListKeysOnly(t *testing.T) {
@@ -3523,7 +3969,7 @@ func TestServerListKeysOnly(t *testing.T) {
 	collectionKey := &resourcepb.ResourceKey{Group: group, Resource: resource}
 
 	t.Run("returns identity and folder with no object bodies", func(t *testing.T) {
-		srv, ctx := newKeysOnlyTestServer(t)
+		srv, ctx := newKeysOnlyTestServer(t, false)
 		seed(t, srv, ctx, map[string]string{
 			"aaa": "folder-a",
 			"bbb": "",
@@ -3567,7 +4013,7 @@ func TestServerListKeysOnly(t *testing.T) {
 	// The cross-namespace scan must report each item's namespace, and paging must
 	// carry that namespace through the continue token.
 	t.Run("lists across namespaces", func(t *testing.T) {
-		srv, ctx := newKeysOnlyTestServer(t)
+		srv, ctx := newKeysOnlyTestServer(t, false)
 		seedIn := func(itemNS, name string) {
 			t.Helper()
 			raw, err := json.Marshal(map[string]any{
@@ -3628,7 +4074,7 @@ func TestServerListKeysOnly(t *testing.T) {
 	})
 
 	t.Run("honors limit and pins the snapshot RV across pages", func(t *testing.T) {
-		srv, ctx := newKeysOnlyTestServer(t)
+		srv, ctx := newKeysOnlyTestServer(t, false)
 		seed(t, srv, ctx, map[string]string{
 			"aaa": "", "bbb": "", "ccc": "", "ddd": "", "eee": "",
 		})
@@ -3666,7 +4112,7 @@ func TestServerListKeysOnly(t *testing.T) {
 	})
 
 	t.Run("namespaced pagination remains pinned during mutations", func(t *testing.T) {
-		srv, ctx := newKeysOnlyTestServer(t)
+		srv, ctx := newKeysOnlyTestServer(t, false)
 		seed(t, srv, ctx, map[string]string{
 			"aaa": "", "bbb": "", "ccc": "folder-old", "eee": "",
 		})
@@ -3736,7 +4182,7 @@ func TestServerListKeysOnly(t *testing.T) {
 			"trash":   resourcepb.ListRequest_TRASH,
 		} {
 			t.Run(name, func(t *testing.T) {
-				srv, ctx := newKeysOnlyTestServer(t)
+				srv, ctx := newKeysOnlyTestServer(t, false)
 				seed(t, srv, ctx, map[string]string{"aaa": ""})
 
 				rsp, err := srv.List(ctx, &resourcepb.ListRequest{
@@ -3753,7 +4199,7 @@ func TestServerListKeysOnly(t *testing.T) {
 	})
 
 	t.Run("clamps an oversized limit", func(t *testing.T) {
-		srv, ctx := newKeysOnlyTestServer(t)
+		srv, ctx := newKeysOnlyTestServer(t, false)
 		seed(t, srv, ctx, map[string]string{"aaa": "", "bbb": ""})
 
 		req := &resourcepb.ListRequest{
@@ -3820,7 +4266,7 @@ func newRecordingTestServer(t *testing.T, ac authlib.AccessClient, identityNames
 	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
 	require.NoError(t, err)
 
-	srv, err = NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac})
+	srv, err = NewResourceServer(ResourceServerOptions{Backend: store, AccessClient: ac, AuthorizeBeforeFetchEnabled: true})
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -4011,7 +4457,7 @@ func TestServerListKeysOnly_RefusesEverySelector(t *testing.T) {
 		"empty namespace selector": field("metadata.namespace", "=", ""),
 	} {
 		t.Run(name, func(t *testing.T) {
-			srv, ctx := newKeysOnlyTestServer(t)
+			srv, ctx := newKeysOnlyTestServer(t, false)
 			created, err := srv.Create(ctx, &resourcepb.CreateRequest{
 				Key: &resourcepb.ResourceKey{Group: group, Resource: resource, Namespace: ns, Name: "aaa"},
 				Value: []byte(`{"apiVersion":"` + group + `/v0alpha1","kind":"Playlist",` +
@@ -4165,7 +4611,7 @@ func TestServerListKeysOnly_BytesBudgetAppliesToIdentity(t *testing.T) {
 	// identity bytes big enough to matter.
 	longName := strings.Repeat("n", 200)
 
-	srv, ctx := newKeysOnlyTestServerWithMaxPageBytes(t, 4096)
+	srv, ctx := newKeysOnlyTestServerWithMaxPageBytes(t, 4096, false)
 	for i := range 50 {
 		name := fmt.Sprintf("%s-%03d", longName, i)
 		created, err := srv.Create(ctx, &resourcepb.CreateRequest{

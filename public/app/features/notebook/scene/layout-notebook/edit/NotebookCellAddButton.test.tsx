@@ -22,19 +22,19 @@ describe('NotebookCellAddButton', () => {
   it('renders an accessible add-block trigger', () => {
     render(<NotebookCellAddButton index={1} />);
 
-    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
   });
 
   // The only behavioural pin on the insertion index. The button at position i always inserts at
-  // i + 1 — an off-by-one here would silently insert blocks in the wrong place.
-  it('inserts below its own cell', async () => {
+  // i — an off-by-one here would silently insert blocks in the wrong place.
+  it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
-    expect(onAdd).toHaveBeenCalledWith('heading', 2);
+    expect(onAdd).toHaveBeenCalledWith('heading', 1);
   });
 
   // Opening the menu moves focus into its own Portal (see Dropdown's FloatingFocusManager), which
@@ -45,7 +45,7 @@ describe('NotebookCellAddButton', () => {
     const { user } = render(<NotebookCellAddButton index={1} />);
     // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
     // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
-    const addButton = screen.getByRole('button', { name: 'Click to add below' });
+    const addButton = screen.getByRole('button', { name: 'Click to add above' });
     const wrapper = addButton.closest('div');
 
     await user.click(addButton);
@@ -61,7 +61,7 @@ describe('NotebookCellAddButton', () => {
   it('offers "New from Saved Queries" under Visualization when onAddSavedQuery is given', async () => {
     const { user } = render(<NotebookCellAddButton index={1} onAddSavedQuery={jest.fn()} />);
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
 
     const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
@@ -71,7 +71,7 @@ describe('NotebookCellAddButton', () => {
   it('does not offer "New from Saved Queries" when onAddSavedQuery is omitted', async () => {
     const { user } = render(<NotebookCellAddButton index={1} />);
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
 
     expect(screen.getByRole('menuitem', { name: 'Visualization' })).not.toHaveAttribute('aria-haspopup');
   });

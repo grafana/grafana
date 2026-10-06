@@ -15,6 +15,7 @@ import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { getEditableElementFor } from '../utils/getEditableElementFor';
 
 import { applyDashboardSpec } from './applyDashboardSpec';
 
@@ -106,7 +107,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalSidebar = scene.state.sidebar;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.sidebar).toBe(originalSidebar);
   });
@@ -115,7 +116,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.title).toBe('New title');
     const newBody = scene.state.body;
@@ -139,7 +140,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     const originalBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     const addedObjects: unknown[] = [];
     scene.subscribeToEvent(NewSceneObjectAddedEvent, (evt) => addedObjects.push(evt.payload));
@@ -153,7 +154,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeSpec('Old title'));
     expect(scene.state.isDirty).toBeFalsy();
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
     expect(scene.state.isDirty).toBe(true);
 
     scene.state.sidebar.undoAction();
@@ -164,7 +165,7 @@ describe('applyDashboardSpec', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
     const rowsBody = scene.state.body;
 
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
     const tabsBody = scene.state.body;
     expect(tabsBody).not.toBe(rowsBody);
@@ -180,15 +181,27 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
   });
 
-  it('closes the code pane so it does not contain stale content', () => {
+  it('recreates the code pane on apply, undo, and redo so it reloads the current spec', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
 
     scene.state.sidebar.openPane(new DashboardCodePane({}));
+    const originalPane = scene.state.sidebar.state.openPane!;
+    expect(originalPane.getId()).toBe('code');
+
+    applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
+
+    const appliedPane = scene.state.sidebar.state.openPane!;
+    expect(appliedPane.getId()).toBe('code');
+    expect(appliedPane).not.toBe(originalPane);
+
+    scene.state.sidebar.undoAction();
+    const restoredPane = scene.state.sidebar.state.openPane!;
+    expect(restoredPane.getId()).toBe('code');
+    expect(restoredPane).not.toBe(appliedPane);
+
+    scene.state.sidebar.redoAction();
     expect(scene.state.sidebar.state.openPane?.getId()).toBe('code');
-
-    applyDashboardSpec({ scene, spec: makeRowsSpec('Dashboard'), description: 'Apply spec' });
-
-    expect(scene.state.sidebar.state.openPane).toBeUndefined();
+    expect(scene.state.sidebar.state.openPane).not.toBe(restoredPane);
   });
 
   it('closes an open pane even when there is no selection', () => {
@@ -198,35 +211,82 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.sidebar.state.openPane).toBe(addNewPane);
     expect(scene.state.sidebar.state.selectionContext.selected).toHaveLength(0);
 
-    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.sidebar.state.openPane).toBeUndefined();
   });
 
-  it('clears panel selection and closes the pane on apply, undo, and redo', () => {
+  it('rebinds panel selection by ID across layouts on apply, undo, and redo', () => {
     const scene = buildScene(makeRowsSpec('Dashboard'));
     const sidebar = scene.state.sidebar;
-    const selectPanel = () => {
-      sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
-      expect(sidebar.state.openPane?.getId()).toBe('element');
-      expect(sidebar.state.selectionContext.selected).toHaveLength(1);
-    };
-    const expectClosed = () => {
-      expect(sidebar.state.openPane).toBeUndefined();
-      expect(sidebar.state.selectionContext.selected).toEqual([]);
-      expect(sidebar.state.previousState).toBeUndefined();
-    };
+    sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
+    const originalSelection = sidebar.state.selectionContext.selected;
+    const originalPane = sidebar.state.openPane!;
+    const originalPanel = sidebar.getSelectedObject();
 
-    selectPanel();
-    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec' });
-    expectClosed();
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
 
-    selectPanel();
+    const appliedPanel = findVizPanelByKey(scene, 'panel-1')!;
+    expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }]);
+    expect(sidebar.state.selectionContext.selected).not.toBe(originalSelection);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(sidebar.state.openPane).not.toBe(originalPane);
+    expect(sidebar.getSelectedObject()).toBe(appliedPanel);
+    expect(sidebar.getSelectedObject()).not.toBe(originalPanel);
+    expect(sidebar.state.previousState).toBeUndefined();
+
     sidebar.undoAction();
-    expectClosed();
+    expect(sidebar.getSelectedObject()).toBe(originalPanel);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
 
-    selectPanel();
     sidebar.redoAction();
-    expectClosed();
+    expect(sidebar.getSelectedObject()).toBe(appliedPanel);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+  });
+
+  it('closes the pane when a selected ID no longer exists', () => {
+    const scene = buildScene(makeRowsSpec('Dashboard'));
+    const sidebar = scene.state.sidebar;
+    sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+
+    applyDashboardSpec({ scene, spec: makeSpec('Empty dashboard'), description: 'Apply spec', scope: 'code-pane' });
+
+    expect(sidebar.state.selectionContext.selected).toEqual([]);
+    expect(sidebar.state.openPane).toBeUndefined();
+    expect(sidebar.state.previousState).toBeUndefined();
+  });
+
+  it('applies title edits to the current panel after a rebuild', () => {
+    const scene = buildScene(makeRowsSpec('Dashboard'));
+    const sidebar = scene.state.sidebar;
+    const originalPanel = findVizPanelByKey(scene, 'panel-1')!;
+    sidebar.selectObject(originalPanel);
+
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
+    getEditableElementFor(sidebar.getSelectedObject())!.onChangeName!('Renamed after rebuild');
+
+    expect(findVizPanelByKey(scene, 'panel-1')!.state.title).toBe('Renamed after rebuild');
+    expect(originalPanel.state.title).toBe('Panel 1');
+  });
+
+  it('preserves multiple selected IDs and closes the pane if any selected panel is removed', () => {
+    const scene = buildScene(makeRowsSpec('Dashboard'));
+    const sidebar = scene.state.sidebar;
+    sidebar.selectObject(findVizPanelByKey(scene, 'panel-1')!);
+    sidebar.selectObject(findVizPanelByKey(scene, 'panel-2')!, { multi: true });
+
+    applyDashboardSpec({ scene, spec: makeTabsSpec('Dashboard'), description: 'Apply spec', scope: 'code-pane' });
+    expect(sidebar.state.selectionContext.selected).toEqual([{ id: 'panel-1' }, { id: 'panel-2' }]);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+
+    const spec = makeRowsSpec('Dashboard');
+    delete spec.elements['panel-2'];
+    spec.layout = { kind: 'GridLayout', spec: { items: [gridItem('panel-1')] } };
+    sidebar.setState({ isDocked: true });
+    applyDashboardSpec({ scene, spec, description: 'Remove panel', scope: 'code-pane' });
+
+    expect(sidebar.state.selectionContext.selected).toEqual([]);
+    expect(sidebar.state.openPane).toBeUndefined();
   });
 });

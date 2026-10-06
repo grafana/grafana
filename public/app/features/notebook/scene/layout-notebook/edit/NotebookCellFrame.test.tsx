@@ -84,7 +84,7 @@ describe('NotebookCellFrame', () => {
     renderFrame();
 
     expect(screen.queryByRole('button', { name: 'Drag to reorder' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Click to add above' })).not.toBeInTheDocument();
   });
 
   it('renders the handle and the add button in edit mode', async () => {
@@ -92,20 +92,20 @@ describe('NotebookCellFrame', () => {
 
     expect(await screen.findByText('Hello notebook')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Drag to reorder' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
   });
 
-  // The only behavioural pin on the insertion index. The button belongs to the cell above it, so
-  // the frame at position i inserts at i + 1 — an off-by-one here would silently insert blocks in
-  // the wrong place once edit mode wires onAdd up.
-  it('inserts below its own cell', async () => {
+  // The only behavioural pin on the insertion index. The button is anchored to this cell's own top
+  // edge and inserts there, so the frame at position i inserts at i — an off-by-one here would
+  // silently insert blocks in the wrong place once edit mode wires onAdd up.
+  it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = renderFrame({ index: 1, isEditing: true, onAdd });
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
-    expect(onAdd).toHaveBeenCalledWith('heading', 2);
+    expect(onAdd).toHaveBeenCalledWith('heading', 1);
   });
 
   // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but

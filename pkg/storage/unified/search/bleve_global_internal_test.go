@@ -1,11 +1,14 @@
 package search
 
 import (
+	"errors"
 	"testing"
 	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -214,4 +217,217 @@ func TestGlobalSearchKeyIsDistinct(t *testing.T) {
 	// The reserved pair must not collide with a real resource on disk or in remote
 	// storage, because both derive their path from the key.
 	assert.NotEqual(t, resourceSubPath(global), resourceSubPath(dashboards))
+}
+
+// Two resource types can hold the same name, so on a namespace-wide index the
+// name alone does not order results. Paging one at a time has to return each
+// document exactly once.
+func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	key := resource.GlobalSearchKey("default")
+
+	doc := func(group, res, name string) *resource.BulkIndexItem {
+		return &resource.BulkIndexItem{
+			Action: resource.ActionIndex,
+			Doc: &resource.IndexableDocument{
+				RV:    1,
+				Name:  name,
+				Title: name,
+				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			},
+		}
+	}
+	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			doc("dashboard.grafana.app", "dashboards", "shared"),
+			doc("folder.grafana.app", "folders", "shared"),
+			doc("dashboard.grafana.app", "dashboards", "zzz"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+	var seen []string
+	var after []string
+	for range 5 {
+		rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
+			SortBy:      []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+			Limit:       1,
+			SearchAfter: after,
+		}, nil, nil)
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		if len(rsp.Results.Rows) == 0 {
+			break
+		}
+		row := rsp.Results.Rows[0]
+		seen = append(seen, row.Key.Group+"/"+row.Key.Resource+"/"+row.Key.Name)
+		after = row.SortFields
+	}
+
+	assert.ElementsMatch(t, []string{
+		"dashboard.grafana.app/dashboards/shared",
+		"folder.grafana.app/folders/shared",
+		"dashboard.grafana.app/dashboards/zzz",
+	}, seen)
+	assert.Len(t, seen, 3, "no document is repeated")
+}
+
+var (
+	typeBuildsKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	importedA     = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
+	importedB     = schema.GroupResource{Group: "b.grafana.app", Resource: "bs"}
+	importMonday  = time.Date(2026, 9, 28, 10, 0, 0, 123456789, time.UTC)
+)
+
+func TestCompletedTypeBuildsAreEmptyOnANewIndex(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	builds, err := idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Empty(t, builds)
+}
+
+// Recording one type keeps what is recorded for the others, to the nanosecond.
+func TestCompletedTypeBuildsAreRecordedPerType(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday.Add(time.Hour)}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday.Add(2 * time.Hour)}))
+
+	builds, err := idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{
+		importedA: {StorageImportTime: importMonday.Add(2 * time.Hour)},
+		importedB: {StorageImportTime: importMonday.Add(time.Hour)},
+	}, builds)
+}
+
+// A type the index holds but never saw imported is recorded with the zero time,
+// and a forgotten type is no longer recorded at all.
+func TestCompletedTypeBuildsRecordNeverImportedAndForgottenTypes(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday}))
+	builds, err := idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}, importedB: {StorageImportTime: importMonday}}, builds)
+
+	require.NoError(t, idx.ForgetType(importedB))
+	builds, err = idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}}, builds)
+}
+
+// A type is recorded as it is first written, and a delete does not forget it:
+// only ForgetType does, after its documents are removed. Kept inside the index,
+// so a restarted server still finds a type written in part.
+func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
+	dir := t.TempDir()
+	key := resource.GlobalSearchKey("ns")
+	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	docs := []*resource.BulkIndexItem{
+		refDoc(dashboardsGR, "ns", "dash-a", 11),
+		refDoc(foldersGR, "ns", "folder-a", 12),
+		refDoc(playlists, "ns", "playlist-a", 13),
+	}
+	{
+		backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+		idx, err := backend.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
+			return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
+		}, nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+		require.NoError(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionDelete,
+			Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: foldersGR.Group, Resource: foldersGR.Resource, Name: "folder-a"},
+		}}}))
+		require.NoError(t, idx.RecordCompletedTypeBuild(playlists, resource.TypeBuild{StorageImportTime: importMonday}))
+		require.NoError(t, idx.ForgetType(playlists))
+		backend.Stop()
+	}
+
+	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+	idx, err := reopened.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the index on disk should have been reused, not built again")
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	types, err := idx.DocumentTypes()
+	require.NoError(t, err)
+	assert.Equal(t, []schema.GroupResource{dashboardsGR, foldersGR}, types)
+	builds, err := idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Empty(t, builds, "forgotten from both records")
+}
+
+// Zero until recorded, then kept to the nanosecond.
+func TestReconciledAtIsRecorded(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	at, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Zero(t, at)
+
+	require.NoError(t, idx.RecordReconciledAt(importMonday))
+	at, err = idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, importMonday, at)
+}
+
+// Kept inside the index, so a restarted server does not redo an import it has
+// already caught up with.
+func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
+	dir := t.TempDir()
+	const docs = 10
+	{
+		backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
+		build := func(index resource.ResourceIndex) (int64, error) {
+			rv, err := indexTestDocs(typeBuildsKey, docs, 100)(index)
+			if err != nil {
+				return rv, err
+			}
+			return rv, index.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday})
+		}
+		_, err := backend.BuildIndex(t.Context(), typeBuildsKey, docs, "test", build, nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+		backend.Stop()
+	}
+
+	reopened, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
+	idx, err := reopened.BuildIndex(t.Context(), typeBuildsKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the index on disk should have been reused, not built again")
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	builds, err := idx.CompletedTypeBuilds()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {StorageImportTime: importMonday}}, builds)
+}
+
+// Notifications write to a global index outside its updater, so an index closed
+// under them, as one evicted or replaced, must refuse the write rather than
+// panic.
+func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(t.TempDir()))
+	key := resource.GlobalSearchKey("ns")
+	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	backend.Stop()
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 }

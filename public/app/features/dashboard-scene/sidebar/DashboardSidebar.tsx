@@ -13,6 +13,7 @@ import {
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
 
+import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
@@ -25,6 +26,7 @@ import {
   DashboardBatchEditActionEndEvent,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
+  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -60,6 +62,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.cancelPaneRequest();
     const controller = new AbortController();
     this._paneRequest = controller;
+    this.setState({ isLoading: true });
     if (!this.isActive) {
       this.cancelPaneRequest();
     }
@@ -67,14 +70,32 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     return controller.signal;
   }
 
-  private cancelPaneRequest() {
+  public async runPaneRequest(load: (signal: AbortSignal) => Promise<void>) {
+    const signal = this.beginPaneRequest();
+    try {
+      if (!signal.aborted) {
+        await load(signal);
+      }
+    } finally {
+      // An older load must not clear the indicator for a newer selection.
+      if (this._paneRequest?.signal === signal) {
+        this.cancelPaneRequest();
+      }
+    }
+  }
+
+  public cancelPaneRequest() {
     const request = this._paneRequest;
     this._paneRequest = undefined;
     request?.abort();
+    if (this.state.isLoading) {
+      this.setState({ isLoading: false });
+    }
   }
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
+    meta: DashboardActionMeta;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
@@ -85,8 +106,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public clone(withState: Partial<DashboardSidebarState>): this {
-    // Clone without any undo/redo history
-    return super.clone({ ...withState, redoStack: [], undoStack: [] });
+    // Pending requests and edit history belong to the live sidebar, not its snapshots.
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
   }
 
   private onActivate() {
@@ -94,12 +115,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this._subs.add(
       dashboard.subscribeToState((state, previous) => {
-        if (
-          state.isEditing !== previous.isEditing ||
-          state.editview !== previous.editview ||
-          state.editPanel !== previous.editPanel ||
-          state.viewPanel !== previous.viewPanel
-        ) {
+        if (dashboardViewChanged(state, previous)) {
           this.cancelPaneRequest();
         }
       })
@@ -187,12 +203,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, actions: [] };
+    this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
@@ -205,6 +221,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      meta: batch.meta,
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -253,6 +270,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
+        meta: { actionId: 'panel.moveOrResize' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,
@@ -266,6 +284,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    // How far back the user has already stepped through history before this undo
+    const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -275,7 +295,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.undoSingleAction(action);
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
-    reportInteraction('grafana_dashboard_undo');
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
@@ -323,6 +347,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
+    const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -332,7 +357,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
-    reportInteraction('grafana_dashboard_redo');
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   public enableSelection() {
@@ -543,6 +572,40 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
       // UrlSyncManager subscribes to this and removes the pane url state from url
       this.publishEvent(new SceneObjectRemovedEvent(openPane), true);
+    }
+  }
+
+  /**
+   * This should be called when state of the DashboardScene got swapped
+   * and selected element or code pane needs to be refreshed. In case the change
+   * in DashboardScene means the element no longer exists - the sidebar is closed
+   */
+  public refreshAfterRebuild() {
+    const { openPane, selectionContext, selectedDisconnectedObject } = this.state;
+    if (openPane?.getId() === 'code') {
+      this.setState({
+        // force remount: we cannot call new DashboardCodePane({}) to ensure DashboardCodePane can be lazy loaded
+        openPane: openPane.clone({ key: undefined }),
+        selectionContext: { ...selectionContext, selected: [] },
+        selectedDisconnectedObject: undefined,
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else if (
+      openPane?.getId() === 'element' &&
+      !selectedDisconnectedObject &&
+      selectionContext.selected.length > 0 &&
+      selectionContext.selected.every(({ id }) => this.getSelectedObject(id))
+    ) {
+      this.setState({
+        openPane: new ElementEditPane({}),
+        selectionContext: { ...selectionContext, selected: [...selectionContext.selected] },
+        isNewElement: false,
+        previousState: undefined,
+      });
+    } else {
+      this.setState({ previousState: undefined });
+      this.closePane();
     }
   }
 

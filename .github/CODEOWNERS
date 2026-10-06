@@ -435,6 +435,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/cloud-plugins-suite/ @grafana/data-sources-plugins
 /e2e-playwright/diagnostics-suite/ @grafana/data-sources-plugins
 /e2e-playwright/dashboard-new-layouts/ @grafana/dashboards-squad
+/e2e-playwright/notebooks-suite/ @grafana/sharing-squad
 /e2e-playwright/dashboard-cujs/ @grafana/dashboards-squad
 /e2e-playwright/journey-tracking/ @grafana/dashboards-squad
 /e2e-playwright/dashboard-cujs/scope-*.spec.ts @grafana/dashboards-squad @grafana/grafana-operator-experience-squad
@@ -504,6 +505,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
 /e2e-playwright/storybook/ @grafana/grafana-frontend-platform
 /e2e-playwright/test-plugins/ @grafana/grafana-frontend-platform
+/e2e-playwright/unauthenticated/login-perf.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/utils/ @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
@@ -856,6 +858,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/api/clients/scope/ @grafana/grafana-operator-experience-squad
 /public/app/core/actions/ @grafana/grafana-frontend-platform
 /public/app/core/app_events.ts @grafana/grafana-frontend-platform
+/public/app/core/assistant/ @grafana/dataviz-squad
 /public/app/core/components/AccessControl/ @grafana/identity-access-team
 /public/app/core/components/Animations/ @grafana/grafana-frontend-platform
 /public/app/core/components/AccentBoxBadge/ @grafana/grafana-frontend-platform
@@ -1195,7 +1198,7 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 eslint-suppressions.json @grafanabot
 
 # Design system
-/public/img/icons/unicons/ @grafana/product-design-engineering
+/public/img/icons/unicons/ @grafana/ui-engineering
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
@@ -1290,6 +1293,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/apis/dashboard/search_test.go @grafana/grafana-search-and-storage
 /pkg/registry/apps/advisor @grafana/grafana-catalog
 /pkg/registry/apps/alerting @grafana/alerting-squad
+/pkg/registry/apps/annotation @grafana/grafana-backend-services-squad
 /pkg/registry/apps/plugins @grafana/grafana-catalog
 /pkg/registry/apps/dashvalidator @grafana/sharing-squad
 /pkg/codegen/ @grafana/grafana-as-code
@@ -1371,6 +1375,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-reembed-version-approval.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-resource-search-result-format.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-operator-experience-squad

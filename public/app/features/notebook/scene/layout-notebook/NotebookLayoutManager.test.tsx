@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
-import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -190,6 +190,26 @@ function panelCell(elementName: string, queries?: DataQuery[]) {
   return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), runner };
 }
 
+function panelCellWithOwnTimeOverride(elementName: string, timeFrom: string) {
+  const panelKind = defaultVisualizationPanelKind();
+  const panel = new VizPanel(
+    buildVizPanelState(
+      {
+        ...panelKind,
+        spec: {
+          ...panelKind.spec,
+          data: {
+            ...panelKind.spec.data,
+            spec: { ...panelKind.spec.data.spec, queryOptions: { ...panelKind.spec.data.spec.queryOptions, timeFrom } },
+          },
+        },
+      },
+      1
+    )
+  );
+  return { cell: new NotebookCellItem({ elementName, source: 'user', body: panel }), panel };
+}
+
 function withExpr(query: DataQuery, expr: string): DataQuery {
   return { ...query, expr } as DataQuery;
 }
@@ -228,7 +248,7 @@ describe('NotebookLayoutManager', () => {
     it('does not offer them outside edit mode', () => {
       renderNotebook();
 
-      expect(screen.queryByRole('button', { name: 'Click to add below' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Click to add above' })).not.toBeInTheDocument();
     });
 
     // One "+" per cell — two real cells plus the trailing empty one the invariant appends.
@@ -236,7 +256,7 @@ describe('NotebookLayoutManager', () => {
       renderNotebook(true);
 
       await screen.findAllByRole('textbox', { name: 'Markdown' });
-      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Click to add above' })).toHaveLength(3);
     });
 
     // Revealed by hovering the cell, and carried along when the cell is reordered.
@@ -246,7 +266,7 @@ describe('NotebookLayoutManager', () => {
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
 
       expect(frame).not.toBeNull();
-      expect(within(frame!).getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+      expect(within(frame!).getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
     });
 
     // The trailing-invariant bootstrap gives an empty notebook a first cell immediately (see 'the
@@ -254,13 +274,13 @@ describe('NotebookLayoutManager', () => {
     it('renders an add button once an empty notebook gets its first cell', () => {
       renderManager(buildManager([], true));
 
-      expect(screen.getAllByRole('button', { name: 'Click to add below' })).toHaveLength(1);
+      expect(screen.getAllByRole('button', { name: 'Click to add above' })).toHaveLength(1);
     });
 
     it('opens the block type menu', async () => {
       const { user } = renderNotebook(true);
 
-      await user.click(screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
       expect(screen.getByRole('menu')).toBeInTheDocument();
       expect(screen.getByRole('menuitem', { name: 'Heading' })).toBeInTheDocument();
@@ -285,7 +305,7 @@ describe('NotebookLayoutManager', () => {
       mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await user.click(screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await user.click(screen.getAllByRole('button', { name: 'Click to add above' })[0]);
       fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
       const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
       fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
@@ -297,9 +317,9 @@ describe('NotebookLayoutManager', () => {
         await openDrawer.mock.calls[0][0].onSelectQuery(query, 'My query title');
       });
 
-      expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.body?.state.pluginId).toBe('barchart');
-      expect(manager.state.cells[1].state.body?.state.title).toBe('My query title');
+      expect(cellNames(manager)).toEqual(['visualization-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.body?.state.pluginId).toBe('barchart');
+      expect(manager.state.cells[0].state.body?.state.title).toBe('My query title');
     });
   });
 
@@ -519,6 +539,47 @@ describe('NotebookLayoutManager', () => {
       expect(cellNames(manager)).toEqual(['a', 'c', 'paragraph-1']);
     });
 
+    // Each content kind through the same wiring; which shapes count as discardable is pinned in
+    // cellEmptiness.test.ts rather than re-asserted through a render here.
+    it.each([
+      ['an untouched paragraph', { kind: 'Markdown' as const, spec: { text: '' } }],
+      ['a code block with no code', { kind: 'Code' as const, spec: { language: 'sql', code: '' } }],
+    ])('deletes %s outright, without asking', async (_label, content) => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { manager } = renderManager(
+        buildManager(
+          [
+            ...buildNarrativeCells(['a']),
+            new NotebookCellItem({ elementName: 'blank', source: 'user', content }),
+            ...buildNarrativeCells(['b']),
+          ],
+          true
+        )
+      );
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+
+      expect(publish).not.toHaveBeenCalled();
+      // Plus the trailing-invariant cell appended after 'b'.
+      expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
+    });
+
+    // A panel carries no `content`, so it is never discardable — emptiness cannot be read off its
+    // queries when every viz type but the notebook's own holds content elsewhere.
+    it('asks before deleting a panel', async () => {
+      const publish = jest.spyOn(appEvents, 'publish');
+      const { cell } = panelCell('latency');
+      // Collapsed so the cell renders as just its name: loading a live panel's plugin has its own
+      // coverage, and what the frame renders is beside the point here.
+      cell.setState({ collapsed: true });
+      const { manager } = renderManager(buildManager([cell], true));
+
+      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+
+      expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
+      expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
+    });
+
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
@@ -580,6 +641,21 @@ describe('NotebookLayoutManager', () => {
 
       expect(cellNames(manager)).toEqual(['a']);
     });
+
+    it("clones a cell's own time range independently", () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = buildManager([cell]);
+
+      manager.duplicateCell(manager.state.cells[0]);
+
+      const [original, copy] = manager.state.cells;
+      expect(copy.state.$timeRange?.state.from).toBe('now-24h');
+      expect(copy.state.$timeRange).not.toBe(original.state.$timeRange);
+
+      copy.state.$timeRange?.setState({ from: 'now-1h' });
+      expect(original.state.$timeRange?.state.from).toBe('now-24h');
+    });
   });
 
   describe('addCell', () => {
@@ -610,17 +686,18 @@ describe('NotebookLayoutManager', () => {
       await user.click(screen.getByRole('menuitem', { name: itemName }));
     }
 
-    // Cell 'a' own add button, clicked, inserts between 'a' and 'b'. 'paragraph-1' is the
-    // trailing-invariant cell the bootstrap effect appends after 'b' before any of this happens.
+    // Cell 'a' own add button, clicked, inserts above 'a' — the very first position, which the old
+    // insert-below behaviour could not reach at all. 'paragraph-1' is the trailing-invariant cell the
+    // bootstrap effect appends after 'b' before any of this happens.
     it('inserts an empty code cell where its own add button offered it', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickCode(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickCode(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'code-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
+      expect(cellNames(manager)).toEqual(['code-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Code', spec: { language: '', code: '' } });
       // Inserted because a person asked for it, not because the assistant proposed it.
-      expect(manager.state.cells[1].state.source).toBe('user');
+      expect(manager.state.cells[0].state.source).toBe('user');
     });
 
     it('inserts a visualization panel cell at the given index', () => {
@@ -633,12 +710,11 @@ describe('NotebookLayoutManager', () => {
       expect(manager.state.cells[1].state.body?.state.pluginId).toBe('timeseries');
     });
 
-    // The trailing empty cell's own add button is offering to insert *past* it. Inserting after
-    // that slot would leave it stranded mid-document once the invariant appends a replacement;
-    // inserting before it keeps the empty cell at the tail and still records an "Add block".
-    it('inserts before the trailing empty slot when its add button offers a position past it', async () => {
+    // The trailing empty cell's own add button offers its own position, so the new block lands
+    // before that slot and the empty cell stays at the tail.
+    it("inserts before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
       await pickCode(user, addButtons[addButtons.length - 1]);
 
@@ -650,9 +726,9 @@ describe('NotebookLayoutManager', () => {
     // Same insert-before-trailing path as Code above — Paragraph's starter content is already
     // empty markdown, identical to the trailing slot, so a convert-in-place used to be a no-op
     // on the undo stack. A fresh cell still has to land before the slot.
-    it('inserts a paragraph before the trailing empty slot when its add button offers a position past it', async () => {
+    it("inserts a paragraph before the trailing empty slot when that slot's own add button is used", async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
-      const addButtons = screen.getAllByRole('button', { name: 'Click to add below' });
+      const addButtons = screen.getAllByRole('button', { name: 'Click to add above' });
 
       await pickParagraph(user, addButtons[addButtons.length - 1]);
 
@@ -796,10 +872,10 @@ describe('NotebookLayoutManager', () => {
     it('inserts a heading cell seeded with a heading marker', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickHeading(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickHeading(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'heading-1', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
+      expect(cellNames(manager)).toEqual(['heading-1', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: '# ' } });
     });
 
     // Unlike 'heading-1' above, this insert's own default name collides with the trailing-invariant
@@ -808,10 +884,10 @@ describe('NotebookLayoutManager', () => {
     it('inserts an empty paragraph cell', async () => {
       const { manager, user } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await pickParagraph(user, screen.getAllByRole('button', { name: 'Click to add below' })[0]);
+      await pickParagraph(user, screen.getAllByRole('button', { name: 'Click to add above' })[0]);
 
-      expect(cellNames(manager)).toEqual(['a', 'paragraph-2', 'b', 'paragraph-1']);
-      expect(manager.state.cells[1].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
+      expect(cellNames(manager)).toEqual(['paragraph-2', 'a', 'b', 'paragraph-1']);
+      expect(manager.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: '' } });
     });
 
     // The cell arrives editable and focused, same as a freshly inserted code cell. There are two
@@ -1416,6 +1492,91 @@ describe('NotebookLayoutManager', () => {
     });
   });
 
+  describe('setCellTimeRange', () => {
+    it('applies directly, with no undo entry, while only viewing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.canUndo).toBe(false);
+      expect(runQueries).toHaveBeenCalledTimes(1);
+    });
+
+    it('records a discrete, correctly labeled undo step while editing', () => {
+      const { cell, runner } = panelCell('latency');
+      const runQueries = jest.spyOn(runner, 'runQueries').mockImplementation(() => {});
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(history.state.undoLabel).toBe('Set panel time range');
+      expect(runQueries).toHaveBeenCalledTimes(1);
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(runQueries).toHaveBeenCalledTimes(2);
+
+      act(() => history.redo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+      expect(runQueries).toHaveBeenCalledTimes(3);
+    });
+
+    it('clears the override, labeled as reverting to the notebook time, while editing', () => {
+      const { cell } = panelCell('latency');
+      cell.setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(history.state.undoLabel).toBe('Use notebook time range');
+
+      act(() => history.undo());
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("clears a panel's own carried-over override so the new cell range is not shadowed", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+      expect(sceneGraph.getTimeRange(panel)).toBe(panel.state.$timeRange);
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+
+      expect(panel.state.$timeRange).toBeUndefined();
+      expect(sceneGraph.getTimeRange(panel).state.from).toBe('now-24h');
+    });
+
+    it("restores a panel's own carried-over override on undo", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: true });
+      const history = attachHistory(manager);
+      const originalPanelTimeRange = panel.state.$timeRange;
+
+      manager.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      act(() => history.undo());
+
+      expect(panel.state.$timeRange).toBe(originalPanelTimeRange);
+    });
+
+    it("also clears a panel's own carried-over override when resetting to the notebook time", () => {
+      const { cell, panel } = panelCellWithOwnTimeOverride('latency', '2h');
+      const manager = new NotebookLayoutManager({ cells: [cell], isEditing: false });
+      attachHistory(manager);
+
+      manager.setCellTimeRange(cell, undefined);
+
+      expect(panel.state.$timeRange).toBeUndefined();
+    });
+  });
+
   // The session counts by the kind each action carries, so these tests pin that mapping.
   // End to end on purpose: a real layout action, through the real history, into the real tracker.
   describe('what an edit session counts', () => {
@@ -1742,6 +1903,16 @@ describe('NotebookLayoutManager', () => {
       expect(clone.state.cells[0].state.body).toBeUndefined();
       expect(clone.state.cells[0].state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
       expect(clone.state.cells[0].state.content).not.toBe(original.state.content);
+    });
+
+    it("clones each cell's own time range independently", () => {
+      const manager = buildManager();
+      manager.state.cells[1].setState({ $timeRange: new SceneTimeRange({ from: 'now-24h', to: 'now' }) });
+
+      const clone = manager.duplicate();
+
+      expect(clone.state.cells[1].state.$timeRange?.state.from).toBe('now-24h');
+      expect(clone.state.cells[1].state.$timeRange).not.toBe(manager.state.cells[1].state.$timeRange);
     });
   });
 

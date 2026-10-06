@@ -168,63 +168,6 @@ describe('DefaultGridLayoutManager', () => {
     });
   });
 
-  describe('duplicatePanel', () => {
-    it('Should duplicate a panel', () => {
-      const { manager, grid } = setup();
-      const vizPanel = findVizPanelByKey(manager, 'panel-1')!;
-
-      expect(grid.state.children.length).toBe(3);
-
-      manager.duplicatePanel(vizPanel);
-
-      const newGridItem = grid.state.children[3];
-
-      expect(grid.state.children.length).toBe(4);
-      expect(newGridItem.state.key).toBe('grid-item-4');
-    });
-
-    it('Should maintain size of duplicated panel', () => {
-      const { manager, grid } = setup();
-
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ height: 1 });
-
-      const vizPanel = gItem.state.body;
-      manager.duplicatePanel(vizPanel);
-
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
-
-      expect(newGridItem.state.height).toBe(1);
-      expect(newGridItem.state.itemHeight).toBe(1);
-    });
-
-    it('Should duplicate a repeated panel', () => {
-      const { manager, grid } = setup();
-      const gItem = grid.state.children[0] as DashboardGridItem;
-      gItem.setState({ variableName: 'server', repeatDirection: 'v', maxPerRow: 100 });
-      const vizPanel = gItem.state.body;
-      manager.duplicatePanel(vizPanel as VizPanel);
-
-      const newGridItem = grid.state.children[grid.state.children.length - 1] as DashboardGridItem;
-
-      expect(newGridItem.state.variableName).toBe('server');
-      expect(newGridItem.state.repeatDirection).toBe('v');
-      expect(newGridItem.state.maxPerRow).toBe(100);
-    });
-
-    it('Should duplicate a panel in a row', () => {
-      const { manager } = setup();
-      const vizPanel = findVizPanelByKey(manager, 'panel-within-row1')!;
-      const gridRow = vizPanel.parent?.parent as SceneGridRow;
-
-      expect(gridRow.state.children.length).toBe(2);
-
-      manager.duplicatePanel(vizPanel);
-
-      expect(gridRow.state.children.length).toBe(3);
-    });
-  });
-
   describe('duplicate', () => {
     it('returns a new DefaultGridLayoutManager instance', () => {
       const { manager } = setup();

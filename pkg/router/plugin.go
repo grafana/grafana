@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -37,7 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error)
+type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error)
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
@@ -52,6 +54,7 @@ type PluginDependencies struct {
 	PluginSettings     pluginsettings.Service
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
+	TokenExchanger     authn.TokenExchanger       // used for delegation
 	Tracer             tracing.Tracer             // needed for proxy (legacy)
 	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
 	Cfg                *setting.Cfg
@@ -86,6 +89,14 @@ func ProvidePluginLoaderDependencies(
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
+	// A missing exchange configuration leaves requests unauthenticated: the
+	// caller's identity is not propagated, and plugins that authenticate reject
+	// them. An invalid one fails each request with the configuration error.
+	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
+	if err != nil {
+		exchanger = appplugin.InvalidClientV3TokenExchanger(err)
+	}
+
 	return PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
@@ -106,6 +117,7 @@ func ProvidePluginLoaderDependencies(
 			Tracer:             tracer,
 			Features:           features,
 			Cfg:                cfg,
+			TokenExchanger:     exchanger,
 		},
 	}
 }
@@ -163,7 +175,7 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
 				// TODO? should we fail more loudly
-				if !strings.Contains(jsonData.ID, "-") || strings.Contains(jsonData.ID, ".") || jsonData.ID == "v1" {
+				if !isPluginAPIGroup(jsonData.ID) || jsonData.ID == "v1" {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -182,16 +194,33 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
 		backend, err := NewPluginBackend(plugin,
-			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+			func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
 			}, pl.deps.PluginDependencies,
 		)
 		if err != nil {
-			return nil, err
+			// One bad plugin must not keep every other plugin from loading.
+			logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
+			continue
 		}
 		backends = append(backends, backend)
 	}
 	return backends, nil
+}
+
+// pluginManifestGroupSuffix is required on manifest groups: unified storage
+// always enforces RBAC on it, and no core Grafana group uses it.
+const pluginManifestGroupSuffix = ".ext.grafana.app"
+
+// isPluginAPIGroup reports whether group has the shape of an app plugin's API
+// group: a manifest group ending in pluginManifestGroupSuffix, or a plugin ID,
+// which contains a hyphen and no dots. No core Grafana or Kubernetes group has
+// either shape, so a group that passes cannot shadow one.
+func isPluginAPIGroup(group string) bool {
+	if name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix); ok {
+		return name != ""
+	}
+	return strings.Contains(group, "-") && !strings.Contains(group, ".")
 }
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
@@ -202,10 +231,20 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (*PluginBackend, error) {
+func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (_ *PluginBackend, err error) {
+	// The plugin API builder panics on an invalid manifest. Plugins are loaded
+	// inside the reconcile loop, so a panic here would stop it for every group.
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("plugin %q: %v", plugin.JSONData.ID, p)
+		}
+	}()
 	group, err := pluginroute.APIGroup(plugin, pluginroute.Options{PluginClient: deps.PluginClient, ContextProvider: deps.ContextProvider})
 	if err != nil {
 		return nil, err
+	}
+	if !isPluginAPIGroup(group.Name) {
+		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", plugin.JSONData.ID, group.Name)
 	}
 
 	b, err := json.Marshal(plugin)
@@ -237,12 +276,28 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 	return b.group
 }
 
+// Source implements [Backend].
+func (b *PluginBackend) Source() string { return sourceLocalPlugin }
+
 func (b *PluginBackend) Key() string {
 	return b.key
 }
 
 func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	clientV2, clientV3, err := b.client(ctx, b.plugin.JSONData.ID)
+	if err != nil {
+		return nil, err
+	}
+	if clientV2 != nil {
+		clientV2 = &breakerPluginClient{Client: clientV2}
+	}
+	if clientV3 != nil {
+		clientV3 = &breakerPluginClientV3{Client: clientV3}
+	}
+	// Keep authentication outside the breaker: token exchange failures do not
+	// indicate whether the plugin is reachable.
+	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID,
+		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.plugin.JSONData.ID, b.deps.TokenExchanger))
 	if err != nil {
 		return nil, err
 	}
@@ -268,6 +323,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
 			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
 			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
+			HybridAPIEnabled:         apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),
 			KeysAPIEnabled:           apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		},
 		Tracer:          b.deps.Tracer,

@@ -16,7 +16,8 @@ import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
 import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
 
-const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
+/** Hand-written for the same reason as the class above. */
+export const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
 
 /** Which edge of a cell the drop line is drawn on while a drag is in flight. */
 export type NotebookCellDropIndicator = 'top' | 'bottom';
@@ -31,8 +32,8 @@ interface Props {
   cell: NotebookCellItem;
   /**
    * The cell's position in `cells`. This doubles as the Draggable index, so it must stay dense and
-   * 0-based — dnd derives every drop boundary from it. Also the base for the add button's insertion
-   * index: `index + 1`, since it always inserts directly below this cell.
+   * 0-based — dnd derives every drop boundary from it. Doubles as the add button's insertion index,
+   * since that button inserts directly above this cell.
    */
   index: number;
   isEditing?: boolean;
@@ -56,7 +57,7 @@ interface Props {
   /** True while any cell in the notebook is being dragged, not only this one. */
   isDragActive?: boolean;
   dropIndicator?: NotebookCellDropIndicator;
-  /** Forwarded to this cell's add button, which offsets it to `index + 1`. */
+  /** Forwarded to this cell's add button, which passes this cell's own `index` — an insert above it. */
   onAdd?: (type: NotebookBlockType, index: number) => void;
   /** "New from Saved Queries": forwarded to this cell's add button, offset the same way as `onAdd`. */
   onAddSavedQuery?: (index: number) => void;
