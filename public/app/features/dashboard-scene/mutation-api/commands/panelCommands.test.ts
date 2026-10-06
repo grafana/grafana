@@ -233,6 +233,110 @@ describe('Panel mutation commands', () => {
     jest.restoreAllMocks();
   });
 
+  describe('GET_PANEL_ERRORS', () => {
+    it('returns compact errors with query references and never enters edit mode', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Broken query');
+      attachPanelData(
+        scene,
+        'Broken query',
+        makePanelData({ state: LoadingState.Error, errors: [{ message: 'Unknown column', refId: 'A' }] })
+      );
+      scene.setState({ isEditing: false });
+      jest.mocked(scene.onEnterEditMode).mockClear();
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result).toEqual({
+        success: true,
+        changes: [],
+        data: {
+          errors: [
+            {
+              element: name,
+              title: 'Broken query',
+              errors: [{ source: 'query', message: 'Unknown column', refId: 'A' }],
+            },
+          ],
+          noDataPanels: [],
+          panelsChecked: 1,
+          panelsWithoutQueries: 0,
+          uncheckedPanels: [],
+        },
+      });
+      expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+      expect(scene.state.isEditing).toBe(false);
+    });
+
+    it('reports loading and missing elements without reporting stale query errors', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Loading query');
+      await addPanel(client, 'Excluded panel');
+      attachPanelData(
+        scene,
+        'Loading query',
+        makePanelData({ state: LoadingState.Loading, errors: [{ message: 'Stale error' }] })
+      );
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: [name, 'missing', name] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        panelsWithoutQueries: 0,
+        uncheckedPanels: [
+          { element: name, reason: 'loading' },
+          { element: 'missing', reason: 'not_found' },
+        ],
+      });
+    });
+
+    it('reports plugin errors and keeps no-data panels separate', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const broken = await addPanel(client, 'Broken plugin');
+      const empty = await addPanel(client, 'Empty query');
+      scene.state.body
+        .getVizPanels()
+        .find((p) => p.state.title === 'Broken plugin')
+        ?.setState({ _pluginLoadError: 'Plugin unavailable' });
+      attachPanelData(scene, 'Empty query', makePanelData({ state: LoadingState.Done, series: [] }));
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result.data).toEqual({
+        errors: [
+          { element: broken, title: 'Broken plugin', errors: [{ source: 'plugin', message: 'Plugin unavailable' }] },
+        ],
+        noDataPanels: [{ element: empty, title: 'Empty query' }],
+        panelsChecked: 2,
+        panelsWithoutQueries: 0,
+        uncheckedPanels: [],
+      });
+    });
+
+    it('uses the same error-notice extraction as LIST_PANELS', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Notices');
+      const frame = toDataFrame({
+        fields: [{ name: 'Value', values: [1] }],
+        meta: {
+          notices: [
+            { severity: 'error', text: 'Invalid frame' },
+            { severity: 'warning', text: 'Partial data' },
+          ],
+        },
+      });
+      attachPanelData(scene, 'Notices', makePanelData({ state: LoadingState.Done, series: [frame] }));
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      expect(result.data).toEqual({
+        errors: [{ element: name, title: 'Notices', errors: [{ source: 'notice', message: 'Invalid frame' }] }],
+        noDataPanels: [],
+        panelsChecked: 1,
+        panelsWithoutQueries: 0,
+        uncheckedPanels: [],
+      });
+    });
+  });
+
   describe('LIST_PANELS', () => {
     it('returns elements from the dashboard as an array', async () => {
       const scene = buildPanelScene();

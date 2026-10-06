@@ -607,6 +607,16 @@ Remove one or more panels by element name.
 
 If some elements fail while others succeed, `success` is `true` and partial failures are reported in `warnings`.
 
+### `GET_PANEL_ERRORS`
+
+Read current errors on the open dashboard without returning panel specifications, queries, layout, or result data. This read-only command does not run queries, activate panels, or enter edit mode.
+
+```json
+{ "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1", "panel-5"] } }
+```
+
+Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured query/plugin/error-notice messages), separate `noDataPanels`, `panelsChecked`, `panelsWithoutQueries`, and `uncheckedPanels` with reasons `loading`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+
 ### `LIST_PANELS`
 
 List elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.
