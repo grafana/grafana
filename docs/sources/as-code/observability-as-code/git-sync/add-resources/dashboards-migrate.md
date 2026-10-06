@@ -82,7 +82,7 @@ You can export existing dashboards from the terminal or from agentic coding tool
 
 {{< admonition type="note" >}}
 
-For more information, refer to the [`gcx` documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx/) for setup and usage details.
+For more information, refer to the [`gcx` documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/grafana-cli/gcx/) for setup and usage guidance.
 
 {{< /admonition >}}
 
