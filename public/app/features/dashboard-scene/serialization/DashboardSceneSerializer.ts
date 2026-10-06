@@ -33,6 +33,10 @@ import { transformSceneToSaveModelSchemaV2 } from './transformSceneToSaveModelSc
  */
 export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unknown }> {
   /**
+   * Which dashboard schema this serializer handles.
+   */
+  readonly version: 'v1' | 'v2';
+  /**
    * The save model which the dashboard scene was originally created from
    */
   initialSaveModel?: I;
@@ -115,6 +119,7 @@ export interface DSReferencesMapping {
 export class V1DashboardSerializer
   implements DashboardSceneSerializerLike<Dashboard, DashboardMeta, Dashboard, DashboardJson>
 {
+  readonly version = 'v1' as const;
   initialSaveModel?: Dashboard;
   metadata?: DashboardMeta;
   protected elementPanelMap = new Map<string, number>();
@@ -296,6 +301,7 @@ export class V2DashboardSerializer
       Dashboard | DashboardV2Spec
     >
 {
+  readonly version = 'v2' as const;
   initialSaveModel?: DashboardV2Spec | Dashboard;
   metadata?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
   protected elementPanelMap = new Map<string, number>();

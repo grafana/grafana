@@ -15,7 +15,6 @@ import { Stack } from '@grafana/ui';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
-import { V1DashboardSerializer } from '../serialization/DashboardSceneSerializer';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { getDashboardSceneFor } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
@@ -138,7 +137,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
    */
   private shouldMigrateRepeat(): boolean {
     if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromSceneVersion, false)) {
-      return getDashboardSceneFor(this).serializer instanceof V1DashboardSerializer;
+      return getDashboardSceneFor(this).serializer.version === 'v1';
     }
 
     const dashboard = getDashboardSceneFor(this);
