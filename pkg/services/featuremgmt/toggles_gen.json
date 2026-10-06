@@ -1035,6 +1035,20 @@
     },
     {
       "metadata": {
+        "name": "authz.legacyUserPermissions",
+        "resourceVersion": "1791276873520",
+        "creationTimestamp": "2026-10-06T08:54:33Z"
+      },
+      "spec": {
+        "description": "Load legacy Access Control permissions through embedded AuthZ.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "authz.listFoldersViaSearch",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
