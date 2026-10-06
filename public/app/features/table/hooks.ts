@@ -7,7 +7,6 @@ import {
   type DataFrame,
   type Field,
   type FieldConfigSource,
-  getFieldDisplayName,
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -18,27 +17,12 @@ import {
   useFlagTableRefreshNewFeatures,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
-import { useAdHocTransformations, usePanelContext } from '@grafana/ui';
-import { getVisibleFields } from '@grafana/ui/internal';
+import { usePanelContext } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
-import { useStructureRev } from 'app/core/hooks/useStructureRev';
 
-import { decodeAdHocColumns, encodeColumnOrder, encodeHiddenColumns, frameFilterFor } from './adHocColumns';
-import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
-
-export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
-
-/** Scope runtime state to a query position and invalidate it when source structure changes. */
-export function useTableFrameScope(sourceSeries: readonly DataFrame[]) {
-  const structureRev = useStructureRev(sourceSeries);
-  return useCallback(
-    (frameIndex: number) => JSON.stringify([sourceSeries[frameIndex]?.refId, frameIndex, structureRev]),
-    [sourceSeries, structureRev]
-  );
-}
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -143,78 +127,4 @@ export function useCommonTableProps(options: CommonTableOptions, fieldConfig: Fi
       refreshNewFeaturesEnabled,
     ]
   );
-}
-
-export function useTableRefreshNewFeatures(): boolean {
-  // Read both hooks unconditionally to keep hook order stable.
-  const newFeaturesEnabled = useFlagTableRefreshNewFeatures();
-  const refreshEnabled = useFlagTableRefresh();
-
-  return newFeaturesEnabled && refreshEnabled;
-}
-
-/** Returns controlled TableNG column state when the current frame can use the ad-hoc stage. */
-export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
-  const adHoc = useAdHocTransformations(TABLE_TRANSFORMATIONS_OWNER);
-  const api = usePanelContext().adHocTransformations;
-  const stage = adHoc?.transformations;
-  const refId = frames[frameIndex]?.refId;
-  const hasSafeScope =
-    frames.length === 1 || Boolean(refId && frames.filter((frame) => frame.refId === refId).length === 1);
-  const sourceFrame =
-    enabled && hasSafeScope && supportsColumnManagement(frames[frameIndex])
-      ? adHoc?.sourceSeries[frameIndex]
-      : undefined;
-
-  const catalog = useMemo(() => {
-    if (!sourceFrame || !adHoc) {
-      return undefined;
-    }
-
-    // Source frames have not had field config or overrides applied.
-    const source = adHoc.sourceSeries.map((frame) => ({
-      ...frame,
-      fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
-    }));
-    cacheFieldDisplayNames(source);
-
-    const catalogFrame = source[frameIndex];
-    const names = getVisibleFields(catalogFrame.fields).map((field) =>
-      getFieldDisplayName(field, catalogFrame, source)
-    );
-
-    // Display names are the column identity, so duplicates cannot be managed independently.
-    return new Set(names).size === names.length ? names : undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adHoc, sourceFrame]);
-
-  const frameFilter = useMemo(() => frameFilterFor(frames, frameIndex), [frames, frameIndex]);
-
-  const onColumnOrderChange = useCallback(
-    (order: string[]) =>
-      adHoc?.setTransformations(encodeColumnOrder(api?.get(TABLE_TRANSFORMATIONS_OWNER) ?? [], order, frameFilter)),
-    [adHoc, api, frameFilter]
-  );
-
-  const onHiddenColumnsChange = useCallback(
-    (hidden: ReadonlySet<string>) =>
-      adHoc?.setTransformations(encodeHiddenColumns(api?.get(TABLE_TRANSFORMATIONS_OWNER) ?? [], hidden, frameFilter)),
-    [adHoc, api, frameFilter]
-  );
-
-  return useMemo(() => {
-    if (!catalog || !stage) {
-      return undefined;
-    }
-
-    const { columnOrder, hiddenColumns } = decodeAdHocColumns(stage, catalog, frameFilter);
-
-    return {
-      columnOrder,
-      hiddenColumns,
-      columnCatalog: columnOrder ?? catalog,
-      onColumnOrderChange,
-      onHiddenColumnsChange,
-    };
-  }, [catalog, stage, frameFilter, onColumnOrderChange, onHiddenColumnsChange]);
 }

@@ -3,7 +3,7 @@ import { useCounter, usePrevious } from 'react-use';
 
 import { type DataFrame, compareArrayValues, compareDataFrameStructures } from '@grafana/data';
 
-export function useStructureRev(frames: readonly DataFrame[]) {
+export function useStructureRev(frames: DataFrame[]) {
   const [structureRev, { inc }] = useCounter(1);
   const previousFrames = usePrevious(frames);
 

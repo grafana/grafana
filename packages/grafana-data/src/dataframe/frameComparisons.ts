@@ -75,7 +75,7 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipConfi
  *
  * @beta
  */
-export function compareArrayValues<T>(a: readonly T[], b: readonly T[], cmp: (a: T, b: T) => boolean) {
+export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boolean) {
   if (a === b) {
     return true;
   }

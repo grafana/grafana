@@ -19,7 +19,6 @@ import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type TableRowTransformations } from './TableViewContext';
 import { type TextAlign } from './styles';
 import { type ApplyFilterResult } from './utils';
 
@@ -110,10 +109,6 @@ export interface TableSortByFieldState {
 export type SortByBehavior = 'initial' | 'managed';
 
 interface BaseTableProps {
-  /** Experimental transformation-backed table view, explicitly owned by its host. */
-  rowTransformationsEnabled?: boolean;
-  rowTransformations?: TableRowTransformations;
-  timeZone?: string;
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -183,14 +178,6 @@ interface BaseTableProps {
   jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
-  /** Controlled column order, by display name. */
-  columnOrder?: string[];
-  onColumnOrderChange?: (columnOrder: string[]) => void;
-  /** Controlled hidden columns, by display name. */
-  hiddenColumns?: ReadonlySet<string>;
-  onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;
-  /** All columns the controlling owner can show, including those removed from `data`. */
-  columnCatalog?: string[];
 }
 
 /* ---------------------------- Table cell props ---------------------------- */

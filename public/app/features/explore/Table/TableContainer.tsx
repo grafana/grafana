@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
@@ -18,7 +18,6 @@ import { getTemplateSrv, PanelRenderer } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { type AdHocFilterItem, PanelChrome, useTheme2, PanelContextProvider } from '@grafana/ui';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
-import { useTableFrameScope } from 'app/features/table/hooks';
 import {
   hasDeprecatedParentRowIndex,
   migrateFromParentRowIndexToNestedFrames,
@@ -76,8 +75,6 @@ export const TableContainer = memo(function TableContainer({
   queryStreaming = false,
 }: Props) {
   const theme = useTheme2();
-  const sourceFrames = useMemo(() => tableResult?.filter((frame) => frame.length !== 0) ?? [], [tableResult]);
-  const getFrameScope = useTableFrameScope(sourceFrames);
   const [showAll, setShowAll] = useState(false);
   const tablePlugin = useAsync(() => importPanelPlugin('table'), []);
   const panelPadding = tablePlugin.value?.noPadding ? 'none' : 'md';
@@ -185,7 +182,7 @@ export const TableContainer = memo(function TableContainer({
         <div className={css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1) })}>
           {frames.map((data, i) => (
             <PanelChrome
-              key={`${getFrameScope(i)}-${panelPadding}`}
+              key={`${data.refId || `table-${i}`}-${panelPadding}`}
               title={getTableTitle(dataFrames, data, i)}
               titleItems={[
                 !showAll && dataLimited && (

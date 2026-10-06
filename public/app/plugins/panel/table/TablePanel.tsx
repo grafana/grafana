@@ -1,31 +1,23 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
 
 import {
-  applyFieldOverrides,
   type DataFrame,
-  type GrafanaTheme2,
   getFrameDisplayName,
+  type GrafanaTheme2,
   type PanelProps,
   type SelectableValue,
-  useDataLinksContext,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { getPluginImportUtils, PanelDataErrorView } from '@grafana/runtime';
+import { PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
-  TABLE_TRANSFORMATIONS_OWNER,
-  useAdHocColumnState,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
-  useTableRefreshNewFeatures,
-  useTableFrameScope,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -51,14 +43,14 @@ export function TablePanel(props: Props) {
     fitContent,
   } = props;
 
+  useCacheFieldDisplayNames(data.series);
+
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
-  const { dataLinkPostProcessor } = useDataLinksContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
-  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -66,35 +58,7 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const outputMain = frames[currentIndex];
-  const sourceSeries = tableRefreshNewFeaturesEnabled
-    ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
-    : undefined;
-  const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
-  // Rebuild against original rows while retaining cross-frame display and data-link context.
-  const displayFrames = useMemo(
-    () =>
-      sourceSeries
-        ? applyFieldOverrides({
-            data: [...sourceSeries],
-            fieldConfig,
-            fieldConfigRegistry: getPluginImportUtils().getPanelPluginFromCache('table')?.fieldConfigRegistry,
-            theme,
-            timeZone: props.timeZone,
-            replaceVariables,
-            dataLinkPostProcessor,
-          })
-        : frames,
-    [sourceSeries, frames, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
-  );
-  useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[currentIndex] ?? outputMain;
-  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
-  const main = useMemo(
-    () => (tableRefreshNewFeaturesEnabled && rawMain ? withRefreshedTableCapabilities(rawMain) : rawMain),
-    [rawMain, tableRefreshNewFeaturesEnabled]
-  );
+  const main = frames[currentIndex];
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -117,18 +81,6 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
-      {...adHocColumns}
-      rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
-      rowTransformations={
-        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations
-          ? {
-              api: panelContext.adHocTransformations,
-              owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: getFrameScope(currentIndex),
-            }
-          : undefined
-      }
-      timeZone={props.timeZone}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
