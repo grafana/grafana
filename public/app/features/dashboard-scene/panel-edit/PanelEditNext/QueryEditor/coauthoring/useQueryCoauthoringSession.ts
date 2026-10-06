@@ -214,6 +214,11 @@ export function useQueryCoauthoringSession({
     trackQueryCoauthoringDismissed({ datasourceType });
     dismiss();
   }, [datasourceType, dismiss]);
+  const dismissUntouched = useCallback(() => {
+    if (!sessionRef.current.data.engaged) {
+      dismissPopover();
+    }
+  }, [dismissPopover]);
 
   useEffect(() => {
     if (!trackedOpenRef.current) {
@@ -419,5 +424,5 @@ export function useQueryCoauthoringSession({
       };
   }
 
-  return { closeFeedback, dismiss: dismissPopover, feedback: session.data.feedback, state };
+  return { closeFeedback, dismiss: dismissPopover, dismissUntouched, feedback: session.data.feedback, state };
 }

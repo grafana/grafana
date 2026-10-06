@@ -362,6 +362,9 @@ export function QueryCoauthoringProposal({
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
         <div className={styles.footerActions}>
+          <Button size="sm" fill="text" variant="secondary" onClick={onClose}>
+            <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
+          </Button>
           <Button className={styles.compactButton} size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
             <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in chat</Trans>
           </Button>

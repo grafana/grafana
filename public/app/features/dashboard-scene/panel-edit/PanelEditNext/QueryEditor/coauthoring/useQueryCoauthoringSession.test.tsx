@@ -206,6 +206,27 @@ describe('useQueryCoauthoringSession', () => {
     mockAssistantAvailable = true;
     mockAssistantLoading = false;
   });
+
+  it('restores the clarification and entered answer after Assistant becomes available again', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation } = await setup();
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
+
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+    expect(screen.getByText('Assistant unavailable')).toBeInTheDocument();
+
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByText('Which label should I group by?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
+    expect(readInvocation).toHaveBeenCalledTimes(2);
+  });
   it('allows prompt entry while identifying and ignores a late explanation after submission', async () => {
     mockIsIdentifying = true;
     const { user } = await setup();
