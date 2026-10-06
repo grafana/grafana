@@ -69,7 +69,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
-	smtp              remoteClient.SmtpConfig
+	smtp              SmtpConfigFunc
 	state             stateStore
 	tenantID          string
 	url               string
@@ -103,8 +103,8 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// SmtpConfig has all the necessary settings for the remote Alertmanager to create an email sender.
-	SmtpConfig remoteClient.SmtpConfig
+	// SmtpConfig returns the settings the remote Alertmanager needs to create an email sender.
+	SmtpConfig SmtpConfigFunc
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
@@ -361,6 +361,11 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, c alertingNotify
 	}
 	amConfig.Receivers = decryptedReceivers
 
+	var smtp remoteClient.SmtpConfig
+	if am.smtp != nil {
+		smtp = am.smtp(ctx)
+	}
+
 	payload := remoteClient.UserGrafanaConfig{
 		GrafanaAlertmanagerConfig: remoteClient.GrafanaAlertmanagerConfig{
 			AlertmanagerConfig: amConfig,
@@ -369,7 +374,7 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, c alertingNotify
 		CreatedAt:     time.Now().Unix(),
 		Promoted:      am.promoteConfig,
 		ExternalURL:   am.externalURL,
-		SmtpConfig:    am.smtp,
+		SmtpConfig:    smtp,
 		RuntimeConfig: am.runtimeConfig,
 		Default:       am.isDefaultConfiguration(c),
 	}

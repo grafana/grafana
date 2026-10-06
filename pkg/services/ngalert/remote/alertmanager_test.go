@@ -315,6 +315,10 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
+	smtp := client.SmtpConfig{
+		FromAddress:   "test-instance@grafana.net",
+		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
+	}
 	cfg := AlertmanagerConfig{
 		OrgID:         1,
 		TenantID:      tenantID,
@@ -323,10 +327,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
-		SmtpConfig: client.SmtpConfig{
-			FromAddress:   "test-instance@grafana.net",
-			StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
-		},
+		SmtpConfig:    func(context.Context) client.SmtpConfig { return smtp },
 	}
 
 	ctx := context.Background()
@@ -369,8 +370,8 @@ func TestIntegrationApplyConfig(t *testing.T) {
 
 	// Grafana's URL, email "from" address, and static headers should be sent alongside the configuration.
 	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
-	require.Equal(t, cfg.SmtpConfig.FromAddress, configSent.SmtpConfig.FromAddress)
-	require.Equal(t, cfg.SmtpConfig.StaticHeaders, configSent.SmtpConfig.StaticHeaders)
+	require.Equal(t, smtp.FromAddress, configSent.SmtpConfig.FromAddress)
+	require.Equal(t, smtp.StaticHeaders, configSent.SmtpConfig.StaticHeaders)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
@@ -390,25 +391,23 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	moa, _ = newAm(cfg)
-	require.NoError(t, err)
+	moa, am = newAm(cfg)
+	am.syncInterval = 0
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)
 	require.False(t, applied) // Not applied.
 	require.Equal(t, 2, configSyncs)
 
-	// Changing the "from" address should result in the configuration being updated.
-	cfg.SmtpConfig.FromAddress = "new-address@test.com"
-	moa, am = newAm(cfg)
-	require.NoError(t, err)
+	// Changing the "from" address should result in the configuration being updated without a restart.
+	smtp.FromAddress = "new-address@test.com"
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)
 	require.True(t, applied)
 	require.Equal(t, 3, configSyncs)
-	require.Equal(t, am.smtp.FromAddress, configSent.SmtpConfig.FromAddress)
+	require.Equal(t, smtp.FromAddress, configSent.SmtpConfig.FromAddress)
 
 	// Changing fields in the SMTP config should result in the configuration being updated.
-	cfg.SmtpConfig = client.SmtpConfig{
+	smtp = client.SmtpConfig{
 		EhloIdentity:   "test",
 		FromAddress:    "test@test.com",
 		FromName:       "Test Name",
@@ -419,13 +418,11 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		StaticHeaders:  map[string]string{"test": "true"},
 		User:           "Test User",
 	}
-	moa, am = newAm(cfg)
-	require.NoError(t, err)
 	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: testGrafanaConfig})
 	require.NoError(t, err)
 	require.True(t, applied)
 	require.Equal(t, 4, configSyncs)
-	require.Equal(t, am.smtp, configSent.SmtpConfig)
+	require.Equal(t, smtp, configSent.SmtpConfig)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
