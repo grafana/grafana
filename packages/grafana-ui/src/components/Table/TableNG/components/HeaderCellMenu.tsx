@@ -12,6 +12,7 @@ import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
 
 interface HeaderCellMenuProps {
+  onAddToAssistant?: () => void;
   displayName: string;
   filterable: boolean;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
@@ -38,6 +39,7 @@ export function HeaderCellMenu({
   onHideColumn,
   canHideColumn,
   onOpenColumnPanel,
+  onAddToAssistant,
 }: HeaderCellMenuProps) {
   // `Dropdown` overwrites its child's ref with its own floating-ui reference, so we can't hold a ref
   // on the button directly. We reach it through the wrapper instead, so the popup can anchor to it.
@@ -81,9 +83,28 @@ export function HeaderCellMenu({
             />
           </>
         )}
+        {onAddToAssistant && (
+          <>
+            {(filterable || onHideColumn || onOpenColumnPanel) && <Menu.Divider />}
+            <Menu.Item
+              label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+              icon="ai-sparkle"
+              onClick={onAddToAssistant}
+            />
+          </>
+        )}
       </Menu>
     ),
-    [filterable, hasActiveFilter, menuLabel, onOpenFilter, onHideColumn, canHideColumn, onOpenColumnPanel]
+    [
+      filterable,
+      hasActiveFilter,
+      menuLabel,
+      onOpenFilter,
+      onHideColumn,
+      canHideColumn,
+      onOpenColumnPanel,
+      onAddToAssistant,
+    ]
   );
 
   return (

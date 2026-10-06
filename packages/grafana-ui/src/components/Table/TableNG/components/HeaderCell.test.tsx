@@ -401,6 +401,12 @@ describe('HeaderCell', () => {
       expect((await screen.findByText('Hide column')).closest('button')).toBeDisabled();
     });
 
+    it('keeps the Assistant action out of the classic header', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} onAddToAssistant={jest.fn()} />);
+      expect(screen.getByText('Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
     it('scopes the menu reveal to its header cell', () => {
       const { container } = render(<HeaderCell {...baseProps} field={filterableField()} tableRefreshEnabled />);
       expect(container.querySelector('.table-ng-header-cell')).toBeInTheDocument();
