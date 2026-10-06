@@ -182,7 +182,7 @@ function OTelCategory<T>({
   const toggleCategory = useCallback(() => {
     if (expanded) {
       setExpanded(false);
-      store.delete(`${logOptionsStorageKey}.log-details.${category.id}-open`);
+      store.set(`${logOptionsStorageKey}.log-details.${category.id}-open`, false);
     } else {
       setExpanded(true);
       store.set(`${logOptionsStorageKey}.log-details.${category.id}-open`, true);
