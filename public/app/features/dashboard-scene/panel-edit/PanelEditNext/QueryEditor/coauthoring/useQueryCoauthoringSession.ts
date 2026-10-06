@@ -239,16 +239,19 @@ export function useQueryCoauthoringSession({
   }, [datasourceType]);
 
   useEffect(() => {
-    if (!isAssistantAvailable) {
-      return;
-    }
-
     return () => {
       send({ type: 'request-invalidated' });
       cancel();
       revertQueryPreview();
     };
-  }, [adapter, cancel, invocationId, isAssistantAvailable, revertQueryPreview, send]);
+  }, [adapter, cancel, invocationId, revertQueryPreview, send]);
+
+  useEffect(() => {
+    if (!isAssistantAvailable && sessionRef.current.data.activeRequestId !== undefined) {
+      send({ type: 'generation-stopped' });
+      cancel();
+    }
+  }, [cancel, isAssistantAvailable, send]);
 
   const stop = () => {
     trackQueryCoauthoringGenerationStopped({ datasourceType });

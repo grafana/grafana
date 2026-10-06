@@ -208,6 +208,83 @@ describe('useQueryCoauthoringSession', () => {
     expect(mockGenerate.mock.calls[1][0].prompt).toBe('Use handler');
     expect(readInvocation).toHaveBeenCalledTimes(2);
   });
+
+  it('restores the same proposal after a context reload fails and Retry succeeds without reverting its preview', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation, onPreview, onRevertPreview, onAccept } =
+      await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeInTheDocument();
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Use an increase.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(readInvocation).toHaveBeenCalledTimes(3);
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: 'increase(http_requests_total[5m])' });
+  });
+
+  it('reverts the proposal to the baseline when closing the Assistant-unavailable cover', async () => {
+    const { user, rerender, queryCoauthoringProps, onPreview, onRevertPreview, dismissInvocation } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      request.onComplete('');
+    });
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByText('Assistant unavailable')).toBeInTheDocument();
+    expect(onPreview).toHaveBeenCalledTimes(1);
+    expect(onRevertPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+    expect(onRevertPreview).toHaveBeenCalledTimes(1);
+    expect(dismissInvocation).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels generation on Assistant unavailability and retries failed context loading at the submitted prompt', async () => {
+    const { user, rerender, queryCoauthoringProps, readInvocation, stagePreview, onPreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+    const cancelCalls = mockCancel.mock.calls.length;
+    mockAssistantAvailable = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(mockCancel).toHaveBeenCalledTimes(cancelCalls + 1);
+    mockIsGenerating = false;
+    readInvocation.mockRejectedValueOnce(new Error('Context unavailable'));
+    mockAssistantAvailable = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(await screen.findByRole('alert', { name: 'Could not read the selected query context' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
+    await act(async () => {
+      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Late proposal.'] });
+      request.onComplete('');
+    });
+    expect(stagePreview).not.toHaveBeenCalled();
+    expect(onPreview).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    expect(mockGenerate).toHaveBeenCalledTimes(2);
+  });
+
   it('preserves entered text when invocation loading finishes without an Assistant request', async () => {
     const initial = await setup();
     initial.unmount();
