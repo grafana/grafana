@@ -53,6 +53,7 @@ import {
   type TableSortByFieldState,
   type TableSummaryRow,
   type TypographyCtx,
+  type TextWrapFallback,
 } from './types';
 import {
   getDisplayName,
@@ -494,7 +495,51 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  // A new result may contain only short values despite having the same schema or value buffers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
+  const [version, setVersion] = useState(0);
+
+  // Height callbacks run inside the grid's render, after columns have already been built. Collect
+  // discoveries without updating another component during render, then repair all heights and
+  // column styles together before paint. Finishing the scan batches discoveries across columns.
+  // Check every commit: pagination and expansion can expose new values without changing fields.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (epoch.pending.size > 0) {
+      for (const name of epoch.pending) {
+        epoch.disabled.add(name);
+      }
+      epoch.pending.clear();
+      setVersion((value) => value + 1);
+    }
+  });
+
+  return useMemo(
+    () => ({
+      disabledFields: new Set(epoch.disabled),
+      shouldDisable: (field: Field, value: unknown) => {
+        const name = getDisplayName(field);
+        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+          return true;
+        }
+        if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
+          epoch.pending.add(name);
+          return true;
+        }
+        return false;
+      },
+    }),
+    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [epoch, version]
+  );
+}
+
 interface UseRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
   lastColumnExtraPadding?: number;
   columnWidths: number[];
   fields: Field[];
@@ -523,6 +568,8 @@ const getTrueColWidths = (cw: number[], noPanelPadding = false, lastColumnExtraP
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
+  wrapFallback,
+  nestedWrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -541,9 +588,10 @@ export function useRowHeight({
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
-    [nestedFields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight, nestedWrapFallback),
+    [nestedFields, typographyCtx, maxHeight, theme, nestedWrapFallback]
   );
+  const hasWrappedNestedCols = (nestedMeasurers?.length ?? 0) > 0;
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
   const totalNestedWidth = useMemo(() => nestedColWidths.reduce((acc, width) => acc + width, 0), [nestedColWidths]);
@@ -588,8 +636,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -638,10 +686,9 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
-        const nestedRowsHeight = nestedRows[row.__index].final.reduce(
-          (acc, row) => acc + getNestedRowHeightWithCache(row),
-          0
-        );
+        const nestedRowsHeight = hasWrappedNestedCols
+          ? nestedRows[row.__index].final.reduce((acc, row) => acc + getNestedRowHeightWithCache(row), 0)
+          : nestedRows[row.__index].final.length * defaultNestedHeight;
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
         const nestedTableVerticalPadding = tableRefreshEnabled
           ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
@@ -660,6 +707,7 @@ export function useRowHeight({
     defaultNestedHeight,
     hasNestedFrames,
     hasWrappedCols,
+    hasWrappedNestedCols,
     nestedFooterHeight,
     nestedHasOverflow,
     nestedRows,
@@ -672,6 +720,7 @@ export function useRowHeight({
 }
 
 interface UseFlatRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
   columnWidths: number[];
   fields: Field[];
   defaultHeight: NonNullable<CSSProperties['height']>;
@@ -685,6 +734,7 @@ interface UseFlatRowHeightOptions {
  * Unlike `useRowHeight`, this does not handle nested frame rows.
  */
 export function useFlatRowHeight({
+  wrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -694,8 +744,8 @@ export function useFlatRowHeight({
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 

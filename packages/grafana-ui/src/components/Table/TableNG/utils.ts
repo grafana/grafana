@@ -62,6 +62,7 @@ import type {
   GetActionsFunctionLocal,
   TableColumn,
   FromFieldsResult,
+  TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -277,7 +278,7 @@ export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: 
     // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
     // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
     // regardless, so measure them separately: the widest is what the whole string needs.
-    for (const segment of text.split('\n')) {
+    for (const segment of text.slice(0, TABLE.MAX_WRAP_TEXT_LENGTH).split('\n')) {
       let width = Math.ceil(ctx.measureText(segment).width);
       while (test(segment, width)) {
         width++;
@@ -297,7 +298,7 @@ export function getTextHeightMeasurerFromUwrapCount(count: Count): MeasureCellHe
       return lineHeight;
     }
 
-    const lines = count(String(value), width);
+    const lines = count(String(value).slice(0, TABLE.MAX_WRAP_TEXT_LENGTH), width);
     return lines * lineHeight;
   };
 }
@@ -470,7 +471,8 @@ export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
   theme: GrafanaTheme2,
-  maxHeight?: number
+  maxHeight?: number,
+  wrapFallback?: TextWrapFallback
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -500,9 +502,16 @@ export function buildCellHeightMeasurers(
   const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
+      const guard = (measurer: MeasureCellHeight): MeasureCellHeight => {
+        if (measurerFactoryKey !== TableCellDisplayMode.Auto || wrapFallback == null) {
+          return measurer;
+        }
+        return (value, width, field, rowIdx, lineHeight) =>
+          wrapFallback.shouldDisable(field, value) ? -1 : measurer(value, width, field, rowIdx, lineHeight);
+      };
       result[measurerFactoryKey] = {
-        measure: clampByMaxHeight(measure, maxHeight),
-        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
+        measure: guard(clampByMaxHeight(measure, maxHeight)),
+        estimate: estimate != null ? guard(clampByMaxHeight(estimate, maxHeight)) : undefined,
         fieldIdxs: [],
       };
     }
@@ -511,7 +520,7 @@ export function buildCellHeightMeasurers(
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
     const field = fields[fieldIdx];
-    if (shouldTextWrap(field)) {
+    if (shouldTextWrap(field) && !wrapFallback?.disabledFields.has(getDisplayName(field))) {
       wrappedFields++;
 
       const cellType = getCellOptions(field).type;
