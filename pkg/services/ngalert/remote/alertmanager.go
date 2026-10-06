@@ -363,7 +363,10 @@ func (am *Alertmanager) buildConfiguration(ctx context.Context, c alertingNotify
 
 	var smtp remoteClient.SmtpConfig
 	if am.smtp != nil {
-		smtp = am.smtp(ctx)
+		smtp, err = am.smtp(ctx)
+		if err != nil {
+			return remoteClient.UserGrafanaConfig{}, fmt.Errorf("unable to read SMTP settings: %w", err)
+		}
 	}
 
 	payload := remoteClient.UserGrafanaConfig{

@@ -34,25 +34,21 @@ func TestLiveSmtpConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		get := LiveSmtpConfig(cfgProvider, cfg)
-		got := get(ctx)
+		got, err := get(ctx)
+		require.NoError(t, err)
 		require.Equal(t, "live:25", got.Host)
 		require.Equal(t, "live@grafana.net", got.FromAddress)
 		require.Equal(t, "instance", got.EhloIdentity)
 		require.Equal(t, map[string]string{"Foo-Header": "foo"}, got.StaticHeaders)
 
 		smtp.Key("from_address").SetValue("updated@grafana.net")
-		require.Equal(t, "updated@grafana.net", get(ctx).FromAddress)
-
-		// Invalid settings keep the last ones read.
-		cfg.Raw.Section("smtp.static_headers").Key("not-canonical").SetValue("bar")
-		require.Equal(t, "updated@grafana.net", get(ctx).FromAddress)
+		got, err = get(ctx)
+		require.NoError(t, err)
+		require.Equal(t, "updated@grafana.net", got.FromAddress)
 	})
 
-	t.Run("falls back to the startup settings if the first read fails", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.Smtp.FromAddress = "startup@grafana.net"
-
-		got := LiveSmtpConfig(failingConfigProvider{}, cfg)(ctx)
-		require.Equal(t, "startup@grafana.net", got.FromAddress)
+	t.Run("returns the error if the settings can't be read", func(t *testing.T) {
+		_, err := LiveSmtpConfig(failingConfigProvider{}, setting.NewCfg())(ctx)
+		require.Error(t, err)
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -315,6 +316,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	// ApplyConfig performs a readiness check at startup.
 	// A non-200 response should result in an error.
 	server := httptest.NewServer(errorHandler)
+	var smtpErr error
 	smtp := client.SmtpConfig{
 		FromAddress:   "test-instance@grafana.net",
 		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
@@ -327,7 +329,7 @@ func TestIntegrationApplyConfig(t *testing.T) {
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
-		SmtpConfig:    func(context.Context) client.SmtpConfig { return smtp },
+		SmtpConfig:    func(context.Context) (client.SmtpConfig, error) { return smtp, smtpErr },
 	}
 
 	ctx := context.Background()
@@ -423,6 +425,13 @@ func TestIntegrationApplyConfig(t *testing.T) {
 	require.True(t, applied)
 	require.Equal(t, 4, configSyncs)
 	require.Equal(t, smtp, configSent.SmtpConfig)
+
+	// If the SMTP settings can't be read, the configuration shouldn't be sent.
+	smtpErr = errors.New("unable to read settings")
+	applied, err = moa.ApplyConfig(ctx, 1, &ngmodels.AlertConfiguration{AlertmanagerConfiguration: string(encryptedConfig)})
+	require.ErrorContains(t, err, "unable to read SMTP settings")
+	require.False(t, applied)
+	require.Equal(t, 4, configSyncs)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
