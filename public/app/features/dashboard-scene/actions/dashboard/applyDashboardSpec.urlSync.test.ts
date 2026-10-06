@@ -101,6 +101,7 @@ function makeSpec({
   sections = [],
   adhoc,
   time = {},
+  tabs = [],
 }: {
   title?: string;
   namespace?: string;
@@ -109,6 +110,8 @@ function makeSpec({
   sections?: string[];
   adhoc?: string;
   time?: Partial<DashboardV2Spec['timeSettings']>;
+  /** One tab per entry, titled with that value. */
+  tabs?: string[];
 } = {}): DashboardV2Spec {
   const defaults = defaultDashboardV2Spec();
   const spec: DashboardV2Spec = {
@@ -132,6 +135,17 @@ function makeSpec({
             layout: { kind: 'GridLayout', spec: { items: [] } },
             variables: [queryVariable('pod', pod, false)],
           },
+        })),
+      },
+    };
+  }
+  if (tabs.length > 0) {
+    spec.layout = {
+      kind: 'TabsLayout',
+      spec: {
+        tabs: tabs.map((tabTitle) => ({
+          kind: 'TabsLayoutTab',
+          spec: { title: tabTitle, layout: { kind: 'GridLayout', spec: { items: [] } } },
         })),
       },
     };
@@ -267,6 +281,80 @@ describe('applyDashboardSpec with url sync', () => {
     expect(url().getAll('var-filters')).toEqual(['env|=|staging#dashboard#restorable']);
   });
 
+  it('keeps the values the spec sets for a variable name more than one section uses', async () => {
+    const scene = await open(
+      makeSpec({ sections: ['a', 'b'] }),
+      'var-namespace=a&var-service=$__all&var-pod=a&var-pod-2=b'
+    );
+
+    await apply(scene, makeSpec({ sections: ['x', 'y'] }));
+
+    const pods = sceneGraph
+      .findAllObjects(scene, (obj) => 'name' in obj.state && obj.state.name === 'pod')
+      .map((obj) => (obj as MultiValueVariable).getValue());
+    expect(pods).toEqual(['x', 'y']);
+    expect([url().get('var-pod'), url().get('var-pod-2')]).toEqual(['x', 'y']);
+  });
+
+  it('keeps the selected tab across an apply that renames the first tab', async () => {
+    const scene = await open(makeSpec({ tabs: ['One', 'Two'] }), 'var-namespace=a&var-service=$__all&dtab=two');
+
+    await apply(scene, makeSpec({ tabs: ['First', 'Two'] }));
+
+    expect(url().get('dtab')).toBe('two');
+  });
+
+  it('keeps the selected tab across an apply that inserts a tab before it and changes a variable', async () => {
+    const scene = await open(makeSpec({ tabs: ['One', 'Two'] }), 'var-namespace=a&var-service=$__all&dtab=two');
+
+    await apply(scene, makeSpec({ namespace: 'b', tabs: ['Zero', 'One', 'Two'] }));
+
+    expect(url().get('dtab')).toBe('two');
+    expect(value(scene, 'namespace')).toBe('b');
+  });
+
+  it('keeps the spec value of the remaining section when the spec removes a section sharing its variable name', async () => {
+    const scene = await open(
+      makeSpec({ sections: ['a', 'b'] }),
+      'var-namespace=a&var-service=$__all&var-pod=a&var-pod-2=b'
+    );
+
+    await apply(scene, makeSpec({ sections: ['y'] }));
+
+    const pods = sceneGraph
+      .findAllObjects(scene, (obj) => 'name' in obj.state && obj.state.name === 'pod')
+      .map((obj) => (obj as MultiValueVariable).getValue());
+    expect(pods).toEqual(['y']);
+  });
+
+  it('keeps a value the user picked after the apply when undoing an apply that did not touch the variable', async () => {
+    const scene = await open(makeSpec(), 'var-namespace=a&var-service=$__all');
+
+    await apply(scene, makeSpec({ title: 'Renamed' }));
+    lookup<MultiValueVariable>(scene, 'namespace').changeValueTo('x');
+    await settle();
+    scene.state.sidebar.undoAction();
+    await settle();
+
+    expect(value(scene, 'namespace')).toBe('x');
+    expect(url().get('var-namespace')).toBe('x');
+  });
+
+  it('writes the spec value on redo over a value the user picked after the undo', async () => {
+    const scene = await open(makeSpec(), 'var-namespace=a&var-service=$__all');
+
+    await apply(scene, makeSpec({ namespace: 'b' }));
+    scene.state.sidebar.undoAction();
+    await settle();
+    lookup<MultiValueVariable>(scene, 'namespace').changeValueTo('x');
+    await settle();
+    scene.state.sidebar.redoAction();
+    await settle();
+
+    expect(value(scene, 'namespace')).toBe('b');
+    expect(url().get('var-namespace')).toBe('b');
+  });
+
   describe('time settings', () => {
     const before = { from: 'now-6h', to: 'now', timezone: 'utc', autoRefresh: '1m' };
     const after = { from: 'now-24h', to: 'now', timezone: 'browser', autoRefresh: '30s' };
@@ -313,6 +401,29 @@ describe('applyDashboardSpec with url sync', () => {
 
       expect(partial).not.toHaveBeenCalled();
       expect(timeSettings(scene)).toEqual(zoomed);
+    });
+
+    it('re-applies the spec time settings on redo', async () => {
+      const scene = await open(makeSpec({ time: before }), timeSearch);
+
+      await apply(scene, makeSpec({ time: after }));
+      scene.state.sidebar.undoAction();
+      await settle();
+      scene.state.sidebar.redoAction();
+      await settle();
+
+      expect(timeSettings(scene)).toEqual(after);
+      expect(timeUrl()).toEqual(after);
+    });
+
+    it('drops `time` and `time.window` from the URL when the spec changes the time range', async () => {
+      const scene = await open(makeSpec({ time: before }), 'time=1700000000000&time.window=3600000');
+
+      await apply(scene, makeSpec({ time: { ...before, from: 'now-24h' } }));
+
+      expect(sceneGraph.getTimeRange(scene).state.from).toBe('now-24h');
+      expect(url().has('time')).toBe(false);
+      expect(url().has('time.window')).toBe(false);
     });
   });
 });
