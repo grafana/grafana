@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/migrations/contract"
 )
 
-func TestDataSourceMigrationRequiresSharedCollection(t *testing.T) {
+func TestDataSourceMigrationStorageMode(t *testing.T) {
 	ctx := context.Background()
 	cfg := setting.NewCfg()
 	sqlStore := db.NewTestStore(t, db.WithCfg(cfg), db.WithoutMigrator())
@@ -48,9 +48,8 @@ func TestDataSourceMigrationRequiresSharedCollection(t *testing.T) {
 		return mode
 	}
 
-	insertLog("datasources migration")
 	require.Equal(t, contract.StorageModeDualWrite, storageMode())
 
-	insertLog(def.MigrationID)
+	insertLog("datasources migration")
 	require.Equal(t, contract.StorageModeUnified, storageMode())
 }
