@@ -140,7 +140,6 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^10.6.0",
-    "@grafana/scenes": "8.20.1",
     "@grafana/test-utils": "workspace:*",
     "@rollup/plugin-node-resolve": "16.0.1",
     "@rsbuild/core": "^2.1.9",

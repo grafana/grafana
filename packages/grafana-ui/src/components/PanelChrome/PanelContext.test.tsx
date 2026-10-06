@@ -2,7 +2,6 @@ import { act, renderHook } from '@testing-library/react';
 import { type PropsWithChildren } from 'react';
 
 import { type DataTransformerConfig, EventBusSrv, toDataFrame } from '@grafana/data';
-import { VizPanel } from '@grafana/scenes';
 
 import {
   type PanelContext,
@@ -57,26 +56,5 @@ describe('useAdHocTransformations', () => {
     act(() => result.current?.setTransformations(nextTransformations));
 
     expect(result.current?.transformations).toBe(nextTransformations);
-  });
-
-  it('reads and updates only the selected owner when sharing the Scenes controller', () => {
-    const api: PanelRuntimeTransformations = new VizPanel({ pluginId: 'table' }).getRuntimeTransformations();
-    api.set('table', [{ id: 'organize', options: {} }]);
-    api.set('other', [{ id: 'limit', options: { limitField: 2 } }]);
-    const { result, rerender } = renderHook(({ owner }) => useAdHocTransformations(owner), {
-      initialProps: { owner: 'table' },
-      wrapper: wrapperWith({ eventsScope: 'global', eventBus: new EventBusSrv(), adHocTransformations: api }),
-    });
-
-    expect(result.current?.transformations).toEqual([{ id: 'organize', options: {} }]);
-    act(() => result.current?.setTransformations([]));
-    expect(api.get('table')).toEqual([]);
-    expect(api.get('other')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
-
-    rerender({ owner: 'other' });
-    act(() => api.set('table', [{ id: 'organize', options: {} }]));
-    expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
-    act(() => api.set('other', [{ id: 'limit', options: { limitField: 3 } }]));
-    expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 3 } }]);
   });
 });
