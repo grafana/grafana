@@ -87,11 +87,18 @@ The theme is also available as CSS custom properties on `:root`, updated when th
 Clicks on `<a href>` are sent to Grafana, which follows only these links:
 
 - `#panel-<id>` opens a panel of this dashboard in view mode.
-- `?<params>` changes the state of this dashboard.
+- `#explore-panel-<id>` opens Explore with that panel's queries, datasource and the dashboard time
+  range, like the panel menu's Explore item. Ignored without Explore access.
+- `#focus-panel-<id>` scrolls to that panel, switching tab or expanding its row, and highlights it
+  for two seconds.
+- `?<params>` changes the state of this dashboard. `editPanel=panel-<id>` opens the panel editor,
+  only for users who can edit the dashboard; otherwise the whole link is ignored.
 - `/d/<uid>[/<slug>][?<params>]` opens another dashboard.
 
-Only these parameters are allowed: `viewPanel`, `from`, `to`, `var-<name>` and tab keys (`dtab`,
-`<prefix>-dtab`). A link with any other parameter, a scheme or a host is dropped. At most one link
+Only these parameters are allowed: `viewPanel`, `editPanel` (this dashboard only, not with
+`viewPanel`), `from`, `to`, `var-<name>` and tab keys (`dtab`, `<prefix>-dtab`). Panel links carry
+only the panel id: Grafana reads the queries and time range from the dashboard, never from the
+frame. A link with any other parameter, a scheme or a host is dropped. At most one link
 per second is followed, and only right after a user click. Links to an element inside the frame
 (`#section`) scroll the frame and never leave it.
 
@@ -159,8 +166,8 @@ document down, and offers **Retry**, which starts a new frame.
   script loses its nonce and text and leaves the document as soon as it has run.
 - The frame talks to Grafana only over a versioned message channel. Grafana validates every message
   and every link. There is no model at view time: the panel runs the stored code as it is.
-- Public dashboards serve the stored code and run it in the same sandbox, but links are ignored
-  there and the panel gets no extra capability.
+- Public dashboards serve the stored code and run it in the same sandbox, but every link,
+  including edit, Explore and focus links, is ignored there and the panel gets no extra capability.
 - Snapshots carry the panel's data frames like any other panel, and the code draws them.
 
 ## Image and PDF rendering
