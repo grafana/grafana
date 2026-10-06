@@ -98,9 +98,16 @@ function makeSpec({
   title = 'Variables',
   namespace = 'a',
   service = '$__all',
-  section,
+  sections = [],
   adhoc,
-}: { title?: string; namespace?: string; service?: string; section?: string; adhoc?: string } = {}): DashboardV2Spec {
+}: {
+  title?: string;
+  namespace?: string;
+  service?: string;
+  /** One row per entry, each with a `pod` section variable set to that value. */
+  sections?: string[];
+  adhoc?: string;
+} = {}): DashboardV2Spec {
   const spec: DashboardV2Spec = {
     ...defaultDashboardV2Spec(),
     title,
@@ -110,20 +117,18 @@ function makeSpec({
   if (adhoc) {
     spec.variables.push(adhocVariable(adhoc));
   }
-  if (section) {
+  if (sections.length > 0) {
     spec.layout = {
       kind: 'RowsLayout',
       spec: {
-        rows: [
-          {
-            kind: 'RowsLayoutRow',
-            spec: {
-              title: 'Row',
-              layout: { kind: 'GridLayout', spec: { items: [] } },
-              variables: [queryVariable('pod', section, false)],
-            },
+        rows: sections.map((pod, index) => ({
+          kind: 'RowsLayoutRow',
+          spec: {
+            title: `Row ${index + 1}`,
+            layout: { kind: 'GridLayout', spec: { items: [] } },
+            variables: [queryVariable('pod', pod, false)],
           },
-        ],
+        })),
       },
     };
   }
@@ -202,9 +207,9 @@ describe('applyDashboardSpec with url sync', () => {
   });
 
   it('keeps a section variable value the spec sets', async () => {
-    const scene = await open(makeSpec({ section: 'a' }), 'var-namespace=a&var-service=$__all&var-pod=a');
+    const scene = await open(makeSpec({ sections: ['a'] }), 'var-namespace=a&var-service=$__all&var-pod=a');
 
-    await apply(scene, makeSpec({ section: 'x' }));
+    await apply(scene, makeSpec({ sections: ['x'] }));
 
     expect(value(scene, 'pod')).toBe('x');
     expect(url().get('var-pod')).toBe('x');

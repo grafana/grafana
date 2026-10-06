@@ -102,10 +102,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
  */
 function syncRebuiltChildrenFromUrl(scene: DashboardScene, variablesBefore: SceneObjectUrlValues) {
   const variablesAfter = variableUrlStateAsSpec(scene);
-  const liveValues: SceneObjectUrlValues = {};
-  for (const set of findVariableSets(scene)) {
-    Object.assign(liveValues, sceneUtils.getUrlState(set));
-  }
+  const liveValues = variableUrlState(scene, (set) => [sceneUtils.getUrlState(set)]);
 
   const search = locationService.getSearch();
   const updates: SceneObjectUrlValues = {};
@@ -125,25 +122,42 @@ function syncRebuiltChildrenFromUrl(scene: DashboardScene, variablesBefore: Scen
   scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
 }
 
-const isVariableSet = (obj: SceneObject): obj is SceneVariableSet => obj instanceof SceneVariableSet;
-
-function findVariableSets(scene: DashboardScene): SceneVariableSet[] {
-  return sceneGraph.findAllObjects(scene, isVariableSet).filter(isVariableSet);
-}
-
 /**
  * The URL state of every dashboard and section variable as a spec describes it, so that two
  * states compare equal when the spec they serialize to is the same.
  */
 function variableUrlStateAsSpec(scene: DashboardScene): SceneObjectUrlValues {
+  return variableUrlState(scene, (set) =>
+    sceneVariablesSetToSchemaV2Variables(set).map(
+      (model) => createSceneVariableFromVariableModel(model).urlSync?.getUrlState() ?? {}
+    )
+  );
+}
+
+/**
+ * Merges the `var-*` state of every variable set. Url sync gives a name that more than one set
+ * uses a distinct key per set, which a set-by-set read cannot reproduce, so those names are
+ * left out and keep the plain re-sync.
+ */
+function variableUrlState(
+  scene: DashboardScene,
+  read: (set: SceneVariableSet) => SceneObjectUrlValues[]
+): SceneObjectUrlValues {
   const state: SceneObjectUrlValues = {};
-  for (const set of findVariableSets(scene)) {
-    for (const model of sceneVariablesSetToSchemaV2Variables(set)) {
-      Object.assign(state, createSceneVariableFromVariableModel(model).urlSync?.getUrlState());
+  const shared = new Set<string>();
+  for (const set of sceneGraph.findAllObjects(scene, isVariableSet).filter(isVariableSet)) {
+    for (const [key, value] of read(set).flatMap((values) => Object.entries(values))) {
+      if (key in state) {
+        shared.add(key);
+      }
+      state[key] = value;
     }
   }
+  shared.forEach((key) => delete state[key]);
   return state;
 }
+
+const isVariableSet = (obj: SceneObject): obj is SceneVariableSet => obj instanceof SceneVariableSet;
 
 function isSameUrlValue(a: SceneObjectUrlValue, b: SceneObjectUrlValue) {
   const values = (value: SceneObjectUrlValue) => (value == null ? [] : Array.isArray(value) ? value : [value]);
