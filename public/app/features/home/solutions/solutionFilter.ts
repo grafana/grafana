@@ -1,16 +1,10 @@
 import * as z from 'zod';
 
-import {
-  type AdHocVariableFilter,
-  type DataSourceInstanceListItem,
-  type MetricFindValue,
-  rangeUtil,
-} from '@grafana/data';
-import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataSourceInstanceListItem } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { type SolutionId } from './types';
+import { type SolutionId, type SolutionStats } from './types';
 
 /**
  * localStorage key of the current org's stored scope for a solution card (JSON of a
@@ -66,32 +60,14 @@ export function scopeFor<T extends DatasourceBoundFilter>(
   return filter && filter.datasourceUid === ds.uid ? filter : null;
 }
 
-// Matches the cards' "seen recently" lookback (24h inventory / sm_check_info).
-const VALUES_RANGE = { from: 'now-24h', to: 'now' };
-
-/**
- * Distinct `key` values carried by `metric` in datasource `uid` over the last 24h, narrowed by
- * `filters`. The Prometheus datasource caches label values per snapped time range itself
- * (1–60 min by cacheLevel), so reopening the dialog inside that window issues no request and a
- * moved window refreshes the list.
- */
-export async function fetchFilterLabelValues(
-  uid: string,
-  key: string,
-  metric: string,
-  filters: AdHocVariableFilter[] = []
-): Promise<string[]> {
-  const ds = await getDataSourceInstance({ uid });
-  if (!ds.getTagValues) {
-    return [];
-  }
-  const query: PromQuery = { refId: 'values', expr: metric };
-  const result = await ds.getTagValues({
-    key,
-    filters,
-    timeRange: rangeUtil.convertRawToRange(VALUES_RANGE),
-    queries: [query],
-  });
-  const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
-  return values.map((v) => String(v.value ?? v.text));
+/** Stats for a scoped query that matched nothing. Null when the card runs unscoped: an empty fleet stays blank. */
+export async function noMatchStats(
+  filter: DatasourceBoundFilter | null,
+  datasource: () => Promise<DataSourceInstanceListItem | null>,
+  primary: string
+): Promise<SolutionStats | null> {
+  const ds = await datasource();
+  return ds && scopeFor(filter, ds)
+    ? { primary, secondary: t('home.solutions.filter.no-match-hint', 'Adjust the filters') }
+    : null;
 }

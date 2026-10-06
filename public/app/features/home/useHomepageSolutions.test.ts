@@ -203,7 +203,7 @@ describe('useHomepageSolutions', () => {
     {
       solution: 'synthetics' as const,
       index: 4,
-      scope: { jobs: ['canary'], instances: [], probes: [] },
+      scope: { job: ['canary'], instance: [], probe: [] },
       detect: detectSynthetics,
     },
   ])('recreates only the $solution solution when its filter changes', ({ solution: id, index, scope, detect }) => {

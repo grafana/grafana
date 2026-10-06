@@ -11389,6 +11389,7 @@
         "clear": "Clear filters",
         "edit": "Edit filters ({{summary}})",
         "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "no-match-hint": "Adjust the filters",
         "save": "Save",
         "save-failed": "Could not save to browser storage. Try again."
       },
@@ -11406,7 +11407,6 @@
           "cluster": "Cluster",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
-          "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
           "summary-cluster": "Cluster: {{cluster}}",
@@ -11483,7 +11483,6 @@
           "no-instances": "No targets ignored",
           "no-jobs": "No checks ignored",
           "no-match": "All checks ignored",
-          "no-match-hint": "Adjust the filters",
           "no-probes": "No probes ignored",
           "open": "Ignore checks, targets, or probes",
           "probes": "Ignore probes",

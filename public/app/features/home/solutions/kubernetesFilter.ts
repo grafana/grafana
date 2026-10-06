@@ -3,12 +3,8 @@ import * as z from 'zod';
 import { t } from '@grafana/i18n';
 
 import { hasSelection } from './kubernetesData';
-import {
-  DatasourceBoundFilterSchema,
-  fetchFilterLabelValues,
-  parseStoredFilter,
-  TrimmedValues,
-} from './solutionFilter';
+import { fetchLabelValues } from './promQuery';
+import { DatasourceBoundFilterSchema, parseStoredFilter, TrimmedValues } from './solutionFilter';
 
 const KubernetesFilterSchema = DatasourceBoundFilterSchema.extend({
   cluster: z.string().trim(),
@@ -64,7 +60,7 @@ const VALUE_SOURCE_METRIC: Record<KubernetesScopeLabel, string> = {
 
 /** Distinct `key` values in `uid` over the last 24h, optionally narrowed to `cluster` ('' = all). */
 export function fetchKubernetesLabelValues(uid: string, key: KubernetesScopeLabel, cluster: string): Promise<string[]> {
-  return fetchFilterLabelValues(
+  return fetchLabelValues(
     uid,
     key,
     VALUE_SOURCE_METRIC[key],

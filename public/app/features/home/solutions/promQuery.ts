@@ -2,6 +2,7 @@ import { firstValueFrom, NEVER, takeUntil, timeout } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
+  type AdHocVariableFilter,
   type DataFrame,
   type DataQuery,
   type DataSourceInstanceSettings,
@@ -13,10 +14,13 @@ import {
   getDefaultTimeRange,
   getMinMaxAndDelta,
   LoadingState,
+  type MetricFindValue,
+  rangeUtil,
   type TimeRange,
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { abortNotifier } from './probeUtils';
 
@@ -165,4 +169,34 @@ export async function runRangeQuery(
   const range: TimeRange = { from: fromTime, to: toTime, raw: { from: `now-${hours}h`, to: 'now' } };
   const target: PromQuery = { refId, expr, instant: false, range: true };
   return runDatasourceQueries([target], range, ds);
+}
+
+// Matches the cards' "seen recently" lookback (24h inventory / sm_check_info).
+const LABEL_VALUES_RANGE = { from: 'now-24h', to: 'now' };
+
+/**
+ * Distinct `key` values carried by `metric` in datasource `uid` over the last 24h, narrowed by
+ * `filters`. The Prometheus datasource caches label values per snapped time range itself
+ * (1–60 min by cacheLevel), so reopening a dialog inside that window issues no request and a
+ * moved window refreshes the list.
+ */
+export async function fetchLabelValues(
+  uid: string,
+  key: string,
+  metric: string,
+  filters: AdHocVariableFilter[] = []
+): Promise<string[]> {
+  const ds = await getDataSourceInstance({ uid });
+  if (!ds.getTagValues) {
+    return [];
+  }
+  const query: PromQuery = { refId: 'values', expr: metric };
+  const result = await ds.getTagValues({
+    key,
+    filters,
+    timeRange: rangeUtil.convertRawToRange(LABEL_VALUES_RANGE),
+    queries: [query],
+  });
+  const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
+  return values.map((v) => String(v.value ?? v.text));
 }

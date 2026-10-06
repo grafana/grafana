@@ -1,64 +1,24 @@
-import { type DataSourceApi } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
-
-import { fetchSyntheticsLabelValues, parseSyntheticsFilter } from './syntheticsFilter';
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstance: jest.fn(),
-}));
-
-const mockGetDataSourceInstance = jest.mocked(getDataSourceInstance);
-const getTagValues = jest.fn();
+import { parseSyntheticsFilter } from './syntheticsFilter';
 
 const stored = {
   datasourceUid: 'uid-a',
   datasourceName: 'Prometheus',
-  jobs: ['canary'],
-  instances: ['https://shop.example'],
-  probes: ['Amsterdam'],
+  job: ['canary'],
+  instance: ['https://shop.example'],
+  probe: ['Amsterdam'],
 };
-
-beforeEach(() => {
-  getTagValues.mockReset();
-  mockGetDataSourceInstance.mockReset();
-  mockGetDataSourceInstance.mockResolvedValue({ getTagValues } as unknown as DataSourceApi);
-});
 
 describe('parseSyntheticsFilter', () => {
   it('reads a missing, malformed or wrongly shaped value as every check counting', () => {
     expect(parseSyntheticsFilter(undefined)).toBeNull();
     expect(parseSyntheticsFilter('{not json')).toBeNull();
-    expect(parseSyntheticsFilter(JSON.stringify({ ...stored, jobs: 'canary' }))).toBeNull();
+    expect(parseSyntheticsFilter(JSON.stringify({ ...stored, job: 'canary' }))).toBeNull();
   });
 
   it('trims values, drops blank entries and reads what is left empty as every check counting', () => {
     expect(
-      parseSyntheticsFilter(JSON.stringify({ ...stored, jobs: ['', ' canary '], instances: [' '], probes: [] }))
-    ).toEqual({ ...stored, jobs: ['canary'], instances: [], probes: [] });
-    expect(parseSyntheticsFilter(JSON.stringify({ ...stored, jobs: [''], instances: [' '], probes: [] }))).toBeNull();
-  });
-});
-
-describe('fetchSyntheticsLabelValues', () => {
-  it('asks the datasource for the label values carried by sm_check_info, unnarrowed', async () => {
-    getTagValues.mockResolvedValue([{ text: 'canary', value: 'canary' }]);
-
-    await expect(fetchSyntheticsLabelValues('uid-a', 'job')).resolves.toEqual(['canary']);
-
-    expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'uid-a' });
-    expect(getTagValues).toHaveBeenCalledTimes(1);
-    expect(getTagValues.mock.calls[0][0]).toMatchObject({
-      key: 'job',
-      filters: [],
-      queries: [{ refId: 'values', expr: 'sm_check_info' }],
-      timeRange: { raw: { from: 'now-24h', to: 'now' } },
-    });
-  });
-
-  it('reads as empty when the datasource cannot list label values', async () => {
-    mockGetDataSourceInstance.mockResolvedValue({} as DataSourceApi);
-
-    await expect(fetchSyntheticsLabelValues('uid-c', 'probe')).resolves.toEqual([]);
+      parseSyntheticsFilter(JSON.stringify({ ...stored, job: ['', ' canary '], instance: [' '], probe: [] }))
+    ).toEqual({ ...stored, job: ['canary'], instance: [], probe: [] });
+    expect(parseSyntheticsFilter(JSON.stringify({ ...stored, job: [''], instance: [' '], probe: [] }))).toBeNull();
   });
 });

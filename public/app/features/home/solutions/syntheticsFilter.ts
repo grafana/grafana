@@ -2,18 +2,14 @@ import type * as z from 'zod';
 
 import { t } from '@grafana/i18n';
 
-import {
-  DatasourceBoundFilterSchema,
-  fetchFilterLabelValues,
-  parseStoredFilter,
-  TrimmedValues,
-} from './solutionFilter';
-import { hasIgnores } from './syntheticsData';
+import { fetchLabelValues } from './promQuery';
+import { DatasourceBoundFilterSchema, parseStoredFilter, TrimmedValues } from './solutionFilter';
+import { hasIgnores, type IgnoreLabel } from './syntheticsData';
 
 const SyntheticsFilterSchema = DatasourceBoundFilterSchema.extend({
-  jobs: TrimmedValues,
-  instances: TrimmedValues,
-  probes: TrimmedValues,
+  job: TrimmedValues,
+  instance: TrimmedValues,
+  probe: TrimmedValues,
 });
 
 export type SyntheticsFilter = z.infer<typeof SyntheticsFilterSchema>;
@@ -26,26 +22,26 @@ export function parseSyntheticsFilter(raw: string | undefined): SyntheticsFilter
 /** Human summary for tooltips: non-empty parts joined with ' · '. */
 export function summarizeSyntheticsFilter(filter: SyntheticsFilter): string {
   const parts: string[] = [];
-  if (filter.jobs.length > 0) {
+  if (filter.job.length > 0) {
     parts.push(
       t('home.solutions.synthetics.filter.summary-jobs', 'Ignoring checks: {{jobs}}', {
-        jobs: filter.jobs.join(', '),
+        jobs: filter.job.join(', '),
         interpolation: { escapeValue: false },
       })
     );
   }
-  if (filter.instances.length > 0) {
+  if (filter.instance.length > 0) {
     parts.push(
       t('home.solutions.synthetics.filter.summary-instances', 'Ignoring targets: {{instances}}', {
-        instances: filter.instances.join(', '),
+        instances: filter.instance.join(', '),
         interpolation: { escapeValue: false },
       })
     );
   }
-  if (filter.probes.length > 0) {
+  if (filter.probe.length > 0) {
     parts.push(
       t('home.solutions.synthetics.filter.summary-probes', 'Ignoring probes: {{probes}}', {
-        probes: filter.probes.join(', '),
+        probes: filter.probe.join(', '),
         interpolation: { escapeValue: false },
       })
     );
@@ -53,9 +49,7 @@ export function summarizeSyntheticsFilter(filter: SyntheticsFilter): string {
   return parts.join(' · ');
 }
 
-export type SyntheticsIgnoreLabel = 'job' | 'instance' | 'probe';
-
-/** Distinct values of `key` on sm_check_info over the last 24h; the lists are independent of each other. */
-export function fetchSyntheticsLabelValues(uid: string, key: SyntheticsIgnoreLabel): Promise<string[]> {
-  return fetchFilterLabelValues(uid, key, 'sm_check_info');
+/** Distinct values of `label` on sm_check_info over the last 24h; the lists are independent of each other. */
+export function fetchSyntheticsLabelValues(uid: string, label: IgnoreLabel): Promise<string[]> {
+  return fetchLabelValues(uid, label, 'sm_check_info');
 }

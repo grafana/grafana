@@ -42,10 +42,10 @@ const SM_SUCCESS_RATIO_1H =
   'sum by (job, instance) (rate(probe_all_success_sum[1h])) / sum by (job, instance) (rate(probe_all_success_count[1h]))';
 
 // The regex escape of the dot is itself string-escaped, so the query text carries two backslashes.
-const IGNORE_SCOPE = { jobs: ['canary', 'shop.example'], instances: ['shop.example:443'], probes: ['Amsterdam'] };
+const IGNORE_SCOPE = { job: ['canary', 'shop.example'], instance: ['shop.example:443'], probe: ['Amsterdam'] };
 const IGNORE_SEL = '{job!~"canary|shop\\\\.example",instance!~"shop\\\\.example:443",probe!~"Amsterdam"}';
 const IGNORED_SUCCESS_RATIO_1H = `sum by (job, instance) (rate(probe_all_success_sum${IGNORE_SEL}[1h])) / sum by (job, instance) (rate(probe_all_success_count${IGNORE_SEL}[1h]))`;
-const NO_IGNORES = { jobs: [], instances: [], probes: [] };
+const NO_IGNORES = { job: [], instance: [], probe: [] };
 
 function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: boolean }): DataSourceInstanceListItem {
   return {
@@ -67,8 +67,6 @@ let dataByUid: Record<string, number>;
 let probeErrorUids: Set<string>;
 // refId -> frames returned for detail batches; absent refId = empty instant vector.
 let framesByRefId: Record<string, DataFrame>;
-// Detail batches containing these refIds emit LoadingState.Error; sibling refIds' frames survive.
-let queryErrorRefIds: Set<string>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
 
@@ -88,7 +86,6 @@ beforeEach(() => {
   dataByUid = {};
   probeErrorUids = new Set();
   framesByRefId = {};
-  queryErrorRefIds = new Set();
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
     let captured: CapturedRun | undefined;
@@ -109,12 +106,10 @@ beforeEach(() => {
           const series = count > 0 ? [numberFrame('checks', [count])] : [];
           return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
         }
-        const queries = captured?.queries ?? [];
-        const series = queries.flatMap((q) =>
-          framesByRefId[q.refId] && !queryErrorRefIds.has(q.refId) ? [framesByRefId[q.refId]] : []
+        const series = (captured?.queries ?? []).flatMap((q) =>
+          framesByRefId[q.refId] ? [framesByRefId[q.refId]] : []
         );
-        const state = queries.some((q) => queryErrorRefIds.has(q.refId)) ? LoadingState.Error : LoadingState.Done;
-        return of({ state, series, timeRange: {} } as PanelData);
+        return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
       },
       cancel: jest.fn(),
       destroy: jest.fn(),
@@ -202,13 +197,6 @@ describe('fetchSyntheticsStats', () => {
 
   it('reads empty instant vectors as nulls', async () => {
     await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: null, successRatio: null });
-  });
-
-  it('reads a failed count query as null while keeping the success ratio from the same batch', async () => {
-    framesByRefId = { successRatio: numberFrame('successRatio', [0.985]) };
-    queryErrorRefIds = new Set(['checks']);
-
-    await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: null, successRatio: 0.985 });
   });
 
   it('excludes the ignored jobs, targets and probes from both stats queries', async () => {

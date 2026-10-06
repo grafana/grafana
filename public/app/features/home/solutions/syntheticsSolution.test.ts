@@ -44,9 +44,9 @@ const healthy: SyntheticsHealth = { failing: null, worstCheck: null, worstRatio:
 const storedFilter: SyntheticsFilter = {
   datasourceUid: 'sm-uid',
   datasourceName: 'sm-prom',
-  jobs: ['canary'],
-  instances: [],
-  probes: [],
+  job: ['canary'],
+  instance: [],
+  probe: [],
 };
 
 beforeEach(() => {

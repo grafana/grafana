@@ -71,9 +71,9 @@ describe('SyntheticsFilterActions', () => {
     expect(JSON.parse(window.localStorage.getItem(solutionFilterStorageKey('synthetics')) ?? '')).toEqual({
       datasourceUid: 'prometheus',
       datasourceName: 'Prometheus',
-      jobs: ['canary'],
-      instances: ['https://a.example/x'],
-      probes: [],
+      job: ['canary'],
+      instance: ['https://a.example/x'],
+      probe: [],
     });
     expect(
       screen.getByRole('button', {
@@ -87,7 +87,7 @@ describe('SyntheticsFilterActions', () => {
     expect(mockFilterChanged).toHaveBeenCalledWith({
       solution: 'synthetics',
       change: 'saved',
-      customized: 'jobs,instances',
+      customized: 'job,instance',
     });
   });
 
@@ -97,9 +97,9 @@ describe('SyntheticsFilterActions', () => {
       JSON.stringify({
         datasourceUid: 'other',
         datasourceName: 'Other',
-        jobs: ['canary'],
-        instances: [],
-        probes: ['Amsterdam'],
+        job: ['canary'],
+        instance: [],
+        probe: ['Amsterdam'],
       })
     );
     const { user } = render(<SyntheticsFilterActions datasource={stubDatasource} />);

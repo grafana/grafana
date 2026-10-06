@@ -1,3 +1,4 @@
+import { pick } from 'lodash';
 import { useMemo } from 'react';
 import { type Control, Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
@@ -6,12 +7,17 @@ import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, MultiCombobox } from '@grafana/ui';
 
-import { hasIgnores, type SyntheticsScope } from '../solutions/syntheticsData';
+import {
+  hasIgnores,
+  IGNORE_LABELS,
+  type IgnoreLabel,
+  ignoredLabels,
+  type SyntheticsScope,
+} from '../solutions/syntheticsData';
 import {
   fetchSyntheticsLabelValues,
   parseSyntheticsFilter,
   summarizeSyntheticsFilter,
-  type SyntheticsIgnoreLabel,
 } from '../solutions/syntheticsFilter';
 
 import {
@@ -21,38 +27,16 @@ import {
   toOptions,
 } from './SolutionFilterActions';
 
-const NO_IGNORES: SyntheticsScope = { jobs: [], instances: [], probes: [] };
-
-// sm_check_info label whose values each ignore list offers.
-const IGNORE_LABEL: Record<keyof SyntheticsScope, SyntheticsIgnoreLabel> = {
-  jobs: 'job',
-  instances: 'instance',
-  probes: 'probe',
-};
-
-/** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
-function customizedDimensions(scope: SyntheticsScope): string {
-  const dimensions: string[] = [];
-  if (scope.jobs.length > 0) {
-    dimensions.push('jobs');
-  }
-  if (scope.instances.length > 0) {
-    dimensions.push('instances');
-  }
-  if (scope.probes.length > 0) {
-    dimensions.push('probes');
-  }
-  return dimensions.join(',');
-}
+const NO_IGNORES: SyntheticsScope = { job: [], instance: [], probe: [] };
 
 const spec: SolutionFilterSpec<SyntheticsScope> = {
   solution: 'synthetics',
   parse: parseSyntheticsFilter,
   summarize: summarizeSyntheticsFilter,
-  defaultValues: (filter) =>
-    filter ? { jobs: filter.jobs, instances: filter.instances, probes: filter.probes } : NO_IGNORES,
+  defaultValues: (filter) => (filter ? pick(filter, IGNORE_LABELS) : NO_IGNORES),
   hasSelection: hasIgnores,
-  customized: customizedDimensions,
+  // Label names only, for analytics; the values are customer data and never leave the browser.
+  customized: (scope) => ignoredLabels(scope).join(','),
 };
 
 export function SyntheticsFilterActions({ datasource }: CardFilterActionsProps) {
@@ -66,21 +50,21 @@ export function SyntheticsFilterActions({ datasource }: CardFilterActionsProps) 
       {({ control }) => (
         <>
           <IgnoreField
-            name="jobs"
+            name="job"
             label={t('home.solutions.synthetics.filter.jobs', 'Ignore checks')}
             placeholder={t('home.solutions.synthetics.filter.no-jobs', 'No checks ignored')}
             datasource={datasource}
             control={control}
           />
           <IgnoreField
-            name="instances"
+            name="instance"
             label={t('home.solutions.synthetics.filter.instances', 'Ignore targets')}
             placeholder={t('home.solutions.synthetics.filter.no-instances', 'No targets ignored')}
             datasource={datasource}
             control={control}
           />
           <IgnoreField
-            name="probes"
+            name="probe"
             label={t('home.solutions.synthetics.filter.probes', 'Ignore probes')}
             placeholder={t('home.solutions.synthetics.filter.no-probes', 'No probes ignored')}
             datasource={datasource}
@@ -93,7 +77,7 @@ export function SyntheticsFilterActions({ datasource }: CardFilterActionsProps) 
 }
 
 interface IgnoreFieldProps {
-  name: keyof SyntheticsScope;
+  name: IgnoreLabel;
   label: string;
   placeholder: string;
   datasource: DataSourceInstanceListItem;
@@ -104,7 +88,7 @@ interface IgnoreFieldProps {
 // narrow the targets offered) and is locked until they arrive. A rejected lookup leaves the value
 // undefined: an empty list, with custom entry still allowed.
 function IgnoreField({ name, label, placeholder, datasource, control }: IgnoreFieldProps) {
-  const values = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, IGNORE_LABEL[name]), [datasource.uid, name]);
+  const values = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, name), [datasource.uid, name]);
   const options = useMemo(() => toOptions(values.value), [values.value]);
   const id = `synthetics-filter-${name}`;
 

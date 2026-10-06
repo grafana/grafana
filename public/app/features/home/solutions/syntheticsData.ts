@@ -23,18 +23,20 @@ export interface SyntheticsHealth {
   worstRatio: number | null;
 }
 
-/** Series left out of every Synthetics query. An empty list ignores nothing. */
-export interface SyntheticsScope {
-  /** Check job names (`job`). */
-  jobs: string[];
-  /** Targets (`instance`), ignored under every job. */
-  instances: string[];
-  /** Probe locations (`probe`). */
-  probes: string[];
+/** sm_check_info labels an ignore list targets: check job, target, probe location. */
+export const IGNORE_LABELS = ['job', 'instance', 'probe'] as const;
+export type IgnoreLabel = (typeof IGNORE_LABELS)[number];
+
+/** Series left out of every Synthetics query, by label. An empty list ignores nothing. */
+export type SyntheticsScope = Record<IgnoreLabel, string[]>;
+
+/** Labels whose ignore list is non-empty. */
+export function ignoredLabels(scope: SyntheticsScope): IgnoreLabel[] {
+  return IGNORE_LABELS.filter((label) => scope[label].length > 0);
 }
 
 export function hasIgnores(scope: SyntheticsScope): boolean {
-  return scope.jobs.length > 0 || scope.instances.length > 0 || scope.probes.length > 0;
+  return ignoredLabels(scope).length > 0;
 }
 
 // "Seen recently" lookback matching the shared data probes.
@@ -43,19 +45,7 @@ const SM_LOOKBACK = '24h';
 // Negative regex matchers for the ignore lists; a series missing the label is kept, so an absent
 // label degrades a list to a no-op. '' when nothing is ignored so metrics stay bare.
 function ignoreSelector(scope: SyntheticsScope | null): string {
-  if (!scope) {
-    return '';
-  }
-  const matchers: string[] = [];
-  if (scope.jobs.length > 0) {
-    matchers.push(`job!~${quotePromAlternation(scope.jobs)}`);
-  }
-  if (scope.instances.length > 0) {
-    matchers.push(`instance!~${quotePromAlternation(scope.instances)}`);
-  }
-  if (scope.probes.length > 0) {
-    matchers.push(`probe!~${quotePromAlternation(scope.probes)}`);
-  }
+  const matchers = scope ? ignoredLabels(scope).map((label) => `${label}!~${quotePromAlternation(scope[label])}`) : [];
   return matchers.length > 0 ? `{${matchers.join(',')}}` : '';
 }
 
@@ -70,8 +60,12 @@ const SM_CHECK_PROBE = checkCountQuery('');
 // window keeps the alert about current breakage; the stats secondary deliberately reports
 // the 24h fleet ratio instead, matching its "% success · 24h" copy.
 const SM_ATTENTION_RATIO = 0.9;
-const successRatio1h = (sel: string) =>
-  `sum by (job, instance) (rate(probe_all_success_sum${sel}[1h])) / sum by (job, instance) (rate(probe_all_success_count${sel}[1h]))`;
+
+// Probe success ratio over `window`, fleet-wide or per `by` labels.
+function successRatioExpr(sel: string, window: string, by?: string): string {
+  const sum = by ? `sum by (${by}) ` : 'sum';
+  return `${sum}(rate(probe_all_success_sum${sel}[${window}])) / ${sum}(rate(probe_all_success_count${sel}[${window}]))`;
+}
 
 function statsQueries(scope: SyntheticsScope | null): Record<string, string> {
   const sel = ignoreSelector(scope);
@@ -79,15 +73,15 @@ function statsQueries(scope: SyntheticsScope | null): Record<string, string> {
     // `or vector(0)` turns an empty fleet into a 0 sample; a missing sample then means the count
     // query failed, which the partial batch would otherwise make indistinguishable from empty.
     checks: `${checkCountQuery(sel)} or vector(0)`,
-    successRatio: `sum(rate(probe_all_success_sum${sel}[${SM_LOOKBACK}])) / sum(rate(probe_all_success_count${sel}[${SM_LOOKBACK}]))`,
+    successRatio: successRatioExpr(sel, SM_LOOKBACK),
   };
 }
 
 function healthQueries(scope: SyntheticsScope | null): Record<string, string> {
-  const sel = ignoreSelector(scope);
+  const perCheck = successRatioExpr(ignoreSelector(scope), '1h', 'job, instance');
   return {
-    failing: `count((${successRatio1h(sel)}) < ${SM_ATTENTION_RATIO})`,
-    worst: `bottomk(1, (${successRatio1h(sel)}) < ${SM_ATTENTION_RATIO})`,
+    failing: `count((${perCheck}) < ${SM_ATTENTION_RATIO})`,
+    worst: `bottomk(1, (${perCheck}) < ${SM_ATTENTION_RATIO})`,
   };
 }
 
@@ -141,12 +135,11 @@ export async function fetchSyntheticsSuccessSeries(
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
   scope: SyntheticsScope | null
 ): Promise<FieldSparkline | null> {
-  const sel = ignoreSelector(scope);
   const frames = await runRangeQuery(
     'success',
     // [1h] rate window: check cadence is configurable up to one run per hour and rate() needs
     // two samples in the window; [5m] would blank the trend for slow fleets.
-    `sum(rate(probe_all_success_sum${sel}[1h])) / sum(rate(probe_all_success_count${sel}[1h]))`,
+    successRatioExpr(ignoreSelector(scope), '1h'),
     24,
     ds
   );

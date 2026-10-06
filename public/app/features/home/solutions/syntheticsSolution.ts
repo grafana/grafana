@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
 import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
-import { scopeFor } from './solutionFilter';
+import { noMatchStats, scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
 import {
@@ -104,14 +104,7 @@ export function syntheticsSolution(
         return null;
       }
       if (usage.checks <= 0) {
-        // A scoped empty result must not leave a blank card under a highlighted gear.
-        const ds = await datasource();
-        return ds && scopeFor(filter, ds)
-          ? {
-              primary: t('home.solutions.synthetics.filter.no-match', 'All checks ignored'),
-              secondary: t('home.solutions.synthetics.filter.no-match-hint', 'Adjust the filters'),
-            }
-          : null;
+        return noMatchStats(filter, datasource, t('home.solutions.synthetics.filter.no-match', 'All checks ignored'));
       }
       const checkCount = Math.ceil(usage.checks);
       return {
