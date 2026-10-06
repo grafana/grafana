@@ -171,7 +171,9 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 ## Lifecycle
 
 - **Standalone:** the dskit `router` target. `pkg/server`'s `initRouterModule` builds the loader
-  (the Wire injector `InitializeRoutesLoader`) and the `Service`. `RegisterTargetRoutes` mounts it on
+  and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
+  source, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
+  migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
   implements `services.Service` (such as `cloudLoader`, which runs informers and poll loops) is run
   alongside it with `newCompositeService`, so both start and stop together.
