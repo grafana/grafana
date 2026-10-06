@@ -19,8 +19,9 @@ import {
   filterByValueTransformer,
   organizeFieldsTransformer,
 } from '@grafana/data/internal';
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 import { mockClientSize } from '@grafana/test-utils';
+
+import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { TableNG } from './TableNG';
 import { editableTableFilter, transformTableFilters, tableFilterKey } from './TableViewContext';
@@ -228,7 +229,7 @@ it.each([false, true])(
     const source = makeFrame();
     let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
     const listeners = new Set<() => void>();
-    const api: VizPanelRuntimeTransformations = {
+    const api: PanelRuntimeTransformations = {
       get: () => configs,
       set: (_owner, next) => {
         configs = next;
@@ -285,7 +286,7 @@ it('keeps header sorting out of the ad-hoc stage', async () => {
   const frameKey = '[null,0,1]';
   let configs: readonly DataTransformerConfig[] = [{ id: 'organize', options: { excludeByName: { hidden: true } } }];
   const listeners = new Set<() => void>();
-  const api: VizPanelRuntimeTransformations = {
+  const api: PanelRuntimeTransformations = {
     get: () => configs,
     set: jest.fn((_owner: string, next: readonly DataTransformerConfig[]) => {
       configs = next;

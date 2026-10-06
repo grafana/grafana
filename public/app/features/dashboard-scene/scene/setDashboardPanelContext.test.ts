@@ -1,3 +1,5 @@
+import { act, renderHook } from '@testing-library/react';
+import { createElement, type PropsWithChildren } from 'react';
 import { delay, of, Subject } from 'rxjs';
 
 import {
@@ -22,7 +24,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, PanelContextProvider, useAdHocTransformations } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
@@ -123,6 +125,28 @@ beforeEach(() => {
 
 describe('setDashboardPanelContext', () => {
   describe('adHocTransformations', () => {
+    it('reads and updates only the selected owner through the panel context hook', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      api.set('table', [{ id: 'organize', options: {} }]);
+      api.set('other', [{ id: 'limit', options: { limitField: 2 } }]);
+      const { result, rerender } = renderHook(({ owner }) => useAdHocTransformations(owner), {
+        initialProps: { owner: 'table' },
+        wrapper: ({ children }: PropsWithChildren) => createElement(PanelContextProvider, { value: context }, children),
+      });
+
+      expect(result.current?.transformations).toEqual([{ id: 'organize', options: {} }]);
+      act(() => result.current?.setTransformations([]));
+      expect(api.get('table')).toEqual([]);
+      expect(api.get('other')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+
+      rerender({ owner: 'other' });
+      act(() => api.set('table', [{ id: 'organize', options: {} }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      act(() => api.set('other', [{ id: 'limit', options: { limitField: 3 } }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 3 } }]);
+    });
+
     it('keeps each panel’s single view list and subscriptions independent', () => {
       const first = buildTestScene({});
       const second = buildTestScene({});

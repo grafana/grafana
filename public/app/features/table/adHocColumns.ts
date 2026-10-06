@@ -29,14 +29,14 @@ interface ColumnsEntry {
  * Other organize transformations and entries for other frames are left alone.
  */
 export function findColumnsEntry(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   frameFilter?: MatcherConfig
 ): ColumnsEntry | undefined {
-  const index = stage.findIndex(
+  const index = transformations.findIndex(
     (config) => config.id === DataTransformerID.organize && isEqual(config.filter, frameFilter)
   );
 
-  return index === -1 ? undefined : { index, options: stage[index].options ?? {} };
+  return index === -1 ? undefined : { index, options: transformations[index].options ?? {} };
 }
 
 /**
@@ -44,11 +44,11 @@ export function findColumnsEntry(
  * The catalog must contain display names from the untransformed source frame so hidden columns remain available.
  */
 export function decodeAdHocColumns(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   catalog: string[],
   frameFilter?: MatcherConfig
 ): AdHocColumnState {
-  const entry = findColumnsEntry(stage, frameFilter);
+  const entry = findColumnsEntry(transformations, frameFilter);
 
   if (!entry) {
     return NO_COLUMN_STATE;
@@ -69,18 +69,18 @@ export function decodeAdHocColumns(
  * Removes the entry when none of its organize options has an effect.
  */
 function writeColumnsEntry(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   next: OrganizeFieldsTransformerOptions,
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
-  const entry = findColumnsEntry(stage, frameFilter);
+  const entry = findColumnsEntry(transformations, frameFilter);
   const isEmpty =
     Object.keys(next.indexByName ?? {}).length === 0 &&
     Object.values(next.excludeByName ?? {}).every((hidden) => !hidden) &&
     Object.keys(next.renameByName ?? {}).length === 0;
 
   if (isEmpty) {
-    return entry ? stage.filter((_, index) => index !== entry.index) : [...stage];
+    return entry ? transformations.filter((_, index) => index !== entry.index) : [...transformations];
   }
 
   const config: DataTransformerConfig = {
@@ -90,10 +90,10 @@ function writeColumnsEntry(
   };
 
   if (!entry) {
-    return [...stage, config];
+    return [...transformations, config];
   }
 
-  return stage.map((existing, index) => (index === entry.index ? config : existing));
+  return transformations.map((existing, index) => (index === entry.index ? config : existing));
 }
 
 /**
@@ -101,7 +101,7 @@ function writeColumnsEntry(
  * The complete order is recorded because the transformer places fields missing from its index map last.
  */
 export function encodeColumnOrder(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   order: string[],
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
@@ -111,8 +111,8 @@ export function encodeColumnOrder(
   }, {});
 
   return writeColumnsEntry(
-    stage,
-    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, indexByName },
+    transformations,
+    { ...EMPTY_OPTIONS, ...findColumnsEntry(transformations, frameFilter)?.options, indexByName },
     frameFilter
   );
 }
@@ -122,7 +122,7 @@ export function encodeColumnOrder(
  * Existing column order, renames, and transformations outside this frame scope are preserved.
  */
 export function encodeHiddenColumns(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   hidden: ReadonlySet<string>,
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
@@ -132,8 +132,8 @@ export function encodeHiddenColumns(
   }, {});
 
   return writeColumnsEntry(
-    stage,
-    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, excludeByName },
+    transformations,
+    { ...EMPTY_OPTIONS, ...findColumnsEntry(transformations, frameFilter)?.options, excludeByName },
     frameFilter
   );
 }

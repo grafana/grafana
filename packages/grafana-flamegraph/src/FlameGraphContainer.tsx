@@ -112,7 +112,6 @@ export type Props = {
    * the top table renders without them while every other TableNG in Grafana has them.
    */
   tableRefreshEnabled?: boolean;
-  rowTransformationsEnabled?: boolean;
   contentAwareWidthsEnabled?: boolean;
 };
 
@@ -134,7 +133,6 @@ const FlameGraphContainer = ({
   fillHeight,
   useTableNG,
   tableRefreshEnabled,
-  rowTransformationsEnabled,
   contentAwareWidthsEnabled,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
@@ -220,7 +218,6 @@ const FlameGraphContainer = ({
     setFocusedItemIndexes,
     useTableNG,
     tableRefreshEnabled,
-    rowTransformationsEnabled,
     contentAwareWidthsEnabled,
     fillHeight,
   };

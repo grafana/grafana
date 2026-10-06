@@ -10,8 +10,9 @@ import {
   type DataTransformerConfig,
 } from '@grafana/data';
 import { FilterByValueMatch, FilterByValueType, type FilterByValueConfig } from '@grafana/data/internal';
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 import { mockClientSize } from '@grafana/test-utils';
+
+import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { TableNG } from './TableNG';
 import { TableViewProvider, useTableView } from './TableViewContext';
@@ -37,7 +38,7 @@ function setup() {
   })[0];
   let configs: readonly DataTransformerConfig[] = [];
   const listeners = new Set<() => void>();
-  const api: VizPanelRuntimeTransformations = {
+  const api: PanelRuntimeTransformations = {
     get: () => configs,
     set: (_owner, next) => {
       configs = next;

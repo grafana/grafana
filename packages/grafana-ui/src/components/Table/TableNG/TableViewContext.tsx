@@ -17,17 +17,17 @@ import {
 } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 
 import { Button } from '../../Button/Button';
 import { ErrorBoundary } from '../../ErrorBoundary/ErrorBoundary';
+import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { tableViewIndices } from './tableFiltering';
 import { type TableNGProps, type TableRow } from './types';
 import { type ApplyFilterResult } from './utils';
 
 export interface TableRowTransformations {
-  api: VizPanelRuntimeTransformations;
+  api: PanelRuntimeTransformations;
   owner: string;
   frameKey: string;
   frameIndex?: number;
