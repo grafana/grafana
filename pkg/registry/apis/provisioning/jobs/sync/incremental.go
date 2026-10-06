@@ -55,6 +55,7 @@ func IncrementalSync(ctx context.Context, repo repository.Versioned, previousRef
 		progress.SetFinalMessage(ctx, "no changes detected between commits")
 		return nil
 	}
+	diff = splitRenamesOntoNonResources(diff, folderMetadataEnabled)
 
 	var replaced []replacedFolder
 	var relocations map[string][]string
@@ -402,9 +403,7 @@ func applyUnsupportedPath(
 		WithPreviousPath(change.PreviousPath)
 	unsupported := &resources.UnsupportedPathError{Path: change.Path, Err: pathErr}
 
-	removable := change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
-		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
-	if !removable {
+	if !renamedFromResourceFile(change) || resources.IsFolderMetadataFile(change.PreviousPath) {
 		return result.WithWarning(unsupported).Build()
 	}
 
@@ -418,6 +417,57 @@ func applyUnsupportedPath(
 		affectedFolders[safepath.Dir(change.PreviousPath)] = folderName
 	}
 	return result.WithWarning(unsupported).Build()
+}
+
+// renamedFromResourceFile reports whether the change moves a resource file away from a
+// path that is synced, which leaves the resource it held without a file.
+func renamedFromResourceFile(change repository.VersionedFileChange) bool {
+	return change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
+		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
+}
+
+// splitRenamesOntoNonResources rewrites the rename of a resource file onto a path that is not a
+// resource (README.md, another extension, a hidden file or folder) into the deletion of the old
+// path and the creation of the new one. That is what a full sync of the same commit sees, and the
+// deletion removes the resource like any other (or, for a _folder.json, reverts the folder).
+func splitRenamesOntoNonResources(diff []repository.VersionedFileChange, folderMetadataEnabled bool) []repository.VersionedFileChange {
+	rewritten := make([]repository.VersionedFileChange, 0, len(diff))
+	for _, change := range diff {
+		if !splitsRename(change, folderMetadataEnabled) {
+			rewritten = append(rewritten, change)
+			continue
+		}
+
+		rewritten = append(rewritten,
+			repository.VersionedFileChange{
+				Action:       repository.FileActionDeleted,
+				Path:         change.PreviousPath,
+				PreviousPath: change.PreviousPath,
+				Ref:          change.Ref,
+				PreviousRef:  change.PreviousRef,
+			},
+			repository.VersionedFileChange{
+				Action: repository.FileActionCreated,
+				Path:   change.Path,
+				Ref:    change.Ref,
+			})
+	}
+	return rewritten
+}
+
+// splitsRename reports whether a rename has to become a deletion and a creation.
+func splitsRename(change repository.VersionedFileChange, folderMetadataEnabled bool) bool {
+	if !renamedFromResourceFile(change) || safepath.IsDir(change.Path) {
+		return false
+	}
+	if resources.IsFolderMetadataFile(change.PreviousPath) {
+		// With folder metadata off a _folder.json is not synced, so there is nothing to remove. With it
+		// on, the folder is reverted by the deletion of the file, wherever the file went (a metadata
+		// file moved onto another _folder.json is the metadata builder's own case).
+		return folderMetadataEnabled && !resources.IsFolderMetadataFile(change.Path)
+	}
+	return resources.IsPathSupported(change.Path) != nil &&
+		(safepath.IsHidden(change.Path) || !resources.HasResourceExtension(change.Path))
 }
 
 // reserveQuota is the hook RenameResourceFile calls before it creates a resource

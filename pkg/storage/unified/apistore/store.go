@@ -692,18 +692,50 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 	results := make([]resultSlot, len(rsp.Items))
 
-	// Concurrently process items as some may be large and take a while to process.
-	err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
-		item := rsp.Items[idx]
-		obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
-		if err != nil {
+	if decoder, ok := s.serializer.(BatchDecoder); ok {
+		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if shouldAppend {
-			results[idx] = resultSlot{obj: obj, shouldAppend: true}
+		if len(rsp.Items) > 0 {
+			data := make([][]byte, len(rsp.Items))
+			for i, item := range rsp.Items {
+				data[i] = item.Value
+			}
+			objects, err := decoder.DecodeBatch(ctx, data)
+			if err != nil {
+				return err
+			}
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if len(objects) != len(data) {
+				return fmt.Errorf("batch decoder returned %d objects, expected %d", len(objects), len(data))
+			}
+			for idx, obj := range objects {
+				if obj == nil {
+					return fmt.Errorf("batch decoder returned nil object at index %d", idx)
+				}
+				obj, appendItem, err := s.processDecodedItem(obj, rsp.Items[idx].ResourceVersion, opts, predicate)
+				if err != nil {
+					return err
+				}
+				results[idx] = resultSlot{obj: obj, shouldAppend: appendItem}
+			}
 		}
-		return nil
-	})
+	} else {
+		// Concurrently process items as some may be large and take a while to process.
+		err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
+			item := rsp.Items[idx]
+			obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
+			if err != nil {
+				return err
+			}
+			if shouldAppend {
+				results[idx] = resultSlot{obj: obj, shouldAppend: true}
+			}
+			return nil
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -738,7 +770,11 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 	if err != nil {
 		return nil, false, err
 	}
-	if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
+	return s.processDecodedItem(obj, item.ResourceVersion, opts, predicate)
+}
+
+func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}
 
