@@ -10,6 +10,9 @@ const [mockTree] = wellFormedTree();
 const dashboardsTree = mockTree.filter(({ item }) => item.kind === 'dashboard');
 
 const dashboardToAppPlatform = (dashboard: (typeof mockTree)[number]['item']) => {
+  const parentUID = dashboard.kind === 'dashboard' ? dashboard.parentUID : undefined;
+  const folderTitle = mockTree.find(({ item }) => item.uid === parentUID)?.item.title;
+
   return {
     kind: 'DashboardWithAccessInfo',
     apiVersion: 'dashboard.grafana.app/v2beta1',
@@ -19,7 +22,8 @@ const dashboardToAppPlatform = (dashboard: (typeof mockTree)[number]['item']) =>
       uid: dashboard.uid,
       creationTimestamp: '2023-01-01T00:00:00Z',
       annotations: {
-        'grafana.app/folder': dashboard.kind === 'dashboard' ? dashboard.parentUID : undefined,
+        'grafana.app/folder': parentUID,
+        'grafana.app/folderTitle': folderTitle,
       },
       labels: {},
     },

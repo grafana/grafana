@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { render, screen, testWithFeatureToggles, waitFor } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -30,11 +31,24 @@ describe('DashboardPicker', () => {
 
     testWithFeatureToggles({ enable: [] });
 
-    it('should fetch and display dashboards', async () => {
-      render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
-
-      expect(await screen.findByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
     });
+
+    it.each([
+      { dashboardNewLayouts: true },
+      { dashboardNewLayouts: false },
+    ])(
+      'labels a selected dashboard with the folder title newLayouts: $dashboardNewLayouts',
+      async ({ dashboardNewLayouts }) => {
+        setTestFlags({ dashboardNewLayouts });
+        render(<DashboardPicker value={folderA_dashbdD.item.uid} />);
+
+        expect(await screen.findByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
+       }
+    );
 
     it('should search for dashboards and allow selection', async () => {
       const { user } = render(<DashboardPicker onChange={onChange} />);
