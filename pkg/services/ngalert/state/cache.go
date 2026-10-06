@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
+	prometheusModel "github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -205,6 +206,18 @@ func expandAnnotationsAndLabels(ctx context.Context, log log.Logger, alertRule *
 	}
 	if len(dupes) > 0 {
 		log.Debug("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
+	}
+	// The alert name is the rule title. Expand it with the same label map
+	// annotations already see, so any label key can appear in the title.
+	// A plain title has no template and is left as-is.
+	alertName := string(prometheusModel.AlertNameLabel)
+	if _, ok := lbs[alertName]; ok && strings.Contains(alertRule.Title, "{{") {
+		expanded, err := template.Expand(ctx, alertRule.Title, alertRule.Title, templateData, externalURL, result.EvaluatedAt)
+		if err != nil {
+			log.Error("Error in expanding title template", "error", err)
+		} else if expanded != "" {
+			lbs[alertName] = expanded
+		}
 	}
 	return lbs, annotations
 }
