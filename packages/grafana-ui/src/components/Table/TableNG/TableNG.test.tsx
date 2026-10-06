@@ -2460,7 +2460,10 @@ describe('TableNG', () => {
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(/^repeat\(1, 34px\)\s*100px$/);
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(
+        new RegExp(`^repeat\\(1, ${TABLE.HEADER_HEIGHT}px\\)\\s*${expectedRowHeight}px$`)
+);
     });
 
     it("never shrinks a hover-expanded JSON cell below the column's own width", async () => {
