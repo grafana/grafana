@@ -105,7 +105,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
 ---
 
 # Data sources
