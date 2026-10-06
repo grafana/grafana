@@ -85,3 +85,7 @@ func (UnimplementedStorageBackend) ListStoredResources(context.Context, Namespac
 func (UnimplementedStorageBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
 	return time.Time{}, errUnimplemented
 }
+
+func (UnimplementedStorageBackend) ListResourceLastImportTimes(context.Context) (map[NamespacedResource]time.Time, error) {
+	return nil, errUnimplemented
+}

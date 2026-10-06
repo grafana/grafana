@@ -1439,7 +1439,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
-	syncChs, err := s.queueTypeSyncs(ctx, filterKeys)
+	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -1691,10 +1691,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 
 	// A global index reused at startup may predate a type being added or
 	// dropped, so that is checked now rather than at the first tick.
-	if _, err := s.queueTypeSyncs(ctx, s.search.GetOpenIndexes()); err != nil {
-		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
-	}
-	s.queueDueReconciles(s.search.GetOpenIndexes(), time.Now())
+	s.scanForIndexesToRebuild(ctx, false)
 
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
@@ -1705,18 +1702,24 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			keys := s.search.GetOpenIndexes()
-			importTimes, err := s.getLastImportTimes(ctx, keys)
-			if err != nil {
-				s.log.Error("failed to get import times", "error", err)
-			}
-			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
-			if _, err := s.queueTypeSyncs(ctx, keys); err != nil {
-				s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
-			}
-			s.queueDueReconciles(keys, time.Now())
+			s.scanForIndexesToRebuild(ctx, true)
 		}
 	}
+}
+
+func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullRebuilds bool) {
+	keys := s.search.GetOpenIndexes()
+	importTimes, err := s.listLastImportTimes(ctx)
+	if err != nil {
+		s.log.Error("failed to get import times", "error", err)
+	}
+	if checkFullRebuilds {
+		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
+	}
+	if _, err := s.queueTypeSyncs(ctx, keys, importTimes); err != nil {
+		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
+	}
+	s.queueDueReconciles(keys, time.Now())
 }
 
 // Reads already hide expired trash, so this only reclaims space and can run
@@ -1842,12 +1845,21 @@ func (s *searchServer) getLastImportTimes(ctx context.Context, keys []Namespaced
 	for _, key := range keys {
 		lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 		if err != nil {
-			// Return the times collected so far so periodic scans can still check those indexes.
 			return result, err
 		}
 		result[key] = lastImportTime
 	}
 	return result, nil
+}
+
+func (s *searchServer) listLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
+	result, err := s.storage.ListResourceLastImportTimes(ctx)
+	if result == nil {
+		// Avoid per-type fallback reads while still returning the error below.
+		result = make(map[NamespacedResource]time.Time)
+	}
+	// Keep any times collected before an error so scans can still check those indexes.
+	return result, err
 }
 
 // runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.

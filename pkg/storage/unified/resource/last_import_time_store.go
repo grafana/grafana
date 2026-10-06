@@ -136,12 +136,12 @@ func (s *lastImportStore) ListLastImportTimes(ctx context.Context, lastImportTim
 		Limit: 0, // Get all.
 	}) {
 		if err != nil {
-			return nil, nil, err
+			return valid, toDelete, err
 		}
 
 		key, err := ParseLastImportKey(k)
 		if err != nil {
-			return nil, nil, err
+			return valid, toDelete, err
 		}
 
 		if lastImportTimeMaxAge > 0 && now.Sub(key.LastImportTime) > lastImportTimeMaxAge {
