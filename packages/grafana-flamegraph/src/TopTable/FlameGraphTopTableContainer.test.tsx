@@ -92,7 +92,7 @@ describe('FlameGraphTopTableContainer', () => {
 });
 
 describe('FlameGraphTopTableContainer with useTableNG', () => {
-  const setup = (props?: { tableRefreshEnabled?: boolean; rowTransformationsEnabled?: boolean }) => {
+  const setup = (props?: { tableRefreshEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -107,7 +107,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
         tableRefreshEnabled={props?.tableRefreshEnabled}
-        rowTransformationsEnabled={props?.rowTransformationsEnabled}
       />
     );
 
