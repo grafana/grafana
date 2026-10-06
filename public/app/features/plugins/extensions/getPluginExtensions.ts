@@ -28,8 +28,8 @@ import {
 
 /**
  * Returns an observable that emits plugin extensions whenever the core extensions registries change.
- * The observable will emit the initial state of the extensions and then emit again whenever
- * either the added components registry or the added links registry changes.
+ * The observable will emit the initial state of the extensions and then emit again whenever the
+ * added components, added links or added functions registry changes.
  *
  * @param options - The options for getting plugin extensions
  * @returns An Observable that emits the plugin extensions for the given extension point any time the registries change
@@ -80,9 +80,19 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
   );
 };
 
-export const getObservablePluginFunctions: GetObservablePluginFunctions = (options) => {
+// `options` needs an explicit type: a generic arrow doesn't get it contextually from the annotation.
+export const getObservablePluginFunctions: GetObservablePluginFunctions = <Signature>(
+  options: Parameters<typeof getObservablePluginExtensions>[0]
+) => {
   return getObservablePluginExtensions(options).pipe(
-    map((value) => value.extensions.filter((extension) => extension.type === PluginExtensionTypes.function))
+    map(
+      (value) =>
+        // `PluginExtension[]` is heterogeneous, so the narrowing is also where the signature lands.
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        value.extensions.filter((extension) => extension.type === PluginExtensionTypes.function) as Array<
+          PluginExtensionFunction<Signature>
+        >
+    )
   );
 };
 
@@ -190,7 +200,7 @@ export const getPluginExtensions: GetExtensions = ({
       continue;
     }
 
-    // The registry's `fn` is `unknown` (it carries the caller's own Signature generic); narrow it without a cast.
+    // Makes the `unknown` `fn` callable, and guards callers passing a hand-built registry.
     if (!isFunction(addedFunction.fn)) {
       continue;
     }

@@ -7,9 +7,9 @@ type GetObservablePluginFunctionsOptions = {
   limitPerPlugin?: number;
 };
 
-export type GetObservablePluginFunctions = (
+export type GetObservablePluginFunctions = <Signature>(
   options: GetObservablePluginFunctionsOptions
-) => Observable<PluginExtensionFunction[]>;
+) => Observable<Array<PluginExtensionFunction<Signature>>>;
 
 let singleton: GetObservablePluginFunctions | undefined;
 
@@ -22,12 +22,12 @@ export function setGetObservablePluginFunctions(fn: GetObservablePluginFunctions
   singleton = fn;
 }
 
-export function getObservablePluginFunctions(
+export function getObservablePluginFunctions<Signature>(
   options: GetObservablePluginFunctionsOptions
-): Observable<PluginExtensionFunction[]> {
+): Observable<Array<PluginExtensionFunction<Signature>>> {
   if (!singleton) {
     throw new Error('getObservablePluginFunctions() can only be used after the Grafana instance has started.');
   }
 
-  return singleton(options);
+  return singleton<Signature>(options);
 }

@@ -973,4 +973,25 @@ describe('getObservablePluginFunctions()', () => {
 
     expect(functions).toHaveLength(0);
   });
+
+  it('should apply the caller-provided signature to the returned functions', async () => {
+    type GreetFn = (name: string) => string;
+
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Greet',
+          description: 'Greets the given name',
+          targets: extensionPointId,
+          fn: (name: string) => `hello ${name}`,
+        },
+      ],
+    });
+
+    const functions = await firstValueFrom(getObservablePluginFunctions<GreetFn>({ extensionPointId }));
+    const greet = functions.find((extension) => extension.title === 'Greet');
+
+    expect(greet?.fn('world')).toBe('hello world');
+  });
 });
