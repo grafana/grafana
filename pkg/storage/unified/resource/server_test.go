@@ -23,6 +23,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -3575,6 +3576,28 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
 		require.Nil(t, rsp.Error)
 		require.True(t, blob.getReached)
+	})
+
+	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		bucket := memblob.OpenBucket(nil)
+		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
+		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
+		require.NoError(t, err)
+		srv.blob = blob
+
+		value := []byte(`{"title":"test"}`)
+		put, err := blob.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource: key, Method: resourcepb.PutBlobRequest_GRPC,
+			ContentType: "application/json; charset=utf-8", Value: value,
+		})
+		require.NoError(t, err)
+		create(t, srv, fmt.Sprintf(`,"blobs":{"dashboard":{"uid":%q,"contentType":"application/json; charset=utf-8"}}`, put.Uid))
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
+		require.Nil(t, rsp.Error)
+		require.Equal(t, value, rsp.Value)
+		require.Equal(t, "application/json; charset=utf-8", rsp.ContentType)
 	})
 
 	t.Run("rejects a blob the resource does not reference", func(t *testing.T) {
