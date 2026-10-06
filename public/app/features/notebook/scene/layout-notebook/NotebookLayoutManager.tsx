@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
+import { AppEvents, CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -1003,7 +1003,7 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
           const cell = await model.addCellFromSavedQuery(index, query, title);
           requestFocus(cell?.state.key);
         },
-        options: { context: 'notebook-cell' },
+        options: { context: CoreApp.Notebook },
       });
     },
     [model, openDrawer, requestFocus]

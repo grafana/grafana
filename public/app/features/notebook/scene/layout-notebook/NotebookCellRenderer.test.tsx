@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, within } from 'test/test-utils';
 
+import { CoreApp } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -266,7 +267,7 @@ describe('NotebookCellRenderer', () => {
         expect(submenu.getByRole('menuitem', { name: 'New from Saved Queries' })).toBeInTheDocument();
       });
 
-      it('opens the drawer with notebook-cell context and converts the cell once a query is selected', async () => {
+      it('opens the drawer with the Notebook context and converts the cell once a query is selected', async () => {
         const openDrawer = jest.fn();
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
         contextSrv.isSignedIn = true;
@@ -279,7 +280,7 @@ describe('NotebookCellRenderer', () => {
         const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
         fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
 
-        expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: 'notebook-cell' } }));
+        expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: CoreApp.Notebook } }));
 
         const query = { refId: 'A', datasource: { uid: 'test-ds' } };
         await act(async () => {

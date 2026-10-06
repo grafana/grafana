@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { CoreApp } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils } from '@grafana/runtime';
@@ -289,7 +290,7 @@ describe('NotebookLayoutManager', () => {
       expect(screen.getByRole('menuitem', { name: 'Visualization' })).toBeInTheDocument();
     });
 
-    it('opens the saved-queries drawer with notebook-cell context and inserts the selected query on selection', async () => {
+    it('opens the saved-queries drawer with the Notebook context and inserts the selected query on selection', async () => {
       const openDrawer = jest.fn();
       mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
       contextSrv.isSignedIn = true;
@@ -310,7 +311,7 @@ describe('NotebookLayoutManager', () => {
       const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
       fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
 
-      expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: 'notebook-cell' } }));
+      expect(openDrawer).toHaveBeenCalledWith(expect.objectContaining({ options: { context: CoreApp.Notebook } }));
 
       const query: DataQuery = { refId: 'A', datasource: { uid: 'test-ds' } };
       await act(async () => {

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { Suspense, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
@@ -304,7 +304,7 @@ function SpecialMarkdownCell({
         await cell.getParentLayout().convertCellFromSavedQuery(cell, query, title);
         onFocusRequest?.();
       },
-      options: { context: 'notebook-cell' },
+      options: { context: CoreApp.Notebook },
     });
   };
 
