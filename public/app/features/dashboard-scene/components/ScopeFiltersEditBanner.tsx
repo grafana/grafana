@@ -47,6 +47,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
       )}
       onRemove={() => setDismissed(true)}
       style={{ flex: 0 }}
+      data-testid="scope-filters-edit-banner"
     />
   );
 }

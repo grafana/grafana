@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => ({
 
 const mockUseScopes = jest.mocked(useScopes);
 
-const BANNER_TEXT = /You are editing this dashboard with a Scope selected/;
+const BANNER_TEST_ID = 'scope-filters-edit-banner';
 
 function makeScope(name: string, hasFilters: boolean): Scope {
   return {
@@ -78,7 +78,9 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId(BANNER_TEST_ID)).toHaveTextContent(
+      /You are editing this dashboard with a Scope selected/
+    );
   });
 
   it('renders for a newly created dashboard in edit mode under the same conditions', () => {
@@ -87,7 +89,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('does not render in view mode (not editing)', () => {
@@ -96,7 +98,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('does not render when no scope is selected', () => {
@@ -105,7 +107,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('does not render when the scopes feature is unavailable', () => {
@@ -114,7 +116,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('does not render when the selected scope has no filters', () => {
@@ -123,7 +125,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('does not render when the dashboard has no Loki or Prometheus panels', () => {
@@ -132,7 +134,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('does not render for a dashboard with no panels at all', () => {
@@ -141,7 +143,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('renders once a Loki panel is added to the grid after edit mode has already started', async () => {
@@ -149,7 +151,7 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['mysql'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
     const grid = (dashboard.state.body as DefaultGridLayoutManager).state.grid;
     const newPanel = new VizPanel({
@@ -164,7 +166,7 @@ describe('ScopeFiltersEditBanner', () => {
       });
     });
 
-    expect(await screen.findByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('renders when at least one of several panels uses Prometheus', () => {
@@ -173,7 +175,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('dismisses the banner when the close button is clicked', async () => {
@@ -181,11 +183,11 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     const { user } = render(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.getByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Close alert/i }));
 
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('disappears when edit mode is exited, and reappears if edit mode is re-entered after a dismissal', async () => {
@@ -194,18 +196,18 @@ describe('ScopeFiltersEditBanner', () => {
 
     const { user, rerender } = render(<ScopeFiltersEditBanner dashboard={dashboard} />);
     await user.click(screen.getByRole('button', { name: /Close alert/i }));
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
     act(() => {
       dashboard.setState({ isEditing: false });
     });
     rerender(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
     act(() => {
       dashboard.setState({ isEditing: true });
     });
     rerender(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.getByText(BANNER_TEXT)).toBeInTheDocument();
+    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 });
