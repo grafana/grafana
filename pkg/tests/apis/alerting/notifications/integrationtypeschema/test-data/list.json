@@ -1838,7 +1838,7 @@
                 "inputType": "",
                 "label": "Fields",
                 "placeholder": "",
-                "propertyName": "fields",
+                "propertyName": "custom_fields",
                 "required": false,
                 "secure": false,
                 "showWhen": {
@@ -4455,7 +4455,7 @@
                     "inputType": "text",
                     "label": "Source",
                     "placeholder": "",
-                    "propertyName": "source",
+                    "propertyName": "src",
                     "required": false,
                     "secure": false,
                     "showWhen": {
@@ -5690,6 +5690,22 @@
                     "value": "none"
                   }
                 ],
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Upload an image with the notification.",
+                "element": "checkbox",
+                "inputType": "",
+                "label": "Upload image",
+                "placeholder": "",
+                "propertyName": "uploadImage",
+                "required": false,
+                "secure": false,
                 "showWhen": {
                   "field": "",
                   "is": ""
@@ -10561,7 +10577,7 @@
                 "inputType": "text",
                 "label": "Chat ID",
                 "placeholder": "",
-                "propertyName": "chat_id",
+                "propertyName": "chat",
                 "required": true,
                 "secure": false,
                 "showWhen": {
@@ -14966,6 +14982,23 @@
                 "label": "To User",
                 "placeholder": "@all",
                 "propertyName": "touser",
+                "required": false,
+                "secure": false,
+                "showWhen": {
+                  "field": "",
+                  "is": ""
+                },
+                "validationRule": ""
+              },
+              {
+                "dependsOn": "",
+                "description": "Override the default WeCom API endpoint",
+                "element": "input",
+                "inputType": "text",
+                "label": "Endpoint URL",
+                "placeholder": "https://qyapi.weixin.qq.com",
+                "propertyName": "endpointUrl",
+                "protected": true,
                 "required": false,
                 "secure": false,
                 "showWhen": {

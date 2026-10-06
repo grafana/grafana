@@ -18,7 +18,7 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -180,7 +180,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 	kv := resource.NewBadgerKV(db)
 	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                kv,
-		Log:                    log.New(),
+		Log:                    logging.DefaultLogger,
 		DisableStorageServices: true,
 	})
 	if err != nil {
@@ -222,7 +222,7 @@ func NewRESTOptionsGetterForFileXX(path string,
 	kv := resource.NewBadgerKV(db)
 	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore: kv,
-		Log:     log.New(),
+		Log:     logging.DefaultLogger,
 	})
 	if err != nil {
 		return nil, err

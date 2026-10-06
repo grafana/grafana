@@ -38,7 +38,8 @@ func (h *Handler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.A
 		Spec: &spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{
 			OperationId: "getCurrentUserPermissions",
 			Tags:        []string{"User"},
-			Description: "Get effective permissions for the currently authenticated identity",
+			Description: "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
+			Deprecated:  true,
 			Parameters: []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
 				Name:        "namespace",
 				In:          "path",

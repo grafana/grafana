@@ -26,13 +26,14 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 
 | Feature toggle name                          | Description                                                                                                                         | Enabled by default |
 | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `featureHighlights`                          | Highlight Grafana Enterprise features                                                                                               |                    |
 | `cloudWatchCrossAccountQuerying`             | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
 | `lokiQuerySplitting`                         | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
 | `renderAuthJWT`                              | Uses JWT-based auth for rendering instead of relying on remote cache                                                                | Yes                |
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                   | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                               | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
+| `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
+| `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                           | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
@@ -59,19 +60,16 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
 | `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                    | Yes                |
-| `alertingImportYAMLUI`                       | Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules                                            | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
 | `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
-| `profilesExemplars`                          | Enables profiles exemplars support in profiles drilldown                                                                            | Yes                |
 | `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
 | `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
 | `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                     | Yes                |
 | `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                        | Yes                |
-| `react19`                                    | Whether to use the new React 19 runtime                                                                                             | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
@@ -112,6 +110,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles

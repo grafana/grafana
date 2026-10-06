@@ -1,7 +1,6 @@
 package appplugin
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -25,8 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/util/errhttp"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -117,7 +116,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	// the rest of its API still works, so this drops search rather than the group.
 	searchHandlers, err := b.searchRoutes(gv)
 	if err != nil {
-		logging.DefaultLogger.Error("invalid manifest search declarations; search and trash routes are not served",
+		logging.DefaultLogger.Error("invalid manifest search declarations; search, trash and hybrid routes are not served",
 			"group", gv.Group, "version", gv.Version, "error", err)
 	}
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
@@ -164,7 +163,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	return routes
 }
 
-// searchRoutes builds the generic search and trash endpoints for the kinds this
+// searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
 // version serves.
 //
 // Delegated to searchroutes rather than mounted per kind here, because which
@@ -184,16 +183,14 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 	manifest := *b.manifest
 	manifest.Group = b.group
 
-	built, err := searchroutes.BuildForServedGroupVersionsWithOptions(
+	built, err := searchroutes.BuildForServedGroupVersions(
 		[]*app.ManifestData{&manifest},
 		map[schema.GroupVersion]bool{gv: true},
 		b.opts.SearchAPIEnabled,
 		b.opts.TrashAPIEnabled,
 		b.tracer,
 		b.search,
-		searchroutes.BuildOptions{FieldValueResultsEnabled: func(ctx context.Context) bool {
-			return b.features != nil && b.features.IsEnabled(ctx, featuremgmt.FlagSearchApiFieldValueResults) // nolint:staticcheck
-		}},
+		searchroutes.Options{HybridEnabled: b.opts.HybridAPIEnabled},
 	)
 	if err != nil {
 		return nil, err
@@ -290,13 +287,22 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 					return
 				}
 
+				sv, err := b.decrypter.get(ctx, m)
+				if err != nil {
+					_ = errhttp.Write(ctx, err, w)
+					return
+				}
 				parent.SetName(name)
 				parent.SetRv(m.GetResourceVersion())
 				parent.SetRaw(raw)
+				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
-		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+		// The caller's identity reaches the plugin only as the access token the
+		// v3 client exchanges for it, never as an ID token in the HTTP headers.
+		req.Header.Del(proxyutil.IDHeaderName)
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }

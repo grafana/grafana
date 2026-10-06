@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -103,6 +104,18 @@ spec:
 		require.True(t, strings.HasPrefix(dash.Obj.GetName(), "rand-"), "set name")
 	})
 
+	t.Run("accepts names allowed by unified storage", func(t *testing.T) {
+		for _, name := range []string{"Player_Resolver-ext_proc", "123abc", "my.name:with-punctuation", "search", strings.Repeat("a", 253)} {
+			t.Run(name, func(t *testing.T) {
+				dash, err := parser.Parse(t.Context(), &repository.FileInfo{
+					Data: []byte(fmt.Sprintf(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":%q},"spec":{"title":"Test dashboard"}}`, name)),
+				})
+				require.NoError(t, err)
+				require.Equal(t, name, dash.Obj.GetName())
+			})
+		}
+	})
+
 	t.Run("dashboard classic format", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
@@ -188,6 +201,79 @@ spec:
 			})
 		}
 	})
+}
+
+func TestParser_RejectsInvalidNamesBeforeClientResolution(t *testing.T) {
+	formats := []struct {
+		name         string
+		format       string
+		generateName bool
+	}{
+		{
+			name:   "dashboard",
+			format: `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":%q},"spec":{"title":"Test dashboard"}}`,
+		},
+		{
+			name:   "classic dashboard",
+			format: `{"uid":%q,"schemaVersion":30,"panels":[],"tags":[]}`,
+		},
+		{
+			name:   "playlist",
+			format: `{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":%q},"spec":{"title":"Test playlist"}}`,
+		},
+		{
+			name:         "generated name",
+			format:       `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"generateName":%q},"spec":{"title":"Test dashboard"}}`,
+			generateName: true,
+		},
+	}
+	tests := []struct {
+		name   string
+		value  string
+		detail string
+	}{
+		{name: "spaces and parentheses", value: "Player Resolver (ext_proc)", detail: "must consist of alphanumeric characters"},
+		{name: "slash", value: "invalid/name", detail: "must consist of alphanumeric characters"},
+		{name: "percent", value: "invalid%name", detail: "must consist of alphanumeric characters"},
+		{name: "too long", value: strings.Repeat("a", 254), detail: "name is too long"},
+	}
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					clients := NewMockResourceClients(t)
+					parser := &parser{
+						repo: provisioning.ResourceRepositoryInfo{
+							Namespace: "xxx",
+							Name:      "repo",
+						},
+						clients: clients,
+					}
+					parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
+						Path: "resource.json",
+						Data: []byte(fmt.Sprintf(format.format, tt.value)),
+					})
+					require.Nil(t, parsed)
+					var validationErr *ResourceValidationError
+					require.ErrorAs(t, err, &validationErr)
+					require.True(t, apierrors.IsBadRequest(err))
+					var fieldErr *field.Error
+					require.ErrorAs(t, err, &fieldErr)
+					require.Equal(t, field.ErrorTypeInvalid, fieldErr.Type)
+					require.Equal(t, "metadata.name", fieldErr.Field)
+					require.Contains(t, fieldErr.Detail, tt.detail)
+					if format.generateName {
+						name := fieldErr.BadValue.(string)
+						require.True(t, strings.HasPrefix(name, tt.value))
+						require.Greater(t, len(name), len(tt.value))
+					} else {
+						require.Equal(t, tt.value, fieldErr.BadValue)
+					}
+					require.Empty(t, clients.Calls)
+				})
+			}
+		})
+	}
 }
 
 func TestParser_FolderAnnotationGuard(t *testing.T) {

@@ -59,6 +59,10 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 		relations,
 	)
 
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
+
 	// Special case for creating folders and resources in the root folder
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
@@ -105,6 +109,10 @@ func NewResourceInfoFromBatchCheckItem(item *authzv1.BatchCheckItem) ResourceInf
 		item.GetSubresource(),
 		relations,
 	)
+
+	if resource.UsesRootFolderPermissions() && resource.folder == "" {
+		resource.folder = accesscontrol.GeneralFolderUID
+	}
 
 	// Special case for creating folders and resources in the root folder
 	if item.GetVerb() == utils.VerbCreate {
@@ -160,6 +168,11 @@ type ResourceInfo struct {
 	relations   []string
 }
 
+// UsesRootFolderPermissions identifies resources whose root objects use General-folder grants.
+func (r ResourceInfo) UsesRootFolderPermissions() bool {
+	return r.group == "dashboard.grafana.app" && (r.resource == "variables" || r.resource == "librarypanels")
+}
+
 func (r ResourceInfo) GroupResource() string {
 	return FormatGroupResource(r.group, r.resource, r.subresource)
 }
@@ -169,6 +182,14 @@ func (r ResourceInfo) GroupResourceIdent() string {
 }
 
 func (r ResourceInfo) ResourceIdent() string {
+	// When resource is a folder, use ResourceInfo.folder instead of empty name.
+	// This correctly handles folder-scoped folder permissions, like {folders:read, folders:uid:f1},
+	// translated to {Resource: folders, Name: "", Folder: "f1"} check. Otherwise, empty folder name
+	// leads to group/resource check only and rejection if user granted folder access.
+	if r.Type() == TypeFolder && r.name == "" && r.folder != "" && r.folder != "*" {
+		return NewTypedIdent(r.typ, r.folder)
+	}
+
 	// Treat "*" the same as "". Wildcard access ("can access all resources of this type")
 	// is handled at the group-resource level.
 	if r.name == "" || r.name == "*" {

@@ -11,6 +11,7 @@ import {
   type DisplayValue,
   type Field,
   FieldType,
+  getRawDisplayProcessor,
   type GrafanaTheme2,
   type LinkModel,
   type ValueLinkConfig,
@@ -2934,6 +2935,16 @@ describe('TableNG utils', () => {
 
     it('should render arrays as JSON', () => {
       expect(displayJsonValue(field)([1, 2, 3]).text).toBe('[\n 1,\n 2,\n 3\n]');
+    });
+
+    it.each([false, true])('uses formatted text for circular values (array: %s)', (asArray) => {
+      const value: { name: string; frame?: unknown } = { name: 'nested' };
+      value.frame = value;
+      field.display = getRawDisplayProcessor();
+
+      expect(displayJsonValue(field)(asArray ? [value] : value).text).toBe(
+        asArray ? '[{"name":"nested"}]' : '{"name":"nested"}'
+      );
     });
   });
 

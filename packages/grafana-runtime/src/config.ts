@@ -217,9 +217,6 @@ export class GrafanaBootConfig {
   recordedQueries = {
     enabled: true,
   };
-  featureHighlights = {
-    enabled: false,
-  };
   reporting = {
     enabled: true,
   };

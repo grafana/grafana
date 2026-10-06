@@ -203,6 +203,52 @@ func TestService_checkPermission(t *testing.T) {
 			expected: false,
 		},
 		{
+			// Regression for folder-move escalation masking: a general grant must
+			// not gate write on an empty-parent root folder, else the move-escalation
+			// probe reads an inflated old tier and masks a privilege increase.
+			name: "should not treat general as parent of root folders on update",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: false,
+		},
+		{
+			// Same as above for the Admin-tier setpermissions verb.
+			name: "should not treat general as parent of root folders on setpermissions",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders.permissions:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders.permissions:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbSetPermissions,
+			},
+			expected: false,
+		},
+		{
 			name: "should check general folder scope for root variable get with empty parent",
 			permissions: []accesscontrol.Permission{
 				{
@@ -2754,7 +2800,8 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		expected    bool
 	}
 
-	testCases := []testCase{
+	testCases := make([]testCase, 0, 43)
+	testCases = append(testCases, []testCase{
 		{
 			name: "resource with stack role and folder read permission",
 			permissions: []accesscontrol.Permission{
@@ -2854,6 +2901,27 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
 			expected: false,
 		},
+	}...)
+
+	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
+		for _, name := range []string{"", "w1"} {
+			for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, hasStackRole := range []bool{false, true} {
+					var permissions []accesscontrol.Permission
+					if hasStackRole {
+						permissions = []accesscontrol.Permission{stackRole(group + "/widgets:" + verb)}
+					} else {
+						permissions = []accesscontrol.Permission{folderPerm("folders:read", accesscontrol.GeneralFolderUID), folderPerm("folders:write", accesscontrol.GeneralFolderUID)}
+					}
+					testCases = append(testCases, testCase{
+						name:        fmt.Sprintf("root parent=%q name=%q verb=%s stackRole=%t", parent, name, verb, hasStackRole),
+						permissions: permissions,
+						req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: verb, Name: name, Folder: parent},
+						expected:    hasStackRole,
+					})
+				}
+			}
+		}
 	}
 
 	for _, tc := range testCases {

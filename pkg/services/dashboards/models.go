@@ -529,8 +529,6 @@ type FindPersistedDashboardsQuery struct {
 	Sort       model.SortOption
 	IsDeleted  bool
 
-	UseFieldValueResults bool
-
 	ManagedBy            utils.ManagerKind
 	ManagerIdentity      string
 	SourcePath           string

@@ -167,7 +167,7 @@
     {
       "resource": "dashboards",
       "name": "timeseries-stacking2",
-      "title": "TimeSeries & BarChart Stacking",
+      "title": "TimeSeries \u0026 BarChart Stacking",
       "tags": [
         "gdev",
         "panel-tests",

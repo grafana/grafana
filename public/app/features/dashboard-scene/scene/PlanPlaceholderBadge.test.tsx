@@ -84,7 +84,6 @@ function setup($data?: SceneDataProvider) {
     planning: {
       planId: 'plan-1',
       planTitle: 'Plan',
-      panelCount: 1,
       onBuild: jest.fn(),
       onDismiss: jest.fn(),
     },

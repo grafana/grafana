@@ -807,7 +807,7 @@ func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
-	migrationFinishedAt := time.Now()
+	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
 
 	tests := []struct {
 		name         string
@@ -837,7 +837,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 					{
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
-						BuildTimeUnix: migrationFinishedAt.Unix(),
+						BuildTimeUnix: migrationFinishedAt.Add(time.Second).Unix(),
 					},
 				},
 			},
@@ -868,7 +868,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
-			name: "build time exactly at migration time succeeds",
+			name: "build time in same second as migration finish succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
 				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -883,7 +883,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
 			expectErr:  false,
-			numRetries: 1, // Only initial attempt, no retries needed
+			numRetries: 1,
 		},
 		{
 			name: "build time after migration time succeeds",
@@ -934,7 +934,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 					{
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
-						BuildTimeUnix: migrationFinishedAt.Unix(),
+						BuildTimeUnix: migrationFinishedAt.Add(time.Second).Unix(),
 					},
 					{
 						Group:         "dashboard.grafana.app",
@@ -1002,11 +1002,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testing.T) {
-	// Test that retries work with distributor - first call has stale build time, second succeeds
-	migrationFinishedAt := time.Now()
+	// A build from the previous second is stale, but a rebuild in the migration finish second is valid.
+	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
 	mockClient := resource.NewMockResourceClient(t)
 
-	// First call returns stale build time (before migration)
+	// First call returns a build time from before migration finished.
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{
@@ -1015,13 +1015,13 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 				{
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
-					BuildTimeUnix: migrationFinishedAt.Add(-1 * time.Second).Unix(),
+					BuildTimeUnix: migrationFinishedAt.Add(-time.Second).Unix(),
 				},
 			},
 		}, nil).
 		Once()
 
-	// Second call succeeds with fresh build time
+	// Second call succeeds with a build time in the same second as migration finish.
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{

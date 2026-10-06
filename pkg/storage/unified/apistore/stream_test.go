@@ -336,14 +336,80 @@ func TestFolderNormalizationOnReadAndWatch(t *testing.T) {
 				read, err := s.convertToObject(t.Context(), data, &unstructured.Unstructured{})
 				require.NoError(t, err)
 				require.Equal(t, expected, read.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
-				client := &mockWatchClient{ctx: t.Context()}
-				decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.serializer, func() {}, false)
-				decoder.decodeObject = s.convertToObject
-				watched, err := decoder.toObject(&resourcepb.WatchEvent_Resource{Value: data, Version: 42})
-				require.NoError(t, err)
-				require.Equal(t, expected, watched.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
-				require.Equal(t, "42", watched.(*unstructured.Unstructured).GetResourceVersion())
+				for _, event := range []struct {
+					typeID resourcepb.WatchEvent_Type
+					action watch.EventType
+				}{
+					{resourcepb.WatchEvent_ADDED, watch.Added},
+					{resourcepb.WatchEvent_MODIFIED, watch.Modified},
+					{resourcepb.WatchEvent_DELETED, watch.Deleted},
+				} {
+					t.Run(string(event.action), func(t *testing.T) {
+						current := &resourcepb.WatchEvent_Resource{Value: data, Version: 42}
+						if event.action == watch.Deleted {
+							current.Value = nil
+						}
+						client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+							Type: event.typeID, Resource: current,
+							Previous: &resourcepb.WatchEvent_Resource{Value: data, Version: 41},
+						}}}
+						decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.serializer, func() {}, false)
+						t.Cleanup(decoder.Close)
+						decoder.decodeObject = s.convertToObject
+						action, watched, err := decoder.Decode()
+						require.NoError(t, err)
+						require.Equal(t, event.action, action)
+						require.Equal(t, expected, watched.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
+						require.Equal(t, "42", watched.(*unstructured.Unstructured).GetResourceVersion())
+					})
+				}
 			})
 		}
 	}
+}
+
+func TestStreamDecoderDeletedEvents(t *testing.T) {
+	deleted := []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"deleted","resourceVersion":"12"}}`)
+	for name, event := range map[string]*resourcepb.WatchEvent{
+		// Servers remove the deletion marker and send the deleted object as Previous.
+		"empty value with previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"previous takes precedence over value": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: []byte(`{"apiVersion":"example.com/v1","kind":"Widget","metadata":{"name":"current"}}`), Version: 13},
+			Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+		},
+		"value without previous": {
+			Type:     resourcepb.WatchEvent_DELETED,
+			Resource: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 13},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{event}}
+			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+			t.Cleanup(decoder.Close)
+			action, obj, err := decoder.Decode()
+			require.NoError(t, err)
+			require.Equal(t, watch.Deleted, action)
+			require.Equal(t, "deleted", obj.(*unstructured.Unstructured).GetName())
+			require.Equal(t, "13", obj.(*unstructured.Unstructured).GetResourceVersion(), "a delete carries the deletion's resource version")
+		})
+	}
+}
+
+func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
+	client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+		Type:     resourcepb.WatchEvent_DELETED,
+		Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+	}}}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, JSONSerializer(), func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.Error(t, err)
+	require.Equal(t, watch.Error, action)
+	require.Nil(t, obj)
 }
