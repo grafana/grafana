@@ -87,7 +87,7 @@ To create a dashboard, follow these steps:
 {{< shared id="create-dashboard" >}}
 
 1. Click **Dashboards** in the main menu.
-1. Click **New** and select **New Dashboard**.
+1. Click **New** and select **New dashboard**.
 1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
    {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.1.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
@@ -237,7 +237,7 @@ To edit a dashboard, follow these steps:
    | ---------------------- | ----------------------------- |
    | Edit dashboard settings | Click the **Dashboard options** icon to access dashboard settings in the sidebar. |
    | Add more panels        | <p>Click the **Add new element** icon and select **Panel**.</p><p>You can also hover your cursor on the dashboard to display the **Add panel** button. This is helpful if you want to ensure that you add a new panel within a grouping.</p>   |
-   | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Links](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
+   | Add dashboard controls | Click **Add new element** and select one of the following: <ul><li>[Filter and Group by](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls)</li><li>[Variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables)</li><li>[Annotation query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-annotation-queries)</li><li>[Link](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-links)</li></ul> |
    | Group panels           | <p>Click the **Add new element** icon and select **Add row/Group into rows** or **Add tab/Group into tabs**.</p><p>Alternatively hover your cursor on the dashboard to display the **Group panels** button and select a grouping option or select a specific set of panels and group them into rows or tabs.</p><p>For more information on groupings, refer to [Panel groupings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-groupings/).</p>   |
    | Edit panels | <p>Hover your cursor over any part of a panel to display the actions tooltip, which has the following options: **Settings**, **Edit visualization**, **Copy**, **Duplicate**, **Delete**.</p><p>Click **Settings** to access high-level panel options in the sidebar, or **Edit visualization** to open the panel editor.</p>  |
    | Edit dashboard controls | <p>Hover your cursor over any part of a dashboard control to display the actions tooltip, which has the following options: **Settings**, **Duplicate**, and **Delete**. Click **Settings** to access options in the sidebar. For some controls, the tooltip also includes an **Edit query** or **Edit values** option. |
@@ -292,7 +292,7 @@ To update the panel layout, follow these steps:
 1. Click **Edit**.
 1. Click the dashboard or the grouping that contains the panel layout you want to update.
 1. Click the **Dashboard options** icon to open the sidebar, if needed.
-1. Under **Layout**, select **Custom** or **Auto grid**.
+1. Under **Layout**, select **Custom** or **Auto**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
@@ -519,7 +519,7 @@ To make a copy of a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **Save** drop-down list and select **Save as copy**.
+1. Click the **More save options** icon next to **Save** and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
