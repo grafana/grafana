@@ -14,6 +14,13 @@ const organize = (options: object): DataTransformerConfig => ({ id: 'organize', 
 const unrelated: DataTransformerConfig = { id: 'filterByValue', options: { filters: [] } };
 
 describe('decodeAdHocColumns', () => {
+  it('treats an organize transformation without options as an unchanged view', () => {
+    expect(decodeAdHocColumns([{ id: 'organize', options: undefined }], CATALOG)).toEqual({
+      columnOrder: undefined,
+      hiddenColumns: new Set(),
+    });
+  });
+
   it('reads an empty stage as no ad-hoc view', () => {
     expect(decodeAdHocColumns([], CATALOG)).toEqual({ columnOrder: undefined, hiddenColumns: new Set() });
   });
@@ -82,6 +89,18 @@ describe('encodeColumnOrder', () => {
 });
 
 describe('encodeHiddenColumns', () => {
+  it('leaves unrelated transformations intact when clearing an absent column entry', () => {
+    expect(encodeHiddenColumns([unrelated], new Set())).toEqual([unrelated]);
+  });
+
+  it('preserves renames when the last hidden column is restored', () => {
+    const stage = [organize({ excludeByName: { B: true }, renameByName: { A: 'Alpha' } })];
+
+    expect(encodeHiddenColumns(stage, new Set())).toEqual([
+      organize({ indexByName: {}, excludeByName: {}, renameByName: { A: 'Alpha' } }),
+    ]);
+  });
+
   it('adds and removes hidden column names', () => {
     const hidden = encodeHiddenColumns([], new Set(['B']));
 

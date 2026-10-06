@@ -3069,7 +3069,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/scenes@npm:8.20.1":
+"@grafana/scenes@npm:8.20.1, @grafana/scenes@npm:^8.20.1":
   version: 8.20.1
   resolution: "@grafana/scenes@npm:8.20.1"
   dependencies:
@@ -3221,7 +3221,7 @@ __metadata:
     "@grafana/faro-web-sdk": "npm:^2.12.0"
     "@grafana/i18n": "npm:13.3.0-pre"
     "@grafana/react-data-grid": "npm:7.0.0-beta.58"
-    "@grafana/scenes": "npm:8.20.1"
+    "@grafana/scenes": "npm:^8.20.1"
     "@grafana/schema": "npm:13.3.0-pre"
     "@grafana/test-utils": "workspace:*"
     "@hello-pangea/dnd": "npm:^18.0.1"
