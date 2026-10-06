@@ -501,7 +501,7 @@ describe('FieldDisplay', () => {
   });
 
   describe('sparkline', () => {
-    it('should return sparkline when data has a time field', () => {
+    it('should return sparkline when data has multiple values', () => {
       const options = createDisplayOptions({
         sparkline: true,
         reduceOptions: { calcs: [ReducerID.last] },
@@ -522,10 +522,18 @@ describe('FieldDisplay', () => {
       expect(result[0].sparkline?.highlightIndex).toBe(2);
     });
 
-    it('should not return sparkline when data has no time field', () => {
+    it('should not return sparkline when data has less than 3 values', () => {
       const options = createDisplayOptions({
         sparkline: true,
         reduceOptions: { calcs: [ReducerID.last] },
+        data: [
+          toDataFrame({
+            fields: [
+              { name: 'Time', type: FieldType.time, values: [1, 2] },
+              { name: 'Value', type: FieldType.number, values: [10, 20] },
+            ],
+          }),
+        ],
       });
 
       const result = getFieldDisplayValues(options);
