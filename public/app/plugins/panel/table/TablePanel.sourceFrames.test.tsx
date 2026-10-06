@@ -1,5 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import {
   applyFieldOverrides,
@@ -20,7 +21,7 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { TableCellDisplayMode, type TableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
-import { PanelContextProvider } from '@grafana/ui';
+import { PanelContextProvider, type PanelRuntimeTransformations } from '@grafana/ui';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 
 import { getPanelProps } from '../test-utils';
@@ -50,7 +51,13 @@ function makeFrame(name = 'Query', refId = 'A', values = [10, 20]) {
   return toDataFrame({ name, refId, fields: [{ name: 'metric', type: FieldType.number, values }] });
 }
 
-function panel(sourceSeries: DataFrame[], dataLinkPostProcessor: DataLinkPostProcessor, frameIndex = 0) {
+function panel(
+  sourceSeries: DataFrame[],
+  dataLinkPostProcessor: DataLinkPostProcessor,
+  frameIndex = 0,
+  outputSeries = sourceSeries,
+  setTransformations: PanelRuntimeTransformations['set'] = () => {}
+) {
   const fieldConfig = {
     defaults: {
       custom: { cellOptions: { type: TableCellDisplayMode.DataLinks } },
@@ -66,7 +73,7 @@ function panel(sourceSeries: DataFrame[], dataLinkPostProcessor: DataLinkPostPro
     state: LoadingState.Done,
     timeRange: props.timeRange,
     series: applyFieldOverrides({
-      data: sourceSeries,
+      data: outputSeries,
       fieldConfig,
       fieldConfigRegistry: plugin.fieldConfigRegistry,
       theme: createTheme(),
@@ -85,7 +92,7 @@ function panel(sourceSeries: DataFrame[], dataLinkPostProcessor: DataLinkPostPro
             eventBus: new EventBusSrv(),
             adHocTransformations: {
               get: () => transformations,
-              set: () => {},
+              set: setTransformations,
               getSourceSeries: () => sourceSeries,
               subscribe: () => () => {},
             },
@@ -126,6 +133,66 @@ it('preserves multi-frame display names and series indices when rebuilding the s
 
   expect(await screen.findByRole('columnheader', { name: /Second metric/ })).toBeVisible();
   expect(screen.getByRole('link', { name: 'Inspect' })).toHaveAttribute('href', '/series/1');
+});
+
+it.each(['removed', 'reordered'])('displays the selected source when output frames are %s', async (change) => {
+  const sourceSeries = [makeFrame('First', 'A', [10]), makeFrame('Second', 'B', [20])];
+  const outputSeries = change === 'removed' ? [sourceSeries[1]] : [sourceSeries[1], sourceSeries[0]];
+  render(
+    panel(
+      sourceSeries,
+      ({ linkModel, field, config }) => ({
+        ...linkModel,
+        href: `/series/${field.state?.seriesIndex}/row/${field.values[config.valueRowIndex!]}`,
+      }),
+      0,
+      outputSeries
+    )
+  );
+
+  expect(await screen.findByRole('columnheader', { name: /Second metric/ })).toBeVisible();
+  expect(screen.getByRole('link', { name: 'Inspect' })).toHaveAttribute('href', '/series/1/row/20');
+});
+
+it.each(['missing', 'ambiguous'])('keeps the output frame when the source match is %s', async (match) => {
+  const sourceSeries = [makeFrame('First', 'A', [10]), makeFrame('Second', match === 'ambiguous' ? 'A' : 'B', [20])];
+  const outputSeries = [makeFrame('Output', match === 'ambiguous' ? 'A' : 'C', [99])];
+  render(
+    panel(
+      sourceSeries,
+      ({ linkModel, field, config }) => ({ ...linkModel, href: `/row/${field.values[config.valueRowIndex!]}` }),
+      0,
+      outputSeries
+    )
+  );
+
+  expect(await screen.findByRole('link', { name: 'Inspect' })).toHaveAttribute('href', '/row/99');
+});
+
+it('writes row filters with the matched source index and scope', async () => {
+  const sourceSeries = ['A', 'B'].map((refId) =>
+    toDataFrame({
+      name: refId,
+      refId,
+      fields: [{ name: 'label', type: FieldType.string, values: [`${refId}-one`, `${refId}-two`] }],
+    })
+  );
+  const set = jest.fn();
+  render(panel(sourceSeries, ({ linkModel }) => linkModel, 0, [sourceSeries[1]], set));
+  const user = userEvent.setup();
+  await user.click(screen.getByLabelText('Column options for B label'));
+  await user.click(await screen.findByText('Filter values'));
+  await user.click(screen.getByRole('checkbox', { name: 'B-one' }));
+  await user.click(screen.getByRole('button', { name: 'Ok' }));
+
+  expect(set).toHaveBeenCalledWith('grafana:table-view', [
+    expect.objectContaining({
+      id: 'filterByValue',
+      options: expect.objectContaining({
+        target: { refId: 'B', frameIndex: 1, frameKey: '["B",1,1]', parentIndex: undefined, parentKey: undefined },
+      }),
+    }),
+  ]);
 });
 
 it('rebuilds selected-frame context when only a sibling frame changes', async () => {

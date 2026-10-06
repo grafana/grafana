@@ -26,7 +26,7 @@ import {
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
 import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
-import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
+import { getCurrentFrameIndex, getSourceFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
 import { useTableCellAssistant } from './useTableCellAssistant';
@@ -72,11 +72,12 @@ export function TablePanel(props: Props) {
   const sourceSeries = tableRefreshNewFeaturesEnabled
     ? panelContext.adHocTransformations?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER)
     : undefined;
+  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, currentIndex, sourceSeries) : undefined;
   const getFrameScope = useTableFrameScope(sourceSeries ?? frames);
   // Rebuild against original rows while retaining cross-frame display and data-link context.
   const displayFrames = useMemo(
     () =>
-      sourceSeries
+      sourceSeries && sourceFrameIndex !== undefined
         ? applyFieldOverrides({
             data: [...sourceSeries],
             fieldConfig,
@@ -87,10 +88,19 @@ export function TablePanel(props: Props) {
             dataLinkPostProcessor,
           })
         : frames,
-    [sourceSeries, frames, fieldConfig, theme, props.timeZone, replaceVariables, dataLinkPostProcessor]
+    [
+      sourceSeries,
+      sourceFrameIndex,
+      frames,
+      fieldConfig,
+      theme,
+      props.timeZone,
+      replaceVariables,
+      dataLinkPostProcessor,
+    ]
   );
   useCacheFieldDisplayNames(displayFrames);
-  const rawMain = displayFrames[currentIndex] ?? outputMain;
+  const rawMain = displayFrames[sourceFrameIndex ?? currentIndex] ?? outputMain;
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
   const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
   const main = useMemo(
@@ -126,12 +136,12 @@ export function TablePanel(props: Props) {
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       rowTransformationsEnabled={tableRefreshNewFeaturesEnabled}
       rowTransformations={
-        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations
+        tableRefreshNewFeaturesEnabled && panelContext.adHocTransformations && sourceFrameIndex !== undefined
           ? {
               api: panelContext.adHocTransformations,
               owner: TABLE_TRANSFORMATIONS_OWNER,
-              frameKey: getFrameScope(currentIndex),
-              frameIndex: currentIndex,
+              frameKey: getFrameScope(sourceFrameIndex),
+              frameIndex: sourceFrameIndex,
             }
           : undefined
       }
