@@ -13,6 +13,13 @@ import (
 // migration from local AccessControl evaluation to centralized AuthZ checks.
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
+	// TODO: Complete in subsequent PRs:
+	//   - ANY/ALL evaluators: nesting, empty expressions and short-circuit evaluation.
+	//   - EvalPermission: action-only checks, explicit empty scopes and multiple scopes.
+	//   - Scope resolution: inheritance, MutateScopes after denial, errors and WithoutResolvers.
+	//   - Resolver caching: tenant isolation, bypass and invalidation.
+	//   - Permissions: NoOrgID globals, action-set expansion, SharedWithMe and empty-permission denial.
+	//   - Expression validation: invalid nodes, conflicting fields and tree limits.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
