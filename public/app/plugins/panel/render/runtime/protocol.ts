@@ -87,24 +87,27 @@ export interface RenderInitMessage {
 
 export const frameErrorKindSchema = z.enum(['startup', 'runtime', 'csp', 'output-limit']);
 
-/** Frame -> host messages. Anything that does not parse is a fatal protocol error on the host. */
+/**
+ * Frame -> host messages. Anything that does not parse is a fatal protocol error on the host. The
+ * schemas are strict so a message cannot carry unbounded extra payload past validation.
+ */
 export const frameMessageSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('ready'), version: z.literal(RENDER_PROTOCOL_VERSION) }),
-  z.object({
+  z.strictObject({ type: z.literal('ready'), version: z.literal(RENDER_PROTOCOL_VERSION) }),
+  z.strictObject({
     type: z.literal('render-complete'),
     seq: z.number().int().min(0),
     durationMs: z.number().finite().min(0),
     nodeCount: z.number().int().min(0),
   }),
-  z.object({ type: z.literal('height'), height: z.number().finite().min(0).max(MAX_HEIGHT_HINT_PX) }),
-  z.object({
+  z.strictObject({ type: z.literal('height'), height: z.number().finite().min(0).max(MAX_HEIGHT_HINT_PX) }),
+  z.strictObject({
     type: z.literal('error'),
     kind: frameErrorKindSchema,
     message: z.string().max(MAX_DIAGNOSTIC_LENGTH),
     seq: z.number().int().optional(),
   }),
-  z.object({ type: z.literal('link'), href: z.string().min(1).max(MAX_HREF_LENGTH) }),
-  z.object({ type: z.literal('pong'), id: z.number().int() }),
+  z.strictObject({ type: z.literal('link'), href: z.string().min(1).max(MAX_HREF_LENGTH) }),
+  z.strictObject({ type: z.literal('pong'), id: z.number().int() }),
 ]);
 
 export type FrameMessage = z.infer<typeof frameMessageSchema>;

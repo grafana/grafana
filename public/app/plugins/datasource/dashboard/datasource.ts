@@ -27,6 +27,7 @@ import {
   type SceneDataProvider,
   SceneDataTransformer,
   type SceneObject,
+  VizPanel,
 } from '@grafana/scenes';
 import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
 import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/utils';
@@ -39,6 +40,20 @@ import { type DashboardQuery } from './types';
 interface DashboardSourceMeta {
   panelId: number;
   title: string;
+}
+
+// Only the render panel groups frames by source panel, so only its queries get the attribution.
+const SOURCE_ATTRIBUTION_CONSUMERS: ReadonlySet<string> = new Set(['render']);
+
+function wantsSourceAttribution(consumer: SceneObject): boolean {
+  let current: SceneObject | undefined = consumer;
+  while (current) {
+    if (current instanceof VizPanel) {
+      return SOURCE_ATTRIBUTION_CONSUMERS.has(current.state.pluginId);
+    }
+    current = current.parent;
+  }
+  return false;
 }
 
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
@@ -100,10 +115,9 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Extract AdHoc filters from the request
     const adHocFilters = options.filters || [];
 
-    const source: DashboardSourceMeta = {
-      panelId,
-      title: sceneGraph.interpolate(sourcePanel, sourcePanel.state.title),
-    };
+    const source: DashboardSourceMeta | undefined = wantsSourceAttribution(scene)
+      ? { panelId, title: sceneGraph.interpolate(sourcePanel, sourcePanel.state.title) }
+      : undefined;
 
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
@@ -172,7 +186,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     data: PanelData,
     query: DashboardQuery,
     filters: AdHocVariableFilter[],
-    source: DashboardSourceMeta
+    source: DashboardSourceMeta | undefined
   ): DataFrame[] {
     // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
@@ -190,16 +204,18 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
-        // Additive source attribution: refIds collide across source panels, so consumers
-        // (e.g. the render panel) can group frames by the panel they came from.
-        meta: {
-          ...s.meta,
-          custom: {
-            ...s.meta?.custom,
-            dashboardSourcePanelId: source.panelId,
-            dashboardSourcePanelTitle: source.title,
+        // Additive source attribution: refIds collide across source panels, so the render panel
+        // can group frames by the panel they came from. Other consumers get the frames unchanged.
+        ...(source && {
+          meta: {
+            ...s.meta,
+            custom: {
+              ...s.meta?.custom,
+              dashboardSourcePanelId: source.panelId,
+              dashboardSourcePanelTitle: source.title,
+            },
           },
-        },
+        }),
         fields: s.fields.map((field: Field) => ({
           ...field,
           config: {
