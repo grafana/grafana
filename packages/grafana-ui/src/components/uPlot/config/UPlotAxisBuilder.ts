@@ -30,7 +30,7 @@ export interface AxisProps {
   ticks?: Axis.Ticks;
   filter?: Axis.Filter;
   space?: Axis.Space;
-  formatValue?: (v: any, decimals?: DecimalCount) => string;
+  formatValue?: (v: number, decimals?: DecimalCount) => string;
   incrs?: Axis.Incrs;
   splits?: Axis.Splits;
   values?: Axis.Values;
@@ -237,7 +237,7 @@ function calculateSpace(
   scaleMin: number,
   scaleMax: number,
   plotDim: number,
-  formatValue?: (value: unknown) => string
+  formatValue?: (value: number) => string
 ): number {
   const axis = self.axes[axisIdx];
   const scale = self.scales[axis.scale!];

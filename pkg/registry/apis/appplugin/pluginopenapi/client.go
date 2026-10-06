@@ -69,7 +69,7 @@ func (offlineStoreClient) ListStoredResources(context.Context, *resourcepb.ListS
 	return nil, errOffline
 }
 
-// offlineSearchClient allows search and trash routes to be registered without
+// offlineSearchClient allows search, trash and hybrid routes to be registered without
 // connecting to the search index.
 type offlineSearchClient struct{}
 

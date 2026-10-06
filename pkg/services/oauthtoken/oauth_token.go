@@ -40,6 +40,9 @@ var (
 	ErrRetriesExhausted    = errors.New("retries exhausted")
 )
 
+// minLockWait keeps waiters from polling the server lock table in a tight loop when the configured min wait is tiny.
+const minLockWait = 100 * time.Millisecond
+
 type Service struct {
 	cfgProvider     configprovider.ConfigProvider
 	SocialService   social.Service
@@ -244,14 +247,16 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr identity.Requester, t
 		return nil, nil
 	}
 
+	minWait := max(time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs)*time.Millisecond, minLockWait)
 	lockTimeConfig := serverlock.LockTimeConfig{
 		MaxInterval: 30 * time.Second,
-		MinWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs) * time.Millisecond,
-		MaxWait:     time.Duration(cfg.OAuthRefreshTokenServerLockMinWaitMs+500) * time.Millisecond,
+		MinWait:     minWait,
+		MaxWait:     minWait + minWait/2,
 	}
 
-	retryOpt := func(attempts int) error {
-		if attempts < 5 {
+	lockDeadline := time.Now().Add(time.Duration(cfg.OAuthRefreshTokenServerLockWaitBudgetMs) * time.Millisecond)
+	retryOpt := func(int) error {
+		if time.Now().Before(lockDeadline) {
 			return nil
 		}
 		return ErrRetriesExhausted

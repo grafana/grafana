@@ -1061,3 +1061,10 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		}
 	})
 }
+
+func TestTranslateFolderCanonicalRoot(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "top-level", "annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}
+	tuples, err := TranslateFolderToTuples(obj)
+	require.NoError(t, err)
+	require.Empty(t, tuples)
+}
