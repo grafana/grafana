@@ -97,6 +97,30 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
+func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) (*provisioning.TestResults, error) {
+	// TODO: use a lighter endpoint than listing repositories to check the token.
+	if _, err := lister.ListRepositories(ctx); err != nil {
+		if errors.Is(err, connection.ErrAuthentication) {
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "The provider rejected the connection's access token",
+				}},
+			), nil
+		}
+		return connection.FailedTestResults(
+			http.StatusUnprocessableEntity,
+			[]provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeInternal,
+				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
+			}},
+		), nil
+	}
+	return connection.SuccessTestResults(), nil
+}
+
 type listingConnection struct {
 	*oauthConnection
 	lister connection.RepositoryLister
