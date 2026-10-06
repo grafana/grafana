@@ -807,9 +807,8 @@ func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb
 // queueReconcileAfterLostKeys queues a reconcile of the open global index this
 // instance owns for a namespace that may have lost written keys, or of every one
 // for an empty namespace: once a watch is ready, after a reconnect, and when
-// keys were dropped. It only queues, and the queue merges repeated requests for
-// an index, so it does not block the bus's callback and a burst of drops costs
-// one reconcile.
+// keys were dropped. It only queues, so it does not block the bus's callback,
+// and repeated pending requests for an index are merged.
 func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
 	if namespace != "" {
 		key := GlobalSearchKey(namespace)
