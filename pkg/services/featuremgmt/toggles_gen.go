@@ -806,6 +806,10 @@ const (
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
+	// FlagKubernetesUsersDeterministicUID
+	// Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value
+	FlagKubernetesUsersDeterministicUID = "kubernetesUsersDeterministicUID"
+
 	// FlagKubernetesAuthInfoApi
 	// Enables auth info APIs in the app platform
 	FlagKubernetesAuthInfoApi = "kubernetesAuthInfoApi"

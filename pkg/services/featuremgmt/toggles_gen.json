@@ -3702,6 +3702,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersDeterministicUID",
+        "resourceVersion": "1791287388877",
+        "creationTimestamp": "2026-10-06T11:11:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-06 11:49:48.877899 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUsersRedirect",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
