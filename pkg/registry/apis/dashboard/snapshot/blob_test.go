@@ -15,6 +15,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -111,6 +112,24 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	_, err = rest.(*dashboardREST).Connect(ctx, "snap-1", nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, namespace, store.get.Resource.Namespace)
+
+	// Authenticated requests must retain their caller identity for remote blob stores.
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace, IDToken: "caller-token"}
+	store.checkGet = func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+		info, ok := authlib.AuthInfoFrom(ctx)
+		require.True(t, ok)
+		require.Same(t, caller, info)
+		require.Equal(t, "caller-token", info.GetIDToken())
+		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
+	}
+	_, err = rest.(*dashboardREST).Connect(authlib.WithAuthInfo(ctx, caller), "snap-1", nil, nil)
+	require.NoError(t, err)
+
+	store.get = nil
+	wrongCaller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: "org-3", IDToken: "other-token"}
+	_, err = rest.(*dashboardREST).Connect(authlib.WithAuthInfo(ctx, wrongCaller), "snap-1", nil, nil)
+	require.True(t, apierrors.IsForbidden(err))
+	require.Nil(t, store.get)
 
 	// The snapshot lookup is global in the legacy store. A result from another
 	// namespace must not be used to mint blob access for that namespace.

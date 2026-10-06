@@ -84,9 +84,17 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 	}
 
 	content := snap.Spec.Dashboard
-	// GetBlob is an internal delegated RPC; the public snapshot GET was authorized
-	// above, but anonymous requests need a namespace-scoped identity for the RPC.
-	blobCtx := authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: ns.Value})
+	blobCtx := ctx
+	if snap.Blobs.Dashboard != nil && snap.Blobs.Dashboard.Uid != "" {
+		if caller, ok := authlib.AuthInfoFrom(ctx); ok && caller != nil {
+			if !authlib.NamespaceMatches(caller.GetNamespace(), ns.Value) {
+				return nil, apierrors.NewForbidden(dashv0.SnapshotResourceInfo.GroupResource(), name, fmt.Errorf("caller namespace does not match snapshot namespace"))
+			}
+		} else {
+			// GetBlob is a delegated RPC; anonymous public reads need a namespace-scoped identity.
+			blobCtx = authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: ns.Value})
+		}
+	}
 	if fromBlob, ok, err := readDashboardBlob(blobCtx, r.blobs, snap); err != nil {
 		return nil, err
 	} else if ok {
