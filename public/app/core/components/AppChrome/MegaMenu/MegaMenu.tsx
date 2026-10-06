@@ -6,10 +6,11 @@ import { memo, forwardRef, useId } from 'react';
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
 import { useSyncStarredItemsInNav } from 'app/features/stars/hooks';
 
 import { MegaMenuCustomiseControls } from './MegaMenuCustomiseControls';
@@ -29,6 +30,7 @@ export interface Props extends DOMAttributes {
 export const MegaMenu = memo(
   forwardRef<HTMLDivElement, Props>(({ onClose, ...restProps }, ref) => {
     const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
+    const scopesMegaMenuEnabled = useFlagGrafanaScopesDashboardsMegaMenu();
     const styles = useStyles2(getStyles, visualRefreshEnabled);
     const { chrome } = useGrafana();
     const state = chrome.useState();
@@ -149,6 +151,11 @@ export const MegaMenu = memo(
         />
       );
 
+    // Scoped-dashboards section: rendered in both the canCustomise true/false branches below, since
+    // canCustomise depends on an unrelated flag + sign-in state and shouldn't gate whether a user
+    // with scopes enabled sees their suggested dashboards.
+    const renderScopesDashboardsSection = () => scopesMegaMenuEnabled && <ScopesDashboardsMegaMenuSection />;
+
     // Pinned box: a subtle grey box, with a "Pinned" heading, listing each pinned item as a compact
     // horizontal breadcrumb. Entries are drag-reorderable while editing.
     const renderPinnedBox = () =>
@@ -243,12 +250,16 @@ export const MegaMenu = memo(
                 ) : canCustomise ? (
                   <>
                     {renderPinnedBox()}
+                    {renderScopesDashboardsSection()}
                     {renderSectionList()}
                   </>
                 ) : (
-                  <ul className={styles.itemList} aria-label={navLabel}>
-                    {navItems.map((link) => renderNavItem(link))}
-                  </ul>
+                  <>
+                    {renderScopesDashboardsSection()}
+                    <ul className={styles.itemList} aria-label={navLabel}>
+                      {navItems.map((link) => renderNavItem(link))}
+                    </ul>
+                  </>
                 )}
                 <MegaMenuExtensionPoint />
               </>
