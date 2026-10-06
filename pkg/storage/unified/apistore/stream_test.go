@@ -365,3 +365,41 @@ func TestStreamDecoderDeletedEventWithoutObject(t *testing.T) {
 	require.Equal(t, watch.Error, action)
 	require.Nil(t, obj)
 }
+
+func TestStreamDecoderDeletedEventsSharedStorage(t *testing.T) {
+	other := []byte(`{"apiVersion":"shared.example.com/v1","kind":"Widget","metadata":{"name":"other"}}`)
+	deleted := []byte(`{"apiVersion":"shared.example.com/v1","kind":"Widget","metadata":{"name":"stored"}}`)
+	client := &mockWatchClient{
+		ctx: t.Context(),
+		events: []*resourcepb.WatchEvent{
+			{
+				Type:     resourcepb.WatchEvent_DELETED,
+				Resource: &resourcepb.WatchEvent_Resource{Version: 13},
+				Previous: &resourcepb.WatchEvent_Resource{Value: other, Version: 11},
+			},
+			{
+				Type:     resourcepb.WatchEvent_DELETED,
+				Resource: &resourcepb.WatchEvent_Resource{Version: 14},
+				Previous: &resourcepb.WatchEvent_Resource{Value: deleted, Version: 12},
+			},
+		},
+	}
+	serializer := &sharedSerializer{
+		inner: JSONSerializer(),
+		shared: SharedStorage{
+			Group: "shared.example.com",
+			Name:  &SharedName{Stored: "stored", Served: "instance"},
+		},
+		served: "served.example.com",
+	}
+	decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, serializer, func() {}, false)
+	t.Cleanup(decoder.Close)
+
+	action, obj, err := decoder.Decode()
+	require.NoError(t, err)
+	require.Equal(t, watch.Deleted, action)
+	deletedObj := obj.(*unstructured.Unstructured)
+	require.Equal(t, "instance", deletedObj.GetName())
+	require.Equal(t, "served.example.com/v1", deletedObj.GetAPIVersion())
+	require.Equal(t, "14", deletedObj.GetResourceVersion())
+}
