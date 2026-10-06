@@ -1624,6 +1624,19 @@ func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.Na
 	return time.Time{}, nil
 }
 
+func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource.NamespacedResource]time.Time, error) {
+	result := make(map[resource.NamespacedResource]time.Time)
+	for entry, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return result, err
+		}
+		if entry.LastImportTime.After(result[entry.NamespacedResource]) {
+			result[entry.NamespacedResource] = entry.LastImportTime
+		}
+	}
+	return result, nil
+}
+
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
 	b.logCall("GetResourceLastImportTimes")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")

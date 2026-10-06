@@ -132,6 +132,9 @@ decode:
 			decodeSource = evt.Previous
 		}
 		obj, err := d.toObject(decodeSource)
+		if errors.Is(err, errSharedMismatch) {
+			continue decode
+		}
 		if err != nil {
 			logger.Error("error decoding entity", "error", err)
 			return watch.Error, nil, err
@@ -166,6 +169,9 @@ decode:
 			var prevObj runtime.Object
 			if evt.Previous != nil {
 				prevObj, err = d.toObject(evt.Previous)
+				if errors.Is(err, errSharedMismatch) {
+					continue decode
+				}
 				if err != nil {
 					logger.Error("error decoding entity", "error", err)
 					return watch.Error, nil, err

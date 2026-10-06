@@ -105,6 +105,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.hybridSearch",
+        "resourceVersion": "1790261991235",
+        "creationTimestamp": "2026-09-24T14:59:51Z"
+      },
+      "spec": {
+        "description": "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -1787,6 +1800,19 @@
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.teamHttpHeadersWriteGuard",
+        "resourceVersion": "1790977358513",
+        "creationTimestamp": "2026-10-02T21:42:38Z"
+      },
+      "spec": {
+        "description": "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
@@ -3681,6 +3707,23 @@
       },
       "spec": {
         "description": "Enables user APIs in the app platform",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "kubernetesUsersDeterministicUID",
+        "resourceVersion": "1791287388877",
+        "creationTimestamp": "2026-10-06T11:11:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-06 11:49:48.877899 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
