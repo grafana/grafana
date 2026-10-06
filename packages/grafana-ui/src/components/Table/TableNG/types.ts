@@ -132,6 +132,7 @@ interface BaseTableProps {
    * frame indexes (`TableRow.__index`), not the current page slice.
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
@@ -363,6 +364,12 @@ export type MeasureCellHeight = (
   rowIdx: number,
   lineHeight: number
 ) => number;
+
+export interface TextWrapFallback {
+  disabledFields: ReadonlySet<string>;
+  shouldDisable: (field: Field, value: unknown) => boolean;
+}
+
 export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value
