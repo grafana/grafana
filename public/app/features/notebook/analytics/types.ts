@@ -360,3 +360,15 @@ export interface NotebookAddFailedProperties extends EventProperty {
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
 }
+
+export const NOTEBOOK_INCIDENT_ACTION = {
+  DECLARE: 'declare',
+  ATTACH: 'attach',
+} as const;
+
+export type NotebookIncidentAction = (typeof NOTEBOOK_INCIDENT_ACTION)[keyof typeof NOTEBOOK_INCIDENT_ACTION];
+
+export interface NotebookIncidentActionClickedProperties extends EventProperty {
+  notebookUid: string;
+  action: NotebookIncidentAction;
+}
