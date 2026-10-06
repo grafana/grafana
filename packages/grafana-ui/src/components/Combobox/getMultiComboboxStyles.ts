@@ -36,19 +36,28 @@ export const getMultiComboboxStyles = (
         alignItems: 'center',
         width: '100%',
         gap: theme.spacing(0.5),
-        paddingLeft: theme.spacing(0.5),
+        padding: theme.spacing(0.5),
         paddingRight: isClearable ? theme.spacing(5) : 28, // Account for suffix
         '&:focus-within': {
           ...focusStyles,
         },
       })
     ),
+    prefixIcon: css({
+      alignItems: 'center',
+      color: theme.colors.text.secondary,
+      display: 'flex',
+      marginLeft: theme.spacing(0.5),
+      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+    }),
     input: css({
       border: 'none',
       outline: 'none',
       background: 'transparent',
       flexGrow: 1,
-      height: '100%',
+      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
       maxWidth: '100%',
       minWidth: 20, // This is a bit arbitrary, but is used to leave some space for clicking. This will override the minWidth property
       '&::placeholder': {
@@ -60,7 +69,14 @@ export const getMultiComboboxStyles = (
       },
       cursor: 'pointer',
     }),
-
+    overflowWrapper: css({
+      display: 'flex',
+      flexDirection: 'row',
+      gap: theme.spacing(1),
+      height: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      lineHeight: `calc(${theme.spacing(theme.components.height.md)} - (2 * ${theme.spacing(0.5)}) - 2px)`,
+      marginLeft: theme.spacing(0.5),
+    }),
     pillWrapper: css({
       display: 'inline-flex',
       alignItems: 'center',
