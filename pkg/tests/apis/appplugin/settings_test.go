@@ -356,10 +356,6 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, "", extraFeatures...)
-}
-
 // setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
 	return setupHelperFull(t, mode, "app-sdk-manifest.json", extraFeatures...)

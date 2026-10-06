@@ -130,7 +130,6 @@ func TestIntegrationPluginManifestSettingsUsePluginID(t *testing.T) {
 		_, err := client.Resource.List(t.Context(), metav1.ListOptions{})
 		require.True(t, apierrors.IsNotFound(err), "settings must not be served under the manifest group: %v", err)
 	}
-
 }
 
 // TestIntegrationPluginManifestOpenAPIV3 verifies discovery links resolve the plugin's schemas.
