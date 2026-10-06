@@ -107,25 +107,26 @@ markup that contains one, throws.
 
 ## Limits
 
-| Limit                               | Value                                          |
-| ----------------------------------- | ---------------------------------------------- |
-| Code size                           | 256 KiB (UTF-8)                                |
-| Data sent to the frame              | 4 MiB serialized, 100,000 values, 1,000 frames |
-| String value length                 | 1,024 characters, longer values are cut        |
-| Variables                           | 100 variables, 1,000 values each               |
-| Elements under `#root` after a draw | 20,000                                         |
-| Startup                             | 15 s from load until the frame is ready        |
-| Draw                                | 10 s per draw                                  |
-| Unresponsive frame                  | 8 s without answering a heartbeat              |
-| Messages from the frame             | 50 per second                                  |
-| Error message length                | 4,096 characters                               |
-| Link length                         | 2,048 characters                               |
-| Height hint (content-fit layouts)   | 10,000 px                                      |
-| Image rendering wait                | 30 s                                           |
+| Limit                               | Value                                                 |
+| ----------------------------------- | ----------------------------------------------------- |
+| Code size                           | 256 KiB (UTF-8)                                       |
+| Data sent to the frame              | 4 MiB serialized, 100,000 values, 1,000 frames        |
+| String value length                 | 1,024 characters, longer values are cut               |
+| Variables                           | 100 variables, 1,000 values each                      |
+| Elements under `#root` after a draw | 20,000                                                |
+| Startup                             | 15 s from creation until the frame is ready           |
+| Draw                                | 10 s per draw                                         |
+| Unresponsive frame                  | 8 s without answering a heartbeat, from the first one |
+| Messages from the frame             | 50 per second                                         |
+| Error message length                | 4,096 characters                                      |
+| Link length                         | 2,048 characters                                      |
+| Height hint (content-fit layouts)   | 10,000 px                                             |
+| Image rendering wait                | 30 s                                                  |
 
 When the data is over a limit the panel shows a message and does not draw. Too many elements clear
 the drawing and show an error. A frame that does not start, stops answering, navigates away, sends
-invalid messages or too many messages is stopped; the panel then offers **Reload**.
+invalid messages or too many messages is stopped: the panel removes the frame, which tears its
+document down, and offers **Retry**, which starts a new frame.
 
 ## Security model
 

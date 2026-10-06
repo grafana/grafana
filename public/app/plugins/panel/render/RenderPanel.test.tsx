@@ -165,16 +165,18 @@ describe('RenderPanel', () => {
     expect(latestHold().released).toBe(true);
   });
 
-  it('releases the readiness hold on a fatal error and offers a reload that uses a new iframe', async () => {
+  it('removes an unresponsive frame, releases the hold and offers a retry that uses a new iframe', async () => {
     setup();
     const first = frame();
     fail('unresponsive', true);
 
     expect(latestHold().released).toBe(true);
-    expect(screen.getByText('The drawing code stopped responding.')).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('The drawing code stopped responding.');
+    // Removing the element is what tears the hung document down.
+    expect(first.isConnected).toBe(false);
     expect(screen.queryByTitle('Panel drawing')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Reload' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Retry' }));
 
     expect(mockControllers[0].dispose).toHaveBeenCalled();
     expect(mockControllers).toHaveLength(2);
@@ -182,6 +184,14 @@ describe('RenderPanel', () => {
     expect(second).not.toBe(first);
     fireEvent.load(second);
     expect(mockControllers[1].handleLoad).toHaveBeenLastCalledWith(second);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // The new frame gets the current data right away.
+    expect(mockControllers[1].render).toHaveBeenCalledTimes(1);
+
+    // A frame that hangs again is removed again; the panel never stays on a dead frame.
+    fail('unresponsive', true);
+    expect(second.isConnected).toBe(false);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('shows a non-fatal error over the frame and clears it on the next completed draw', () => {
