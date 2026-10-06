@@ -6,7 +6,7 @@ import { config, locationService, setTemplateSrv, type TemplateSrv } from '@graf
 
 import { getPanelProps } from '../test-utils';
 
-import { RenderPanel } from './RenderPanel';
+import { CustomPanel } from './CustomPanel';
 import { type RenderFrameError, type RenderFrameHandlers, type RenderInput } from './runtime';
 import { type Options } from './types';
 
@@ -85,9 +85,9 @@ function makeData(values: number[], state = LoadingState.Done): PanelData {
 
 function setup(overrides: Partial<Omit<PanelProps<Options>, 'options'>> = {}, options: Options = { code: CODE }) {
   const props = getPanelProps<Options>(options, { data: makeData([1, 2, 3]), ...overrides });
-  const view = render(<RenderPanel {...props} />);
+  const view = render(<CustomPanel {...props} />);
   const rerender = (next: Partial<Omit<PanelProps<Options>, 'options'>>) =>
-    view.rerender(<RenderPanel {...props} {...next} />);
+    view.rerender(<CustomPanel {...props} {...next} />);
   return { ...view, props, rerender };
 }
 
@@ -99,7 +99,7 @@ function fail(kind: RenderFrameError['kind'], fatal: boolean) {
   act(() => latestController().handlers.onError({ kind, fatal, message: 'boom at line 3' }));
 }
 
-describe('RenderPanel', () => {
+describe('CustomPanel', () => {
   beforeAll(() => {
     setTemplateSrv({ getVariables: () => [] } as unknown as TemplateSrv);
   });

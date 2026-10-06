@@ -198,7 +198,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"flamegraph":     {},
 		"traces":         {},
 		"piechart":       {},
-		"render":         {},
+		"custom-panel":   {},
 		"stat":           {},
 		"state-timeline": {},
 		"status-history": {},

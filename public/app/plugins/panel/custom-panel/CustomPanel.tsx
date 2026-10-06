@@ -34,14 +34,14 @@ const TERMINAL_STATES: ReadonlySet<string> = new Set([LoadingState.Done, Loading
 /** Errors for one draw: a draw of final data that fails will not draw anything else. */
 const SETTLING_ERRORS: ReadonlySet<RenderFrameErrorKind> = new Set(['runtime', 'output-limit', 'render-timeout']);
 
-export function RenderPanel(props: PanelProps<Options>) {
+export function CustomPanel(props: PanelProps<Options>) {
   const styles = useStyles2(getStyles);
   const code = props.options.code ?? '';
 
   if (code.trim() === '') {
     return (
       <div className={styles.message}>
-        <Trans i18nKey="render-panel.empty-code">Add drawing code in the panel options to render this panel.</Trans>
+        <Trans i18nKey="custom-panel.empty-code">Add drawing code in the panel options to render this panel.</Trans>
       </div>
     );
   }
@@ -298,9 +298,9 @@ function RenderFrameHost({
   if (!doc.ok) {
     return (
       <div className={styles.message}>
-        <Alert severity="error" title={t('render-panel.errors.code-too-large-title', 'Drawing code is too large')}>
+        <Alert severity="error" title={t('custom-panel.errors.code-too-large-title', 'Drawing code is too large')}>
           {t(
-            'render-panel.errors.code-too-large',
+            'custom-panel.errors.code-too-large',
             'The drawing code is {{bytes}} bytes, over the limit for this panel.',
             {
               bytes: doc.bytes,
@@ -320,7 +320,7 @@ function RenderFrameHost({
         <div className={styles.message} role="alert">
           <p>{fatalErrorMessage(fatalError.kind)}</p>
           <Button variant="secondary" icon="sync" onClick={retry}>
-            {t('render-panel.errors.retry', 'Retry')}
+            {t('custom-panel.errors.retry', 'Retry')}
           </Button>
         </div>
       ) : (
@@ -331,13 +331,13 @@ function RenderFrameHost({
           sandbox={RENDER_FRAME_SANDBOX}
           srcDoc={doc.srcdoc}
           referrerPolicy="no-referrer"
-          title={t('render-panel.frame-title', 'Panel drawing')}
+          title={t('custom-panel.frame-title', 'Panel drawing')}
           onLoad={onLoad}
         />
       )}
       {!fatalError && limitError && (
         <div className={styles.overlay}>
-          <Alert severity="warning" title={t('render-panel.errors.limit-title', 'Too much data to draw')}>
+          <Alert severity="warning" title={t('custom-panel.errors.limit-title', 'Too much data to draw')}>
             {limitErrorMessage(limitError)}
           </Alert>
         </div>
@@ -371,20 +371,20 @@ function limitErrorMessage({ reason, actual, limit }: LimitError): string {
   switch (reason) {
     case 'too-many-frames':
       return t(
-        'render-panel.errors.too-many-frames',
-        'The queries returned {{actual}} frames. The render panel draws at most {{limit}}.',
+        'custom-panel.errors.too-many-frames',
+        'The queries returned {{actual}} frames. The custom panel draws at most {{limit}}.',
         { actual, limit }
       );
     case 'too-many-cells':
       return t(
-        'render-panel.errors.too-many-cells',
-        'The queries returned {{actual}} values. The render panel draws at most {{limit}}. Reduce the time range or add a limit to the query.',
+        'custom-panel.errors.too-many-cells',
+        'The queries returned {{actual}} values. The custom panel draws at most {{limit}}. Reduce the time range or add a limit to the query.',
         { actual, limit }
       );
     case 'too-large':
       return t(
-        'render-panel.errors.too-large',
-        'The data is {{actual}} bytes once serialized. The render panel sends at most {{limit}} bytes to the drawing code.',
+        'custom-panel.errors.too-large',
+        'The data is {{actual}} bytes once serialized. The custom panel sends at most {{limit}} bytes to the drawing code.',
         { actual, limit }
       );
   }
@@ -393,15 +393,15 @@ function limitErrorMessage({ reason, actual, limit }: LimitError): string {
 function frameErrorTitle(kind: RenderFrameErrorKind): string {
   switch (kind) {
     case 'startup':
-      return t('render-panel.errors.startup', 'The drawing code failed to start');
+      return t('custom-panel.errors.startup', 'The drawing code failed to start');
     case 'runtime':
-      return t('render-panel.errors.runtime', 'The drawing code failed');
+      return t('custom-panel.errors.runtime', 'The drawing code failed');
     case 'csp':
-      return t('render-panel.errors.csp', 'The drawing code tried something the sandbox does not allow');
+      return t('custom-panel.errors.csp', 'The drawing code tried something the sandbox does not allow');
     case 'output-limit':
-      return t('render-panel.errors.output-limit', 'The drawing produced too many elements');
+      return t('custom-panel.errors.output-limit', 'The drawing produced too many elements');
     case 'render-timeout':
-      return t('render-panel.errors.render-timeout', 'The drawing code took too long to finish');
+      return t('custom-panel.errors.render-timeout', 'The drawing code took too long to finish');
     default:
       return fatalErrorMessage(kind);
   }
@@ -410,17 +410,17 @@ function frameErrorTitle(kind: RenderFrameErrorKind): string {
 function fatalErrorMessage(kind: RenderFrameErrorKind): string {
   switch (kind) {
     case 'startup-timeout':
-      return t('render-panel.errors.startup-timeout', 'The drawing sandbox did not start in time.');
+      return t('custom-panel.errors.startup-timeout', 'The drawing sandbox did not start in time.');
     case 'unresponsive':
-      return t('render-panel.errors.unresponsive', 'The drawing code stopped responding.');
+      return t('custom-panel.errors.unresponsive', 'The drawing code stopped responding.');
     case 'navigated-away':
-      return t('render-panel.errors.navigated-away', 'The drawing code tried to navigate away and was stopped.');
+      return t('custom-panel.errors.navigated-away', 'The drawing code tried to navigate away and was stopped.');
     case 'protocol':
-      return t('render-panel.errors.protocol', 'The drawing sandbox sent an invalid message and was stopped.');
+      return t('custom-panel.errors.protocol', 'The drawing sandbox sent an invalid message and was stopped.');
     case 'rate-limit':
-      return t('render-panel.errors.rate-limit', 'The drawing code sent too many messages and was stopped.');
+      return t('custom-panel.errors.rate-limit', 'The drawing code sent too many messages and was stopped.');
     default:
-      return t('render-panel.errors.generic', 'The drawing sandbox stopped.');
+      return t('custom-panel.errors.generic', 'The drawing sandbox stopped.');
   }
 }
 

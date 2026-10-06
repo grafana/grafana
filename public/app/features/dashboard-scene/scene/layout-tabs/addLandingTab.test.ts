@@ -15,7 +15,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getDefaultRenderCode } from 'app/plugins/panel/render/templates';
+import { getDefaultDrawingCode } from 'app/plugins/panel/custom-panel/templates';
 
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModel } from '../../serialization/transformSceneToSaveModel';
@@ -133,7 +133,7 @@ function toDto(spec: DashboardV2Spec): DashboardWithAccessInfo<DashboardV2Spec> 
 }
 
 /**
- * Two tabs: 'Metrics' holds a testdata panel (1) and a render panel (2), 'Details' holds a panel chained
+ * Two tabs: 'Metrics' holds a testdata panel (1) and a custom panel (2), 'Details' holds a panel chained
  * through '-- Dashboard --' (3) and a second testdata panel (4). Only panels 1 and 4 are landing sources.
  */
 function buildDashboard(): { dashboard: DashboardScene; manager: TabsLayoutManager } {
@@ -142,7 +142,7 @@ function buildDashboard(): { dashboard: DashboardScene; manager: TabsLayoutManag
     title: 'Landing test',
     elements: {
       'panel-1': panel(1, 'timeseries', [testDataQuery('A')]),
-      'panel-2': panel(2, 'render', [testDataQuery('A')], { code: 'panel.onRender(() => {});' }),
+      'panel-2': panel(2, 'custom-panel', [testDataQuery('A')], { code: 'panel.onRender(() => {});' }),
       'panel-3': panel(3, 'stat', [dashboardDataQuery(1)]),
       'panel-4': panel(4, 'stat', [testDataQuery('A')]),
     },
@@ -180,7 +180,7 @@ describe('addLandingTab', () => {
   });
 
   describe('collectLandingSources', () => {
-    it('returns the queryable panels in layout order, without render or chained panels', () => {
+    it('returns the queryable panels in layout order, without custom or chained panels', () => {
       const { dashboard } = buildDashboard();
 
       expect(collectLandingSources(dashboard).map(getPanelIdForVizPanel)).toEqual([1, 4]);
@@ -199,7 +199,7 @@ describe('addLandingTab', () => {
     expect(buildLandingQueries(collectLandingSources(dashboard))).toEqual(DASHBOARD_DS_QUERIES);
   });
 
-  it('inserts an Overview tab first, selects it, and fills it with one render panel', async () => {
+  it('inserts an Overview tab first, selects it, and fills it with one custom panel', async () => {
     const { manager } = buildDashboard();
 
     const tab = await addLandingTab(manager);
@@ -214,9 +214,9 @@ describe('addLandingTab', () => {
     expect((layout as AutoGridLayoutManager).state.maxColumnCount).toBe(1);
 
     const landing = getLandingPanel(manager);
-    expect(landing.state.pluginId).toBe('render');
+    expect(landing.state.pluginId).toBe('custom-panel');
     expect(landing.state.title).toBe('Overview');
-    expect(landing.state.options).toEqual({ code: getDefaultRenderCode() });
+    expect(landing.state.options).toEqual({ code: getDefaultDrawingCode() });
     expect(getPanelIdForVizPanel(landing)).toBe(5);
 
     const queryRunner = getQueryRunnerFor(landing);
@@ -225,7 +225,7 @@ describe('addLandingTab', () => {
     expect(queryRunner?.state.queries).toEqual(DASHBOARD_DS_QUERIES);
   });
 
-  it('keeps the render panel and its queries through a v2 save and load', async () => {
+  it('keeps the custom panel and its queries through a v2 save and load', async () => {
     const { dashboard, manager } = buildDashboard();
     await addLandingTab(manager);
 
@@ -235,16 +235,16 @@ describe('addLandingTab', () => {
     if (element.kind !== 'Panel') {
       return;
     }
-    expect(element.spec.vizConfig.group).toBe('render');
-    expect(element.spec.vizConfig.spec.options).toEqual({ code: getDefaultRenderCode() });
+    expect(element.spec.vizConfig.group).toBe('custom-panel');
+    expect(element.spec.vizConfig.spec.options).toEqual({ code: getDefaultDrawingCode() });
 
     const reloaded = transformSaveModelSchemaV2ToScene(toDto(saved));
     const reloadedManager = reloaded.state.body as TabsLayoutManager;
     expect(reloadedManager.state.tabs.map((t) => t.state.title)).toEqual(['Overview', 'Metrics', 'Details']);
 
     const landing = getLandingPanel(reloadedManager);
-    expect(landing.state.pluginId).toBe('render');
-    expect(landing.state.options).toEqual({ code: getDefaultRenderCode() });
+    expect(landing.state.pluginId).toBe('custom-panel');
+    expect(landing.state.options).toEqual({ code: getDefaultDrawingCode() });
 
     const queryRunner = getQueryRunnerFor(landing);
     expect(queryRunner?.state.datasource).toEqual({ type: 'mixed', uid: '-- Mixed --' });
@@ -258,15 +258,15 @@ describe('addLandingTab', () => {
     ).toEqual(DASHBOARD_DS_QUERIES);
   });
 
-  it('keeps the render panel and its queries in the v1 save model', async () => {
+  it('keeps the custom panel and its queries in the v1 save model', async () => {
     const { dashboard, manager } = buildDashboard();
     await addLandingTab(manager);
 
     const saved = transformSceneToSaveModel(dashboard);
     const landing = saved.panels?.find((p) => p.id === 5);
 
-    expect(landing?.type).toBe('render');
-    expect(landing && 'options' in landing ? landing.options : undefined).toEqual({ code: getDefaultRenderCode() });
+    expect(landing?.type).toBe('custom-panel');
+    expect(landing && 'options' in landing ? landing.options : undefined).toEqual({ code: getDefaultDrawingCode() });
     expect(landing?.datasource).toEqual({ type: 'mixed', uid: '-- Mixed --' });
     expect(landing && 'targets' in landing ? landing.targets : undefined).toEqual(DASHBOARD_DS_QUERIES);
   });
@@ -274,10 +274,10 @@ describe('addLandingTab', () => {
 
 describe('TabsLayoutManagerRenderer add landing tab button', () => {
   const textPanelMeta = { id: 'text', name: 'Text' } as PanelPluginMeta;
-  const renderPanelMeta = { id: 'render', name: 'Render' } as PanelPluginMeta;
+  const customPanelMeta = { id: 'custom-panel', name: 'Custom panel' } as PanelPluginMeta;
 
   beforeAll(() => {
-    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: true });
     // The landing panel's query runner resolves its datasource once rendered; keep it pending.
     setDataSourceSrv({
       getInstanceSettings: () => undefined,
@@ -289,12 +289,12 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
     setTestFlags({});
   });
 
-  it('hides the button while the render panel flag is off', async () => {
-    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: false });
-    setPanelPluginMetas({ text: textPanelMeta, render: renderPanelMeta });
+  it('hides the button while the custom panel flag is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: false });
+    setPanelPluginMetas({ text: textPanelMeta, 'custom-panel': customPanelMeta });
     renderTabs(true);
     await waitForEditableTabBar();
-    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: true });
 
     expect(screen.getByTestId(selectors.components.CanvasGridAddActions.addTab)).toBeInTheDocument();
     expect(screen.queryByTestId(selectors.components.CanvasGridAddActions.addLandingTab)).not.toBeInTheDocument();
@@ -317,8 +317,8 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
     );
   }
 
-  it('adds and selects the landing tab when clicked while editing with the render panel registered', async () => {
-    setPanelPluginMetas({ text: textPanelMeta, render: renderPanelMeta });
+  it('adds and selects the landing tab when clicked while editing with the custom panel registered', async () => {
+    setPanelPluginMetas({ text: textPanelMeta, 'custom-panel': customPanelMeta });
     const manager = renderTabs(true);
     await waitForEditableTabBar();
 
@@ -328,7 +328,7 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
     expect(manager.state.tabs.map((tab) => tab.state.title)).toEqual(['Overview', 'Metrics', 'Details']);
   });
 
-  it('hides the button when the render panel is not registered', async () => {
+  it('hides the button when the custom panel is not registered', async () => {
     setPanelPluginMetas({ text: textPanelMeta });
     renderTabs(true);
     await waitForEditableTabBar();
@@ -338,7 +338,7 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
   });
 
   it('hides the button outside edit mode', () => {
-    setPanelPluginMetas({ text: textPanelMeta, render: renderPanelMeta });
+    setPanelPluginMetas({ text: textPanelMeta, 'custom-panel': customPanelMeta });
     renderTabs(false);
 
     expect(screen.getByRole('tab', { name: 'Metrics' })).toBeInTheDocument();

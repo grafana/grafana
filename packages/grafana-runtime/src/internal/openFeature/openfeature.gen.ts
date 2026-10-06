@@ -94,6 +94,8 @@ export const FlagKeys = {
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
+  /** Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled */
+  GrafanaCustomPanel: "grafana.customPanel",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Uses auto grid as the default layout for new dashboards */
@@ -142,8 +144,6 @@ export const FlagKeys = {
   GrafanaPluginPathNesting: "grafana.pluginPathNesting",
   /** Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options */
   GrafanaQueryVarEditorRedesign: "grafana.queryVarEditorRedesign",
-  /** Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled */
-  GrafanaRenderPanel: "grafana.renderPanel",
   /** Enables the dedicated Saved queries page and its navigation entry */
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
@@ -701,6 +701,17 @@ export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled
+ *
+ * **Details:**
+ * - flag key: `grafana.customPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customPanel", false, options).value;
+};
+
+/**
  * Allows users to customise the mega menu by hiding top-level navigation items they are not interested in
  *
  * **Details:**
@@ -962,17 +973,6 @@ export const useFlagGrafanaPluginPathNesting = (options?: ReactFlagEvaluationOpt
  */
 export const useFlagGrafanaQueryVarEditorRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.queryVarEditorRedesign", true, options).value;
-};
-
-/**
- * Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled
- *
- * **Details:**
- * - flag key: `grafana.renderPanel`
- * - default value: `false`
- */
-export const useFlagGrafanaRenderPanel = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.renderPanel", false, options).value;
 };
 
 /**

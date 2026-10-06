@@ -929,16 +929,16 @@ describe('DashboardDatasource', () => {
 
   describe('Source attribution', () => {
     beforeEach(() => {
-      setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
+      setTestFlags({ [FlagKeys.GrafanaCustomPanel]: true });
     });
 
     afterEach(() => {
       setTestFlags({});
     });
 
-    it('leaves series meta unchanged for a render panel consumer when the renderPanel flag is off', async () => {
+    it('leaves series meta unchanged for a custom panel consumer when the customPanel flag is off', async () => {
       setTestFlags({});
-      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'render');
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'custom-panel');
 
       let rsp: DataQueryResponse | undefined;
       observable.subscribe({ next: (data) => (rsp = data) });
@@ -946,8 +946,8 @@ describe('DashboardDatasource', () => {
       expect(rsp?.data[0].meta).toEqual({ executedQueryString: 'up', custom: { existing: 'kept' } });
     });
 
-    it('annotates series for a render panel consumer with the source panel id and interpolated title', async () => {
-      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'render');
+    it('annotates series for a custom panel consumer with the source panel id and interpolated title', async () => {
+      const { observable } = setupWithSourcePanel({ refId: 'B', panelId: 7 }, 'CPU on ${host}', 'custom-panel');
 
       let rsp: DataQueryResponse | undefined;
       observable.subscribe({ next: (data) => (rsp = data) });

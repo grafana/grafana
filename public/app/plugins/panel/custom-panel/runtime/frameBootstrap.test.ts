@@ -344,14 +344,14 @@ describe('content frame bootstrap', () => {
       const { window } = mountFrame(PROBE_CODE, withWebRtc);
       const recorded = results(window);
       for (const name of WEBRTC_CONSTRUCTORS) {
-        expect(recorded['new ' + name]).toBe(`threw: ${name} is not available in the render panel.`);
-        expect(recorded['call ' + name]).toBe(`threw: ${name} is not available in the render panel.`);
+        expect(recorded['new ' + name]).toBe(`threw: ${name} is not available in the custom panel.`);
+        expect(recorded['call ' + name]).toBe(`threw: ${name} is not available in the custom panel.`);
         // A strict-mode assignment to a read-only property throws; sloppy code would silently fail.
         expect(recorded['assign ' + name]).toEqual(expect.stringMatching(/^(threw|assigned)/));
         expect(recorded['redefine ' + name]).toEqual(expect.stringContaining('threw'));
         const descriptor = Object.getOwnPropertyDescriptor(window, name);
         expect(descriptor).toMatchObject({ writable: false, configurable: false });
-        expect(() => new (Reflect.get(window, name))()).toThrow(`${name} is not available in the render panel.`);
+        expect(() => new (Reflect.get(window, name))()).toThrow(`${name} is not available in the custom panel.`);
       }
     });
 
@@ -363,7 +363,7 @@ describe('content frame bootstrap', () => {
     it('stops the code from creating, parsing or inserting nested frames', () => {
       const { window } = mountFrame(PROBE_CODE, withWebRtc);
       const recorded = results(window);
-      const blocked = 'threw: Nested frames, objects and embeds are not available in the render panel.';
+      const blocked = 'threw: Nested frames, objects and embeds are not available in the custom panel.';
       for (const probe of [
         'createElement iframe',
         'createElement IFRAME',
@@ -485,7 +485,7 @@ describe('content frame bootstrap', () => {
           configurable: true,
         });
       });
-      expect(Reflect.get(window, 'observer')).toBe('ReportingObserver is not available in the render panel.');
+      expect(Reflect.get(window, 'observer')).toBe('ReportingObserver is not available in the custom panel.');
     });
   });
 });

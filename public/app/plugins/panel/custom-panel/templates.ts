@@ -14,8 +14,8 @@ export interface StarterTemplate {
 // so this file can hold it in a single TypeScript template string without escaping.
 
 const KPI_BRIEFING_CODE = `// KPI briefing: one card per source panel with its last value, a sparkline and the change
-// since the start of the time range. The render API (ctx fields, helpers, CSS variables, limits)
-// is described in the render panel README.
+// since the start of the time range. The drawing API (ctx fields, helpers, CSS variables, limits)
+// is described in the custom panel README.
 const MAX_SPARKLINE_POINTS = 200;
 
 function sparklinePoints(values) {
@@ -139,7 +139,7 @@ panel.onRender(({ root, data, timeRange, helpers }) => {
 const INCIDENT_LAYOUT_CODE = `// Incident layout: switches between a calm summary and an incident view.
 // A metric is critical when its thresholds have more than one step and its last value is at or
 // above the last step. The dashboard variable "incident_mode" ("on" / "off") forces the mode.
-// The render API (ctx fields, helpers, CSS variables, limits) is described in the render panel README.
+// The drawing API (ctx fields, helpers, CSS variables, limits) is described in the custom panel README.
 
 function collectMetrics(helpers) {
   const metrics = [];
@@ -260,10 +260,10 @@ panel.onRender(({ root, data, variables, helpers }) => {
 });
 `;
 
-const BLANK_CODE = `// Render panel drawing code. Data comes from this panel's queries; this code only draws it.
+const BLANK_CODE = `// Custom panel drawing code. Data comes from this panel's queries; this code only draws it.
 // panel.onRender(draw) runs draw(ctx) on every data, time range, variable, theme or size change.
 // ctx: root, seq, data, timeRange, timeZone, variables, theme, size, isRenderTarget, helpers.
-// See the render panel README for the full API, the CSS variables (var(--gf-...)) and the limits.
+// See the custom panel README for the full API, the CSS variables (var(--gf-...)) and the limits.
 // The code runs in a sandbox: no network, no eval, no popups. Links (<a href="#panel-2">) are
 // validated by Grafana before they navigate.
 panel.onRender(({ root, data, helpers }) => {
@@ -272,11 +272,11 @@ panel.onRender(({ root, data, helpers }) => {
 });
 `;
 
-export function getDefaultRenderCode(): string {
+export function getDefaultDrawingCode(): string {
   return KPI_BRIEFING_CODE;
 }
 
-export function getBlankRenderCode(): string {
+export function getBlankDrawingCode(): string {
   return BLANK_CODE;
 }
 
@@ -284,26 +284,26 @@ export function getStarterTemplates(): StarterTemplate[] {
   return [
     {
       id: 'kpi-briefing',
-      label: t('render-panel.templates.kpi-briefing.label', 'KPI briefing'),
+      label: t('custom-panel.templates.kpi-briefing.label', 'KPI briefing'),
       description: t(
-        'render-panel.templates.kpi-briefing.description',
+        'custom-panel.templates.kpi-briefing.description',
         'One card per source panel with the last value, a sparkline and the change over the time range'
       ),
       code: KPI_BRIEFING_CODE,
     },
     {
       id: 'incident-layout',
-      label: t('render-panel.templates.incident-layout.label', 'Incident layout'),
+      label: t('custom-panel.templates.incident-layout.label', 'Incident layout'),
       description: t(
-        'render-panel.templates.incident-layout.description',
+        'custom-panel.templates.incident-layout.description',
         'Switches to an incident view when a metric crosses its last threshold'
       ),
       code: INCIDENT_LAYOUT_CODE,
     },
     {
       id: 'blank',
-      label: t('render-panel.templates.blank.label', 'Blank'),
-      description: t('render-panel.templates.blank.description', 'A minimal starting point'),
+      label: t('custom-panel.templates.blank.label', 'Blank'),
+      description: t('custom-panel.templates.blank.description', 'A minimal starting point'),
       code: BLANK_CODE,
     },
   ];

@@ -46,9 +46,9 @@ function setPanelsAndAliases(input: PanelPluginMetas) {
   if (input.text && getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewTextPanel, false)) {
     input = { ...input, text: { ...input.text, skipDataQuery: false } };
   }
-  // The render panel runs code stored in the dashboard, so it stays unavailable until its flag is on.
-  if (input.render && !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaRenderPanel, false)) {
-    const { render, ...rest } = input;
+  // The custom panel runs code stored in the dashboard, so it stays unavailable until its flag is on.
+  if (input['custom-panel'] && !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomPanel, false)) {
+    const { 'custom-panel': customPanel, ...rest } = input;
     input = rest;
   }
   panels = input;

@@ -1,4 +1,4 @@
-import { getDefaultRenderCode, getStarterTemplates, type StarterTemplateId } from './templates';
+import { getDefaultDrawingCode, getStarterTemplates, type StarterTemplateId } from './templates';
 
 // The shapes the sandbox hands to drawing code (see runtime/protocol.ts). Templates only run inside
 // the frame, so the tests drive them the same way the frame bootstrap does: install a `panel`
@@ -96,7 +96,7 @@ const critical = [
 describe('starter templates', () => {
   it('offers the three templates and uses the KPI briefing as the default code', () => {
     expect(getStarterTemplates().map((template) => template.id)).toEqual(['kpi-briefing', 'incident-layout', 'blank']);
-    expect(getDefaultRenderCode()).toBe(templateCode('kpi-briefing'));
+    expect(getDefaultDrawingCode()).toBe(templateCode('kpi-briefing'));
   });
 
   it.each(['kpi-briefing', 'incident-layout', 'blank'] as const)('%s registers exactly one draw callback', (id) => {

@@ -1,11 +1,11 @@
 {
   "type": "panel",
-  "name": "Render",
-  "id": "render",
+  "name": "Custom panel",
+  "id": "custom-panel",
   "state": "alpha",
 
   "info": {
-    "description": "Draws panel data with sandboxed code stored in the dashboard",
+    "description": "Draw anything with JavaScript, safely sandboxed",
     "author": {
       "name": "Grafana Labs",
       "url": "https://grafana.com"

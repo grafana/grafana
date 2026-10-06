@@ -1,14 +1,14 @@
-# Render panel
+# Custom panel
 
-The render panel draws panel data with JavaScript stored in the panel options (`options.code`).
+The custom panel draws panel data with JavaScript stored in the panel options (`options.code`).
 Data comes from the panel's normal queries, including the `-- Dashboard --` datasource that reuses
 the results of other panels. The code only draws: it cannot query, fetch or call any Grafana API.
 
 Because the code lives in the dashboard JSON it is diffable and reviewable like any other panel
-option. The panel adds no schema: it is a regular panel with type `render` and an opaque options
+option. The panel adds no schema: it is a regular panel with type `custom-panel` and an opaque options
 object, so it survives dashboard schema v2 to v1 to v2 conversion unchanged.
 
-The panel is in **alpha**. It is only available when alpha panels and the `grafana.renderPanel`
+The panel is in **alpha**. It is only available when alpha panels and the `grafana.customPanel`
 feature flag are both enabled:
 
 ```ini
@@ -16,7 +16,7 @@ feature flag are both enabled:
 enable_alpha = true
 
 [feature_toggles]
-grafana.renderPanel = true
+grafana.customPanel = true
 ```
 
 ## Writing drawing code

@@ -3358,8 +3358,8 @@ var (
 			Expression:  "true",
 		},
 		{
-			Name:         "grafana.renderPanel",
-			Description:  "Enables the render panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled",
+			Name:         "grafana.customPanel",
+			Description:  "Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaDashboardsSquad,
 			Expression:   "false",

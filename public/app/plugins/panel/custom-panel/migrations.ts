@@ -1,11 +1,11 @@
 import { type PanelTypeChangedHandler } from '@grafana/data';
 
-import { getBlankRenderCode } from './templates';
+import { getBlankDrawingCode } from './templates';
 import { type Options } from './types';
 
 export const DYNAMIC_TEXT_PANEL_ID = 'marcusolsson-dynamictext-panel';
 
-export const renderPanelChangeHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
+export const customPanelChangeHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   if (prevPluginId === DYNAMIC_TEXT_PANEL_ID) {
     return { code: convertDynamicTextOptions(prevOptions).code };
   }
@@ -137,7 +137,7 @@ function unconvertedCode(prev: unknown): string {
     ' */',
   ].join('\n');
 
-  return `${header}\n${getBlankRenderCode()}`;
+  return `${header}\n${getBlankDrawingCode()}`;
 }
 
 function commentLines(value: string): string {

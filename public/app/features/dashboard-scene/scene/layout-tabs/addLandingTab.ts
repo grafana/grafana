@@ -15,7 +15,7 @@ import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager
 import { TabItem } from './TabItem';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 
-const RENDER_PANEL_PLUGIN_ID = 'render';
+const CUSTOM_PANEL_PLUGIN_ID = 'custom-panel';
 const DEFAULT_MAX_LANDING_SOURCES = 8;
 
 function usesDashboardDatasource(panel: VizPanel): boolean {
@@ -32,15 +32,15 @@ function usesDashboardDatasource(panel: VizPanel): boolean {
 }
 
 /**
- * Panels the landing render panel can reuse through '-- Dashboard --' queries, in layout order.
- * Render panels, chained '-- Dashboard --' panels and repeat clones are left out.
+ * Panels the landing custom panel can reuse through '-- Dashboard --' queries, in layout order.
+ * Custom panels, chained '-- Dashboard --' panels and repeat clones are left out.
  */
 export function collectLandingSources(dashboard: DashboardScene, maxSources = DEFAULT_MAX_LANDING_SOURCES): VizPanel[] {
   return dashboardSceneGraph
     .getVizPanels(dashboard)
     .filter(
       (panel) =>
-        panel.state.pluginId !== RENDER_PANEL_PLUGIN_ID &&
+        panel.state.pluginId !== CUSTOM_PANEL_PLUGIN_ID &&
         panel.state.$data !== undefined &&
         !panel.state.repeatSourceKey &&
         !usesDashboardDatasource(panel)
@@ -57,18 +57,18 @@ export function buildLandingQueries(sources: VizPanel[]): DashboardQuery[] {
   }));
 }
 
-export async function buildLandingRenderPanel(dashboard: DashboardScene): Promise<VizPanel> {
+export async function buildLandingCustomPanel(dashboard: DashboardScene): Promise<VizPanel> {
   const sources = collectLandingSources(dashboard);
-  const [panel, { getDefaultRenderCode }] = await Promise.all([
+  const [panel, { getDefaultDrawingCode }] = await Promise.all([
     getDefaultVizPanel(),
-    // Loaded lazily so the dashboard bundle does not pull in the render panel.
-    import(/* webpackChunkName: "renderPanel" */ 'app/plugins/panel/render/templates'),
+    // Loaded lazily so the dashboard bundle does not pull in the custom panel.
+    import(/* webpackChunkName: "customPanel" */ 'app/plugins/panel/custom-panel/templates'),
   ]);
 
   panel.setState({
-    pluginId: RENDER_PANEL_PLUGIN_ID,
+    pluginId: CUSTOM_PANEL_PLUGIN_ID,
     title: t('dashboard.tabs-layout.landing.panel-title', 'Overview'),
-    options: { code: getDefaultRenderCode() },
+    options: { code: getDefaultDrawingCode() },
     // Mixed splits '-- Dashboard --' queries into one request per query, since that datasource only reads targets[0].
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({
@@ -84,12 +84,12 @@ export async function buildLandingRenderPanel(dashboard: DashboardScene): Promis
 }
 
 /**
- * Adds an 'Overview' tab in the first position holding one render panel that reuses the results
+ * Adds an 'Overview' tab in the first position holding one custom panel that reuses the results
  * of the dashboard's other panels, and switches to it.
  */
 export async function addLandingTab(manager: TabsLayoutManager): Promise<TabItem> {
   // Build the panel before inserting anything so the sources do not include the new tab.
-  const panel = await buildLandingRenderPanel(getDashboardSceneFor(manager));
+  const panel = await buildLandingCustomPanel(getDashboardSceneFor(manager));
 
   const tab = new TabItem({
     title: t('dashboard.tabs-layout.landing.title', 'Overview'),

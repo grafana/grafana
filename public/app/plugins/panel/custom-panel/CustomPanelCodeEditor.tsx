@@ -8,7 +8,7 @@ import { CodeEditor, Combobox, type ComboboxOption, ConfirmModal, Stack, useStyl
 import { getStarterTemplates, type StarterTemplate, type StarterTemplateId } from './templates';
 import { type Options } from './types';
 
-export const RenderCodeEditor = ({ value, onChange }: StandardEditorProps<string, {}, Options>) => {
+export const CustomPanelCodeEditor = ({ value, onChange }: StandardEditorProps<string, {}, Options>) => {
   const styles = useStyles2(getStyles);
   const templates = useMemo(() => getStarterTemplates(), []);
   const [pendingTemplate, setPendingTemplate] = useState<StarterTemplate | null>(null);
@@ -36,7 +36,7 @@ export const RenderCodeEditor = ({ value, onChange }: StandardEditorProps<string
     <div className={styles.editorBox}>
       <Stack direction="column" gap={1}>
         <p className={styles.help}>
-          <Trans i18nKey="render-panel.editor.help">
+          <Trans i18nKey="custom-panel.editor.help">
             Call panel.onRender(draw). The code runs in a sandbox with no network access.
           </Trans>
         </p>
@@ -44,8 +44,8 @@ export const RenderCodeEditor = ({ value, onChange }: StandardEditorProps<string
           options={templateOptions}
           value={null}
           onChange={onTemplateChange}
-          placeholder={t('render-panel.editor.insert-template', 'Insert template')}
-          aria-label={t('render-panel.editor.insert-template', 'Insert template')}
+          placeholder={t('custom-panel.editor.insert-template', 'Insert template')}
+          aria-label={t('custom-panel.editor.insert-template', 'Insert template')}
         />
         <CodeEditor
           value={value ?? ''}
@@ -60,13 +60,13 @@ export const RenderCodeEditor = ({ value, onChange }: StandardEditorProps<string
       </Stack>
       <ConfirmModal
         isOpen={pendingTemplate !== null}
-        title={t('render-panel.editor.replace-title', 'Replace drawing code?')}
+        title={t('custom-panel.editor.replace-title', 'Replace drawing code?')}
         body={t(
-          'render-panel.editor.replace-body',
+          'custom-panel.editor.replace-body',
           'The "{{template}}" template replaces the current drawing code. Your changes are lost.',
           { template: pendingTemplate?.label ?? '' }
         )}
-        confirmText={t('render-panel.editor.replace-confirm', 'Replace')}
+        confirmText={t('custom-panel.editor.replace-confirm', 'Replace')}
         onConfirm={() => {
           if (pendingTemplate) {
             onChange(pendingTemplate.code);

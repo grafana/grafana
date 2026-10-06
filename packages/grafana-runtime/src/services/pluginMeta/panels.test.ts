@@ -736,25 +736,25 @@ describe('immutability', () => {
   });
 });
 
-describe('render panel flag', () => {
-  const renderPanel = { ...panel, id: 'render', name: 'Render' };
+describe('custom panel flag', () => {
+  const customPanel = { ...panel, id: 'custom-panel', name: 'Custom panel' };
 
   afterEach(() => {
     setTestFlags({});
   });
 
-  it('leaves the render panel out while grafana.renderPanel is off', async () => {
-    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: false });
-    setPanelPluginMetas({ 'grafana-test-panel': panel, render: renderPanel });
+  it('leaves the custom panel out while grafana.customPanel is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: false });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, 'custom-panel': customPanel });
 
-    expect(await getPanelPluginMeta('render')).toBeNull();
+    expect(await getPanelPluginMeta('custom-panel')).toBeNull();
     expect(Object.keys(await getPanelPluginMetasMap())).toEqual(['grafana-test-panel']);
   });
 
-  it('keeps the render panel when grafana.renderPanel is on', async () => {
-    setTestFlags({ [FlagKeys.GrafanaRenderPanel]: true });
-    setPanelPluginMetas({ 'grafana-test-panel': panel, render: renderPanel });
+  it('keeps the custom panel when grafana.customPanel is on', async () => {
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: true });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, 'custom-panel': customPanel });
 
-    expect(await getPanelPluginMeta('render')).toMatchObject({ id: 'render' });
+    expect(await getPanelPluginMeta('custom-panel')).toMatchObject({ id: 'custom-panel' });
   });
 });

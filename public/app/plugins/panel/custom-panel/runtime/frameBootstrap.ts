@@ -126,7 +126,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     var FRAME_SELECTOR = frameTagNames.join(',');
     var FRAME_MARKUP = /<(?:[a-z0-9_.-]+:)?(?:iframe|frame|frameset|object|embed|portal|fencedframe)(?=[\\s/>]|$)/i;
-    var NESTED_FRAME_MESSAGE = 'Nested frames, objects and embeds are not available in the render panel.';
+    var NESTED_FRAME_MESSAGE = 'Nested frames, objects and embeds are not available in the custom panel.';
     var nodeTypeGetter = getOwnDescriptor(Node.prototype, 'nodeType').get;
     var localNameGetter = getOwnDescriptor(Element.prototype, 'localName').get;
     var elementQuery = Element.prototype.querySelector;
@@ -145,7 +145,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
 
     function unavailable(name) {
       return function () {
-        throw new SafeError(name + ' is not available in the render panel.');
+        throw new SafeError(name + ' is not available in the custom panel.');
       };
     }
 
@@ -384,7 +384,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
       try {
         Object.defineProperty(window, 'ReportingObserver', {
           value: function () {
-            throw new Error('ReportingObserver is not available in the render panel.');
+            throw new Error('ReportingObserver is not available in the custom panel.');
           },
           writable: false,
           enumerable: false,

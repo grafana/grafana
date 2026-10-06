@@ -43,11 +43,11 @@ interface DashboardSourceMeta {
   title: string;
 }
 
-// Only the render panel groups frames by source panel, so only its queries get the attribution.
-const SOURCE_ATTRIBUTION_CONSUMERS: ReadonlySet<string> = new Set(['render']);
+// Only the custom panel groups frames by source panel, so only its queries get the attribution.
+const SOURCE_ATTRIBUTION_CONSUMERS: ReadonlySet<string> = new Set(['custom-panel']);
 
 function wantsSourceAttribution(consumer: SceneObject): boolean {
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaRenderPanel, false)) {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomPanel, false)) {
     return false;
   }
   let current: SceneObject | undefined = consumer;
@@ -208,7 +208,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
-        // Additive source attribution: refIds collide across source panels, so the render panel
+        // Additive source attribution: refIds collide across source panels, so the custom panel
         // can group frames by the panel they came from. Other consumers get the frames unchanged.
         ...(source && {
           meta: {

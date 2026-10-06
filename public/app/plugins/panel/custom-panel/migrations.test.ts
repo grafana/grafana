@@ -1,7 +1,7 @@
 import { type PanelModel } from '@grafana/data';
 
-import { convertDynamicTextOptions, renderPanelChangeHandler } from './migrations';
-import { getBlankRenderCode } from './templates';
+import { convertDynamicTextOptions, customPanelChangeHandler } from './migrations';
+import { getBlankDrawingCode } from './templates';
 import { type Options } from './types';
 
 const escapeHtml = (value: unknown) =>
@@ -33,7 +33,7 @@ function drawConverted(code: string, rows: Array<{ host: string; cpu: number }>)
 
 const panelWithDefaults = (): PanelModel<Options> => ({
   id: 1,
-  type: 'render',
+  type: 'custom-panel',
   options: { code: 'default code' },
   fieldConfig: { defaults: {}, overrides: [] },
 });
@@ -100,7 +100,7 @@ describe('convertDynamicTextOptions', () => {
 
     expect(result.converted).toBe(false);
     expect(result.code).toContain(` *   ${options.content}`);
-    expect(result.code.endsWith(getBlankRenderCode())).toBe(true);
+    expect(result.code.endsWith(getBlankDrawingCode())).toBe(true);
     const onRender = jest.fn();
     new Function('panel', result.code)({ onRender });
     expect(onRender).toHaveBeenCalledTimes(1);
@@ -118,15 +118,15 @@ describe('convertDynamicTextOptions', () => {
 
   it('falls back to the blank template for options without string content', () => {
     expect(convertDynamicTextOptions(undefined)).toEqual({
-      code: expect.stringContaining(getBlankRenderCode()),
+      code: expect.stringContaining(getBlankDrawingCode()),
       converted: false,
     });
   });
 });
 
-describe('renderPanelChangeHandler', () => {
+describe('customPanelChangeHandler', () => {
   it('converts options coming from the dynamic text panel', () => {
-    const options = renderPanelChangeHandler(
+    const options = customPanelChangeHandler(
       panelWithDefaults(),
       'marcusolsson-dynamictext-panel',
       { content: '{{host}}' },
@@ -141,7 +141,7 @@ describe('renderPanelChangeHandler', () => {
 
   it('keeps the default code when coming from any other panel', () => {
     const panel = panelWithDefaults();
-    const options = renderPanelChangeHandler(panel, 'text', { content: '# Hello' }, { defaults: {}, overrides: [] });
+    const options = customPanelChangeHandler(panel, 'text', { content: '# Hello' }, { defaults: {}, overrides: [] });
 
     expect(options).toEqual({ code: 'default code' });
   });
