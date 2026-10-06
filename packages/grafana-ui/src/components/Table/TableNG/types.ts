@@ -130,6 +130,7 @@ interface BaseTableProps {
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -176,6 +177,7 @@ interface BaseTableProps {
   preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   // alternates the background color of every other row (table.refreshNewFeatures)
   zebraStriping?: boolean;
 }
@@ -186,6 +188,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -211,6 +214,8 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  onAddToAssistant?: () => void;
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;

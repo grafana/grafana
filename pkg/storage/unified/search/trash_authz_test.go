@@ -2,12 +2,14 @@ package search_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -553,4 +555,120 @@ func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 
 	assert.LessOrEqual(t, second.TotalHits, int64(4), "never more than Alice's own deletions")
 	assert.False(t, second.TotalHitsExact, "counted from the cursor, so not a total")
+}
+
+func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
+	for _, path := range trashIndexBuilders() {
+		t.Run(path.name, func(t *testing.T) {
+			for _, mode := range []struct {
+				name      string
+				deleted   bool
+				delegated bool
+			}{
+				{name: "live direct"},
+				{name: "live delegated", delegated: true},
+				{name: "trash direct", deleted: true},
+				{name: "trash delegated", deleted: true, delegated: true},
+			} {
+				t.Run(mode.name, func(t *testing.T) {
+					index := path.build(t)
+					doc := liveDoc("dash-1", "folder-1")
+					verb := "get"
+					if mode.deleted {
+						doc = trashDoc("dash-1", "folder-1", trashAlice)
+						verb = "set_permissions"
+					}
+					indexDocs(t, index, []*resource.BulkIndexItem{doc})
+					for _, outcome := range []struct {
+						name        string
+						granted     bool
+						userAllowed bool
+					}{
+						{name: "missing service grant", userAllowed: true},
+						{name: "allowed", granted: true, userAllowed: true},
+						{name: "user denied", granted: true},
+					} {
+						t.Run(outcome.name, func(t *testing.T) {
+							id := &identity.StaticRequester{
+								Type: authlib.TypeAccessPolicy, Namespace: "default", AccessToken: "verified-access-token",
+								AccessTokenClaims: &authnlib.Claims[authnlib.AccessTokenClaims]{},
+							}
+							missing := resource.ErrServicePermissionMissing
+							if mode.delegated {
+								id.Type = authlib.TypeUser
+								id.UserUID = "carol"
+								missing = resource.ErrServiceCannotDelegate
+							}
+							if outcome.granted {
+								permissions := []string{"dashboard.grafana.app/dashboards:" + verb}
+								if mode.delegated {
+									id.AccessTokenClaims.Rest.DelegatedPermissions = permissions
+								} else {
+									id.AccessTokenClaims.Rest.Permissions = permissions
+								}
+							}
+							ac := resource.NewAuthzLimitedClient(&trashAccessClient{
+								readAll: outcome.userAllowed, adminFolders: map[string]bool{"folder-1": outcome.userAllowed},
+							}, resource.AuthzOptions{})
+							q := trashQueryFor(nil)
+							q.IsDeleted = mode.deleted
+							res, err := index.Search(authlib.WithAuthInfo(t.Context(), id), ac, q, nil, nil)
+							if !outcome.granted {
+								require.ErrorIs(t, err, missing)
+								require.Nil(t, res)
+								return
+							}
+							require.NoError(t, err)
+							require.Nil(t, res.Error)
+							if outcome.userAllowed {
+								require.Equal(t, []string{"dash-1"}, namesOf(res))
+							} else {
+								require.Empty(t, namesOf(res))
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}
+
+type failingTrashAccessClient struct {
+	*trashAccessClient
+	err       error
+	itemError bool
+}
+
+func (c *failingTrashAccessClient) Check(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
+	return authlib.CheckResponse{}, c.err
+}
+
+func (c *failingTrashAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req authlib.BatchCheckRequest) (authlib.BatchCheckResponse, error) {
+	if !c.itemError {
+		return authlib.BatchCheckResponse{}, c.err
+	}
+	results := make(map[string]authlib.BatchCheckResult, len(req.Checks))
+	for _, item := range req.Checks {
+		results[item.CorrelationID] = authlib.BatchCheckResult{Error: c.err}
+	}
+	return authlib.BatchCheckResponse{Results: results}, nil
+}
+
+func TestSearchAuthorizationFailureReturnsError(t *testing.T) {
+	boom := errors.New("authorization unavailable")
+	for _, path := range trashIndexBuilders() {
+		t.Run(path.name, func(t *testing.T) {
+			for name, folder := range map[string]string{"batch": "folder-1", "single check": "k6-app", "item error": "folder-2"} {
+				t.Run(name, func(t *testing.T) {
+					index := path.build(t)
+					indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("dash-1", folder, trashAlice)})
+					ac := &failingTrashAccessClient{trashAccessClient: &trashAccessClient{}, err: boom, itemError: name == "item error"}
+					id := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "carol", Namespace: "default"}
+					res, err := index.Search(authlib.WithAuthInfo(t.Context(), id), ac, trashQueryFor(nil), nil, nil)
+					require.ErrorIs(t, err, boom)
+					require.Nil(t, res)
+				})
+			}
+		})
+	}
 }

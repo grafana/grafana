@@ -1,14 +1,18 @@
+import { css } from '@emotion/css';
+
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { isFetchError } from '@grafana/runtime';
 import { type Dashboard } from '@grafana/schema';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { Alert, Button } from '@grafana/ui';
+import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath } from 'app/features/apiserver/types';
 import { type DashboardMeta } from 'app/types/dashboard';
 
 import { type DashboardSceneState } from '../scene/types/dashboard';
 import { type Diffs } from '../settings/version-history/utils';
+
+import { type SaveDashboardErrorInfo } from './saveErrors';
 
 export interface DashboardChangeInfo {
   changedSaveModel: Dashboard | DashboardV2Spec;
@@ -33,17 +37,65 @@ export function isNewDashboard({ uid, meta }: Pick<DashboardSceneState, 'uid' | 
   return !uid && !meta.k8s?.name;
 }
 
-export function isVersionMismatchError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'version-mismatch';
+/**
+ * Renders the save failures that leave the form usable, so the user can correct the dashboard and
+ * retry. Conflicts and name collisions are rendered by their callers instead, because they replace
+ * the footer with their own recovery actions.
+ */
+export function SaveDashboardErrorAlert({ info }: { info: SaveDashboardErrorInfo }) {
+  const styles = useStyles2(getSaveDashboardErrorStyles);
+
+  // Alert already pads its body, so the text is rendered bare: a <p> would add its global
+  // bottom margin on top of that padding and leave the alert looking bottom-heavy.
+  const body =
+    info.causes.length > 0 ? (
+      <ul className={styles.causes}>
+        {info.causes.map((cause) => (
+          <li key={cause}>{cause}</li>
+        ))}
+      </ul>
+    ) : (
+      info.message
+    );
+
+  if (info.kind === 'forbidden') {
+    return (
+      <Alert
+        title={t('save-dashboards.forbidden.title', 'You do not have permission to save this dashboard')}
+        severity="error"
+      >
+        {body}
+      </Alert>
+    );
+  }
+
+  if (info.kind === 'invalid') {
+    return (
+      <Alert title={t('save-dashboards.invalid.title', 'This dashboard is not valid')} severity="error">
+        {body}
+      </Alert>
+    );
+  }
+
+  return (
+    <Alert
+      title={t(
+        'dashboard-scene.save-dashboard-form.render-footer.title-failed-to-save-dashboard',
+        'Failed to save dashboard'
+      )}
+      severity="error"
+    >
+      {body}
+    </Alert>
+  );
 }
 
-export function isNameExistsError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'name-exists';
-}
-
-export function isPluginDashboardError(error?: Error) {
-  return isFetchError(error) && error.data && error.data.status === 'plugin-dashboard';
-}
+const getSaveDashboardErrorStyles = (theme: GrafanaTheme2) => ({
+  causes: css({
+    margin: 0,
+    paddingLeft: theme.spacing(2),
+  }),
+});
 
 const FOLDER_BOUND_ANNOTATIONS: readonly string[] = [AnnoKeyManagerIdentity, AnnoKeyManagerKind, AnnoKeySourcePath];
 

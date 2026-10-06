@@ -2,7 +2,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2022-02-15,panelTitleSearch,preview,@grafana/search-and-storage,false,false,false
 2023-01-03,publicDashboardsEmailSharing,preview,@grafana/grafana-operator-experience-squad,false,false,false
 2023-06-19,lokiExperimentalStreaming,experimental,@grafana/data-sources-plugins,false,false,false
-2022-02-03,featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,false
 2022-05-31,canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
 2022-11-28,cloudWatchCrossAccountQuerying,GA,@grafana/data-sources-plugins,false,false,false
 2022-12-14,alertingBacktesting,experimental,@grafana/alerting-squad,false,false,false
@@ -35,8 +34,8 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
 2023-07-21,awsAsyncQueryCaching,GA,@grafana/data-sources-plugins,false,false,false
 2023-07-26,configurableSchedulerTick,experimental,@grafana/alerting-squad,false,true,false
-2026-09-16,reportingHeaderSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
-2026-09-16,reportingFooterSettings,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-09-16,reportingHeaderSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
+2026-09-16,reportingFooterSettings,GA,@grafana/grafana-operator-experience-squad,false,false,true
 2023-09-07,sseGroupByDatasource,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,sseExpressionErrorIsolation,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2023-09-19,lokiRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
@@ -114,6 +113,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-04-16,disableNumericMetricsSortingInExpressions,experimental,@grafana/data-sources-plugins,false,true,false
 2024-04-22,grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,false
 2022-10-07,queryLibrary,GA,@grafana/sharing-squad,false,false,false
+2026-09-18,grafana.savedQueriesSearch,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,grafana.savedQueriesPage,experimental,@grafana/sharing-squad,false,false,false
 2026-09-16,playlistsRBAC,GA,@grafana/sharing-squad,false,false,false
 2026-09-16,savedQueriesRBAC,GA,@grafana/sharing-squad,false,false,false
@@ -175,6 +175,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,teamHttpHeadersFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,datasources.teamHttpHeadersFromAppPlatformST,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,datasources.teamHttpHeadersFromAppPlatformMT,experimental,@grafana/identity-access-team,false,false,false
+2026-10-02,datasources.teamHttpHeadersWriteGuard,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,teamLBACApiReadFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,teamLBACApiWriteFromAppPlatform,experimental,@grafana/identity-access-team,false,false,false
 2025-01-15,elasticsearchImprovedParsing,experimental,@grafana/data-sources-plugins,false,false,false
@@ -191,7 +192,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-03-05,alertRuleRestore,preview,@grafana/alerting-squad,false,false,false
 2025-03-14,infinityRunQueriesInParallel,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-03-14,alertingMigrationUI,GA,@grafana/alerting-squad,false,false,true
-2025-05-21,alertingImportYAMLUI,GA,@grafana/alerting-squad,false,false,true
 2026-09-16,alertingMigrationWizardUI,preview,@grafana/alerting-squad,false,false,true
 2025-04-02,azureMonitorLogsBuilderEditor,preview,@grafana/data-sources-plugins,false,false,false
 2026-09-16,datasources.azureMonitorBatchAPI,preview,@grafana/data-sources-plugins,false,false,false
@@ -222,7 +222,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,alertEnrichmentConditional,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,alertEnrichmentPreview,experimental,@grafana/alerting-squad,false,false,false
 2025-06-10,alertingImportAlertmanagerAPI,preview,@grafana/alerting-squad,false,false,false
-2026-09-16,alertingDisableDMAinUI,experimental,@grafana/alerting-squad,false,false,false
 2025-06-17,preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 2025-06-25,newInfluxDSConfigPageDesign,privatePreview,@grafana/data-sources-plugins,false,false,false
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
@@ -267,7 +266,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
 2026-01-05,smoothingTransformation,experimental,@grafana/datapro,false,false,true
 2026-01-06,secretsManagementAppPlatformAwsKeeper,preview,@grafana/grafana-operator-experience-squad,false,false,false
-2026-01-07,profilesExemplars,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,pyroscopeUTF8LabelNames,preview,@grafana/observability-traces-and-profiling,false,false,false
 2026-01-14,alertingSyncDispatchTimer,experimental,@grafana/alerting-squad,false,true,false
 2026-09-16,queryWithAssistant,experimental,@grafana/data-sources-plugins,false,false,true
@@ -285,6 +283,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirectNoFallback,experimental,@grafana/identity-access-team,false,false,false
+2026-10-06,kubernetesUsersDeterministicUID,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
@@ -297,10 +296,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
 2026-09-16,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
-2026-09-16,dashboard.recentlyDeletedViaTrash,experimental,@grafana/search-and-storage,false,false,true
+2026-09-16,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-09-16,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-09-16,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
-2026-09-16,react19,GA,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,managedPluginsV2,experimental,@grafana/grafana-catalog,false,false,false
 2026-09-16,rememberUserOrgForSso,GA,@grafana/identity-access-team,false,false,false
 2026-09-16,datasourcesApiServerEnableHealthEndpoint,experimental,@grafana/grafana-datasources-core-services,false,false,false
@@ -336,7 +334,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.meticulousAIMode,experimental,@grafana/dataviz-squad,false,false,false
 2026-09-16,datasources.useNewStackInfoToSettingsCache,GA,@grafana/grafana-datasources-core-services,false,false,false
 2026-09-16,plugins.marketplaceLicensing,experimental,@grafana/grafana-catalog,false,true,false
-2026-09-16,alerting.syncExternalAlertmanager,experimental,@grafana/alerting-squad,false,true,false
+2026-09-16,alerting.syncExternalAlertmanager,privatePreview,@grafana/alerting-squad,false,true,false
 2026-09-16,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.useDefaultScopesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
@@ -344,11 +342,9 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,paneledit.buttonLabels,experimental,@grafana/datapro,false,false,true
 2026-09-16,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
-2026-09-16,grafana.visualDesignRefresh,experimental,@grafana/grafana-frontend-platform,false,false,true
-2026-09-16,dashboard.searchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
-2026-09-16,dashboard.apiSearchFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
-2026-09-16,search.apiFieldValueResults,experimental,@grafana/search-and-storage,false,false,false
+2026-09-16,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
+2026-09-24,alerting.hybridSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
@@ -360,6 +356,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,table.refreshNewFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,table.inspectDataTableNG,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,dataviz.experimentalColorSchemes,experimental,@grafana/dataviz-squad,false,false,true
+2026-10-02,dataviz.tabularNums,preview,@grafana/dataviz-squad,false,false,true
 2026-09-16,datetime.useLuxon,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-09-16,grafana.customizableMegaMenu,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,cujTracking,experimental,@grafana/dashboards-squad,false,false,true
@@ -396,8 +393,10 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-16,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
+2026-09-30,datasources.queryGatewaySlimAudit,experimental,@grafana/data-sources-plugins,false,false,false
 2026-09-16,alerting.folderHasRulesLabel,experimental,@grafana/alerting-squad,false,false,false
 2026-09-16,unifiedStorageClient.requireCallerIdentity,experimental,@grafana/identity-access-team,false,false,false
+2026-09-21,unifiedStorageClient.onBehalfOf,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,grafana.logDetailsDisplayedFieldControls,deprecated,@grafana/observability-logs,false,false,true
 2026-09-16,grafana.mtFallback,experimental,@grafana/grafana-frontend-platform,false,false,true

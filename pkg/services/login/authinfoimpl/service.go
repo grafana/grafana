@@ -138,6 +138,10 @@ func generateCacheKey(query *login.GetAuthInfoQuery) string {
 	return cacheKey
 }
 
+func AuthInfoCacheKey(query *login.GetAuthInfoQuery) string {
+	return generateCacheKey(query)
+}
+
 func (s *Service) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	// Only update auth info if we have an (user id + auth module)
 	if cmd.UserId == 0 || cmd.AuthModule == "" {
@@ -193,10 +197,12 @@ func (s *Service) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 }
 
 func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.GetAuthInfoQuery) {
-	logger := s.logger.FromContext(ctx)
+	InvalidateAuthInfoCache(ctx, s.remoteCache, s.logger.FromContext(ctx), query)
+}
 
+func InvalidateAuthInfoCache(ctx context.Context, cache remotecache.CacheStorage, logger log.Logger, query *login.GetAuthInfoQuery) {
 	if query.AuthId != "" {
-		err := s.remoteCache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
+		err := cache.Delete(ctx, generateCacheKey(&login.GetAuthInfoQuery{
 			AuthModule: query.AuthModule,
 			AuthId:     query.AuthId,
 		}))
@@ -206,7 +212,7 @@ func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.Ge
 	}
 
 	if query.UserId != 0 {
-		errN := s.remoteCache.Delete(ctx, generateCacheKey(
+		errN := cache.Delete(ctx, generateCacheKey(
 			&login.GetAuthInfoQuery{
 				UserId: query.UserId,
 			}))
@@ -214,13 +220,24 @@ func (s *Service) deleteUserAuthInfoInCache(ctx context.Context, query *login.Ge
 			logger.Warn("failed to delete user auth info from cache", "error", errN)
 		}
 
-		errA := s.remoteCache.Delete(ctx, generateCacheKey(
+		errA := cache.Delete(ctx, generateCacheKey(
 			&login.GetAuthInfoQuery{
 				UserId:     query.UserId,
 				AuthModule: query.AuthModule,
 			}))
 		if errA != nil {
 			logger.Warn("failed to delete user module auth info from cache", "error", errA)
+		}
+
+		if query.AuthId != "" {
+			errU := cache.Delete(ctx, generateCacheKey(
+				&login.GetAuthInfoQuery{
+					UserId: query.UserId,
+					AuthId: query.AuthId,
+				}))
+			if errU != nil {
+				logger.Warn("failed to delete user authID auth info from cache", "error", errU)
+			}
 		}
 	}
 }

@@ -210,9 +210,10 @@ describe('<SpanDetail>', () => {
     expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
   it('lists the service name, duration, start time and kind', () => {
@@ -435,6 +436,42 @@ describe('<SpanDetail>', () => {
     it('does not render a Summary attributes accordion for non-summary spans', () => {
       render(<SpanDetail {...({ ...props, detailState: new DetailState() } as unknown as SpanDetailProps)} />);
       expect(screen.queryByRole('switch', { name: /Summary attributes/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('exception details', () => {
+    const exceptionSpan = {
+      ...span,
+      tags: [...span.tags, { key: 'http.status_code', value: 503 }],
+      logs: [
+        {
+          timestamp: 10,
+          name: 'exception',
+          fields: [
+            { key: 'exception.type', value: 'java.lang.NullPointerException' },
+            { key: 'exception.message', value: 'Cannot invoke User.getId()' },
+            { key: 'exception.stacktrace', value: 'at UserService.getUserId' },
+          ],
+        },
+      ],
+    };
+
+    it('renders the exception box above span attributes', () => {
+      render(<SpanDetail {...({ ...props, span: exceptionSpan } as unknown as SpanDetailProps)} />);
+
+      const exceptionBox = screen.getByRole('alert');
+      expect(exceptionBox).toHaveAccessibleName('Exception');
+      expect(exceptionBox).toHaveTextContent('Type:');
+      expect(exceptionBox).toHaveTextContent('java.lang.NullPointerException');
+      expect(exceptionBox).toHaveTextContent('Cannot invoke User.getId()');
+      expect(exceptionBox).not.toHaveTextContent('at UserService.getUserId');
+      expect(screen.getByRole('button', { name: 'Stacktrace' })).toHaveAttribute('aria-expanded', 'false');
+    });
+
+    it('does not show the exception box when the span has no exception', () => {
+      render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     });
   });
 
