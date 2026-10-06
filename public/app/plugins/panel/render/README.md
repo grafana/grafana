@@ -103,7 +103,8 @@ Only these parameters are allowed: `viewPanel`, `editPanel` (this dashboard only
 `viewPanel`), `from`, `to`, `var-<name>` and tab keys (`dtab`, `<prefix>-dtab`). Panel links carry
 only the panel id: Grafana reads the queries and time range from the dashboard, never from the
 frame. A link with any other parameter, a scheme or a host is dropped. At most one link
-per second is followed, and only right after a user click. Links to an element inside the frame
+per second is followed, and only while the page has transient user activation (shortly after a
+click). Links to an element inside the frame
 (`#section`) scroll the frame and never leave it.
 
 `document.currentScript` is `null` while the code runs.
@@ -169,7 +170,8 @@ document down, and offers **Retry**, which starts a new frame.
   a closed shadow root, where `document.currentScript` is `null` and no query reaches it. That
   script loses its nonce and text and leaves the document as soon as it has run.
 - The frame talks to Grafana only over a versioned message channel. Grafana validates every message
-  and every link. There is no model at view time: the panel runs the stored code as it is.
+  and every link. Nothing generates or changes code at view time: the panel runs the stored code as
+  it is.
 - Public dashboards serve the stored code and run it in the same sandbox, but every link,
   including edit, Explore and focus links, is ignored there and the panel gets no extra capability.
 - Snapshots carry the panel's data frames like any other panel, and the code draws them.
@@ -221,5 +223,8 @@ comment at the top.
   DOM, where the code can read that script's nonce while its top level runs. The bootstrap checks
   before relying on it. Chromium runs them; Firefox and Safari should, per the HTML spec, but this
   was not verified.
+- The click requirement for links is the browser's transient user activation on the Grafana page,
+  which any recent click on the page grants, not only a click inside the drawing. Within that
+  window the code can request any allowlisted link.
 - `window.length` and `window[0]` cannot be intercepted from script. They stay empty only because
   no frame element can be inserted.
