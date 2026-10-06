@@ -4,7 +4,14 @@ import Papa from 'papaparse';
 import { t } from '@grafana/i18n';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
-import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './utils';
+import {
+  canShowRoles,
+  getOrgUsers,
+  getUserRoles,
+  getUsersPage,
+  isNeverLoggedIn,
+  type UserSearchOptions,
+} from './utils';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
 
@@ -46,6 +53,11 @@ export async function exportUsers({ scope, ...options }: UserExportOptions): Pro
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${scope}-users.csv`, { autoBom: true });
 }
 
+// Never-logged-in users carry a placeholder lastSeenAt, so leave the cell blank for them.
+function lastActiveCell(user: Pick<UserDTO, 'lastSeenAt' | 'created'>): string {
+  return isNeverLoggedIn(user) ? '' : (user.lastSeenAt ?? '');
+}
+
 function statusCells(user: Pick<UserDTO, 'authLabels' | 'isProvisioned' | 'isDisabled'>): string[] {
   return [user.authLabels?.[0] ?? '', user.isProvisioned ? 'Provisioned' : '', user.isDisabled ? 'Disabled' : ''];
 }
@@ -85,7 +97,7 @@ export function usersToCsv(users: UserDTO[]): string {
                 : (user.licensedRole ?? ''),
             ]
           : []),
-        user.lastSeenAt ?? '',
+        lastActiveCell(user),
         ...statusCells(user),
       ]),
     },
@@ -101,7 +113,7 @@ export function orgUsersToCsv(users: OrgUser[]): string {
         user.login,
         user.email,
         user.name,
-        user.lastSeenAt ?? '',
+        lastActiveCell(user),
         [user.role, ...(user.roles?.map((role) => `${role.group}:${role.displayName || role.name}`) ?? [])].join('; '),
         ...statusCells(user),
       ]),

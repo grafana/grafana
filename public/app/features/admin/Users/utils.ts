@@ -60,6 +60,11 @@ function getUsersSearchUrl({ query, sort, filters = [], page, perPage }: UserPag
   return `/api/users/search?${params}`;
 }
 
+// A last-seen timestamp before account creation indicates the user has never logged in.
+export function isNeverLoggedIn(user: Pick<UserDTO, 'lastSeenAt' | 'created'>): boolean {
+  return Boolean(user.lastSeenAt && user.created && new Date(user.lastSeenAt) < new Date(user.created));
+}
+
 export function getUserLastActive(user: Pick<UserDTO, 'lastSeenAt' | 'created' | 'lastSeenAtAge'>): {
   text: string;
   neverLoggedIn: boolean;
@@ -68,8 +73,7 @@ export function getUserLastActive(user: Pick<UserDTO, 'lastSeenAt' | 'created' |
     return { text: '', neverLoggedIn: false };
   }
 
-  // A last-seen timestamp before account creation indicates the user has never logged in.
-  const neverLoggedIn = Boolean(user.lastSeenAt && user.created && new Date(user.lastSeenAt) < new Date(user.created));
+  const neverLoggedIn = isNeverLoggedIn(user);
   return {
     text: neverLoggedIn ? t('admin.users-table.last-seen-never', 'Never') : user.lastSeenAtAge,
     neverLoggedIn,

@@ -165,7 +165,7 @@ it('includes optional organization and licensed-role columns from users on any p
   ).toBe(
     'Login,Email,Name,Belongs to,Licensed role,Last active,Origin,Provisioned,Disabled\r\n' +
       'alice,alice@example.com,Alice,,,2026-09-27T12:00:00Z,SAML,,\r\n' +
-      'bob,bob@example.com,Bob,Main; Other; Grafana Admin,Not assigned,2026-09-28T12:00:00Z,SAML,Provisioned,Disabled'
+      'bob,bob@example.com,Bob,Main; Other; Grafana Admin,Not assigned,,SAML,Provisioned,Disabled'
   );
 });
 
@@ -184,6 +184,16 @@ it('exports timestamps in both CSV formats even when the relative age is missing
   expect(orgUsersToCsv([{ ...orgAlice, lastSeenAtAge: '' }])).toBe(
     'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +
       'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,Viewer,SAML,,'
+  );
+});
+
+it('leaves last active blank for users who never logged in', () => {
+  const neverLoggedIn = { created: '2026-09-29T12:00:00Z', lastSeenAt: '2016-09-29T12:00:00Z' };
+  expect(usersToCsv([{ ...alice, ...neverLoggedIn }])).toBe(
+    'Login,Email,Name,Last active,Origin,Provisioned,Disabled\r\n' + 'alice,alice@example.com,Alice,,SAML,,'
+  );
+  expect(orgUsersToCsv([{ ...orgAlice, ...neverLoggedIn }])).toBe(
+    'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' + 'alice,alice@example.com,Alice,,Viewer,SAML,,'
   );
 });
 
