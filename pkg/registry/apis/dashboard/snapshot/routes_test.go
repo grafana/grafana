@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+func testReadFromLegacy(context.Context) (bool, error) { return false, nil }
+
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
@@ -135,6 +137,7 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				tt.setupStorageMock(t),
 				dashboardService,
 				nil,
+				testReadFromLegacy,
 			)
 
 			// Find the create handler (first namespace route)
@@ -240,6 +243,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 		func() rest.Storage { return mockStorage },
 		dashboardService,
 		nil,
+		testReadFromLegacy,
 	)
 
 	require.NotEmpty(t, routes.Namespace)
@@ -323,6 +327,7 @@ func TestCreateSnapshotPublicMode(t *testing.T) {
 				func() rest.Storage { return mockStorage },
 				dashboardService,
 				nil,
+				testReadFromLegacy,
 			)
 
 			bodyBytes, err := json.Marshal(tt.body)
@@ -367,6 +372,7 @@ func TestCreateSnapshotPublicModeRejectsExternal(t *testing.T) {
 		func() rest.Storage { return mockStorage },
 		dashboardService,
 		nil,
+		testReadFromLegacy,
 	)
 
 	body := map[string]any{
@@ -441,6 +447,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -502,6 +509,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			func() rest.Storage { return nil },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -547,6 +555,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			func() rest.Storage { return nil },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -580,6 +589,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			func() rest.Storage { return nil },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -632,6 +642,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -708,6 +719,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -762,6 +774,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 			func() rest.Storage { return nil },
 			dashboardService,
 			nil,
+			testReadFromLegacy,
 		)
 
 		body, _ := json.Marshal(map[string]any{
@@ -889,6 +902,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
 			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/"+deleteKey, nil)
@@ -914,6 +928,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
 			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/missing-key", nil)
@@ -937,6 +952,7 @@ func TestHandleDeleteByKey(t *testing.T) {
 			func() rest.Storage { return mockStorage },
 			dashboards.NewFakeDashboardService(t),
 			nil,
+			testReadFromLegacy,
 		)
 
 		req := httptest.NewRequest(http.MethodDelete, "/snapshots/delete/some-key", nil)

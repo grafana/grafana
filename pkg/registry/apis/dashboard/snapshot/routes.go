@@ -152,7 +152,7 @@ func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapsho
 }
 
 // nolint:gocyclo
-func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient, readFromUnified ...func(context.Context) (bool, error)) *builder.APIRoutes {
+func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient, readFromUnified func(context.Context) (bool, error)) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -390,9 +390,9 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
 					useBlobs := blobs != nil && !cmd.External
-					if useBlobs && len(readFromUnified) > 0 {
+					if useBlobs {
 						var err error
-						useBlobs, err = readFromUnified[0](ctx)
+						useBlobs, err = readFromUnified(ctx)
 						if err != nil {
 							errhttp.Write(ctx, err, w)
 							return
@@ -405,8 +405,7 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 						}
 					}
 
-					// Create via storage (dual-write mode decides legacy, unified, or both)
-					// TODO: split creation from Snapshot and the blob
+					// A failed create can leave the previously uploaded blob orphaned.
 					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
 					if err != nil {
 						errhttp.Write(ctx, err, w)

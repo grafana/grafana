@@ -1709,14 +1709,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		legacySearchRoutes := b.search.GetAPIRoutes(defs)
 		snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
-			func() rest.Storage {
-				return b.snapshotStorage
-			}, b.dashboardService, b.snapshotBlobs, func(ctx context.Context) (bool, error) {
-				if b.isStandalone {
-					return true, nil
-				}
-				return b.dualWriter.ReadFromUnified(ctx, dashv0.SnapshotResourceInfo.GroupResource())
-			})
+			func() rest.Storage { return b.snapshotStorage }, b.dashboardService, b.snapshotBlobs, b.snapshotReadFromUnified)
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
 	}
@@ -1725,6 +1718,13 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		return nil
 	}
 	return routes
+}
+
+func (b *DashboardsAPIBuilder) snapshotReadFromUnified(ctx context.Context) (bool, error) {
+	if b.isStandalone {
+		return true, nil
+	}
+	return b.dualWriter.ReadFromUnified(ctx, dashv0.SnapshotResourceInfo.GroupResource())
 }
 
 // GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.
