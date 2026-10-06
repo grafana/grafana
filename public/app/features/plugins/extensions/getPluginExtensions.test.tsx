@@ -58,7 +58,6 @@ async function createRegistries(
 ) {
   const addedLinksRegistry = new AddedLinksRegistry([]);
   const addedComponentsRegistry = new AddedComponentsRegistry([]);
-  const addedFunctionsRegistry = new AddedFunctionsRegistry([]);
 
   for (const { pluginId, addedLinkConfigs, addedComponentConfigs } of preloadResults) {
     addedLinksRegistry.register({
@@ -74,7 +73,6 @@ async function createRegistries(
   return {
     addedLinksRegistry: await addedLinksRegistry.getState(),
     addedComponentsRegistry: await addedComponentsRegistry.getState(),
-    addedFunctionsRegistry: await addedFunctionsRegistry.getState(),
   };
 }
 

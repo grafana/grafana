@@ -2,7 +2,7 @@ import { type Observable } from 'rxjs';
 
 import { type PluginExtensionFunction } from '@grafana/data';
 
-type GetObservablePluginFunctionsOptions = {
+export type GetObservablePluginFunctionsOptions = {
   extensionPointId: string;
   limitPerPlugin?: number;
 };
