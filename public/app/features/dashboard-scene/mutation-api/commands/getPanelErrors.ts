@@ -2,8 +2,7 @@ import type * as z from 'zod';
 
 import { LoadingState } from '@grafana/data';
 
-import { getElements } from '../../serialization/layoutSerializers/utils';
-import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import type { PanelErrorsData } from '../types';
 
 import { getPanelRuntimeStatus } from './listPanels';
@@ -17,30 +16,29 @@ export const getPanelErrorsCommand: MutationCommand<z.infer<typeof payloads.getP
   permission: readOnly,
   readOnly: true,
   handler: async ({ elements }, { scene }) => {
-    const fullElements = getElements(scene.state.body, scene);
-    const panels = scene.state.body.getVizPanels();
+    const panelsByElement = new Map(
+      scene.state.body
+        .getVizPanels()
+        .map((panel) => [scene.serializer.getElementIdForPanel(getPanelIdForVizPanel(panel)), panel])
+    );
     const data: PanelErrorsData = {
       errors: [],
       noDataPanels: [],
       panelsChecked: 0,
-      panelsWithoutQueries: 0,
       uncheckedPanels: [],
     };
-    for (const name of new Set(elements ?? Object.keys(fullElements))) {
-      const element = fullElements[name];
-      if (!element) {
+    for (const name of new Set(elements ?? panelsByElement.keys())) {
+      if (name === undefined) {
+        continue;
+      }
+      const panel = panelsByElement.get(name);
+      if (!panel) {
         data.uncheckedPanels.push({ element: name, reason: 'not_found' });
         continue;
       }
-      const id = scene.serializer.getPanelIdForElement(name);
-      const panel = id === undefined ? undefined : panels.find((p) => p.state.key === getVizPanelKeyForPanelId(id));
-      const status = panel && getPanelRuntimeStatus(panel);
+      const status = getPanelRuntimeStatus(panel);
       if (!status) {
-        if (element.kind === 'Panel' && element.spec.data.spec.queries.length === 0) {
-          data.panelsWithoutQueries += 1;
-        } else {
-          data.uncheckedPanels.push({ element: name, reason: 'status_unavailable' });
-        }
+        data.uncheckedPanels.push({ element: name, reason: 'status_unavailable' });
         continue;
       }
       if ([LoadingState.Loading, LoadingState.Streaming, LoadingState.NotStarted].includes(status.loadingState)) {
@@ -48,7 +46,7 @@ export const getPanelErrorsCommand: MutationCommand<z.infer<typeof payloads.getP
         continue;
       }
       data.panelsChecked += 1;
-      const identity = { element: name, title: panel?.state.title ?? '' };
+      const identity = { element: name, title: panel.state.title ?? '' };
       if (status.hasError) {
         data.errors.push({
           ...identity,

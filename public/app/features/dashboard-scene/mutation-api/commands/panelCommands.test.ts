@@ -8,7 +8,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { SceneDataNode, SceneDataTransformer, sceneGraph, type VizPanel } from '@grafana/scenes';
+import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
@@ -234,6 +234,18 @@ describe('Panel mutation commands', () => {
   });
 
   describe('GET_PANEL_ERRORS', () => {
+    it('reports panels without runtime status using their dashboard element names', async () => {
+      const scene = buildPanelScene([new VizPanel({ key: 'panel-7', title: 'Notes', pluginId: 'text' })], { notes: 7 });
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['notes'] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'notes', reason: 'status_unavailable' }],
+      });
+    });
+
     it('returns compact errors with query references and never enters edit mode', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);
@@ -259,7 +271,6 @@ describe('Panel mutation commands', () => {
           ],
           noDataPanels: [],
           panelsChecked: 1,
-          panelsWithoutQueries: 0,
           uncheckedPanels: [],
         },
       });
@@ -282,7 +293,6 @@ describe('Panel mutation commands', () => {
         errors: [],
         noDataPanels: [],
         panelsChecked: 0,
-        panelsWithoutQueries: 0,
         uncheckedPanels: [
           { element: name, reason: 'loading' },
           { element: 'missing', reason: 'not_found' },
@@ -307,7 +317,6 @@ describe('Panel mutation commands', () => {
         ],
         noDataPanels: [{ element: empty, title: 'Empty query' }],
         panelsChecked: 2,
-        panelsWithoutQueries: 0,
         uncheckedPanels: [],
       });
     });
@@ -331,7 +340,6 @@ describe('Panel mutation commands', () => {
         errors: [{ element: name, title: 'Notices', errors: [{ source: 'notice', message: 'Invalid frame' }] }],
         noDataPanels: [],
         panelsChecked: 1,
-        panelsWithoutQueries: 0,
         uncheckedPanels: [],
       });
     });
