@@ -7,7 +7,7 @@ import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
   isValidRecordingRulesTarget,
 } from '@grafana/alerting/internal';
-import { useRoutingTreeOptions } from '@grafana/alerting/unstable';
+import { buildRoutingTreeOptions, useRoutingTrees } from '@grafana/alerting/unstable';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -150,7 +150,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
   const rulesSourceOptions = getRulesSourceOptions(true);
 
   // Fetch available routing trees from the k8s API
-  const { options: existingTreeOptions, isLoading: isLoadingRoutingTrees } = useRoutingTreeOptions();
+  const { trees: existingTrees, isLoading: isLoadingRoutingTrees } = useRoutingTrees();
+  const existingTreeOptions = useMemo(() => buildRoutingTreeOptions(existingTrees), [existingTrees]);
 
   // Build routing tree dropdown options
   // Only includes: routing trees from API + policyTreeName from Step 1 (if filled)

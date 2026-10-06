@@ -5,7 +5,7 @@ import {
   RoutingTreeSelector,
   findRoutingTreeByName,
   isDefaultRoutingTree,
-  useListRoutingTrees,
+  useRoutingTrees,
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
@@ -37,9 +37,8 @@ export function PolicyTreeSelector() {
     defaultValue: '',
   });
 
-  // Same query arg as the one RoutingTreeSelector uses internally, so both share a single request.
-  const { currentData: routingTrees, isLoading, error } = useListRoutingTrees({});
-  const policies = routingTrees?.items;
+  // RoutingTreeSelector calls this same hook, so both share a single request.
+  const { trees: policies, isLoading, isError } = useRoutingTrees();
 
   // The legacy label is migrated into selectedPolicy (and stripped from labels) at read time
   // (see resolveSelectedPolicyAndLabels in rule-form.ts), so editing always goes through the field.
@@ -52,10 +51,7 @@ export function PolicyTreeSelector() {
   // can't tell a deleted tree from one this user isn't allowed to read, and guessing either way
   // would mean rewriting someone's routing behind their back.
   const isPolicyMissingFromList =
-    !isLoading &&
-    Boolean(policies?.length) &&
-    !isUsingDefaultPolicy &&
-    !findRoutingTreeByName(policies ?? [], currentPolicyValue);
+    !isLoading && policies.length > 0 && !isUsingDefaultPolicy && !findRoutingTreeByName(policies, currentPolicyValue);
 
   // Expanded state: collapsed when using default policy, expanded when custom policy is selected
   const [isExpanded, setIsExpanded] = useState(!isUsingDefaultPolicy);
@@ -86,7 +82,7 @@ export function PolicyTreeSelector() {
   // Only hide the section when we have no list at all. RoutingTreeSelector refetches this same
   // query on mount and on window focus, and a failed refetch sets error while the last good list is
   // still cached - bailing out then would make the whole policy section vanish mid-edit.
-  if (error && !policies) {
+  if (isError && policies.length === 0) {
     return null; // Silently fail - the user can still use the form without this feature
   }
 

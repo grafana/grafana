@@ -1,5 +1,6 @@
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
+import { type ComboboxOption } from '@grafana/ui';
 
 /** The name the backend emits for the default (root) routing tree and the name the frontend SENDS. */
 export const USER_DEFINED_TREE_NAME = 'user-defined';
@@ -50,4 +51,35 @@ export function getRoutingTreeDisplayName(name?: string): string {
   }
   // isDefaultRoutingTreeName already covered the empty cases, so a name is guaranteed here.
   return name ?? '';
+}
+
+const collator = new Intl.Collator('en', { sensitivity: 'accent' });
+
+/**
+ * Turns routing trees into combobox options: the default tree is labelled "Default policy" and
+ * always listed first, the rest are sorted by name.
+ */
+export function buildRoutingTreeOptions(trees: RoutingTree[]): Array<ComboboxOption<string>> {
+  return trees
+    .map((tree) => {
+      const name = tree.metadata.name ?? '';
+
+      return {
+        label: getRoutingTreeDisplayName(name),
+        value: name,
+        description: isDefaultRoutingTreeName(name)
+          ? t('alerting.routing-trees.default-policy-desc', 'Routes alerts using the default notification policy tree')
+          : t('alerting.routing-trees.custom-policy-desc', 'Route alerts through the {{name}} policy tree', { name }),
+      } satisfies ComboboxOption<string>;
+    })
+    .sort((a, b) => {
+      // Default policy always first
+      if (isDefaultRoutingTreeName(a.value)) {
+        return -1;
+      }
+      if (isDefaultRoutingTreeName(b.value)) {
+        return 1;
+      }
+      return collator.compare(a.label, b.label);
+    });
 }

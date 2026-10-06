@@ -1,12 +1,12 @@
-import { type ComponentProps } from 'react';
+import { type ComponentProps, useMemo } from 'react';
 
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui';
 
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
-import { useRoutingTreeOptions } from '../../hooks/useRoutingTreeOptions';
-import { findRoutingTreeByName } from '../../routingTrees';
+import { useRoutingTrees } from '../../hooks/useRoutingTrees';
+import { buildRoutingTreeOptions, findRoutingTreeByName } from '../../routingTrees';
 
 type SingleSelectProps = CustomComboBoxProps<RoutingTree> & { multi?: false };
 type MultiSelectProps = Omit<ComponentProps<typeof MultiCombobox<string>>, 'options' | 'loading' | 'onChange'> & {
@@ -41,7 +41,8 @@ export type RoutingTreeSelectorProps = SingleSelectProps | MultiSelectProps;
  * ```
  */
 function RoutingTreeSelector(props: RoutingTreeSelectorProps) {
-  const { options, trees, isLoading, isError } = useRoutingTreeOptions();
+  const { trees, isLoading, isError } = useRoutingTrees();
+  const options = useMemo(() => buildRoutingTreeOptions(trees), [trees]);
 
   // Only give up when we have nothing to show. A failed refetch (this query refetches on mount and
   // on window focus) sets isError while the last good list is still in the cache, and replacing a
