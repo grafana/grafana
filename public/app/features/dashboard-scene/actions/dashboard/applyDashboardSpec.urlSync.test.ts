@@ -1,7 +1,7 @@
 /**
  * applyDashboardSpec re-syncs the rebuilt scene from the URL so url-only state survives the swap.
- * These cover how that re-sync treats variable values, which are url-synced but also carried by
- * the spec. Kept apart from applyDashboardSpec.test.ts because query variables need a mocked
+ * These cover how that re-sync treats variable values and time settings, which are url-synced but
+ * also carried by the spec. Kept apart from applyDashboardSpec.test.ts because query variables need a mocked
  * datasource and runner.
  */
 import { cloneDeep } from 'lodash';
@@ -100,6 +100,7 @@ function makeSpec({
   service = '$__all',
   sections = [],
   adhoc,
+  time = {},
 }: {
   title?: string;
   namespace?: string;
@@ -107,11 +108,14 @@ function makeSpec({
   /** One row per entry, each with a `pod` section variable set to that value. */
   sections?: string[];
   adhoc?: string;
+  time?: Partial<DashboardV2Spec['timeSettings']>;
 } = {}): DashboardV2Spec {
+  const defaults = defaultDashboardV2Spec();
   const spec: DashboardV2Spec = {
-    ...defaultDashboardV2Spec(),
+    ...defaults,
     title,
     elements: {},
+    timeSettings: { ...defaults.timeSettings, ...time },
     variables: [queryVariable('namespace', namespace, false), queryVariable('service', service, true)],
   };
   if (adhoc) {
@@ -261,5 +265,54 @@ describe('applyDashboardSpec with url sync', () => {
 
     expect(filterValue()).toBe('staging');
     expect(url().getAll('var-filters')).toEqual(['env|=|staging#dashboard#restorable']);
+  });
+
+  describe('time settings', () => {
+    const before = { from: 'now-6h', to: 'now', timezone: 'utc', autoRefresh: '1m' };
+    const after = { from: 'now-24h', to: 'now', timezone: 'browser', autoRefresh: '30s' };
+    const timeSearch = 'from=now-6h&to=now&timezone=utc&refresh=1m';
+
+    const timeSettings = (scene: DashboardScene) => {
+      const { from, to, timeZone } = sceneGraph.getTimeRange(scene).state;
+      return { from, to, timezone: timeZone, autoRefresh: scene.state.controls?.state.refreshPicker.state.refresh };
+    };
+    const timeUrl = () => ({
+      from: url().get('from'),
+      to: url().get('to'),
+      timezone: url().get('timezone'),
+      autoRefresh: url().get('refresh'),
+    });
+
+    it('keeps the time range, timezone and refresh the spec sets instead of reading the previous ones back from the URL', async () => {
+      const scene = await open(makeSpec({ time: before }), timeSearch);
+
+      await apply(scene, makeSpec({ time: after }));
+
+      expect(timeSettings(scene)).toEqual(after);
+      expect(timeUrl()).toEqual(after);
+    });
+
+    it('restores the previous time settings, and the URL, on undo', async () => {
+      const scene = await open(makeSpec({ time: before }), timeSearch);
+
+      await apply(scene, makeSpec({ time: after }));
+      scene.state.sidebar.undoAction();
+      await settle();
+
+      expect(timeSettings(scene)).toEqual(before);
+      expect(timeUrl()).toEqual(before);
+    });
+
+    it('keeps a time range the user zoomed to in the URL when the spec carries it unchanged', async () => {
+      const zoomed = { ...before, from: 'now-1h' };
+      const scene = await open(makeSpec({ time: before }), 'from=now-1h&to=now&timezone=utc&refresh=1m');
+      const partial = jest.spyOn(locationService, 'partial');
+
+      // A spec read back from the open dashboard carries its live time range.
+      await apply(scene, makeSpec({ time: zoomed, title: 'Renamed' }));
+
+      expect(partial).not.toHaveBeenCalled();
+      expect(timeSettings(scene)).toEqual(zoomed);
+    });
   });
 });

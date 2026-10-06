@@ -66,7 +66,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
         urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
       }
 
-      const variablesBefore = variableUrlStateAsSpec(scene);
+      const before = specUrlState(scene);
       scene.setState({ ...newState, editPanel: undefined, isDirty: true });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
@@ -78,41 +78,74 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
       // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
       // into panel edit.
-      syncRebuiltChildrenFromUrl(scene, variablesBefore);
+      syncRebuiltChildrenFromUrl(scene, before);
 
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
     },
     undo: () => {
-      const variablesBefore = variableUrlStateAsSpec(scene);
+      const before = specUrlState(scene);
       scene.setState(previousState);
       scene.state.sidebar.refreshAfterRebuild();
-      syncRebuiltChildrenFromUrl(scene, variablesBefore);
+      syncRebuiltChildrenFromUrl(scene, before);
     },
   });
 }
 
+interface SpecUrlState {
+  variables: SceneObjectUrlValues;
+  timeRange: SceneObjectUrlValues;
+  refresh: SceneObjectUrlValues;
+}
+
+/**
+ * The url-synced state a spec sets: variable values, and the time range, timezone and refresh of
+ * `timeSettings`. The `_dash.*` controls are not part of it: the URL can only hide them, a view
+ * override that no spec carries, so the re-sync never reverts a spec value there.
+ */
+function specUrlState(scene: DashboardScene): SpecUrlState {
+  const { $timeRange, controls } = scene.state;
+  return {
+    variables: variableUrlStateAsSpec(scene),
+    timeRange: $timeRange ? sceneUtils.getUrlState($timeRange) : {},
+    refresh: controls ? sceneUtils.getUrlState(controls.state.refreshPicker) : {},
+  };
+}
+
 /**
  * Re-attaches the swapped-in children to url sync, which restores url-only state such as the
- * selected tab. Variable values are url-synced too, so for every variable the swap changed the
- * URL is first rewritten to the new value; otherwise the sync reads the pre-swap `var-*` params
- * back and reverts it. Variables the swap did not change are left to the sync: their URL value
- * can carry more than a spec holds (restorable ad hoc filters), and rewriting it would drop that.
+ * selected tab. Variable values, the time range and the refresh interval are url-synced too, so
+ * for every one the swap changed the URL is first rewritten to the new value; otherwise the sync
+ * reads the pre-swap params back and reverts it. State the swap did not change is left to the
+ * sync: a variable's URL value can carry more than a spec holds (restorable ad hoc filters), and
+ * a time range the user zoomed to in the URL is a view the spec does not override.
  */
-function syncRebuiltChildrenFromUrl(scene: DashboardScene, variablesBefore: SceneObjectUrlValues) {
-  const variablesAfter = variableUrlStateAsSpec(scene);
+function syncRebuiltChildrenFromUrl(scene: DashboardScene, before: SpecUrlState) {
+  const after = specUrlState(scene);
   const liveValues = variableUrlState(scene, (set) => [sceneUtils.getUrlState(set)]);
 
   const search = locationService.getSearch();
   const updates: SceneObjectUrlValues = {};
-  for (const [key, value] of Object.entries(variablesAfter)) {
+  for (const [key, value] of Object.entries(after.variables)) {
     // A key missing from the URL is not read back, so it needs no rewrite.
-    if (!search.has(key) || isSameUrlValue(variablesBefore[key], value)) {
+    if (!search.has(key) || isSameUrlValue(before.variables[key], value)) {
       continue;
     }
     if (!isSameUrlValue(search.getAll(key), liveValues[key])) {
       updates[key] = liveValues[key];
+    }
+  }
+  for (const group of ['timeRange', 'refresh'] as const) {
+    const changed = Object.keys(after[group]).some((key) => !isSameUrlValue(before[group][key], after[group][key]));
+    if (!changed) {
+      continue;
+    }
+    for (const [key, value] of Object.entries(after[group])) {
+      // `null` is the time range clearing `time`/`time.window`, which otherwise win over `from`/`to`.
+      if (search.has(key) && (value === null || !isSameUrlValue(search.getAll(key), value))) {
+        updates[key] = value ?? null;
+      }
     }
   }
   if (Object.keys(updates).length > 0) {
