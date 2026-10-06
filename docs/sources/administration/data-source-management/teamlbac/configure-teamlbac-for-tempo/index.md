@@ -138,11 +138,11 @@ How LBAC filters data depends on the endpoint:
 
 Cloud Traces supports three redaction modes for trace-by-ID lookups. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
 
-| Mode | Non-matching spans | Best for |
-| --------------------- | --------------------------------------------- | ---------------------------------------------- |
-| Attributes (default) | Kept, but attributes and intrinsics redacted | Preserving trace structure |
-| Spans | Removed entirely | Hiding the existence of spans (may break traces) |
-| Error | Entire request returns a `404` | Strict, all-or-nothing visibility |
+| Mode                 | Non-matching spans                           | Best for                                         |
+| -------------------- | -------------------------------------------- | ------------------------------------------------ |
+| Attributes (default) | Kept, but attributes and intrinsics redacted | Preserving trace structure                       |
+| Spans                | Removed entirely                             | Hiding the existence of spans (may break traces) |
+| Error                | Entire request returns a `404`               | Strict, all-or-nothing visibility                |
 
 ### Attributes mode (default)
 
