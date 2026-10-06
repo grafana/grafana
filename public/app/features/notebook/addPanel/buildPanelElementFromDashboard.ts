@@ -1,8 +1,8 @@
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
+import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
-import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getLibraryPanelBehavior } from 'app/features/dashboard-scene/utils/utils';
 
 import { type PanelElement } from '../types';

@@ -1,8 +1,8 @@
 import { type PanelModel } from '@grafana/data';
 import { SceneDataTransformer, type VizPanel } from '@grafana/scenes';
 import { type DataSourceRef, type DataTransformerConfig } from '@grafana/schema';
+import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
-import { getQueryRunnerFor } from './getQueryRunnerFor';
 import { getPanelIdForVizPanel } from './utils-panels';
 
 export class PanelModelCompatibilityWrapper implements PanelModel {

@@ -27,7 +27,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
   const hasScopeWithFilters = Boolean(scopes?.state.value.some((scope) => (scope.spec.filters?.length ?? 0) > 0));
 
   const body: SceneObject = dashboard.state.body;
-  const [hasFilteredDatasource, setHasFilteredDatasource] = useState(() => hasScopeFilteredDatasource(dashboard));
+  const [hasFilteredDatasource, setHasFilteredDatasource] = useState(false);
 
   // The layout manager's own setState doesn't fire for a change deep in its subtree (grid
   // children, row/tab contents, a panel's query runner) — those call setState on the nested
@@ -40,15 +40,28 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
       return;
     }
 
-    setHasFilteredDatasource(hasScopeFilteredDatasource(dashboard));
+    // hasScopeFilteredDatasource resolves datasource refs asynchronously; `cancelled` drops a
+    // stale result if the scene changes again (or this unmounts) before it settles.
+    let cancelled = false;
+    const recomputeHasFilteredDatasource = () => {
+      hasScopeFilteredDatasource(dashboard).then((result) => {
+        if (!cancelled) {
+          setHasFilteredDatasource(result);
+        }
+      });
+    };
+
+    recomputeHasFilteredDatasource();
 
     const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, (event) => {
-      if (isQueryRunnerDataOnlyUpdate(event)) {
-        return;
+      if (!isQueryRunnerDataOnlyUpdate(event)) {
+        recomputeHasFilteredDatasource();
       }
-      setHasFilteredDatasource(hasScopeFilteredDatasource(dashboard));
     });
-    return () => sub.unsubscribe();
+    return () => {
+      cancelled = true;
+      sub.unsubscribe();
+    };
   }, [dashboard, body, isEditing]);
 
   const [dismissed, setDismissed] = useState(false);

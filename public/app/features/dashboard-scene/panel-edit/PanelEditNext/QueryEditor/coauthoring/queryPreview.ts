@@ -3,8 +3,7 @@ import { isEqual } from 'lodash';
 import { type LoadingState } from '@grafana/data';
 import { type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
-
-import { getQueryRunnerFor } from '../../../../utils/getQueryRunnerFor';
+import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 export interface QueryPreview {
   dispose(): void;

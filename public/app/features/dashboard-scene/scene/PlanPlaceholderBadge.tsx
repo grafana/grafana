@@ -1,8 +1,7 @@
 import { Trans, t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, VizPanel } from '@grafana/scenes';
 import { Badge } from '@grafana/ui';
-
-import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
+import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 
 import { isDashboardSceneLike } from './types/dashboard';
 

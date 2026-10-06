@@ -18,6 +18,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { getQueryRunnerFor } from 'app/core/utils/getQueryRunnerFor';
 import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard/utils';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -63,7 +64,6 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { isLinkEditable } from '../settings/links/utils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { djb2Hash } from '../utils/djb2Hash';
-import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { getLibraryPanelBehavior, isLibraryPanel } from '../utils/utils';
 import { getPanelIdForVizPanel } from '../utils/utils-panels';
 

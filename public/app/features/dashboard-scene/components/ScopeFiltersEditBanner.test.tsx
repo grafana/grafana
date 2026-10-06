@@ -1,7 +1,8 @@
 import { act, render, screen } from 'test/test-utils';
 
-import { type Scope } from '@grafana/data';
+import { type DataSourceInstanceSettings, type Scope } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { hasScopeFilteredDatasource } from 'app/features/scopes/dashboards/scopeFilteredDatasources';
 
@@ -27,6 +28,29 @@ const mockUseScopes = jest.mocked(useScopes);
 const mockHasScopeFilteredDatasource = jest.mocked(hasScopeFilteredDatasource);
 
 const BANNER_TEST_ID = 'scope-filters-edit-banner';
+
+// Every panel below sets an explicit datasource type, and buildDashboard gives each one a
+// `${type}-ds` uid, so seeding these four covers the whole suite.
+function makeDsSettings(uid: string, type: string): DataSourceInstanceSettings {
+  return {
+    uid,
+    name: uid,
+    type,
+    access: 'proxy',
+    jsonData: {},
+    readOnly: false,
+    meta: { id: type } as DataSourceInstanceSettings['meta'],
+  } as DataSourceInstanceSettings;
+}
+
+beforeEach(() => {
+  setDataSourceInstanceSettings({
+    'loki-ds': makeDsSettings('loki-ds', 'loki'),
+    'prometheus-ds': makeDsSettings('prometheus-ds', 'prometheus'),
+    'mysql-ds': makeDsSettings('mysql-ds', 'mysql'),
+    'testdata-ds': makeDsSettings('testdata-ds', 'testdata'),
+  });
+});
 
 function makeScope(name: string, hasFilters: boolean): Scope {
   return {
@@ -81,24 +105,24 @@ describe('ScopeFiltersEditBanner', () => {
     jest.clearAllMocks();
   });
 
-  it('renders when editing, a scope with filters is selected, and a Loki panel is present', () => {
+  it('renders when editing, a scope with filters is selected, and a Loki panel is present', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByTestId(BANNER_TEST_ID)).toHaveTextContent(
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toHaveTextContent(
       /You are editing this dashboard with a Scope selected/
     );
   });
 
-  it('renders for a newly created dashboard in edit mode under the same conditions', () => {
+  it('renders for a newly created dashboard in edit mode under the same conditions', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, isNew: true, datasourceTypes: ['prometheus'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('does not render in view mode (not editing)', () => {
@@ -110,47 +134,54 @@ describe('ScopeFiltersEditBanner', () => {
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
-  it('does not render when no scope is selected', () => {
+  it('does not render when no scope is selected', async () => {
     mockScopes([]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    // The async datasource check still runs (it's independent of scope selection); let it settle.
+    await act(() => Promise.resolve());
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
-  it('does not render when the scopes feature is unavailable', () => {
+  it('does not render when the scopes feature is unavailable', async () => {
     mockScopes(undefined);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await act(() => Promise.resolve());
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
-  it('does not render when the selected scope has no filters', () => {
+  it('does not render when the selected scope has no filters', async () => {
     mockScopes([makeScope('scope-1', false)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await act(() => Promise.resolve());
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
-  it('does not render when the dashboard has no Loki or Prometheus panels', () => {
+  it('does not render when the dashboard has no Loki or Prometheus panels', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['testdata', 'mysql'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    // Let the (resolved-false) async check settle before asserting it stays hidden.
+    await act(() => Promise.resolve());
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
-  it('does not render for a dashboard with no panels at all', () => {
+  it('does not render for a dashboard with no panels at all', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: [] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await act(() => Promise.resolve());
 
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
@@ -160,6 +191,7 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['mysql'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await act(() => Promise.resolve());
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
     const grid = (dashboard.state.body as DefaultGridLayoutManager).state.grid;
@@ -178,7 +210,7 @@ describe('ScopeFiltersEditBanner', () => {
     expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
-  it('does not re-walk the scene for a panel data refresh, but does for a structural change', () => {
+  it('does not re-walk the scene for a panel data refresh, but does for a structural change', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
     const gridItem = (dashboard.state.body as DefaultGridLayoutManager).state.grid.state
@@ -188,6 +220,7 @@ describe('ScopeFiltersEditBanner', () => {
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
     const callsAfterMount = mockHasScopeFilteredDatasource.mock.calls.length;
+    await act(() => Promise.resolve());
 
     // A data refresh only ever touches `data` (and `_hasFetchedData`) on the query runner.
     act(() => {
@@ -200,15 +233,16 @@ describe('ScopeFiltersEditBanner', () => {
       queryRunner.setState({ datasource: { type: 'mysql', uid: 'mysql-ds' } });
     });
     expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount);
+    await act(() => Promise.resolve());
   });
 
-  it('renders when at least one of several panels uses Prometheus', () => {
+  it('renders when at least one of several panels uses Prometheus', async () => {
     mockScopes([makeScope('scope-1', true)]);
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['mysql', 'prometheus'] });
 
     render(<ScopeFiltersEditBanner dashboard={dashboard} />);
 
-    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('dismisses the banner when the close button is clicked', async () => {
@@ -216,7 +250,7 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     const { user } = render(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+    await screen.findByTestId(BANNER_TEST_ID);
 
     await user.click(screen.getByRole('button', { name: /Close alert/i }));
 
@@ -228,6 +262,7 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     const { user, rerender } = render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await screen.findByTestId(BANNER_TEST_ID);
     await user.click(screen.getByRole('button', { name: /Close alert/i }));
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
@@ -241,7 +276,7 @@ describe('ScopeFiltersEditBanner', () => {
       dashboard.setState({ isEditing: true });
     });
     rerender(<ScopeFiltersEditBanner dashboard={dashboard} />);
-    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 
   it('does not carry a dismissal over to a different dashboard keyed by dashboard.state.key', async () => {
@@ -252,10 +287,11 @@ describe('ScopeFiltersEditBanner', () => {
     const dashboardB = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
 
     const { user, rerender } = render(<ScopeFiltersEditBanner dashboard={dashboardA} key={dashboardA.state.key} />);
+    await screen.findByTestId(BANNER_TEST_ID);
     await user.click(screen.getByRole('button', { name: /Close alert/i }));
     expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
 
     rerender(<ScopeFiltersEditBanner dashboard={dashboardB} key={dashboardB.state.key} />);
-    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+    expect(await screen.findByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
 });
