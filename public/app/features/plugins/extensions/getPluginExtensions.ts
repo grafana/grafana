@@ -1,4 +1,3 @@
-import { isFunction } from 'lodash';
 import { catchError, combineLatest, defer, forkJoin, from, map, type Observable, of, switchMap } from 'rxjs';
 
 import {
@@ -11,12 +10,12 @@ import {
   type GetObservablePluginLinks,
   type GetObservablePluginComponents,
   type GetObservablePluginFunctions,
+  type GetObservablePluginFunctionsOptions,
 } from '@grafana/runtime/internal';
 
 import { loadDependentAppPlugins } from './loadDependentAppPlugins';
 import { log } from './logs/log';
-import { type AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
-import { type RegistryType } from './registry/Registry';
+import { addedFunctionsRegistrySlice, type AddedFunctionsRegistryItem } from './registry/AddedFunctionsRegistry';
 import { getPluginExtensionRegistries } from './registry/setup';
 import { type GetExtensions, type GetExtensionsOptions } from './types';
 import {
@@ -30,8 +29,8 @@ import {
 
 /**
  * Returns an observable that emits plugin extensions whenever the core extensions registries change.
- * The observable will emit the initial state of the extensions and then emit again whenever the
- * added components, added links or added functions registry changes.
+ * The observable will emit the initial state of the extensions and then emit again whenever
+ * either the added components registry or the added links registry changes.
  *
  * Unlike the registries, the dependent app plugins for an extension point are not loaded automatically.
  * This function loads them explicitly, the same way the `usePluginLinks`/`usePluginComponents` hooks do via
@@ -42,7 +41,7 @@ import {
  */
 
 export const getObservablePluginExtensions = (
-  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry' | 'addedFunctionsRegistry'>
+  options: Omit<GetExtensionsOptions, 'addedComponentsRegistry' | 'addedLinksRegistry'>
 ): Observable<ReturnType<GetExtensions>> => {
   const { extensionPointId } = options;
 
@@ -69,11 +68,8 @@ export const getObservablePluginExtensions = (
       combineLatest([
         registries.addedComponentsRegistry.asObservableSlice((state) => state[extensionPointId]),
         registries.addedLinksRegistry.asObservableSlice((state) => state[extensionPointId]),
-        registries.addedFunctionsRegistry.asObservableSlice(
-          (state: RegistryType<AddedFunctionsRegistryItem[]>) => state[extensionPointId]
-        ),
       ]).pipe(
-        map(([components, links, functions]) =>
+        map(([components, links]) =>
           getPluginExtensions({
             ...options,
             addedComponentsRegistry: {
@@ -81,9 +77,6 @@ export const getObservablePluginExtensions = (
             },
             addedLinksRegistry: {
               [extensionPointId]: links,
-            },
-            addedFunctionsRegistry: {
-              [extensionPointId]: functions,
             },
           })
         )
@@ -104,19 +97,50 @@ export const getObservablePluginComponents: GetObservablePluginComponents = (opt
   );
 };
 
+// Near-duplicate of the type-enforcing loop in `usePluginFunctions`
+const toFunctionExtensions = <Signature>(
+  registryItems: Array<AddedFunctionsRegistryItem<Signature>>,
+  extensionPointId: string,
+  limitPerPlugin?: number
+): Array<PluginExtensionFunction<Signature>> => {
+  const functions: Array<PluginExtensionFunction<Signature>> = [];
+  const extensionsByPlugin: Record<string, number> = {};
+
+  for (const { pluginId, title, description, fn } of registryItems) {
+    // Only limit if the `limitPerPlugin` is set
+    if (limitPerPlugin && extensionsByPlugin[pluginId] >= limitPerPlugin) {
+      continue;
+    }
+
+    if (extensionsByPlugin[pluginId] === undefined) {
+      extensionsByPlugin[pluginId] = 0;
+    }
+
+    functions.push({
+      id: generateExtensionId(pluginId, extensionPointId, title),
+      type: PluginExtensionTypes.function,
+      pluginId,
+      title,
+      description: description ?? '',
+      fn,
+    });
+    extensionsByPlugin[pluginId] += 1;
+  }
+
+  return functions;
+};
+
 // `options` needs an explicit type: a generic arrow doesn't get it contextually from the annotation.
 export const getObservablePluginFunctions: GetObservablePluginFunctions = <Signature>(
-  options: Parameters<typeof getObservablePluginExtensions>[0]
+  options: GetObservablePluginFunctionsOptions
 ) => {
-  return getObservablePluginExtensions(options).pipe(
-    map(
-      (value) =>
-        // `PluginExtension[]` is heterogeneous, so the narrowing is also where the signature lands.
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        value.extensions.filter((extension) => extension.type === PluginExtensionTypes.function) as Array<
-          PluginExtensionFunction<Signature>
-        >
-    )
+  const { extensionPointId, limitPerPlugin } = options;
+
+  return from(getPluginExtensionRegistries()).pipe(
+    switchMap((registries) =>
+      addedFunctionsRegistrySlice<Signature>(registries.addedFunctionsRegistry, extensionPointId)
+    ),
+    map((registryItems) => toFunctionExtensions(registryItems ?? [], extensionPointId, limitPerPlugin))
   );
 };
 
@@ -127,7 +151,6 @@ export const getPluginExtensions: GetExtensions = ({
   limitPerPlugin,
   addedLinksRegistry,
   addedComponentsRegistry,
-  addedFunctionsRegistry,
 }) => {
   const frozenContext = context ? getReadOnlyProxy(context) : {};
   // We don't return the extensions separated by type, because in that case it would be much harder to define a sort-order for them.
@@ -215,35 +238,6 @@ export const getPluginExtensions: GetExtensions = ({
 
     extensions.push(extension);
     extensionsByPlugin[addedComponent.pluginId] += 1;
-  }
-
-  const addedFunctions = addedFunctionsRegistry?.[extensionPointId] ?? [];
-  for (const addedFunction of addedFunctions) {
-    // Only limit if the `limitPerPlugin` is set
-    if (limitPerPlugin && extensionsByPlugin[addedFunction.pluginId] >= limitPerPlugin) {
-      continue;
-    }
-
-    // Makes the `unknown` `fn` callable, and guards callers passing a hand-built registry.
-    if (!isFunction(addedFunction.fn)) {
-      continue;
-    }
-
-    if (extensionsByPlugin[addedFunction.pluginId] === undefined) {
-      extensionsByPlugin[addedFunction.pluginId] = 0;
-    }
-
-    const extension: PluginExtensionFunction = {
-      id: generateExtensionId(addedFunction.pluginId, extensionPointId, addedFunction.title),
-      type: PluginExtensionTypes.function,
-      pluginId: addedFunction.pluginId,
-      title: addedFunction.title,
-      description: addedFunction.description ?? '',
-      fn: addedFunction.fn,
-    };
-
-    extensions.push(extension);
-    extensionsByPlugin[addedFunction.pluginId] += 1;
   }
 
   return { extensions };
