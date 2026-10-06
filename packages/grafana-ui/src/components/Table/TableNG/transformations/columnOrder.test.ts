@@ -6,14 +6,14 @@ const context = { catalog: ['A', 'B', 'C', 'D'] };
 const { columnOrder, columnVisibility } = tableTransformations;
 
 it('preserves source order until the user reorders', () => {
-  expect(columnOrder.read([], context)).toBeUndefined();
-  expect(columnOrder.read([{ id: 'organize', options: undefined }], context)).toBeUndefined();
-  expect(columnOrder.read(columnVisibility.write([], new Set(['B']), context), context)).toBeUndefined();
+  expect(columnOrder.read([], context).columnOrder).toBeUndefined();
+  expect(columnOrder.read([{ id: 'organize', options: undefined }], context).columnOrder).toBeUndefined();
+  expect(columnOrder.read(columnVisibility.write([], new Set(['B']), context), context).columnOrder).toBeUndefined();
 });
 
 it('orders known columns and appends new columns without mutating the catalog', () => {
   const configs = columnOrder.write([], ['C', 'A'], context);
-  expect(columnOrder.read(configs, context)).toEqual(['C', 'A', 'B', 'D']);
+  expect(columnOrder.read(configs, context).columnOrder).toEqual(['C', 'A', 'B', 'D']);
   expect(context.catalog).toEqual(['A', 'B', 'C', 'D']);
   expect(configs).toEqual([
     {
@@ -39,6 +39,6 @@ it('updates one organize entry while preserving visibility, renames, and unrelat
     },
   ]);
   expect(columnVisibility.read(ordered, context).hiddenColumns).toEqual(new Set(['B']));
-  expect(columnOrder.read(visible, context)).toEqual(['B', 'C', 'A', 'D']);
+  expect(columnOrder.read(visible, context).columnOrder).toEqual(['B', 'C', 'A', 'D']);
   expect(initial).toEqual([unrelated, { id: 'organize', options: { renameByName: { A: 'Alpha' } } }]);
 });

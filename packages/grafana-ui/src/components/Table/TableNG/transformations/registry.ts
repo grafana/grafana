@@ -12,6 +12,7 @@ export const tableTransformations = {
   columnVisibility,
 };
 
+export const columnTransformations = [tableTransformations.columnVisibility, tableTransformations.columnOrder];
 export const filterTransformations = [tableTransformations.valueFilter, tableTransformations.rangeFilter];
 
 export function editableTableFilter(config: FilterByValueConfig) {

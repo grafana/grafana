@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
+import { type TableNGProps } from '../types';
 
 import { prepareColumnContext } from './columnContext';
-import { tableTransformations } from './registry';
+import { columnTransformations, tableTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
@@ -36,22 +37,22 @@ export function useColumnTransformations(
     },
     [context, update]
   );
-  const columnOrder = useMemo(
-    () => (context ? tableTransformations.columnOrder.read(transformations, context) : undefined),
-    [context, transformations]
-  );
 
-  return useMemo(
-    () =>
-      context
-        ? {
-            ...tableTransformations.columnVisibility.read(transformations, context),
-            columnOrder,
-            columnCatalog: columnOrder ?? context.catalog,
-            onColumnOrderChange,
-            onHiddenColumnsChange,
-          }
-        : undefined,
-    [context, transformations, onHiddenColumnsChange, columnOrder, onColumnOrderChange]
-  );
+  return useMemo(() => {
+    if (!context) {
+      return undefined;
+    }
+
+    const state = columnTransformations.reduce<Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>>(
+      (state, transformation) => ({ ...state, ...transformation.read(transformations, context) }),
+      {}
+    );
+
+    return {
+      ...state,
+      columnCatalog: state.columnOrder ?? context.catalog,
+      onColumnOrderChange,
+      onHiddenColumnsChange,
+    };
+  }, [context, transformations, onHiddenColumnsChange, onColumnOrderChange]);
 }
