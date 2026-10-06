@@ -324,6 +324,7 @@ export interface TypographyCtx {
    * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
    * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
    * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   * Only applied when `dataviz.tabularNums` is enabled, otherwise set to `normal`.
    */
   numericCharWidth: number;
   /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
