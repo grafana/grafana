@@ -1,4 +1,5 @@
 import {
+  CAPTURE_TIMEOUT_MS,
   HEARTBEAT_MS,
   LINK_MIN_INTERVAL_MS,
   MAX_FRAME_MESSAGES_PER_SECOND,
@@ -429,5 +430,68 @@ describe('createRenderFrameController', () => {
     expect(port.closed).toBe(true);
     expect(controller.getState()).toBe('disposed');
     expect(controller.render(input())).toBe(-1);
+  });
+  describe('capture', () => {
+    const PNG = 'data:image/png;base64,iVBORw0KGgo=';
+
+    it('asks the frame for its drawing and resolves with the PNG it returns', async () => {
+      const { controller, connect, port, fromFrame } = setup();
+      connect();
+      const captured = controller.capture();
+      expect(port.sent).toContainEqual({ type: 'capture', id: 1 });
+      fromFrame({ type: 'capture', id: 1, image: PNG });
+      await expect(captured).resolves.toBe(PNG);
+    });
+
+    it('rejects with the reason the frame reports', async () => {
+      const { controller, connect, fromFrame } = setup();
+      connect();
+      const captured = controller.capture();
+      fromFrame({ type: 'capture', id: 1, error: 'The browser could not rasterize the drawing.' });
+      await expect(captured).rejects.toThrow('The browser could not rasterize the drawing.');
+    });
+
+    it('rejects before the frame is ready and after the timeout', async () => {
+      const { controller, connect } = setup();
+      await expect(controller.capture()).rejects.toThrow('not running');
+      connect();
+      const captured = controller.capture();
+      jest.advanceTimersByTime(CAPTURE_TIMEOUT_MS);
+      await expect(captured).rejects.toThrow('did not return its drawing');
+    });
+
+    it('rejects pending captures when the controller is disposed', async () => {
+      const { controller, connect } = setup();
+      connect();
+      const captured = controller.capture();
+      controller.dispose();
+      await expect(captured).rejects.toThrow('stopped');
+    });
+
+    it('fails on a capture that was never requested or that is not a PNG data URL', () => {
+      const unrequested = setup();
+      unrequested.connect();
+      unrequested.fromFrame({ type: 'capture', id: 5, image: PNG });
+      expect(unrequested.handlers.onError).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'protocol', fatal: true })
+      );
+
+      const notPng = setup();
+      notPng.connect();
+      void notPng.controller.capture().catch(() => {});
+      notPng.fromFrame({ type: 'capture', id: 1, image: 'data:text/html;base64,PHNjcmlwdD4=' });
+      expect(notPng.handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
+    });
+
+    it('ignores a late answer to a capture that already timed out', async () => {
+      const { controller, connect, fromFrame, handlers } = setup();
+      connect();
+      const captured = controller.capture();
+      jest.advanceTimersByTime(CAPTURE_TIMEOUT_MS);
+      await expect(captured).rejects.toThrow();
+      fromFrame({ type: 'capture', id: 1, image: PNG });
+      expect(handlers.onError).not.toHaveBeenCalled();
+      expect(controller.getState()).toBe('ready');
+    });
   });
 });

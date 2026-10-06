@@ -318,6 +318,7 @@ is declared stable.
 | Link length                         | 2,048 characters                                      |
 | Height hint (content-fit layouts)   | 10,000 px                                             |
 | Image rendering wait                | 30 s                                                  |
+| Capture of the drawing              | 3 s, PNG data URL up to 8 MiB                         |
 
 When the data is over a limit the panel shows a message and does not draw. Too many elements clear
 the drawing and show an error. A frame that does not start, stops answering, navigates away, sends
@@ -370,6 +371,13 @@ pass. Every later draw of final data, after a refresh, a variable change or a re
 capture again until that draw finishes or fails. Animations and transitions are
 disabled in that mode, `<html>` has the class `gf-render-target`, and the frame waits for fonts and images before it reports completion.
 Panels that are scrolled out of view pause drawing, except during image rendering.
+
+Grafana cannot read the opaque frame, so a page capture made in the browser (rather than by the
+image renderer) would show the panel empty. For those, the host can ask the frame for a PNG of its
+drawing: the frame copies its document into an SVG `foreignObject`, turns canvases into images,
+draws that on a canvas and returns the data URL. The host accepts only a `data:image/png` URL of at
+most 8 MiB, within 3 seconds. A browser that refuses to rasterize `foreignObject` (Safari) returns
+an error instead.
 
 ## Migrating from the Dynamic text panel
 

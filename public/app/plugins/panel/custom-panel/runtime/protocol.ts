@@ -1,6 +1,12 @@
 import * as z from 'zod';
 
-import { MAX_DIAGNOSTIC_LENGTH, MAX_HEIGHT_HINT_PX, MAX_HREF_LENGTH, RENDER_PROTOCOL_VERSION } from './constants';
+import {
+  MAX_CAPTURE_LENGTH,
+  MAX_DIAGNOSTIC_LENGTH,
+  MAX_HEIGHT_HINT_PX,
+  MAX_HREF_LENGTH,
+  RENDER_PROTOCOL_VERSION,
+} from './constants';
 
 export type SerializedValue = string | number | boolean | null;
 
@@ -118,6 +124,7 @@ export type HostMessage =
   | { type: 'render'; seq: number; input: RenderInput }
   | { type: 'resize'; seq: number; size: RenderSize }
   | { type: 'ping'; id: number }
+  | { type: 'capture'; id: number }
   | { type: 'pause' }
   | { type: 'resume' };
 
@@ -125,6 +132,9 @@ export interface RenderInitMessage {
   type: string;
   version: typeof RENDER_PROTOCOL_VERSION;
 }
+
+/** A capture is a PNG data URL and nothing else, so the host can show it as an image. */
+const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/;
 
 export const frameErrorKindSchema = z.enum(['startup', 'runtime', 'csp', 'output-limit']);
 
@@ -149,6 +159,12 @@ export const frameMessageSchema = z.discriminatedUnion('type', [
   }),
   z.strictObject({ type: z.literal('link'), href: z.string().min(1).max(MAX_HREF_LENGTH) }),
   z.strictObject({ type: z.literal('pong'), id: z.number().int() }),
+  z.strictObject({
+    type: z.literal('capture'),
+    id: z.number().int(),
+    image: z.string().max(MAX_CAPTURE_LENGTH).regex(PNG_DATA_URL).optional(),
+    error: z.string().max(MAX_DIAGNOSTIC_LENGTH).optional(),
+  }),
 ]);
 
 export type FrameMessage = z.infer<typeof frameMessageSchema>;

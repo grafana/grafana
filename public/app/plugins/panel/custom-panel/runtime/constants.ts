@@ -35,6 +35,10 @@ export const UNRESPONSIVE_MS = 8_000;
 export const RENDER_TIMEOUT_MS = 10_000;
 export const MAX_READINESS_HOLD_MS = 30_000;
 export const MAX_HEIGHT_HINT_PX = 10_000;
+/** How long the host waits for the frame to return a capture of its drawing. */
+export const CAPTURE_TIMEOUT_MS = 3_000;
+/** Length of the PNG data URL a capture may return. */
+export const MAX_CAPTURE_LENGTH = 8 * 1024 * 1024;
 /** Element count under #root after each draw. */
 export const MAX_DOM_NODES = 20_000;
 /** Extra links inside this window are dropped silently. */

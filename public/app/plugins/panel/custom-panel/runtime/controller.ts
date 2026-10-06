@@ -1,4 +1,5 @@
 import {
+  CAPTURE_TIMEOUT_MS,
   HEARTBEAT_MS,
   LINK_MIN_INTERVAL_MS,
   MAX_DIAGNOSTIC_LENGTH,
@@ -72,6 +73,12 @@ export interface RenderFrameController {
   resize(size: RenderSize): number;
   pause(): void;
   resume(): void;
+  /**
+   * Asks the frame for a PNG data URL of what it drew. The host cannot read the opaque frame, so
+   * only the frame can capture itself. Rejects when the frame is not ready, fails, stops or does not
+   * answer within the timeout.
+   */
+  capture(timeoutMs?: number): Promise<string>;
   getState(): RenderFrameState;
   dispose(): void;
 }
@@ -125,6 +132,20 @@ export function createRenderFrameController(
 
   let recentMessages: Array<{ at: number; type: string }> = [];
   let lastLinkAt = -Infinity;
+
+  let captureId = 0;
+  const captures = new Map<
+    number,
+    { resolve: (image: string) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
+  >();
+
+  const settleCaptures = (reason: string) => {
+    for (const pending of captures.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error(reason));
+    }
+    captures.clear();
+  };
 
   const isClosed = () => state === 'failed' || state === 'disposed';
 
@@ -214,6 +235,7 @@ export function createRenderFrameController(
     lastInput = undefined;
     awaitingSeq = undefined;
     recentMessages = [];
+    settleCaptures('The panel frame stopped before it returned its drawing.');
     if (port) {
       port.onmessage = null;
       try {
@@ -348,6 +370,24 @@ export function createRenderFrameController(
           fail('protocol', `The panel frame answered a heartbeat that was not sent (id ${message.id}).`);
         }
         return;
+      case 'capture': {
+        const pending = captures.get(message.id);
+        if (!pending) {
+          // A late answer to a capture that timed out is harmless; one never asked for is not.
+          if (message.id < 1 || message.id > captureId) {
+            fail('protocol', `The panel frame returned a capture that was not requested (id ${message.id}).`);
+          }
+          return;
+        }
+        captures.delete(message.id);
+        clearTimeout(pending.timer);
+        if (message.image) {
+          pending.resolve(message.image);
+        } else {
+          pending.reject(new Error(message.error || 'The panel frame could not capture its drawing.'));
+        }
+        return;
+      }
     }
   }
 
@@ -436,6 +476,20 @@ export function createRenderFrameController(
         startHeartbeat();
         armRenderTimer();
       }
+    },
+    capture(timeoutMs = CAPTURE_TIMEOUT_MS) {
+      if (state !== 'ready') {
+        return Promise.reject(new Error('The panel frame is not running, so it cannot capture its drawing.'));
+      }
+      const id = ++captureId;
+      return new Promise<string>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          captures.delete(id);
+          reject(new Error(`The panel frame did not return its drawing within ${timeoutMs / 1000} seconds.`));
+        }, timeoutMs);
+        captures.set(id, { resolve, reject, timer });
+        send({ type: 'capture', id });
+      });
     },
     getState() {
       return state;

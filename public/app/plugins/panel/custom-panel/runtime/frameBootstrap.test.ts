@@ -503,4 +503,70 @@ describe('content frame bootstrap', () => {
       expect(Reflect.get(window, 'observer')).toBe('ReportingObserver is not available in the custom panel.');
     });
   });
+  describe('capture', () => {
+    // jsdom neither rasterizes SVG images nor implements canvas, so both are stubbed: the stub image
+    // records the SVG it was given and the stub canvas returns a fixed PNG data URL.
+    function mountCapturable(code: string, loads: boolean) {
+      const frame = mountFrame(code, (frameWindow) => {
+        class StubImage {
+          onload: (() => void) | null = null;
+          onerror: (() => void) | null = null;
+          set src(value: string) {
+            Reflect.set(frameWindow, 'capturedSvg', decodeURIComponent(value.slice(value.indexOf(',') + 1)));
+            setTimeout(() => (loads ? this.onload?.() : this.onerror?.()), 0);
+          }
+        }
+        Object.defineProperty(frameWindow, 'Image', { value: StubImage, writable: true, configurable: true });
+        const canvasProto = frameWindow.HTMLCanvasElement.prototype;
+        canvasProto.getContext = function () {
+          return { drawImage: () => {} };
+        } as unknown as typeof canvasProto.getContext;
+        canvasProto.toDataURL = () => 'data:image/png;base64,AAAA';
+      });
+      const port = createPort();
+      frame.dispatchInit(port);
+      const send = (data: unknown) => port.onmessage?.({ data });
+      return { ...frame, port, send };
+    }
+
+    it('returns a PNG of the drawing, rasterized from a copy of the document without scripts', async () => {
+      const code = `panel.onRender(function (ctx) { ctx.root.innerHTML = '<b id="value">42</b><canvas id="chart"></canvas>'; });`;
+      const { port, send, window } = mountCapturable(code, true);
+      send({ type: 'render', seq: 1, input: makeInput() });
+      await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+      send({ type: 'capture', id: 1 });
+      await until(() => messagesOfType(port, 'capture').length > 0);
+
+      expect(messagesOfType(port, 'capture')).toEqual([
+        { type: 'capture', id: 1, image: 'data:image/png;base64,AAAA' },
+      ]);
+      const svg = String(Reflect.get(window, 'capturedSvg'));
+      expect(svg).toContain('<foreignObject');
+      expect(svg).toContain('<b id="value">42</b>');
+      expect(svg).not.toContain('<script');
+      expect(svg).not.toContain('<canvas');
+      expect(svg).toContain('src="data:image/png;base64,AAAA"');
+      // The live drawing is untouched.
+      expect(window.document.getElementById('chart')?.tagName).toBe('CANVAS');
+    });
+
+    it('rewrites :root rules, because the svg is the root element inside the image', async () => {
+      const { port, send, window } = mountCapturable('panel.onRender(function () {});', true);
+      send({ type: 'capture', id: 1 });
+      await until(() => messagesOfType(port, 'capture').length > 0);
+      const svg = String(Reflect.get(window, 'capturedSvg'));
+      expect(svg).not.toContain(':root');
+      expect(svg).toContain('html{color-scheme');
+    });
+
+    it('reports an error when the browser cannot rasterize the drawing', async () => {
+      const { port, send } = mountCapturable('panel.onRender(function () {});', false);
+      send({ type: 'capture', id: 7 });
+      await until(() => messagesOfType(port, 'capture').length > 0);
+      expect(messagesOfType(port, 'capture')).toEqual([
+        { type: 'capture', id: 7, error: 'The browser could not rasterize the drawing.' },
+      ]);
+    });
+  });
 });

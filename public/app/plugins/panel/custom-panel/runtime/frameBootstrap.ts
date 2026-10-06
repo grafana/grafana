@@ -1,4 +1,5 @@
 import {
+  MAX_CAPTURE_LENGTH,
   MAX_DIAGNOSTIC_LENGTH,
   MAX_DOM_NODES,
   MAX_HEIGHT_HINT_PX,
@@ -86,6 +87,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var MAX_DOM_NODES = ${MAX_DOM_NODES};
   var MAX_HEIGHT = ${MAX_HEIGHT_HINT_PX};
   var MAX_HREF_LENGTH = ${MAX_HREF_LENGTH};
+  var MAX_CAPTURE_LENGTH = ${MAX_CAPTURE_LENGTH};
   var MAX_BUFFERED_ERRORS = 20;
   var RESIZE_OBSERVER_LOOP = 'ResizeObserver loop';
   var XLINK = 'http://www.w3.org/1999/xlink';
@@ -94,6 +96,11 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var IS_RENDER_TARGET = document.documentElement.classList.contains(${TARGET_CLASS});
 
   hardenRealm();
+
+  // Captured before the user code runs, so a drawing that replaces them only breaks its own capture.
+  var SafeXMLSerializer = window.XMLSerializer;
+  var SafeImage = window.Image;
+  var encodeComponent = window.encodeURIComponent;
 
   var root = document.getElementById('root');
   var port = null;
@@ -745,6 +752,88 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   window.addEventListener('click', onLinkActivation, true);
   window.addEventListener('auxclick', onLinkActivation, true);
 
+  function postCapture(id, image, error) {
+    var message = { type: 'capture', id: id };
+    if (image) {
+      message.image = image;
+    } else {
+      message.error = toText(error || 'The drawing could not be captured.');
+    }
+    post(message);
+  }
+
+  function removeElements(container, tagName) {
+    var found = container.getElementsByTagName(tagName);
+    for (var i = found.length - 1; i >= 0; i--) {
+      found[i].parentNode.removeChild(found[i]);
+    }
+  }
+
+  /*
+   * The host cannot read this opaque document, so the frame rasterizes itself: a copy of the
+   * document goes into an SVG foreignObject image, which is drawn on a canvas. Canvases become
+   * images first, because their pixels are not part of the markup. Inside the image the root
+   * element is the svg, so :root rules are rewritten to html.
+   */
+  function captureDrawing(id) {
+    try {
+      var html = document.documentElement;
+      var width = Math.max(1, Math.ceil(html.clientWidth));
+      var height = Math.max(1, Math.ceil(html.clientHeight));
+      var copy = html.cloneNode(true);
+      removeElements(copy, 'script');
+      removeElements(copy, 'meta');
+      var styles = copy.getElementsByTagName('style');
+      for (var s = 0; s < styles.length; s++) {
+        styles[s].textContent = String(styles[s].textContent).split(':root').join('html');
+      }
+      var canvases = html.getElementsByTagName('canvas');
+      var copies = copy.getElementsByTagName('canvas');
+      for (var c = copies.length - 1; c >= 0; c--) {
+        var source = canvases[c];
+        var image = document.createElement('img');
+        try {
+          image.src = source.toDataURL('image/png');
+        } catch (e) {
+          // A canvas that cannot be read stays empty in the capture.
+        }
+        image.setAttribute('style', source.getAttribute('style') || '');
+        image.style.width = source.clientWidth + 'px';
+        image.style.height = source.clientHeight + 'px';
+        if (source.className && typeof source.className === 'string') {
+          image.className = source.className;
+        }
+        copies[c].parentNode.replaceChild(image, copies[c]);
+      }
+      var markup = new SafeXMLSerializer().serializeToString(copy);
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '">' +
+        '<foreignObject x="0" y="0" width="100%" height="100%">' + markup + '</foreignObject></svg>';
+      var picture = new SafeImage();
+      picture.onload = function () {
+        try {
+          var canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          canvas.getContext('2d').drawImage(picture, 0, 0, width, height);
+          var url = canvas.toDataURL('image/png');
+          if (url.length > MAX_CAPTURE_LENGTH) {
+            postCapture(id, null, 'The captured drawing is larger than ' + MAX_CAPTURE_LENGTH + ' characters.');
+            return;
+          }
+          postCapture(id, url);
+        } catch (e) {
+          postCapture(id, null, e);
+        }
+      };
+      picture.onerror = function () {
+        postCapture(id, null, 'The browser could not rasterize the drawing.');
+      };
+      picture.src = 'data:image/svg+xml;charset=utf-8,' + encodeComponent(svg);
+    } catch (e) {
+      postCapture(id, null, e);
+    }
+  }
+
   function onPortMessage(event) {
     var message = event && event.data;
     if (!message || typeof message !== 'object') {
@@ -770,6 +859,11 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
       case 'ping':
         if (typeof message.id === 'number') {
           post({ type: 'pong', id: message.id });
+        }
+        return;
+      case 'capture':
+        if (typeof message.id === 'number') {
+          captureDrawing(message.id);
         }
         return;
       case 'pause':
