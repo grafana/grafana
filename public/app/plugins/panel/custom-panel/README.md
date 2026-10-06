@@ -407,6 +407,15 @@ report; the command returns it as `not-mounted` with a reason. `reveal` brings o
 and `waitMs` waits for its draw. Each repeat of a repeated panel reports on its own, with its scene
 key as `instanceKey`.
 
+## Landing tab
+
+In edit mode, a dashboard with tabs has an **Add landing tab** action next to the other tab actions
+when this panel is available. It adds an Overview tab in first position with one Custom panel that
+fills the tab. The panel gets one `-- Dashboard --` query (with transformations) per panel it can
+reuse, in layout order and up to eight: Custom panels, panels that already read `-- Dashboard --`
+and repeat clones are left out. Its code starts from a template that groups the frames by source
+panel.
+
 ## Migrating from the Dynamic text panel
 
 Changing a `marcusolsson-dynamictext-panel` panel to this panel converts simple templates: content
