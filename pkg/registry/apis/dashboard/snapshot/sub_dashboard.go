@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -76,8 +79,15 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
+	if snap.Namespace != ns.Value {
+		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
+	}
+
 	content := snap.Spec.Dashboard
-	if fromBlob, ok, err := readDashboardBlob(ctx, r.blobs, snap); err != nil {
+	// GetBlob is an internal delegated RPC; the public snapshot GET was authorized
+	// above, but anonymous requests need a namespace-scoped identity for the RPC.
+	blobCtx := authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: ns.Value})
+	if fromBlob, ok, err := readDashboardBlob(blobCtx, r.blobs, snap); err != nil {
 		return nil, err
 	} else if ok {
 		content = fromBlob

@@ -6,19 +6,25 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
+	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type fakeBlobStore struct {
-	put    *resourcepb.PutBlobRequest
-	get    *resourcepb.GetBlobRequest
-	putRsp *resourcepb.PutBlobResponse
-	value  []byte
+	put      *resourcepb.PutBlobRequest
+	get      *resourcepb.GetBlobRequest
+	putRsp   *resourcepb.PutBlobResponse
+	value    []byte
+	checkGet func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error)
 }
 
 func (f *fakeBlobStore) PutBlob(_ context.Context, req *resourcepb.PutBlobRequest, _ ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
@@ -27,8 +33,11 @@ func (f *fakeBlobStore) PutBlob(_ context.Context, req *resourcepb.PutBlobReques
 	return f.putRsp, nil
 }
 
-func (f *fakeBlobStore) GetBlob(_ context.Context, req *resourcepb.GetBlobRequest, _ ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
+func (f *fakeBlobStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest, _ ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
 	f.get = req
+	if f.checkGet != nil {
+		return f.checkGet(ctx, req)
+	}
 	return &resourcepb.GetBlobResponse{Value: f.value, ContentType: "application/json"}, nil
 }
 
@@ -76,6 +85,40 @@ func TestMoveDashboardToBlob(t *testing.T) {
 		require.NotNil(t, snap.Spec.Dashboard)
 		require.Nil(t, snap.Blobs.Dashboard)
 	})
+}
+
+func TestPublicSnapshotDashboardBlob(t *testing.T) {
+	const namespace = "org-2"
+	store := &fakeBlobStore{checkGet: func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+		info, ok := authlib.AuthInfoFrom(ctx)
+		if !ok || info == nil {
+			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusUnauthorized}}, nil
+		}
+		if info.GetNamespace() != req.Resource.Namespace {
+			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{Code: http.StatusForbidden}}, nil
+		}
+		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
+	}}
+	snap := newBlobTestSnapshot()
+	snap.Namespace = namespace
+	snap.Spec.Dashboard = nil
+	snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+	getter := grafanarest.NewMockStorage(t)
+	getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(snap, nil)
+	rest, err := NewDashboardREST(getter, store)
+	require.NoError(t, err)
+	ctx := k8srequest.WithNamespace(context.Background(), namespace)
+	_, err = rest.(*dashboardREST).Connect(ctx, "snap-1", nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, namespace, store.get.Resource.Namespace)
+
+	// The snapshot lookup is global in the legacy store. A result from another
+	// namespace must not be used to mint blob access for that namespace.
+	snap.Namespace = "org-3"
+	store.get = nil
+	_, err = rest.(*dashboardREST).Connect(ctx, "snap-1", nil, nil)
+	require.True(t, apierrors.IsNotFound(err))
+	require.Nil(t, store.get)
 }
 
 func TestReadDashboardBlob(t *testing.T) {

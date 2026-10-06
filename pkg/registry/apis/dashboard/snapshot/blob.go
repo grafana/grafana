@@ -42,7 +42,7 @@ func moveDashboardToBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, 
 		if rsp.Error.Code == http.StatusNotImplemented {
 			return nil
 		}
-		return resource.GetError(rsp.Error)
+		return resource.StatusError(rsp.Error)
 	}
 
 	info := &utils.BlobInfo{MimeType: rsp.MimeType, Charset: rsp.Charset}
@@ -72,7 +72,7 @@ func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, sn
 		return nil, true, err
 	}
 	if rsp.Error != nil {
-		return nil, true, resource.GetError(rsp.Error)
+		return nil, true, resource.StatusError(rsp.Error)
 	}
 	if rsp.Url != "" {
 		return nil, true, fmt.Errorf("signed blob URLs are not supported yet")
