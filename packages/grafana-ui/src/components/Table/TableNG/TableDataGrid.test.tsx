@@ -353,7 +353,7 @@ describe('TableDataGrid', () => {
               rule.style.getPropertyValue('z-index') !== ''
           )
           .map((rule) => Number(rule.style.getPropertyValue('z-index')));
-        expect(hoverLayers).toContain(1038);
+        expect(hoverLayers).toContain(createTheme().zIndex.tooltip - 2);
         expect(summaryZIndex).toBeGreaterThan(Math.max(...hoverLayers));
         expect(summaryZIndex).toBeLessThan(createTheme().zIndex.tooltip);
       }
