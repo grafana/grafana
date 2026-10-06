@@ -16,9 +16,9 @@ import {
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
+import { LogLineDetailsSummary } from './LogLineDetailsSummary';
 import { LogLineOTelDetailsError } from './LogLineOTelDetailsError';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
-import { LogLineOTelDetailsSummary } from './LogLineOTelDetailsSummary';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
@@ -106,7 +106,7 @@ const LogLineDetailsOTelComponentBody = ({
 
   return (
     <div className={styles.componentWrapper}>
-      <LogLineOTelDetailsSummary log={log} />
+      <LogLineDetailsSummary log={log} />
       {!groupedFields.length && !groupedLabels.length ? (
         <Box marginTop={1} paddingLeft={0.5}>
           <Trans i18nKey="logs.log-line-details.no-details">No fields to display.</Trans>

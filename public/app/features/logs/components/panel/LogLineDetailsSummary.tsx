@@ -11,11 +11,11 @@ import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel } from './processing';
 
-interface LogLineOTelDetailsSummaryProps {
+interface LogLineDetailsSummaryProps {
   log: LogListModel;
 }
 
-export const LogLineOTelDetailsSummary = ({ log }: LogLineOTelDetailsSummaryProps) => {
+export const LogLineDetailsSummary = ({ log }: LogLineDetailsSummaryProps) => {
   const { app, fontSize, noInteractions, pinLineButtonTooltipTitle, timestampResolution } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
   const links = useMemo(() => collectLogLinks(log), [log]);
