@@ -13,8 +13,10 @@ export {
 } from './grafana/dataSources/predicates';
 
 export {
+  type DataSourcesWithValidRecordingTargetByUidResult,
   getDataSourcesWithValidRecordingTarget,
   useDataSourcesWithValidRecordingTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
 } from './grafana/dataSources/narrowings';
 
 export default {};

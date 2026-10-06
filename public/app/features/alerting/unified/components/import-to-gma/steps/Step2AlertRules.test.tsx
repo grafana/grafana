@@ -4,6 +4,8 @@ import React, { useEffect } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockAlertRuleApi, setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -15,6 +17,27 @@ import { type PromRulesResponse, type RulerRulesConfigDTO } from 'app/types/unif
 import { type ImportFormValues } from '../ImportToGMA';
 
 import { Step2Content, useStep2Validation } from './Step2AlertRules';
+
+jest.mock('@grafana/runtime/unstable', () => {
+  const actual = jest.requireActual('@grafana/runtime/unstable');
+  return { ...actual, getDataSourceInstanceList: jest.fn(actual.getDataSourceInstanceList) };
+});
+
+const runtime = jest.requireActual('@grafana/runtime/unstable');
+const listMock = jest.mocked(getDataSourceInstanceList);
+
+// Holds the recording rules target discovery until the test releases it.
+function holdRecordingTargetDiscovery() {
+  let release = () => {};
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  listMock.mockImplementation(async (filters) => {
+    await released;
+    return runtime.getDataSourceInstanceList(filters);
+  });
+  return release;
+}
 
 const server = setupMswServer();
 
@@ -121,6 +144,77 @@ describe('Step2AlertRules', () => {
 
   afterEach(() => {
     consoleErrorSpy.mockRestore();
+    listMock.mockImplementation(runtime.getDataSourceInstanceList);
+  });
+
+  describe('recording rules target', () => {
+    // The picker only lists data sources that declare a capability such as alerting.
+    const prometheus = mockDataSource(
+      { name: 'Prometheus', uid: 'prometheus-uid', type: 'prometheus' },
+      { alerting: true }
+    );
+    const loki = mockDataSource({ name: 'Loki', uid: 'loki-uid', type: 'loki' }, { alerting: true });
+    const optedOut = mockDataSource(
+      { name: 'Opted out', uid: 'opted-out-uid', type: 'prometheus', jsonData: { allowAsRecordingRulesTarget: false } },
+      { alerting: true }
+    );
+
+    beforeEach(() => {
+      setupDataSources(prometheus, loki, optedOut);
+    });
+
+    function renderStep2() {
+      const view = render(
+        <TestWrapper defaultValues={{ rulesSource: 'datasource' }}>
+          <Step2Content step1Completed={false} step1Skipped={false} canImport={true} />
+        </TestWrapper>
+      );
+      const [sourcePicker, targetPicker] = screen.getAllByTestId(selectors.components.DataSourcePicker.inputV2);
+      return { ...view, sourcePicker, targetPicker };
+    }
+
+    it('disables the source and target pickers until the valid targets are known', async () => {
+      const releaseDiscovery = holdRecordingTargetDiscovery();
+      const { sourcePicker, targetPicker } = renderStep2();
+
+      expect(sourcePicker).toBeDisabled();
+      expect(targetPicker).toBeDisabled();
+
+      releaseDiscovery();
+
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+      expect(sourcePicker).toBeEnabled();
+    });
+
+    it('fills the target with the selected source when the source accepts recording rules', async () => {
+      const { user, sourcePicker, targetPicker } = renderStep2();
+      await waitFor(() => expect(sourcePicker).toBeEnabled());
+
+      await user.click(sourcePicker);
+      await user.click(await screen.findByRole('option', { name: /Prometheus/ }));
+
+      await waitFor(() => expect(targetPicker).toHaveAttribute('placeholder', 'Prometheus'));
+    });
+
+    it('offers only data sources that accept recording rules as targets', async () => {
+      const { user, targetPicker } = renderStep2();
+      await waitFor(() => expect(targetPicker).toBeEnabled());
+
+      await user.click(targetPicker);
+
+      expect(await screen.findByRole('option', { name: /Prometheus/ })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /Opted out/ })).not.toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: /Loki/ })).not.toBeInTheDocument();
+    });
+
+    it('shows an error on the target field when the valid targets cannot be loaded', async () => {
+      listMock.mockRejectedValue(new Error('list request failed'));
+      renderStep2();
+
+      expect(
+        await screen.findByText('Failed to load the list of data sources that can store recording rules')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('Step2Content rendering', () => {

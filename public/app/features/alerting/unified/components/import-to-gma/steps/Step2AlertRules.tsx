@@ -5,9 +5,8 @@ import { useAsync, useToggle } from 'react-use';
 
 import {
   isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
+  useDataSourcesWithValidRecordingTargetByUid,
 } from '@grafana/alerting/internal';
-import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import {
@@ -70,6 +69,8 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
     clearErrors,
     formState: { errors },
   } = useFormContext<ImportFormValues>();
+
+  const recordingTargets = useDataSourcesWithValidRecordingTargetByUid();
 
   const [
     rulesSource,
@@ -289,16 +290,18 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                       <DataSourcePicker
                         {...field}
                         alerting
-                        filter={(ds: DataSourceInstanceSettings) =>
+                        // Selecting a source also picks the recording rules target, so wait until the valid targets are known.
+                        disabled={recordingTargets.isLoading}
+                        filter={(ds) =>
                           isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) &&
                           supportedImportTypes.includes(ds.type)
                         }
                         current={field.value}
-                        onChange={(ds: DataSourceInstanceSettings) => {
+                        onChange={(ds) => {
                           onChange(ds.uid);
                           setValue('rulesDatasourceName', ds.name);
                           // Auto-populate target datasource if not yet selected
-                          if (!getValues('targetDatasourceUID') && isValidRecordingRulesTarget(ds)) {
+                          if (!getValues('targetDatasourceUID') && recordingTargets.byUid.has(ds.uid)) {
                             setValue('targetDatasourceUID', ds.uid);
                           }
                         }}
@@ -475,8 +478,15 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                 'alerting.import-to-gma.step2.target-datasource-desc',
                 'The Prometheus data source to store recording rules in'
               )}
-              invalid={!!errors.targetDatasourceUID}
-              error={errors.targetDatasourceUID?.message}
+              invalid={Boolean(errors.targetDatasourceUID || recordingTargets.error)}
+              error={
+                errors.targetDatasourceUID?.message ??
+                (recordingTargets.error &&
+                  t(
+                    'alerting.recording-rules.target-data-sources-error',
+                    'Failed to load the list of data sources that can store recording rules'
+                  ))
+              }
               noMargin
             >
               <Controller
@@ -486,8 +496,10 @@ export function Step2Content({ step1Completed, step1Skipped, canImport }: Step2C
                     current={field.value}
                     inputId="recording-rules-target-data-source"
                     noDefault
-                    filter={isValidRecordingRulesTarget}
-                    onChange={(ds: DataSourceInstanceSettings) => {
+                    disabled={recordingTargets.isLoading}
+                    isLoading={recordingTargets.isLoading}
+                    filter={(ds) => recordingTargets.byUid.has(ds.uid)}
+                    onChange={(ds) => {
                       setValue('targetDatasourceUID', ds.uid);
                     }}
                   />
