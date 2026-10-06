@@ -286,63 +286,66 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 // their syncs and with every repository on the same token. The explicit requeues below
 // stand in for the ones the controller used to generate for itself, by patching its own
 // status on every pass.
+//
+// Both phases requeue the same key, which the work queue serialises and processes in
+// submission order. So the second phase producing field errors is what establishes that
+// the first phase's requeues reached the controller at all, rather than the assertion
+// passing because nothing was ever delivered.
 func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const (
-		quietName = "ns-steady-quiet" // requeued while no health check is due
-		dueName   = "ns-steady-due"   // control: a health check is made genuinely due
+		repoName  = "ns-steady-repo"
+		otherName = "ns-steady-other" // only here to put the namespace over its limit
 	)
-	quietPath := filepath.Join(helper.ProvisioningPath, "steady-quiet")
-	duePath := filepath.Join(helper.ProvisioningPath, "steady-due")
+	repoPath := filepath.Join(helper.ProvisioningPath, "steady-repo")
 
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       quietName,
-		LocalPath:  quietPath,
+		Name:       repoName,
+		LocalPath:  repoPath,
 		SyncTarget: "folder",
 		SkipSync:   true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       dueName,
-		LocalPath:  duePath,
+		Name:       otherName,
+		LocalPath:  filepath.Join(helper.ProvisioningPath, "steady-other"),
 		SyncTarget: "folder",
 		SkipSync:   true,
 	})
 
 	// Two repositories against a limit of one: both are over quota and settle into the
-	// blocked steady state, which leaves both health timestamps fresh.
+	// blocked steady state, which leaves their health timestamps fresh.
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, quietName)
-	helper.TriggerRepositoryReconciliation(t, dueName)
-	waitForUnhealthyWithNamespaceQuota(t, helper, quietName, provisioning.ReasonQuotaExceeded)
-	waitForUnhealthyWithNamespaceQuota(t, helper, dueName, provisioning.ReasonQuotaExceeded)
-	require.Empty(t, repositoryFieldErrors(t, helper, quietName))
+	helper.TriggerRepositoryReconciliation(t, repoName)
+	helper.TriggerRepositoryReconciliation(t, otherName)
+	waitForUnhealthyWithNamespaceQuota(t, helper, repoName, provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, otherName, provisioning.ReasonQuotaExceeded)
+	require.Empty(t, repositoryFieldErrors(t, helper, repoName))
 
-	// Remove both repository directories, so Test() would now report the path as not
+	// Remove the repository directory, so a Test() would now report the path as not
 	// found. Those field errors reach status.fieldErrors whatever the quota health
 	// override says, which makes them evidence that the repository was tested at all.
-	require.NoError(t, os.RemoveAll(quietPath))
-	require.NoError(t, os.RemoveAll(duePath))
+	require.NoError(t, os.RemoveAll(repoPath))
 
-	// Requeue repeatedly while the stored health check is still fresh.
+	// Phase 1: requeue while the stored health check is still fresh. Nothing is due and
+	// the steady state is not a trigger, so these must not test the repository.
 	for range 3 {
-		helper.TriggerRepositoryReconciliation(t, quietName)
+		helper.TriggerRepositoryReconciliation(t, repoName)
 	}
-
-	// Make the other repository's check genuinely due. It is enqueued after the requeues
-	// above, so its field errors landing proves the controller is draining the queue
-	// rather than the test outrunning it -- and that a due check still tests the repo.
-	markHealthCheckOverdue(t, helper, dueName)
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, dueName),
-			"a repository whose health check is due must still be tested")
-	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
-
 	require.Never(t, func() bool {
-		return len(repositoryFieldErrors(t, helper, quietName)) > 0
+		return len(repositoryFieldErrors(t, helper, repoName)) > 0
 	}, 2*time.Second, 250*time.Millisecond,
 		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
+
+	// Phase 2: make the same repository's check genuinely due. Field errors appearing
+	// here prove the key is delivered and reconciled, the sabotage above is effective,
+	// and a due health check still runs -- so phase 1 was ignored, not undelivered.
+	markHealthCheckOverdue(t, helper, repoName)
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, repoName),
+			"a repository whose health check is due must still be tested")
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 }
 
 // markHealthCheckOverdue pushes the stored health timestamp outside the recent-unhealthy
