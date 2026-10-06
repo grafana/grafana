@@ -219,7 +219,10 @@ describe('useHomepageSolutions', () => {
     });
 
     expect(mockFactories[id]).toHaveBeenCalledTimes(2);
-    expect(mockFactories[id]).toHaveBeenLastCalledWith(expect.objectContaining(scope), detect);
+    expect(mockFactories[id]).toHaveBeenLastCalledWith(
+      { datasourceUid: 'prometheus', datasourceName: 'Prometheus', ...scope },
+      detect
+    );
     result.current.solutions.forEach((current, i) => {
       if (i === index) {
         expect(current).not.toBe(first.solutions[i]);

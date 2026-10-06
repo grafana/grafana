@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Controller, type UseFormReturn } from 'react-hook-form';
+import { type Control, Controller } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
@@ -11,6 +11,7 @@ import {
   fetchSyntheticsLabelValues,
   parseSyntheticsFilter,
   summarizeSyntheticsFilter,
+  type SyntheticsIgnoreLabel,
 } from '../solutions/syntheticsFilter';
 
 import {
@@ -21,6 +22,13 @@ import {
 } from './SolutionFilterActions';
 
 const NO_IGNORES: SyntheticsScope = { jobs: [], instances: [], probes: [] };
+
+// sm_check_info label whose values each ignore list offers.
+const IGNORE_LABEL: Record<keyof SyntheticsScope, SyntheticsIgnoreLabel> = {
+  jobs: 'job',
+  instances: 'instance',
+  probes: 'probe',
+};
 
 /** Names of the dimensions a scope sets, for analytics; the values are customer data and never leave the browser. */
 function customizedDimensions(scope: SyntheticsScope): string {
@@ -55,98 +63,70 @@ export function SyntheticsFilterActions({ datasource }: CardFilterActionsProps) 
       openLabel={t('home.solutions.synthetics.filter.open', 'Ignore checks, targets, or probes')}
       title={t('home.solutions.synthetics.filter.title', 'Customize Synthetic Monitoring')}
     >
-      {(form) => <SyntheticsFilterFields datasource={datasource} form={form} />}
+      {({ control }) => (
+        <>
+          <IgnoreField
+            name="jobs"
+            label={t('home.solutions.synthetics.filter.jobs', 'Ignore checks')}
+            placeholder={t('home.solutions.synthetics.filter.no-jobs', 'No checks ignored')}
+            datasource={datasource}
+            control={control}
+          />
+          <IgnoreField
+            name="instances"
+            label={t('home.solutions.synthetics.filter.instances', 'Ignore targets')}
+            placeholder={t('home.solutions.synthetics.filter.no-instances', 'No targets ignored')}
+            datasource={datasource}
+            control={control}
+          />
+          <IgnoreField
+            name="probes"
+            label={t('home.solutions.synthetics.filter.probes', 'Ignore probes')}
+            placeholder={t('home.solutions.synthetics.filter.no-probes', 'No probes ignored')}
+            datasource={datasource}
+            control={control}
+          />
+        </>
+      )}
     </SolutionFilterActions>
   );
 }
 
-interface SyntheticsFilterFieldsProps {
+interface IgnoreFieldProps {
+  name: keyof SyntheticsScope;
+  label: string;
+  placeholder: string;
   datasource: DataSourceInstanceListItem;
-  form: UseFormReturn<SyntheticsScope>;
+  control: Control<SyntheticsScope>;
 }
 
-function SyntheticsFilterFields({ datasource, form: { control } }: SyntheticsFilterFieldsProps) {
-  // The three lists are independent: an ignored job does not narrow the targets offered.
-  const jobs = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, 'job'), [datasource.uid]);
-  const instances = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, 'instance'), [datasource.uid]);
-  const probes = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, 'probe'), [datasource.uid]);
-  // A rejected lookup leaves the value undefined: an empty list, with custom entry still allowed.
-  const jobOptions = useMemo(() => toOptions(jobs.value), [jobs.value]);
-  const instanceOptions = useMemo(() => toOptions(instances.value), [instances.value]);
-  const probeOptions = useMemo(() => toOptions(probes.value), [probes.value]);
+// One ignore list: loads its own values (the lists are independent, so an ignored job does not
+// narrow the targets offered) and is locked until they arrive. A rejected lookup leaves the value
+// undefined: an empty list, with custom entry still allowed.
+function IgnoreField({ name, label, placeholder, datasource, control }: IgnoreFieldProps) {
+  const values = useAsync(() => fetchSyntheticsLabelValues(datasource.uid, IGNORE_LABEL[name]), [datasource.uid, name]);
+  const options = useMemo(() => toOptions(values.value), [values.value]);
+  const id = `synthetics-filter-${name}`;
 
   return (
-    <>
-      {/* Each select is locked until its own values arrive. */}
-      <Field
-        label={t('home.solutions.synthetics.filter.jobs', 'Ignore checks')}
-        htmlFor="synthetics-filter-jobs"
-        noMargin
-      >
-        <Controller
-          control={control}
-          name="jobs"
-          render={({ field }) => (
-            <MultiCombobox<string>
-              id="synthetics-filter-jobs"
-              options={jobOptions}
-              value={field.value}
-              isClearable
-              createCustomValue
-              loading={jobs.loading}
-              disabled={jobs.loading}
-              placeholder={t('home.solutions.synthetics.filter.no-jobs', 'No checks ignored')}
-              onChange={(options) => field.onChange(options.map((o) => o.value))}
-            />
-          )}
-        />
-      </Field>
-      <Field
-        label={t('home.solutions.synthetics.filter.instances', 'Ignore targets')}
-        htmlFor="synthetics-filter-instances"
-        noMargin
-      >
-        <Controller
-          control={control}
-          name="instances"
-          render={({ field }) => (
-            <MultiCombobox<string>
-              id="synthetics-filter-instances"
-              options={instanceOptions}
-              value={field.value}
-              isClearable
-              createCustomValue
-              loading={instances.loading}
-              disabled={instances.loading}
-              placeholder={t('home.solutions.synthetics.filter.no-instances', 'No targets ignored')}
-              onChange={(options) => field.onChange(options.map((o) => o.value))}
-            />
-          )}
-        />
-      </Field>
-      <Field
-        label={t('home.solutions.synthetics.filter.probes', 'Ignore probes')}
-        htmlFor="synthetics-filter-probes"
-        noMargin
-      >
-        <Controller
-          control={control}
-          name="probes"
-          render={({ field }) => (
-            <MultiCombobox<string>
-              id="synthetics-filter-probes"
-              options={probeOptions}
-              value={field.value}
-              isClearable
-              createCustomValue
-              loading={probes.loading}
-              disabled={probes.loading}
-              placeholder={t('home.solutions.synthetics.filter.no-probes', 'No probes ignored')}
-              onChange={(options) => field.onChange(options.map((o) => o.value))}
-            />
-          )}
-        />
-      </Field>
-    </>
+    <Field label={label} htmlFor={id} noMargin>
+      <Controller
+        control={control}
+        name={name}
+        render={({ field }) => (
+          <MultiCombobox<string>
+            id={id}
+            options={options}
+            value={field.value}
+            isClearable
+            createCustomValue
+            loading={values.loading}
+            disabled={values.loading}
+            placeholder={placeholder}
+            onChange={(options) => field.onChange(options.map((o) => o.value))}
+          />
+        )}
+      />
+    </Field>
   );
 }

@@ -47,13 +47,13 @@ describe('fetchSyntheticsLabelValues', () => {
     await expect(fetchSyntheticsLabelValues('uid-a', 'job')).resolves.toEqual(['canary']);
 
     expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'uid-a' });
-    expect(getTagValues).toHaveBeenCalledWith(
-      expect.objectContaining({
-        key: 'job',
-        filters: [],
-        queries: [{ refId: 'values', expr: 'sm_check_info' }],
-      })
-    );
+    expect(getTagValues).toHaveBeenCalledTimes(1);
+    expect(getTagValues.mock.calls[0][0]).toMatchObject({
+      key: 'job',
+      filters: [],
+      queries: [{ refId: 'values', expr: 'sm_check_info' }],
+      timeRange: { raw: { from: 'now-24h', to: 'now' } },
+    });
   });
 
   it('reads as empty when the datasource cannot list label values', async () => {

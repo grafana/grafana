@@ -58,6 +58,10 @@ describe('readScalar', () => {
     expect(readScalar([numberFrame('A', [1, 2, 3])], 'A')).toBe(3);
   });
 
+  it('returns a zero sample as 0, not as a missing value', () => {
+    expect(readScalar([numberFrame('A', [0])], 'A')).toBe(0);
+  });
+
   it('returns null when no frame matches the refId', () => {
     expect(readScalar([numberFrame('A', [1, 2, 3])], 'B')).toBeNull();
   });

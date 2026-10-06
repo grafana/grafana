@@ -49,10 +49,12 @@ describe('SyntheticsFilterActions', () => {
     expect(within(dialog).getByRole('combobox', { name: 'Ignore checks' })).toBeDisabled();
     expect(within(dialog).getByRole('button', { name: 'Save' })).toBeDisabled();
     expect(within(dialog).queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
-    // Every list is looked up unnarrowed against this card's datasource.
-    for (const key of ['job', 'instance', 'probe']) {
-      expect(mockFetchLabelValues).toHaveBeenCalledWith('prometheus', key);
-    }
+    // Each list is looked up once, unnarrowed, against this card's datasource.
+    expect(mockFetchLabelValues.mock.calls).toEqual([
+      ['prometheus', 'job'],
+      ['prometheus', 'instance'],
+      ['prometheus', 'probe'],
+    ]);
 
     await act(async () => jobs.resolve(['canary', 'checkout']));
     const checks = within(dialog).getByRole('combobox', { name: 'Ignore checks' });

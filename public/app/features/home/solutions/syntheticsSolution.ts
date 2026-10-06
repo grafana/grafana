@@ -99,10 +99,11 @@ export function syntheticsSolution(
     alert,
     stats: async () => {
       const usage = await stats();
-      if (!usage) {
+      if (!usage || usage.checks === null) {
+        // Unreachable datasource or a failed count query: unknown, not empty.
         return null;
       }
-      if (!usage.checks || usage.checks <= 0) {
+      if (usage.checks <= 0) {
         // A scoped empty result must not leave a blank card under a highlighted gear.
         const ds = await datasource();
         return ds && scopeFor(filter, ds)

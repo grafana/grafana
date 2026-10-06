@@ -145,7 +145,7 @@ describe('syntheticsSolution', () => {
     await syntheticsSolution({ ...storedFilter, datasourceUid: 'other-uid' }).stats();
 
     expect(mockFetchStats.mock.calls).toEqual([
-      [datasource, expect.objectContaining({ jobs: ['canary'] })],
+      [datasource, storedFilter],
       [datasource, null],
     ]);
   });
@@ -227,13 +227,20 @@ describe('syntheticsSolution stats and sparkline', () => {
     await expect(syntheticsSolution(null).stats()).resolves.toBeNull();
   });
 
-  it('reports all checks ignored instead of hiding an empty scoped count', async () => {
+  it('reports all checks ignored instead of hiding a confirmed empty scoped count', async () => {
     mockFetchStats.mockResolvedValue({ checks: 0, successRatio: null });
 
     await expect(syntheticsSolution(storedFilter).stats()).resolves.toEqual({
       primary: 'All checks ignored',
       secondary: 'Adjust the filters',
     });
+  });
+
+  it('keeps a scoped card blank when the count is unavailable rather than claiming every check is ignored', async () => {
+    // A failed count query inside the partial stats batch leaves the ratio but no count.
+    mockFetchStats.mockResolvedValue({ checks: null, successRatio: 0.9 });
+
+    await expect(syntheticsSolution(storedFilter).stats()).resolves.toBeNull();
   });
 
   it('drops the secondary when the success ratio is unavailable', async () => {

@@ -67,6 +67,8 @@ let dataByUid: Record<string, number>;
 let probeErrorUids: Set<string>;
 // refId -> frames returned for detail batches; absent refId = empty instant vector.
 let framesByRefId: Record<string, DataFrame>;
+// Detail batches containing these refIds emit LoadingState.Error; sibling refIds' frames survive.
+let queryErrorRefIds: Set<string>;
 
 type CapturedRun = { datasource: { uid: string }; queries: Array<{ refId: string; expr: string }> };
 
@@ -86,6 +88,7 @@ beforeEach(() => {
   dataByUid = {};
   probeErrorUids = new Set();
   framesByRefId = {};
+  queryErrorRefIds = new Set();
   mockCreateQueryRunner.mockImplementation(() => {
     // Per-runner capture: parallel probes each get their own runner, so a shared variable would race.
     let captured: CapturedRun | undefined;
@@ -106,10 +109,12 @@ beforeEach(() => {
           const series = count > 0 ? [numberFrame('checks', [count])] : [];
           return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
         }
-        const series = (captured?.queries ?? []).flatMap((q) =>
-          framesByRefId[q.refId] ? [framesByRefId[q.refId]] : []
+        const queries = captured?.queries ?? [];
+        const series = queries.flatMap((q) =>
+          framesByRefId[q.refId] && !queryErrorRefIds.has(q.refId) ? [framesByRefId[q.refId]] : []
         );
-        return of({ state: LoadingState.Done, series, timeRange: {} } as PanelData);
+        const state = queries.some((q) => queryErrorRefIds.has(q.refId)) ? LoadingState.Error : LoadingState.Done;
+        return of({ state, series, timeRange: {} } as PanelData);
       },
       cancel: jest.fn(),
       destroy: jest.fn(),
@@ -173,17 +178,24 @@ describe('Synthetics datasource resolution', () => {
 });
 
 describe('fetchSyntheticsStats', () => {
-  it('issues the stats batch with the expected PromQL and reads its scalars', async () => {
+  it('reads the check count and success ratio off the batch', async () => {
     framesByRefId = {
       checks: numberFrame('checks', [12]),
       successRatio: numberFrame('successRatio', [0.985]),
     };
 
     await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: 12, successRatio: 0.985 });
+  });
+
+  it.each([
+    { name: 'no filter', scope: null },
+    { name: 'empty ignore lists', scope: NO_IGNORES },
+  ])('issues the bare stats queries with $name', async ({ scope }) => {
+    await fetchSyntheticsStats(datasource, scope);
 
     const [stats] = statsCalls();
     expect(Object.fromEntries(stats[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
-      checks: SM_CHECK_PROBE,
+      checks: `${SM_CHECK_PROBE} or vector(0)`,
       successRatio: 'sum(rate(probe_all_success_sum[24h])) / sum(rate(probe_all_success_count[24h]))',
     });
   });
@@ -192,23 +204,20 @@ describe('fetchSyntheticsStats', () => {
     await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: null, successRatio: null });
   });
 
+  it('reads a failed count query as null while keeping the success ratio from the same batch', async () => {
+    framesByRefId = { successRatio: numberFrame('successRatio', [0.985]) };
+    queryErrorRefIds = new Set(['checks']);
+
+    await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: null, successRatio: 0.985 });
+  });
+
   it('excludes the ignored jobs, targets and probes from both stats queries', async () => {
     await fetchSyntheticsStats(datasource, IGNORE_SCOPE);
 
     const [stats] = statsCalls();
     expect(Object.fromEntries(stats[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
-      checks: `count(count by (job, instance) (last_over_time(sm_check_info${IGNORE_SEL}[24h])))`,
+      checks: `count(count by (job, instance) (last_over_time(sm_check_info${IGNORE_SEL}[24h]))) or vector(0)`,
       successRatio: `sum(rate(probe_all_success_sum${IGNORE_SEL}[24h])) / sum(rate(probe_all_success_count${IGNORE_SEL}[24h]))`,
-    });
-  });
-
-  it('keeps the queries bare when every ignore list is empty', async () => {
-    await fetchSyntheticsStats(datasource, NO_IGNORES);
-
-    const [stats] = statsCalls();
-    expect(Object.fromEntries(stats[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
-      checks: SM_CHECK_PROBE,
-      successRatio: 'sum(rate(probe_all_success_sum[24h])) / sum(rate(probe_all_success_count[24h]))',
     });
   });
 });

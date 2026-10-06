@@ -12,6 +12,7 @@ import {
 import { CLOUD_UTILITY_PROM_DATASOURCE_UIDS, probeFound } from './solutionDataProbes';
 
 export interface SyntheticsStats {
+  /** Distinct checks: 0 for a confirmed empty (scoped) fleet, null when the count query failed. */
   checks: number | null;
   successRatio: number | null;
 }
@@ -75,7 +76,9 @@ const successRatio1h = (sel: string) =>
 function statsQueries(scope: SyntheticsScope | null): Record<string, string> {
   const sel = ignoreSelector(scope);
   return {
-    checks: checkCountQuery(sel),
+    // `or vector(0)` turns an empty fleet into a 0 sample; a missing sample then means the count
+    // query failed, which the partial batch would otherwise make indistinguishable from empty.
+    checks: `${checkCountQuery(sel)} or vector(0)`,
     successRatio: `sum(rate(probe_all_success_sum${sel}[${SM_LOOKBACK}])) / sum(rate(probe_all_success_count${sel}[${SM_LOOKBACK}]))`,
   };
 }
