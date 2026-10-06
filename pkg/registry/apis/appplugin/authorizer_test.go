@@ -71,7 +71,3 @@ func TestGetAuthorizer(t *testing.T) {
 		})
 	}
 }
-
-// Manifest kinds follow the rules apiextensions applies to CRDs: a namespaced
-// kind is decided at the storage layer, which knows the object's folder, and a
-// cluster-scoped kind is only reachable by users when the manifest says so.

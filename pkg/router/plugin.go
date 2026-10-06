@@ -288,6 +288,14 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	if clientV2 != nil {
+		clientV2 = &breakerPluginClient{Client: clientV2}
+	}
+	if clientV3 != nil {
+		clientV3 = &breakerPluginClientV3{Client: clientV3}
+	}
+	// Keep authentication outside the breaker: token exchange failures do not
+	// indicate whether the plugin is reachable.
 	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID,
 		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.plugin.JSONData.ID, b.deps.TokenExchanger))
 	if err != nil {

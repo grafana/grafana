@@ -14,12 +14,11 @@ import (
 )
 
 // clusterReadVerbs are the only verbs a user may run against a cluster-scoped
-// kind, and only one the manifest marks user readable. Watch is a read: the
-// reader role grants it, and without it no informer over the kind can start.
+// kind, and only one the manifest marks user readable. Watch is left to service
+// identities, as the apiextensions authorizer does for cluster-scoped CRDs.
 var clusterReadVerbs = map[string]bool{
-	utils.VerbGet:   true,
-	utils.VerbList:  true,
-	utils.VerbWatch: true,
+	utils.VerbGet:  true,
+	utils.VerbList: true,
 }
 
 // kindPolicy is what authorizing a manifest kind needs to know about it.

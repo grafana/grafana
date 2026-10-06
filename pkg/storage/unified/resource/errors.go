@@ -333,15 +333,20 @@ func AsErrorResult(err error) *resourcepb.ErrorResult {
 }
 
 // StatusError converts an ErrorResult into a Kubernetes StatusError, preserving the HTTP code, reason, details and
-// causes; returns nil for nil; counterpart of [AsErrorResult]
+// causes; defaults an unspecified HTTP code to 500. Returns nil for nil; counterpart of [AsErrorResult].
 func StatusError(res *resourcepb.ErrorResult) error {
 	if res == nil {
 		return nil
 	}
 
+	code := res.Code
+	if code == 0 {
+		code = http.StatusInternalServerError
+	}
+
 	status := &apierrors.StatusError{ErrStatus: metav1.Status{
 		Status:  metav1.StatusFailure,
-		Code:    res.Code,
+		Code:    code,
 		Reason:  metav1.StatusReason(res.Reason),
 		Message: res.Message,
 	}}
