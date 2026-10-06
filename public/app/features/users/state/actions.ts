@@ -2,7 +2,7 @@ import { debounce } from 'lodash';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { type FetchDataArgs } from '@grafana/ui';
-import { canShowRoles, getOrgUsers, getUserRoles } from 'app/features/admin/Users/userSearch';
+import { canShowRoles, getOrgUsers, getUserRoles } from 'app/features/admin/Users/utils';
 import { type ThunkResult } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
 

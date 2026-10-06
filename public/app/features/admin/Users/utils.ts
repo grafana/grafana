@@ -1,3 +1,4 @@
+import { t } from '@grafana/i18n';
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { accessControlQueryParam } from 'app/core/utils/accessControl';
@@ -57,4 +58,20 @@ function getUsersSearchUrl({ query, sort, filters = [], page, perPage }: UserPag
     params.set('sort', sort);
   }
   return `/api/users/search?${params}`;
+}
+
+export function getUserLastActive(user: Pick<UserDTO, 'lastSeenAt' | 'created' | 'lastSeenAtAge'>): {
+  text: string;
+  neverLoggedIn: boolean;
+} {
+  if (!user.lastSeenAtAge) {
+    return { text: '', neverLoggedIn: false };
+  }
+
+  // A last-seen timestamp before account creation indicates the user has never logged in.
+  const neverLoggedIn = Boolean(user.lastSeenAt && user.created && new Date(user.lastSeenAt) < new Date(user.created));
+  return {
+    text: neverLoggedIn ? t('admin.users-table.last-seen-never', 'Never') : user.lastSeenAtAge,
+    neverLoggedIn,
+  };
 }

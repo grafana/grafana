@@ -20,7 +20,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
-import { getUserLastActive } from './getUserLastActive';
+import { getUserLastActive } from './utils';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 

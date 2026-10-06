@@ -1,4 +1,4 @@
-import { getUserLastActive } from './getUserLastActive';
+import { getUserLastActive } from './utils';
 
 it.each([
   {

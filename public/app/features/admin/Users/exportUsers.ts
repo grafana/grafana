@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { t } from '@grafana/i18n';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
-import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './userSearch';
+import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './utils';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
 

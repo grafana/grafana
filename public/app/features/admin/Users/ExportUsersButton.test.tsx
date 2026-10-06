@@ -30,7 +30,7 @@ it('shows the download label in a tooltip instead of inside the button', async (
   await userEvent.hover(button);
 
   expect(await screen.findByRole('tooltip')).toHaveTextContent('Download table as CSV');
-  expect(button).not.toHaveTextContent('Download as CSV');
+  expect(button).not.toHaveTextContent('Download table as CSV');
 });
 
 it('disables the button while gathering pages and enables it after the download', async () => {
@@ -50,7 +50,7 @@ it('disables the button while gathering pages and enables it after the download'
   await act(async () => finish({ users: [], totalCount: 0 }));
 
   expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true });
-  expect(screen.getByRole('button', { name: 'Download as CSV' })).toHaveAttribute('aria-disabled', 'false');
+  expect(screen.getByRole('button', { name: 'Download table as CSV' })).toHaveAttribute('aria-disabled', 'false');
 });
 
 it('reports a failed export and allows retrying the download', async () => {
@@ -63,7 +63,7 @@ it('reports a failed export and allows retrying the download', async () => {
   await waitFor(() =>
     expect(emit).toHaveBeenCalledWith(AppEvents.alertError, ['Failed to export users. Please try again.'])
   );
-  expect(screen.getByRole('button', { name: 'Download as CSV' })).toHaveAttribute('aria-disabled', 'false');
+  expect(screen.getByRole('button', { name: 'Download table as CSV' })).toHaveAttribute('aria-disabled', 'false');
   expect(saveAs).not.toHaveBeenCalled();
 
   await userEvent.click(screen.getByRole('button', { name: 'Download table as CSV' }));

@@ -31,7 +31,7 @@ import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
-import { getUserLastActive } from './getUserLastActive';
+import { getUserLastActive } from './utils';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 

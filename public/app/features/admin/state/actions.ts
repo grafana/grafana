@@ -11,7 +11,7 @@ import { type LdapUser } from 'app/types/ldap';
 import { type ThunkResult } from 'app/types/store';
 import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
-import { getUsersPage } from '../Users/userSearch';
+import { getUsersPage } from '../Users/utils';
 
 import {
   userAdminPageLoadedAction,
