@@ -111,7 +111,7 @@ export function useFilterPopupState({
                         min: field.config.min,
                         max: field.config.max,
                       },
-                      timeZone: selection?.timeZone ?? view.timeZone,
+                      timeZone: selection?.timeZone,
                     } satisfies ValueSetOptions,
                   },
                   parentIndex
@@ -138,7 +138,6 @@ export function useFilterPopupState({
               )
           : undefined,
       onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
-      timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       name,
       rows: rowsForPopup,

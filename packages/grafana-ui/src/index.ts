@@ -177,6 +177,7 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
+  type PanelRuntimeTransformations,
   type AdHocTransformationsState,
   PanelContextRoot,
   usePanelContext,

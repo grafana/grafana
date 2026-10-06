@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvents from '@testing-library/user-event';
 
 import { createDataFrame } from '@grafana/data';
@@ -92,7 +92,7 @@ describe('FlameGraphTopTableContainer', () => {
 });
 
 describe('FlameGraphTopTableContainer with useTableNG', () => {
-  const setup = (props?: { tableRefreshEnabled?: boolean; rowTransformationsEnabled?: boolean }) => {
+  const setup = (props?: { tableRefreshEnabled?: boolean }) => {
     const flameGraphData = createDataFrame(data);
     const container = new FlameGraphDataContainer(flameGraphData, { collapsing: true });
     const onSearch = jest.fn();
@@ -107,7 +107,6 @@ describe('FlameGraphTopTableContainer with useTableNG', () => {
         colorScheme={ColorScheme.ValueBased}
         useTableNG={true}
         tableRefreshEnabled={props?.tableRefreshEnabled}
-        rowTransformationsEnabled={props?.rowTransformationsEnabled}
       />
     );
 

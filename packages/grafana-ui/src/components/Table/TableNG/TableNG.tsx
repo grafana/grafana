@@ -42,7 +42,9 @@ export function TableNG(props: TableNGProps) {
     }
     const frame = props.data;
     const prepare = (frame: DataFrame): DataFrame => {
-      cacheFieldDisplayNames([frame]);
+      if (!hasCachedDisplayNames(frame)) {
+        cacheFieldDisplayNames([frame]);
+      }
       const names = frame.fields.map(getDisplayName);
       const identities = frame.fields.map((field) => JSON.stringify([field.name, field.labels]));
       const duplicates = (values: string[]) => {

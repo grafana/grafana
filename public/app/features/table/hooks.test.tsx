@@ -141,6 +141,98 @@ describe('useAdHocColumnState', () => {
     expect(cacheFieldDisplayNamesMock).not.toHaveBeenCalled();
   });
 
+  it('exposes the catalog when column management is enabled', () => {
+    const frames = [makeFrame()];
+    const { result, rerender } = renderHook(({ enabled }) => useAdHocColumnState(frames, 0, enabled), {
+      initialProps: { enabled: false },
+      wrapper: wrapperWith(contextWithSource(frames)),
+    });
+
+    expect(result.current).toBeUndefined();
+    rerender({ enabled: true });
+    expect(result.current?.columnCatalog).toEqual(['value']);
+  });
+
+  it('rejects duplicate display names and exposes a catalog after names become unique', () => {
+    const sourceFrame = makeFrame({
+      fields: [
+        { name: 'first', type: FieldType.number, config: { displayName: 'Duplicate' }, values: [1] },
+        { name: 'second', type: FieldType.number, config: { displayName: 'Duplicate' }, values: [2] },
+      ],
+    });
+    const sourceSeries = [sourceFrame];
+    const context = contextWithSource(sourceSeries);
+    const { result, rerender } = renderHook(({ frames }) => useAdHocColumnState(frames, 0, true), {
+      initialProps: { frames: sourceSeries },
+      wrapper: wrapperWith(context),
+    });
+
+    expect(result.current).toBeUndefined();
+    sourceSeries[0] = makeFrame({
+      fields: sourceFrame.fields.map((field) => ({ ...field, config: { displayName: field.name } })),
+    });
+    rerender({ frames: [...sourceSeries] });
+    expect(result.current?.columnCatalog).toEqual(['first', 'second']);
+  });
+
+  it('preserves existing source field state when resolving display names', () => {
+    const state = { displayName: 'Cached name' };
+    const frames = [
+      makeFrame({
+        fields: [{ name: 'raw', type: FieldType.number, config: {}, values: [1], state }],
+      }),
+    ];
+    const { result } = renderHook(() => useAdHocColumnState(frames, 0, true), {
+      wrapper: wrapperWith(contextWithSource(frames)),
+    });
+
+    expect(result.current?.columnCatalog).toEqual(['raw']);
+    expect(frames[0].fields[0].state).toBe(state);
+    expect(state).toEqual({ displayName: 'Cached name' });
+  });
+
+  it('writes frame-scoped column changes using the latest transformations without losing other transformations', () => {
+    const frames = [makeFrame({ refId: 'A' }), makeFrame({ refId: 'B' })];
+    const context = contextWithSource(frames);
+    const api = context.adHocTransformations!;
+    const { result } = renderHook(() => useAdHocColumnState(frames, 1, true), {
+      wrapper: wrapperWith(context),
+    });
+    const otherFrame: DataTransformerConfig = {
+      id: 'organize',
+      filter: { id: 'byRefId', options: 'A' },
+      options: { excludeByName: { value: true } },
+    };
+    const unrelated: DataTransformerConfig = { id: 'limit', options: { limitField: 3 } };
+    let latest: readonly DataTransformerConfig[] = [otherFrame, unrelated];
+    api.get = () => latest;
+    const set = jest.spyOn(api, 'set').mockImplementation((_owner, next) => {
+      latest = next;
+    });
+
+    act(() => result.current?.onColumnOrderChange(['value']));
+    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+      otherFrame,
+      unrelated,
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'B' },
+        options: { indexByName: { value: 0 }, excludeByName: {}, renameByName: {} },
+      },
+    ]);
+
+    act(() => result.current?.onHiddenColumnsChange(new Set(['value'])));
+    expect(set).toHaveBeenLastCalledWith('grafana:table-view', [
+      otherFrame,
+      unrelated,
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'B' },
+        options: { indexByName: { value: 0 }, excludeByName: { value: true }, renameByName: {} },
+      },
+    ]);
+  });
+
   it.each([undefined, 'A'])('disables ambiguous multi-frame column management for refId %s', (refId) => {
     const frames = [makeFrame({ refId }), makeFrame({ refId })];
     const { result, rerender } = renderHook(({ frames }) => useAdHocColumnState(frames, 0, true), {
