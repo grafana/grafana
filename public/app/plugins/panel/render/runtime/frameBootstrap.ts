@@ -72,6 +72,8 @@ export const WRAPPER_BOOTSTRAP_SOURCE = `(function () {
  */
 export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   'use strict';
+  // Captured first: the user code must never find this element, its nonce or its text.
+  var bootstrapScript = document.currentScript;
   var NONCE = ${BOOTSTRAP_NONCE_PLACEHOLDER};
   var CODE = ${BOOTSTRAP_CODE_PLACEHOLDER};
   var INIT_TYPE = ${INIT_TYPE};
@@ -359,6 +361,79 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
   }
 
+  /*
+   * The nonce is in the bootstrap script (attribute, property and text) and in the CSP meta element.
+   * Removing them does not change the enforced policy, which the browser fixed when it parsed them.
+   * ReportingObserver would hand out the policy text of a violation, so it is replaced too.
+   */
+  function concealNonce() {
+    if (bootstrapScript) {
+      bootstrapScript.removeAttribute('nonce');
+      bootstrapScript.nonce = '';
+      bootstrapScript.textContent = '';
+      if (bootstrapScript.parentNode) {
+        bootstrapScript.parentNode.removeChild(bootstrapScript);
+      }
+      bootstrapScript = null;
+    }
+    var metas = document.querySelectorAll('meta[http-equiv]');
+    for (var i = 0; i < metas.length; i++) {
+      metas[i].parentNode.removeChild(metas[i]);
+    }
+    if ('ReportingObserver' in window) {
+      try {
+        Object.defineProperty(window, 'ReportingObserver', {
+          value: function () {
+            throw new Error('ReportingObserver is not available in the render panel.');
+          },
+          writable: false,
+          enumerable: false,
+          configurable: false
+        });
+      } catch (e) {
+        // Only violation reports would leak, and the code has no channel to send them out.
+      }
+    }
+  }
+
+  function nonceScript(text) {
+    var element = document.createElement('script');
+    element.setAttribute('nonce', NONCE);
+    element.nonce = NONCE;
+    element.textContent = text;
+    return element;
+  }
+
+  function clearScript(element) {
+    element.removeAttribute('nonce');
+    element.nonce = '';
+    element.textContent = '';
+    if (element.parentNode) {
+      element.parentNode.removeChild(element);
+    }
+  }
+
+  /** A closed shadow root of the connected host if scripts run there, else the host itself. */
+  function closedScriptRoot(host) {
+    var shadow;
+    try {
+      shadow = host.attachShadow({ mode: 'closed' });
+    } catch (e) {
+      return host;
+    }
+    var flag = '__grafanaRenderShadowProbe';
+    var probe = nonceScript('window.' + flag + ' = true;');
+    shadow.appendChild(probe);
+    var runs = window[flag] === true;
+    try {
+      delete window[flag];
+    } catch (e) {
+      window[flag] = undefined;
+    }
+    clearScript(probe);
+    return runs ? shadow : host;
+  }
+
   function noop() {}
   var raf = typeof window.requestAnimationFrame === 'function'
     ? function (callback) { window.requestAnimationFrame(callback); }
@@ -423,7 +498,10 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   // One blocked request violates both this document's policy and the inherited wrapper policy,
   // so identical reports within the same task are sent once.
   var recentViolations = null;
+  // Registered first, in the capture phase on window, so the event never reaches the user code:
+  // its originalPolicy carries the nonce.
   window.addEventListener('securitypolicyviolation', function (event) {
+    event.stopImmediatePropagation();
     var directive = event.violatedDirective || event.effectiveDirective || 'policy';
     var text = directive + ' ' + (event.blockedURI || 'inline');
     if (!recentViolations) {
@@ -832,15 +910,24 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     window.panel = api;
   }
 
-  var script = document.createElement('script');
-  script.setAttribute('nonce', NONCE);
-  script.nonce = NONCE;
-  script.textContent = CODE;
+  concealNonce();
+
+  // The user script needs the nonce to run, so it runs inside a closed shadow root when the browser
+  // runs scripts there: querySelector, document.scripts and document.currentScript cannot reach it.
+  // Either way it loses its nonce and text, and leaves the document, as soon as it has run.
+  var scriptHost = document.createElement('span');
+  (document.body || document.documentElement).appendChild(scriptHost);
+  var scriptParent = closedScriptRoot(scriptHost);
+  var script = nonceScript(CODE);
   runningUserCode = true;
   try {
-    (document.body || document.documentElement).appendChild(script);
+    scriptParent.appendChild(script);
   } finally {
     runningUserCode = false;
+    clearScript(script);
+    if (scriptHost.parentNode) {
+      scriptHost.parentNode.removeChild(scriptHost);
+    }
   }
   if (!draw && !startupFailed) {
     reportError('startup', 'The code did not call panel.onRender(draw) at the top level.');
