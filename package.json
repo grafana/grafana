@@ -317,7 +317,7 @@
     "@hello-pangea/dnd": "18.0.1",
     "@kusto/monaco-kusto": "^10.0.0",
     "@leeoniya/ufuzzy": "1.0.19",
-    "@lezer/common": "1.5.2",
+    "@lezer/common": "1.5.3",
     "@lezer/lr": "1.4.10",
     "@lezer/markdown": "1.7.2",
     "@locker/near-membrane-dom": "0.14.0",
