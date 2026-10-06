@@ -3,6 +3,7 @@ import { type Unsubscribable } from 'rxjs';
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
+import { applySavedViewStateAsDefault, captureSavedViewState } from '../savedviews/state';
 import { createDashboardEditViewFor } from '../settings/createDashboardEditViewFor';
 import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
 import { findEditPanel, getLibraryPanelBehavior } from '../utils/utils';
@@ -28,7 +29,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   constructor(private _scene: DashboardScene) {}
 
   getKeys(): string[] {
-    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow'];
+    return ['inspect', 'viewPanel', 'editPanel', 'editview', 'autofitpanels', 'shareView', 'drow', 'viewFilter'];
   }
 
   getUrlState(): SceneObjectUrlValues {
@@ -42,6 +43,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
       // param through its own navigation, and reporting the held id here would put it back.
       editPanel: state.editPanel?.getUrlKey() || (state.isEditing ? this._heldEditPanelId : undefined),
       shareView: state.shareView,
+      viewFilter: state.viewFilter,
     };
   }
 
@@ -71,9 +73,37 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   updateFromUrl(values: SceneObjectUrlValues): void {
-    const { viewPanel, isEditing, editPanel, editview, shareView } = this._scene.state;
+    const { viewPanel, isEditing, editPanel, editview, shareView, viewFilter, savedViews } = this._scene.state;
     const update: Partial<DashboardSceneState> = {};
     let panelToEdit: VizPanel | undefined;
+
+    // update.viewFilter is applied synchronously below (a plain scalar on this scene, not a
+    // cross-object mutation, so it doesn't participate in the problem this comment describes).
+    // The actual apply is deferred with setTimeout for the same reason the editview branch above
+    // defers onEnterEditMode: $timeRange's and every variable's own updateFromUrl run right after
+    // this call, in the SAME synchronous pass, against the SAME already-captured URL snapshot. If
+    // we mutated them here, their own updateFromUrl would immediately see "current state (now the
+    // new value) differs from the stale snapshot (the old value)" and revert them right back — the
+    // sync pass doesn't re-read the URL mid-walk, so a synchronous mutation here is invisible to it
+    // and gets clobbered a few lines later in the very same call stack. Deferring to a new tick
+    // lets that pass finish first.
+    if (typeof values.viewFilter === 'string' && values.viewFilter !== viewFilter) {
+      const view = savedViews?.find((v) => v.metadata.name === values.viewFilter);
+      if (view) {
+        const scene = this._scene;
+        // Captured synchronously, right now -- before $timeRange's and every variable's own
+        // updateFromUrl run later in this SAME pass. Diffing this against a second capture taken
+        // inside the deferred callback (after those siblings have had their turn) is what lets a
+        // saved view act as a default an explicit var- or from/to param in the same url change
+        // still overrides, per field, instead of being unconditionally clobbered by the view's own
+        // values (e.g. a shared link like "?viewFilter=view-1&from=now-15m").
+        const before = captureSavedViewState(scene);
+        setTimeout(() => applySavedViewStateAsDefault(scene, view.spec, before));
+        update.viewFilter = values.viewFilter;
+      }
+    } else if (viewFilter && values.viewFilter === null) {
+      update.viewFilter = undefined;
+    }
 
     // Reachable directly via ?editview=, independent of any settings entry point: without this
     // check, the branch below calls onEnterEditMode() unconditionally when not already editing,

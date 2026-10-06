@@ -1,9 +1,10 @@
 import { waitFor } from '@testing-library/react';
 
 import { locationService } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, SceneQueryRunner, SceneTimeRange, UrlSyncManager, VizPanel } from '@grafana/scenes';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { type SavedDashboardView } from '../savedviews/api';
 
 import { DashboardScene } from './DashboardScene';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
@@ -29,6 +30,108 @@ describe('DashboardSceneUrlSync', () => {
       const layout = scene.state.body as DefaultGridLayoutManager;
       layout.state.grid.setState({ UNSAFE_fitPanels: true });
       expect(scene.urlSync?.getUrlState().autofitpanels).toBe('true');
+    });
+  });
+
+  describe('viewFilter', () => {
+    function buildSceneWithSavedViews() {
+      const view: SavedDashboardView = {
+        apiVersion: 'dashboardviews.grafana.app/v0alpha1',
+        kind: 'SavedDashboardView',
+        metadata: { name: 'view-1', resourceVersion: '1', creationTimestamp: '' },
+        spec: {
+          dashboardUID: 'dash-1',
+          name: 'My view',
+          timeRange: { from: 'now-24h', to: 'now-1h' },
+          variables: [],
+        },
+      };
+      const scene = new DashboardScene({
+        title: 'hello',
+        uid: 'dash-1',
+        savedViews: [view],
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+      });
+      return { scene, view };
+    }
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('records the selection synchronously, but defers applying it', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      // state.viewFilter is a plain scalar on this scene, so it applies immediately.
+      expect(scene.state.viewFilter).toBe('view-1');
+      // The actual time range/variable apply is deferred to a later tick -- applying it here,
+      // synchronously, would get clobbered a few lines later in the SAME url-sync pass by
+      // $timeRange's own updateFromUrl, which still sees the pre-mutation URL snapshot. This is
+      // the regression this test guards against: reverting to a synchronous applySavedViewState
+      // call would make this assertion fail (from would already be 'now-24h').
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-24h');
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h');
+    });
+
+    it('ignores a viewFilter that does not match any saved view', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'does-not-exist' });
+      jest.runAllTimers();
+
+      expect(scene.state.viewFilter).toBeUndefined();
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h');
+    });
+
+    it('clears viewFilter from state when removed from the url', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      expect(scene.state.viewFilter).toBe('view-1');
+
+      scene.urlSync?.updateFromUrl({ viewFilter: null });
+      expect(scene.state.viewFilter).toBeUndefined();
+    });
+
+    it('reflects the applied view in getUrlState', () => {
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+
+      expect(scene.urlSync?.getUrlState().viewFilter).toBe('view-1');
+    });
+
+    it('does not clobber an explicit time-range override that lands in the same url-sync pass', () => {
+      // Regression test for a link like "?viewFilter=view-1&from=now-15m": $timeRange's own
+      // updateFromUrl runs synchronously, in the SAME pass, right after this handler's -- before
+      // this test's simulated equivalent of that.
+      const { scene } = buildSceneWithSavedViews();
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      scene.state.$timeRange?.urlSync?.updateFromUrl({ from: 'now-15m' });
+
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-15m'); // explicit override survives
+      expect(scene.state.$timeRange?.state.to).toBe('now-1h'); // untouched -- still gets the default
+    });
+
+    it('does not schedule a second apply when the url already matches the current viewFilter', () => {
+      // Pins the fix for SavedViewsPane.handleSelect's double-apply: it now sets viewFilter
+      // synchronously before the url round-trips, so by the time locationService.partial's change
+      // reaches here, this guard is already false and the branch never runs at all.
+      const { scene } = buildSceneWithSavedViews();
+      scene.setState({ viewFilter: 'view-1' });
+
+      scene.urlSync?.updateFromUrl({ viewFilter: 'view-1' });
+      jest.runAllTimers();
+
+      expect(scene.state.$timeRange?.state.from).toBe('now-6h'); // unchanged: branch never fired
     });
   });
 
