@@ -1,7 +1,5 @@
 import { columnVisibility } from './columnVisibility';
 
-export const tableTransformations = {
+export const columnTransformations = {
   columnVisibility,
 };
-
-export const columnTransformations = [tableTransformations.columnVisibility];
