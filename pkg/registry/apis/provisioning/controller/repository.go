@@ -1102,17 +1102,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Determine the main triggering condition
 	var reason string
 	switch {
-	// First, we check if the repository is blocked
-	case isCurrentlyBlocked && isOverQuota:
-		reason = "blocked_over_quota"
-		logger.Info("repository blocked and over quota, reconciling but skipping sync")
+	// Each case is a change to act on. Already blocked and still over quota is a steady
+	// state, so it is not one: it matched every requeue, and a reconcile's own status
+	// patch requeues it, so it fed itself. Recovery triggers on forceProcessForUnblock.
 	case !isCurrentlyBlocked && isOverQuota:
 		reason = "over_quota"
 		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
 	case hasSpecChanged:
 		reason = "spec_changed"
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	case shouldResync:
+	// A blocked repository never finishes a sync, so Sync.Finished never advances and
+	// shouldResync stays true for good. determineSyncStrategy refuses to sync it anyway.
+	case shouldResync && !isOverQuota:
 		reason = "resync_interval"
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:

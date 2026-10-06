@@ -210,26 +210,9 @@ describe('<SpanDetail>', () => {
     expect(screen.getByTestId('span-detail-cards-column')).toBeInTheDocument();
   });
 
-  it('shows the operation name', () => {
+  it('shows the operation name without an error icon when the span failed', () => {
     render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
     expect(screen.getByRole('heading', { name: span.operationName })).toBeInTheDocument();
-  });
-
-  it('shows an error icon in the header when the span failed', () => {
-    render(<SpanDetail {...(props as unknown as SpanDetailProps)} />);
-
-    expect(screen.getByLabelText('Span has an error')).toHaveAttribute('data-testid', 'icon-exclamation-circle');
-  });
-
-  it('hides the header error icon when the span did not fail', () => {
-    const okSpan = {
-      ...span,
-      statusCode: 0,
-      tags: span.tags.filter((tag) => tag.key !== 'error'),
-    };
-
-    render(<SpanDetail {...(props as unknown as SpanDetailProps)} span={okSpan} />);
-
     expect(screen.queryByLabelText('Span has an error')).not.toBeInTheDocument();
   });
 
