@@ -537,6 +537,69 @@ describe('renderContent', () => {
       '<b>web-1</b>&lt;script&gt;alert(1)&lt;/script&gt;\n<b>web-2</b>&lt;script&gt;alert(1)&lt;/script&gt;'
     );
   });
+
+  describe('handlebars inside an HTML comment', () => {
+    function renderOnce(content: string, mode: TextMode) {
+      return renderContent(
+        { content, series: [hosts], renderMode: RenderMode.Once, mode },
+        createReplaceVariables(),
+        false
+      );
+    }
+
+    it.each([TextMode.HTML, TextMode.Markdown])(
+      'leaves the template below a commented-out loop renderable in %s mode',
+      (mode) => {
+        // Rendered, the loop fills the whole character budget inside the comment, so the cut
+        // lands there and takes both the closing `-->` and everything below it.
+        const wide = toDataFrame({
+          fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+        });
+        const { content, truncated } = renderContent(
+          {
+            content: '<!-- {{#each data}}{{n}}{{/each}} -->\n<b>below</b>',
+            series: [wide],
+            renderMode: RenderMode.Once,
+            mode,
+          },
+          createReplaceVariables(),
+          false
+        );
+
+        expect(content).toContain('<b>below</b>');
+        expect(truncated).toBe(false);
+      }
+    );
+
+    it.each([
+      {
+        desc: 'a plain comment in HTML, which the sanitizer drops as before',
+        mode: TextMode.HTML,
+        content: '<!-- note --><p>hi</p>',
+        expected: '<p>hi</p>',
+      },
+      {
+        desc: 'a plain comment inside markdown inline code',
+        mode: TextMode.Markdown,
+        content: 'Use `<!-- hide me -->` for that.',
+        expected: '<p>Use <code>&lt;!-- hide me --&gt;</code> for that.</p>\n',
+      },
+      {
+        desc: 'a plain comment inside a markdown code fence',
+        mode: TextMode.Markdown,
+        content: '```html\n<!-- set the title -->\n```\n',
+        expected: '<pre><code class="language-html">&lt;!-- set the title --&gt;\n</code></pre>\n',
+      },
+    ])('keeps $desc untouched', ({ mode, content, expected }) => {
+      expect(renderOnce(content, mode).content).toBe(expected);
+    });
+
+    it('shows a commented-out loop verbatim in code mode, where nothing is rendered', () => {
+      const content = '<!-- {{#each data}}{{host}}{{/each}} -->';
+
+      expect(renderOnce(content, TextMode.Code).content).toBe(content);
+    });
+  });
 });
 
 describe('catchTemplateError', () => {

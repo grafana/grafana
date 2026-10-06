@@ -82,7 +82,9 @@ export function interpolateTemplate(
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
-    isTextNewFeaturesEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
+    isTextNewFeaturesEnabled() && mode !== TextMode.Code
+      ? compileTemplate(stripTemplatedComments(content), replaceVariables)
+      : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables, compiled);
@@ -98,6 +100,32 @@ export function interpolateTemplate(
 
   // A Once template emits one string, so the row ceiling cannot bound its size.
   return cutToMaxChars(rendered);
+}
+
+// Expressions inside an HTML comment render output the sanitizer always discards, so running
+// them only spends the character budget - and a cut landing inside the comment takes the rest
+// of the template with it. A comment holding one is commented-out template, so drop it unrendered.
+function stripTemplatedComments(content: string): string {
+  let out = '';
+  let pos = 0;
+
+  while (pos < content.length) {
+    const open = content.indexOf('<!--', pos);
+
+    if (open === -1) {
+      return out + content.slice(pos);
+    }
+
+    // An unterminated comment runs to the end of the document, as the sanitizer reads it too.
+    const close = content.indexOf('-->', open);
+    const end = close === -1 ? content.length : close + 3;
+    const comment = content.slice(open, end);
+
+    out += content.slice(pos, open) + (comment.includes('{{') ? '' : comment);
+    pos = end;
+  }
+
+  return out;
 }
 
 // Cut on a line break so the tail lands between elements rather than inside a tag, but

@@ -940,7 +940,7 @@ describe('TextNGPanel', () => {
     }
 
     it('says the render was cut short, and still shows what fit', async () => {
-      setupWide('<b>kept</b>\n<!-- {{#each data}}{{n}}{{/each}} -->');
+      setupWide('<b>kept</b>\n{{#each data}}{{n}}{{/each}}');
       const footer = await screen.findByTestId(FOOTER_TEST_ID);
 
       expect(screen.getByText('kept')).toBeInTheDocument();
