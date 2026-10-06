@@ -1380,9 +1380,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
-		if snapshotDualWrite == unifiedSnapshotStore && b.unified != nil {
-			b.snapshotBlobs = b.unified
-		}
+		b.snapshotBlobs = b.unified
 		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
 		storage[snapshots.StoragePath()] = snapshotWrapper
 		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
@@ -1713,7 +1711,12 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
 			func() rest.Storage {
 				return b.snapshotStorage
-			}, b.dashboardService, b.snapshotBlobs)
+			}, b.dashboardService, b.snapshotBlobs, func(ctx context.Context) (bool, error) {
+				if b.isStandalone {
+					return true, nil
+				}
+				return b.dualWriter.ReadFromUnified(ctx, dashv0.SnapshotResourceInfo.GroupResource())
+			})
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
 	}

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
@@ -159,6 +160,54 @@ func TestCreateSnapshotDashboardValidation(t *testing.T) {
 				assert.Contains(t, fmt.Sprintf("%v", resp["message"]), tt.expectedMessage)
 			}
 		})
+	}
+}
+
+func TestCreateSnapshotBlobWritesFollowStorageMode(t *testing.T) {
+	setKubernetesSnapshotsToggle(t, true)
+	const orgID int64 = 1
+	namespace := authlib.OrgNamespaceFormatter(orgID)
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID: "valid-uid", OrgID: orgID,
+	}).Return(&dashboards.Dashboard{UID: "valid-uid", OrgID: orgID}, nil)
+
+	storage := grafanarest.NewMockStorage(t)
+	storage.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			snap := args.Get(1).(*dashv0.Snapshot)
+			if snap.Blobs.Dashboard != nil {
+				require.Nil(t, snap.Spec.Dashboard)
+			} else {
+				require.NotNil(t, snap.Spec.Dashboard)
+			}
+		}).Return(&dashv0.Snapshot{}, nil)
+	blobs := &fakeBlobStore{putRsp: &resourcepb.PutBlobResponse{Uid: "blob-1", MimeType: "application/json"}}
+	unified := false
+	routes := GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]common.OpenAPIDefinition{},
+		func() rest.Storage { return storage }, dashboardService, blobs,
+		func(context.Context) (bool, error) { return unified, nil },
+	)
+
+	for _, enabled := range []bool{false, true} {
+		unified = enabled
+		blobs.put = nil
+		body := []byte(`{"dashboard":{"uid":"valid-uid","title":"test"},"name":"test snapshot"}`)
+		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{UserID: 1, OrgID: orgID}))
+		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
+		recorder := httptest.NewRecorder()
+		routes.Namespace[0].Handler(recorder, req)
+		require.Equal(t, http.StatusOK, recorder.Code, recorder.Body.String())
+		if enabled {
+			require.NotNil(t, blobs.put)
+		} else {
+			require.Nil(t, blobs.put)
+		}
 	}
 }
 

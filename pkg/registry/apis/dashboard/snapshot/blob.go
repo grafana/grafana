@@ -65,8 +65,9 @@ func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, sn
 		return nil, true, fmt.Errorf("snapshot %q references a blob but no blob store is configured", snap.Name)
 	}
 	rsp, err := blobs.GetBlob(ctx, &resourcepb.GetBlobRequest{
-		Resource: snapshotBlobKey(snap),
-		Uid:      ref.Uid,
+		Resource:       snapshotBlobKey(snap),
+		Uid:            ref.Uid,
+		MustProxyBytes: true,
 	})
 	if err != nil {
 		return nil, true, err

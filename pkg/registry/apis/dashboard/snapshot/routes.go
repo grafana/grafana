@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -151,7 +152,7 @@ func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapsho
 }
 
 // nolint:gocyclo
-func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient) *builder.APIRoutes {
+func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient, readFromUnified ...func(context.Context) (bool, error)) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -388,7 +389,16 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					// Set namespace in context for k8s storage layer
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
-					if blobs != nil && !cmd.External {
+					useBlobs := blobs != nil && !cmd.External
+					if useBlobs && len(readFromUnified) > 0 {
+						var err error
+						useBlobs, err = readFromUnified[0](ctx)
+						if err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
+					}
+					if useBlobs {
 						if err := moveDashboardToBlob(ctx, blobs, snapshot); err != nil {
 							errhttp.Write(ctx, err, w)
 							return

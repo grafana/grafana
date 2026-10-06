@@ -171,6 +171,7 @@ func TestReadDashboardBlob(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ok)
 		require.Equal(t, "blob-1", store.get.Uid)
+		require.True(t, store.get.MustProxyBytes)
 		require.Equal(t, "snap-1", store.get.Resource.Name)
 		require.Equal(t, map[string]any{"title": "CPU", "panels": []any{}}, dash)
 	})
