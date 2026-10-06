@@ -276,6 +276,36 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     return changes;
   }
 
+  /**
+   * Resolves the panels `viewOnlyVizChanges` reported, for a caller that is about to apply a spec of its
+   * own and so has no modal to show (APPLY_NOTEBOOK_SPEC, from the assistant). The vizConfig for each
+   * element is read off the scene/autosave directly rather than off the caller's spec, so the result is
+   * correct regardless of what that spec happens to say about the same panel: 'keep' is the panel's
+   * current live look, 'discard' is its last-saved one.
+   */
+  public resolveViewOnlyVizChanges(action: 'keep' | 'discard'): Map<string, PanelKind['spec']['vizConfig']> {
+    const pending = new Set(this.viewOnlyVizChanges());
+    const resolved = new Map<string, PanelKind['spec']['vizConfig']>();
+
+    if (action === 'discard') {
+      for (const { elementName, vizConfig } of this.restorablePanels()) {
+        if (pending.has(elementName)) {
+          resolved.set(elementName, vizConfig);
+        }
+      }
+      return resolved;
+    }
+
+    const liveVizConfigs = collectVizConfigs(transformNotebookSceneToSaveModel(this.scene));
+    for (const name of pending) {
+      const vizConfig = liveVizConfigs.get(name);
+      if (vizConfig) {
+        resolved.set(name, vizConfig);
+      }
+    }
+    return resolved;
+  }
+
   /** Treats the named panels' current look as the notebook's own, so the next save writes it. */
   public keepVizChanges(elementNames: string[]): void {
     for (const name of elementNames) {
