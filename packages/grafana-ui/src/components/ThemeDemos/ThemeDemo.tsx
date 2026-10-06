@@ -13,6 +13,7 @@ import {
 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
+import { Alert, type AlertVariant } from '../Alert/Alert';
 import { allButtonVariants, Button } from '../Button/Button';
 import { Card } from '../Card/Card';
 import { CollapsableSection } from '../Collapse/CollapsableSection';
@@ -301,6 +302,9 @@ export const ThemeDemo = () => {
             </Stack>
           </DemoBox>
         </CollapsableSection>
+        <CollapsableSection label="Alerts" isOpen={true}>
+          <AlertsDemo />
+        </CollapsableSection>
         <CollapsableSection label="Actions" isOpen={true}>
           <ActionsDemo />
         </CollapsableSection>
@@ -436,6 +440,77 @@ function ShadowDemo({ name, shadow }: { name: string; shadow: string }) {
     boxShadow: shadow,
   });
   return <div className={style}>{name}</div>;
+}
+
+const alertSeverities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
+
+function AlertsDemo() {
+  const [dismissed, setDismissed] = useState<AlertVariant[]>([]);
+
+  return (
+    <Stack direction="column" gap={3}>
+      <DemoBox bg="primary">
+        <Stack direction="column" gap={2}>
+          <DemoText bold>Title only</DemoText>
+          {alertSeverities.map((severity) => (
+            <Alert key={severity} severity={severity} title={`${severity} alert`} bottomSpacing={0} />
+          ))}
+        </Stack>
+      </DemoBox>
+      <DemoBox bg="primary">
+        <Stack direction="column" gap={2}>
+          <DemoText bold>With content</DemoText>
+          {alertSeverities.map((severity) => (
+            <Alert key={severity} severity={severity} title={`${severity} alert`} bottomSpacing={0}>
+              Supporting text that explains what happened and what the user can do about it.
+            </Alert>
+          ))}
+        </Stack>
+      </DemoBox>
+      <DemoBox bg="primary">
+        <Stack direction="column" gap={2}>
+          <DemoText bold>Dismissable</DemoText>
+          {alertSeverities
+            .filter((severity) => !dismissed.includes(severity))
+            .map((severity) => (
+              <Alert
+                key={severity}
+                severity={severity}
+                title={`${severity} alert`}
+                bottomSpacing={0}
+                onRemove={() => setDismissed((current) => [...current, severity])}
+              >
+                Supporting text that explains what happened and what the user can do about it.
+              </Alert>
+            ))}
+          {dismissed.length > 0 && (
+            <Stack justifyContent="flex-start">
+              <Button variant="secondary" size="sm" onClick={() => setDismissed([])}>
+                Restore dismissed alerts
+              </Button>
+            </Stack>
+          )}
+        </Stack>
+      </DemoBox>
+      <DemoBox bg="secondary">
+        <Stack direction="column" gap={2}>
+          <DemoText bold>With button and elevated on secondary background</DemoText>
+          <Alert
+            severity="warning"
+            title="Alert with a text button"
+            bottomSpacing={0}
+            buttonContent="Dismiss"
+            onRemove={() => {}}
+          >
+            Supporting text that explains what happened and what the user can do about it.
+          </Alert>
+          <Alert severity="info" title="Elevated alert" bottomSpacing={0} elevated>
+            Elevated alerts use the z3 shadow and are used for notifications on top of other content.
+          </Alert>
+        </Stack>
+      </DemoBox>
+    </Stack>
+  );
 }
 
 function ActionsDemo() {
