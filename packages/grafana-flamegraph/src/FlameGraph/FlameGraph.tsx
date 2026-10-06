@@ -207,7 +207,11 @@ const FlameGraph = ({
           onSandwichPillClick={onSandwichPillClick}
         />
         <div className={styles.controls}>
-          <ColorSchemeButton value={colorScheme} onChange={onColorSchemeChange} isDiffMode={isDiffMode} />
+          <ColorSchemeButton
+            value={colorScheme}
+            onChange={onColorSchemeChange}
+            isDiffMode={isDiffMode} 
+            dataSource={data.getDataSource()} />
           <ButtonGroup className={styles.buttonSpacing}>
             <Button
               variant={'secondary'}

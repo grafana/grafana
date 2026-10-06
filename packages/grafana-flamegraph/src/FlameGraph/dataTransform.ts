@@ -419,6 +419,10 @@ export class FlameGraphDataContainer {
     return this.collapsedMap!;
   }
 
+  getDataSource() {
+    return this.dataSource;
+  }
+
   private initLevels() {
     if (!this.levels) {
       const [levels, uniqueLabelsMap, collapsedMap] = nestedSetToLevels(this, this.options);

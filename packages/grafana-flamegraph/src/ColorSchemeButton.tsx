@@ -10,12 +10,13 @@ import {
   diffColorBlindGradient,
   diffDefaultGradient
 } from './FlameGraph/colors';
-import { ColorScheme, ColorSchemeDiff } from './types';
+import { ColorScheme, ColorSchemeDiff, DataSourceType } from './types';
 
 type ColorSchemeButtonProps = {
   value: ColorScheme | ColorSchemeDiff;
   onChange: (colorScheme: ColorScheme | ColorSchemeDiff) => void;
   isDiffMode: boolean;
+  dataSource?: DataSourceType;
 };
 
 export function ColorSchemeButton(props: ColorSchemeButtonProps) {
@@ -24,7 +25,9 @@ export function ColorSchemeButton(props: ColorSchemeButtonProps) {
     <Menu>
       <Menu.Item label="By package name" onClick={() => props.onChange(ColorScheme.PackageBased)} />
       <Menu.Item label="By value" onClick={() => props.onChange(ColorScheme.ValueBased)} />
-      <Menu.Item label="By kernel/user space" onClick={() => props.onChange(ColorScheme.SpaceBased)} />
+      {props.dataSource === DataSourceType.PprofPyroscope && (
+        <Menu.Item label="By kernel/user space" onClick={() => props.onChange(ColorScheme.SpaceBased)} />
+      )}
     </Menu>
   );
 
