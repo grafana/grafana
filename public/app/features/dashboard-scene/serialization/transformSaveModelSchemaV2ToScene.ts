@@ -175,6 +175,7 @@ export function transformSaveModelSchemaV2ToScene(
     isSnapshot,
     isEmbedded: Boolean(metadata.annotations?.[AnnoKeyEmbedded]),
     publicDashboardEnabled: dto.access.isPublic,
+    libraryPanelRepeatResolved: dto.libraryPanelRepeatResolved,
 
     // UI-only metadata, ref: DashboardModel.initMeta
     showSettings: Boolean(dto.access.canEdit),

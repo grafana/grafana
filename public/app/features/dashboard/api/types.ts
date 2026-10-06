@@ -64,6 +64,11 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     annotationsPermissions?: AnnotationsPermissions;
     isPublic?: boolean;
   }; // TODO...
+  /**
+   * Set by the client, not returned by the API. Marks a spec that came from the apiserver, whose
+   * v1->v2 conversion resolves library panel repeats.
+   */
+  libraryPanelRepeatResolved?: boolean;
 }
 
 export interface DashboardVersionError extends Error {

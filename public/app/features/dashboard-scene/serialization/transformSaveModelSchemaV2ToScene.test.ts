@@ -662,6 +662,20 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.version).toBe(123);
       });
 
+      // LibraryPanelBehavior reads this to decide whether it still has to apply a library panel's
+      // repeat. The flag is set by the apiserver /dto path and absent on a client-side conversion.
+      it('carries libraryPanelRepeatResolved through from the DTO', () => {
+        expect(transformSaveModelSchemaV2ToScene(defaultDashboard).state.meta.libraryPanelRepeatResolved).toBe(
+          undefined
+        );
+
+        const resolved: DashboardWithAccessInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          libraryPanelRepeatResolved: true,
+        };
+        expect(transformSaveModelSchemaV2ToScene(resolved).state.meta.libraryPanelRepeatResolved).toBe(true);
+      });
+
       it('handles access metadata values', () => {
         const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
           ...defaultDashboard,

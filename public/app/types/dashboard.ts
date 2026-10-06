@@ -51,6 +51,11 @@ export interface DashboardMeta {
   hasUnsavedFolderChange?: boolean;
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
+  /**
+   * True only when the spec this scene was built from came from the apiserver, which resolves a
+   * library panel's repeat onto the grid item during the v1->v2 conversion.
+   */
+  libraryPanelRepeatResolved?: boolean;
   isEmbedded?: boolean;
   isNew?: boolean;
   version?: number;

@@ -91,6 +91,10 @@ export class K8sDashboardV2API
         dashboard.spec.links = removeExistingSourceLinks(dashboard.spec.links);
       }
 
+      // The apiserver resolved any library panel repeat onto the grid item while converting, so
+      // LibraryPanelBehavior must not copy the definition's repeat over it.
+      dashboard.libraryPanelRepeatResolved = true;
+
       return dashboard;
     } catch (e) {
       const status = getStatusFromError(e);

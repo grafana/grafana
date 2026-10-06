@@ -131,6 +131,17 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
+  // LibraryPanelBehavior relies on this: only a spec that came through the apiserver had its
+  // library panel repeats resolved onto the grid item by the v1->v2 conversion.
+  it('marks the response as having its library panel repeats resolved by the server', async () => {
+    mockGet.mockResolvedValueOnce(mockDashboardDto);
+
+    const api = new K8sDashboardV2API();
+    const result = (await api.getDashboardDTO('test')) as DashboardWithAccessInfo<DashboardV2Spec>;
+
+    expect(result.libraryPanelRepeatResolved).toBe(true);
+  });
+
   it('throws an error if folder service returns an error other than 403', async () => {
     mockGet.mockResolvedValueOnce({
       ...mockDashboardDto,

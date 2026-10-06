@@ -3,6 +3,7 @@ import { of } from 'rxjs';
 import { FieldType, LoadingState, type PanelData, getDefaultTimeRange, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import {
   SceneCanvasText,
   type SceneDataTransformer,
@@ -14,6 +15,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import * as libpanels from 'app/features/library-panels/state/api';
 
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
@@ -322,6 +324,105 @@ describe('LibraryPanelBehavior', () => {
       ).not.toThrow();
     });
   });
+
+  describe('repeat migration with dashboards.libraryPanelRepeatFromServerResolution enabled', () => {
+    beforeEach(() => {
+      setTestFlags({ [FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution]: true });
+    });
+
+    afterEach(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
+    });
+
+    it('migrates repeat onto the grid item when the server did not resolve it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration when the server already resolved it', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatResolved: true },
+        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('migrates when dashboardNewLayouts is enabled but the server did not resolve it', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('still migrates for a public dashboard when the server did not resolve it', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a public dashboard when the server already resolved it', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { publicDashboardEnabled: true, libraryPanelRepeatResolved: true },
+        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a scripted dashboard when the server did not resolve it', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('skips the migration for a scripted dashboard when the server already resolved it', async () => {
+      config.featureToggles.dashboardNewLayouts = true;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { fromScript: true, libraryPanelRepeatResolved: true },
+        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('leaves the grid item alone when the library panel has no repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel();
+
+      expect(gridItem.state.variableName).toBeUndefined();
+    });
+  });
 });
 
 interface BuildTestSceneOptions {
@@ -331,11 +432,23 @@ interface BuildTestSceneOptions {
   /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
   repeat?: string;
   /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
-  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean };
+  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatResolved?: boolean };
+  /**
+   * Seeded on the grid item the way DefaultGridLayoutSerializer builds it from
+   * GridLayoutItemKind.spec.repeat, standing in for a repeat the server already resolved.
+   */
+  resolvedRepeat?: { variableName: string; repeatDirection?: 'h' | 'v'; maxPerRow?: number };
 }
 
 async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {}) {
-  const { vizPanelTitle = 'Panel A', libPanelModelTitle = 'LibraryPanel A title', timeFrom, repeat, meta } = options;
+  const {
+    vizPanelTitle = 'Panel A',
+    libPanelModelTitle = 'LibraryPanel A title',
+    timeFrom,
+    repeat,
+    meta,
+    resolvedRepeat,
+  } = options;
 
   const behavior = new LibraryPanelBehavior({ name: 'LibraryPanel A', uid: '111' });
 
@@ -373,6 +486,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     width: 10,
     height: 12,
     body: vizPanel,
+    ...resolvedRepeat,
   });
 
   const scene = new DashboardScene({

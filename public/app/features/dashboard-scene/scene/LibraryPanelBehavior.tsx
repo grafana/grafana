@@ -1,6 +1,7 @@
 import { PanelPlugin, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   type SceneObject,
   SceneObjectBase,
@@ -118,19 +119,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // (a notebook cell included). Inside this branch the root is necessarily a DashboardScene, so the
     // lookup below cannot fail — if it ever does, that is a bug worth surfacing rather than skipping.
     if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
-      // Skip migrating repeat options from library panel when using dynamic dashboards (dashboardNewLayouts),
-      // as repeat options should only come from the dashboard panel instance (grid item),
-      // not from the library panel definition.
-      // Exception: Public dashboards and scripted dashboards still need this migration
-      // even when dashboardNewLayouts is enabled. This is because public and scripted dashboard migrations are still handled in the frontend.
-      const dashboard = getDashboardSceneFor(this);
-      const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
-      const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-      const shouldSkipRepeatMigration =
-        config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard;
-
-      // Migrate repeat options to layout element (only for legacy dashboards, or public/scripted dashboards)
-      if (!shouldSkipRepeatMigration) {
+      if (this.shouldMigrateRepeat()) {
         layoutElement.setState({
           variableName: libPanelModel.repeat,
           repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
@@ -140,6 +129,24 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
         layoutElement.performRepeat();
       }
     }
+  }
+
+  /**
+   * A library panel's repeat has to be copied onto the grid item unless the server already did it.
+   * The apiserver resolves it during the v1->v2 conversion, so only a spec that came from there
+   * arrives with the repeat in place; a v1 spec and a spec converted in the browser by
+   * ensureV2Response do not, because neither can fetch library panel definitions.
+   */
+  private shouldMigrateRepeat(): boolean {
+    const dashboard = getDashboardSceneFor(this);
+
+    if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution, false)) {
+      return dashboard.state.meta.libraryPanelRepeatResolved !== true;
+    }
+
+    const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
+    const isScriptedDashboard = dashboard.state.meta.fromScript === true;
+    return !(config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard);
   }
 
   /**
