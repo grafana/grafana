@@ -427,6 +427,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/schedule"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	_ "github.com/grafana/grafana/pkg/services/ngalert/status"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/store"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	_ "github.com/grafana/grafana/pkg/services/ngalert/store/rules"

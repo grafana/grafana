@@ -317,7 +317,7 @@ var (
 		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -325,7 +325,7 @@ var (
 		{
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -1517,6 +1517,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "datasources.teamHttpHeadersWriteGuard",
+			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
 			Name:        "teamLBACApiReadFromAppPlatform",
 			Description: "Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server",
 			Stage:       FeatureStageExperimental,
@@ -2438,6 +2446,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersDeterministicUID",
+			Description:  "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "kubernetesAuthInfoApi",
 			Description:  "Enables auth info APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2546,10 +2563,10 @@ var (
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
 			Description:  "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaSearchAndStorageSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true", // enabled by default
 			Generate:     Generate{React: true},
 		},
 		{
@@ -2955,6 +2972,14 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "alerting.hybridSearch",
+			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "grafana.vectorSearchCmdk",

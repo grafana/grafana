@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/golang-lru/v2/expirable"
 	gocache "github.com/patrickmn/go-cache"
 	"go.opentelemetry.io/otel/attribute"
+	otelcodes "go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"golang.org/x/sync/singleflight"
@@ -84,11 +85,6 @@ func (s *NamespacedResource) String() string {
 func (s *NamespacedResource) GroupResource() string {
 	return fmt.Sprintf("%s/%s", s.Group, s.Resource)
 }
-
-// globalIndexUpdateInterval is how often a global index picks up changes in the
-// background. Notifications apply most changes sooner, so this only has to catch
-// the ones they miss.
-const globalIndexUpdateInterval = time.Minute
 
 // globalIndexReconcileInterval is how often a global index is compared with
 // storage, which repairs what replaying changes cannot. See
@@ -245,7 +241,12 @@ var knownIndexFeatures = []IndexFeature{
 //
 // Without the trash features the writers drop deleted documents, so trash comes
 // back empty, which reads as "nothing was deleted".
-var requiredIndexFeatures = TrashIndexFeatures()
+//
+// IndexFeatureHoldsDeletedDocuments is required for the same reason, one step later: an
+// index built before deleted documents were kept maps the trash fields but holds nothing
+// in them, and a file-based index is reused across an upgrade, so trash would stay
+// unavailable until some unrelated change triggered a rebuild.
+var requiredIndexFeatures = slices.Concat(TrashIndexFeatures(), []IndexFeature{IndexFeatureHoldsDeletedDocuments})
 
 // CurrentIndexFeatures returns the features sorted, so declaration order cannot
 // change what an index records.
@@ -340,16 +341,16 @@ type ResourceIndex interface {
 	// only in part is included, and stays until ForgetType.
 	DocumentTypes() ([]schema.GroupResource, error)
 
-	// ImportTimes returns every resource type the index has written in full, with
-	// the import time storage reported when it last caught up with that type,
-	// zero if it had none. A type missing from it may still have documents, as
-	// one written only in part; DocumentTypes lists those. Kept inside the index,
-	// so a restarted server does not redo work the index already did.
-	ImportTimes() (map[schema.GroupResource]time.Time, error)
+	// CompletedTypeBuilds returns every resource type the index has written in
+	// full, by an index build or a type rebuild, with what storage reported then.
+	// A type missing from it may still have documents, as one written only in
+	// part; DocumentTypes lists those. Kept inside the index, so a restarted
+	// server does not redo work the index already did.
+	CompletedTypeBuilds() (map[schema.GroupResource]TypeBuild, error)
 
-	// RecordImportTime records that the index has written one resource type in
-	// full and caught up with its import that storage reports at t, zero if none.
-	RecordImportTime(gr schema.GroupResource, t time.Time) error
+	// RecordCompletedTypeBuild records that the index has written one resource
+	// type in full.
+	RecordCompletedTypeBuild(gr schema.GroupResource, build TypeBuild) error
 
 	// ReconciledAt returns when the index was last compared with storage, or
 	// built from it, zero if never. Kept inside the index, so a restarted server
@@ -360,7 +361,7 @@ type ResourceIndex interface {
 	RecordReconciledAt(t time.Time) error
 
 	// ForgetType records that the index no longer holds one resource type,
-	// removing it from both ImportTimes and DocumentTypes.
+	// removing it from both CompletedTypeBuilds and DocumentTypes.
 	ForgetType(gr schema.GroupResource) error
 
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
@@ -369,6 +370,16 @@ type ResourceIndex interface {
 
 	// BuildInfo returns build information about the index.
 	BuildInfo() (IndexBuildInfo, error)
+}
+
+// TypeBuild is what an index records when it has written one resource type in
+// full.
+type TypeBuild struct {
+	// StorageImportTime is the import time storage reported for the type when
+	// the build read it, zero if the type was never imported. Storage reporting a
+	// newer one means an import has replaced the type since, and the index is
+	// behind.
+	StorageImportTime time.Time
 }
 
 // DocumentRef is what an index knows about one document without reading it.
@@ -887,6 +898,12 @@ func (s *searchServer) Search(ctx context.Context, req *resourcepb.ResourceSearc
 
 	stats := NewSearchStats("Search")
 	defer s.logStats(ctx, stats, span, "namespace", req.Options.Key.Namespace, "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "query", req.Query)
+
+	if err := s.checkSearchServicePermissions(ctx, req); err != nil {
+		span.SetStatus(otelcodes.Error, err.Error())
+		span.RecordError(err)
+		return &resourcepb.ResourceSearchResponse{Error: AsErrorResult(err)}, nil
+	}
 
 	nsr := NamespacedResource{
 		Group:     req.Options.Key.Group,
@@ -1422,7 +1439,7 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 	completeChs := s.findIndexesToRebuild(importTimes, filterKeys, time.Now(), false)
 	// A global index is never imported itself; its covered types are, and only
 	// those are rebuilt.
-	syncChs, err := s.queueTypeSyncs(ctx, filterKeys)
+	syncChs, err := s.queueTypeSyncs(ctx, filterKeys, nil)
 	if err != nil {
 		return &resourcepb.RebuildIndexesResponse{Error: AsErrorResult(err)}, nil
 	}
@@ -1450,6 +1467,12 @@ func (s *searchServer) RebuildIndexes(ctx context.Context, req *resourcepb.Rebui
 		if err != nil {
 			s.log.Warn("failed to get build info for index", "key", key, "error", err)
 			continue
+		}
+		if lastImportTime := importTimes[key]; !lastImportTime.IsZero() && !bi.BuildTime.After(lastImportTime) {
+			return &resourcepb.RebuildIndexesResponse{
+				RebuildCount: int64(rebuildCount),
+				Error:        AsErrorResult(fmt.Errorf("index for %s was not built after last import (%s)", key, lastImportTime)),
+			}, nil
 		}
 		if !bi.BuildTime.IsZero() {
 			buildTimes = append(buildTimes, &resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -1625,7 +1648,6 @@ func (s *searchServer) init(ctx context.Context) error {
 
 	if s.globalIndexEnabled {
 		s.bgTaskWg.Go(func() { s.runGlobalIndexWatch(subctx) })
-		s.bgTaskWg.Go(func() { s.runPeriodicGlobalIndexUpdate(subctx) })
 	}
 
 	s.startRateBucketSweeper(subctx)
@@ -1669,10 +1691,7 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 
 	// A global index reused at startup may predate a type being added or
 	// dropped, so that is checked now rather than at the first tick.
-	if _, err := s.queueTypeSyncs(ctx, s.search.GetOpenIndexes()); err != nil {
-		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
-	}
-	s.queueDueReconciles(s.search.GetOpenIndexes(), time.Now())
+	s.scanForIndexesToRebuild(ctx, false)
 
 	ticker := time.NewTicker(5 * time.Minute)
 	defer ticker.Stop()
@@ -1683,68 +1702,28 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 			s.log.Info("stopping periodic index rebuild due to context cancellation")
 			return
 		case <-ticker.C:
-			keys := s.search.GetOpenIndexes()
-			importTimes, err := s.getLastImportTimes(ctx, keys)
-			if err != nil {
-				s.log.Error("failed to get import times", "error", err)
-			}
-			s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
-			if _, err := s.queueTypeSyncs(ctx, keys); err != nil {
-				s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
-			}
-			s.queueDueReconciles(keys, time.Now())
+			s.scanForIndexesToRebuild(ctx, true)
 		}
 	}
 }
 
-// runPeriodicGlobalIndexUpdate brings the global indexes up to date in the
-// background. Searches on them do not wait for an update, because a global index
-// covers several resource types, so it would wait once per type, and it answers
-// requests that would rather be fast than exactly current. Notifications apply
-// most changes sooner; this picks up any they missed.
-func (s *searchServer) runPeriodicGlobalIndexUpdate(ctx context.Context) {
-	ticker := time.NewTicker(globalIndexUpdateInterval)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			s.updateGlobalIndexes(ctx)
-		}
+func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullRebuilds bool) {
+	keys := s.search.GetOpenIndexes()
+	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
+	if err != nil {
+		s.log.Error("failed to get import times", "error", err)
 	}
-}
-
-// updateGlobalIndexes brings every open global index this instance owns up to
-// date. An index that is not open is left alone: it is brought up to date when it
-// is next opened.
-func (s *searchServer) updateGlobalIndexes(ctx context.Context) {
-	start := time.Now()
-	updated := 0
-	defer func() {
-		elapsed := time.Since(start)
-		s.indexMetrics.GlobalUpdateRoundDuration.Observe(elapsed.Seconds())
-		s.indexMetrics.GlobalUpdateRoundIndexes.Set(float64(updated))
-		s.log.Debug("Updated global search indexes", "indexes", updated, "duration", elapsed)
-	}()
-	for _, key := range s.search.GetOpenIndexes() {
-		if !key.IsGlobal() || !s.ownsGlobalIndex(key) {
-			continue
-		}
-		if ctx.Err() != nil {
-			return
-		}
-		idx := s.search.GetIndex(key)
-		if idx == nil {
-			continue
-		}
-		updated++
-		if _, err := idx.UpdateIndex(ctx); err != nil {
-			// Logged and left for the next tick: the index keeps serving what it has.
-			s.log.Warn("failed to update global search index", "namespace", key.Namespace, "error", err)
-		}
+	if importTimes == nil {
+		// An empty map prevents per-type fallback reads after a failed scan.
+		importTimes = make(map[NamespacedResource]time.Time)
 	}
+	if checkFullRebuilds {
+		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
+	}
+	if _, err := s.queueTypeSyncs(ctx, keys, importTimes); err != nil {
+		s.log.Warn("failed to check which resource types of global search indexes are out of date", "error", err)
+	}
+	s.queueDueReconciles(keys, time.Now())
 }
 
 // Reads already hide expired trash, so this only reclaims space and can run
@@ -1870,7 +1849,6 @@ func (s *searchServer) getLastImportTimes(ctx context.Context, keys []Namespaced
 	for _, key := range keys {
 		lastImportTime, err := s.storage.GetResourceLastImportTime(ctx, key)
 		if err != nil {
-			// Return the times collected so far so periodic scans can still check those indexes.
 			return result, err
 		}
 		result[key] = lastImportTime
@@ -1986,7 +1964,7 @@ func (s *searchServer) rebuildIndex(ctx context.Context, req rebuildRequest) {
 			}
 		}
 		if req.reconcile {
-			if err := s.reconcileGlobalIndex(ctx, req.NamespacedResource); err != nil {
+			if _, err := s.reconcileGlobalIndex(ctx, req.NamespacedResource); err != nil {
 				span.RecordError(err)
 				l.Warn("failed to reconcile the global search index", "error", err)
 			}
@@ -2166,7 +2144,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	)
 
 	idx := s.search.GetIndex(key)
-	alreadyOpen := idx != nil
 	if idx == nil {
 		span.AddEvent("Building index")
 		buildStartTime := time.Now()
@@ -2213,11 +2190,10 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 		}
 	}
 
-	// A global index is updated in the background, so a search on an open one
-	// reads whatever it holds instead of waiting for storage. One just opened is
-	// updated first: it may have been reopened from disk long after it was
-	// written, and nothing updated it while it was closed.
-	if key.IsGlobal() && alreadyOpen {
+	// A global index is kept current from notifications and repaired by
+	// reconcile, so a search reads whatever it holds. It replays no events: one
+	// reopened or restored is reconciled instead, see build.
+	if key.IsGlobal() {
 		return idx, nil
 	}
 
@@ -2232,13 +2208,6 @@ func (s *searchServer) getOrCreateIndex(ctx context.Context, stats *SearchStats,
 	s.indexMetrics.SearchUpdateWaitTime.WithLabelValues(reason).Observe(elapsed.Seconds())
 	s.log.FromContext(ctx).Debug("Index updated before search", "namespace", key.Namespace, "group", key.Group, "resource", key.Resource, "reason", reason, "duration", elapsed, "rv", rv)
 	span.AddEvent("Index updated")
-
-	// One just opened may have been closed for longer than the event log keeps
-	// events, which the update above cannot tell, so it is compared with storage
-	// now if it is due rather than at the next scan.
-	if key.IsGlobal() {
-		s.queueDueReconciles([]NamespacedResource{key}, time.Now())
-	}
 
 	return idx, nil
 }
@@ -2446,7 +2415,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// Recorded even with no import, because the record also says which
 			// types the index has written in full.
 			if nsr.IsGlobal() {
-				if err := index.RecordImportTime(groupResourceOf(src), importedAt); err != nil {
+				if err := index.RecordCompletedTypeBuild(groupResourceOf(src), TypeBuild{StorageImportTime: importedAt}); err != nil {
 					return indexRV, err
 				}
 			}
@@ -2596,15 +2565,10 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			return rv, docs, nil
 		}
 
-		// Every type is asked for changes since the same point. How far the index
-		// has got is the oldest of their answers, so nothing newer than that is
-		// skipped next time; a type that was further ahead is asked again for a
-		// few changes it has already applied, which rewrites them unchanged.
-		//
-		// One checkpoint is enough on the KV backend, which answers every type
-		// with the same store-wide version. The SQL backend counts versions per
-		// type, where an idle type would hold the index back; the global index
-		// does not support it.
+		// Every source is asked for changes since the same point, and how far the
+		// index has got is the oldest of their answers, so nothing newer than that
+		// is skipped next time. Only a global index has more than one source, and
+		// it gets no updater, so in practice there is one.
 		listModifiedTime := time.Now()
 		newRV := int64(0)
 		totalDocs := 0
@@ -2638,10 +2602,25 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 	// within ~10% of the per-resource rebuild interval.
 	maxFreshSnapshotAge := s.getIndexMaxAge(nsr) / 10
 
-	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updaterFn, rebuild, lastImportTime, maxFreshSnapshotAge)
+	// A global index replays no events, so it gets no updater.
+	var updater UpdateFn = updaterFn
+	if nsr.IsGlobal() {
+		updater = nil
+	}
+
+	index, err := s.search.BuildIndex(ctx, nsr, size, indexBuildReason, builderFn, updater, rebuild, lastImportTime, maxFreshSnapshotAge)
 
 	if err != nil {
 		return nil, err
+	}
+
+	// A global index replays no events, so whatever it missed is repaired by
+	// comparing it with storage, at once rather than at its next slot. One reused
+	// from disk or restored from a snapshot missed what changed while it was
+	// closed. One just built missed what changed after its listing: until it is
+	// published, notifications go to the index it replaces, or nowhere.
+	if nsr.IsGlobal() {
+		s.queueReconcile(nsr)
 	}
 
 	// The indexed kinds metric is not recorded here: the search backend refreshes it

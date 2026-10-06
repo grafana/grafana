@@ -66,7 +66,7 @@ View data results as JSON and as data frame JSON models in the **JSON tab**.
 View, inspect and download raw query results in the **Data tab**.
 
 1. Open the Query inspector and click the **Data** tab.
-1. Click **Data options** to to view options under **Show data frame**.
+1. Click **Data options** to view options under **Show data frame**.
 1. Select a data results set from the dropdown menu.
 1. For multiple queries or for queries multiple nodes, you can select **Series joined by time** from the dropdown to view the raw data from all of your queries at once, one result set per column. You can click any column heading to sort the data.
 1. Toggle **Formatted data** to match the format in the panel.
