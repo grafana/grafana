@@ -23,10 +23,12 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
 
   // TODO this type check here is hacky and should be replaced with a more generic solid solution
   const canPaste = element instanceof RowItem || element instanceof TabItem ? element : undefined;
+  const readOnly = element.isReadOnly === true;
   const onCopy = element.onCopy?.bind(element);
-  const onDuplicate = element.onDuplicate?.bind(element);
-  const onDelete = element.onDelete?.bind(element);
-  const onConfirmDelete = element.onConfirmDelete?.bind(element);
+  const onDuplicate = readOnly ? undefined : element.onDuplicate?.bind(element);
+  const onDelete = readOnly ? undefined : element.onDelete?.bind(element);
+  const onConfirmDelete = readOnly ? undefined : element.onConfirmDelete?.bind(element);
+  const onRemove = readOnly ? element.onRemove?.bind(element) : undefined;
 
   const onDeleteElement = () => {
     if (onConfirmDelete) {
@@ -34,6 +36,11 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
     } else if (onDelete) {
       onDelete();
     }
+    DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
+  };
+
+  const onRemoveElement = () => {
+    onRemove?.();
     DashboardInteractions.trackDeleteDashboardElement(elementInfo.typeName);
   };
 
@@ -84,19 +91,27 @@ export function ElementEditPaneHeader({ element, sidebar }: EditPaneHeaderProps)
           <Trans i18nKey="dashboard.sidebar.element-actions.paste">Paste</Trans>
         </Button>
       )}
-      {(onDelete || onConfirmDelete) && (
+      {(onDelete || onConfirmDelete || onRemove) && (
         <>
           <FlexItem grow={1} />
           <Button
-            onClick={onDeleteElement}
+            onClick={onRemove ? onRemoveElement : onDeleteElement}
             size="sm"
             variant="secondary"
             icon="trash-alt"
             fill="text"
             data-testid={selectors.components.EditPaneHeader.deleteButton}
-            tooltip={t('dashboard.sidebar.element-actions.delete', 'Delete')}
+            tooltip={
+              onRemove
+                ? t('dashboard.sidebar.element-actions.remove', 'Remove')
+                : t('dashboard.sidebar.element-actions.delete', 'Delete')
+            }
           >
-            <Trans i18nKey="dashboard.sidebar.element-actions.delete">Delete</Trans>
+            {onRemove ? (
+              <Trans i18nKey="dashboard.sidebar.element-actions.remove">Remove</Trans>
+            ) : (
+              <Trans i18nKey="dashboard.sidebar.element-actions.delete">Delete</Trans>
+            )}
           </Button>
         </>
       )}

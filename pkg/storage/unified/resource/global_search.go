@@ -150,7 +150,7 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
 // lists them; only the global ones have types to sync.
-func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource, lastImportTimes map[NamespacedResource]time.Time) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
 	for _, key := range openIndexes {
@@ -161,7 +161,7 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 		if idx == nil {
 			continue
 		}
-		stale, err := s.outOfDateTypes(ctx, key, idx, nil)
+		stale, err := s.outOfDateTypes(ctx, key, idx, nil, lastImportTimes)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("checking which types of %s are out of date: %w", key.String(), err))
 			continue
@@ -201,7 +201,8 @@ type staleType struct {
 // and types it may hold documents of but no longer covers. Only a newer import counts, the same as for a
 // per-resource index, which is rebuilt when its build time is before the last
 // import.
-func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]staleType, error) {
+// A nil lastImportTimes reads storage directly so rebuild workers re-check queued imports.
+func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource, lastImportTimes map[NamespacedResource]time.Time) ([]staleType, error) {
 	recorded, err := idx.CompletedTypeBuilds()
 	if err != nil {
 		return nil, err
@@ -215,9 +216,12 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 		if !wanted(gr) {
 			continue
 		}
-		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
-		if err != nil {
-			return nil, err
+		importedAt := lastImportTimes[src]
+		if lastImportTimes == nil {
+			importedAt, err = s.storage.GetResourceLastImportTime(ctx, src)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if build, held := recorded[gr]; held && !importedAt.After(build.StorageImportTime) {
 			continue
@@ -259,7 +263,7 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 	}
 	// The import time is read before the rebuild, so an import that lands during
 	// it is still seen as newer next time.
-	stale, err := s.outOfDateTypes(ctx, key, idx, only)
+	stale, err := s.outOfDateTypes(ctx, key, idx, only, nil)
 	if err != nil || len(stale) == 0 {
 		return err
 	}

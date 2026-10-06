@@ -369,7 +369,7 @@ func (m *MockClient) PatchInto(ctx context.Context, identifier resource.Identifi
 }
 
 // fakeMetadataGetter is a function-backed metadata.Getter for tests. Only the
-// namespace-scoped List path used by Runner.listChecksMetadata is implemented;
+// namespace-scoped List path used by Runner.forEachCheckMetadata is implemented;
 // other methods fall through to the embedded nil interface and would panic if
 // called.
 type fakeMetadataGetter struct {

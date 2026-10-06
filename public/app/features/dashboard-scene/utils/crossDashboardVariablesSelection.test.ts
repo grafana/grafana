@@ -12,6 +12,7 @@ import {
   resolvePredefinedVariablesForDashboard,
   serializeUseCrossDashboardVariables,
   setScopeAll,
+  setShownScopeNames,
   toggleSelectionName,
   toggleScopeName,
   writeUseCrossDashboardVariables,
@@ -330,6 +331,51 @@ describe('setScopeAll', () => {
   it('writes all when checked and none when unchecked', () => {
     expect(setScopeAll(true)).toBe('all');
     expect(setScopeAll(false)).toBe('none');
+  });
+});
+
+describe('setShownScopeNames', () => {
+  it('adds shown names without upgrading to all when hidden names remain', () => {
+    expect(
+      setShownScopeNames({ global: 'none', folder: 'none' }, 'global', ['service'], ['env', 'service'], true)
+    ).toEqual({ global: ['service'], folder: 'none' });
+  });
+
+  it('upgrades to all when the shown names cover the scope', () => {
+    expect(
+      setShownScopeNames({ global: ['env'], folder: 'none' }, 'global', ['service'], ['env', 'service'], true)
+    ).toEqual({ global: 'all', folder: 'none' });
+  });
+
+  it('leaves all in place when unchecking hides some names in the scope', () => {
+    expect(
+      setShownScopeNames({ global: 'all', folder: ['service'] }, 'global', ['service'], ['env', 'service'], false)
+    ).toEqual({ global: 'all', folder: ['service'] });
+  });
+
+  it('clears all when every name in the scope is shown', () => {
+    expect(setShownScopeNames({ global: 'all', folder: 'none' }, 'global', ['service'], ['service'], false)).toEqual({
+      global: 'none',
+      folder: 'none',
+    });
+  });
+
+  it('drops unchecked shown names from the other scope', () => {
+    expect(
+      setShownScopeNames(
+        { global: ['service', 'env'], folder: ['service'] },
+        'global',
+        ['service'],
+        ['env', 'service'],
+        false
+      )
+    ).toEqual({ global: ['env'], folder: 'none' });
+  });
+
+  it('drops a same-named filter from the other scope when this scope lists none', () => {
+    expect(
+      setShownScopeNames({ global: 'none', folder: ['service'] }, 'global', ['service'], ['service'], false)
+    ).toEqual({ global: 'none', folder: 'none' });
   });
 });
 
