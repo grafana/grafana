@@ -550,6 +550,97 @@ describe('detectDrilldownMigrationCandidates', () => {
     });
   });
 
+  it('rules out only the variable whose datasource capability throws', async () => {
+    registerDatasource('prom-a', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getDrilldownMigrationUsage: () => {
+        throw new Error('boom');
+      },
+    });
+    registerDatasource('prom-b', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getDrilldownMigrationUsage: () => ({ kind: 'filter', key: 'job', operator: '=' }),
+    });
+
+    const scene = buildScene(
+      [buildVariable('instance', 'prom-a'), buildVariable('job', 'prom-b')],
+      [
+        buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]),
+        buildPanel('panel-2', 'prom-b', [{ refId: 'B', expr: 'up{job="$job"}' }]),
+      ]
+    );
+
+    const candidates = await detectDrilldownMigrationCandidates(scene);
+
+    expect(candidates.map((c) => c.variableName)).toEqual(['job']);
+  });
+
+  it('keeps detecting other variables when a datasource lookup rejects', async () => {
+    registerDatasource('prom-b', 'prometheus', {
+      getTagKeys: jest.fn(),
+      getTagValues: jest.fn(),
+      getDrilldownMigrationUsage: () => ({ kind: 'filter', key: 'job', operator: '=' }),
+    });
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => {
+      const uid = getRefUid(ref);
+      if (uid === 'broken') {
+        throw new Error('lookup failed');
+      }
+      return uid ? dsSettingsByUid[uid] : undefined;
+    });
+
+    const scene = buildScene(
+      [buildVariable('instance', 'broken'), buildVariable('job', 'prom-b')],
+      [buildPanel('panel-1', 'prom-b', [{ refId: 'A', expr: 'up{job="$job"}' }])]
+    );
+
+    const candidates = await detectDrilldownMigrationCandidates(scene);
+
+    expect(candidates.map((c) => c.variableName)).toEqual(['job']);
+  });
+
+  describe('references from other variables', () => {
+    beforeEach(() => {
+      registerDatasource('prom-a', 'prometheus', {
+        getTagKeys: jest.fn(),
+        getTagValues: jest.fn(),
+        getDrilldownMigrationUsage: ({ variableName }) =>
+          variableName === 'instance' ? { kind: 'filter', key: 'instance', operator: '=~' } : undefined,
+      });
+    });
+
+    const panel = () => buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+
+    it('disqualifies a variable that another variable query depends on', async () => {
+      const dependent = new QueryVariable({
+        name: 'pod',
+        datasource: { uid: 'prom-a' },
+        query: 'label_values(up{instance=~"$instance"}, pod)',
+      });
+
+      const scene = buildScene([buildVariable('instance', 'prom-a'), dependent], [panel()]);
+
+      expect(await detectDrilldownMigrationCandidates(scene)).toEqual([]);
+    });
+
+    it('ignores option values that merely contain the variable syntax', async () => {
+      const other = new QueryVariable({
+        name: 'note',
+        datasource: { uid: 'prom-a' },
+        query: 'label_values(up, note)',
+        options: [{ label: 'costs $instance', value: 'costs $instance' }],
+        value: 'costs $instance',
+        text: 'costs $instance',
+      });
+
+      const scene = buildScene([buildVariable('instance', 'prom-a'), other], [panel()]);
+
+      expect((await detectDrilldownMigrationCandidates(scene)).map((c) => c.variableName)).toEqual(['instance']);
+    });
+  });
+
   it('skips a variable whose own datasource ref is itself variable-templated', async () => {
     registerDatasource('prom-a', 'prometheus', {
       getTagKeys: jest.fn(),

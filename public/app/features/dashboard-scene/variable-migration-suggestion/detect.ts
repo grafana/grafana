@@ -1,4 +1,4 @@
-import { type DataSourceApi } from '@grafana/data';
+import { type DataSourceApi, type DrilldownMigrationUsage } from '@grafana/data';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { QueryVariable, SceneDataTransformer, sceneGraph, type SceneDataQuery } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
@@ -56,9 +56,13 @@ export async function detectDrilldownMigrationCandidates(
       continue;
     }
 
-    const candidate = await detectCandidateForVariable(scene, variable, queryUsages);
-    if (candidate) {
-      candidates.push(candidate);
+    try {
+      const candidate = await detectCandidateForVariable(scene, variable, queryUsages);
+      if (candidate) {
+        candidates.push(candidate);
+      }
+    } catch {
+      // A failing lookup or datasource capability only rules out this variable.
     }
   }
 
@@ -177,7 +181,12 @@ function aggregateHighConfidenceCandidate(
   let kind: MigrationSuggestionCandidateUsage['kind'] | undefined;
 
   for (const { query } of sameDatasourceQueries) {
-    const usage = ds.getDrilldownMigrationUsage!({ variableName: variable.state.name, query });
+    let usage: DrilldownMigrationUsage | undefined;
+    try {
+      usage = ds.getDrilldownMigrationUsage!({ variableName: variable.state.name, query });
+    } catch {
+      return undefined;
+    }
     if (!usage) {
       continue;
     }
@@ -297,13 +306,21 @@ function hasBlockingReferences(scene: DashboardScene, variable: QueryVariable, p
   }
 
   for (const other of sceneGraph.getVariables(scene).state.variables) {
-    if (other !== variable && matchesVariableReference(other.state, pattern)) {
+    if (other === variable) {
+      continue;
+    }
+    // Options and the current value are runtime data, potentially thousands of entries; only the
+    // definition (query, regex, datasource, ...) can reference another variable.
+    const definition = Object.entries(other.state).filter(([key]) => !VARIABLE_RUNTIME_STATE_KEYS.has(key));
+    if (matchesVariableReference(Object.fromEntries(definition), pattern)) {
       return true;
     }
   }
 
   return false;
 }
+
+const VARIABLE_RUNTIME_STATE_KEYS = new Set(['options', 'value', 'text', 'loading', 'error']);
 
 // Repeat behaviors (row/panel) key off the repeated variable's bare name (no `$` prefix),
 // stored on a `variableName` field - unlike everything else here, this isn't a `pattern` match.

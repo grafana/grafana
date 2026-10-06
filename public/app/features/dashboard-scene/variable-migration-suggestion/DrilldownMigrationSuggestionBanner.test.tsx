@@ -137,6 +137,14 @@ describe('DrilldownMigrationSuggestionBanner', () => {
     expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
   });
 
+  it('does not render, and does not throw, when detection fails', async () => {
+    await enableOurFlag(true);
+    mockDetect.mockRejectedValue(new Error('boom'));
+    await renderBanner();
+
+    expect(screen.queryByText(/may benefit from filters and group by/)).not.toBeInTheDocument();
+  });
+
   it('renders when every gate passes', async () => {
     await enableOurFlag(true);
     await renderBanner();
