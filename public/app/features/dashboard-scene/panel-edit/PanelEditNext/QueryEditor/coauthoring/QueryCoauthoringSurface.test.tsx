@@ -47,6 +47,18 @@ function createAdapter(initialSnapshot: QueryEditorCoauthoringSnapshotV1) {
   };
 }
 
+function createEditorTarget() {
+  const editor = document.createElement('div');
+  editor.className = 'monaco-editor';
+  const queryText = document.createElement('span');
+  queryText.textContent = 'rate(http_requests_total[5m])';
+  queryText.tabIndex = 0;
+  const portalTarget = document.createElement('div');
+  editor.append(queryText, portalTarget);
+  document.body.append(editor);
+  return { queryText, portalTarget };
+}
+
 function renderSurface(adapter: QueryEditorCoauthoringAdapterV1) {
   const revert = jest.fn();
   const view = render(
@@ -100,6 +112,34 @@ describe('QueryCoauthoringSurface', () => {
       await user.keyboard('{Escape}');
     }
     expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the selection pill through multiple clicks in its owning editor and still closes it on Escape', async () => {
+    const { queryText, portalTarget } = createEditorTarget();
+    const { adapter, publish } = createAdapter({ mode: 'selection', portalTarget });
+    adapter.dismiss = jest.fn(() => publish({ mode: 'hidden' }));
+    const user = userEvent.setup();
+    renderSurface(adapter);
+    expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+    await user.tripleClick(queryText);
+    expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+    expect(adapter.dismiss).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /Explain or modify/ })).not.toBeInTheDocument();
+  });
+
+  it('dismisses the selection pill when a different editor is clicked', async () => {
+    const { portalTarget } = createEditorTarget();
+    const otherEditor = createEditorTarget();
+    const { adapter, publish } = createAdapter({ mode: 'selection', portalTarget });
+    adapter.dismiss = jest.fn(() => publish({ mode: 'hidden' }));
+    const user = userEvent.setup();
+    renderSurface(adapter);
+    expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+    await user.click(otherEditor.queryText);
+    expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: /Explain or modify/ })).not.toBeInTheDocument();
   });
 
   it('replaces the toolbar with the Core session when the adapter publishes an invocation', () => {

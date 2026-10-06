@@ -135,7 +135,13 @@ function QueryCoauthoringEntry({
   const entryRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onOutsidePointerDown = (event: PointerEvent) => {
-      if (event.target instanceof Node && !entryRef.current?.contains(event.target)) {
+      // Selection gestures in the owning editor must not dismiss the entry they reveal.
+      const editor = portalTarget.closest('.monaco-editor');
+      if (
+        event.target instanceof Node &&
+        !entryRef.current?.contains(event.target) &&
+        !editor?.contains(event.target)
+      ) {
         adapter.dismiss();
       }
     };
@@ -152,7 +158,7 @@ function QueryCoauthoringEntry({
       document.removeEventListener('pointerdown', onOutsidePointerDown);
       document.removeEventListener('keydown', onEscape);
     };
-  }, [adapter]);
+  }, [adapter, portalTarget]);
   const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
   return createPortal(
     <div
