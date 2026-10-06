@@ -382,8 +382,6 @@ export function useQueryCoauthoringSession({
           }),
         onError: fail,
       });
-    } catch {
-      fail();
     } finally {
       if (isCurrentQueryCoauthoringRequest(sessionRef.current, requestId)) {
         fail();
