@@ -108,7 +108,12 @@ export function getTraceToLogsQuery(
   spanID?: string,
   serviceNames: string[] = []
 ) {
-  const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
+  // Treat omitted customQuery + non-empty query as custom (provisioned V2); explicit false ignores leftover query text.
+  const customQuery =
+    traceToLogsOptions.customQuery === true ||
+    (traceToLogsOptions.customQuery == null && Boolean(traceToLogsOptions.query))
+      ? traceToLogsOptions.query
+      : undefined;
   const tagsToUse =
     traceToLogsOptions.tags && traceToLogsOptions.tags.length > 0 ? traceToLogsOptions.tags : getDefaultLogsTags();
 
