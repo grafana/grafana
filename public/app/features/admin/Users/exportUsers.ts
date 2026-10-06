@@ -4,7 +4,6 @@ import Papa from 'papaparse';
 import { t } from '@grafana/i18n';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
-import { getUserLastActive } from './getUserLastActive';
 import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './userSearch';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
@@ -86,7 +85,7 @@ export function usersToCsv(users: UserDTO[]): string {
                 : (user.licensedRole ?? ''),
             ]
           : []),
-        getUserLastActive(user).text,
+        user.lastSeenAt ?? '',
         ...statusCells(user),
       ]),
     },
@@ -102,7 +101,7 @@ export function orgUsersToCsv(users: OrgUser[]): string {
         user.login,
         user.email,
         user.name,
-        getUserLastActive(user).text,
+        user.lastSeenAt ?? '',
         [user.role, ...(user.roles?.map((role) => `${role.group}:${role.displayName || role.name}`) ?? [])].join('; '),
         ...statusCells(user),
       ]),

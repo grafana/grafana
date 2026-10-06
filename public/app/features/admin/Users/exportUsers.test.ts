@@ -21,6 +21,7 @@ const alice: UserDTO = {
   name: 'Alice',
   isGrafanaAdmin: false,
   isDisabled: false,
+  lastSeenAt: '2026-09-27T12:00:00Z',
   lastSeenAtAge: '2 days',
   authLabels: ['SAML'],
 };
@@ -78,8 +79,8 @@ it('downloads every page of all users with the same search, filters and sort', a
   ]);
   expect(await savedCsv()).toBe(
     'Login,Email,Name,Last active,Origin,Provisioned,Disabled\r\n' +
-      'alice,alice@example.com,Alice,2 days,SAML,,\r\n' +
-      'bob,bob@example.com,Bob,2 days,SAML,,'
+      'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,SAML,,\r\n' +
+      'bob,bob@example.com,Bob,2026-09-27T12:00:00Z,SAML,,'
   );
   expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'all-users.csv', { autoBom: true });
 });
@@ -107,8 +108,8 @@ it('downloads every organization user page including permitted custom roles', as
   ]);
   expect(await savedCsv()).toBe(
     'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +
-      'alice,alice@example.com,Alice,2 days,Viewer; Custom:Reports,SAML,,\r\n' +
-      'bob,bob@example.com,Bob,2 days,Editor,SAML,,'
+      'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,Viewer; Custom:Reports,SAML,,\r\n' +
+      'bob,bob@example.com,Bob,2026-09-27T12:00:00Z,Editor,SAML,,'
   );
   expect(saveAs).toHaveBeenCalledWith(expect.any(Blob), 'organization-users.csv', { autoBom: true });
 });
@@ -122,7 +123,7 @@ it('exports basic roles without requesting custom roles when permission is missi
 
   expect(await savedCsv()).toBe(
     'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +
-      'alice,alice@example.com,Alice,2 days,Viewer,SAML,,'
+      'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,Viewer,SAML,,'
   );
   expect(post).not.toHaveBeenCalled();
 });
@@ -143,7 +144,7 @@ it('downloads headers for an empty result', async () => {
   expect(get).toHaveBeenCalledTimes(1);
 });
 
-it('includes optional columns and table display values from users on any page', () => {
+it('includes optional organization and licensed-role columns from users on any page', () => {
   expect(
     usersToCsv([
       alice,
@@ -163,14 +164,31 @@ it('includes optional columns and table display values from users on any page', 
     ])
   ).toBe(
     'Login,Email,Name,Belongs to,Licensed role,Last active,Origin,Provisioned,Disabled\r\n' +
-      'alice,alice@example.com,Alice,,,2 days,SAML,,\r\n' +
-      'bob,bob@example.com,Bob,Main; Other; Grafana Admin,Not assigned,Never,SAML,Provisioned,Disabled'
+      'alice,alice@example.com,Alice,,,2026-09-27T12:00:00Z,SAML,,\r\n' +
+      'bob,bob@example.com,Bob,Main; Other; Grafana Admin,Not assigned,2026-09-28T12:00:00Z,SAML,Provisioned,Disabled'
   );
 });
 
 it('escapes punctuation, newlines and spreadsheet formula prefixes in user fields', () => {
   expect(orgUsersToCsv([{ ...orgAlice, login: '=1+1', name: 'Alice, "A"\nOcenáš' }])).toBe(
     'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +
-      '"\'=1+1",alice@example.com,"Alice, ""A""\nOcenáš",2 days,Viewer,SAML,,'
+      '"\'=1+1",alice@example.com,"Alice, ""A""\nOcenáš",2026-09-27T12:00:00Z,Viewer,SAML,,'
+  );
+});
+
+it('exports timestamps in both CSV formats even when the relative age is missing', () => {
+  expect(usersToCsv([{ ...alice, lastSeenAtAge: undefined }])).toBe(
+    'Login,Email,Name,Last active,Origin,Provisioned,Disabled\r\n' +
+      'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,SAML,,'
+  );
+  expect(orgUsersToCsv([{ ...orgAlice, lastSeenAtAge: '' }])).toBe(
+    'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +
+      'alice,alice@example.com,Alice,2026-09-27T12:00:00Z,Viewer,SAML,,'
+  );
+});
+
+it('leaves last active blank when the timestamp is missing', () => {
+  expect(usersToCsv([{ ...alice, lastSeenAt: undefined }])).toBe(
+    'Login,Email,Name,Last active,Origin,Provisioned,Disabled\r\n' + 'alice,alice@example.com,Alice,,SAML,,'
   );
 });
