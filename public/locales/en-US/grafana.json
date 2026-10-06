@@ -1750,9 +1750,6 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
-      "routing-tree": {
-        "default-policy": "Default Policy"
-      },
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -2609,15 +2606,11 @@
       "aria-label": "Select notification policy",
       "change": "Change",
       "change-aria": "Change notification policy",
-      "custom-policy-desc": "Route alerts through the {{name}} policy tree",
       "default-badge": "Default policy",
       "default-info": "Alert instances are routed using the default notification policy tree.",
-      "default-policy": "Default policy",
-      "default-policy-desc": "Routes alerts using the default notification policy tree",
       "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "missing-policy": "This policy tree is not in your list. It may have been deleted, or you may not have permission to view it. It stays assigned to this rule unless you pick a different one.",
       "placeholder": "Select a policy...",
-      "reset": "Reset to default",
-      "reset-aria": "Reset to default policy",
       "view-policies": "View policies",
       "view-policies-aria": "View notification policies"
     },
@@ -5799,6 +5792,7 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
       "row-hide-header": "Hide row header",
@@ -9001,7 +8995,6 @@
       "attribute-category": {
         "other": "Other"
       },
-      "error-indicator": "Span has an error",
       "exception-message": "Message:",
       "exception-stacktrace": "Stacktrace",
       "exception-title": "Exception",
@@ -9148,7 +9141,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace is not included in TraceQL queries and can only be queried by trace ID. Please review the <2>documentation</2> for more details.",
+        "body": "This trace was originally dropped by Adaptive Traces and has been restored. A restored trace might not be included in TraceQL queries and might only be queryable by trace ID. Please review the <2>documentation</2> for more details.",
         "title": "Trace restored by Adaptive Traces"
       },
       "application-observability-promo": {
@@ -11389,6 +11382,7 @@
         "clear": "Clear filters",
         "edit": "Edit filters ({{summary}})",
         "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "no-match-hint": "Adjust the filters",
         "save": "Save",
         "save-failed": "Could not save to browser storage. Try again."
       },
@@ -11406,7 +11400,6 @@
           "cluster": "Cluster",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
-          "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
           "summary-cluster": "Cluster: {{cluster}}",
@@ -11477,6 +11470,20 @@
         "failing_one": "{{count}} check failing",
         "failing_other": "{{count}} checks failing",
         "failing-worst": "{{check}} at {{percent}}%",
+        "filter": {
+          "instances": "Ignore targets",
+          "jobs": "Ignore checks",
+          "no-instances": "No targets ignored",
+          "no-jobs": "No checks ignored",
+          "no-match": "All checks ignored",
+          "no-probes": "No probes ignored",
+          "open": "Ignore checks, targets, or probes",
+          "probes": "Ignore probes",
+          "summary-instances": "Ignoring targets: {{instances}}",
+          "summary-jobs": "Ignoring checks: {{jobs}}",
+          "summary-probes": "Ignoring probes: {{probes}}",
+          "title": "Customize Synthetic Monitoring"
+        },
         "setup-hint": "create a check",
         "stats": "{{percent}}% success · 24h",
         "success-trend": "Success rate · last 24h",
@@ -14028,11 +14035,13 @@
     "preview-banner": {
       "behind-branch-text": "This resource is behind the branch in {{repoType}}.",
       "branch-targets": "targets",
+      "create-pull-request-in-repository": "Open the repository and create a pull or merge request from the branch you saved to.",
       "delete-from-branch": "The rest of Grafana users in your organization will still see this resource until this branch is merged",
       "move-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "not-saved": "The rest of Grafana users in your organization will still see the current version saved to configured default branch until this branch is merged",
       "open-in-repo-button": "Open in {{repoType}}",
       "open-pull-request-in-repo": "Open pull request in {{repoType}}",
+      "open-repository": "Open repository",
       "update-from-branch": "The rest of Grafana users in your organization will still see the current version until this branch is merged",
       "view-in-repo-button": "View it in {{repoType}} to see the latest changes.",
       "view-pull-request-in-repo": "View pull request in {{repoType}}",
@@ -15714,12 +15723,12 @@
       "collapse": "Collapse",
       "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
+      "filter": "Filter...",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
       "noResultsForScopes": "No dashboards or links found for the selected scopes",
       "noResultsNoScopes": "No scopes selected",
-      "search": "Search",
       "toggle": {
         "collapse": "Collapse suggested dashboards list",
         "disabled": "Suggested dashboards list is disabled due to read only mode",
