@@ -96,7 +96,7 @@ func (h *HybridHandler) search(ctx context.Context, req *http.Request) (*resourc
 		if status.Code(err) == codes.Unimplemented {
 			return nil, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance")
 		}
-		return nil, resource.GetError(resource.AsErrorResult(err))
+		return nil, resource.StatusError(resource.AsErrorResult(err))
 	}
 	return resp, nil
 }
