@@ -186,7 +186,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
-      <ScopeFiltersEditBanner dashboard={dashboard} />
+      <ScopeFiltersEditBanner dashboard={dashboard} key={dashboard.state.key} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showCustomTemplates && <TemplateDashboardModal />}

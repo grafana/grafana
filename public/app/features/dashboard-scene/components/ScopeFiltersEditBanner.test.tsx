@@ -243,4 +243,19 @@ describe('ScopeFiltersEditBanner', () => {
     rerender(<ScopeFiltersEditBanner dashboard={dashboard} />);
     expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
   });
+
+  it('does not carry a dismissal over to a different dashboard keyed by dashboard.state.key', async () => {
+    // Mirrors the usage site (DashboardScenePage), which keys the banner by dashboard.state.key so
+    // navigating to a different dashboard remounts it instead of reusing the dismissed state.
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboardA = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+    const dashboardB = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+
+    const { user, rerender } = render(<ScopeFiltersEditBanner dashboard={dashboardA} key={dashboardA.state.key} />);
+    await user.click(screen.getByRole('button', { name: /Close alert/i }));
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
+
+    rerender(<ScopeFiltersEditBanner dashboard={dashboardB} key={dashboardB.state.key} />);
+    expect(screen.getByTestId(BANNER_TEST_ID)).toBeInTheDocument();
+  });
 });
