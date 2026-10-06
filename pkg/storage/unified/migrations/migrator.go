@@ -293,6 +293,8 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 			buildTimeMap[key] = bt.BuildTimeUnix
 		}
 
+		// RebuildIndexes checks freshness against the import time before reporting build times.
+		// Accept the finish second: build times are only reported at second precision.
 		migrationFinishTime := opts.MigrationFinishedAt.Unix()
 
 		// Only validate resources that have a build time reported.
@@ -306,9 +308,9 @@ func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndex
 				continue
 			}
 
-			if buildTime <= migrationFinishTime {
-				m.log.Error("index build time is not after migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
-				return fmt.Errorf("rebuild index error: index for %s was not built after migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
+			if buildTime < migrationFinishTime {
+				m.log.Error("index build time is before migration finished", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)
+				return fmt.Errorf("rebuild index error: index for %s was built before migration finished (built at %s, migration finished at %s)", key, time.Unix(buildTime, 0), opts.MigrationFinishedAt)
 			}
 
 			m.log.Info("verified index build time", "resource", key, "build_time", time.Unix(buildTime, 0), "migration_finished_at", opts.MigrationFinishedAt, "namespace", opts.NamespaceInfo.Value, "orgId", opts.NamespaceInfo.OrgID)

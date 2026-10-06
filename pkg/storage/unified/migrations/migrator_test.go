@@ -864,11 +864,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
 			expectErr:    true,
-			expectErrMsg: "was not built after migration finished",
+			expectErrMsg: "was built before migration finished",
 			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
-			name: "build time in same second as migration finish retries and returns error",
+			name: "build time in same second as migration finish succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
 				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -882,9 +882,8 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			resources: []schema.GroupResource{
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
-			expectErr:    true,
-			expectErrMsg: "was not built after migration finished",
-			numRetries:   5,
+			expectErr:  false,
+			numRetries: 1,
 		},
 		{
 			name: "build time after migration time succeeds",
@@ -1003,11 +1002,26 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testing.T) {
-	// Test that retries work when the first build time ties with migration finish at second precision.
+	// A build from the previous second is stale, but a rebuild in the migration finish second is valid.
 	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
 	mockClient := resource.NewMockResourceClient(t)
 
-	// First call returns a build time in the same second as migration finish.
+	// First call returns a build time from before migration finished.
+	mockClient.EXPECT().
+		RebuildIndexes(mock.Anything, mock.Anything).
+		Return(&resourcepb.RebuildIndexesResponse{
+			ContactedAllInstances: true,
+			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
+				{
+					Group:         "dashboard.grafana.app",
+					Resource:      "dashboards",
+					BuildTimeUnix: migrationFinishedAt.Add(-time.Second).Unix(),
+				},
+			},
+		}, nil).
+		Once()
+
+	// Second call succeeds with a build time in the same second as migration finish.
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{
@@ -1017,21 +1031,6 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
 					BuildTimeUnix: migrationFinishedAt.Unix(),
-				},
-			},
-		}, nil).
-		Once()
-
-	// Second call succeeds with fresh build time
-	mockClient.EXPECT().
-		RebuildIndexes(mock.Anything, mock.Anything).
-		Return(&resourcepb.RebuildIndexesResponse{
-			ContactedAllInstances: true,
-			BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
-				{
-					Group:         "dashboard.grafana.app",
-					Resource:      "dashboards",
-					BuildTimeUnix: migrationFinishedAt.Add(time.Second).Unix(),
 				},
 			},
 		}, nil).
