@@ -283,69 +283,68 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 // A repository that is blocked and still over quota is a steady state, not a change, so
 // requeuing it must not test the repository again. Every reconcile that proceeds runs a
 // health check, and that is a call against the customer's git provider -- shared with
-// their syncs and with every repository on the same token. The explicit requeues below
+// their syncs and with every repository on the same token. The explicit requeues here
 // stand in for the ones the controller used to generate for itself, by patching its own
 // status on every pass.
 //
-// Both phases requeue the same key, which the work queue serialises and processes in
-// submission order. So the second phase producing field errors is what establishes that
-// the first phase's requeues reached the controller at all, rather than the assertion
-// passing because nothing was ever delivered.
+// The subject's health is never aged, so there is no point in the test at which its key
+// could legitimately produce field errors, however late the queue gets to it. The
+// control repository, whose health is aged, shows the controller draining its queue and
+// the sabotage taking effect while that holds. A reconcile the controller never picks up
+// at all would still read as a pass here; the delivery-certain version of this is the
+// unit test, which calls process directly.
 func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const (
-		repoName  = "ns-steady-repo"
-		otherName = "ns-steady-other" // only here to put the namespace over its limit
+		subject = "ns-steady-subject"
+		control = "ns-steady-control"
 	)
-	repoPath := filepath.Join(helper.ProvisioningPath, "steady-repo")
+	subjectPath := filepath.Join(helper.ProvisioningPath, "steady-subject")
+	controlPath := filepath.Join(helper.ProvisioningPath, "steady-control")
 
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       repoName,
-		LocalPath:  repoPath,
-		SyncTarget: "folder",
-		SkipSync:   true,
-	})
-	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       otherName,
-		LocalPath:  filepath.Join(helper.ProvisioningPath, "steady-other"),
-		SyncTarget: "folder",
-		SkipSync:   true,
-	})
+	for name, path := range map[string]string{subject: subjectPath, control: controlPath} {
+		helper.CreateLocalRepo(t, common.TestRepo{
+			Name:       name,
+			LocalPath:  path,
+			SyncTarget: "folder",
+			SkipSync:   true,
+		})
+	}
 
 	// Two repositories against a limit of one: both are over quota and settle into the
 	// blocked steady state, which leaves their health timestamps fresh.
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, repoName)
-	helper.TriggerRepositoryReconciliation(t, otherName)
-	waitForUnhealthyWithNamespaceQuota(t, helper, repoName, provisioning.ReasonQuotaExceeded)
-	waitForUnhealthyWithNamespaceQuota(t, helper, otherName, provisioning.ReasonQuotaExceeded)
-	require.Empty(t, repositoryFieldErrors(t, helper, repoName))
+	helper.TriggerRepositoryReconciliation(t, subject)
+	helper.TriggerRepositoryReconciliation(t, control)
+	waitForUnhealthyWithNamespaceQuota(t, helper, subject, provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, control, provisioning.ReasonQuotaExceeded)
+	require.Empty(t, repositoryFieldErrors(t, helper, subject))
 
-	// Remove the repository directory, so a Test() would now report the path as not
-	// found. Those field errors reach status.fieldErrors whatever the quota health
-	// override says, which makes them evidence that the repository was tested at all.
-	require.NoError(t, os.RemoveAll(repoPath))
+	// Remove both directories, so a Test() would report the path as not found. Those
+	// field errors reach status.fieldErrors whatever the quota health override says,
+	// which makes them per-repository evidence that the repository was tested at all.
+	require.NoError(t, os.RemoveAll(subjectPath))
+	require.NoError(t, os.RemoveAll(controlPath))
 
-	// Phase 1: requeue while the stored health check is still fresh. Nothing is due and
-	// the steady state is not a trigger, so these must not test the repository.
+	// Requeue the subject while its stored health check is fresh, and leave it fresh:
+	// each trigger re-stamps the timestamp, and nothing below ages it.
 	for range 3 {
-		helper.TriggerRepositoryReconciliation(t, repoName)
+		helper.TriggerRepositoryReconciliation(t, subject)
 	}
-	require.Never(t, func() bool {
-		return len(repositoryFieldErrors(t, helper, repoName)) > 0
-	}, 2*time.Second, 250*time.Millisecond,
-		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
 
-	// Phase 2: make the same repository's check genuinely due. Field errors appearing
-	// here prove the key is delivered and reconciled, the sabotage above is effective,
-	// and a due health check still runs -- so phase 1 was ignored, not undelivered.
-	markHealthCheckOverdue(t, helper, repoName)
+	// Age only the control's health, so its check is genuinely due.
+	markHealthCheckOverdue(t, helper, control)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, repoName),
+		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, control),
 			"a repository whose health check is due must still be tested")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
+
+	// Checked last, so the control above has already shown the controller working
+	// through its queue over this window.
+	assert.Empty(t, repositoryFieldErrors(t, helper, subject),
+		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
 }
 
 // markHealthCheckOverdue pushes the stored health timestamp outside the recent-unhealthy
