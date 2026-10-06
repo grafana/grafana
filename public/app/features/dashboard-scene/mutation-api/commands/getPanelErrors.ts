@@ -2,7 +2,7 @@ import type * as z from 'zod';
 
 import { LoadingState } from '@grafana/data';
 
-import { getPanelIdForVizPanel } from '../../utils/utils-panels';
+import { getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import type { PanelErrorsData } from '../types';
 
 import { getPanelRuntimeStatus } from './listPanels';
@@ -16,10 +16,14 @@ export const getPanelErrorsCommand: MutationCommand<z.infer<typeof payloads.getP
   permission: readOnly,
   readOnly: true,
   handler: async ({ elements }, { scene }) => {
+    const elementByPanelId = new Map(Array.from(scene.serializer.getElementPanelMapping(), ([name, id]) => [id, name]));
     const panelsByElement = new Map(
-      scene.state.body
-        .getVizPanels()
-        .map((panel) => [scene.serializer.getElementIdForPanel(getPanelIdForVizPanel(panel)), panel])
+      scene.state.body.getVizPanels().map((panel) => {
+        const id = getPanelIdForVizPanel(panel);
+        // Unmapped runtime panels use the serializer's generated naming convention.
+        const name = elementByPanelId.get(id) ?? getVizPanelKeyForPanelId(id);
+        return [name, panel];
+      })
     );
     const data: PanelErrorsData = {
       errors: [],
@@ -28,9 +32,6 @@ export const getPanelErrorsCommand: MutationCommand<z.infer<typeof payloads.getP
       uncheckedPanels: [],
     };
     for (const name of new Set(elements ?? panelsByElement.keys())) {
-      if (name === undefined) {
-        continue;
-      }
       const panel = panelsByElement.get(name);
       if (!panel) {
         data.uncheckedPanels.push({ element: name, reason: 'not_found' });

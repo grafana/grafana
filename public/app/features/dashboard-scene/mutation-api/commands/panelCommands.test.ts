@@ -76,6 +76,7 @@ function mockSerializer(elementMap: Record<string, number> = {}) {
   }
 
   return {
+    getElementPanelMapping: jest.fn(() => new Map(Object.entries(elementMap))),
     getPanelIdForElement: jest.fn((name: string) => elementMap[name]),
     getElementIdForPanel: jest.fn((id: number) => ensureMapping(id)),
     getDSReferencesMapping: jest.fn(() => ({
@@ -234,6 +235,64 @@ describe('Panel mutation commands', () => {
   });
 
   describe('GET_PANEL_ERRORS', () => {
+    it('indexes 300 panels without per-panel reverse scans and refreshes names on the next call', async () => {
+      const mapping: Record<string, number> = {};
+      const panels = Array.from({ length: 300 }, (_, index) => {
+        const id = index + 1;
+        mapping[`element-${id}`] = id;
+        return new VizPanel({
+          key: `panel-${id}`,
+          title: `Panel ${id}`,
+          pluginId: 'text',
+          _pluginLoadError: 'Plugin unavailable',
+        });
+      });
+      const scene = buildPanelScene(panels, mapping);
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['element-300'] } });
+      expect(result.data).toEqual({
+        errors: [
+          { element: 'element-300', title: 'Panel 300', errors: [{ source: 'plugin', message: 'Plugin unavailable' }] },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+      expect(scene.serializer.getElementPanelMapping).toHaveBeenCalledTimes(1);
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+
+      delete mapping['element-300'];
+      mapping['renamed-panel'] = 300;
+      const refreshed = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['renamed-panel'] } });
+      expect(refreshed.data).toEqual({
+        errors: [
+          {
+            element: 'renamed-panel',
+            title: 'Panel 300',
+            errors: [{ source: 'plugin', message: 'Plugin unavailable' }],
+          },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+      expect(scene.serializer.getElementPanelMapping).toHaveBeenCalledTimes(2);
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+    });
+
+    it('uses the generated element name for an unmapped runtime panel without a reverse scan', async () => {
+      const scene = buildPanelScene([new VizPanel({ key: 'panel-7', title: 'Notes', pluginId: 'text' })]);
+      const client = new DashboardMutationClient(scene);
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: { elements: ['panel-7'] } });
+      expect(result.data).toEqual({
+        errors: [],
+        noDataPanels: [],
+        panelsChecked: 0,
+        uncheckedPanels: [{ element: 'panel-7', reason: 'status_unavailable' }],
+      });
+      expect(scene.serializer.getElementIdForPanel).not.toHaveBeenCalled();
+    });
+
     it('reports panels without runtime status using their dashboard element names', async () => {
       const scene = buildPanelScene([new VizPanel({ key: 'panel-7', title: 'Notes', pluginId: 'text' })], { notes: 7 });
       const client = new DashboardMutationClient(scene);
