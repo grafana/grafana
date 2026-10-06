@@ -420,10 +420,12 @@ func applyUnsupportedPath(
 }
 
 // renamedFromResourceFile reports whether the change moves a resource file away from a
-// path that is synced, which leaves the resource it held without a file.
+// path that is synced, which leaves the resource it held without a file. A folder metadata
+// file (_folder.json) holds no resource of its own.
 func renamedFromResourceFile(change repository.VersionedFileChange) bool {
 	return change.Action == repository.FileActionRenamed && change.PreviousPath != "" &&
-		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil
+		!safepath.IsDir(change.PreviousPath) && resources.IsPathSupported(change.PreviousPath) == nil &&
+		!resources.IsFolderMetadataFile(change.PreviousPath)
 }
 
 // splitRenamesOntoNonResources rewrites the rename of a resource file onto a path that is not a

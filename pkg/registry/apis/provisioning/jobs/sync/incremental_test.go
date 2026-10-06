@@ -515,6 +515,7 @@ func TestSplitRenamesOntoNonResources(t *testing.T) {
 		"a rename of a non-resource onto a non-resource": rename("README.md", "NOTES.md"),
 		"a rename of a resource that never synced":       rename(".a.json", "README.md"),
 		"a rename of a folder":                           rename("old/", "new/"),
+		"a rename of a folder metadata file":             rename("team/_folder.json", "team/README.md"),
 		"a creation":                                     {Action: repository.FileActionCreated, Path: "README.md", Ref: "new-ref"},
 		"a deletion":                                     {Action: repository.FileActionDeleted, Path: "a.json", PreviousRef: "old-ref"},
 	} {
