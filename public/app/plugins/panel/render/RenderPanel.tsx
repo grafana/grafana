@@ -134,7 +134,7 @@ function RenderFrameHost({
           return;
         }
         setFrameError(error);
-        if (error.kind === 'render-timeout') {
+        if (releasesReadiness(error, finalBySeqRef.current)) {
           hold.release();
         }
       },
@@ -291,6 +291,23 @@ function RenderFrameHost({
       )}
     </div>
   );
+}
+
+/**
+ * A draw of final data that fails will not draw anything else, so the image renderer stops waiting.
+ * A startup error comes before any draw: the code may never draw at all.
+ */
+function releasesReadiness(error: RenderFrameError, finalBySeq: Map<number, boolean>): boolean {
+  switch (error.kind) {
+    case 'render-timeout':
+    case 'startup':
+      return true;
+    case 'runtime':
+    case 'output-limit':
+      return error.seq !== undefined && finalBySeq.get(error.seq) === true;
+    default:
+      return false;
+  }
 }
 
 function followLink(target: RenderLinkTarget) {

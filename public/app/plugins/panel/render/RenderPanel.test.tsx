@@ -165,6 +165,34 @@ describe('RenderPanel', () => {
     expect(latestHold().released).toBe(true);
   });
 
+  it.each([
+    ['runtime', 1],
+    ['output-limit', 1],
+    ['startup', undefined],
+  ] as const)('releases the readiness hold when the frame reports a %s error for final data', (kind, seq) => {
+    setup();
+    expect(latestHold().released).toBe(false);
+
+    act(() => latestController().handlers.onError({ kind, seq, fatal: false, message: 'boom' }));
+
+    expect(latestHold().released).toBe(true);
+    expect(frame()).toBeInTheDocument();
+  });
+
+  it('keeps holding when the error is for a draw of data that is still loading', () => {
+    const { rerender } = setup({ data: makeData([1], LoadingState.Loading) });
+    act(() => latestController().handlers.onError({ kind: 'runtime', seq: 1, fatal: false, message: 'boom' }));
+    act(() => latestController().handlers.onError({ kind: 'output-limit', seq: 1, fatal: false, message: 'boom' }));
+    // Errors that are not tied to a draw do not end the wait either.
+    act(() => latestController().handlers.onError({ kind: 'runtime', fatal: false, message: 'late timer' }));
+    act(() => latestController().handlers.onError({ kind: 'csp', seq: 1, fatal: false, message: 'img-src x' }));
+    expect(latestHold().released).toBe(false);
+
+    rerender({ data: makeData([1, 2], LoadingState.Done) });
+    act(() => latestController().handlers.onError({ kind: 'runtime', seq: 2, fatal: false, message: 'boom' }));
+    expect(latestHold().released).toBe(true);
+  });
+
   it('removes an unresponsive frame, releases the hold and offers a retry that uses a new iframe', async () => {
     setup();
     const first = frame();
