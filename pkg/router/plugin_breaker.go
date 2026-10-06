@@ -21,8 +21,10 @@ import (
 // entirely from storage remain available.
 func (*tracedPluginHandler) breaksOnClientCalls() {}
 
-// Only failures to reach the client count against it. Errors in plugin responses
-// (including admission rejection and HTTP 5xx) say nothing about reachability.
+var errPluginClientPanic = errors.New("router: plugin client panicked")
+
+// Failures to reach the client and panics count against it. Errors in plugin
+// responses (including admission rejection and HTTP 5xx) say nothing about reachability.
 func pluginClientOutcome(ctx context.Context, err error) error {
 	if ctx.Err() != nil {
 		return fmt.Errorf("%w: %w", errCallerGone, ctx.Err())
@@ -31,7 +33,8 @@ func pluginClientOutcome(ctx context.Context, err error) error {
 		return nil
 	}
 	switch {
-	case errors.Is(err, plugins.ErrPluginNotRegistered),
+	case errors.Is(err, errPluginClientPanic),
+		errors.Is(err, plugins.ErrPluginNotRegistered),
 		errors.Is(err, plugins.ErrPluginUnavailable),
 		errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)),
 		apierrors.IsServiceUnavailable(err):
@@ -50,6 +53,9 @@ func allowPluginCall(ctx context.Context) (func(error), error) {
 	}
 	done, err := cb.Allow()
 	if err != nil {
+		if outcome, ok := ctx.Value(requestOutcomeKey{}).(*requestOutcome); ok && outcome != nil {
+			outcome.failure = failureBreakerOpen
+		}
 		return nil, apierrors.NewServiceUnavailable("plugin backend unavailable")
 	}
 	// Streaming calls report on their first response and again when they end.
@@ -59,6 +65,14 @@ func allowPluginCall(ctx context.Context) (func(error), error) {
 	}, nil
 }
 
+// reportPluginPanic releases an unsettled attempt before propagating the panic.
+func reportPluginPanic(done func(error)) {
+	if p := recover(); p != nil {
+		done(errPluginClientPanic)
+		panic(p)
+	}
+}
+
 type breakerPluginClientV3 struct{ appclientv3.Client }
 
 func (c *breakerPluginClientV3) AdmissionReview(ctx context.Context, req *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
@@ -66,6 +80,7 @@ func (c *breakerPluginClientV3) AdmissionReview(ctx context.Context, req *plugin
 	if err != nil {
 		return nil, err
 	}
+	defer reportPluginPanic(done)
 	res, err := c.Client.AdmissionReview(ctx, req)
 	done(err)
 	return res, err
@@ -76,6 +91,7 @@ func (c *breakerPluginClientV3) ConvertObjects(ctx context.Context, req *pluginv
 	if err != nil {
 		return nil, err
 	}
+	defer reportPluginPanic(done)
 	res, err := c.Client.ConvertObjects(ctx, req)
 	done(err)
 	return res, err
@@ -86,12 +102,19 @@ func (c *breakerPluginClientV3) CallRoute(ctx context.Context, req *pluginv3.Cal
 	if err != nil {
 		return nil, err
 	}
+	defer reportPluginPanic(done)
 	stream, err := c.Client.CallRoute(ctx, req)
 	if err != nil {
 		done(err)
 		return nil, err
 	}
-	return &breakerPluginRouteStream{ServerStreamingClient: stream, done: done}, nil
+	// A caller may abandon the stream without receiving a response. Release its
+	// trial slot on cancellation, and stop watching once the first result arrives.
+	stop := context.AfterFunc(ctx, func() { done(ctx.Err()) })
+	return &breakerPluginRouteStream{ServerStreamingClient: stream, done: func(err error) {
+		stop()
+		done(err)
+	}}, nil
 }
 
 type breakerPluginRouteStream struct {
@@ -100,6 +123,7 @@ type breakerPluginRouteStream struct {
 }
 
 func (s *breakerPluginRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
+	defer reportPluginPanic(s.done)
 	res, err := s.ServerStreamingClient.Recv()
 	// gRPC can defer a connection error until Recv. The first response settles
 	// the attempt so a long-lived stream cannot hold the half-open trial slot.
@@ -114,6 +138,7 @@ func (c *breakerPluginClient) CheckHealth(ctx context.Context, req *backend.Chec
 	if err != nil {
 		return nil, err
 	}
+	defer reportPluginPanic(done)
 	res, err := c.Client.CheckHealth(ctx, req)
 	done(err)
 	return res, err
@@ -124,6 +149,7 @@ func (c *breakerPluginClient) CallResource(ctx context.Context, req *backend.Cal
 	if err != nil {
 		return err
 	}
+	defer reportPluginPanic(done)
 	err = c.Client.CallResource(ctx, req, backend.CallResourceResponseSenderFunc(func(res *backend.CallResourceResponse) error {
 		done(nil)
 		return sender.Send(res)

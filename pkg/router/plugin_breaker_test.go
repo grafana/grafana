@@ -3,6 +3,7 @@ package router
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +15,8 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -27,22 +30,32 @@ import (
 
 type stubPluginClientV3 struct {
 	appclientv3.Client
-	err    error
-	calls  int
-	stream grpc.ServerStreamingClient[pluginv3.CallRouteResponse]
+	panicValue any
+	err        error
+	calls      int
+	stream     grpc.ServerStreamingClient[pluginv3.CallRouteResponse]
 }
 
 func (c *stubPluginClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
+	if c.panicValue != nil {
+		panic(c.panicValue)
+	}
 	c.calls++
 	return &pluginv3.AdmissionReviewResponse{}, c.err
 }
 
 func (c *stubPluginClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
+	if c.panicValue != nil {
+		panic(c.panicValue)
+	}
 	c.calls++
 	return &pluginv3.ConvertObjectsResponse{}, c.err
 }
 
 func (c *stubPluginClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+	if c.panicValue != nil {
+		panic(c.panicValue)
+	}
 	c.calls++
 	return c.stream, c.err
 }
@@ -89,6 +102,7 @@ func TestPluginClientOutcome(t *testing.T) {
 		err         error
 		wantFailure bool
 	}{
+		{"panic", errPluginClientPanic, true},
 		{"unavailable", status.Error(codes.Unavailable, "offline"), true},
 		{"timeout", status.Error(codes.DeadlineExceeded, "timeout"), true},
 		{"plugin unavailable", plugins.ErrPluginUnavailable, true},
@@ -120,10 +134,14 @@ func TestPluginClientOutcome(t *testing.T) {
 
 type stubPluginRouteStream struct {
 	grpc.ServerStreamingClient[pluginv3.CallRouteResponse]
-	err error
+	panicValue any
+	err        error
 }
 
 func (s *stubPluginRouteStream) Recv() (*pluginv3.CallRouteResponse, error) {
+	if s.panicValue != nil {
+		panic(s.panicValue)
+	}
 	res := &pluginv3.CallRouteResponse{}
 	res.SetCode(http.StatusServiceUnavailable)
 	return res, s.err
@@ -168,10 +186,14 @@ func TestPluginResponsesDoNotTripBreaker(t *testing.T) {
 
 type stubLegacyPluginClient struct {
 	plugins.Client
-	err error
+	panicValue any
+	err        error
 }
 
 func (c *stubLegacyPluginClient) CallResource(_ context.Context, _ *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	if c.panicValue != nil {
+		panic(c.panicValue)
+	}
 	if c.err != nil {
 		return c.err
 	}
@@ -393,4 +415,148 @@ func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
 			require.Equal(t, gobreaker.StateOpen, cb.State(), "storage reads must not reset the plugin breaker")
 		})
 	}
+}
+
+func (c *stubLegacyPluginClient) CheckHealth(context.Context, *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	if c.panicValue != nil {
+		panic(c.panicValue)
+	}
+	return &backend.CheckHealthResult{}, c.err
+}
+
+func TestPluginBreakerRejectionMetrics(t *testing.T) {
+	for _, halfOpen := range []bool{false, true} {
+		t.Run(fmt.Sprint("half-open=", halfOpen), func(t *testing.T) {
+			const group = "test.ext.grafana.app"
+			timeout := time.Hour
+			if halfOpen {
+				timeout = 20 * time.Millisecond
+			}
+			cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
+				ReadyToTrip: func(gobreaker.Counts) bool { return true }, Timeout: timeout,
+			})
+			done, err := cb.Allow()
+			require.NoError(t, err)
+			done(plugins.ErrPluginUnavailable)
+			if halfOpen {
+				require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
+				done, err = cb.Allow()
+				require.NoError(t, err)
+				defer done(nil)
+			}
+			raw := &stubPluginClientV3{}
+			client := &breakerPluginClientV3{Client: raw}
+			handler := &tracedPluginHandler{Handler: &pluginroute.Handler{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				_, err := client.AdmissionReview(r.Context(), &pluginv3.AdmissionReviewRequest{})
+				require.True(t, apierrors.IsServiceUnavailable(err))
+				w.WriteHeader(http.StatusServiceUnavailable)
+			})}}
+			router := withGroupHandlerAndBreaker(group, handler, cb)
+			metrics := newRouterMetrics(prometheus.NewRegistry())
+			response := httptest.NewRecorder()
+			metrics.instrument(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
+			require.Equal(t, http.StatusServiceUnavailable, response.Code)
+			require.Equal(t, 1.0, testutil.ToFloat64(metrics.backendFailures.WithLabelValues(group, failureBreakerOpen)))
+			require.Zero(t, raw.calls)
+			_, err = allowPluginCall(context.WithValue(withoutRequestOutcome(t.Context()), clientBreakerKey{}, cb))
+			require.True(t, apierrors.IsServiceUnavailable(err))
+		})
+	}
+}
+
+func TestPluginPanicSettlesHalfOpenAttempt(t *testing.T) {
+	panicValue := &struct{ message string }{"plugin panic"}
+	for _, method := range []string{"admission", "conversion", "route", "receive", "health", "resource"} {
+		t.Run(method, func(t *testing.T) {
+			cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
+				ReadyToTrip: func(gobreaker.Counts) bool { return true }, Timeout: 20 * time.Millisecond,
+			})
+			done, err := cb.Allow()
+			require.NoError(t, err)
+			done(plugins.ErrPluginUnavailable)
+			require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
+			ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+			raw := &stubPluginClientV3{panicValue: panicValue}
+			client := &breakerPluginClientV3{Client: raw}
+			legacy := &breakerPluginClient{Client: &stubLegacyPluginClient{panicValue: panicValue}}
+			require.PanicsWithValue(t, panicValue, func() {
+				switch method {
+				case "admission":
+					_, _ = client.AdmissionReview(ctx, &pluginv3.AdmissionReviewRequest{})
+				case "conversion":
+					_, _ = client.ConvertObjects(ctx, &pluginv3.ConvertObjectsRequest{})
+				case "route":
+					_, _ = client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
+				case "receive":
+					raw.panicValue = nil
+					raw.stream = &stubPluginRouteStream{panicValue: panicValue}
+					stream, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
+					require.NoError(t, err)
+					_, _ = stream.Recv()
+				case "health":
+					_, _ = legacy.CheckHealth(ctx, &backend.CheckHealthRequest{})
+				case "resource":
+					_ = legacy.CallResource(ctx, &backend.CallResourceRequest{}, nil)
+				}
+			})
+			require.Equal(t, gobreaker.StateOpen, cb.State(), "a panic must fail the trial instead of leaving it in flight")
+			require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
+			raw.panicValue = nil
+			_, err = client.AdmissionReview(ctx, &pluginv3.AdmissionReviewRequest{})
+			require.NoError(t, err)
+			require.Equal(t, gobreaker.StateClosed, cb.State())
+		})
+	}
+}
+
+func TestPluginStreamPanicAfterFirstResponsePreservesOutcome(t *testing.T) {
+	cb := newGroupBreaker("plugin")
+	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	raw := &stubPluginRouteStream{}
+	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: raw}}
+	stream, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
+	require.NoError(t, err)
+	_, err = stream.Recv()
+	require.NoError(t, err)
+	before := cb.Counts()
+	raw.panicValue = "stream panic"
+	require.PanicsWithValue(t, raw.panicValue, func() { _, _ = stream.Recv() })
+	require.Equal(t, before, cb.Counts())
+	require.Equal(t, uint32(1), before.TotalSuccesses)
+	require.Zero(t, before.TotalFailures)
+}
+
+func TestPluginStreamCancellationReleasesHalfOpenAttempt(t *testing.T) {
+	cb := gobreaker.NewTwoStepCircuitBreaker[struct{}](gobreaker.Settings{
+		ReadyToTrip: func(gobreaker.Counts) bool { return true },
+		Timeout:     20 * time.Millisecond,
+		IsExcluded:  func(err error) bool { return errors.Is(err, errCallerGone) },
+	})
+	done, err := cb.Allow()
+	require.NoError(t, err)
+	done(plugins.ErrPluginUnavailable)
+	require.Eventually(t, func() bool { return cb.State() == gobreaker.StateHalfOpen }, time.Second, time.Millisecond)
+	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
+	trialCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	raw := &stubPluginRouteStream{}
+	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: raw}}
+	abandoned, err := client.CallRoute(trialCtx, &pluginv3.CallRouteRequest{})
+	require.NoError(t, err)
+	_, err = client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
+	require.True(t, apierrors.IsServiceUnavailable(err))
+	cancel()
+	require.Eventually(t, func() bool { return cb.Counts().TotalExclusions == 1 }, time.Second, time.Millisecond)
+	require.Equal(t, gobreaker.StateHalfOpen, cb.State())
+	require.Zero(t, cb.Counts().TotalFailures)
+	require.Zero(t, cb.Counts().TotalSuccesses)
+	retry, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
+	require.NoError(t, err)
+	// A late result from the canceled stream must not settle the new trial.
+	_, err = abandoned.Recv()
+	require.NoError(t, err)
+	require.Equal(t, gobreaker.StateHalfOpen, cb.State())
+	_, err = retry.Recv()
+	require.NoError(t, err)
+	require.Equal(t, gobreaker.StateClosed, cb.State())
 }
