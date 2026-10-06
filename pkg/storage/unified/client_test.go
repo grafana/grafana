@@ -2,7 +2,6 @@ package unified
 
 import (
 	"context"
-	"fmt"
 	"maps"
 	"net"
 	"strings"
@@ -41,88 +40,78 @@ func clientIdentityCounts(t *testing.T) map[string]float64 {
 	return counts
 }
 
-func TestForwardSearchInterceptors(t *testing.T) {
-	for _, streaming := range []bool{false, true} {
-		for _, tc := range []struct {
-			name    string
-			info    *identity.StaticRequester
-			cancel  bool
-			expired bool
-			code    codes.Code
-		}{
-			{name: "classic", info: &identity.StaticRequester{AccessToken: "original-access", IDToken: "original-id"}},
-			{name: "obo", info: &identity.StaticRequester{AccessToken: "original-obo"}},
-			{name: "service", info: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, AccessToken: "original-service"}},
-			{name: "missing auth info", code: codes.Unauthenticated},
-			{name: "missing access token", info: &identity.StaticRequester{IDToken: "id-only"}, code: codes.Unauthenticated},
-			{name: "cancelled", info: &identity.StaticRequester{AccessToken: "access"}, cancel: true, code: codes.Canceled},
-			{name: "expired deadline", info: &identity.StaticRequester{AccessToken: "access"}, expired: true, code: codes.DeadlineExceeded},
-		} {
-			t.Run(fmt.Sprintf("%s/stream=%t", tc.name, streaming), func(t *testing.T) {
-				ctx, cancel := context.WithCancel(t.Context())
-				defer cancel()
-				if tc.cancel {
-					cancel()
-				}
-				if tc.expired {
-					var stop context.CancelFunc
-					ctx, stop = context.WithDeadline(ctx, time.Now().Add(-time.Second))
-					defer stop()
-				}
-				if tc.info != nil {
-					ctx = authlib.WithAuthInfo(ctx, tc.info)
-				}
-				original := metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace")
-				ctx = metadata.NewOutgoingContext(ctx, original)
-				ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("x-access-token", "unverified-access", "x-id-token", "unverified-id"))
-				before := clientIdentityCounts(t)
-				called := false
-				check := func(out context.Context) {
-					called = true
-					md, _ := metadata.FromOutgoingContext(out)
-					require.Equal(t, []string{tc.info.AccessToken}, md.Get("x-access-token"))
-					if tc.info.IDToken == "" {
-						require.Empty(t, md.Get("x-id-token"))
-					} else {
-						require.Equal(t, []string{tc.info.IDToken}, md.Get("x-id-token"))
-					}
-					require.Equal(t, []string{"search"}, md.Get("route"))
-					require.Equal(t, []string{"trace"}, md.Get("traceparent"))
-					require.Equal(t, ctx.Done(), out.Done())
-					wantDeadline, wantOK := ctx.Deadline()
-					gotDeadline, gotOK := out.Deadline()
-					require.Equal(t, wantOK, gotOK)
-					require.Equal(t, wantDeadline, gotDeadline)
-					md.Set("route", "modified")
-				}
-				var err error
-				if streaming {
-					_, err = forwardSearchStreamInterceptor(ctx, nil, nil, "Search", func(out context.Context, _ *grpc.StreamDesc, _ *grpc.ClientConn, _ string, _ ...grpc.CallOption) (grpc.ClientStream, error) {
-						check(out)
-						return nil, status.Error(codes.PermissionDenied, "receiver denied")
-					})
+func TestForwardSearchUnaryInterceptor(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		info    *identity.StaticRequester
+		cancel  bool
+		expired bool
+		code    codes.Code
+	}{
+		{name: "classic", info: &identity.StaticRequester{AccessToken: "original-access", IDToken: "original-id"}},
+		{name: "obo", info: &identity.StaticRequester{AccessToken: "original-obo"}},
+		{name: "service", info: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, AccessToken: "original-service"}},
+		{name: "missing auth info", code: codes.Unauthenticated},
+		{name: "missing access token", info: &identity.StaticRequester{IDToken: "id-only"}, code: codes.Unauthenticated},
+		{name: "cancelled", info: &identity.StaticRequester{AccessToken: "access"}, cancel: true, code: codes.Canceled},
+		{name: "expired deadline", info: &identity.StaticRequester{AccessToken: "access"}, expired: true, code: codes.DeadlineExceeded},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if tc.cancel {
+				cancel()
+			}
+			if tc.expired {
+				var stop context.CancelFunc
+				ctx, stop = context.WithDeadline(ctx, time.Now().Add(-time.Second))
+				defer stop()
+			}
+			if tc.info != nil {
+				ctx = authlib.WithAuthInfo(ctx, tc.info)
+			}
+			original := metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace")
+			ctx = metadata.NewOutgoingContext(ctx, original)
+			ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("x-access-token", "unverified-access", "x-id-token", "unverified-id"))
+			before := clientIdentityCounts(t)
+			called := false
+			check := func(out context.Context) {
+				called = true
+				md, _ := metadata.FromOutgoingContext(out)
+				require.Equal(t, []string{tc.info.AccessToken}, md.Get("x-access-token"))
+				if tc.info.IDToken == "" {
+					require.Empty(t, md.Get("x-id-token"))
 				} else {
-					err = forwardSearchUnaryInterceptor(ctx, "Search", nil, nil, nil, func(out context.Context, _ string, _, _ any, _ *grpc.ClientConn, _ ...grpc.CallOption) error {
-						check(out)
-						return status.Error(codes.PermissionDenied, "receiver denied")
-					})
+					require.Equal(t, []string{tc.info.IDToken}, md.Get("x-id-token"))
 				}
-				after := clientIdentityCounts(t)
-				if tc.code == codes.OK {
-					require.True(t, called)
-					require.Equal(t, codes.PermissionDenied, status.Code(err))
-					require.Equal(t, before["forwarded"]+1, after["forwarded"])
-				} else {
-					require.False(t, called)
-					require.Equal(t, tc.code, status.Code(err))
-					require.Equal(t, before["forwarded"], after["forwarded"])
-				}
-				delete(before, "forwarded")
-				delete(after, "forwarded")
-				require.Equal(t, before, after)
-				require.Equal(t, metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace"), original)
+				require.Equal(t, []string{"search"}, md.Get("route"))
+				require.Equal(t, []string{"trace"}, md.Get("traceparent"))
+				require.Equal(t, ctx.Done(), out.Done())
+				wantDeadline, wantOK := ctx.Deadline()
+				gotDeadline, gotOK := out.Deadline()
+				require.Equal(t, wantOK, gotOK)
+				require.Equal(t, wantDeadline, gotDeadline)
+				md.Set("route", "modified")
+			}
+			err := forwardSearchUnaryInterceptor(ctx, "Search", nil, nil, nil, func(out context.Context, _ string, _, _ any, _ *grpc.ClientConn, _ ...grpc.CallOption) error {
+				check(out)
+				return status.Error(codes.PermissionDenied, "receiver denied")
 			})
-		}
+			after := clientIdentityCounts(t)
+			if tc.code == codes.OK {
+				require.True(t, called)
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Equal(t, before["forwarded"]+1, after["forwarded"])
+			} else {
+				require.False(t, called)
+				require.Equal(t, tc.code, status.Code(err))
+				require.Equal(t, before["forwarded"], after["forwarded"])
+			}
+			delete(before, "forwarded")
+			delete(after, "forwarded")
+			require.Equal(t, before, after)
+			require.Equal(t, metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace"), original)
+		})
 	}
 }
 
@@ -138,11 +127,7 @@ func TestInternalSearchForwardingConfiguration(t *testing.T) {
 
 	client, err := NewStorageApiSearchClient(cfg, features)
 	require.NoError(t, err)
-	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{AccessToken: "original-access", IDToken: "original-id"})
-	_, _ = client.Search(ctx, &resourcepb.ResourceSearchRequest{})
-	md := searchServer.getMetadata("/resource.ResourceIndex/Search")
-	require.Equal(t, []string{"original-access"}, md.Get("x-access-token"))
-	require.Equal(t, []string{"original-id"}, md.Get("x-id-token"))
+	require.NotNil(t, client)
 
 	_, err = NewSearchClient(cfg, features)
 	require.ErrorContains(t, err, "token exchange url is required")

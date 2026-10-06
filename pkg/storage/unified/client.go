@@ -429,7 +429,7 @@ func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forw
 		return nil, err
 	}
 	if forwardAuth {
-		cc := grpchan.InterceptClientConn(conn, forwardSearchUnaryInterceptor, forwardSearchStreamInterceptor)
+		cc := grpchan.InterceptClientConn(conn, forwardSearchUnaryInterceptor, nil)
 		return resourcepb.NewResourceIndexClient(cc), nil
 	}
 
@@ -493,15 +493,6 @@ func forwardSearchUnaryInterceptor(ctx context.Context, method string, req, repl
 	}
 	resourceclient.RecordForwardedClientIdentity()
 	return invoker(ctx, method, req, reply, cc, opts...)
-}
-
-func forwardSearchStreamInterceptor(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
-	ctx, err := forwardSearchCredentials(ctx)
-	if err != nil {
-		return nil, err
-	}
-	resourceclient.RecordForwardedClientIdentity()
-	return streamer(ctx, desc, cc, method, opts...)
 }
 
 // grpcConn creates a new gRPC connection to the provided address.
