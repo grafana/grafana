@@ -492,6 +492,202 @@ func TestIncrementalSync_CrossBoundaryDirectoryChanges(t *testing.T) {
 	})
 }
 
+// Every kind of old path against every kind of new path, for both states of the folder metadata
+// flag. The rule being checked: the old resource (or the folder metadata) must go whenever the new
+// path is not a synced file of the same kind, and a rename is split only where nothing else removes it.
+func TestSplitsRenameMatrix(t *testing.T) {
+	const (
+		resource    = "dash.json"          // synced resource file
+		metadata    = "team/_folder.json"  // folder metadata file
+		nonResource = "README.md"          // not a resource
+		hiddenFile  = ".dash.json"         // hidden
+		hiddenDir   = ".hidden/dash.json"  // inside a hidden folder
+		unsafe      = "Backend & UI.json"  // resource file whose path cannot sync
+		otherMeta   = "other/_folder.json" // another folder metadata file
+		syncedOther = "renamed.json"       // another synced resource file
+	)
+	cases := []struct {
+		previous, current string
+		onWhenMetadata    bool // split with folder metadata on
+		offWhenMetadata   bool // split with folder metadata off
+		why               string
+	}{
+		{resource, nonResource, true, true, "the resource is gone, the new file is not one"},
+		{resource, hiddenFile, true, true, "same, hidden file"},
+		{resource, hiddenDir, true, true, "same, hidden folder"},
+		{resource, unsafe, false, false, "applyUnsupportedPath removes it and warns"},
+		{resource, syncedOther, false, false, "an ordinary rename"},
+		{metadata, nonResource, true, false, "on: the folder reverts; off: never synced"},
+		{metadata, hiddenFile, true, false, "same"},
+		{metadata, unsafe, true, false, "on: the folder reverts, the new path only warns; off: nothing to remove"},
+		{metadata, syncedOther, true, false, "on: the folder reverts, the new file is a resource; off: left as it was"},
+		{metadata, otherMeta, false, false, "the metadata builder's own case"},
+		{nonResource, hiddenFile, false, false, "was never synced"},
+		{nonResource, syncedOther, false, false, "was never synced"},
+		{hiddenFile, nonResource, false, false, "was never synced"},
+	}
+	for _, c := range cases {
+		change := repository.VersionedFileChange{Action: repository.FileActionRenamed, Path: c.current, PreviousPath: c.previous}
+		require.Equal(t, c.onWhenMetadata, splitsRename(change, true), "folder metadata on: %s -> %s (%s)", c.previous, c.current, c.why)
+		require.Equal(t, c.offWhenMetadata, splitsRename(change, false), "folder metadata off: %s -> %s (%s)", c.previous, c.current, c.why)
+	}
+}
+
+func TestSplitRenamesOntoNonResources(t *testing.T) {
+	rename := func(previousPath, path string) repository.VersionedFileChange {
+		return repository.VersionedFileChange{
+			Action: repository.FileActionRenamed, Path: path, PreviousPath: previousPath, Ref: "new-ref", PreviousRef: "old-ref",
+		}
+	}
+
+	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+		t.Run("a rename onto "+path+" becomes a deletion and a creation", func(t *testing.T) {
+			got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("dashboard.json", path)}, false)
+			require.Equal(t, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "new-ref", PreviousRef: "old-ref"},
+				{Action: repository.FileActionCreated, Path: path, Ref: "new-ref"},
+			}, got)
+		})
+	}
+
+	t.Run("a folder metadata file renamed away is rewritten when folder metadata is on", func(t *testing.T) {
+		got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("team/_folder.json", "team/README.md")}, true)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionDeleted, Path: "team/_folder.json", PreviousPath: "team/_folder.json", Ref: "new-ref", PreviousRef: "old-ref"},
+			{Action: repository.FileActionCreated, Path: "team/README.md", Ref: "new-ref"},
+		}, got)
+	})
+	t.Run("a folder metadata file renamed onto a path that cannot sync is rewritten when folder metadata is on", func(t *testing.T) {
+		got := splitRenamesOntoNonResources([]repository.VersionedFileChange{rename("team/_folder.json", "team/Backend & UI.json")}, true)
+		require.Equal(t, []repository.VersionedFileChange{
+			{Action: repository.FileActionDeleted, Path: "team/_folder.json", PreviousPath: "team/_folder.json", Ref: "new-ref", PreviousRef: "old-ref"},
+			{Action: repository.FileActionCreated, Path: "team/Backend & UI.json", Ref: "new-ref"},
+		}, got)
+	})
+	t.Run("a folder metadata file moved onto another folder metadata path is left alone", func(t *testing.T) {
+		change := rename("a/_folder.json", "b/_folder.json")
+		require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}, true))
+	})
+	t.Run("a folder metadata file renamed away is left alone when folder metadata is off", func(t *testing.T) {
+		change := rename("team/_folder.json", "team/README.md")
+		require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}, false))
+	})
+
+	for name, change := range map[string]repository.VersionedFileChange{
+		"a rename between resource paths":                rename("a.json", "b.json"),
+		"a rename onto a path that cannot sync":          rename("a.json", "folder/Backend & UI.json"),
+		"a rename of a non-resource onto a non-resource": rename("README.md", "NOTES.md"),
+		"a rename of a resource that never synced":       rename(".a.json", "README.md"),
+		"a rename of a folder":                           rename("old/", "new/"),
+		"a creation":                                     {Action: repository.FileActionCreated, Path: "README.md", Ref: "new-ref"},
+		"a deletion":                                     {Action: repository.FileActionDeleted, Path: "a.json", PreviousRef: "old-ref"},
+	} {
+		t.Run(name+" is left alone", func(t *testing.T) {
+			require.Equal(t, []repository.VersionedFileChange{change}, splitRenamesOntoNonResources([]repository.VersionedFileChange{change}, false))
+		})
+	}
+}
+
+// A resource file renamed onto a path that is not a resource is gone for a full sync of the
+// same commit, so the incremental sync removes the resource and treats the new path as the
+// non-resource file it is, without reporting anything about it.
+func TestIncrementalSync_RenameOntoNonResourcePath(t *testing.T) {
+	permissiveQt := newPermissiveMockQuotaTracker(t)
+
+	renameOnto := func(name, path string, removal func(*resources.MockRepositoryResources), expectDeletion func(jobs.JobResourceResult) bool) incrementalSyncTestCase {
+		return incrementalSyncTestCase{
+			name:         name,
+			quotaTracker: permissiveQt,
+			setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+				changes := []repository.VersionedFileChange{{
+					Action:       repository.FileActionRenamed,
+					Path:         path,
+					PreviousPath: "dashboard.json",
+					Ref:          "new-ref",
+					PreviousRef:  "old-ref",
+				}}
+				repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+				// one rename is a deletion plus a creation once rewritten
+				progress.On("SetTotal", mock.Anything, 2).Return()
+				progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+				progress.On("HasDirPathFailedCreation", path).Return(false)
+
+				removal(repoResources)
+
+				progress.On("Record", mock.Anything, mock.MatchedBy(expectDeletion)).Return().Once()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Action() == repository.FileActionIgnored && result.Path() == path &&
+						result.Error() == nil && result.Warning() == nil
+				})).Return().Once()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			previousRef: "old-ref",
+			currentRef:  "new-ref",
+		}
+	}
+
+	tests := make([]incrementalSyncTestCase, 0, 5)
+	for _, path := range []string{"README.md", "dashboard.txt", ".dashboard.json", ".hidden/dashboard.json"} {
+		tests = append(tests, renameOnto(
+			"a dashboard renamed onto "+path+" is removed without a warning",
+			path,
+			func(repoResources *resources.MockRepositoryResources) {
+				repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
+					Return("removed-dashboard", "", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, 0, nil)
+			},
+			func(result jobs.JobResourceResult) bool {
+				return result.Action() == repository.FileActionDeleted && result.Path() == "dashboard.json" &&
+					result.Name() == "removed-dashboard" && result.Error() == nil && result.Warning() == nil
+			}))
+	}
+	tests = append(tests, renameOnto(
+		"a failed removal on rename onto a non-resource path is an error",
+		"README.md",
+		func(repoResources *resources.MockRepositoryResources) {
+			repoResources.On("RemoveResourceFromFile", mock.Anything, "dashboard.json", "old-ref").
+				Return("", "", schema.GroupVersionKind{}, 0, errors.New("boom"))
+		},
+		func(result jobs.JobResourceResult) bool {
+			return result.Action() == repository.FileActionDeleted && result.Path() == "dashboard.json" &&
+				result.Error() != nil && result.Warning() == nil
+		}))
+	runIncrementalSyncTests(t, tests)
+}
+
+// With folder metadata off a _folder.json is not synced: renamed onto a path that cannot sync it only
+// warns about the new path, it is never removed as if it were a resource.
+func TestIncrementalSync_FolderMetadataRenamedOntoUnsupportedPath(t *testing.T) {
+	runIncrementalSyncTests(t, []incrementalSyncTestCase{{
+		name:         "only warns",
+		quotaTracker: newPermissiveMockQuotaTracker(t),
+		setupMocks: func(repo *repository.MockVersioned, repoResources *resources.MockRepositoryResources, progress *jobs.MockJobProgressRecorder) {
+			changes := []repository.VersionedFileChange{{
+				Action:       repository.FileActionRenamed,
+				Path:         "team/Backend & UI.json",
+				PreviousPath: "team/_folder.json",
+				Ref:          "new-ref",
+				PreviousRef:  "old-ref",
+			}}
+			repo.On("CompareFiles", mock.Anything, "old-ref", "new-ref").Return(changes, nil)
+			progress.On("SetTotal", mock.Anything, 1).Return()
+			progress.On("SetMessage", mock.Anything, "replicating versioned changes").Return()
+			progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
+			progress.On("HasDirPathFailedCreation", "team/Backend & UI.json").Return(false)
+
+			// no RemoveResourceFromFile expectation: the mock fails the test if it is called
+			progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+				var unsupportedErr *resources.UnsupportedPathError
+				return result.Action() == repository.FileActionRenamed && result.Error() == nil &&
+					errors.As(result.Warning(), &unsupportedErr)
+			})).Return().Once()
+			progress.On("TooManyErrors").Return(nil)
+		},
+		previousRef: "old-ref",
+		currentRef:  "new-ref",
+	}})
+}
+
 func TestIncrementalSync_UnsupportedPaths(t *testing.T) {
 	permissiveQt := newPermissiveMockQuotaTracker(t)
 	runIncrementalSyncTests(t, []incrementalSyncTestCase{
