@@ -108,6 +108,7 @@ declare module "@openfeature/core" {
     | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
+    | "dataviz.tabularNums"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"

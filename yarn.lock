@@ -2140,6 +2140,7 @@ __metadata:
     "@grafana/test-utils": "workspace:*"
     "@grafana/ui": "npm:13.3.0-pre"
     "@kusto/monaco-kusto": "npm:^10.0.0"
+    "@openfeature/react-sdk": "npm:^1.4.1"
     "@openfeature/web-sdk": "npm:^1.10.0"
     "@testing-library/dom": "npm:10.4.1"
     "@testing-library/jest-dom": "npm:6.6.4"
@@ -5372,10 +5373,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.5.2, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.0.2, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0, @lezer/common@npm:^1.2.1, @lezer/common@npm:^1.3.0, @lezer/common@npm:^1.5.0, @lezer/common@npm:^1.5.2":
-  version: 1.5.2
-  resolution: "@lezer/common@npm:1.5.2"
-  checksum: 10/62c0a0ce431cb14bfa6cded04e24a05efa566e9260314bb3f3cf547d501efa1db5c83fc9a7871f8e0b6a4030212840f0e6567433168960c7c83bb3ffbeef8b99
+"@lezer/common@npm:1.5.3, @lezer/common@npm:^1.0.0, @lezer/common@npm:^1.0.2, @lezer/common@npm:^1.1.0, @lezer/common@npm:^1.2.0, @lezer/common@npm:^1.2.1, @lezer/common@npm:^1.3.0, @lezer/common@npm:^1.5.0, @lezer/common@npm:^1.5.2":
+  version: 1.5.3
+  resolution: "@lezer/common@npm:1.5.3"
+  checksum: 10/298f5601442978fbc9d7cd598edf952bdcd861d0bdf180f835c5db40025313ff2a97f8b524daab2c70623c69f64c4d1cb3bfc4588838626ae7bf4df3ac147022
   languageName: node
   linkType: hard
 
@@ -6376,7 +6377,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@openfeature/react-sdk@npm:^1.3.0":
+"@openfeature/react-sdk@npm:^1.3.0, @openfeature/react-sdk@npm:^1.4.1":
   version: 1.4.1
   resolution: "@openfeature/react-sdk@npm:1.4.1"
   peerDependencies:
@@ -20061,7 +20062,7 @@ __metadata:
     "@hello-pangea/dnd": "npm:18.0.1"
     "@kusto/monaco-kusto": "npm:^10.0.0"
     "@leeoniya/ufuzzy": "npm:1.0.19"
-    "@lezer/common": "npm:1.5.2"
+    "@lezer/common": "npm:1.5.3"
     "@lezer/lr": "npm:1.4.10"
     "@lezer/markdown": "npm:1.7.2"
     "@locker/near-membrane-dom": "npm:0.14.0"
@@ -20327,7 +20328,6 @@ __metadata:
     ts-morph: "npm:^28.0.0"
     ts-node: "npm:10.9.2"
     tslib: "npm:2.8.1"
-    tween-functions: "npm:^1.2.0"
     type-fest: "npm:^4.18.2"
     typescript: "npm:@typescript/typescript6@^6.0.2"
     uplot: "npm:1.6.32"
@@ -33206,13 +33206,6 @@ __metadata:
     debug: "npm:^4.4.3"
     make-fetch-happen: "npm:^15.0.1"
   checksum: 10/ae6d3f3e5de940fd6b9faeab3964f9cbddd8885e6dc01d3db7bacdb009abf31a3fab2e10162fc527781a67b04fb957cda2b6aa0017ce49b695fd3c24167aed97
-  languageName: node
-  linkType: hard
-
-"tween-functions@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "tween-functions@npm:1.2.0"
-  checksum: 10/f145f39187aacfe6e3c6bfe8452be4061a569b8e1e75c28169c55b7cdf519daa1877c79a8a2cdc902b68f49b67b8478f34818ff02529d27ae5aa0545e7fbdc06
   languageName: node
   linkType: hard
 
