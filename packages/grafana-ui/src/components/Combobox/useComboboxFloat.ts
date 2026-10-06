@@ -1,5 +1,5 @@
 import { autoUpdate, autoPlacement, size, useFloating } from '@floating-ui/react';
-import { type CSSProperties, type RefObject, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 
 import { t } from '@grafana/i18n';
 
@@ -53,6 +53,7 @@ export const useComboboxFloat = (
     width: 0,
     height: 0,
   }); // set initial values to prevent infinite size, briefly removing the list virtualization
+  const popoverMaxSizeRef = useRef(popoverMaxSize);
 
   const scrollbarWidth = useMemo(() => getScrollbarWidth(), []);
 
@@ -72,19 +73,35 @@ export const useComboboxFloat = (
         const width = Math.max(preferredMaxWidth, 0);
         const height = Math.min(Math.max(preferredMaxHeight, MENU_OPTION_HEIGHT * 6), POPOVER_MAX_HEIGHT);
 
+        // Check against the existing size to avoid a rerender if the size hasn't changed
+        // Calling `setPopoverMaxSize` with the same object still causes a rerender, so use a ref
+        if (popoverMaxSizeRef.current.width === width && popoverMaxSizeRef.current.height === height) {
+          return;
+        }
+
+        popoverMaxSizeRef.current = { width, height };
         setPopoverMaxSize({ width, height });
       },
     }),
   ];
   const elements = { reference: inputRef.current, floating: floatingRef.current };
-  const { floatingStyles } = useFloating({
+  const { floatingStyles, update } = useFloating({
     strategy: 'fixed',
     open: isOpen,
     placement: 'bottom-start',
     middleware,
     elements,
-    whileElementsMounted: autoUpdate,
   });
+
+  useEffect(() => {
+    if (!isOpen || !inputRef.current || !floatingRef.current) {
+      return;
+    }
+
+    // Only automatically update the position/size when the popover is open on the screen
+    // Otherwise we hit issues with continual updates when the input is hidden by CSS
+    return autoUpdate(inputRef.current, floatingRef.current, update);
+  }, [isOpen, update]);
 
   const longestItemWidth = useMemo(() => {
     let longestLabel = '';

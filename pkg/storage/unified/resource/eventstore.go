@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/bwmarrin/snowflake"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -208,7 +209,7 @@ func (n *eventStore) ListKeysSince(ctx context.Context, sinceRV int64, sortOrder
 	}
 	return func(yield func(string, error) bool) {
 		defer span.End()
-		for evtKey, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		for evtKey, err := range pagedKeys(ctx, n.kv, eventsSection, opts, keyPageSize) {
 			if err != nil {
 				yield("", err)
 				return
@@ -311,6 +312,31 @@ func (n *eventStore) readEventPage(ctx context.Context, keys []string) ([]Event,
 	return events, nil
 }
 
+// latest reads metadata at or below throughRV newest-first
+func (n *eventStore) latest(ctx context.Context, limit int, throughRV int64) ([]Event, error) {
+	keys := make([]string, 0, limit)
+	opts := ListOptions{Sort: SortOrderDesc, Limit: int64(limit)}
+	if throughRV < math.MaxInt64 {
+		opts.EndKey = fmt.Sprintf("%d", throughRV+1)
+	}
+	for key, err := range n.kv.Keys(ctx, eventsSection, opts) {
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, key)
+	}
+	events := make([]Event, 0, len(keys))
+	for page := range slices.Chunk(keys, readEventBatchSize) {
+		batch, err := n.readEventPage(ctx, page)
+		if err != nil {
+			return nil, err
+		}
+		events = append(events, batch...)
+	}
+	slices.Reverse(events)
+	return events, nil
+}
+
 // CleanupOldEvents deletes events older than the specified retention period.
 func (n *eventStore) CleanupOldEvents(ctx context.Context, cutoff time.Time) (int, error) {
 	ctx, span := tracer.Start(ctx, "resource.eventStore.CleanupOldEvents")
@@ -362,14 +388,14 @@ func (n *eventStore) batchDelete(ctx context.Context, keys []string) error {
 
 // snowflake id with last two sections set to 0 (machine id and sequence)
 func snowflakeFromTime(t time.Time) int64 {
-	return (t.UnixMilli() - snowflake.Epoch) << (snowflake.NodeBits + snowflake.StepBits)
+	return (t.UnixMilli() - resourceVersionEpoch) << resourceVersionTimestampShift
 }
 
 // SubtractDurationFromSnowflake subtracts a duration from a snowflake ID by
 // converting it to time, subtracting the duration, and converting back to a snowflake ID
 func SubtractDurationFromSnowflake(snowflakeID int64, duration time.Duration) int64 {
 	// Extract timestamp from snowflake (returns milliseconds since epoch)
-	timestamp := snowflake.ID(snowflakeID).Time()
+	timestamp := snowflakeTimestampMillis(snowflakeID)
 	// Convert to time.Time
 	t := time.Unix(0, timestamp*int64(time.Millisecond))
 	// Subtract duration

@@ -54,7 +54,12 @@ export const getNotebookSpecCommand: MutationCommand<GetNotebookSpecPayload, Not
 
       return {
         success: true,
-        data: { spec: notebook },
+        // An existing notebook's resourceVersion always exists on the server — what's missing here
+        // is this session's own cache of it (NotebookAutosave.savedResourceVersion), which is only
+        // populated once a save has gone through this scene. A caller that gets none back can fall
+        // back to a REST read for the authoritative value instead (a blank/new/unsaved notebook has
+        // none to read there either, so the fallback agrees in that case too).
+        data: { spec: notebook, resourceVersion: scene.autosave.state.savedResourceVersion },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };

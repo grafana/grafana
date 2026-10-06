@@ -5,6 +5,7 @@ import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
+import { TABLE } from '../constants';
 import { type RowExpanderNGProps } from '../types';
 
 export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGProps) {
@@ -37,9 +38,13 @@ export function RowExpander({ onCellExpand, isExpanded, rowId }: RowExpanderNGPr
 
 const styles = {
   expanderCell: css({
+    position: 'absolute',
+    inset: 0,
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingInline: TABLE.CELL_PADDING,
     cursor: 'pointer',
   }),
 };

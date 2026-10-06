@@ -313,6 +313,7 @@ export interface GrafanaConfig {
   rudderstackV3SdkUrl: string;
   rudderstackConfigUrl: string;
   rudderstackIntegrationsUrl: string;
+  rudderstackBatchInterval: number;
   applicationInsightsConnectionString: string;
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;

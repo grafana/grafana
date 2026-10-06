@@ -1,11 +1,11 @@
 /**
  * Pure recommendation matrix ("Homepage Led Growth" analytics matrix), scoped to Logs, Traces
  * (Hosted Traces), Kubernetes Monitoring, Application Observability (also a widget-bearing
- * solution) and Synthetic Monitoring.
+ * solution), Synthetic Monitoring and IRM.
  * No I/O: signal detection lives in solutionState.ts.
  */
 
-import { type SolutionState } from '../solutions/solutionState';
+import { CORE_SIGNALS, type SolutionState } from '../solutions/solutionState';
 import { type SolutionId } from '../solutions/types';
 
 export type RecommendedCardId =
@@ -15,7 +15,8 @@ export type RecommendedCardId =
   | 'hosted-traces'
   | 'kubernetes-monitoring'
   | 'application-observability'
-  | 'synthetic-monitoring';
+  | 'synthetic-monitoring'
+  | 'irm';
 
 // Complete total orders (every RecommendedCardId appears once) so the sort is deterministic;
 // gating means several entries are unreachable for a given solution, which is harmless.
@@ -29,6 +30,7 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'hosted-traces',
     'application-observability',
     'connect-metrics',
+    'irm',
     'synthetic-monitoring',
   ],
   // Logs↔traces correlation is the classic next step from logs.
@@ -39,11 +41,13 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'kubernetes-monitoring',
     'enable-logs',
     'enable-logs-k8s',
+    'irm',
     'synthetic-monitoring',
   ],
-  // Traces are the App Observability foundation.
+  // Traces are the App Observability foundation; IRM closes its observe -> page -> respond loop.
   traces: [
     'application-observability',
+    'irm',
     'connect-metrics',
     'enable-logs',
     'enable-logs-k8s',
@@ -51,10 +55,11 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'hosted-traces',
     'synthetic-monitoring',
   ],
-  // Matrix "App O11y active" row: K8s Monitoring ("App-to-Infra crosscheck") is the only shipped
-  // recommendation; IRM/FE O11y are PRIMARY but have no cards yet, Synthetics is n/a. Telemetry
-  // cards are near-unreachable here (App O11y implies M+L+T); own card last (matches kubernetes).
+  // Matrix "App O11y active" row: IRM is PRIMARY, K8s Monitoring ("App-to-Infra crosscheck") the
+  // SECONDARY; FE O11y is PRIMARY too but has no card yet, Synthetics is n/a. Telemetry cards are
+  // near-unreachable here (App O11y implies M+L+T); own card last (matches kubernetes).
   'app-observability': [
+    'irm',
     'kubernetes-monitoring',
     'hosted-traces',
     'enable-logs',
@@ -63,11 +68,13 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
     'synthetic-monitoring',
     'application-observability',
   ],
+  // Telemetry depth first; IRM's alert-to-resolution loop follows once the cluster is observed.
   kubernetes: [
     'enable-logs-k8s',
     'enable-logs',
     'hosted-traces',
     'application-observability',
+    'irm',
     'connect-metrics',
     'kubernetes-monitoring',
     'synthetic-monitoring',
@@ -75,6 +82,7 @@ export const SOLUTION_CARD_PRIORITY: Record<SolutionId, readonly RecommendedCard
   // Black-box uptime affinity: infra-adjacent next steps first, own card last (matches kubernetes).
   synthetics: [
     'kubernetes-monitoring',
+    'irm',
     'hosted-traces',
     'application-observability',
     'enable-logs',
@@ -124,9 +132,9 @@ export interface RecommendationSelection {
  * `metrics` inactive is unreachable — solutionState enforces the invariant.
  */
 export function selectRecommendations(state: SolutionState): RecommendationSelection {
-  const { metrics, logs, traces, kubernetes, 'app-observability': appObservability, synthetics } = state;
-  // The core-signal short-circuit deliberately excludes App Observability and Synthetics: they each gate one card.
-  if (metrics === 'unknown' || logs === 'unknown' || traces === 'unknown' || kubernetes === 'unknown') {
+  const { metrics, logs, traces, kubernetes, 'app-observability': appObservability, synthetics, irm } = state;
+  // Only core signals short-circuit; App Observability, synthetics and irm each gate a single card.
+  if (CORE_SIGNALS.some((signal) => state[signal] === 'unknown')) {
     return { cards: [], baseRow: 'unknown' };
   }
 
@@ -147,24 +155,38 @@ export function selectRecommendations(state: SolutionState): RecommendationSelec
   // own card, only a definitive inactive shows it.
   const syntheticMonitoring: RecommendedCardId[] = synthetics === 'inactive' ? ['synthetic-monitoring'] : [];
 
+  // IRM needs something to route: a cluster, synthetic checks, or the full M+L+T stack. A
+  // metrics-only or M+L stack gets no IRM card. Like the other gated cards, only inactive shows it.
+  const irmWanted = kubernetes === 'active' || synthetics === 'active' || (logs === 'active' && traces === 'active');
+  const irmCard: RecommendedCardId[] = irmWanted && irm === 'inactive' ? ['irm'] : [];
+
   if (logs === 'inactive') {
     // Logs is PRIMARY before any traces/k8s recommendation; the K8s row only changes the copy
     // (Helm values flag). The row's Traces cell is moot when traces are already active.
     return kubernetes === 'active'
-      ? { cards: ['enable-logs-k8s', ...syntheticMonitoring], baseRow: 'k8s_no_logs' }
-      : { cards: ['enable-logs', ...syntheticMonitoring], baseRow: 'metrics_only' };
+      ? { cards: ['enable-logs-k8s', ...syntheticMonitoring, ...irmCard], baseRow: 'k8s_no_logs' }
+      : { cards: ['enable-logs', ...syntheticMonitoring, ...irmCard], baseRow: 'metrics_only' };
   }
 
   if (traces === 'inactive') {
     // Distinct rows so Hosted Traces clicks segment by Kubernetes presence.
     return kubernetes === 'active'
-      ? { cards: ['hosted-traces', ...syntheticMonitoring], baseRow: 'mlk_no_traces' }
-      : { cards: ['hosted-traces', 'kubernetes-monitoring'], baseRow: 'ml_no_traces' };
+      ? { cards: ['hosted-traces', ...syntheticMonitoring, ...irmCard], baseRow: 'mlk_no_traces' }
+      : { cards: ['hosted-traces', 'kubernetes-monitoring', ...irmCard], baseRow: 'ml_no_traces' };
   }
 
-  // M+L+T (OTel starters): App Observability unless it is already in use.
-  const appO11y: RecommendedCardId[] = appObservability === 'inactive' ? ['application-observability'] : [];
-  return kubernetes === 'active'
-    ? { cards: appO11y, baseRow: 'fully_active' }
-    : { cards: [...appO11y, 'kubernetes-monitoring'], baseRow: 'mlt' };
+  // M+L+T (OTel starters): App Observability's own signal decides whether it is still the next step.
+  const k8sMonitoring: RecommendedCardId[] = kubernetes === 'active' ? [] : ['kubernetes-monitoring'];
+  const baseRow: BaseRow = kubernetes === 'active' ? 'fully_active' : 'mlt';
+  switch (appObservability) {
+    // App Observability leads; IRM is the matrix's SECONDARY.
+    case 'inactive':
+      return { cards: ['application-observability', ...k8sMonitoring, ...irmCard], baseRow };
+    // App Observability proven in use: the matrix's "App O11y active" row ranks IRM PRIMARY.
+    case 'active':
+      return { cards: [...irmCard, ...k8sMonitoring], baseRow };
+    // An inconclusive probe hides App Observability without promoting IRM.
+    case 'unknown':
+      return { cards: [...k8sMonitoring, ...irmCard], baseRow };
+  }
 }

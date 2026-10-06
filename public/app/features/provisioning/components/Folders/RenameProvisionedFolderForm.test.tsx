@@ -36,6 +36,11 @@ jest.mock('../../hooks/useProvisionedFolderFormData', () => ({
   useProvisionedFolderFormData: jest.fn(),
 }));
 
+jest.mock('../../hooks/useGetResourceRepositoryView', () => ({
+  ...jest.requireActual('../../hooks/useGetResourceRepositoryView'),
+  useGetResourceRepositoryView: jest.fn(),
+}));
+
 jest.mock('react-router-dom-v5-compat', () => {
   const actual = jest.requireActual('react-router-dom-v5-compat');
   return {

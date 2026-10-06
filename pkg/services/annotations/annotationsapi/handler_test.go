@@ -297,6 +297,21 @@ func TestMigrationProxy(t *testing.T) {
 			assert.Empty(t, client.deletedNames)
 		})
 
+		t.Run("moving a point with a non-nil timeEnd keeps it a point", func(t *testing.T) {
+			existing := existingAnno("anno-1")
+			existing.Spec.TimeEnd = new(int64(1000))
+			client := &fakeClient{existing: existing}
+			proxy := newProxy(client)
+
+			err := proxy.Update(context.Background(), orgID, legacyID, &annotations.Item{Text: "after", Epoch: 5000})
+			require.NoError(t, err)
+
+			require.NotNil(t, client.created, "moving the time re-creates the record")
+			require.NotNil(t, client.created.Spec.TimeEnd, "a moved point keeps its non-nil timeEnd convention")
+			assert.Equal(t, int64(5000), *client.created.Spec.TimeEnd, "timeEnd must also move with time")
+			assert.Equal(t, []string{"anno-1"}, client.deletedNames)
+		})
+
 		t.Run("moving a point to a later time keeps it a point", func(t *testing.T) {
 			existing := existingAnno("anno-1")
 			client := &fakeClient{existing: existing}

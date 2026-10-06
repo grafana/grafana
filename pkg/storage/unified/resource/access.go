@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"strings"
@@ -12,19 +13,25 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 type groupResource map[string]map[string]interface{}
 
 type accessMetrics struct {
-	checkDuration      *prometheus.HistogramVec
-	compileDuration    *prometheus.HistogramVec
-	batchCheckDuration *prometheus.HistogramVec
-	errorsTotal        *prometheus.CounterVec
+	checkDuration              *prometheus.HistogramVec
+	compileDuration            *prometheus.HistogramVec
+	batchCheckDuration         *prometheus.HistogramVec
+	errorsTotal                *prometheus.CounterVec
+	missingDelegatedPermission *prometheus.CounterVec
 }
 
 func newMetrics(reg prometheus.Registerer) *accessMetrics {
@@ -61,7 +68,113 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 				Name: "grafana_grpc_authz_limited_client_errors_total",
 				Help: "Number of errors",
 			}, []string{"group", "resource", "verb"}),
+		missingDelegatedPermission: promauto.With(reg).NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "grafana_grpc_authz_limited_client_missing_delegated_permission_total",
+				Help: "Number of access checks refused because this service's token cannot act on behalf of a user for the group and resource",
+			}, []string{"group", "resource", "verb"}),
 	}
+}
+
+// ErrServiceCannotDelegate is returned instead of the denial authlib would
+// answer on its own, without asking the authz service. That denial is
+// indistinguishable from the user lacking access, so a deployment mistake shows
+// up as missing results rather than as a failure.
+var ErrServiceCannotDelegate = errors.New("this service's token has no delegated permission for the resource")
+
+// ErrServicePermissionMissing distinguishes a service denial from a user denial.
+var ErrServicePermissionMissing = errors.New("this service's token has no permission for the resource")
+
+func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb string) error {
+	res := authz.CheckServicePermissions(id, group, resource, verb)
+	if res.Allowed {
+		return nil
+	}
+
+	// Tokenless callers need the underlying client's local authorization rules.
+	// A verified token with empty permissions must not receive this exemption.
+	if id.GetAccessToken() == "" && len(id.GetTokenPermissions()) == 0 && len(id.GetTokenDelegatedPermissions()) == 0 {
+		return nil
+	}
+
+	missing := ErrServiceCannotDelegate
+	if res.ServiceCall {
+		missing = ErrServicePermissionMissing
+	}
+	return fmt.Errorf("%w: %s/%s:%s", missing, group, resource, verb)
+}
+
+func (c authzLimitedClient) serviceCanDelegate(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
+	err := checkServiceTokenPermissions(id, group, resource, verb)
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, ErrServicePermissionMissing) {
+		c.metrics.errorsTotal.WithLabelValues(group, resource, verb).Inc()
+	} else {
+		c.metrics.missingDelegatedPermission.WithLabelValues(group, resource, verb).Inc()
+	}
+	c.logger.FromContext(ctx).Error(
+		"Refusing access check: missing service permission",
+		"error", err,
+		"group", group,
+		"resource", resource,
+		"verb", verb,
+		"subject", id.GetSubject(),
+		"required_permission", fmt.Sprintf("%s/%s:%s", group, resource, verb),
+	)
+	return err
+}
+
+// Check before scanning so an empty index cannot hide a missing service grant.
+func (s *searchServer) checkSearchServicePermissions(ctx context.Context, req *resourcepb.ResourceSearchRequest) error {
+	id, ok := claims.AuthInfoFrom(ctx)
+	if !ok || id == nil {
+		if s.access == nil {
+			return nil
+		}
+		return apierrors.NewUnauthorized(authz.ErrMissingAuthInfo.Error())
+	}
+	key := req.Options.Key
+	if !claims.NamespaceMatches(id.GetNamespace(), key.Namespace) {
+		return claims.ErrNamespaceMismatch
+	}
+
+	verb := utils.VerbGet
+	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
+		verb = utils.VerbUpdate
+	}
+	if req.IsDeleted {
+		verb = utils.VerbSetPermissions
+	}
+	resources := indexSources(NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	for _, resource := range resources {
+		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, verb); err != nil {
+			return err
+		}
+	}
+	for _, resource := range req.Federated {
+		if err := s.checkSearchServicePermission(ctx, id, resource.Group, resource.Resource, utils.VerbGet); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *searchServer) checkSearchServicePermission(ctx context.Context, id claims.AuthInfo, group, resource, verb string) error {
+	err := checkServiceTokenPermissions(id, group, resource, verb)
+	if err == nil {
+		return nil
+	}
+	mode := "direct"
+	if errors.Is(err, ErrServiceCannotDelegate) {
+		mode = "delegated"
+	}
+	s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode).Inc()
+	s.log.FromContext(ctx).Error("Search service permission check failed", "error", err,
+		"group", group, "resource", resource, "verb", verb, "subject", id.GetSubject(),
+		"required_permission", fmt.Sprintf("%s/%s:%s", group, resource, verb))
+	return err
 }
 
 // batchSizeBucket keeps the batch size out of the label value, which would
@@ -189,6 +302,12 @@ func (c authzLimitedClient) Check(ctx context.Context, id claims.AuthInfo, req c
 		span.SetAttributes(attribute.Bool("allowed", true))
 		return claims.CheckResponse{Allowed: true}, nil
 	}
+	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return claims.CheckResponse{Allowed: false}, err
+	}
+
 	resp, err := c.client.Check(ctx, id, req, folder)
 	if err != nil {
 		c.logger.FromContext(ctx).Error("Check", "group", req.Group, "resource", req.Resource, "error", err, "duration", time.Since(t))
@@ -225,6 +344,12 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 			return true
 		}, claims.NoopZookie{}, nil
 	}
+	if err := c.serviceCanDelegate(ctx, id, req.Group, req.Resource, req.Verb); err != nil {
+		span.SetStatus(codes.Error, err.Error())
+		span.RecordError(err)
+		return nil, claims.NoopZookie{}, err
+	}
+
 	//nolint:staticcheck // SA1019: Compile is deprecated but BatchCheck is not yet fully implemented
 	checker, zookie, err := c.client.Compile(ctx, id, req)
 	if err != nil {
@@ -289,6 +414,21 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 		return claims.BatchCheckResponse{Results: results}, nil
 	}
 
+	// Once per group, resource and verb: a page of hits repeats the same combination.
+	seen := make(map[string]struct{}, len(itemsToCheck))
+	for _, item := range itemsToCheck {
+		key := item.Group + "/" + item.Resource + ":" + item.Verb
+		if _, dup := seen[key]; dup {
+			continue
+		}
+		seen[key] = struct{}{}
+		if err := c.serviceCanDelegate(ctx, id, item.Group, item.Resource, item.Verb); err != nil {
+			span.SetStatus(codes.Error, err.Error())
+			span.RecordError(err)
+			return claims.BatchCheckResponse{}, err
+		}
+	}
+
 	// Forward to the underlying client
 	batchReq := claims.BatchCheckRequest{
 		Namespace: req.Namespace,
@@ -296,6 +436,20 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 		SkipCache: req.SkipCache,
 	}
 	resp, err := c.client.BatchCheck(ctx, id, batchReq)
+	if err == nil {
+		// FilterAuthorized only reads Allowed, so errors must reach it at batch level.
+		for _, item := range itemsToCheck {
+			result, ok := resp.Results[item.CorrelationID]
+			if !ok {
+				err = fmt.Errorf("missing authorization result for %s", item.CorrelationID)
+				break
+			}
+			if result.Error != nil {
+				err = result.Error
+				break
+			}
+		}
+	}
 	if err != nil {
 		c.logger.FromContext(ctx).Error("BatchCheck", "error", err, "duration", time.Since(t))
 		c.metrics.errorsTotal.WithLabelValues("", "", "batch_check").Inc()
@@ -311,4 +465,4 @@ func (c authzLimitedClient) BatchCheck(ctx context.Context, id claims.AuthInfo, 
 	return claims.BatchCheckResponse{Results: results}, nil
 }
 
-var _ claims.AccessClient = &authzLimitedClient{}
+var _ claims.AccessClient = (*authzLimitedClient)(nil)

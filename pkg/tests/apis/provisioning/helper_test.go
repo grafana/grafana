@@ -11,6 +11,8 @@ var env = common.NewSharedEnv(
 	common.WithoutProvisioningFolderMetadata,
 	func(opts *testinfra.GrafanaOpts) {
 		opts.SecretsManagerEnableDBMigrations = true
+		opts.EnableKeysAPI = true
+		opts.EnableSearchAPI = true
 	},
 	common.WithoutExportFeatureFlag,
 )

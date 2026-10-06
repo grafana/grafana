@@ -2,6 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { mockComboboxRect } from '@grafana/test-utils';
+// eslint-disable-next-line no-restricted-imports
+import type * as ui from '@grafana/ui';
 
 import { ARGScope } from '../../dataquery.gen';
 import { selectors } from '../../e2e/selectors';
@@ -9,6 +11,13 @@ import createMockDatasource from '../../mocks/datasource';
 import createMockQuery from '../../mocks/query';
 
 import ArgQueryEditor from './ArgQueryEditor';
+
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual<typeof ui>('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value }: { value: string }) {
+    return <pre>{value}</pre>;
+  },
+}));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),

@@ -8,8 +8,16 @@ export const SIGNAL_BUDGET_MS = 30_000;
 
 export type SignalStatus = 'active' | 'inactive' | 'unknown';
 
-/** Every solution's settled signal, keyed by solution id. */
-export type SolutionState = Record<SolutionId, SignalStatus>;
+/** Every solution's settled signal, keyed by solution id, plus the signals only the matrix reads. */
+export type SolutionState = Record<SolutionId, SignalStatus> & {
+  /** Grafana Alerting routing into IRM. Gates only the IRM card; 'unknown' never blanks recommendations. */
+  irm: SignalStatus;
+};
+
+/** The signals that pick a matrix row; any of them `unknown` blanks the recommendations. */
+export const CORE_SIGNALS = ['metrics', 'logs', 'traces', 'kubernetes'] as const satisfies ReadonlyArray<
+  keyof SolutionState
+>;
 
 /** A settled signal: whether data is flowing, and the datasource that proved it. */
 export interface SignalDetection {
@@ -30,4 +38,20 @@ export async function detectSignal(probe: () => Promise<DataSourceInstanceListIt
   } catch {
     return { status: 'unknown', datasource: null };
   }
+}
+
+/** Settles every signal; a rejection reads as unknown so one failing producer never blanks the snapshot. */
+export async function settleSignals<K extends string>(
+  signals: Record<K, Promise<SignalStatus>>
+): Promise<Record<K, SignalStatus>>;
+export async function settleSignals(
+  signals: Record<string, Promise<SignalStatus>>
+): Promise<Record<string, SignalStatus>> {
+  const entries = await Promise.all(
+    Object.entries(signals).map(async ([key, signal]) => {
+      const status = await signal.catch(() => 'unknown' as const);
+      return [key, status] as const;
+    })
+  );
+  return Object.fromEntries(entries);
 }

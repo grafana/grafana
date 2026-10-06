@@ -595,9 +595,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
-      createSearchRules: build.mutation<CreateSearchRulesApiResponse, CreateSearchRulesApiArg>({
-        query: (queryArg) => ({ url: `/searchRules`, method: 'POST', body: queryArg.createSearchRulesRequestBody }),
-      }),
     }),
     overrideExisting: false,
   });
@@ -1371,10 +1368,6 @@ export type UpdateRuleSequenceStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type CreateSearchRulesApiResponse = /** status 200 OK */ CreateSearchRulesResponse;
-export type CreateSearchRulesApiArg = {
-  createSearchRulesRequestBody: CreateSearchRulesRequestBody;
-};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1575,6 +1568,14 @@ export type AlertRuleOperatorState = {
 };
 export type AlertRuleAlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
 export type AlertRuleAlertRuleStateReason = 'Evaluated' | 'KeepLast';
+export type AlertRuleAlertRuleInstanceTotals = {
+  error?: number;
+  firing?: number;
+  healthy?: number;
+  nodata?: number;
+  pending?: number;
+  recovering?: number;
+};
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
@@ -1592,6 +1593,7 @@ export type AlertRuleStatus = {
   };
   state?: AlertRuleAlertRuleState;
   stateReason?: AlertRuleAlertRuleStateReason;
+  totals?: AlertRuleAlertRuleInstanceTotals;
 };
 export type AlertRule = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1778,6 +1780,14 @@ export type ConfigSpec = {
         org. The operator ini setting `unified_alerting.external_ruler_uid`
         overrides this when set; see status.externalRulerSync.origin. */
     datasourceUid?: string;
+    /** pollInterval sets how often this org's rules are re-synced from
+        datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The
+        worker checks orgs against a short internal baseline and only does
+        real work for an org once its own pollInterval has elapsed, so this
+        is a lower bound, not a guarantee — an org's actual sync can lag
+        slightly past its configured interval. Has no effect on the operator
+        ini path, which always uses the 5m default. */
+    pollInterval?: string;
   };
 };
 export type ConfigCondition = {
@@ -1816,6 +1826,12 @@ export type ConfigStatus = {
     /** datasourceUid is the UID actually used on the last sync attempt; may lag
         spec until the next tick. When origin=ini, this is the ini override value. */
     datasourceUid?: string;
+    /** lastAppliedHash is the upstream config hash from the last successful
+        sync via this resource. The worker reads it back (API path only) to
+        skip an unchanged re-apply across restarts and replicas, where an
+        in-memory-only dedup cache would otherwise start empty. Internal
+        bookkeeping; not user-facing. */
+    lastAppliedHash?: string;
     /** origin records which source supplied datasourceUid on the last run. "ini"
         (grafana.ini's unified_alerting.external_ruler_uid) wins over "api"
         (spec.externalRulerSync.datasourceUid). */
@@ -2094,88 +2110,6 @@ export type RuleSequenceList = {
   kind?: string;
   metadata: ListMeta;
 };
-export type CreateSearchRulesFacetValue = {
-  count: number;
-  value: string;
-};
-export type CreateSearchRulesRuleSearchHitFields = {
-  /** Alert-rule fields. */
-  annotations?: {
-    [key: string]: string;
-  };
-  dashboardUID?: string;
-  datasourceUIDs?: string[];
-  folder?: string;
-  for?: string;
-  interval?: string;
-  keepFiringFor?: string;
-  labels?: {
-    [key: string]: string;
-  };
-  /** Recording-rule fields. */
-  metric?: string;
-  notificationType?: string;
-  panelID?: number;
-  paused?: boolean;
-  receiver?: string;
-  routingTree?: string;
-  targetDatasourceUID?: string;
-  title?: string;
-  type?: string;
-};
-export type CreateSearchRulesSearchResultResource = {
-  group: string;
-  kind: string;
-  name: string;
-  resource: string;
-};
-export type CreateSearchRulesSearchResultHit = {
-  fields: CreateSearchRulesRuleSearchHitFields;
-  resource: CreateSearchRulesSearchResultResource;
-  score?: number;
-};
-export type CreateSearchRulesTotalHitsRelation = 'eq' | 'lte';
-export type CreateSearchRulesSearchResultsMetadata = {
-  continue?: string;
-  totalHits?: number;
-  /** Always read totalHits together with totalHitsRelation. */
-  totalHitsRelation?: CreateSearchRulesTotalHitsRelation;
-};
-export type CreateSearchRulesResponse = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion: string;
-  facets?: {
-    [key: string]: CreateSearchRulesFacetValue[];
-  };
-  items: CreateSearchRulesSearchResultHit[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind: string;
-  metadata: CreateSearchRulesSearchResultsMetadata;
-};
-export type CreateSearchRulesSearchSortField = string;
-export type CreateSearchRulesSearchFilterLeaf = {
-  field: string;
-  operator: 'In' | 'NotIn';
-  values: string[];
-};
-export type CreateSearchRulesSearchTextLeaf = {
-  fields?: string[];
-  value: string;
-};
-export type CreateSearchRulesSearchWhereNode = {
-  and?: CreateSearchRulesSearchWhereNode[];
-  filter?: CreateSearchRulesSearchFilterLeaf;
-  text?: CreateSearchRulesSearchTextLeaf;
-};
-export type CreateSearchRulesRequestBody = {
-  continue?: string;
-  facets?: string[];
-  fields?: string[];
-  labelSelector?: string;
-  limit?: number;
-  sort?: CreateSearchRulesSearchSortField[];
-  where?: CreateSearchRulesSearchWhereNode;
-};
 export const {
   useGetApiResourcesQuery,
   useLazyGetApiResourcesQuery,
@@ -2232,5 +2166,4 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
-  useCreateSearchRulesMutation,
 } = injectedRtkApi;

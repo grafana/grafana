@@ -11,8 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -133,6 +135,39 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 
 		require.Len(t, info.VersionedResourcesStorageMap, 1)
 		require.Empty(t, b.kinds)
+	})
+
+	// The apiserver skips a version with no storage, which would take its custom
+	// routes out of discovery and OpenAPI.
+	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
+		routesOnly := func(routes app.ManifestVersionRoutes) *AppPluginAPIBuilder {
+			b := testBuilder(t, &app.ManifestData{
+				Group: "example.ext.grafana.app",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1",
+					Served: true,
+					Routes: routes,
+				}},
+			})
+			b.client = nil // no settings, so the routes are all the version has
+			return b
+		}
+		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
+
+		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}})
+		info, opts := testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
+			info.VersionedResourcesStorageMap["v1"])
+
+		// A route that is dropped at mount time serves nothing, so the version
+		// has nothing to install.
+		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{
+			"ping": {Head: ping.Get},
+		}})
+		info, opts = testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+		require.Empty(t, info.VersionedResourcesStorageMap)
 	})
 
 	// A kind whose plural collides would silently replace the resource already in

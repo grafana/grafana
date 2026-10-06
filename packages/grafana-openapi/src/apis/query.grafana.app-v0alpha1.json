@@ -42,6 +42,23 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of connections to return; zero means no limit",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "name": "continue",
+            "in": "query",
+            "description": "Continuation token from the previous page",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
