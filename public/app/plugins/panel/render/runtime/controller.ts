@@ -255,19 +255,21 @@ export function createRenderFrameController(
       return;
     }
     const data = event.data;
+    // Every message counts, valid or not, so a frame cannot flood the host with anything.
+    if (!admit(messageTypeOf(data))) {
+      fail(
+        'rate-limit',
+        `The panel frame sent more than ${MAX_FRAME_MESSAGES_PER_SECOND} messages in one second (${rateSummary()}).`
+      );
+      return;
+    }
     if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      fail('protocol', 'The panel frame sent a message that is not an object.');
       return;
     }
     const message = parseFrameMessage(data);
     if (!message) {
       fail('protocol', describeInvalidFrameMessage(data));
-      return;
-    }
-    if (message.type !== 'pong' && !admit(message.type)) {
-      fail(
-        'rate-limit',
-        `The panel frame sent more than ${MAX_FRAME_MESSAGES_PER_SECOND} messages in one second (${rateSummary()}).`
-      );
       return;
     }
     handle(message);
@@ -323,9 +325,15 @@ export function createRenderFrameController(
         return;
       }
       case 'pong':
-        if (message.id === pingId) {
+        if (message.id === pingId && pingedAt !== undefined) {
           answered = true;
           pingedAt = undefined;
+          return;
+        }
+        // An earlier ping can be answered after the host restarted the wait. Anything else is a
+        // pong the host never asked for.
+        if (message.id < 1 || message.id >= pingId) {
+          fail('protocol', `The panel frame answered a heartbeat that was not sent (id ${message.id}).`);
         }
         return;
     }
@@ -426,6 +434,16 @@ export function createRenderFrameController(
       teardown();
     },
   };
+}
+
+function messageTypeOf(data: unknown): string {
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const type: unknown = Reflect.get(data, 'type');
+    if (typeof type === 'string') {
+      return type.slice(0, 64);
+    }
+  }
+  return Array.isArray(data) ? 'array' : typeof data;
 }
 
 function isDocumentHidden(): boolean {

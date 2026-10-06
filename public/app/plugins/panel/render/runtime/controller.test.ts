@@ -174,12 +174,101 @@ describe('createRenderFrameController', () => {
     expect(port.onmessage).toBeNull();
   });
 
-  it('drops non-object messages without failing', () => {
+  it.each([
+    ['a string', 'ready'],
+    ['an array', [{ type: 'ready', version: 1 }]],
+    ['null', null],
+    ['a number', 42],
+  ])('fails with a protocol error on %s instead of ignoring it', (_, message) => {
     const { handlers, connect, fromFrame, controller } = setup();
     connect();
-    fromFrame('ready');
-    fromFrame([{ type: 'ready', version: 1 }]);
-    fromFrame(null);
+    fromFrame(message);
+    expect(handlers.onError).toHaveBeenCalledWith({
+      kind: 'protocol',
+      message: 'The panel frame sent a message that is not an object.',
+      fatal: true,
+    });
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it('fails with a protocol error on a valid message that carries extra payload', () => {
+    const { handlers, connect, fromFrame, controller } = setup();
+    connect();
+    fromFrame({ type: 'height', height: 10, padding: 'x'.repeat(10_000) });
+    expect(handlers.onHeight).not.toHaveBeenCalled();
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it('counts primitive messages toward the rate limit before parsing them', () => {
+    const { handlers, connect, fromFrame, controller } = setup();
+    connect();
+    jest.advanceTimersByTime(1000);
+    for (let i = 0; i < MAX_FRAME_MESSAGES_PER_SECOND; i++) {
+      fromFrame({ type: 'height', height: i });
+    }
+    fromFrame('x'.repeat(1000));
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'rate-limit', fatal: true }));
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it('counts pongs toward the rate limit', () => {
+    const { handlers, connect, fromFrame, controller, port } = setup();
+    connect();
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    const ping = port.sent.find((message) => Reflect.get(Object(message), 'type') === 'ping');
+    const id = Reflect.get(Object(ping), 'id');
+    jest.advanceTimersByTime(1000);
+    for (let i = 0; i < MAX_FRAME_MESSAGES_PER_SECOND; i++) {
+      fromFrame({ type: 'height', height: i });
+    }
+    expect(controller.getState()).toBe('ready');
+    // A valid answer to the outstanding ping is still one message too many.
+    fromFrame({ type: 'pong', id });
+    expect(handlers.onError).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'rate-limit', message: expect.stringContaining('1 pong'), fatal: true })
+    );
+  });
+
+  it('accepts one pong per ping and fails on a duplicate or a pong for a ping never sent', () => {
+    const { handlers, connect, fromFrame, controller, port } = setup();
+    connect();
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    const ping = port.sent.find((message) => Reflect.get(Object(message), 'type') === 'ping');
+    const id = Number(Reflect.get(Object(ping), 'id'));
+
+    fromFrame({ type: 'pong', id });
+    expect(controller.getState()).toBe('ready');
+
+    fromFrame({ type: 'pong', id });
+    expect(handlers.onError).toHaveBeenCalledWith({
+      kind: 'protocol',
+      message: `The panel frame answered a heartbeat that was not sent (id ${id}).`,
+      fatal: true,
+    });
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it('fails on a pong with an id ahead of the last ping', () => {
+    const { handlers, connect, fromFrame, controller } = setup();
+    connect();
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    fromFrame({ type: 'pong', id: 999 });
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
+    expect(controller.getState()).toBe('failed');
+  });
+
+  it('ignores a late pong for an earlier ping without counting it as an answer', () => {
+    const { handlers, connect, fromFrame, controller, port } = setup();
+    connect();
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    // A long host stall restarts the wait, so the next tick sends a new ping.
+    jest.setSystemTime(Date.now() + HEARTBEAT_MS * 4);
+    jest.advanceTimersByTime(HEARTBEAT_MS);
+    const pings = port.sent.filter((message) => Reflect.get(Object(message), 'type') === 'ping');
+    expect(pings.length).toBeGreaterThanOrEqual(2);
+
+    fromFrame({ type: 'pong', id: Reflect.get(Object(pings[0]), 'id') });
     expect(handlers.onError).not.toHaveBeenCalled();
     expect(controller.getState()).toBe('ready');
   });
