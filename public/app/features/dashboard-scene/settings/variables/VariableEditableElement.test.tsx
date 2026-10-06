@@ -1,11 +1,14 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
+import { of } from 'rxjs';
 import { getWrapper } from 'test/test-utils';
 
+import { VariableRefresh } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginLinksHook } from '@grafana/runtime';
-import { CustomVariable, SceneTimeRange, SceneVariableSet } from '@grafana/scenes';
+import { CustomVariable, QueryVariable, SceneTimeRange, type SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { Sidebar, useSidebar } from '@grafana/ui';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -23,6 +26,11 @@ jest.mock('../../utils/interactions', () => ({
     editSessionStarted: jest.fn(),
     variableActionButtonClicked: jest.fn(),
   },
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaQueryVarEditorRedesign: () => true,
 }));
 
 const variableActionButtonClickedMock = jest.mocked(DashboardInteractions.variableActionButtonClicked);
@@ -156,6 +164,71 @@ describe('VariableEditableElement', () => {
   });
 });
 
+describe('VariableEditableElement undo/redo', () => {
+  it('records a multi-value change as one undoable action', async () => {
+    const variable = new CustomVariable({ name: 'service', query: 'api,web' });
+    const { dashboard } = buildDashboardVariableScene(variable);
+    const sidebar = dashboard.state.sidebar;
+    const user = userEvent.setup();
+    renderVariableSidebar(dashboard);
+
+    await user.click(await screen.findByLabelText('Multi-value'));
+    expect(variable.state.isMulti).toBe(true);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.isMulti).toBeFalsy();
+    expect(screen.getByLabelText('Multi-value')).not.toBeChecked();
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.isMulti).toBe(true);
+  });
+
+  it('records a custom all value change as one undoable action', async () => {
+    const variable = new CustomVariable({ name: 'service', query: 'api,web', includeAll: true, allValue: '.*' });
+    const { dashboard } = buildDashboardVariableScene(variable);
+    const sidebar = dashboard.state.sidebar;
+    const user = userEvent.setup();
+    renderVariableSidebar(dashboard);
+
+    await user.clear(await screen.findByLabelText(/^Custom all value/));
+    await user.type(screen.getByLabelText(/^Custom all value/), 'all');
+    await user.tab();
+    expect(variable.state.allValue).toBe('all');
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.allValue).toBe('.*');
+    expect(screen.getByLabelText(/^Custom all value/)).toHaveValue('.*');
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.allValue).toBe('all');
+    expect(screen.getByLabelText(/^Custom all value/)).toHaveValue('all');
+  });
+
+  it('records a query variable refresh change as one undoable action', async () => {
+    mockBoundingClientRect();
+    const variable = new QueryVariable({ name: 'query', refresh: VariableRefresh.onDashboardLoad });
+    jest.spyOn(variable, 'validateAndUpdate').mockReturnValue(of({}));
+    const { dashboard } = buildDashboardVariableScene(variable);
+    const sidebar = dashboard.state.sidebar;
+    const user = userEvent.setup();
+    renderVariableSidebar(dashboard);
+
+    const refreshField = await screen.findByTestId('data-testid variable-type Refresh field property editor');
+    await user.click(within(refreshField).getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'On time range change' }));
+    expect(variable.state.refresh).toBe(VariableRefresh.onTimeRangeChanged);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.refresh).toBe(VariableRefresh.onDashboardLoad);
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.refresh).toBe(VariableRefresh.onTimeRangeChanged);
+  });
+});
+
 function WrapSidebar({ children }: { children: ReactNode }) {
   const sidebarContext = useSidebar({});
 
@@ -174,14 +247,15 @@ function renderVariableSidebar(dashboard: DashboardScene) {
   );
 }
 
-function buildDashboardVariableScene() {
-  const variable = new CustomVariable({
+function buildDashboardVariableScene(
+  variable: SceneVariable = new CustomVariable({
     name: 'service',
     label: 'Service',
     query: 'api,web',
     value: 'api',
     text: 'api',
-  });
+  })
+) {
   const variableSet = new SceneVariableSet({ variables: [variable] });
   const dashboard = new DashboardScene({
     $variables: variableSet,

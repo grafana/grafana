@@ -965,7 +965,7 @@ describe('panelMenuBehavior', () => {
 
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
-      new DashboardScene({
+      const dashboard = new DashboardScene({
         title: 'My dashboard',
         uid: 'dash-1',
         meta: { canEdit: true },
@@ -976,7 +976,7 @@ describe('panelMenuBehavior', () => {
       menu.activate();
       await new Promise((r) => setTimeout(r, 1));
 
-      return { menu, panel };
+      return { menu, panel, dashboard };
     }
 
     afterEach(() => {
@@ -1002,6 +1002,17 @@ describe('panelMenuBehavior', () => {
       pasteItem?.onClick?.({} as never);
 
       expect(spy).toHaveBeenCalledWith('paste', 'timeseries', expect.any(Number));
+    });
+
+    it('should record pasting styles in the undo history', async () => {
+      store.set(LS_STYLES_COPY_KEY, JSON.stringify({ panelType: 'timeseries', styles: {} }));
+      const { menu, dashboard } = await buildTimeseriesTestScene();
+      dashboard.state.sidebar.activate();
+
+      const pasteItem = menu.state.items?.find((i) => i.text === 'Styles')?.subMenu?.[1];
+      pasteItem?.onClick?.({} as never);
+
+      expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
     });
 
     it('should not show styles menu for unsupported panel types', async () => {

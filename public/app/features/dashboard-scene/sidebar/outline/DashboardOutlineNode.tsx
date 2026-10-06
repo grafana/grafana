@@ -62,7 +62,7 @@ export function DashboardOutlineNode({
 
   const elementInfo = editableElement.getEditableElementInfo();
   const instanceName = elementInfo.instanceName || noTitleText;
-  const outlineRename = useOutlineRename(editableElement, isEditing);
+  const outlineRename = useOutlineRename(sceneObject, editableElement, isEditing);
   const isContainer = editableElement.getOutlineChildren ? true : false;
   const visibleChildren = useMemo(
     () => getVisibleOutlineChildren(sceneObject, Boolean(isEditing)),

@@ -15,7 +15,6 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
-  editPanelTitleAction,
 } from '../panel-edit/getPanelFrameOptions';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
@@ -151,7 +150,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public onChangeName(name: string) {
-    editPanelTitleAction(this.panel, name);
+    getDashboardSceneFor(this.panel).updatePanelTitle(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {

@@ -16,6 +16,7 @@ import {
 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 
+import { toggleRowCollapse } from '../../actions/layout/toggleRowCollapse';
 import { useIsConditionallyHidden } from '../../conditional-rendering/hooks/useIsConditionallyHidden';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
@@ -156,7 +157,11 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
             >
               <button
                 onClick={(evt) => {
-                  model.onCollapseToggle();
+                  if (isEditing) {
+                    toggleRowCollapse(model);
+                  } else {
+                    model.onCollapseToggle();
+                  }
                   onClearSelection?.();
                 }}
                 className={cx(clearStyles, styles.rowTitleButton)}

@@ -11,6 +11,7 @@ import { useQueryLibraryContext } from 'app/features/explore/QueryLibrary/QueryL
 
 import { type AnnotationLayer } from './AnnotationEditableElement';
 import { AnnotationQueryEditorModal } from './AnnotationQueryEditorModal';
+import { annotationEditActions } from './actions';
 
 export function AnnotationQueryEditorButton({ layer }: { layer: AnnotationLayer }) {
   const { queryLibraryEnabled } = useQueryLibraryContext();
@@ -53,8 +54,12 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
       onSelectQuery: async (selectedQuery: DataQuery) => {
         try {
           const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
-          layer.setState({ query: updatedQuery });
-          layer.runLayer();
+          annotationEditActions.changeAnnotationQuery({
+            source: layer,
+            oldValue: query,
+            newValue: updatedQuery,
+            scope: 'query-library',
+          });
         } catch (error) {
           console.error('Failed to replace annotation query!', error);
           getAppEvents().publish({
