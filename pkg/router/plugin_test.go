@@ -97,10 +97,10 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 func TestPluginBackendKey(t *testing.T) {
 	plugin := definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "test-app", Info: plugins.Info{Version: "1.0.0"}},
-		Manifest: &app.ManifestData{
+		Manifests: []*app.ManifestData{{
 			AppName: "test", Group: "test.ext.grafana.app",
 			Versions: []app.ManifestVersion{{Name: "v1alpha1", Served: true}},
-		},
+		}},
 	}
 	key := func(plugin definition.PluginDefinition) string {
 		t.Helper()
@@ -134,13 +134,13 @@ func TestPluginBackendKey(t *testing.T) {
 func TestPluginBackendLoad(t *testing.T) {
 	plugin := definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "test-app"},
-		Manifest: &app.ManifestData{
+		Manifests: []*app.ManifestData{{
 			AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
 			Versions: []app.ManifestVersion{
 				{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "Thing", Plural: "things", Scope: "Namespaced"}}},
 				{Name: "v2alpha1", Served: false},
 			},
-		},
+		}},
 	}
 	t.Run("loads an API handler using the plugin's clients", func(t *testing.T) {
 		calls := 0
@@ -159,7 +159,7 @@ func TestPluginBackendLoad(t *testing.T) {
 		require.Equal(t, 1, calls)
 		spans := setupRouterTracing(t)
 		t.Cleanup(handler.(interface{ Destroy() }).Destroy)
-		req := httptest.NewRequest(http.MethodGet, "/apis/"+plugin.Manifest.Group, nil)
+		req := httptest.NewRequest(http.MethodGet, "/apis/"+plugin.Manifests[0].Group, nil)
 		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
 			Type: claims.TypeUser, OrgID: 1, Namespace: "default",
 		}))
@@ -171,7 +171,7 @@ func TestPluginBackendLoad(t *testing.T) {
 			if span.Name() == "router.plugin" {
 				found = true
 				require.Contains(t, span.Attributes(), attribute.String("grafana.plugin.id", plugin.JSONData.ID))
-				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", plugin.Manifest.Group))
+				require.Contains(t, span.Attributes(), attribute.String("grafana.router.group", plugin.Manifests[0].Group))
 				require.Contains(t, span.Attributes(), attribute.Int("http.response.status_code", http.StatusOK))
 			}
 		}
@@ -210,7 +210,7 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 			hybrid := true
 			plugin := definition.PluginDefinition{
 				JSONData: plugins.JSONData{ID: "test-app"},
-				Manifest: &app.ManifestData{
+				Manifests: []*app.ManifestData{{
 					AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
 					Versions: []app.ManifestVersion{{
 						Name: "v1alpha1", Served: true,
@@ -219,7 +219,7 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 							Search: &app.ManifestVersionKindSearch{Hybrid: &hybrid},
 						}},
 					}},
-				},
+				}},
 			}
 			backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
 				return nil, nil, nil

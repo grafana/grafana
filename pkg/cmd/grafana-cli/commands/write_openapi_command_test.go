@@ -149,8 +149,8 @@ func TestWriteOpenAPIInputRejectsDirectory(t *testing.T) {
 func TestOpenAPISpecFilename(t *testing.T) {
 	t.Run("uses manifest group", func(t *testing.T) {
 		plugin := definition.PluginDefinition{
-			JSONData: plugins.JSONData{ID: "example-app"},
-			Manifest: &app.ManifestData{Group: "example.ext.grafana.app"},
+			JSONData:  plugins.JSONData{ID: "example-app"},
+			Manifests: []*app.ManifestData{{Group: "example.ext.grafana.app"}},
 		}
 
 		require.Equal(t, "example.ext.grafana.app-v1alpha1.json", openAPISpecFilename(plugin, "v1alpha1"))

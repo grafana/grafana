@@ -30,8 +30,8 @@ func testBuilder(t *testing.T, manifest *app.ManifestData) *AppPluginAPIBuilder 
 	t.Helper()
 
 	plugin := definition.PluginDefinition{
-		JSONData: plugins.JSONData{ID: "example-app"},
-		Manifest: manifest,
+		JSONData:  plugins.JSONData{ID: "example-app"},
+		Manifests: []*app.ManifestData{manifest},
 	}
 	return &AppPluginAPIBuilder{
 		group:           apiGroupForPlugin(plugin),

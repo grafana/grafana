@@ -84,7 +84,7 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifest.Group, plugin.JSONData.ID,
+	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	// Any attempt to construct legacy dual-write storage would call a nil service.
 	opts.DualWrite = struct{ dualwrite.Service }{}
@@ -156,7 +156,7 @@ func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
 	t.Run("a second group loads onto the same registry", func(t *testing.T) {
 		other := testPlugin()
 		other.JSONData.ID = "other-app"
-		other.Manifest.Group = "other.ext.grafana.app"
+		other.Manifests[0].Group = "other.ext.grafana.app"
 
 		handler := loadHandler(t, other, opts)
 		var group metav1.APIGroup
@@ -258,7 +258,7 @@ func testPlugin() definition.PluginDefinition {
 			Type: plugins.TypeApp,
 			Info: plugins.Info{Description: "An example"},
 		},
-		Manifest: &app.ManifestData{
+		Manifests: []*app.ManifestData{{
 			AppName:          "example",
 			Group:            "example.ext.grafana.app",
 			PreferredVersion: "v1alpha1",
@@ -282,7 +282,7 @@ func testPlugin() definition.PluginDefinition {
 				},
 				{Name: "v2alpha1", Served: false},
 			},
-		},
+		}},
 	}
 }
 
@@ -312,11 +312,16 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		change func(*definition.PluginDefinition, *Options)
 		want   string
 	}{
-		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifest = &app.ManifestData{} }, "empty app manifest"},
-		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Group = "example.com" }, "invalid manifest group"},
+		{"multiple manifests", func(p *definition.PluginDefinition, _ *Options) {
+			p.Manifests = append(p.Manifests, &app.ManifestData{Group: "other.ext.grafana.app"})
+		}, "multiple app manifests are not supported yet"},
+		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifests = []*app.ManifestData{{}} }, "empty app manifest"},
+		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
-		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Versions[0].Kinds[0].Kind = "Settings" }, "reserved kind name"},
+		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
+			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
+		}, "reserved kind name"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			plugin, opts := testPlugin(), testOptions()
@@ -344,7 +349,7 @@ func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 
 func TestHandlerWithoutManifest(t *testing.T) {
 	plugin := testPlugin()
-	plugin.Manifest = nil
+	plugin.Manifests = nil
 	expected, err := APIGroup(plugin, testOptions())
 	require.NoError(t, err)
 	require.Equal(t, plugin.JSONData.ID, expected.Name)
@@ -392,7 +397,7 @@ func TestHandlerResourceStorage(t *testing.T) {
 	opts.Storage = UnifiedStorage(client, nil, nil)
 	plugin := testPlugin()
 	folderScoped := false
-	plugin.Manifest.Versions[0].Kinds[0].FolderScoped = &folderScoped
+	plugin.Manifests[0].Versions[0].Kinds[0].FolderScoped = &folderScoped
 	handler := withRequester(loadHandler(t, plugin, opts))
 	root := "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds"
 
@@ -443,9 +448,9 @@ func TestHandlerAdmission(t *testing.T) {
 			} else {
 				capabilities.Validation = &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}
 			}
-			plugin.Manifest.Versions[0].Kinds[0].Admission = capabilities
+			plugin.Manifests[0].Versions[0].Kinds[0].Admission = capabilities
 			folderScoped := false
-			plugin.Manifest.Versions[0].Kinds[0].FolderScoped = &folderScoped
+			plugin.Manifests[0].Versions[0].Kinds[0].FolderScoped = &folderScoped
 			client := &admissionClient{}
 			opts := allowAll(testOptions())
 			opts.ClientV3 = client
@@ -478,7 +483,7 @@ func TestHandlerLegacySettings(t *testing.T) {
 		t.Run(fmt.Sprint("manifest=", withManifest), func(t *testing.T) {
 			plugin := testPlugin()
 			if !withManifest {
-				plugin.Manifest = nil
+				plugin.Manifests = nil
 			}
 			group, err := APIGroup(plugin, testOptions())
 			require.NoError(t, err)
@@ -528,8 +533,8 @@ func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
 
 func TestHandlerRejectsManifestWithoutServedVersions(t *testing.T) {
 	plugin := testPlugin()
-	for i := range plugin.Manifest.Versions {
-		plugin.Manifest.Versions[i].Served = false
+	for i := range plugin.Manifests[0].Versions {
+		plugin.Manifests[0].Versions[i].Served = false
 	}
 	_, err := APIGroup(plugin, testOptions())
 	require.ErrorContains(t, err, "no served versions")

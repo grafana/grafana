@@ -91,10 +91,10 @@ func TestNewPluginBackendRejectsNonPluginGroups(t *testing.T) {
 		t.Run(group, func(t *testing.T) {
 			plugin := definition.PluginDefinition{
 				JSONData: plugins.JSONData{ID: "test-app"},
-				Manifest: &app.ManifestData{
+				Manifests: []*app.ManifestData{{
 					AppName: "test", Group: group,
 					Versions: []app.ManifestVersion{{Name: "v1", Served: true}},
-				},
+				}},
 			}
 			var backend *PluginBackend
 			var err error

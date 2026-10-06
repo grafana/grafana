@@ -116,10 +116,10 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
 	for _, entry := range deployment.Plugins {
-		if entry.Definition.Manifest == nil {
+		if len(entry.Definition.Manifests) == 0 || entry.Definition.Manifests[0] == nil {
 			continue
 		}
-		group := apiGroupFromManifestData(*entry.Definition.Manifest)
+		group := apiGroupFromManifestData(*entry.Definition.Manifests[0])
 		if !matchesAnyPattern(group.Name, t.patterns) {
 			continue
 		}

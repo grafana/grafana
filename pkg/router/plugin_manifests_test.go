@@ -25,24 +25,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// pluginManifestsFixture is a minimal instance of the response shape a real
-// plugin-manifests operator emits at GET /plugins -- the
-// {"key","plugins":[{"definition":{"jsonData","manifest"},"host"}]} envelope
-// definition.PluginDeployments describes, confirmed against a live
-// deployment (an earlier check against a stale pinned image wrongly found a
-// bare-array mismatch; a fresher image returns exactly this shape).
 const pluginManifestsFixture = `{
 	"key": "2026-09-16T01:31:44Z",
 	"plugins": [
 		{
 			"definition": {
 				"jsonData": {"id": "grafana-appsdktest-app", "type": "app", "name": "Test App"},
-				"manifest": {
+				"manifests": [{
 					"appName": "grafana-appsdktest-app",
 					"group": "appsdktest.ext.grafana.app",
 					"versions": [{"name": "v1alpha1", "served": true}],
 					"preferredVersion": "v1alpha1"
-				}
+				}]
 			},
 			"host": "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051"
 		},
@@ -67,13 +61,13 @@ func TestFetchPluginManifests_DecodesDeploymentsEnvelope(t *testing.T) {
 
 	first := deployment.Plugins[0]
 	require.Equal(t, "grafana-appsdktest-app", first.Definition.JSONData.ID)
-	require.NotNil(t, first.Definition.Manifest)
-	require.Equal(t, "appsdktest.ext.grafana.app", first.Definition.Manifest.Group)
+	require.Len(t, first.Definition.Manifests, 1)
+	require.Equal(t, "appsdktest.ext.grafana.app", first.Definition.Manifests[0].Group)
 	require.Equal(t, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", first.Host)
 
 	second := deployment.Plugins[1]
 	require.Equal(t, "no-manifest-plugin", second.Definition.JSONData.ID)
-	require.Nil(t, second.Definition.Manifest)
+	require.Empty(t, second.Definition.Manifests)
 }
 
 func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *testing.T) {
@@ -336,7 +330,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	entry := &deployment.Plugins[0]
 	entry.Host = ""
 	folderScoped := false
-	entry.Definition.Manifest.Versions[0].Kinds = []app.ManifestVersionKind{{
+	entry.Definition.Manifests[0].Versions[0].Kinds = []app.ManifestVersionKind{{
 		Kind: "Thing", Plural: "things", Scope: "Namespaced", FolderScoped: &folderScoped,
 	}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -388,7 +382,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 		{"validation", &app.AdmissionCapabilities{Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}}},
 	} {
 		t.Run(tc.name+" requires a backend client", func(t *testing.T) {
-			entry.Definition.Manifest.Versions[0].Kinds[0].Admission = tc.capabilities
+			entry.Definition.Manifests[0].Versions[0].Kinds[0].Admission = tc.capabilities
 			target.poll(t.Context(), make(chan struct{}, 1))
 			require.Len(t, target.Backends(), 1)
 			_, err := target.Backends()[0].Load(t.Context())

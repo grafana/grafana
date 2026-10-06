@@ -129,14 +129,21 @@ func NewAppPluginAPIBuilder(
 	tracer tracing.Tracer, // needed for proxy
 	features featuremgmt.FeatureToggles, // needed for proxy
 ) (*AppPluginAPIBuilder, error) {
-	if plugin.Manifest != nil && !openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{}) {
+	if len(plugin.Manifests) > 1 {
+		return nil, fmt.Errorf("plugin %q: multiple app manifests are not supported yet", plugin.JSONData.ID)
+	}
+	var manifest *app.ManifestData
+	if len(plugin.Manifests) == 1 {
+		manifest = plugin.Manifests[0]
+	}
+	if manifest != nil && !openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{}) {
 		client = nil
 		contextProvider = nil
 	}
 	return &AppPluginAPIBuilder{
 		group:           apiGroupForPlugin(plugin),
-		manifest:        plugin.Manifest,
-		kindPolicies:    kindPolicies(plugin.Manifest),
+		manifest:        manifest,
+		kindPolicies:    kindPolicies(manifest),
 		pluginJSON:      plugin.JSONData,
 		client:          client,
 		clientV3:        clientV3,
@@ -248,7 +255,7 @@ func RegisterAPIService(
 
 		// Unified storage checks every *.ext.grafana.app group,
 		// and nothing else grants the actions a manifest kind is checked against.
-		if err := declareManifestRoles(acService, b.group, plugin.JSONData.Name, plugin.Manifest); err != nil {
+		if err := declareManifestRoles(acService, b.group, plugin.JSONData.Name, b.manifest); err != nil {
 			return nil, fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
 		}
 
@@ -271,8 +278,8 @@ func RegisterAPIService(
 // apiGroupForPlugin returns the API group the plugin is served under: the group
 // declared in the manifest when it has one, otherwise the plugin id.
 func apiGroupForPlugin(plugin definition.PluginDefinition) string {
-	if plugin.Manifest != nil {
-		group := plugin.Manifest.Group
+	if len(plugin.Manifests) > 0 && plugin.Manifests[0] != nil {
+		group := plugin.Manifests[0].Group
 
 		// Unified storage only always-enforces RBAC on groups ending in
 		// .ext.grafana.app (alwaysEnforced in pkg/storage/unified/resource), so

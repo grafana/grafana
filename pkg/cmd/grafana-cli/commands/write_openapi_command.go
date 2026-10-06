@@ -80,8 +80,8 @@ func writeOpenAPICommand(c *cli.Context) error {
 
 func openAPISpecFilename(plugin definition.PluginDefinition, version string) string {
 	group := plugin.JSONData.ID
-	if plugin.Manifest != nil {
-		group = plugin.Manifest.Group
+	if len(plugin.Manifests) > 0 && plugin.Manifests[0] != nil {
+		group = plugin.Manifests[0].Group
 	}
 	return group + "-" + version + ".json"
 }

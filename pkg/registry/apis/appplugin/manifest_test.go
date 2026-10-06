@@ -163,7 +163,7 @@ func TestAPIGroupForPlugin(t *testing.T) {
 	plugin := func(group string) definition.PluginDefinition {
 		d := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app"}}
 		if group != "" {
-			d.Manifest = &app.ManifestData{AppName: "example", Group: group}
+			d.Manifests = []*app.ManifestData{{AppName: "example", Group: group}}
 		}
 		return d
 	}
@@ -179,8 +179,8 @@ func TestAPIGroupForPlugin(t *testing.T) {
 
 	t.Run("a manifest declaring no group is refused", func(t *testing.T) {
 		d := definition.PluginDefinition{
-			JSONData: plugins.JSONData{ID: "example-app"},
-			Manifest: &app.ManifestData{AppName: "example"},
+			JSONData:  plugins.JSONData{ID: "example-app"},
+			Manifests: []*app.ManifestData{{AppName: "example"}},
 		}
 		require.Panics(t, func() { apiGroupForPlugin(d) })
 	})

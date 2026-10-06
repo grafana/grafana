@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
@@ -398,4 +399,17 @@ func TestApplyDefaultStorageConfig(t *testing.T) {
 			require.Equal(t, rest.Mode1, cfg.DualWriterMode)
 		}
 	})
+}
+
+func TestNewAppPluginAPIBuilderRejectsMultipleManifests(t *testing.T) {
+	plugin := definition.PluginDefinition{
+		JSONData: plugins.JSONData{ID: "test-app"},
+		Manifests: []*app.ManifestData{
+			{Group: "first.ext.grafana.app"},
+			{Group: "second.ext.grafana.app"},
+		},
+	}
+	b, err := NewAppPluginAPIBuilder(plugin, nil, nil, nil, nil, nil, nil, nil, AppPluginRunnerOptions{}, nil, nil)
+	require.ErrorContains(t, err, "multiple app manifests are not supported yet")
+	require.Nil(t, b)
 }

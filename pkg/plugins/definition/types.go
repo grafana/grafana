@@ -19,7 +19,7 @@ type PluginDefinition struct {
 	Schemas map[string]*pluginschema.PluginSchema `json:"schemas,omitempty"`
 
 	// When an app manifest is defined, we can use that
-	Manifest *app.ManifestData `json:"manifest,omitempty"`
+	Manifests []*app.ManifestData `json:"manifests,omitempty"`
 }
 
 // Internal, cloud specific type used by the router to know which MT plugins exist

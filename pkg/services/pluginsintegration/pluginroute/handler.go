@@ -204,11 +204,11 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 }
 
 func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
-	if plugin.Manifest != nil {
-		if plugin.Manifest.IsEmpty() {
+	if len(plugin.Manifests) > 0 && plugin.Manifests[0] != nil {
+		if plugin.Manifests[0].IsEmpty() {
 			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
 		}
-		group := plugin.Manifest.Group
+		group := plugin.Manifests[0].Group
 		if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
 			return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
 		}
