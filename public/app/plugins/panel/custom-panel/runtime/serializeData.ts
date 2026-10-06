@@ -13,6 +13,7 @@ import {
   type TimeRange,
   type TimeZone,
 } from '@grafana/data';
+import { type PanelRenderDataSummary, type PanelRenderFrameSummary } from 'app/features/panel/panelRenderStatus';
 
 import {
   DASHBOARD_SOURCE_PANEL_ID_META_KEY,
@@ -143,6 +144,49 @@ export function getRenderInputBuilder(apiVersion: unknown): RenderInputBuilder |
 }
 
 /** The frame formats with Intl, which needs a concrete IANA zone, never 'browser'. */
+const SUMMARY_MAX_FRAMES = 20;
+const SUMMARY_MAX_FIELDS = 30;
+const SUMMARY_MAX_TEXT = 120;
+
+/**
+ * The shape of the data a drawing received, without the values: for tools that write drawing code
+ * and cannot see the frames (GET_PANEL_RENDER_STATUS includeData).
+ */
+export function summarizeRenderData(series: SerializedFrame[]): PanelRenderDataSummary {
+  const short = (text: string) => (text.length > SUMMARY_MAX_TEXT ? `${text.slice(0, SUMMARY_MAX_TEXT)}…` : text);
+  const frames = series.slice(0, SUMMARY_MAX_FRAMES).map((frame): PanelRenderFrameSummary => {
+    const summary: PanelRenderFrameSummary = {
+      ...(frame.refId !== undefined && { refId: frame.refId }),
+      ...(frame.name !== undefined && { name: short(frame.name) }),
+      length: frame.length,
+      ...(frame.meta && { sourcePanelId: frame.meta.custom.dashboardSourcePanelId }),
+      ...(frame.meta?.custom.dashboardSourcePanelTitle !== undefined && {
+        sourcePanelTitle: frame.meta.custom.dashboardSourcePanelTitle,
+      }),
+      ...(frame.meta?.custom.dashboardSourceRefId !== undefined && {
+        sourceRefId: frame.meta.custom.dashboardSourceRefId,
+      }),
+      fields: frame.fields.slice(0, SUMMARY_MAX_FIELDS).map((field) => {
+        const display = field.state.lastNotNullDisplay;
+        return {
+          name: short(field.name),
+          type: field.type,
+          displayName: short(field.state.displayName),
+          ...(field.config.unit !== undefined && { unit: field.config.unit }),
+          ...(display && { last: short(`${display.prefix ?? ''}${display.text}${display.suffix ?? ''}`) }),
+        };
+      }),
+    };
+    if (frame.fields.length > SUMMARY_MAX_FIELDS) {
+      summary.omittedFields = frame.fields.length - SUMMARY_MAX_FIELDS;
+    }
+    return summary;
+  });
+  return series.length > SUMMARY_MAX_FRAMES
+    ? { frames, omittedFrames: series.length - SUMMARY_MAX_FRAMES }
+    : { frames };
+}
+
 export function resolveTimeZone(timeZone: TimeZone): string {
   const resolved = getTimeZone({ timeZone });
   if (!resolved || resolved === 'browser') {

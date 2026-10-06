@@ -396,8 +396,16 @@ The panel reports the result of its last draw to Grafana, so tools that cannot s
 can read it with the Mutation API command `GET_PANEL_RENDER_STATUS`: `pending`, `drawn` or `error`,
 whether the drawn data is final, the error kind and message, problems reported during a draw that
 still finished, the draw time and the element count. The report carries a digest of the code, so a
-tool that just wrote the code can wait for the report of that code. With `includeImage` the command
-also returns the frame's capture of its drawing.
+tool that just wrote the code can wait for the report of that code. A draw of an input older than
+the latest one sent is never final. With `includeImage` the command also returns the frame's
+capture of its drawing, and with `includeData` the shape of the data the drawing received (frames,
+fields, units and formatted last values, no other values).
+
+A panel scrolled out of view does not draw and reports `paused: true`. A Custom panel that is not
+rendered at all (an inactive tab, a collapsed row, or not reached yet by lazy loading) has no
+report; the command returns it as `not-mounted` with a reason. `reveal` brings one panel into view
+and `waitMs` waits for its draw. Each repeat of a repeated panel reports on its own, with its scene
+key as `instanceKey`.
 
 ## Migrating from the Dynamic text panel
 

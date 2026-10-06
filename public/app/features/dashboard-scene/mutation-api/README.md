@@ -708,7 +708,7 @@ Each entry uses the same `{ element, layoutItem }` shape as write commands. The 
 
 Read the last draw result of panels that report one. Today that is the Custom panel, whose drawing
 runs in a sandboxed frame that the DOM, `LIST_PANELS` and browser-side screenshots cannot see into.
-Read-only.
+It never changes the dashboard; `reveal` changes only what is in view.
 
 **Request:**
 
@@ -718,7 +718,18 @@ Read-only.
 
 - `elements` (optional): element names to return. Omit to return every panel that reports.
 - `includeImage` (optional, default `false`): also return `image`, a PNG data URL of the drawing,
-  for at most 20 panels. A panel that cannot capture itself returns `imageError` instead.
+  for at most 20 panels and 16 MiB of data URLs in all. A panel that cannot capture itself, or
+  whose image would go over that budget, returns `imageError` instead.
+- `includeData` (optional, default `false`): also return `data`, the shape of the data the drawing
+  received: per frame `refId`, `name`, `length` and, for `-- Dashboard --` frames, `sourcePanelId`,
+  `sourcePanelTitle` and `sourceRefId`; per field `name`, `type`, `displayName`, `unit` and `last`
+  (the last non-null value as the panel formats it). At most 20 frames of 30 fields, no values.
+- `reveal` (optional, default `false`): bring the one requested panel into view first, switching
+  to its tab, expanding its row and scrolling to it, so it mounts and draws. Requires exactly one
+  element.
+- `waitMs` (optional, default `0`, at most `15000`): wait up to this long for the requested Custom
+  panels to settle (`drawn` with `final: true`, or `error`) before answering. A panel out of view
+  counts as settled unless it was just revealed.
 
 **Response:**
 
@@ -744,11 +755,17 @@ Read-only.
 }
 ```
 
-- `state`: `pending` (no draw finished yet), `drawn` (the last draw finished) or `error` (it
+- `state`: `pending` (no draw finished yet), `drawn` (the last draw finished), `error` (it
   failed, or the panel could not draw at all: unsupported API version, code too large, data over
-  the limits).
-- `final`: the drawn data will not change (`Done`, `Error` or `PartialResult`). Wait for
-  `final: true` or `state: "error"` before judging a drawing.
+  the limits) or `not-mounted` (a Custom panel that is not rendered right now, so it has no draw;
+  `reason` is `inactive-tab`, `collapsed-row`, `no-code` or `not-rendered`, the last for a panel
+  that lazy loading has not reached yet). Pass `reveal` to bring it into view.
+- `final`: the drawn data will not change (`Done`, `Error` or `PartialResult`) and the draw is of
+  the latest input. Wait for `final: true` or `state: "error"` before judging a drawing.
+- `paused`: `true` while the panel is scrolled out of view. It does not draw until it is in view
+  again, so a `pending` panel that is paused will stay pending; use `reveal`.
+- `instanceKey`: the scene key of the mounted panel. A repeated panel returns one entry per
+  repeat, all with the same `element` and each with its own `instanceKey`.
 - `digest`: for the Custom panel, FNV-1a 32-bit over the UTF-16 code units of `options.code`, as
   8 lowercase hex digits. A caller that just wrote the code computes the same value to tell the new
   drawing's report from the previous one.
@@ -756,7 +773,8 @@ Read-only.
   the sandbox blocked.
 - `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
 
-Requested panels that are not on the dashboard, or do not report, are named in `warnings`.
+Requested panels that are not on the dashboard, or do not report, and Custom panels that are
+`not-mounted`, are named in `warnings`.
 
 ---
 

@@ -1,6 +1,8 @@
 import {
   capturePanelRender,
+  getPanelRenderData,
   getPanelRenderStatus,
+  getPanelRenderStatuses,
   getReportingPanelIds,
   registerPanelRenderReporter,
 } from './panelRenderStatus';
@@ -56,5 +58,34 @@ describe('panelRenderStatus', () => {
     reporter.dispose();
     reporter.report({ state: 'drawn', final: true });
     expect(getPanelRenderStatus(9)).toBeUndefined();
+  });
+
+  it('answers once per instance key: repeat clones each, the editor and dashboard together', async () => {
+    const dashboard = registerPanelRenderReporter(6, 'custom-panel', Date.now, 'panel-6');
+    const clone = registerPanelRenderReporter(6, 'custom-panel', Date.now, 'panel-6-clone-1');
+    const editor = registerPanelRenderReporter(6, 'custom-panel', Date.now, 'panel-6');
+    clone.report({ state: 'error', final: true, error: { kind: 'runtime', message: 'boom' } });
+    clone.setCapture(() => Promise.resolve('data:image/png;base64,CC=='));
+    editor.report({ state: 'drawn', final: true });
+
+    expect(getPanelRenderStatuses(6).map((status) => [status.instanceKey, status.state])).toEqual([
+      ['panel-6-clone-1', 'error'],
+      ['panel-6', 'drawn'],
+    ]);
+    await expect(capturePanelRender(6, 'panel-6-clone-1')).resolves.toBe('data:image/png;base64,CC==');
+    [dashboard, clone, editor].forEach((reporter) => reporter.dispose());
+  });
+
+  it('keeps the paused flag and the data shape across reports', () => {
+    const reporter = registerPanelRenderReporter(11, 'custom-panel');
+    reporter.setPaused(true);
+    reporter.setData({ frames: [{ refId: 'A', length: 1, fields: [] }] });
+    reporter.report({ state: 'drawn', final: true });
+    expect(getPanelRenderStatus(11)).toEqual(expect.objectContaining({ state: 'drawn', paused: true }));
+    expect(getPanelRenderData(11)).toEqual({ frames: [{ refId: 'A', length: 1, fields: [] }] });
+
+    reporter.setPaused(false);
+    expect(getPanelRenderStatus(11)).not.toHaveProperty('paused');
+    reporter.dispose();
   });
 });

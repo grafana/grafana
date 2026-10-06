@@ -16,6 +16,7 @@ export { parseFrameMessage } from './protocol';
 export { buildRenderDocument, codeDigest, readHostNonce, type BuildDocumentResult } from './document';
 export {
   serializePanelData,
+  summarizeRenderData,
   buildRenderInput,
   getRenderInputBuilder,
   SUPPORTED_API_VERSIONS,

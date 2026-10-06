@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, FieldType, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { capturePanelRender, getPanelRenderStatus } from 'app/features/panel/panelRenderStatus';
+import {
+  capturePanelRender,
+  getPanelRenderData,
+  getPanelRenderStatus,
+  getPanelRenderStatuses,
+} from 'app/features/panel/panelRenderStatus';
 
 import { getPanelProps } from '../test-utils';
 
@@ -434,6 +439,62 @@ describe('CustomPanel', () => {
       expect(getPanelRenderStatus(props.id)).toEqual(
         expect.objectContaining({ state: 'error', error: expect.objectContaining({ kind: 'data-limit' }) })
       );
+    });
+
+    it('reports a draw of an earlier input as not final', () => {
+      const { props, rerender } = setup();
+      rerender({ data: makeData([4, 5]) });
+      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 1, nodeCount: 2 }));
+      expect(getPanelRenderStatus(props.id)).toEqual(expect.objectContaining({ state: 'drawn', final: false }));
+
+      act(() => latestController().handlers.onRenderComplete({ seq: 2, durationMs: 1, nodeCount: 2 }));
+      expect(getPanelRenderStatus(props.id)).toEqual(expect.objectContaining({ state: 'drawn', final: true }));
+    });
+
+    it('reports the panel paused while it is out of view', () => {
+      let observe: IntersectionObserverCallback = () => {};
+      const original = window.IntersectionObserver;
+      window.IntersectionObserver = jest.fn((callback: IntersectionObserverCallback) => {
+        observe = callback;
+        return { observe: jest.fn(), disconnect: jest.fn() };
+      }) as unknown as typeof IntersectionObserver;
+      try {
+        const { props } = setup();
+        const toggle = (isIntersecting: boolean) =>
+          act(() => observe([{ isIntersecting } as IntersectionObserverEntry], {} as unknown as IntersectionObserver));
+
+        toggle(false);
+        expect(latestController().pause).toHaveBeenCalled();
+        expect(getPanelRenderStatus(props.id)).toEqual(expect.objectContaining({ state: 'pending', paused: true }));
+
+        toggle(true);
+        expect(getPanelRenderStatus(props.id)?.paused).toBeUndefined();
+      } finally {
+        window.IntersectionObserver = original;
+      }
+    });
+
+    it('reports under the scene key of the panel element, which tells repeat clones apart', () => {
+      const props = getPanelProps<Options>({ code: CODE }, { data: makeData([1]) });
+      render(
+        <div data-viz-panel-key="panel-6-clone-1">
+          <CustomPanel {...props} />
+        </div>
+      );
+      expect(getPanelRenderStatuses(props.id)).toEqual([expect.objectContaining({ instanceKey: 'panel-6-clone-1' })]);
+    });
+
+    it('keeps the shape of the data it sent to the drawing', () => {
+      const { props } = setup();
+      expect(getPanelRenderData(props.id)).toEqual({
+        frames: [
+          {
+            refId: 'A',
+            length: 3,
+            fields: [expect.objectContaining({ name: 'value', type: 'number', displayName: 'value' })],
+          },
+        ],
+      });
     });
 
     it('captures the drawing through the frame and stops reporting on unmount', async () => {

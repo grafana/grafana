@@ -23,6 +23,7 @@ import {
   holdRenderReadiness,
   readHostNonce,
   getRenderInputBuilder,
+  summarizeRenderData,
   validateRenderLink,
   type RenderLocation,
   type RenderFrameController,
@@ -31,6 +32,8 @@ import {
   type RenderReadinessHold,
 } from './runtime';
 import { CUSTOM_PANEL_ID, DEFAULT_API_VERSION, type Options } from './types';
+
+type ReportUpdate = Omit<PanelRenderStatusUpdate, 'digest' | 'dataState' | 'final'>;
 
 type LimitError = { reason: 'too-many-frames' | 'too-many-cells' | 'too-large'; actual: number; limit: number };
 
@@ -106,6 +109,8 @@ function RenderFrameHost({
   // The latest seq of final data the hold waits for; undefined while no final data was sent yet.
   const holdSeqRef = useRef<number | undefined>(undefined);
   const lastInputFinalRef = useRef(false);
+  // The seq of the latest input sent; a draw of an earlier seq is not the final drawing.
+  const latestSeqRef = useRef<number | undefined>(undefined);
   // An iframe that loaded before its controller existed; the controller picks it up on creation.
   const pendingLoadRef = useRef<HTMLIFrameElement | null>(null);
 
@@ -116,16 +121,21 @@ function RenderFrameHost({
   // Non-fatal errors since the last input was sent; a draw that still finishes carries them along.
   const diagnosticsRef = useRef<string[]>([]);
   reportBaseRef.current.digest = digest;
-  const report = useCallback((update: Omit<PanelRenderStatusUpdate, 'digest' | 'dataState' | 'final'>) => {
+  const report = useCallback((update: ReportUpdate, seq?: number) => {
+    const latest = latestSeqRef.current;
+    const current = seq === undefined || latest === undefined || seq >= latest;
     reporterRef.current?.report({
       ...update,
       digest: reportBaseRef.current.digest,
       dataState: reportBaseRef.current.dataState,
-      final: lastInputFinalRef.current,
+      final: lastInputFinalRef.current && current,
     });
   }, []);
   useEffect(() => {
-    const reporter = registerPanelRenderReporter(id, CUSTOM_PANEL_ID);
+    // Repeat clones share the panel id; the scene key on the panel element tells them apart.
+    const instanceKey =
+      containerRef.current?.closest('[data-viz-panel-key]')?.getAttribute('data-viz-panel-key') ?? undefined;
+    const reporter = registerPanelRenderReporter(id, CUSTOM_PANEL_ID, Date.now, instanceKey);
     reporterRef.current = reporter;
     const current = controllerRef.current;
     if (current) {
@@ -184,6 +194,7 @@ function RenderFrameHost({
     }
     holdRef.current = holdRenderReadiness();
     holdSeqRef.current = undefined;
+    latestSeqRef.current = undefined;
     setFatalError(null);
     setFrameError(null);
     setHeightHint(null);
@@ -195,12 +206,12 @@ function RenderFrameHost({
       onRenderComplete: ({ seq, durationMs, nodeCount }) => {
         setFrameError(null);
         const diagnostics = diagnosticsRef.current;
-        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) });
+        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) }, seq);
         settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),
       onError: (error) => {
-        report({ state: 'error', error: { kind: error.kind, message: error.message } });
+        report({ state: 'error', error: { kind: error.kind, message: error.message } }, error.seq);
         if (diagnosticsRef.current.length < MAX_REPORTED_DIAGNOSTICS) {
           diagnosticsRef.current = [...diagnosticsRef.current, `${error.kind}: ${error.message}`];
         }
@@ -293,8 +304,11 @@ function RenderFrameHost({
       sentRef.current = { ...sent, width, height };
       diagnosticsRef.current = [];
       const seq = controller.resize({ width, height });
-      if (seq >= 0 && lastInputFinalRef.current) {
-        holdForSeq(seq);
+      if (seq >= 0) {
+        latestSeqRef.current = seq;
+        if (lastInputFinalRef.current) {
+          holdForSeq(seq);
+        }
       }
       return;
     }
@@ -324,13 +338,17 @@ function RenderFrameHost({
       return;
     }
     setLimitError(null);
+    reporterRef.current?.setData(summarizeRenderData(result.input.data.series));
     sentRef.current = { controller, sources, width, height };
     lastInputFinalRef.current = isFinalData(data);
     reportBaseRef.current.dataState = String(data.state);
     diagnosticsRef.current = [];
     const seq = controller.render(result.input);
-    if (seq >= 0 && lastInputFinalRef.current) {
-      holdForSeq(seq);
+    if (seq >= 0) {
+      latestSeqRef.current = seq;
+      if (lastInputFinalRef.current) {
+        holdForSeq(seq);
+      }
     }
   }, [
     controller,
@@ -363,17 +381,22 @@ function RenderFrameHost({
       const entry = entries[entries.length - 1];
       if (entry?.isIntersecting) {
         controller.resume();
+        reporterRef.current?.setPaused(false);
       } else {
         controller.pause();
+        reporterRef.current?.setPaused(true);
       }
     });
     observer.observe(element);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      reporterRef.current?.setPaused(false);
+    };
   }, [controller, renderTarget]);
 
   if (!buildInput) {
     return (
-      <div className={styles.message}>
+      <div ref={containerRef} className={styles.message}>
         <ReportStatic
           report={report}
           kind="unsupported-api-version"
@@ -395,7 +418,7 @@ function RenderFrameHost({
 
   if (!doc.ok) {
     return (
-      <div className={styles.message}>
+      <div ref={containerRef} className={styles.message}>
         <ReportStatic
           report={report}
           kind="code-too-large"
@@ -462,7 +485,7 @@ function ReportStatic({
   kind,
   message,
 }: {
-  report: (update: Omit<PanelRenderStatusUpdate, 'digest' | 'dataState' | 'final'>) => void;
+  report: (update: ReportUpdate) => void;
   kind: string;
   message: string;
 }) {
