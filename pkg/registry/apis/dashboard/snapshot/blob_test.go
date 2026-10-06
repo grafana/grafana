@@ -125,11 +125,28 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	_, err = rest.(*dashboardREST).Connect(authlib.WithAuthInfo(ctx, caller), "snap-1", nil, nil)
 	require.NoError(t, err)
 
-	store.get = nil
-	wrongCaller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: "org-3", IDToken: "other-token"}
-	_, err = rest.(*dashboardREST).Connect(authlib.WithAuthInfo(ctx, wrongCaller), "snap-1", nil, nil)
-	require.True(t, apierrors.IsForbidden(err))
-	require.Nil(t, store.get)
+	store.checkGet = func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+		info, ok := authlib.AuthInfoFrom(ctx)
+		require.True(t, ok)
+		require.Equal(t, authlib.TypeAnonymous, info.GetIdentityType())
+		require.Equal(t, req.Resource.Namespace, info.GetNamespace())
+		require.Empty(t, info.GetIDToken())
+		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
+	}
+	for _, tc := range []struct {
+		name   string
+		caller *identity.StaticRequester
+	}{
+		{"anonymous requester without namespace", &identity.StaticRequester{Type: authlib.TypeAnonymous}},
+		{"Grafana admin in another namespace", &identity.StaticRequester{Type: authlib.TypeUser, Namespace: "org-3", IsGrafanaAdmin: true, IDToken: "other-token"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store.get = nil
+			_, err = rest.(*dashboardREST).Connect(identity.WithRequester(ctx, tc.caller), "snap-1", nil, nil)
+			require.NoError(t, err)
+			require.NotNil(t, store.get)
+		})
+	}
 
 	// The snapshot lookup is global in the legacy store. A result from another
 	// namespace must not be used to mint blob access for that namespace.
