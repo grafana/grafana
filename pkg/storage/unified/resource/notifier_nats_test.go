@@ -798,17 +798,21 @@ func TestWatchWrittenKeysReportsDroppedKeys(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	notification := mustMarshalNotification(t, &resourcepb.WatchNotification{
-		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a",
-	})
-	// Nothing reads the keys, so the buffer fills and the next one is dropped.
-	for range writtenKeysBufferSize + 1 {
-		sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", notification)
+	notification := func(namespace string) []byte {
+		return mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_MODIFIED, Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a",
+		})
 	}
+	// Nothing reads the keys, so these fill the buffer and exactly the next one
+	// is dropped. It is in another namespace, so the report shows which it was.
+	for range writtenKeysBufferSize {
+		sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", notification("ns"))
+	}
+	sub.handlers[0]("us.watch.v1.dashboard.grafana.app.other.dashboards", notification("other"))
 
 	mu.Lock()
 	defer mu.Unlock()
-	assert.Equal(t, []string{"ns"}, lost)
+	assert.Equal(t, []string{"other"}, lost)
 }
 
 // Shadow mode is for observation only, so with the NATS notifier off, written
