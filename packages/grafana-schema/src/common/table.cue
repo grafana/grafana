@@ -90,7 +90,7 @@ TableGeoCellOptions: {
 }
 
 // Height of a table cell
-TableCellHeight: "sm" | "md" | "lg" | "auto" @cuetsy(kind="enum")
+TableCellHeight: "sm" | "md" | "lg" | "auto" | "condensed" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.

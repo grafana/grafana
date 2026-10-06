@@ -402,6 +402,7 @@ export function TableFlat(props: TableNGProps) {
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
     noPanelPadding,
+    cellHeight,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -564,6 +565,7 @@ export function TableFlat(props: TableNGProps) {
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
       zebraStriping={zebraStriping}
+      cellHeight={cellHeight}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}

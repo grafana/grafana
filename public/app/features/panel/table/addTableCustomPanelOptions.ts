@@ -31,6 +31,7 @@ export const addTableCustomPanelOptions = <O extends TableOptions>(builder: Pane
       defaultValue: defaultTableOptions.cellHeight,
       settings: {
         options: [
+          { value: TableCellHeight.Condensed, label: t('table.cell-height-options.label-condensed', 'Condensed') },
           { value: TableCellHeight.Sm, label: t('table.cell-height-options.label-small', 'Small') },
           { value: TableCellHeight.Md, label: t('table.cell-height-options.label-medium', 'Medium') },
           { value: TableCellHeight.Lg, label: t('table.cell-height-options.label-large', 'Large') },

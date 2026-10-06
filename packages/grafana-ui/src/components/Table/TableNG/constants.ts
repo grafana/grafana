@@ -17,6 +17,10 @@ export const TABLE = {
   CELL_PADDING: 6,
   LINE_HEIGHT: 22,
   MAX_CELL_HEIGHT: 48,
+  // `condensed` cell height: the smallest option, with its own (smaller) padding and font size to match.
+  CONDENSED_CELL_HEIGHT: 24,
+  CONDENSED_CELL_PADDING: 4,
+  CONDENSED_FONT_SIZE: 12,
   PAGINATION_LIMIT: 750,
   SCROLL_BAR_WIDTH: 8,
   SCROLL_BAR_MARGIN: 2,

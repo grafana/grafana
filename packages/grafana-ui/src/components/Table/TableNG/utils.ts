@@ -174,6 +174,8 @@ export function getDefaultRowHeight(
   }
 
   switch (cellHeight) {
+    case TableCellHeight.Condensed:
+      return TABLE.CONDENSED_CELL_HEIGHT;
     case TableCellHeight.Sm:
       return 36;
     case TableCellHeight.Md:

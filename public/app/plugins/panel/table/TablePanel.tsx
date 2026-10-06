@@ -123,6 +123,7 @@ export function TablePanel(props: Props) {
 // Approximate row/header pixel sizes used to self-size in fit-content mode.
 // Mirrors getDefaultRowHeight in TableNG; exact pixels are not critical because
 // the cell's CSS max-height ultimately bounds the panel.
+const TABLE_ROW_HEIGHT_CONDENSED = 24;
 const TABLE_ROW_HEIGHT_SM = 36;
 const TABLE_ROW_HEIGHT_MD = 42;
 const TABLE_ROW_HEIGHT_LG = 60;
@@ -130,6 +131,8 @@ const TABLE_HEADER_HEIGHT = 36;
 
 function getRowPixelHeight(cellHeight: TableCellHeight | undefined): number {
   switch (cellHeight) {
+    case TableCellHeight.Condensed:
+      return TABLE_ROW_HEIGHT_CONDENSED;
     case TableCellHeight.Sm:
       return TABLE_ROW_HEIGHT_SM;
     case TableCellHeight.Lg:

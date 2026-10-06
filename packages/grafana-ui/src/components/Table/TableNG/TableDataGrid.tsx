@@ -5,6 +5,7 @@ import { type Dispatch, type RefObject, type SetStateAction, useEffect, useMemo,
 
 import { Trans } from '@grafana/i18n';
 import { DataGrid, type DataGridHandle, type DataGridProps, type SortColumn } from '@grafana/react-data-grid';
+import { type TableCellHeight } from '@grafana/schema';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Pagination } from '../../Pagination/Pagination';
@@ -68,6 +69,7 @@ export interface TableDataGridProps extends Omit<DataGridProps<TableRow, TableSu
   transparent?: boolean;
   tableRefreshEnabled?: boolean;
   zebraStriping?: boolean;
+  cellHeight?: TableCellHeight;
   noPanelPadding?: boolean;
   initialRowIndex?: number;
   sortedRows: TableRow[];
@@ -107,6 +109,7 @@ export function TableDataGrid({
   transparent,
   tableRefreshEnabled,
   zebraStriping,
+  cellHeight,
   noPanelPadding,
   initialRowIndex,
   sortedRows,
@@ -143,7 +146,8 @@ export function TableDataGrid({
     transparent,
     tableRefreshEnabled,
     noPanelPadding,
-    zebraStriping
+    zebraStriping,
+    cellHeight
   );
 
   const commonDataGridProps = useMemo(

@@ -27,7 +27,7 @@ import {
   type DataGridProps,
   type SortColumn,
 } from '@grafana/react-data-grid';
-import { type MatcherScope } from '@grafana/schema';
+import { type MatcherScope, TableCellHeight } from '@grafana/schema';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { type TableColumnResizeActionCallback } from '../types';
@@ -367,6 +367,7 @@ interface UseHeaderHeightOptions {
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
   noPanelPadding?: boolean;
+  cellHeight?: TableCellHeight;
 }
 
 export function useHeaderHeight({
@@ -376,6 +377,7 @@ export function useHeaderHeight({
   typographyCtx,
   showTypeIcons = false,
   noPanelPadding = false,
+  cellHeight,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
 
@@ -411,6 +413,7 @@ export function useHeaderHeight({
     [fields, columnWidths, showTypeIcons, noPanelPadding]
   );
 
+  const isCondensed = cellHeight === TableCellHeight.Condensed;
   const headerHeight = useMemo(() => {
     if (!enabled) {
       return 0;
@@ -419,12 +422,12 @@ export function useHeaderHeight({
       fields,
       { __index: -1, __depth: 0 },
       columnAvailableWidths,
-      TABLE.HEADER_HEIGHT,
+      isCondensed ? TABLE.CONDENSED_CELL_HEIGHT : TABLE.HEADER_HEIGHT,
       measurers,
       TABLE.LINE_HEIGHT,
-      TABLE.CELL_PADDING
+      isCondensed ? TABLE.CONDENSED_CELL_PADDING : TABLE.CELL_PADDING
     );
-  }, [fields, enabled, columnAvailableWidths, measurers]);
+  }, [fields, enabled, columnAvailableWidths, measurers, isCondensed]);
 
   return headerHeight;
 }

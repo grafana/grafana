@@ -4,6 +4,7 @@ import memoize, { type Key, type RawKey } from 'micro-memoize';
 
 import { type GrafanaTheme2, colorManipulator } from '@grafana/data';
 import { palette } from '@grafana/data/unstable';
+import { TableCellHeight } from '@grafana/schema';
 
 import {
   COLUMN,
@@ -84,8 +85,10 @@ export const getGridStyles = memoize(
     transparent?: boolean,
     tableRefreshEnabled?: boolean,
     noPanelPadding?: boolean,
-    zebraStriping?: boolean
+    zebraStriping?: boolean,
+    cellHeight?: TableCellHeight
   ) => {
+    const isCondensed = cellHeight === TableCellHeight.Condensed;
     const bgColor = getGridBackgroundColor(theme, transparent);
     // this needs to be pre-calc'd since the theme colors have alpha and the border color becomes
     // unpredictable for background color cells
@@ -171,6 +174,12 @@ export const getGridStyles = memoize(
           // react-data-grid rings the selected cell in the selection color. Once focus is gone that
           // ring marks a cell the user can no longer see they are on, so leave the cell bare.
           [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
+          // `condensed` only shrinks the header-menu-free body row: header/footer text and padding
+          // stay put, same as the other cell height options.
+          ...(isCondensed && {
+            paddingBlock: TABLE.CONDENSED_CELL_PADDING,
+            fontSize: TABLE.CONDENSED_FONT_SIZE,
+          }),
         },
 
         '.rdg-cell.rdg-cell-frozen': {
@@ -326,6 +335,7 @@ export const getGridStyles = memoize(
       headerRow: css({
         paddingBlockStart: 0,
         fontWeight: 'normal',
+        ...(isCondensed && { fontSize: TABLE.CONDENSED_FONT_SIZE }),
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         // `table.refresh`: react-data-grid applies these classes itself while a column drag is in
         // progress — only the visual treatment lives here, gated so a column can only look

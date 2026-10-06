@@ -258,6 +258,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
+    cellHeight,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
@@ -279,6 +280,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     enabled: hasNestedHeaders,
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
+    cellHeight,
   });
 
   const defaultRowHeight = useMemo(
@@ -333,7 +335,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     transparent,
     tableRefreshEnabled,
     noPanelPadding,
-    zebraStriping
+    zebraStriping,
+    cellHeight
   );
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -664,6 +667,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       transparent={transparent}
       tableRefreshEnabled={tableRefreshEnabled}
       zebraStriping={zebraStriping}
+      cellHeight={cellHeight}
       noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
