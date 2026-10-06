@@ -33,11 +33,10 @@ export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /** Scope runtime state to a query position and invalidate it when source structure changes. */
 export function useTableFrameScope(sourceSeries: readonly DataFrame[]) {
-  const frames = useMemo(() => [...sourceSeries], [sourceSeries]);
-  const structureRev = useStructureRev(frames);
+  const structureRev = useStructureRev(sourceSeries);
   return useCallback(
-    (frameIndex: number) => JSON.stringify([frames[frameIndex]?.refId, frameIndex, structureRev]),
-    [frames, structureRev]
+    (frameIndex: number) => JSON.stringify([sourceSeries[frameIndex]?.refId, frameIndex, structureRev]),
+    [sourceSeries, structureRev]
   );
 }
 
