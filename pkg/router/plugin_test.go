@@ -13,6 +13,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/handler3"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
@@ -190,6 +191,62 @@ func TestPluginBackendLoad(t *testing.T) {
 		require.ErrorIs(t, err, failure)
 		require.Nil(t, handler)
 	})
+}
+
+func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		ini        string
+		wantSearch bool
+		wantHybrid bool
+	}{
+		{name: "defaults enable opted-in hybrid", wantSearch: true, wantHybrid: true},
+		{name: "hybrid can be disabled independently", ini: "enable_hybrid_api = false", wantSearch: true},
+		{name: "hybrid only", ini: "enable_search_api = false\nenable_trash_api = false", wantHybrid: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := setting.NewCfgFromBytes([]byte("[grafana-apiserver]\n" + tc.ini))
+			require.NoError(t, err)
+			hybrid := true
+			plugin := definition.PluginDefinition{
+				JSONData: plugins.JSONData{ID: "test-app"},
+				Manifest: &app.ManifestData{
+					AppName: "test", Group: "test.ext.grafana.app", PreferredVersion: "v1alpha1",
+					Versions: []app.ManifestVersion{{
+						Name: "v1alpha1", Served: true,
+						Kinds: []app.ManifestVersionKind{{
+							Kind: "Thing", Plural: "things", Scope: "Namespaced",
+							Search: &app.ManifestVersionKindSearch{Hybrid: &hybrid},
+						}},
+					}},
+				},
+			}
+			backend, err := NewPluginBackend(plugin, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+				return nil, nil, nil
+			}, PluginDependencies{
+				Cfg: cfg, Unified: &resource.MockResourceClient{},
+				AccessControl: &actest.FakeAccessControl{ExpectedEvaluate: true},
+			})
+			require.NoError(t, err)
+			handler, err := backend.Load(t.Context())
+			require.NoError(t, err)
+			t.Cleanup(handler.(interface{ Destroy() }).Destroy)
+			req := httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/test.ext.grafana.app/v1alpha1", nil)
+			req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{
+				Type: claims.TypeUser, OrgID: 1, Namespace: "default",
+			}))
+			res := httptest.NewRecorder()
+			handler.ServeHTTP(res, req)
+			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+			var oas spec3.OpenAPI
+			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &oas))
+			root := "/apis/test.ext.grafana.app/v1alpha1/namespaces/{namespace}/things"
+			_, search := oas.Paths.Paths[root+"/search"]
+			_, hybridRoute := oas.Paths.Paths[root+"/search/hybrid"]
+			require.Equal(t, tc.wantSearch, search)
+			require.Equal(t, tc.wantHybrid, hybridRoute)
+		})
+	}
 }
 
 func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {

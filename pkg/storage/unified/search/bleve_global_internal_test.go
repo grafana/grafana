@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -309,6 +310,82 @@ func TestImportTimesAreRecordedPerType(t *testing.T) {
 	}, times)
 }
 
+// A type the index holds but never saw imported is recorded with the zero time,
+// and a forgotten type is no longer recorded at all.
+func TestImportTimesRecordNeverImportedAndForgottenTypes(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	require.NoError(t, idx.RecordImportTime(importedA, time.Time{}))
+	require.NoError(t, idx.RecordImportTime(importedB, importMonday))
+	times, err := idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: {}, importedB: importMonday}, times)
+
+	require.NoError(t, idx.ForgetType(importedB))
+	times, err = idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: {}}, times)
+}
+
+// A type is recorded as it is first written, and a delete does not forget it:
+// only ForgetType does, after its documents are removed. Kept inside the index,
+// so a restarted server still finds a type written in part.
+func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
+	dir := t.TempDir()
+	key := resource.GlobalSearchKey("ns")
+	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
+	docs := []*resource.BulkIndexItem{
+		refDoc(dashboardsGR, "ns", "dash-a", 11),
+		refDoc(foldersGR, "ns", "folder-a", 12),
+		refDoc(playlists, "ns", "playlist-a", 13),
+	}
+	{
+		backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+		idx, err := backend.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
+			return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
+		}, nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+		require.NoError(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+			Action: resource.ActionDelete,
+			Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: foldersGR.Group, Resource: foldersGR.Resource, Name: "folder-a"},
+		}}}))
+		require.NoError(t, idx.RecordImportTime(playlists, importMonday))
+		require.NoError(t, idx.ForgetType(playlists))
+		backend.Stop()
+	}
+
+	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+	idx, err := reopened.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the index on disk should have been reused, not built again")
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	types, err := idx.DocumentTypes()
+	require.NoError(t, err)
+	assert.Equal(t, []schema.GroupResource{dashboardsGR, foldersGR}, types)
+	times, err := idx.ImportTimes()
+	require.NoError(t, err)
+	assert.Empty(t, times, "forgotten from both records")
+}
+
+// Zero until recorded, then kept to the nanosecond.
+func TestReconciledAtIsRecorded(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	at, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Zero(t, at)
+
+	require.NoError(t, idx.RecordReconciledAt(importMonday))
+	at, err = idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, importMonday, at)
+}
+
 // Kept inside the index, so a restarted server does not redo an import it has
 // already caught up with.
 func TestImportTimesSurviveReopening(t *testing.T) {
@@ -337,4 +414,20 @@ func TestImportTimesSurviveReopening(t *testing.T) {
 	times, err := idx.ImportTimes()
 	require.NoError(t, err)
 	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: importMonday}, times)
+}
+
+// Notifications write to a global index outside its updater, so an index closed
+// under them, as one evicted or replaced, must refuse the write rather than
+// panic.
+func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(t.TempDir()))
+	key := resource.GlobalSearchKey("ns")
+	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	backend.Stop()
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 }

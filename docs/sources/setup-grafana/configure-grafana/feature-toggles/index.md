@@ -32,6 +32,8 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsDatasourcesTempCredentials`              | Support temporary security credentials in AWS plugins for Grafana Cloud customers                                                   | Yes                |
 | `provisioningFolderMetadata`                 | Allow setting folder metadata for provisioned folders                                                                               | Yes                |
 | `awsAsyncQueryCaching`                       | Enable caching for async queries for Redshift and Athena. Requires that the data source has caching and async query support enabled | Yes                |
+| `reportingHeaderSettings`                    | Enables configuration of PDF report settings                                                                                        |                    |
+| `reportingFooterSettings`                    | Enables the configurable footer settings for PDF reports                                                                            |                    |
 | `useKubernetesShortURLsAPI`                  | Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs                           | Yes                |
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
@@ -108,6 +110,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |
 | `grafana.viewPanelPane`            | Enables the sidebar pane with new toggles and options in panel view mode                                                       |
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
+| `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
 
 ## Development feature toggles

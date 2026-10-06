@@ -575,7 +575,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 				Resource:        "resource",
 				Name:            "resource1",
 				Folder:          "folderuid",
-				ResourceVersion: storageBackend.snowflake.Generate().Int64(),
+				ResourceVersion: requireGeneratedResourceVersion(t, storageBackend.resourceVersions),
 				Action:          action,
 			}, bytes.NewReader([]byte("{}")))
 			require.NoError(t, err)
@@ -892,7 +892,7 @@ func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
 				Resource:        "resource",
 				Name:            "resource1",
 				Folder:          "folderuid",
-				ResourceVersion: b.snowflake.Generate().Int64(),
+				ResourceVersion: requireGeneratedResourceVersion(t, b.resourceVersions),
 				Action:          action,
 			}, bytes.NewReader([]byte("{}")))
 			require.NoError(t, err)

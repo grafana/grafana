@@ -262,6 +262,7 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 		KvStore:                 kvStore,
 		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
 	})
 }
 
@@ -1101,7 +1102,7 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 
 // BatchReadResource is unsupported: the SQL backend is retiring, so batched
 // search-list reads live only on the KV backend.
-func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest) (iter.Seq[*resource.BackendReadResponse], error) {
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	return nil, resource.ErrBatchReadUnsupported
 }
 

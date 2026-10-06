@@ -20,6 +20,8 @@ type BleveIndexMetrics struct {
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
+	GlobalReconcileDuration *prometheus.HistogramVec
+
 	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
@@ -135,6 +137,13 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
+		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
+			Help:                            "Time to compare one global search index with storage and repair what differs",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"result"}),
 		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
