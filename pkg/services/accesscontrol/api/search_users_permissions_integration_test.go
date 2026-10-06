@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -460,6 +461,8 @@ type searchPermissionsFixture struct {
 	orgs              org.Service
 	server            *webtest.Server
 	actions           resourcepermissions.ActionSetService
+	cache             *localcache.CacheService
+	store             *searchPermissionsStore
 	orgID, otherOrgID int64
 }
 
@@ -488,12 +491,14 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	actions := resourcepermissions.NewActionSetService()
 	registry := permreg.ProvidePermissionRegistry()
 	registry.RegisterPluginScope("tests:id:")
-	service := acimpl.ProvideOSSService(cfg, database.ProvideService(sql), actions, localcache.ProvideService(),
+	cache := localcache.ProvideService()
+	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
+	service := acimpl.ProvideOSSService(cfg, store, actions, cache,
 		features, tracer, sql, registry, nil, iam.Features{})
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()
 	return &searchPermissionsFixture{
-		sql: sql, service: service, users: users, orgs: orgs, actions: actions,
+		sql: sql, service: service, users: users, orgs: orgs, actions: actions, cache: cache, store: store,
 		server: webtest.NewServer(t, routes), orgID: orgID, otherOrgID: otherOrgID,
 	}
 }
@@ -588,4 +593,15 @@ func (f *searchPermissionsFixture) assertSearch(t *testing.T, caller *user.Signe
 			require.ElementsMatch(t, scopes, got[userID][action], "user %d, action %s", userID, action)
 		}
 	}
+}
+
+// Count search queries to distinguish a cache hit from an identical database result.
+type searchPermissionsStore struct {
+	accesscontrol.Store
+	searches atomic.Int64
+}
+
+func (s *searchPermissionsStore) SearchUsersPermissions(ctx context.Context, orgID int64, options accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error) {
+	s.searches.Add(1)
+	return s.Store.SearchUsersPermissions(ctx, orgID, options)
 }
