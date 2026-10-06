@@ -293,25 +293,44 @@ func TestIntegrationGlobalIndexFollowsKVWritesThroughNATS(t *testing.T) {
 	dashboards := NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	titleOf := func(name string) string { return "Title of " + name }
 	written := map[string]bool{}
-	// Interest propagates asynchronously, and core NATS drops a message nobody
-	// is subscribed to yet, so keep writing new dashboards until one arrives.
-	require.Eventually(t, func() bool {
+	writeDashboard := func() error {
 		name := fmt.Sprintf("dash-%d", len(written)+1)
 		written[name] = true
 		obj, err := createTestObjectWithName(name, dashboards, "value")
-		require.NoError(t, err)
-		require.NoError(t, unstructured.SetNestedField(obj.Object, titleOf(name), "spec", "title"))
+		if err != nil {
+			return err
+		}
+		if err := unstructured.SetNestedField(obj.Object, titleOf(name), "spec", "title"); err != nil {
+			return err
+		}
+		value, err := obj.MarshalJSON()
+		if err != nil {
+			return err
+		}
 		meta, err := utils.MetaAccessor(obj)
-		require.NoError(t, err)
+		if err != nil {
+			return err
+		}
 		_, err = backend.WriteEvent(ctx, WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    &resourcepb.ResourceKey{Namespace: dashboards.Namespace, Group: dashboards.Group, Resource: dashboards.Resource, Name: name},
-			Value:  objectToJSONBytes(t, obj),
+			Value:  value,
 			Object: meta,
 		})
-		require.NoError(t, err)
+		return err
+	}
+	// Interest propagates asynchronously, and core NATS drops a message nobody
+	// is subscribed to yet, so keep writing new dashboards until one arrives. A
+	// failed write ends the wait, so it is reported as itself below rather than
+	// as a timeout.
+	var writeErr error
+	require.Eventually(t, func() bool {
+		if writeErr = writeDashboard(); writeErr != nil {
+			return true
+		}
 		return len(idx.indexedItems()) > 0
 	}, 10*time.Second, 100*time.Millisecond)
+	require.NoError(t, writeErr)
 
 	// Whichever write arrived first, it is one this test made, read back from
 	// storage with its contents.
