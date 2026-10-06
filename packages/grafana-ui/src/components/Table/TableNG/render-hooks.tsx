@@ -627,7 +627,7 @@ function buildColumnsFromFields(
           canHideColumn={fields.length > 1}
           onOpenColumnPanel={onOpenColumnPanel}
           selectFirstCell={() => {
-            gridRef.current?.selectCell({ rowIdx: 0, idx: 0 });
+            gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });
           }}
         />
       ),
