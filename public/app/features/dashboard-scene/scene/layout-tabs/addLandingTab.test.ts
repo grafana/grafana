@@ -15,7 +15,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { getDefaultDrawingCode } from 'app/plugins/panel/custom-panel/templates';
+import { getDefaultPanelOptions } from 'app/plugins/panel/custom-panel/templates';
 
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { transformSceneToSaveModel } from '../../serialization/transformSceneToSaveModel';
@@ -216,7 +216,7 @@ describe('addLandingTab', () => {
     const landing = getLandingPanel(manager);
     expect(landing.state.pluginId).toBe('custom-panel');
     expect(landing.state.title).toBe('Overview');
-    expect(landing.state.options).toEqual({ code: getDefaultDrawingCode() });
+    expect(landing.state.options).toEqual(getDefaultPanelOptions());
     expect(getPanelIdForVizPanel(landing)).toBe(5);
 
     const queryRunner = getQueryRunnerFor(landing);
@@ -236,7 +236,7 @@ describe('addLandingTab', () => {
       return;
     }
     expect(element.spec.vizConfig.group).toBe('custom-panel');
-    expect(element.spec.vizConfig.spec.options).toEqual({ code: getDefaultDrawingCode() });
+    expect(element.spec.vizConfig.spec.options).toEqual(getDefaultPanelOptions());
 
     const reloaded = transformSaveModelSchemaV2ToScene(toDto(saved));
     const reloadedManager = reloaded.state.body as TabsLayoutManager;
@@ -244,7 +244,7 @@ describe('addLandingTab', () => {
 
     const landing = getLandingPanel(reloadedManager);
     expect(landing.state.pluginId).toBe('custom-panel');
-    expect(landing.state.options).toEqual({ code: getDefaultDrawingCode() });
+    expect(landing.state.options).toEqual(getDefaultPanelOptions());
 
     const queryRunner = getQueryRunnerFor(landing);
     expect(queryRunner?.state.datasource).toEqual({ type: 'mixed', uid: '-- Mixed --' });
@@ -266,7 +266,7 @@ describe('addLandingTab', () => {
     const landing = saved.panels?.find((p) => p.id === 5);
 
     expect(landing?.type).toBe('custom-panel');
-    expect(landing && 'options' in landing ? landing.options : undefined).toEqual({ code: getDefaultDrawingCode() });
+    expect(landing && 'options' in landing ? landing.options : undefined).toEqual(getDefaultPanelOptions());
     expect(landing?.datasource).toEqual({ type: 'mixed', uid: '-- Mixed --' });
     expect(landing && 'targets' in landing ? landing.targets : undefined).toEqual(DASHBOARD_DS_QUERIES);
   });

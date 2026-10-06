@@ -1,5 +1,7 @@
 import { t } from '@grafana/i18n';
 
+import { DRAWING_API_VERSION } from './runtime/constants';
+
 export type StarterTemplateId = 'kpi-briefing' | 'incident-layout' | 'blank';
 
 export interface StarterTemplate {
@@ -355,6 +357,11 @@ panel.onRender(({ root, data }) => {
 
 export function getDefaultDrawingCode(): string {
   return KPI_BRIEFING_CODE;
+}
+
+/** Options of a new panel built outside the panel editor: the default code, pinned to the latest API. */
+export function getDefaultPanelOptions(): { code: string; apiVersion: number } {
+  return { code: KPI_BRIEFING_CODE, apiVersion: DRAWING_API_VERSION };
 }
 
 export function getBlankDrawingCode(): string {

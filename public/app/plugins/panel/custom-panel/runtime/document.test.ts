@@ -64,6 +64,13 @@ describe('buildRenderDocument', () => {
     expect(contentDocument('', NONCE, false)).toContain('<!doctype html><html><head>');
   });
 
+  it('embeds the panel apiVersion as a number, defaulting to the latest', () => {
+    expect(contentDocument('', NONCE, false, 3)).toContain('var API_VERSION = 3;');
+    expect(contentDocument('', NONCE, false)).toContain('var API_VERSION = 1;');
+    // User code that contains the placeholder is left alone.
+    expect(contentDocument('__RENDER_API_VERSION__', NONCE, false, 3)).toContain('"__RENDER_API_VERSION__"');
+  });
+
   it('refuses code over the byte limit, counting UTF-8 bytes', () => {
     // 'é' is two bytes in UTF-8, so half the limit in characters is already at the limit.
     const atLimit = 'é'.repeat(MAX_CODE_BYTES / 2);
@@ -75,7 +82,7 @@ describe('buildRenderDocument', () => {
     });
   });
 
-  it('keys the document on code and nonce', () => {
+  it('keys the document on code, nonce and apiVersion', () => {
     const first = buildRenderDocument({ code: 'a', isRenderTarget: false, nonce: NONCE });
     const same = buildRenderDocument({ code: 'a', isRenderTarget: true, nonce: NONCE });
     const otherCode = buildRenderDocument({ code: 'b', isRenderTarget: false, nonce: NONCE });
@@ -85,6 +92,8 @@ describe('buildRenderDocument', () => {
     expect(first.documentKey).toMatch(/^[0-9a-f]{8}$/);
     expect(same.documentKey).toBe(first.documentKey);
     expect(otherCode.documentKey).not.toBe(first.documentKey);
+    const otherVersion = buildRenderDocument({ code: 'a', apiVersion: 2, isRenderTarget: false, nonce: NONCE });
+    expect(otherVersion.ok && otherVersion.documentKey).not.toBe(first.documentKey);
   });
 
   it('replaces an invalid nonce with a random base64 one', () => {

@@ -14,7 +14,15 @@ export type {
 export { parseFrameMessage } from './protocol';
 
 export { buildRenderDocument, readHostNonce, type BuildDocumentResult } from './document';
-export { serializePanelData, buildRenderInput, type SerializeResult, type BuildInputResult } from './serializeData';
+export {
+  serializePanelData,
+  buildRenderInput,
+  getRenderInputBuilder,
+  SUPPORTED_API_VERSIONS,
+  type SerializeResult,
+  type BuildInputResult,
+  type RenderInputBuilder,
+} from './serializeData';
 export { serializeTheme } from './theme';
 export { validateRenderLink, type RenderLinkTarget } from './links';
 export { holdRenderReadiness, type RenderReadinessHold } from './readiness';

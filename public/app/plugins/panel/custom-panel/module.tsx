@@ -3,24 +3,35 @@ import { t } from '@grafana/i18n';
 
 import { CustomPanel } from './CustomPanel';
 import { CustomPanelCodeEditor } from './CustomPanelCodeEditor';
-import { customPanelChangeHandler } from './migrations';
+import { customPanelChangeHandler, customPanelMigrationHandler, needsApiVersionPin } from './migrations';
 import { getDefaultDrawingCode } from './templates';
-import { type Options } from './types';
+import { DEFAULT_API_VERSION, type Options } from './types';
 
 export const plugin = new PanelPlugin<Options>(CustomPanel)
   .setNoPadding()
   .setFitContentSupport()
   .setPanelChangeHandler(customPanelChangeHandler)
+  .setMigrationHandler(customPanelMigrationHandler, needsApiVersionPin)
   .setPanelOptions((builder) => {
-    builder.addCustomEditor({
-      id: 'code',
-      path: 'code',
-      name: t('custom-panel.options.code', 'Drawing code'),
-      description: t(
-        'custom-panel.options.code-description',
-        'JavaScript that draws the panel data. It is stored in the dashboard and runs in a sandbox.'
-      ),
-      editor: CustomPanelCodeEditor,
-      defaultValue: getDefaultDrawingCode(),
-    });
+    builder
+      .addCustomEditor({
+        id: 'code',
+        path: 'code',
+        name: t('custom-panel.options.code', 'Drawing code'),
+        description: t(
+          'custom-panel.options.code-description',
+          'JavaScript that draws the panel data. It is stored in the dashboard and runs in a sandbox.'
+        ),
+        editor: CustomPanelCodeEditor,
+        defaultValue: getDefaultDrawingCode(),
+      })
+      // Not edited in the UI: new panels get the latest version, saved panels keep theirs.
+      .addCustomEditor({
+        id: 'apiVersion',
+        path: 'apiVersion',
+        name: t('custom-panel.options.api-version', 'Drawing API version'),
+        editor: () => null,
+        defaultValue: DEFAULT_API_VERSION,
+        showIf: () => false,
+      });
   });

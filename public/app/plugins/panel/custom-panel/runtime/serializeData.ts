@@ -126,6 +126,21 @@ export function buildRenderInput(params: {
   return { ok: true, input, bytes };
 }
 
+export type RenderInputBuilder = typeof buildRenderInput;
+
+/**
+ * One builder per drawing API version, so a panel pinned to a version keeps getting that ctx after
+ * Grafana upgrades. A breaking change adds a builder for the next version and keeps this one.
+ */
+const RENDER_INPUT_BUILDERS: ReadonlyMap<number, RenderInputBuilder> = new Map([[1, buildRenderInput]]);
+
+export const SUPPORTED_API_VERSIONS: readonly number[] = [...RENDER_INPUT_BUILDERS.keys()];
+
+/** The builder for a panel's apiVersion, or undefined for a version this Grafana does not know. */
+export function getRenderInputBuilder(apiVersion: unknown): RenderInputBuilder | undefined {
+  return typeof apiVersion === 'number' ? RENDER_INPUT_BUILDERS.get(apiVersion) : undefined;
+}
+
 /** The frame formats with Intl, which needs a concrete IANA zone, never 'browser'. */
 export function resolveTimeZone(timeZone: TimeZone): string {
   const resolved = getTimeZone({ timeZone });
@@ -296,7 +311,7 @@ function serializeFieldConfigSource(source: FieldConfigSource, theme: GrafanaThe
   return { defaults: serializeFieldConfig(source?.defaults ?? {}, theme), overrides };
 }
 
-/** Panel options without the drawing code, which the frame already runs. */
+/** Panel options without the drawing code, which the frame already runs, and its apiVersion (panel.apiVersion). */
 function serializeOptions(options: object): Record<string, unknown> {
   const copy = toJson(options);
   if (!copy || typeof copy !== 'object' || Array.isArray(copy)) {
@@ -304,6 +319,7 @@ function serializeOptions(options: object): Record<string, unknown> {
   }
   const result: Record<string, unknown> = { ...copy };
   delete result.code;
+  delete result.apiVersion;
   return result;
 }
 

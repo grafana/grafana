@@ -59,7 +59,7 @@ export function buildLandingQueries(sources: VizPanel[]): DashboardQuery[] {
 
 export async function buildLandingCustomPanel(dashboard: DashboardScene): Promise<VizPanel> {
   const sources = collectLandingSources(dashboard);
-  const [panel, { getDefaultDrawingCode }] = await Promise.all([
+  const [panel, { getDefaultPanelOptions }] = await Promise.all([
     getDefaultVizPanel(),
     // Loaded lazily so the dashboard bundle does not pull in the custom panel.
     import(/* webpackChunkName: "customPanel" */ 'app/plugins/panel/custom-panel/templates'),
@@ -68,7 +68,7 @@ export async function buildLandingCustomPanel(dashboard: DashboardScene): Promis
   panel.setState({
     pluginId: CUSTOM_PANEL_PLUGIN_ID,
     title: t('dashboard.tabs-layout.landing.panel-title', 'Overview'),
-    options: { code: getDefaultDrawingCode() },
+    options: getDefaultPanelOptions(),
     // Mixed splits '-- Dashboard --' queries into one request per query, since that datasource only reads targets[0].
     $data: new SceneDataTransformer({
       $data: new SceneQueryRunner({

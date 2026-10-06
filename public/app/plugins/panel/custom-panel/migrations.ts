@@ -1,13 +1,38 @@
-import { type PanelTypeChangedHandler } from '@grafana/data';
+import { type PanelMigrationHandler, type PanelModel, type PanelTypeChangedHandler } from '@grafana/data';
 
 import { getBlankDrawingCode } from './templates';
-import { type Options } from './types';
+import { DEFAULT_API_VERSION, type Options } from './types';
 
 export const DYNAMIC_TEXT_PANEL_ID = 'marcusolsson-dynamictext-panel';
 
+/** The version of panels saved before options carried one. It never changes. */
+export const UNVERSIONED_API_VERSION = 1;
+
 export const customPanelChangeHandler: PanelTypeChangedHandler<Options> = (panel, prevPluginId, prevOptions) => {
   if (prevPluginId === DYNAMIC_TEXT_PANEL_ID) {
-    return { code: convertDynamicTextOptions(prevOptions).code };
+    // The converted code is written for the current drawing API.
+    return { code: convertDynamicTextOptions(prevOptions).code, apiVersion: DEFAULT_API_VERSION };
+  }
+  return panel.options;
+};
+
+/**
+ * A saved panel with code but no apiVersion predates versioning: pin it to that version, so a later
+ * default never changes the ctx its code gets. A new panel has no code yet and gets the defaults.
+ */
+export function needsApiVersionPin(panel: PanelModel): boolean {
+  const options: unknown = panel.options;
+  return (
+    typeof options === 'object' &&
+    options !== null &&
+    typeof Reflect.get(options, 'code') === 'string' &&
+    Reflect.get(options, 'apiVersion') === undefined
+  );
+}
+
+export const customPanelMigrationHandler: PanelMigrationHandler<Options> = (panel) => {
+  if (needsApiVersionPin(panel)) {
+    return { ...panel.options, apiVersion: UNVERSIONED_API_VERSION };
   }
   return panel.options;
 };

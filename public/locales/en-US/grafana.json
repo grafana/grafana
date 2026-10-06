@@ -5521,10 +5521,13 @@
       "too-large": "The data is {{actual}} bytes once serialized. The custom panel sends at most {{limit}} bytes to the drawing code.",
       "too-many-cells": "The queries returned {{actual}} values. The custom panel draws at most {{limit}}. Reduce the time range or add a limit to the query.",
       "too-many-frames": "The queries returned {{actual}} frames. The custom panel draws at most {{limit}}.",
-      "unresponsive": "The drawing code stopped responding."
+      "unresponsive": "The drawing code stopped responding.",
+      "unsupported-api-version": "This panel was saved with drawing API version {{version}}, which this version of Grafana does not support. Update Grafana or set the panel to a supported version.",
+      "unsupported-api-version-title": "Unsupported drawing API version"
     },
     "frame-title": "Panel drawing",
     "options": {
+      "api-version": "Drawing API version",
       "code": "Drawing code",
       "code-description": "JavaScript that draws the panel data. It is stored in the dashboard and runs in a sandbox."
     },

@@ -1,5 +1,6 @@
-import { MAX_CODE_BYTES, RENDER_TARGET_CLASS } from './constants';
+import { DRAWING_API_VERSION, MAX_CODE_BYTES, RENDER_TARGET_CLASS } from './constants';
 import {
+  BOOTSTRAP_API_VERSION_PLACEHOLDER,
   BOOTSTRAP_CODE_PLACEHOLDER,
   BOOTSTRAP_CONTENT_PLACEHOLDER,
   BOOTSTRAP_NONCE_PLACEHOLDER,
@@ -51,6 +52,8 @@ const WRAPPER_STYLE =
  */
 export function buildRenderDocument(params: {
   code: string;
+  /** Exposed to the code as panel.apiVersion; the host only builds documents for supported versions. */
+  apiVersion?: number;
   isRenderTarget: boolean;
   nonce?: string;
 }): BuildDocumentResult {
@@ -59,21 +62,27 @@ export function buildRenderDocument(params: {
     return { ok: false, reason: 'code-too-large', bytes };
   }
   const nonce = params.nonce !== undefined && NONCE_PATTERN.test(params.nonce) ? params.nonce : randomNonce();
-  const content = contentDocument(params.code, nonce, params.isRenderTarget);
+  const apiVersion =
+    Number.isSafeInteger(params.apiVersion) && params.apiVersion! > 0 ? params.apiVersion! : DRAWING_API_VERSION;
+  const content = contentDocument(params.code, nonce, params.isRenderTarget, apiVersion);
   const wrapperScript = WRAPPER_BOOTSTRAP_SOURCE.replace(BOOTSTRAP_CONTENT_PLACEHOLDER, () => scriptLiteral(content));
   const srcdoc =
     `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${wrapperDocumentCsp(nonce)}">` +
     `<meta charset="utf-8"><style>${WRAPPER_STYLE}</style></head><body>` +
     `<script nonce="${nonce}">${wrapperScript}</script></body></html>`;
-  return { ok: true, srcdoc, documentKey: fnv1aHex(params.code + nonce) };
+  return { ok: true, srcdoc, documentKey: fnv1aHex(`${apiVersion}:${params.code}${nonce}`) };
 }
 
 /** The content document alone, which the wrapper loads as its child's srcdoc. */
-export function contentDocument(code: string, nonce: string, isRenderTarget: boolean): string {
-  const script = CONTENT_BOOTSTRAP_SOURCE.replace(BOOTSTRAP_NONCE_PLACEHOLDER, () => scriptLiteral(nonce)).replace(
-    BOOTSTRAP_CODE_PLACEHOLDER,
-    () => scriptLiteral(code)
-  );
+export function contentDocument(
+  code: string,
+  nonce: string,
+  isRenderTarget: boolean,
+  apiVersion: number = DRAWING_API_VERSION
+): string {
+  const script = CONTENT_BOOTSTRAP_SOURCE.replace(BOOTSTRAP_NONCE_PLACEHOLDER, () => scriptLiteral(nonce))
+    .replace(BOOTSTRAP_API_VERSION_PLACEHOLDER, () => String(Math.trunc(apiVersion)))
+    .replace(BOOTSTRAP_CODE_PLACEHOLDER, () => scriptLiteral(code));
   const style = isRenderTarget ? `${CONTENT_BASE_STYLE} ${RENDER_TARGET_STYLE}` : CONTENT_BASE_STYLE;
   const htmlAttributes = isRenderTarget ? ` class="${RENDER_TARGET_CLASS}"` : '';
   return (

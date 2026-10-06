@@ -19,7 +19,7 @@ import {
   MAX_TRANSFER_CELLS,
   MAX_TRANSFER_FRAMES,
 } from './constants';
-import { buildRenderInput, serializePanelData } from './serializeData';
+import { buildRenderInput, getRenderInputBuilder, serializePanelData, SUPPORTED_API_VERSIONS } from './serializeData';
 
 const theme = createTheme();
 
@@ -198,7 +198,7 @@ describe('buildRenderInput', () => {
     data: panelData(series),
     timeRange: { from: dateTime(1000), to: dateTime(2000), raw: { from: 'now-1h', to: 'now' } },
     timeZone: 'utc',
-    options: { code: 'panel.onRender(() => {})', mode: 'compact', fn: () => 1 },
+    options: { code: 'panel.onRender(() => {})', apiVersion: 1, mode: 'compact', fn: () => 1 },
     fieldConfig: {
       defaults: { unit: 'ms', links: [{ title: 'x', url: 'https://example.com' }] },
       overrides: [
@@ -257,5 +257,14 @@ describe('buildRenderInput', () => {
     const result = buildRenderInput(params([frame]));
     expect(result).toMatchObject({ ok: false, reason: 'too-large', limit: MAX_TRANSFER_BYTES });
     expect(result.ok === false && result.actual > MAX_TRANSFER_BYTES).toBe(true);
+  });
+});
+
+describe('getRenderInputBuilder', () => {
+  it('has a builder for every supported version and none for unknown ones', () => {
+    expect(SUPPORTED_API_VERSIONS).toEqual([1]);
+    expect(getRenderInputBuilder(1)).toBe(buildRenderInput);
+    expect(getRenderInputBuilder(2)).toBeUndefined();
+    expect(getRenderInputBuilder('1')).toBeUndefined();
   });
 });

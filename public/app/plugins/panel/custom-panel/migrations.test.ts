@@ -1,6 +1,11 @@
 import { type PanelModel } from '@grafana/data';
 
-import { convertDynamicTextOptions, customPanelChangeHandler } from './migrations';
+import {
+  convertDynamicTextOptions,
+  customPanelChangeHandler,
+  customPanelMigrationHandler,
+  needsApiVersionPin,
+} from './migrations';
 import { getBlankDrawingCode } from './templates';
 import { type Options } from './types';
 
@@ -141,7 +146,7 @@ describe('customPanelChangeHandler', () => {
       }
     );
 
-    expect(options.code).toBe(convertDynamicTextOptions({ content: '{{host}}' }).code);
+    expect(options).toEqual({ code: convertDynamicTextOptions({ content: '{{host}}' }).code, apiVersion: 1 });
   });
 
   it('keeps the default code when coming from any other panel', () => {
@@ -149,5 +154,29 @@ describe('customPanelChangeHandler', () => {
     const options = customPanelChangeHandler(panel, 'text', { content: '# Hello' }, { defaults: {}, overrides: [] });
 
     expect(options).toEqual({ code: 'default code' });
+  });
+});
+
+describe('customPanelMigrationHandler', () => {
+  const panel = (options: Partial<Options>): PanelModel<Partial<Options>> => ({ ...panelWithDefaults(), options });
+
+  it('pins a saved panel without a version to version 1', () => {
+    expect(needsApiVersionPin(panel({ code: 'x' }))).toBe(true);
+    expect(customPanelMigrationHandler(panel({ code: 'x' }) as PanelModel<Options>)).toEqual({
+      code: 'x',
+      apiVersion: 1,
+    });
+  });
+
+  it('keeps the version a panel was saved with, even one this Grafana does not support', () => {
+    expect(needsApiVersionPin(panel({ code: 'x', apiVersion: 7 }))).toBe(false);
+    expect(customPanelMigrationHandler(panel({ code: 'x', apiVersion: 7 }) as PanelModel<Options>)).toEqual({
+      code: 'x',
+      apiVersion: 7,
+    });
+  });
+
+  it('leaves a new panel without code to the defaults', () => {
+    expect(needsApiVersionPin(panel({}))).toBe(false);
   });
 });

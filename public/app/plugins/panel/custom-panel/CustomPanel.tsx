@@ -14,8 +14,8 @@ import {
   buildRenderDocument,
   createRenderFrameController,
   holdRenderReadiness,
-  buildRenderInput,
   readHostNonce,
+  getRenderInputBuilder,
   validateRenderLink,
   type RenderLocation,
   type RenderFrameController,
@@ -23,7 +23,7 @@ import {
   type RenderFrameErrorKind,
   type RenderReadinessHold,
 } from './runtime';
-import { type Options } from './types';
+import { DEFAULT_API_VERSION, type Options } from './types';
 
 type LimitError = { reason: 'too-many-frames' | 'too-many-cells' | 'too-large'; actual: number; limit: number };
 
@@ -74,9 +74,11 @@ function RenderFrameHost({
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const renderTarget = useMemo(() => isRenderTarget(), []);
+  const apiVersion = options.apiVersion ?? DEFAULT_API_VERSION;
+  const buildInput = getRenderInputBuilder(apiVersion);
   const doc = useMemo(
-    () => buildRenderDocument({ code, isRenderTarget: renderTarget, nonce: readHostNonce() }),
-    [code, renderTarget]
+    () => buildRenderDocument({ code, apiVersion, isRenderTarget: renderTarget, nonce: readHostNonce() }),
+    [code, apiVersion, renderTarget]
   );
 
   const [reloadCount, setReloadCount] = useState(0);
@@ -97,7 +99,7 @@ function RenderFrameHost({
   // An iframe that loaded before its controller existed; the controller picks it up on creation.
   const pendingLoadRef = useRef<HTMLIFrameElement | null>(null);
 
-  const frameKey = doc.ok ? `${doc.documentKey}:${reloadCount}` : null;
+  const frameKey = doc.ok && buildInput ? `${doc.documentKey}:${reloadCount}` : null;
 
   const releaseHold = useCallback(() => {
     holdRef.current?.release();
@@ -214,7 +216,7 @@ function RenderFrameHost({
     height: number;
   } | null>(null);
   useEffect(() => {
-    if (!controller) {
+    if (!controller || !buildInput) {
       return;
     }
     const sources = [
@@ -246,7 +248,7 @@ function RenderFrameHost({
       return;
     }
 
-    const result = buildRenderInput({
+    const result = buildInput({
       id,
       title,
       data,
@@ -276,6 +278,7 @@ function RenderFrameHost({
     }
   }, [
     controller,
+    buildInput,
     id,
     title,
     data,
@@ -310,6 +313,23 @@ function RenderFrameHost({
     observer.observe(element);
     return () => observer.disconnect();
   }, [controller, renderTarget]);
+
+  if (!buildInput) {
+    return (
+      <div className={styles.message}>
+        <Alert
+          severity="error"
+          title={t('custom-panel.errors.unsupported-api-version-title', 'Unsupported drawing API version')}
+        >
+          {t(
+            'custom-panel.errors.unsupported-api-version',
+            'This panel was saved with drawing API version {{version}}, which this version of Grafana does not support. Update Grafana or set the panel to a supported version.',
+            { version: String(apiVersion) }
+          )}
+        </Alert>
+      </div>
+    );
+  }
 
   if (!doc.ok) {
     return (

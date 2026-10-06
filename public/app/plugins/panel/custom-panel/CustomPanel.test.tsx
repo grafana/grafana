@@ -166,6 +166,15 @@ describe('CustomPanel', () => {
     expect(input.data.series[0].fields[0]).toMatchObject({ name: 'value', type: 'number', values: [1, 2, 3] });
   });
 
+  it('shows an error and no frame for a drawing API version this Grafana does not support', () => {
+    setup({}, { code: CODE, apiVersion: 99 });
+
+    expect(screen.getByText('Unsupported drawing API version')).toBeInTheDocument();
+    expect(screen.getByText(/saved with drawing API version 99/)).toBeInTheDocument();
+    expect(screen.queryByTitle('Panel drawing')).not.toBeInTheDocument();
+    expect(mockControllers).toHaveLength(0);
+  });
+
   describe('location', () => {
     beforeEach(() => {
       locationService.replace('/d/abc/overview?var-env=prod');
