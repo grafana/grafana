@@ -69,11 +69,16 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
       severity="warning"
       title={t(
         'dashboard-scene.scope-filters-edit-banner.title',
-        'Note: You are editing this dashboard with a Scope selected, which may affect your queries in unexpected ways. It is recommended that you review your selected Scope and select one without filters for editing.'
+        'You are editing this dashboard with a Scope selected'
       )}
       onRemove={() => setDismissed(true)}
       style={{ flex: 0 }}
       data-testid="scope-filters-edit-banner"
-    />
+    >
+      {t(
+        'dashboard-scene.scope-filters-edit-banner.body',
+        'This may affect your queries in unexpected ways. It is recommended that you review your selected Scope and select one without filters for editing.'
+      )}
+    </Alert>
   );
 }
