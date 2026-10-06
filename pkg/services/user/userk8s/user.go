@@ -123,6 +123,9 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	if cmd.Email == "" {
 		cmd.Email = cmd.Login
 	}
+	if cmd.Login == "" {
+		cmd.Login = cmd.Email
+	}
 
 	uid := cmd.UID
 	if uid == "" {

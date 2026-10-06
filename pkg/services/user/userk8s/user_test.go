@@ -367,7 +367,7 @@ func TestUserK8sService_Create(t *testing.T) {
 }
 
 func TestUserK8sService_Create_DeterministicUID(t *testing.T) {
-	sentName := func(t *testing.T, serverResponse func(w http.ResponseWriter, r *http.Request)) string {
+	sentName := func(t *testing.T, cmd *user.CreateUserCommand, serverResponse func(w http.ResponseWriter, r *http.Request)) string {
 		t.Helper()
 		var got string
 		svc, ctx := setupServiceAndCtx(t, svcTestSetup{
@@ -379,7 +379,7 @@ func TestUserK8sService_Create_DeterministicUID(t *testing.T) {
 				serverResponse(w, r)
 			},
 		})
-		_, err := svc.Create(ctx, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"})
+		_, err := svc.Create(ctx, cmd)
 		require.NoError(t, err)
 		return got
 	}
@@ -392,15 +392,22 @@ func TestUserK8sService_Create_DeterministicUID(t *testing.T) {
 	}
 
 	t.Run("disabled by default: falls back to a random short UID", func(t *testing.T) {
-		name := sentName(t, respond)
+		name := sentName(t, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"}, respond)
 		assert.True(t, util.IsValidShortUID(name))
 		assert.NotEqual(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
 	})
 
 	t.Run("enabled: uses the deterministic hash of namespace, email and login", func(t *testing.T) {
 		enableDeterministicUID(t)
-		name := sentName(t, respond)
+		name := sentName(t, &user.CreateUserCommand{Login: "jdoe", Email: "jdoe@example.com"}, respond)
 		assert.Equal(t, user.GenerateDeterministicUID("org-2", "jdoe@example.com", "jdoe"), name)
+	})
+
+	t.Run("enabled: omitting login hashes the same as explicitly setting login to email", func(t *testing.T) {
+		enableDeterministicUID(t)
+		withLogin := sentName(t, &user.CreateUserCommand{Login: "jdoe@example.com", Email: "jdoe@example.com"}, respond)
+		withoutLogin := sentName(t, &user.CreateUserCommand{Email: "jdoe@example.com"}, respond)
+		assert.Equal(t, withLogin, withoutLogin, "mutate.go defaults Login from Email downstream, so the hash must use the same normalized identity either way")
 	})
 }
 
