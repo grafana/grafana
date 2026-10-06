@@ -14,6 +14,9 @@ export type BuildDocumentResult =
 
 const NONCE_PATTERN = /^[a-zA-Z0-9+/_=-]+$/;
 
+// CSP does not govern speculative DNS prefetch in every engine; turn it off where it is honored.
+const NO_DNS_PREFETCH_META = '<meta http-equiv="x-dns-prefetch-control" content="off">';
+
 /** The content frame runs the user code. It has no network, no frames, no workers and no eval. */
 export function contentDocumentCsp(nonce: string): string {
   return (
@@ -68,7 +71,7 @@ export function buildRenderDocument(params: {
   const wrapperScript = WRAPPER_BOOTSTRAP_SOURCE.replace(BOOTSTRAP_CONTENT_PLACEHOLDER, () => scriptLiteral(content));
   const srcdoc =
     `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${wrapperDocumentCsp(nonce)}">` +
-    `<meta charset="utf-8"><style>${WRAPPER_STYLE}</style></head><body>` +
+    `<meta charset="utf-8">${NO_DNS_PREFETCH_META}<style>${WRAPPER_STYLE}</style></head><body>` +
     `<script nonce="${nonce}">${wrapperScript}</script></body></html>`;
   return { ok: true, srcdoc, documentKey: fnv1aHex(`${apiVersion}:${params.code}${nonce}`) };
 }
@@ -87,7 +90,7 @@ export function contentDocument(
   const htmlAttributes = isRenderTarget ? ` class="${RENDER_TARGET_CLASS}"` : '';
   return (
     `<!doctype html><html${htmlAttributes}><head><meta http-equiv="Content-Security-Policy" content="${contentDocumentCsp(nonce)}">` +
-    `<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+    `<meta charset="utf-8">${NO_DNS_PREFETCH_META}<meta name="viewport" content="width=device-width,initial-scale=1">` +
     `<style>${style}</style></head><body><div id="root"></div>` +
     `<script nonce="${nonce}">${script}</script></body></html>`
   );

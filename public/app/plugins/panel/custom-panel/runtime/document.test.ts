@@ -64,6 +64,13 @@ describe('buildRenderDocument', () => {
     expect(contentDocument('', NONCE, false)).toContain('<!doctype html><html><head>');
   });
 
+  it('turns off DNS prefetch in both documents', () => {
+    const meta = '<meta http-equiv="x-dns-prefetch-control" content="off">';
+    expect(contentDocument('', NONCE, false)).toContain(meta);
+    const result = buildRenderDocument({ code: '', isRenderTarget: false, nonce: NONCE });
+    expect(result.ok && result.srcdoc).toContain(meta);
+  });
+
   it('embeds the panel apiVersion as a number, defaulting to the latest', () => {
     expect(contentDocument('', NONCE, false, 3)).toContain('var API_VERSION = 3;');
     expect(contentDocument('', NONCE, false)).toContain('var API_VERSION = 1;');

@@ -421,6 +421,8 @@ comment at the top.
   Chromium does not recognize it today (it logs an unrecognized directive), so it is not set.
 - DNS prefetch and preconnect hints (`<link rel="dns-prefetch">`) are not governed by CSP in every
   browser, so a drawing could leak a few bytes through DNS lookups of attacker-chosen host names.
+  Both frame documents set `x-dns-prefetch-control: off`, which turns off speculative prefetch
+  where the browser honors it, but does not stop explicit `preconnect` hints everywhere.
 - A browser that does not run scripts inside a shadow root gets the code's script in the light
   DOM, where the code can read that script's nonce while its top level runs. The bootstrap checks
   before relying on it. Chromium runs them; Firefox and Safari should, per the HTML spec, but this
