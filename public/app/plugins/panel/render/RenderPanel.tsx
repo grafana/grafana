@@ -22,6 +22,7 @@ import {
   type RenderFrameError,
   type RenderFrameErrorKind,
   type RenderLinkTarget,
+  type RenderReadinessHold,
 } from './runtime';
 import { type Options } from './types';
 
@@ -29,6 +30,9 @@ type LimitError = { reason: 'too-many-frames' | 'too-many-cells' | 'too-large'; 
 
 // 'PartialResult' is not a LoadingState member yet, but the protocol accepts it as final.
 const TERMINAL_STATES: ReadonlySet<string> = new Set([LoadingState.Done, LoadingState.Error, 'PartialResult']);
+
+/** Errors for one draw: a draw of final data that fails will not draw anything else. */
+const SETTLING_ERRORS: ReadonlySet<RenderFrameErrorKind> = new Set(['runtime', 'output-limit', 'render-timeout']);
 
 export function RenderPanel(props: PanelProps<Options>) {
   const styles = useStyles2(getStyles);
@@ -81,9 +85,11 @@ function RenderFrameHost({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<RenderFrameController | null>(null);
-  const holdRef = useRef<ReturnType<typeof holdRenderReadiness> | null>(null);
-  // seq -> whether the data drawn for that seq is final, used to decide when readiness is released.
-  const finalBySeqRef = useRef(new Map<number, boolean>());
+  // One hold per draw of final data. The first hold is taken with the frame, before any data, so
+  // the image renderer also waits for the frame to start.
+  const holdRef = useRef<RenderReadinessHold | null>(null);
+  // The latest seq of final data the hold waits for; undefined while no final data was sent yet.
+  const holdSeqRef = useRef<number | undefined>(undefined);
   const lastInputFinalRef = useRef(false);
   // An iframe that loaded before its controller existed; the controller picks it up on creation.
   const pendingLoadRef = useRef<HTMLIFrameElement | null>(null);
@@ -92,7 +98,25 @@ function RenderFrameHost({
 
   const releaseHold = useCallback(() => {
     holdRef.current?.release();
+    holdSeqRef.current = undefined;
   }, []);
+
+  const holdForSeq = useCallback((seq: number) => {
+    if (!holdRef.current || holdRef.current.released) {
+      holdRef.current = holdRenderReadiness();
+    }
+    holdSeqRef.current = seq;
+  }, []);
+
+  // The frame draws only the latest input, so a later seq settles an earlier one too.
+  const settleSeq = useCallback(
+    (seq: number | undefined) => {
+      if (seq !== undefined && holdSeqRef.current !== undefined && seq >= holdSeqRef.current) {
+        releaseHold();
+      }
+    },
+    [releaseHold]
+  );
 
   const handleLink = useCallback((href: string) => {
     if (config.publicDashboardAccessToken) {
@@ -113,9 +137,8 @@ function RenderFrameHost({
     if (!frameKey) {
       return undefined;
     }
-    const hold = holdRenderReadiness();
-    holdRef.current = hold;
-    finalBySeqRef.current = new Map();
+    holdRef.current = holdRenderReadiness();
+    holdSeqRef.current = undefined;
     setFatalError(null);
     setFrameError(null);
     setHeightHint(null);
@@ -124,20 +147,21 @@ function RenderFrameHost({
       onReady: () => {},
       onRenderComplete: ({ seq }) => {
         setFrameError(null);
-        if (finalBySeqRef.current.get(seq)) {
-          hold.release();
-        }
+        settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),
       onError: (error) => {
         if (error.fatal) {
           setFatalError(error);
-          hold.release();
+          releaseHold();
           return;
         }
         setFrameError(error);
-        if (releasesReadiness(error, finalBySeqRef.current)) {
-          hold.release();
+        // A startup error comes before any draw: the code may never draw at all.
+        if (error.kind === 'startup') {
+          releaseHold();
+        } else if (SETTLING_ERRORS.has(error.kind)) {
+          settleSeq(error.seq);
         }
       },
       onLink: handleLink,
@@ -152,12 +176,12 @@ function RenderFrameHost({
 
     return () => {
       created.dispose();
-      hold.release();
+      releaseHold();
       if (controllerRef.current === created) {
         controllerRef.current = null;
       }
     };
-  }, [frameKey, handleLink]);
+  }, [frameKey, handleLink, releaseHold, settleSeq]);
 
   // A fatal error already removed the iframe, which tears its document down; a retry mounts a new
   // element with a new controller.
@@ -207,8 +231,8 @@ function RenderFrameHost({
       }
       sentRef.current = { ...sent, width, height };
       const seq = controller.resize({ width, height });
-      if (seq >= 0) {
-        finalBySeqRef.current.set(seq, lastInputFinalRef.current);
+      if (seq >= 0 && lastInputFinalRef.current) {
+        holdForSeq(seq);
       }
       return;
     }
@@ -234,8 +258,8 @@ function RenderFrameHost({
     sentRef.current = { controller, sources, variablesKey, width, height };
     lastInputFinalRef.current = isFinalData(data);
     const seq = controller.render(result.input);
-    if (seq >= 0) {
-      finalBySeqRef.current.set(seq, lastInputFinalRef.current);
+    if (seq >= 0 && lastInputFinalRef.current) {
+      holdForSeq(seq);
     }
     // variablesVersion only re-runs the effect; the snapshot is what is compared.
   }, [
@@ -250,6 +274,7 @@ function RenderFrameHost({
     height,
     renderTarget,
     releaseHold,
+    holdForSeq,
   ]);
 
   // Pause drawing while the panel is scrolled out of view. Render targets always draw.
@@ -326,23 +351,6 @@ function RenderFrameHost({
       )}
     </div>
   );
-}
-
-/**
- * A draw of final data that fails will not draw anything else, so the image renderer stops waiting.
- * A startup error comes before any draw: the code may never draw at all.
- */
-function releasesReadiness(error: RenderFrameError, finalBySeq: Map<number, boolean>): boolean {
-  switch (error.kind) {
-    case 'render-timeout':
-    case 'startup':
-      return true;
-    case 'runtime':
-    case 'output-limit':
-      return error.seq !== undefined && finalBySeq.get(error.seq) === true;
-    default:
-      return false;
-  }
 }
 
 /** Counts variable value changes in the dashboard scene, which bubble up to its root. */

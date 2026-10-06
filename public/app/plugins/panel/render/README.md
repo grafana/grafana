@@ -169,7 +169,8 @@ When the dashboard is captured by the image renderer, the panel keeps the captur
 frame reports that it finished drawing data that will not change (`Done`, `Error` or
 `PartialResult`), or that drawing that data failed (an error thrown by `draw`, or too many
 elements), or until the code fails to start, the frame is stopped, a draw times out, or 30 seconds
-pass. Animations and transitions are
+pass. Every later draw of final data, after a refresh, a variable change or a resize, holds the
+capture again until that draw finishes or fails. Animations and transitions are
 disabled in that mode, and the frame waits for fonts and images before it reports completion.
 Panels that are scrolled out of view pause drawing, except during image rendering.
 
