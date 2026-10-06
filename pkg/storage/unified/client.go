@@ -261,9 +261,15 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
+		var blobBackend resource.BlobSupport
+		if cfg.EnableSQLKVBackend {
+			blobBackend = resource.NewKVBlobSupport(kvStore)
+		}
+
 		serverOptions := sql.ServerOptions{
 			WatchExpiry:    watchExpiry,
 			Backend:        backend,
+			BlobBackend:    blobBackend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
 			Reranker:       rerankerInstance,
