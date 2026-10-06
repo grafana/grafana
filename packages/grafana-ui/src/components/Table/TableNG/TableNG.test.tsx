@@ -2613,7 +2613,14 @@ describe('TableNG', () => {
       expect(screen.getAllByTestId(inspectButton)).toHaveLength(4);
       expect(getComputedStyle(screen.getByRole('gridcell', { name: 'parent one' })).whiteSpace).toBe('pre-line');
       for (const grid of screen.getAllByRole('grid')) {
-        expect(getComputedStyle(grid).gridTemplateRows).toBe('repeat(1, 34px) 34px 34px');
+        // JSDOM preserves repeat() syntax instead of resolving it to individual track heights.
+        const rowHeights = getComputedStyle(grid)
+          .gridTemplateRows.replace(/repeat\((\d+),\s*([\d.]+px)\)/g, (_, count, height) =>
+            `${height} `.repeat(Number(count))
+          )
+          .trim()
+          .split(/\s+/);
+        expect(rowHeights).toEqual(['34px', '34px', '34px']);
       }
       expect(first.fields[0].config.custom?.wrapText).toBe(true);
 
