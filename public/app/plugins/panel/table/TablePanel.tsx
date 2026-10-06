@@ -29,6 +29,7 @@ import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/fe
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
+import { useTableCellAssistant } from './useTableCellAssistant';
 
 interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
@@ -59,6 +60,7 @@ export function TablePanel(props: Props) {
   const commonTableProps = useCommonTableProps(options, fieldConfig);
   const noPanelPadding = commonTableProps.tableRefreshEnabled;
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
+  const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -144,6 +146,7 @@ export function TablePanel(props: Props) {
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}

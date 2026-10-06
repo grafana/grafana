@@ -134,6 +134,7 @@ interface BaseTableProps {
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -227,6 +228,7 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  onAddToAssistant?: () => void;
   tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;

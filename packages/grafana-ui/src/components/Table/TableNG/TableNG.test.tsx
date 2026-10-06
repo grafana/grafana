@@ -83,6 +83,40 @@ const createBasicDataFrame = (): DataFrame =>
     })
   );
 
+it.each([false, true])('adds the original cell to Assistant after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom.filterable = true;
+  const onCellAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onCellAddToAssistant={onCellAddToAssistant}
+    />
+  );
+  if (filtered) {
+    await userEvent.click(
+      screen.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+    );
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  }
+  const firstRow = screen.getAllByRole('row')[1];
+  expect(within(firstRow).getByText(filtered ? 'A2' : 'A3')).toBeInTheDocument();
+  within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onCellAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+    filtered ? 1 : 2
+  );
+});
+
 // A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
 const createJsonDataFrame = (wrapText: boolean): DataFrame =>
   withFieldOverrides(
