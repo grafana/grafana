@@ -13115,6 +13115,13 @@
         "tooltip-numbered-list": "Numbered list",
         "tooltip-strikethrough": "Strikethrough"
       },
+      "panel": {
+        "change-visualization": "Change visualization",
+        "open-in-explore": "Open in Explore",
+        "suggestions-empty": "No visualization suggestions for this data.",
+        "suggestions-error": "Could not load visualization suggestions.",
+        "suggestions-no-data": "Run a query to see visualization suggestions."
+      },
       "query": {
         "add": "Add query",
         "run": "Run query"
@@ -13214,6 +13221,7 @@
       "add-block": "Add block",
       "add-query": "Add query",
       "add-tag": "Add tag",
+      "change-visualization": "Change visualization",
       "delete-block": "Delete block",
       "duplicate-block": "Duplicate block",
       "duplicate-query": "Duplicate query",

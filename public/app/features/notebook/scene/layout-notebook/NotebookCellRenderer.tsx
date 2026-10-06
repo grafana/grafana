@@ -12,6 +12,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookPanelHeaderActions } from './NotebookPanelHeaderActions';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -106,6 +107,18 @@ function PanelCell({
   // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
+
+  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
+  // panels, so this notebook-only chrome is layered on here instead.
+  //
+  // hoverHeader: false keeps the icon row always visible rather than fading in only on hover -
+  // otherwise PanelChrome only shows header content inside a floating HoverWidget on hover.
+  useEffect(() => {
+    panel.setState({
+      hoverHeader: false,
+      headerActions: <NotebookPanelHeaderActions cell={cell} panel={panel} isEditing={isEditing} />,
+    });
+  }, [panel, cell, isEditing]);
 
   return (
     <Stack direction="column" gap={1}>

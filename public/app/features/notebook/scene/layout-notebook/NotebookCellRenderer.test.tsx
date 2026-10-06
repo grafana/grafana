@@ -10,6 +10,8 @@ import {
   SceneTimeRange,
   VizPanel,
 } from '@grafana/scenes';
+import { contextSrv } from 'app/core/services/context_srv';
+import { getExploreUrl } from 'app/core/utils/explore';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 
@@ -19,10 +21,20 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
+// Swappable rather than passed directly to getPanelPlugin: setPluginImportUtils may only be called
+// once, so a test needing an actual panel component (see "the panel header icon row" below) flips
+// this instead of re-registering the utils.
+let stubPanelComponent: Parameters<typeof getPanelPlugin>[1];
+
 setPluginImportUtils({
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}, stubPanelComponent)),
   getPanelPluginFromCache: () => undefined,
 });
+
+jest.mock('app/core/utils/explore', () => ({
+  ...jest.requireActual('app/core/utils/explore'),
+  getExploreUrl: jest.fn(),
+}));
 
 jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue({
   uid: 'lp-1',
@@ -305,6 +317,66 @@ describe('NotebookCellRenderer', () => {
       expect(cell.state.$timeRange?.state.value.from.toISOString()).toBe('2024-01-01T11:00:00.000Z');
 
       jest.useRealTimers();
+    });
+  });
+
+  describe('the panel header icon row', () => {
+    function buildPanelCellInLayout(panel: VizPanel) {
+      const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });
+      new NotebookScene({
+        title: 'Test notebook',
+        body: new NotebookLayoutManager({ cells: [cell] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      return cell;
+    }
+
+    beforeEach(() => {
+      jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
+      jest.mocked(getExploreUrl).mockResolvedValue('/explore?panel=1');
+      // The file-wide stub above has no panel component, so PanelChrome renders an error placeholder
+      // instead of its real header - these tests need the header itself, not what's inside it.
+      stubPanelComponent = () => null;
+    });
+
+    afterEach(() => {
+      stubPanelComponent = undefined;
+    });
+
+    it('shows Explore in view mode, with no visualization picker', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+
+      render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+
+      await screen.findByRole('link', { name: 'Open in Explore' });
+      expect(screen.queryByRole('button', { name: 'Change visualization' })).not.toBeInTheDocument();
+    });
+
+    // A transformation (as "mounts for a panel with transformations while editing" above) rather
+    // than a plain query runner: isEditableQueryPanel excludes it, so this doesn't also mount the real
+    // PanelQueryEditor and its datasource-picker dependencies, which this test has nothing to do with.
+    it('also shows the visualization picker while editing', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneDataTransformer({
+          $data: new SceneQueryRunner({ queries: [] }),
+          transformations: [{ id: 'limit', options: {} }],
+        }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+
+      render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      await screen.findByRole('link', { name: 'Open in Explore' });
+      expect(screen.getByRole('button', { name: 'Change visualization' })).toBeInTheDocument();
     });
   });
 

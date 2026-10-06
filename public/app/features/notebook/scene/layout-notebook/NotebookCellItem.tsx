@@ -1,3 +1,4 @@
+import { type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { type SceneObjectState, SceneObjectBase, type SceneTimeRangeLike, type VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { type DashboardLayoutItem } from 'app/features/dashboard-scene/scene/types/DashboardLayoutItem';
@@ -61,6 +62,10 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public onTimeRangeChange(spec: CellTimeRangeSpec | undefined): void {
     this.getParentLayout().setCellTimeRange(this, spec);
+  }
+
+  public onVisualizationChange(suggestion: PanelPluginVisualizationSuggestion): void {
+    this.getParentLayout().changePanelVisualization(this, suggestion);
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */

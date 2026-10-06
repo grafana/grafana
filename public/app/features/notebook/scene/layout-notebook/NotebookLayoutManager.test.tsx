@@ -1,8 +1,11 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
@@ -92,6 +95,14 @@ import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
+
+// changePanelVisualization (see 'edit history' below) re-applies a real plugin's defaults through the
+// panel's own changePluginType, so it needs a plugin that actually loads rather than throwing on
+// "Grafana instance has started" like an unconfigured one would.
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
   // The renderer reads the time range via sceneGraph.getTimeRange, which resolves the nearest
@@ -1624,6 +1635,92 @@ describe('NotebookLayoutManager', () => {
 
       history.redo();
       expect(manager.state.cells[1]).toBe(duplicate);
+    });
+
+    it('changes the panel visualization and supports undo and redo', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const originalPluginId = panel.state.pluginId;
+      const { manager, history } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+
+      await waitFor(() => expect(panel.state.pluginId).toBe('table'));
+      expect(history.state.undoLabel).toBe('Change visualization');
+
+      history.undo();
+      await waitFor(() => expect(panel.state.pluginId).toBe(originalPluginId));
+
+      history.redo();
+      await waitFor(() => expect(panel.state.pluginId).toBe('table'));
+    });
+
+    it('keeps standard field overrides but clears custom ones when changing visualization', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms', custom: { drawStyle: 'line' } },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'latency' },
+              properties: [
+                { id: 'unit', value: 's' },
+                { id: 'custom.drawStyle', value: 'bars' },
+              ],
+            },
+          ],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'table',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {} },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'latency' },
+              properties: [{ id: 'unit', value: 's' }],
+            },
+          ],
+        }
+      );
+    });
+
+    it('does nothing for a library panel', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({ $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })] });
+      const changePluginType = jest.spyOn(panel, 'changePluginType');
+      const { manager, history } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+
+      expect(changePluginType).not.toHaveBeenCalled();
+      expect(history.state.undoLabel).toBeUndefined();
+    });
+
+    it('does nothing when the suggestion matches the current visualization', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const changePluginType = jest.spyOn(panel, 'changePluginType');
+      const { manager, history } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Timeseries',
+        pluginId: panel.state.pluginId,
+        hash: 'timeseries',
+        options: panel.state.options,
+        fieldConfig: panel.state.fieldConfig,
+      });
+
+      expect(changePluginType).not.toHaveBeenCalled();
+      expect(history.state.undoLabel).toBeUndefined();
     });
   });
 

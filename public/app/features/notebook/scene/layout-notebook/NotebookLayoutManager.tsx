@@ -3,7 +3,12 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import {
+  filterFieldConfigOverrides,
+  type GrafanaTheme2,
+  isStandardFieldProp,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -22,6 +27,7 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -492,6 +498,48 @@ export class NotebookLayoutManager
       kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => apply(after),
       undo: () => apply(before),
+    });
+  }
+
+  /**
+   * Switches a panel to a suggested visualization. A single discrete action rather than a coalesced
+   * one — unlike typing, picking a suggestion is already one deliberate gesture, so there's nothing to
+   * group it with.
+   *
+   * Clears the previous visualization's custom field config rather than carrying it over (the standard
+   * overrides - unit, decimals, etc. - are kept), matching how the panel editor's own "Suggestions" tab
+   * applies a pick. `changePluginType` itself is not awaited: nothing here reads its result, and the
+   * editor does the same.
+   */
+  public changePanelVisualization(cell: NotebookCellItem, suggestion: PanelPluginVisualizationSuggestion): void {
+    const panel = cell.state.body;
+    if (!panel || isLibraryPanel(panel)) {
+      return;
+    }
+
+    const before = {
+      pluginId: panel.state.pluginId,
+      options: panel.state.options,
+      fieldConfig: panel.state.fieldConfig,
+    };
+    const after = {
+      pluginId: suggestion.pluginId,
+      options: suggestion.options ?? {},
+      fieldConfig: suggestion.fieldConfig ?? {
+        defaults: { ...before.fieldConfig.defaults, custom: {} },
+        overrides: filterFieldConfigOverrides(before.fieldConfig.overrides, isStandardFieldProp),
+      },
+    };
+
+    if (isEqual(before, after)) {
+      return;
+    }
+
+    this.executeEdit({
+      label: t('notebooks.history.change-visualization', 'Change visualization'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => void panel.changePluginType(after.pluginId, after.options, after.fieldConfig),
+      undo: () => void panel.changePluginType(before.pluginId, before.options, before.fieldConfig),
     });
   }
 
