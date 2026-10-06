@@ -112,7 +112,6 @@ const FlameGraphTopTableContainer = memo(
                     width={width}
                     height={height}
                     tableRefreshEnabled={tableRefreshEnabled}
-                    rowTransformationsEnabled={false}
                     contentAwareWidthsEnabled={contentAwareWidthsEnabled}
                     // The pane's width is already divided up between the three fixed columns and
                     // Symbol, so a horizontal scrollbar would hide columns rather than reveal them.
