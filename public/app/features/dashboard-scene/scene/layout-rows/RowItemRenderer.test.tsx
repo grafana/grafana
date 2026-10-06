@@ -30,7 +30,7 @@ function renderRow({
     planning,
   });
   render(<scene.Component model={scene} />);
-  return { row };
+  return { row, scene };
 }
 
 describe('RowItemRenderer', () => {
@@ -74,6 +74,31 @@ describe('RowItemRenderer', () => {
 
     await userEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('records collapsing the row in undo history while editing', async () => {
+    const { row, scene } = renderRow({ collapse: false, isEditing: true });
+    const deactivateSidebar = scene.state.sidebar.activate();
+    await waitFor(() => {
+      expect(document.querySelector('[data-rfd-drag-handle-draggable-id="row-1"]')).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByTestId(selectors.components.DashboardRow.toggle(row.state.title!)));
+
+    expect(row.state.collapse).toBe(true);
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
+    deactivateSidebar();
+  });
+
+  it('does not record collapsing the row in undo history outside edit mode', async () => {
+    const { row, scene } = renderRow({ collapse: false });
+    const deactivateSidebar = scene.state.sidebar.activate();
+
+    await userEvent.click(screen.getByTestId(selectors.components.DashboardRow.toggle(row.state.title!)));
+
+    expect(row.state.collapse).toBe(true);
+    expect(scene.state.sidebar.state.undoStack).toHaveLength(0);
+    deactivateSidebar();
   });
 
   it('copies a link to the row when the copy link button is clicked', async () => {

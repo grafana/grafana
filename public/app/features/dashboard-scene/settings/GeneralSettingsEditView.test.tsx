@@ -121,6 +121,40 @@ describe('GeneralSettingsEditView', () => {
     });
   });
 
+  describe('Undo history', () => {
+    async function setupWithHistory() {
+      const { dashboard, settings } = await buildTestScene();
+      const sidebar = dashboard.state.sidebar;
+      const action = {
+        meta: { actionId: 'dashboard.changeTitle' as const },
+        source: dashboard,
+        perform: jest.fn(),
+        undo: jest.fn(),
+      };
+      sidebar.setState({ undoStack: [action], redoStack: [action] });
+
+      return { sidebar, settings };
+    }
+
+    it('clears undo and redo history when a setting changes the dashboard', async () => {
+      const { sidebar, settings } = await setupWithHistory();
+
+      settings.onTitleChange('new title');
+
+      expect(sidebar.state.undoStack).toHaveLength(0);
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('keeps undo and redo history when refresh intervals are committed unchanged', async () => {
+      const { sidebar, settings } = await setupWithHistory();
+
+      settings.onRefreshIntervalChange([...settings.getRefreshPicker()!.state.intervals!]);
+
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.redoStack).toHaveLength(1);
+    });
+  });
+
   describe('Folder field visibility', () => {
     it('renders the Folder field for a normal dashboard', async () => {
       const { settings } = await buildTestScene();

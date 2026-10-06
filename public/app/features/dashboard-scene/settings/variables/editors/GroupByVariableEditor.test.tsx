@@ -3,11 +3,14 @@ import userEvent from '@testing-library/user-event';
 
 import { type MetricFindValue, VariableSupportType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { GroupByVariable } from '@grafana/scenes';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
+
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { getGroupByVariableOptions, GroupByVariableEditor } from './GroupByVariableEditor';
 
@@ -198,7 +201,76 @@ describe('GroupByVariableEditor', () => {
   });
 });
 
-async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value: string[]; text: string[] }) {
+describe('GroupByVariableEditor undo/redo', () => {
+  const originalGroupByToggle = config.featureToggles.groupByVariable;
+
+  beforeAll(() => {
+    mockBoundingClientRect();
+    config.featureToggles.groupByVariable = true;
+  });
+
+  afterAll(() => {
+    config.featureToggles.groupByVariable = originalGroupByToggle;
+  });
+
+  it('records a data source change made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, undefined, true);
+
+    await user.click(renderer.getByTestId(selectors.components.DataSourcePicker.inputV2));
+    await user.click(renderer.getByText(/prom/i));
+    expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.datasource).toEqual({ uid: defaultDatasource.uid, type: defaultDatasource.type });
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.datasource).toEqual({ uid: 'prometheus', type: 'prometheus' });
+  });
+
+  it('records a static dimensions toggle made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, undefined, true);
+
+    await user.click(
+      renderer.getByTestId(selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.modeToggle)
+    );
+    expect(variable.state.defaultOptions).toEqual([]);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.defaultOptions).toBeUndefined();
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.defaultOptions).toEqual([]);
+  });
+
+  it('records a default value change made inline as one undoable action', async () => {
+    const { renderer, variable, user, sidebar } = await setup(undefined, undefined, true);
+    const section = renderer.getByTestId(
+      selectors.pages.Dashboard.Settings.Variables.Edit.GroupByVariable.defaultValueSection
+    );
+
+    await user.click(within(section).getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'job' }));
+    expect(variable.state.defaultValue).toEqual({ value: ['job'], text: ['job'] });
+    expect(variable.state.value).toEqual(['job']);
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    await act(async () => sidebar.undoAction());
+    expect(variable.state.defaultValue).toBeUndefined();
+    expect(variable.state.value).toEqual([]);
+
+    await act(async () => sidebar.redoAction());
+    expect(variable.state.defaultValue).toEqual({ value: ['job'], text: ['job'] });
+    expect(variable.state.value).toEqual(['job']);
+  });
+});
+
+async function setup(
+  defaultOptions?: MetricFindValue[],
+  defaultValue?: { value: string[]; text: string[] },
+  inline?: boolean
+) {
   const onRunQuery = jest.fn();
   const variable = new GroupByVariable({
     name: 'groupByVariable',
@@ -208,7 +280,9 @@ async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value:
     defaultOptions,
     defaultValue,
   });
-  const renderer = render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} />);
+  // Only inline editors record changes, which needs the variable to be part of an edited dashboard
+  const sidebar = inline ? addToEditedDashboard(variable) : undefined;
+  const renderer = render(<GroupByVariableEditor variable={variable} onRunQuery={onRunQuery} inline={inline} />);
 
   // Flush first useAsync (datasource)
   await act(async () => {
@@ -223,6 +297,7 @@ async function setup(defaultOptions?: MetricFindValue[], defaultValue?: { value:
   return {
     renderer,
     variable,
+    sidebar: sidebar!,
     user: userEvent.setup(),
     mocks: { onRunQuery },
   };

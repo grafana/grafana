@@ -1,5 +1,5 @@
-import { noop } from 'lodash';
-import { type FormEvent, useCallback, useMemo, useState } from 'react';
+import { isEqual, noop, omit } from 'lodash';
+import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import {
@@ -14,6 +14,8 @@ import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { AdHocFiltersVariable, type AdHocFilterWithLabels, type SceneVariable } from '@grafana/scenes';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
+import { undoableVariableEdit } from '../../../actions/variable/undoableVariableEdit';
+import { type DashboardActionMeta } from '../../../sidebar/events';
 import { AdHocOriginFiltersController } from '../components/AdHocOriginFiltersController';
 import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
@@ -34,12 +36,27 @@ function isGroupByOriginFilter(f: AdHocFilterWithLabels) {
 }
 
 export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProps) {
-  const { variable } = props;
-  const { datasource: datasourceRef, defaultKeys, allowCustomValue, enableGroupBy } = variable.useState();
+  const { variable, inline } = props;
+  const {
+    datasource: datasourceRef,
+    defaultKeys,
+    allowCustomValue,
+    enableGroupBy,
+    originFilters,
+  } = variable.useState();
 
   const [wip, setWip] = useState<AdHocFilterWithLabels | undefined>(undefined);
 
   const [originalFilters, setOriginalFilters] = useState<AdHocFilterWithLabels[]>(() => variable.getOriginalFilters());
+  const originFiltersSetByEditor = useRef(originFilters);
+
+  // Origin filters can also be replaced outside of the editor (e.g. undo/redo), re-read the original filters then
+  useEffect(() => {
+    if (originFilters !== originFiltersSetByEditor.current) {
+      originFiltersSetByEditor.current = originFilters;
+      setOriginalFilters(variable.getOriginalFilters());
+    }
+  }, [variable, originFilters]);
 
   const adhocOriginFilters = useMemo(
     () => originalFilters.filter((f) => isOriginDashboard(f) && !isGroupByOriginFilter(f)),
@@ -53,12 +70,31 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   );
 
   const updateOriginalFilters = useCallback(
-    (filters: AdHocFilterWithLabels[]) => {
+    (filters: AdHocFilterWithLabels[], description: string, meta: DashboardActionMeta) => {
+      const oldOriginalFilters = variable.getOriginalFilters();
+      const oldOriginFilters = variable.state.originFilters;
+
       setOriginalFilters(filters);
-      variable.setOriginalFilters(filters);
-      variable.setState({ originFilters: filters });
+      originFiltersSetByEditor.current = filters;
+
+      // Moving editing between pills only toggles forceEdit, which is not a change worth an undo entry
+      const changed = !isEqual(withoutForceEdit(oldOriginFilters), withoutForceEdit(filters));
+
+      undoableVariableEdit(inline && changed, {
+        meta,
+        source: variable,
+        description,
+        perform: () => {
+          variable.setOriginalFilters(filters);
+          variable.setState({ originFilters: filters });
+        },
+        undo: () => {
+          variable.setOriginalFilters(oldOriginalFilters);
+          variable.setState({ originFilters: oldOriginFilters });
+        },
+      });
     },
-    [variable]
+    [variable, inline]
   );
 
   const originFiltersController = useMemo(() => {
@@ -70,7 +106,11 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       adhocOriginFilters,
       (filters) => {
         const keep = originalFilters.filter((f) => !isOriginDashboard(f) || isGroupByOriginFilter(f));
-        updateOriginalFilters([...keep, ...filters]);
+        updateOriginalFilters(
+          [...keep, ...filters],
+          t('dashboard.edit-actions.variable-adhoc-default-filters', 'Change variable default filters'),
+          { actionId: 'variable.changeDefaultFilters' }
+        );
         reportInteraction('grafana_unified_drilldown_default_filters_changed', { count: filters.length });
       },
       wip,
@@ -98,7 +138,11 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
         origin: ORIGIN_DASHBOARD,
       }));
     const keep = originalFilters.filter((f) => !isGroupByOriginFilter(f));
-    updateOriginalFilters([...keep, ...groupByFilters]);
+    updateOriginalFilters(
+      [...keep, ...groupByFilters],
+      t('dashboard.edit-actions.variable-adhoc-default-group-by', 'Change variable default group by'),
+      { actionId: 'variable.changeDefaultGroupBy' }
+    );
     reportInteraction('grafana_unified_drilldown_default_groupby_changed', { count: groupByFilters.length });
   };
 
@@ -119,29 +163,70 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
   const onDataSourceChange = async (ds: DataSourceInstanceSettings) => {
     const dsRef = getDataSourceRef(ds);
     const dsInstance = await getDataSourceInstance(dsRef);
+    const { datasource: oldDatasource, supportsMultiValueOperators, enableGroupBy: oldEnableGroupBy } = variable.state;
+    const updateEnableGroupBy = config.featureToggles.dashboardUnifiedDrilldownControls;
 
-    variable.setState({
-      datasource: dsRef,
-      supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
-      ...(config.featureToggles.dashboardUnifiedDrilldownControls && {
-        enableGroupBy: !!dsInstance?.getGroupByKeys,
-      }),
+    undoableVariableEdit(inline, {
+      meta: { actionId: 'variable.changeDataSource', scope: 'adhoc' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-datasource', 'Change variable data source'),
+      perform: () => {
+        variable.setState({
+          datasource: dsRef,
+          supportsMultiValueOperators: ds.meta.multiValueFilterOperators,
+          ...(updateEnableGroupBy && {
+            enableGroupBy: !!dsInstance?.getGroupByKeys,
+          }),
+        });
+      },
+      undo: () => {
+        variable.setState({
+          datasource: oldDatasource,
+          supportsMultiValueOperators,
+          ...(updateEnableGroupBy && {
+            enableGroupBy: oldEnableGroupBy,
+          }),
+        });
+      },
     });
   };
 
   const onDefaultKeysChange = (defaultKeys?: MetricFindValue[]) => {
-    variable.setState({
-      defaultKeys,
+    const oldDefaultKeys = variable.state.defaultKeys;
+
+    undoableVariableEdit(inline && !isEqual(oldDefaultKeys, defaultKeys), {
+      meta: { actionId: 'variable.changeDefaultKeys' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-adhoc-default-keys', 'Change variable static keys'),
+      perform: () => variable.setState({ defaultKeys }),
+      undo: () => variable.setState({ defaultKeys: oldDefaultKeys }),
     });
   };
 
   const onAllowCustomValueChange = (event: FormEvent<HTMLInputElement>) => {
-    variable.setState({ allowCustomValue: event.currentTarget.checked });
+    const newAllowCustomValue = event.currentTarget.checked;
+    const oldAllowCustomValue = variable.state.allowCustomValue;
+
+    undoableVariableEdit(inline, {
+      meta: { actionId: 'variable.changeAllowCustomValue', scope: 'adhoc' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-allow-custom-value', 'Change variable allow custom values'),
+      perform: () => variable.setState({ allowCustomValue: newAllowCustomValue }),
+      undo: () => variable.setState({ allowCustomValue: oldAllowCustomValue }),
+    });
   };
 
   const onEnableGroupByChange = (event: FormEvent<HTMLInputElement>) => {
     const enabled = event.currentTarget.checked;
-    variable.setState({ enableGroupBy: enabled });
+    const oldEnableGroupBy = variable.state.enableGroupBy;
+
+    undoableVariableEdit(inline, {
+      meta: { actionId: 'variable.changeEnableGroupBy' },
+      source: variable,
+      description: t('dashboard.edit-actions.variable-adhoc-enable-group-by', 'Change variable group by option'),
+      perform: () => variable.setState({ enableGroupBy: enabled }),
+      undo: () => variable.setState({ enableGroupBy: oldEnableGroupBy }),
+    });
     reportInteraction('grafana_unified_drilldown_enable_groupby_toggled', { enabled });
   };
 
@@ -167,7 +252,7 @@ export function AdHocFiltersVariableEditor(props: AdHocFiltersVariableEditorProp
       defaultGroupByValues={groupByEnabled ? defaultGroupByValues : undefined}
       defaultGroupByOptions={groupByEnabled ? groupByKeyOptions : undefined}
       onDefaultGroupByChange={groupByEnabled ? onDefaultGroupByChange : undefined}
-      inline={props.inline}
+      inline={inline}
       datasourceSupported={datasourceSettings?.getTagKeys ? true : false}
       datasourceSupportsGroupBy={!!datasourceSettings?.getGroupByKeys}
     />
@@ -186,4 +271,8 @@ export function getAdHocFilterOptions(variable: SceneVariable): OptionsPaneItemD
       render: () => <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];
+}
+
+function withoutForceEdit(filters: AdHocFilterWithLabels[] | undefined) {
+  return filters?.map((filter) => omit(filter, 'forceEdit'));
 }

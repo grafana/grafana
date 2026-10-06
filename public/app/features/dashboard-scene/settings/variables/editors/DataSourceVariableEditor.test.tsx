@@ -1,12 +1,14 @@
 // add unit test for the DataSourceVariableEditor component
 
-import { render, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { JSX } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceVariable } from '@grafana/scenes';
+
+import { addToEditedDashboard } from '../variableEditTestUtils';
 
 import { DataSourceVariableEditor, getDataSourceVariableOptions } from './DataSourceVariableEditor';
 
@@ -207,6 +209,32 @@ describe('getDataSourceVariableOptions', () => {
     const { findAllByTestId } = renderPreviewItem(variable);
 
     expect(await previewedValues(findAllByTestId)).toEqual(['DataSourceInstance2']);
+  });
+});
+
+describe('getDataSourceVariableOptions undo/redo', () => {
+  it('records a name filter change as one undoable action', async () => {
+    const { nameFilter } = selectors.pages.Dashboard.Settings.Variables.Edit.DatasourceVariable;
+    const variable = new DataSourceVariable({ name: 'dsVariable', pluginId: 'dsTestDataSource', regex: '/1$/' });
+    const sidebar = addToEditedDashboard(variable);
+    const nameFilterItem = getDataSourceVariableOptions(variable).find(
+      (item) => item.props.id === 'datasource-options-name-filter'
+    );
+    const { user } = setup(nameFilterItem!.props.render(nameFilterItem!));
+
+    await user.clear(screen.getByTestId(nameFilter));
+    await user.type(screen.getByTestId(nameFilter), '/2$/');
+    await user.tab();
+    expect(variable.state.regex).toBe('/2$/');
+    expect(sidebar.state.undoStack).toHaveLength(1);
+
+    act(() => sidebar.undoAction());
+    expect(variable.state.regex).toBe('/1$/');
+    expect(screen.getByTestId(nameFilter)).toHaveValue('/1$/');
+
+    act(() => sidebar.redoAction());
+    expect(variable.state.regex).toBe('/2$/');
+    expect(screen.getByTestId(nameFilter)).toHaveValue('/2$/');
   });
 });
 
