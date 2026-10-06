@@ -30,6 +30,7 @@ import {
   useRowCompiler,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -96,6 +97,7 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
     onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
@@ -136,6 +138,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const wrapFallback = useTextWrapFallback(data);
   // Measure the prepared display values so JSON cells are not treated as "[object Object]".
   const preparedFields = useMemo(() => prepareFieldsForDisplay(visibleFields, theme), [visibleFields, theme]);
   const hasHeader = !noHeader;
@@ -355,6 +358,7 @@ export function TableFlat(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
@@ -376,6 +380,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
     columnWidths: widths,
     fields: displayedFields,
     enabled: hasHeader,
@@ -394,6 +399,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const rowHeight = useFlatRowHeight({
+    wrapFallback,
     columnWidths: widths,
     fields: displayedFields,
     defaultHeight: defaultRowHeight,
@@ -446,6 +452,7 @@ export function TableFlat(props: TableNGProps) {
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -457,6 +464,7 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
@@ -478,6 +486,7 @@ export function TableFlat(props: TableNGProps) {
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -486,6 +495,7 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,

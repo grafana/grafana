@@ -62,6 +62,7 @@ import type {
   FilterType,
   GetActionsFunctionLocal,
   TableColumn,
+  TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -294,7 +295,7 @@ export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: 
     // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
     // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
     // regardless, so measure them separately: the widest is what the whole string needs.
-    for (const segment of text.split('\n')) {
+    for (const segment of text.slice(0, TABLE.MAX_WRAP_TEXT_LENGTH).split('\n')) {
       let width = Math.ceil(ctx.measureText(segment).width);
       while (test(segment, width)) {
         width++;
@@ -314,7 +315,7 @@ export function getTextHeightMeasurerFromUwrapCount(count: Count): MeasureCellHe
       return lineHeight;
     }
 
-    const lines = count(String(value), width);
+    const lines = count(String(value).slice(0, TABLE.MAX_WRAP_TEXT_LENGTH), width);
     return lines * lineHeight;
   };
 }
@@ -487,7 +488,8 @@ export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
   theme: GrafanaTheme2,
-  maxHeight?: number
+  maxHeight?: number,
+  wrapFallback?: TextWrapFallback
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -517,9 +519,16 @@ export function buildCellHeightMeasurers(
   const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
+      const guard = (measurer: MeasureCellHeight): MeasureCellHeight => {
+        if (measurerFactoryKey !== TableCellDisplayMode.Auto || wrapFallback == null) {
+          return measurer;
+        }
+        return (value, width, field, rowIdx, lineHeight) =>
+          wrapFallback.shouldDisable(field, value) ? -1 : measurer(value, width, field, rowIdx, lineHeight);
+      };
       result[measurerFactoryKey] = {
-        measure: clampByMaxHeight(measure, maxHeight),
-        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
+        measure: guard(clampByMaxHeight(measure, maxHeight)),
+        estimate: estimate != null ? guard(clampByMaxHeight(estimate, maxHeight)) : undefined,
         fieldIdxs: [],
       };
     }
@@ -528,7 +537,7 @@ export function buildCellHeightMeasurers(
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
     const field = fields[fieldIdx];
-    if (shouldTextWrap(field)) {
+    if (shouldTextWrap(field) && !wrapFallback?.disabledFields.has(getDisplayName(field))) {
       wrappedFields++;
 
       const cellType = getCellOptions(field).type;
@@ -1329,6 +1338,7 @@ function sampleIndices(totalLen: number, sampleSize: number): number[] {
 }
 
 export interface ContentAwareColWidthsOptions {
+  hasAssistantAction?: boolean;
   typographyCtx: TypographyCtx;
   /**
    * Header labels render at `fontWeightMedium`, which is wider than the body text `typographyCtx`
@@ -1493,6 +1503,7 @@ export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): bo
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
+  hasAssistantAction?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
@@ -1509,7 +1520,13 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnSidebar = false }: HeaderAffordanceOptions
+  {
+    showTypeIcons,
+    tableRefreshEnabled,
+    isFiltered,
+    hasColumnSidebar = false,
+    hasAssistantAction,
+  }: HeaderAffordanceOptions
 ): number {
   const isFilterable = isFieldFilterable(field);
   let width = 0;
@@ -1522,7 +1539,7 @@ export function getHeaderAffordanceWidth(
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   width += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
-    width += isColumnMenuVisible(field, hasColumnSidebar) ? HEADER_MENU_SPACE : 0;
+    width += isColumnMenuVisible(field, hasColumnSidebar) || hasAssistantAction ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1821,6 +1838,7 @@ export function computeContentAwareColWidths(
     typographyCtx,
     headerTypographyCtx,
     showTypeIcons = false,
+    hasAssistantAction = false,
     hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
@@ -1877,6 +1895,7 @@ export function computeContentAwareColWidths(
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
           hasColumnSidebar,
+          hasAssistantAction,
         })
       : 0;
 
