@@ -12,6 +12,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
 import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
@@ -108,6 +109,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
           document below sit in it as siblings. The toolbar rides inside the row. */}
       <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
       <scene.Component model={scene} />
+      <NotebookPrompt scene={scene} />
     </Page>
   );
 }

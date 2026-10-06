@@ -66,7 +66,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		value *BackendReadResponse
 		obj   utils.GrafanaMetaAccessor
 	}
-	for chunk := range slices.Chunk(page.rows, searchReadChunkSize) {
+	for chunk := range slices.Chunk(page.rows, readChunkSize) {
 		requests := make([]*resourcepb.ReadRequest, len(chunk))
 		for i, row := range chunk {
 			requests[i] = &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion}
@@ -111,10 +111,16 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		if count != len(chunk) {
 			return nil, fmt.Errorf("batch trash reader returned %d responses for %d requests", count, len(chunk))
 		}
-		authorizer.Prepare(ctx, items)
+		if err := authorizer.Prepare(ctx, items); err != nil {
+			return nil, err
+		}
 
 		for _, item := range parsed {
-			if !authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy()) {
+			allowed, err := authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy())
+			if err != nil {
+				return nil, err
+			}
+			if !allowed {
 				continue
 			}
 			pageBytes += len(item.value.Value)

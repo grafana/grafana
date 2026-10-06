@@ -1,4 +1,4 @@
-package resource
+package resourceclient
 
 import (
 	"context"
@@ -11,8 +11,6 @@ import (
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 var _ authnlib.TokenExchanger = (*onBehalfOfExchanger)(nil)
@@ -99,6 +97,6 @@ func serviceSubjectToken(info types.AuthInfo) string {
 // and targeting is per namespace.
 func onBehalfOfFlag(ctx context.Context) bool {
 	return openfeature.NewDefaultClient().Boolean(ctx,
-		featuremgmt.FlagUnifiedStorageClientOnBehalfOf, false,
+		FlagUnifiedStorageClientOnBehalfOf, false,
 		openfeature.TransactionContext(ctx))
 }
