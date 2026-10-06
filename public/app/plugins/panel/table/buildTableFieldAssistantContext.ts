@@ -15,7 +15,7 @@ interface BuildArgs extends AssistantPanelContext {
 }
 
 export function buildTableFieldAssistantContext({ frame, field, ...panelContext }: BuildArgs): ChatContextItem[] {
-  const displayName = getFieldDisplayName(field, frame);
+  const displayName = field.state?.displayName ?? getFieldDisplayName(field, frame);
 
   return [
     createAssistantContextItem('structured', {

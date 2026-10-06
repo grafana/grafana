@@ -1,11 +1,46 @@
 import { createAssistantContextItem } from '@grafana/assistant';
-import { createDataFrame, dateTime, FieldType } from '@grafana/data';
+import { cacheFieldDisplayNames, createDataFrame, dateTime, FieldType } from '@grafana/data';
 
 import { buildTableFieldAssistantContext } from './buildTableFieldAssistantContext';
 
 jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
 }));
+
+beforeEach(() => jest.clearAllMocks());
+
+it('preserves the cached multi-frame display name when attaching a field', () => {
+  const frames = ['Query A', 'Query B'].map((name) =>
+    createDataFrame({
+      name,
+      fields: [{ name: 'requests', type: FieldType.number, values: [42] }],
+    })
+  );
+  cacheFieldDisplayNames(frames);
+  const frame = frames[0];
+  const field = frame.fields[0];
+  const originalState = { ...field.state };
+
+  buildTableFieldAssistantContext({
+    frame,
+    field,
+    panelId: 7,
+    panelTitle: 'Requests',
+    timeRange: { from: dateTime(0), to: dateTime(10000), raw: { from: 'now-1h', to: 'now' } },
+    replaceVariables: (s) => s,
+  });
+
+  expect(field.state).toEqual(originalState);
+  expect(createAssistantContextItem).toHaveBeenCalledWith(
+    'structured',
+    expect.objectContaining({
+      title: 'Query A requests › Requests',
+      data: expect.objectContaining({
+        field: expect.objectContaining({ displayName: 'Query A requests' }),
+      }),
+    })
+  );
+});
 
 it('attaches every raw and formatted value with field, query, and panel metadata', () => {
   const frame = createDataFrame({

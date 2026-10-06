@@ -19,7 +19,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
@@ -30,6 +30,8 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
+  // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
+  mockBoundingClientRect({ width: 800, height: 600 });
   mockClientSize({ width: 800, height: 600 });
 });
 
@@ -1268,6 +1270,8 @@ describe('TableNG', () => {
     });
 
     it("leaves a nested frame's hidden header label out of its content-aware auto widths", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       // A nested frame carries its own header visibility in `meta.custom.noHeader`, so the nested
       // columns can't inherit the outer table's `hasHeader`. The outer header stays visible in both
       // renders; only the nested frame's own `noHeader` changes.
@@ -1283,6 +1287,10 @@ describe('TableNG', () => {
         );
 
         await user.click(container.querySelector('[aria-label="Expand row"]')!);
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+        const initialWidths = grid.style.gridTemplateColumns;
+        act(() => jest.advanceTimersByTime(150));
+        expect(grid.style.gridTemplateColumns).toBe(initialWidths);
 
         // The outer grid is a treegrid; the nested DataGrid is the only plain grid in the tree.
         const widths = container
@@ -1293,11 +1301,15 @@ describe('TableNG', () => {
         return widths;
       };
 
-      const [withNestedHeader] = await renderNestedWidths(false);
-      const [withoutNestedHeader] = await renderNestedWidths(true);
+      try {
+        const [withNestedHeader] = await renderNestedWidths(false);
+        const [withoutNestedHeader] = await renderNestedWidths(true);
 
-      expect(withNestedHeader).toBeGreaterThan(0);
-      expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+        expect(withNestedHeader).toBeGreaterThan(0);
+        expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('shows full column name in title attribute for truncated headers', () => {
