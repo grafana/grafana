@@ -3,7 +3,9 @@ package admission
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -109,5 +111,58 @@ func TestPlugin(t *testing.T) {
 		a := admission.NewAttributesRecord(obj, nil, thingGVK, "default", "t1", thingGVR, "status", admission.Update, nil, false, &user.DefaultInfo{})
 		err, _ := validate(t, newSet(t, api.ActionDeny), a)
 		require.NoError(t, err)
+	})
+}
+
+type failingSets struct{}
+
+func (failingSets) SetFor(context.Context, string) (*engine.Set, error) {
+	return nil, errors.New("storage unavailable")
+}
+
+type observed struct {
+	evaluations []engine.Evaluation
+	sets        []*engine.Set
+	failures    []error
+}
+
+func (o *observed) Evaluated(_ context.Context, _ admission.Attributes, set *engine.Set, ev engine.Evaluation, _ time.Duration) {
+	o.sets = append(o.sets, set)
+	o.evaluations = append(o.evaluations, ev)
+}
+
+func (o *observed) Failed(_ context.Context, _ admission.Attributes, err error) {
+	o.failures = append(o.failures, err)
+}
+
+func TestObserver(t *testing.T) {
+	ctx := warning.WithWarningRecorder(context.Background(), &recorder{})
+
+	t.Run("sees every evaluation", func(t *testing.T) {
+		o := &observed{}
+		set := newSet(t, api.ActionDeny)
+		p := NewPlugin(staticSets{set}, WithObserver(o))
+		require.Error(t, p.Validate(ctx, attrs(""), nil))
+		require.NoError(t, p.Validate(ctx, attrs("ok"), nil))
+		require.Len(t, o.evaluations, 2)
+		require.Len(t, o.evaluations[0].Decisions, 1)
+		require.Empty(t, o.evaluations[1].Decisions)
+		require.Same(t, set, o.sets[0])
+		require.Empty(t, o.failures)
+	})
+
+	t.Run("is not called when nothing is evaluated", func(t *testing.T) {
+		o := &observed{}
+		require.NoError(t, NewPlugin(staticSets{nil}, WithObserver(o)).Validate(ctx, attrs(""), nil))
+		require.Empty(t, o.evaluations)
+		require.Empty(t, o.failures)
+	})
+
+	t.Run("sees failures", func(t *testing.T) {
+		o := &observed{}
+		err := NewPlugin(failingSets{}, WithObserver(o)).Validate(ctx, attrs(""), nil)
+		require.True(t, apierrors.IsInternalError(err), "got %v", err)
+		require.Len(t, o.failures, 1)
+		require.ErrorContains(t, o.failures[0], "storage unavailable")
 	})
 }

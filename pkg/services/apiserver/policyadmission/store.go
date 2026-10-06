@@ -37,6 +37,7 @@ const paramsTimeout = 5 * time.Second
 // ValidationPolicyBinding resources of that namespace.
 type store struct {
 	log       log.Logger
+	metrics   *metrics
 	compiler  *engine.Compiler
 	resources map[schema.GroupVersionKind]schema.GroupVersionResource
 
@@ -63,9 +64,10 @@ type namespaceSet struct {
 	set         *engine.Set
 }
 
-func newStore(logger log.Logger, compiler *engine.Compiler, resources map[schema.GroupVersionKind]schema.GroupVersionResource) *store {
+func newStore(logger log.Logger, m *metrics, compiler *engine.Compiler, resources map[schema.GroupVersionKind]schema.GroupVersionResource) *store {
 	return &store{
 		log:       logger,
+		metrics:   m,
 		compiler:  compiler,
 		resources: resources,
 		compiled:  map[string]compileResult{},
@@ -177,11 +179,14 @@ func (s *store) compileLocked(p api.Policy) (*engine.CompiledPolicy, error) {
 	}
 	sum := sha256.Sum256(raw)
 	key := hex.EncodeToString(sum[:])
-	if r, ok := s.compiled[key]; ok {
+	r, ok := s.compiled[key]
+	s.metrics.compileLookup(ok)
+	if ok {
 		return r.policy, r.err
 	}
 	cp, err := s.compiler.Compile(p)
 	s.compiled[key] = compileResult{policy: cp, err: err}
+	s.metrics.compiled(err, len(s.compiled))
 	return cp, err
 }
 

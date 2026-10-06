@@ -49,6 +49,9 @@ type Result struct {
 	Violations []Violation
 	// Errors are evaluation errors kept by FailurePolicy Fail.
 	Errors []EvalError
+	// Ignored are evaluation errors dropped by FailurePolicy Ignore. They never produce
+	// decisions; they are reported so that callers can observe broken policies.
+	Ignored []EvalError
 	// Skipped lists rules that could not run because the input lacks request context.
 	Skipped []Skip
 }

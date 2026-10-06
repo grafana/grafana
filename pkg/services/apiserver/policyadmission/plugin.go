@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -42,8 +43,9 @@ var _ admission.ValidationInterface = (*Plugin)(nil)
 // New builds the plugin. Policies are type-checked against the schemas in the installed apps'
 // manifests, and against the server's OpenAPI definitions for kinds served by API builders
 // (such as folders and dashboards), which have no manifest.
-func New(installers []appsdkapiserver.AppInstaller, definitions common.GetOpenAPIDefinitions, scheme *runtime.Scheme) *Plugin {
+func New(installers []appsdkapiserver.AppInstaller, definitions common.GetOpenAPIDefinitions, scheme *runtime.Scheme, reg prometheus.Registerer) *Plugin {
 	logger := log.New("validation-policy-admission")
+	m := newMetrics(reg)
 	manifests := make([]app.ManifestData, 0, len(installers))
 	for _, i := range installers {
 		if md := i.ManifestData(); md != nil {
@@ -56,11 +58,11 @@ func New(installers []appsdkapiserver.AppInstaller, definitions common.GetOpenAP
 		logger.Warn("Some app schemas cannot be used by validation policies", "error", err)
 	}
 	schemas := schema.Combine(manifestResolver, resolver.NewDefinitionsSchemaResolver(definitions, scheme))
-	st := newStore(logger, engine.NewCompiler(schema.NewCachingResolver(schemas)), manifest.Resources(manifests...))
+	st := newStore(logger, m, engine.NewCompiler(schema.NewCachingResolver(schemas)), manifest.Resources(manifests...))
 	return &Plugin{
 		Handler:  admission.NewHandler(admission.Create, admission.Update, admission.Delete),
 		store:    st,
-		evaluate: policyadmission.NewPlugin(st),
+		evaluate: policyadmission.NewPlugin(st, policyadmission.WithObserver(&observer{log: logger, metrics: m})),
 	}
 }
 

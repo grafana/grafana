@@ -98,12 +98,23 @@ func (s *Set) Matches(gvk schema.GroupVersionKind) bool {
 	return len(s.byGVK[gvk]) > 0
 }
 
+// Bindings returns the bindings of a policy that cover a namespace.
+func (s *Set) Bindings(policy, namespace string) []api.Binding {
+	var out []api.Binding
+	for _, b := range s.bindings[policy] {
+		if bindingCovers(b, namespace) {
+			out = append(out, b)
+		}
+	}
+	return out
+}
+
 // EvaluateAll evaluates every policy for the input's kind and version and applies their bindings.
-// Only applicable results are returned.
+// Only applicable results, and results with skipped rules or ignored errors, are returned.
 func (s *Set) EvaluateAll(ctx context.Context, in Input) Evaluation {
 	var out Evaluation
 	add := func(res Result, bindings []api.Binding) {
-		if !res.Applicable && len(res.Skipped) == 0 {
+		if !res.Applicable && len(res.Skipped) == 0 && len(res.Ignored) == 0 {
 			return
 		}
 		out.Results = append(out.Results, res)
@@ -126,14 +137,15 @@ func (s *Set) EvaluateAll(ctx context.Context, in Input) Evaluation {
 			case errors.Is(err, ErrParamsNotFound):
 				continue
 			case err != nil:
+				res := Result{Policy: p.Policy().Name, Binding: b.Name}
+				evalErr := EvalError{Policy: p.Policy().Name, Path: "paramRef", Err: err}
 				if p.Policy().EffectiveFailurePolicy() == api.FailurePolicyFail {
-					add(Result{
-						Policy:     p.Policy().Name,
-						Binding:    b.Name,
-						Applicable: true,
-						Errors:     []EvalError{{Policy: p.Policy().Name, Path: "paramRef", Err: err}},
-					}, []api.Binding{b})
+					res.Applicable = true
+					res.Errors = []EvalError{evalErr}
+				} else {
+					res.Ignored = []EvalError{evalErr}
 				}
+				add(res, []api.Binding{b})
 				continue
 			}
 			bound := in

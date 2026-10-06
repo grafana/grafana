@@ -188,6 +188,12 @@ func TestParamsSet(t *testing.T) {
 		require.NoError(t, err)
 		s, err = NewSet([]*CompiledPolicy{ignoring}, []api.Binding{broken}, params)
 		require.NoError(t, err)
-		require.Empty(t, s.EvaluateAll(ctx, in).Decisions)
+		got = s.EvaluateAll(ctx, in)
+		require.Empty(t, got.Decisions)
+		require.Len(t, got.Results, 1, "the ignored error is still reported")
+		require.Equal(t, "broken", got.Results[0].Binding)
+		require.False(t, got.Results[0].Applicable)
+		require.Len(t, got.Results[0].Ignored, 1)
+		require.Equal(t, "paramRef", got.Results[0].Ignored[0].Path)
 	})
 }

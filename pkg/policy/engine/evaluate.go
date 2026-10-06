@@ -57,9 +57,12 @@ func (c *CompiledPolicy) Evaluate(ctx context.Context, in Input) Result {
 		matched, err := ev.evalBool(mc)
 		if err != nil {
 			// With Fail an unevaluable condition must not let a resource escape the policy.
+			evalErr := EvalError{Policy: res.Policy, Path: mc.path, Err: err}
 			if failurePolicy == api.FailurePolicyFail {
 				res.Applicable = true
-				res.Errors = append(res.Errors, EvalError{Policy: res.Policy, Path: mc.path, Err: err})
+				res.Errors = append(res.Errors, evalErr)
+			} else {
+				res.Ignored = append(res.Ignored, evalErr)
 			}
 			return res
 		}
@@ -76,8 +79,11 @@ func (c *CompiledPolicy) Evaluate(ctx context.Context, in Input) Result {
 		}
 		ok, err := ev.evalBool(val.compiledExpr)
 		if err != nil {
+			evalErr := EvalError{Policy: res.Policy, Path: val.path, Err: err}
 			if failurePolicy == api.FailurePolicyFail {
-				res.Errors = append(res.Errors, EvalError{Policy: res.Policy, Path: val.path, Err: err})
+				res.Errors = append(res.Errors, evalErr)
+			} else {
+				res.Ignored = append(res.Ignored, evalErr)
 			}
 			if errors.Is(err, errBudgetExceeded) || ctx.Err() != nil {
 				return res

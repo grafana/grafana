@@ -257,12 +257,16 @@ func TestEvaluate(t *testing.T) {
 		res = mustCompile(t, p).Evaluate(ctx, in)
 		require.False(t, res.Applicable)
 		require.Empty(t, res.Errors)
+		require.Len(t, res.Ignored, 1, "Ignore drops the error but still reports it")
+		require.Equal(t, "matchConditions[0].expression", res.Ignored[0].Path)
 
 		p.MatchConditions = nil
 		res = mustCompile(t, p).Evaluate(ctx, in)
 		require.True(t, res.Applicable)
 		require.Empty(t, res.Errors)
 		require.Empty(t, res.Violations)
+		require.Len(t, res.Ignored, 1)
+		require.Equal(t, "validations[0].expression", res.Ignored[0].Path)
 	})
 
 	t.Run("rules needing request context are skipped without it", func(t *testing.T) {
@@ -370,5 +374,16 @@ func TestSet(t *testing.T) {
 		in.Namespace = "prod"
 		got = s.EvaluateAll(ctx, in)
 		require.Len(t, got.Decisions, 3)
+
+		names := func(bs []api.Binding) []string {
+			out := make([]string, 0, len(bs))
+			for _, b := range bs {
+				out = append(out, b.Name)
+			}
+			return out
+		}
+		require.Equal(t, []string{"warn-all"}, names(s.Bindings("test", "dev")))
+		require.ElementsMatch(t, []string{"deny-prod", "warn-all"}, names(s.Bindings("test", "prod")))
+		require.Empty(t, s.Bindings("nope", "prod"))
 	})
 }

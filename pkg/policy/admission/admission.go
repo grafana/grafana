@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,19 +27,43 @@ type SetProvider interface {
 	SetFor(ctx context.Context, namespace string) (*engine.Set, error)
 }
 
+// Observer is told about every request the plugin evaluates, so that the execution environment
+// can record metrics and logs without this package depending on them.
+type Observer interface {
+	// Evaluated is called after the policies of set were evaluated against the request.
+	// elapsed covers evaluation only, not loading the set.
+	Evaluated(ctx context.Context, a admission.Attributes, set *engine.Set, ev engine.Evaluation, elapsed time.Duration)
+	// Failed is called when the request could not be evaluated, in which case it is rejected.
+	Failed(ctx context.Context, a admission.Attributes, err error)
+}
+
+// Option configures a Plugin.
+type Option func(*Plugin)
+
+// WithObserver reports every evaluation to o.
+func WithObserver(o Observer) Option {
+	return func(p *Plugin) { p.observer = o }
+}
+
 // Plugin is a validating admission plugin that evaluates the policies of the request's namespace.
 type Plugin struct {
 	*admission.Handler
-	sets SetProvider
+	sets     SetProvider
+	observer Observer
 }
 
 var _ admission.ValidationInterface = (*Plugin)(nil)
 
-func NewPlugin(sets SetProvider) *Plugin {
-	return &Plugin{
-		Handler: admission.NewHandler(admission.Create, admission.Update, admission.Delete),
-		sets:    sets,
+func NewPlugin(sets SetProvider, opts ...Option) *Plugin {
+	p := &Plugin{
+		Handler:  admission.NewHandler(admission.Create, admission.Update, admission.Delete),
+		sets:     sets,
+		observer: nopObserver{},
 	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
 }
 
 func (p *Plugin) Validate(ctx context.Context, a admission.Attributes, _ admission.ObjectInterfaces) error {
@@ -48,17 +73,30 @@ func (p *Plugin) Validate(ctx context.Context, a admission.Attributes, _ admissi
 	}
 	set, err := p.sets.SetFor(ctx, a.GetNamespace())
 	if err != nil {
-		return apierrors.NewInternalError(fmt.Errorf("loading validation policies: %w", err))
+		err = fmt.Errorf("loading validation policies: %w", err)
+		p.observer.Failed(ctx, a, err)
+		return apierrors.NewInternalError(err)
 	}
 	if set == nil || !set.Matches(a.GetKind()) {
 		return nil
 	}
 	in, err := InputFromAttributes(a)
 	if err != nil {
+		p.observer.Failed(ctx, a, err)
 		return apierrors.NewInternalError(err)
 	}
-	return Respond(ctx, a, set.EvaluateAll(ctx, in).Decisions)
+	start := time.Now()
+	ev := set.EvaluateAll(ctx, in)
+	p.observer.Evaluated(ctx, a, set, ev, time.Since(start))
+	return Respond(ctx, a, ev.Decisions)
 }
+
+type nopObserver struct{}
+
+func (nopObserver) Evaluated(context.Context, admission.Attributes, *engine.Set, engine.Evaluation, time.Duration) {
+}
+
+func (nopObserver) Failed(context.Context, admission.Attributes, error) {}
 
 // InputFromAttributes converts an admission request into an engine input.
 func InputFromAttributes(a admission.Attributes) (engine.Input, error) {

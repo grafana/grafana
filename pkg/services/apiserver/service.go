@@ -495,7 +495,7 @@ func (s *service) start(ctx context.Context) error {
 
 	// Validation policies are evaluated only while their API is served, which is opt-in.
 	if apiResourceConfig.ResourceEnabled(policyv0alpha1.ValidationPolicyKind().GroupVersionResource()) {
-		policyPlugin := policyadmission.New(s.appInstallers, builder.GetOpenAPIDefinitions(builders, defGetters...), s.scheme)
+		policyPlugin := policyadmission.New(s.appInstallers, builder.GetOpenAPIDefinitions(builders, defGetters...), s.scheme, s.metrics)
 		serverConfig.AdmissionControl = admission.NewChainHandler(serverConfig.AdmissionControl, policyPlugin)
 		if err := serverConfig.AddPostStartHook(policyadmission.PostStartHookName, policyPlugin.PostStartHook); err != nil {
 			return fmt.Errorf("failed to register validation policy post start hook: %w", err)
