@@ -1,5 +1,8 @@
-import { type DataFrame } from '@grafana/data';
-import { supportsColumnManagement } from '@grafana/ui/internal';
+import { FieldType, type DataFrame } from '@grafana/data';
+
+export function supportsColumnManagement(frame: DataFrame | undefined): boolean {
+  return Boolean(frame && !frame.fields.some((field) => field.type === FieldType.nestedFrames));
+}
 
 /** Enables the refreshed table capabilities on every field without mutating the frame. */
 export function withRefreshedTableCapabilities(
