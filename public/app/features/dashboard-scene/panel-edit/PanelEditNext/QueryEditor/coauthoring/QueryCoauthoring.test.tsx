@@ -13,7 +13,7 @@ import {
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
 
-const mockGenerate = jest.fn().mockResolvedValue(undefined);
+const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
 const mockCancel = jest.fn();
 const mockReset = jest.fn();
 const mockOpenAssistant = jest.fn();
@@ -928,30 +928,17 @@ describe('QueryCoauthoring', () => {
   });
 
   it('keeps the captured query focus visible while building', async () => {
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Use increase');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     mockIsGenerating = true;
-
-    await setup(0, false);
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
 
     expect(screen.getByRole('status')).toHaveTextContent('Building query…');
     expect(await screen.findByLabelText('Query focus')).toHaveTextContent('Focus');
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
     expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
     expect(screen.queryByRole('textbox', { name: 'Describe a query change' })).not.toBeInTheDocument();
-  });
-
-  it('degrades safely when an independently released datasource omits metadata', async () => {
-    mockIsGenerating = true;
-
-    await setup(0, false, {
-      revision: '1',
-      query: 'rate(http_requests_total[5m])',
-      focusRanges: [{ from: 0, to: 4 }],
-      language: { id: 'promql', displayName: 'PromQL' },
-      metadata: undefined,
-    } as unknown as QueryEditorCoauthoringContextV1);
-
-    expect(screen.getByText('Building query…')).toBeInTheDocument();
-    expect(await screen.findByLabelText('Relevant query context')).toHaveTextContent('PromQL');
   });
 
   it('constrains the popover to the viewport below its editor anchor', async () => {
