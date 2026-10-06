@@ -958,6 +958,33 @@ describe('getObservablePluginFunctions()', () => {
     expect(functions[1].type).toBe(PluginExtensionTypes.function);
   });
 
+  it('should emit the new state when the registry changes', async () => {
+    const observable = getObservablePluginFunctions({ extensionPointId }).pipe(take(2));
+
+    setTimeout(() => {
+      addedFunctionsRegistry.register({
+        pluginId,
+        configs: [
+          {
+            title: 'Function 2',
+            description: 'Function 2 description',
+            targets: extensionPointId,
+            fn: () => {},
+          },
+        ],
+      });
+    }, 0);
+
+    await expect(observable).toEmitValuesWith((received) => {
+      expect(received[0]).toHaveLength(1);
+      expect(received[0][0].title).toBe('Function 1');
+
+      expect(received[1]).toHaveLength(2);
+      expect(received[1][0].title).toBe('Function 1');
+      expect(received[1][1].title).toBe('Function 2');
+    });
+  });
+
   it('should receive an empty array if there are no functions', async () => {
     getPluginExtensionRegistriesMock.mockResolvedValue({
       addedLinksRegistry: new AddedLinksRegistry([]),
