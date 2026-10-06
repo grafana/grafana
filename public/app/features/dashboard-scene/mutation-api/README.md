@@ -704,6 +704,62 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 Each entry uses the same `{ element, layoutItem }` shape as write commands. The element name is in `layoutItem.spec.element.name`.
 
+### `GET_PANEL_RENDER_STATUS`
+
+Read the last draw result of panels that report one. Today that is the Custom panel, whose drawing
+runs in a sandboxed frame that the DOM, `LIST_PANELS` and browser-side screenshots cannot see into.
+Read-only.
+
+**Request:**
+
+```json
+{ "type": "GET_PANEL_RENDER_STATUS", "payload": { "elements": ["panel-3"], "includeImage": false } }
+```
+
+- `elements` (optional): element names to return. Omit to return every panel that reports.
+- `includeImage` (optional, default `false`): also return `image`, a PNG data URL of the drawing,
+  for at most 20 panels. A panel that cannot capture itself returns `imageError` instead.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "panels": [
+      {
+        "element": "panel-3",
+        "panelId": 3,
+        "pluginId": "custom-panel",
+        "state": "error",
+        "final": true,
+        "dataState": "Done",
+        "digest": "9a1f03bc",
+        "error": { "kind": "runtime", "message": "TypeError: Cannot read properties of undefined" },
+        "ageMs": 820
+      }
+    ]
+  },
+  "changes": []
+}
+```
+
+- `state`: `pending` (no draw finished yet), `drawn` (the last draw finished) or `error` (it
+  failed, or the panel could not draw at all: unsupported API version, code too large, data over
+  the limits).
+- `final`: the drawn data will not change (`Done`, `Error` or `PartialResult`). Wait for
+  `final: true` or `state: "error"` before judging a drawing.
+- `digest`: for the Custom panel, FNV-1a 32-bit over the UTF-16 code units of `options.code`, as
+  8 lowercase hex digits. A caller that just wrote the code computes the same value to tell the new
+  drawing's report from the previous one.
+- `diagnostics`: non-fatal problems reported during a draw that still finished, such as a resource
+  the sandbox blocked.
+- `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
+
+Requested panels that are not on the dashboard, or do not report, are named in `warnings`.
+
+---
+
 ### `MOVE_PANEL`
 
 Move a panel to a different group or reposition it within a grid. The `layoutItem.kind` is optional -- it is auto-detected from the target layout. If provided and mismatched, a warning is emitted.

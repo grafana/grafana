@@ -25,6 +25,7 @@ export const DASHBOARD_COMMAND_SCHEMAS = [
   { name: 'UPDATE_PANEL', payloadSchema: payloads.updatePanel },
   { name: 'REMOVE_PANEL', payloadSchema: payloads.removePanel },
   { name: 'LIST_PANELS', payloadSchema: payloads.listPanels },
+  { name: 'GET_PANEL_RENDER_STATUS', payloadSchema: payloads.getPanelRenderStatus },
   { name: 'GET_DASHBOARD_INFO', payloadSchema: payloads.getDashboardInfo },
   { name: 'GET_METADATA_ANNOTATIONS', payloadSchema: payloads.getMetadataAnnotations },
   { name: 'UPDATE_METADATA_ANNOTATIONS', payloadSchema: payloads.updateMetadataAnnotations },

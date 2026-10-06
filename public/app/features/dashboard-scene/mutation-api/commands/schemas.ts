@@ -680,6 +680,25 @@ const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
 });
 
+export const MAX_RENDER_STATUS_IMAGES = 20;
+
+const getPanelRenderStatusPayloadSchema = z
+  .object({
+    elements: z
+      .array(z.string())
+      .max(100)
+      .optional()
+      .describe('Element names to return (e.g. ["panel-3"]). Omit to return every panel that reports.'),
+    includeImage: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        `When true, also return a PNG data URL of each drawing, for panels that can capture themselves (at most ${MAX_RENDER_STATUS_IMAGES}).`
+      ),
+  })
+  .strict();
+
 const listPanelsPayloadSchema = z.object({
   elements: z
     .array(z.string())
@@ -906,6 +925,9 @@ export const payloads = {
   ),
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
+  getPanelRenderStatus: getPanelRenderStatusPayloadSchema.describe(
+    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, and optionally a capture of the drawing.'
+  ),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),

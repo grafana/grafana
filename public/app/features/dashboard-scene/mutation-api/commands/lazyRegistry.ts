@@ -44,6 +44,11 @@ export const LAZY_DASHBOARD_COMMANDS: LazyMutationCommand[] = [
     load: () => import('./listPanels').then((module) => module.listPanelsCommand),
   },
   {
+    name: 'GET_PANEL_RENDER_STATUS',
+    readOnly: true,
+    load: () => import('./getPanelRenderStatus').then((module) => module.getPanelRenderStatusCommand),
+  },
+  {
     name: 'GET_DASHBOARD_INFO',
     readOnly: true,
     load: () => import('./getDashboardInfo').then((module) => module.getDashboardInfoCommand),

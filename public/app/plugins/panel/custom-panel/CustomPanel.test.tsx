@@ -3,11 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import { createDataFrame, FieldType, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
+import { capturePanelRender, getPanelRenderStatus } from 'app/features/panel/panelRenderStatus';
 
 import { getPanelProps } from '../test-utils';
 
 import { CustomPanel } from './CustomPanel';
-import { type RenderFrameError, type RenderFrameHandlers, type RenderInput } from './runtime';
+import { codeDigest, type RenderFrameError, type RenderFrameHandlers, type RenderInput } from './runtime';
 import { type Options } from './types';
 
 interface FakeController {
@@ -18,6 +19,7 @@ interface FakeController {
   pause: jest.Mock;
   resume: jest.Mock;
   getState: jest.Mock;
+  capture: jest.Mock;
   dispose: jest.Mock;
 }
 interface FakeHold {
@@ -42,6 +44,7 @@ jest.mock('./runtime', () => ({
       pause: jest.fn(),
       resume: jest.fn(),
       getState: jest.fn(() => 'ready'),
+      capture: jest.fn(() => Promise.resolve('data:image/png;base64,AA==')),
       dispose: jest.fn(),
     };
     mockControllers.push(controller);
@@ -388,5 +391,58 @@ describe('CustomPanel', () => {
     expect(screen.getByText(/The queries returned 100001 values/)).toBeInTheDocument();
     expect(latestController().render).not.toHaveBeenCalled();
     expect(latestHold().released).toBe(true);
+  });
+  describe('draw status', () => {
+    it('reports pending, then the finished draw with the code digest, data state and timing', () => {
+      const { props } = setup();
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({ pluginId: 'custom-panel', state: 'pending', digest: codeDigest(CODE) })
+      );
+
+      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 4, nodeCount: 9 }));
+
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({
+          state: 'drawn',
+          final: true,
+          dataState: LoadingState.Done,
+          digest: codeDigest(CODE),
+          durationMs: 4,
+          nodeCount: 9,
+        })
+      );
+    });
+
+    it('reports a draw error, and keeps non-fatal problems with a draw that still finishes', () => {
+      const { props } = setup();
+      act(() =>
+        latestController().handlers.onError({ kind: 'csp', fatal: false, message: 'img-src https://x', seq: 1 })
+      );
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({ state: 'error', error: { kind: 'csp', message: 'img-src https://x' } })
+      );
+
+      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 1, nodeCount: 2 }));
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({ state: 'drawn', diagnostics: ['csp: img-src https://x'] })
+      );
+    });
+
+    it('reports data over the limit as an error', () => {
+      const values = Array.from({ length: 100_001 }, (_, i) => i);
+      const { props } = setup({ data: makeData(values) });
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({ state: 'error', error: expect.objectContaining({ kind: 'data-limit' }) })
+      );
+    });
+
+    it('captures the drawing through the frame and stops reporting on unmount', async () => {
+      const { props, unmount } = setup();
+      await expect(capturePanelRender(props.id)).resolves.toBe('data:image/png;base64,AA==');
+      expect(latestController().capture).toHaveBeenCalled();
+
+      unmount();
+      expect(getPanelRenderStatus(props.id)).toBeUndefined();
+    });
   });
 });

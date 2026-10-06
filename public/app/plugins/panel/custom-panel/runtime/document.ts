@@ -136,6 +136,14 @@ function utf8ByteLength(value: string): number {
   return bytes;
 }
 
+/**
+ * Identifies drawing code in status reports: FNV-1a 32-bit over the UTF-16 code units of the code,
+ * as 8 lowercase hex digits. Callers that wrote the code compute the same value to match a report.
+ */
+export function codeDigest(code: string): string {
+  return fnv1aHex(code);
+}
+
 function fnv1aHex(value: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < value.length; i++) {

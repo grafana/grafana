@@ -6,12 +6,19 @@ import { t, Trans } from '@grafana/i18n';
 import { config, locationService } from '@grafana/runtime';
 import { Alert, Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRenderTarget } from 'app/features/dashboard/services/isRenderTarget';
+import {
+  type PanelRenderReporter,
+  type PanelRenderStatusUpdate,
+  registerPanelRenderReporter,
+} from 'app/features/panel/panelRenderStatus';
 
 import { followLink } from './followLink';
 import {
+  MAX_CODE_BYTES,
   MAX_HEIGHT_HINT_PX,
   RENDER_FRAME_SANDBOX,
   buildRenderDocument,
+  codeDigest,
   createRenderFrameController,
   holdRenderReadiness,
   readHostNonce,
@@ -23,12 +30,15 @@ import {
   type RenderFrameErrorKind,
   type RenderReadinessHold,
 } from './runtime';
-import { DEFAULT_API_VERSION, type Options } from './types';
+import { CUSTOM_PANEL_ID, DEFAULT_API_VERSION, type Options } from './types';
 
 type LimitError = { reason: 'too-many-frames' | 'too-many-cells' | 'too-large'; actual: number; limit: number };
 
 // 'PartialResult' is not a LoadingState member yet, but the protocol accepts it as final.
 const TERMINAL_STATES: ReadonlySet<string> = new Set([LoadingState.Done, LoadingState.Error, 'PartialResult']);
+
+/** Non-fatal errors kept with a draw that still finished, for its status report. */
+const MAX_REPORTED_DIAGNOSTICS = 5;
 
 /** Errors for one draw: a draw of final data that fails will not draw anything else. */
 const SETTLING_ERRORS: ReadonlySet<RenderFrameErrorKind> = new Set(['runtime', 'output-limit', 'render-timeout']);
@@ -99,6 +109,36 @@ function RenderFrameHost({
   // An iframe that loaded before its controller existed; the controller picks it up on creation.
   const pendingLoadRef = useRef<HTMLIFrameElement | null>(null);
 
+  // The last draw result, for tools that cannot see into the frame (GET_PANEL_RENDER_STATUS).
+  const reporterRef = useRef<PanelRenderReporter | null>(null);
+  const digest = useMemo(() => codeDigest(code), [code]);
+  const reportBaseRef = useRef({ digest, dataState: String(data.state) });
+  // Non-fatal errors since the last input was sent; a draw that still finishes carries them along.
+  const diagnosticsRef = useRef<string[]>([]);
+  reportBaseRef.current.digest = digest;
+  const report = useCallback((update: Omit<PanelRenderStatusUpdate, 'digest' | 'dataState' | 'final'>) => {
+    reporterRef.current?.report({
+      ...update,
+      digest: reportBaseRef.current.digest,
+      dataState: reportBaseRef.current.dataState,
+      final: lastInputFinalRef.current,
+    });
+  }, []);
+  useEffect(() => {
+    const reporter = registerPanelRenderReporter(id, CUSTOM_PANEL_ID);
+    reporterRef.current = reporter;
+    const current = controllerRef.current;
+    if (current) {
+      reporter.setCapture(() => current.capture());
+    }
+    return () => {
+      reporter.dispose();
+      if (reporterRef.current === reporter) {
+        reporterRef.current = null;
+      }
+    };
+  }, [id]);
+
   const frameKey = doc.ok && buildInput ? `${doc.documentKey}:${reloadCount}` : null;
 
   const releaseHold = useCallback(() => {
@@ -148,14 +188,22 @@ function RenderFrameHost({
     setFrameError(null);
     setHeightHint(null);
 
+    report({ state: 'pending' });
+
     const created = createRenderFrameController({
       onReady: () => {},
-      onRenderComplete: ({ seq }) => {
+      onRenderComplete: ({ seq, durationMs, nodeCount }) => {
         setFrameError(null);
+        const diagnostics = diagnosticsRef.current;
+        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) });
         settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),
       onError: (error) => {
+        report({ state: 'error', error: { kind: error.kind, message: error.message } });
+        if (diagnosticsRef.current.length < MAX_REPORTED_DIAGNOSTICS) {
+          diagnosticsRef.current = [...diagnosticsRef.current, `${error.kind}: ${error.message}`];
+        }
         if (error.fatal) {
           setFatalError(error);
           releaseHold();
@@ -173,6 +221,7 @@ function RenderFrameHost({
     });
     controllerRef.current = created;
     setController(created);
+    reporterRef.current?.setCapture(() => created.capture());
 
     if (pendingLoadRef.current) {
       created.handleLoad(pendingLoadRef.current);
@@ -182,11 +231,12 @@ function RenderFrameHost({
     return () => {
       created.dispose();
       releaseHold();
+      reporterRef.current?.setCapture(undefined);
       if (controllerRef.current === created) {
         controllerRef.current = null;
       }
     };
-  }, [frameKey, handleLink, releaseHold, settleSeq]);
+  }, [frameKey, handleLink, releaseHold, settleSeq, report]);
 
   // A fatal error already removed the iframe, which tears its document down; a retry mounts a new
   // element with a new controller.
@@ -241,6 +291,7 @@ function RenderFrameHost({
         return;
       }
       sentRef.current = { ...sent, width, height };
+      diagnosticsRef.current = [];
       const seq = controller.resize({ width, height });
       if (seq >= 0 && lastInputFinalRef.current) {
         holdForSeq(seq);
@@ -264,14 +315,19 @@ function RenderFrameHost({
       location,
     });
     if (!result.ok) {
-      setLimitError({ reason: result.reason, actual: result.actual, limit: result.limit });
+      const limit = { reason: result.reason, actual: result.actual, limit: result.limit };
+      setLimitError(limit);
       sentRef.current = null;
+      reportBaseRef.current.dataState = String(data.state);
+      report({ state: 'error', error: { kind: 'data-limit', message: limitErrorMessage(limit) } });
       releaseHold();
       return;
     }
     setLimitError(null);
     sentRef.current = { controller, sources, width, height };
     lastInputFinalRef.current = isFinalData(data);
+    reportBaseRef.current.dataState = String(data.state);
+    diagnosticsRef.current = [];
     const seq = controller.render(result.input);
     if (seq >= 0 && lastInputFinalRef.current) {
       holdForSeq(seq);
@@ -294,6 +350,7 @@ function RenderFrameHost({
     location,
     releaseHold,
     holdForSeq,
+    report,
   ]);
 
   // Pause drawing while the panel is scrolled out of view. Render targets always draw.
@@ -317,6 +374,11 @@ function RenderFrameHost({
   if (!buildInput) {
     return (
       <div className={styles.message}>
+        <ReportStatic
+          report={report}
+          kind="unsupported-api-version"
+          message={`Drawing API version ${String(apiVersion)} is not supported by this Grafana.`}
+        />
         <Alert
           severity="error"
           title={t('custom-panel.errors.unsupported-api-version-title', 'Unsupported drawing API version')}
@@ -334,6 +396,11 @@ function RenderFrameHost({
   if (!doc.ok) {
     return (
       <div className={styles.message}>
+        <ReportStatic
+          report={report}
+          kind="code-too-large"
+          message={`The drawing code is ${doc.bytes} bytes, over the limit of ${MAX_CODE_BYTES}.`}
+        />
         <Alert severity="error" title={t('custom-panel.errors.code-too-large-title', 'Drawing code is too large')}>
           {t(
             'custom-panel.errors.code-too-large',
@@ -387,6 +454,22 @@ function RenderFrameHost({
       )}
     </div>
   );
+}
+
+/** Reports a failure that keeps the panel from starting a frame at all. Renders nothing. */
+function ReportStatic({
+  report,
+  kind,
+  message,
+}: {
+  report: (update: Omit<PanelRenderStatusUpdate, 'digest' | 'dataState' | 'final'>) => void;
+  kind: string;
+  message: string;
+}) {
+  useEffect(() => {
+    report({ state: 'error', error: { kind, message } });
+  }, [report, kind, message]);
+  return null;
 }
 
 /** The page URL, which carries the URL-synced dashboard state. Equal URLs keep the same object. */

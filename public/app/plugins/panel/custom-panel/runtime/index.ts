@@ -13,7 +13,7 @@ export type {
 } from './protocol';
 export { parseFrameMessage } from './protocol';
 
-export { buildRenderDocument, readHostNonce, type BuildDocumentResult } from './document';
+export { buildRenderDocument, codeDigest, readHostNonce, type BuildDocumentResult } from './document';
 export {
   serializePanelData,
   buildRenderInput,

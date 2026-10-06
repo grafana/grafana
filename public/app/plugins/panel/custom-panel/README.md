@@ -379,6 +379,15 @@ draws that on a canvas and returns the data URL. The host accepts only a `data:i
 most 8 MiB, within 3 seconds. A browser that refuses to rasterize `foreignObject` (Safari) returns
 an error instead.
 
+## Draw status
+
+The panel reports the result of its last draw to Grafana, so tools that cannot see into the frame
+can read it with the Mutation API command `GET_PANEL_RENDER_STATUS`: `pending`, `drawn` or `error`,
+whether the drawn data is final, the error kind and message, problems reported during a draw that
+still finished, the draw time and the element count. The report carries a digest of the code, so a
+tool that just wrote the code can wait for the report of that code. With `includeImage` the command
+also returns the frame's capture of its drawing.
+
 ## Migrating from the Dynamic text panel
 
 Changing a `marcusolsson-dynamictext-panel` panel to this panel converts simple templates: content
