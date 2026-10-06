@@ -17,7 +17,7 @@ func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0al
 		return v0alpha1.GetSearchTeamsResponse{}, nil
 	}
 	if result.Error != nil {
-		return v0alpha1.GetSearchTeamsResponse{}, resource.GetError(result.Error)
+		return v0alpha1.GetSearchTeamsResponse{}, resource.StatusError(result.Error)
 	}
 
 	switch result.GetResultFormat() {

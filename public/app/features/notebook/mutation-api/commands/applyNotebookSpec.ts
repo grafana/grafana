@@ -114,7 +114,7 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
 
       return {
         success: true,
-        data: { applied: true, spec: appliedNotebook },
+        data: { applied: true, spec: appliedNotebook, resourceVersion: scene.autosave.state.savedResourceVersion },
         changes: [],
         warnings: warnings.length > 0 ? warnings : undefined,
       };

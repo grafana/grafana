@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -177,6 +178,7 @@ func newClient(opts options.StorageOptions,
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 			Backend:                 backend,
+			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
 			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
@@ -218,7 +220,26 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, nil)
+		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
+		if experimentalKV != nil {
+			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
+		}
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Snapshots live in the storage KV, so the store can only be built once the backend exists.
+		var snapshotStore search.RemoteIndexStore
+		if cfg.IndexSnapshotEnabled {
+			snapshotStore, err = sql.BuildKVSnapshotStore(cfg, backend, log.New("unified-storage-snapshot-store"))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, snapshotStore)
 		if err != nil {
 			return nil, err
 		}
@@ -235,25 +256,21 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
-			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
-		if experimentalKV != nil {
-			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
-		}
-		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
-		if err != nil {
-			return nil, err
-		}
-
 		if backendService, ok := backend.(services.Service); ok {
 			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
 				return nil, fmt.Errorf("failed to start storage backend: %w", err)
 			}
 		}
 
+		var blobBackend resource.BlobSupport
+		if cfg.EnableSQLKVBackend {
+			blobBackend = resource.NewKVBlobSupport(kvStore)
+		}
+
 		serverOptions := sql.ServerOptions{
 			WatchExpiry:    watchExpiry,
 			Backend:        backend,
+			BlobBackend:    blobBackend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
 			Reranker:       rerankerInstance,

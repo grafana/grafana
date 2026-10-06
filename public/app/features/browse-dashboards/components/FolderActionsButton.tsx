@@ -5,6 +5,7 @@ import { AppEvents } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem, Text } from '@grafana/ui';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { appEvents } from 'app/core/app_events';
 import { FolderOwnerModal } from 'app/core/components/OwnerReferences/FolderOwnerModal';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -12,7 +13,6 @@ import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
 import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -30,16 +30,17 @@ interface Props {
   /* If the folder is managed by a provisioned repo and is read-only */
   isReadOnlyRepo?: boolean;
   repoType?: RepoType;
+  /* The repository managing the folder, if any */
+  repository?: RepositoryView;
 }
 
-export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props) {
+export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, repository }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPermissionsDrawer, setShowPermissionsDrawer] = useState(false);
   const [showManageOwnersModal, setShowManageOwnersModal] = useState(false);
   const [showDeleteProvisionedFolderDrawer, setShowDeleteProvisionedFolderDrawer] = useState(false);
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutationFacade();
-  const isProvisionedInstance = useIsProvisionedInstance();
   const deleteFolder = useDeleteFolderMutationFacade();
   const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
@@ -51,7 +52,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo }: Props)
   } = getFolderPermissions(folder);
 
   const isProvisionedFolder = isItemManagedByRepository(folder);
-  const isProvisionedRootFolder = isProvisionedFolder && !isProvisionedInstance && folder.parentUid === undefined;
+  // Only a `folder` target repository has a root folder, and it shares the repository's name
+  const isProvisionedRootFolder = repository?.target === 'folder' && folder.uid === repository.name;
   // Can only move folders when the folder is not provisioned
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Can only delete folders when the folder has the right permission and is not provisioned root folder

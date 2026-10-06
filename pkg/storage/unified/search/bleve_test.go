@@ -1503,6 +1503,40 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 	})
 }
 
+func TestReuseFileIndexRequiresBuildAfterLastImport(t *testing.T) {
+	buildTime := time.Unix(1_700_000_000, 0)
+	logger := log.New("bleve-test")
+
+	for _, tt := range []struct {
+		name           string
+		lastImportTime time.Time
+		wantReuse      bool
+	}{
+		{name: "earlier import", lastImportTime: buildTime.Add(-time.Second), wantReuse: true},
+		{name: "equal import", lastImportTime: buildTime},
+		{name: "later import", lastImportTime: buildTime.Add(time.Second)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+			resourceDir := t.TempDir()
+			index, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), buildTime, buildVersion, nil, "")
+			require.NoError(t, err)
+			require.NoError(t, setRV(index, 42))
+			require.NoError(t, index.Close())
+
+			reopened, _, rv, err := backend.tryReuseFileIndex(resourceDir, tt.lastImportTime, logger)
+			require.NoError(t, err)
+			if tt.wantReuse {
+				require.NotNil(t, reopened)
+				require.Equal(t, int64(42), rv)
+				require.NoError(t, reopened.Close())
+			} else {
+				require.Nil(t, reopened)
+			}
+		})
+	}
+}
+
 // Stands in for an index written by a newer binary.
 func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
 	t.Helper()

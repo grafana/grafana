@@ -58,16 +58,18 @@ linters:
         apps-playlist:
           list-mode: lax
           files:
-            - ./apps/playlist/*
-            - ./apps/playlist/**/*
+            - '**/apps/playlist/*'
+            - '**/apps/playlist/**/*'
+            - '!**/pkg/registry/apps/playlist/*'
+            - '!**/pkg/registry/apps/playlist/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
         apps-dashboard:
           list-mode: lax
           files:
-            - ./apps/dashboard/*
-            - ./apps/dashboard/**/*
+            - '**/apps/dashboard/*'
+            - '**/apps/dashboard/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
           deny:
@@ -76,8 +78,10 @@ linters:
         apps-secret:
           list-mode: lax
           files:
-            - ./apps/secret/*
-            - ./apps/secret/**/*
+            - '**/apps/secret/*'
+            - '**/apps/secret/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/secret is not allowed to import grafana core
@@ -178,16 +182,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
-        storage-unified-resource:
-          list-mode: lax
-          files:
-            - ./pkg/storage/unified/resource/*
-            - ./pkg/storage/unified/resource/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: pkg/storage/unified/resource is not allowed to import grafana core
     exhaustive:
       default-signifies-exhaustive: true
     gocritic:

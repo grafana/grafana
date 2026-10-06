@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -117,7 +116,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	// the rest of its API still works, so this drops search rather than the group.
 	searchHandlers, err := b.searchRoutes(gv)
 	if err != nil {
-		logging.DefaultLogger.Error("invalid manifest search declarations; search and trash routes are not served",
+		logging.DefaultLogger.Error("invalid manifest search declarations; search, trash and hybrid routes are not served",
 			"group", gv.Group, "version", gv.Version, "error", err)
 	}
 	routes.Namespace = append(routes.Namespace, searchHandlers...)
@@ -164,7 +163,7 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 	return routes
 }
 
-// searchRoutes builds the generic search and trash endpoints for the kinds this
+// searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
 // version serves.
 //
 // Delegated to searchroutes rather than mounted per kind here, because which
@@ -191,6 +190,7 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 		b.opts.TrashAPIEnabled,
 		b.tracer,
 		b.search,
+		searchroutes.Options{HybridEnabled: b.opts.HybridAPIEnabled},
 	)
 	if err != nil {
 		return nil, err
@@ -300,10 +300,9 @@ func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, pat
 			info.Parent = parent
 		}
 		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+		// The caller's identity reaches the plugin only as the access token the
+		// v3 client exchanges for it, never as an ID token in the HTTP headers.
 		req.Header.Del(proxyutil.IDHeaderName)
-		if requester, err := identity.GetRequester(ctx); err == nil {
-			proxyutil.ApplyForwardIDHeader(req.Context(), req, requester, nil)
-		}
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
 }
