@@ -169,7 +169,7 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have. An inset table's
+  // Reserve the stable scrollbar gutter, including when the rows do not overflow. An inset table's
   // frame also lives inside `width`, so its two borders are not available to the columns.
   const availableWidth = useMemo(
     () => width - scrollbarWidth - (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),

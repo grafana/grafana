@@ -148,6 +148,12 @@ export const getGridStyles = memoize(
         scrollbarWidth: 'thin',
         scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
+        ...(!IS_SAFARI_26 && {
+          // Flat tables subtract the scrollbar gutter from their auto column widths. Keep that
+          // gutter independent of overflow so column sizing cannot toggle the scrollbar in a loop.
+          '&[role="grid"]': { scrollbarGutter: 'stable' },
+        }),
+
         border: 'none',
 
         // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
