@@ -2,10 +2,8 @@ package quota
 
 import (
 	"encoding/base64"
-	"net/http"
+	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -284,60 +281,68 @@ func TestIntegrationProvisioning_HealthAndTokenRefreshWhileOverNamespaceQuota(t 
 }
 
 // A repository that is blocked and still over quota is a steady state, not a change, so
-// requeuing it must not run another health check. Every reconcile that proceeds runs
-// one, and a health check is a call against the customer's git provider -- shared with
+// requeuing it must not test the repository again. Every reconcile that proceeds runs a
+// health check, and that is a call against the customer's git provider -- shared with
 // their syncs and with every repository on the same token. The explicit requeues below
 // stand in for the ones the controller used to generate for itself, by patching its own
 // status on every pass.
-func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotHealthCheck(t *testing.T) {
+func TestIntegrationProvisioning_BlockedOverQuotaRequeuesDoNotTestRepository(t *testing.T) {
 	helper := sharedHelper(t)
 
 	const (
-		repoName  = "ns-steady-repo1"
-		otherName = "ns-steady-repo2"
+		quietName = "ns-steady-quiet" // requeued while no health check is due
+		dueName   = "ns-steady-due"   // control: a health check is made genuinely due
 	)
+	quietPath := filepath.Join(helper.ProvisioningPath, "steady-quiet")
+	duePath := filepath.Join(helper.ProvisioningPath, "steady-due")
 
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 0})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       repoName,
-		LocalPath:  filepath.Join(helper.ProvisioningPath, "steady1"),
+		Name:       quietName,
+		LocalPath:  quietPath,
 		SyncTarget: "folder",
 		SkipSync:   true,
 	})
 	helper.CreateLocalRepo(t, common.TestRepo{
-		Name:       otherName,
-		LocalPath:  filepath.Join(helper.ProvisioningPath, "steady2"),
+		Name:       dueName,
+		LocalPath:  duePath,
 		SyncTarget: "folder",
 		SkipSync:   true,
 	})
 
 	// Two repositories against a limit of one: both are over quota and settle into the
-	// blocked steady state. Reaching it leaves both health timestamps fresh, so neither
-	// has a check due for the next recentUnhealthyDuration -- long enough for the counts
-	// below to be attributable to the requeues this test makes.
+	// blocked steady state, which leaves both health timestamps fresh.
 	helper.SetQuotaStatus(provisioning.QuotaStatus{MaxRepositories: 1})
-	helper.TriggerRepositoryReconciliation(t, repoName)
-	helper.TriggerRepositoryReconciliation(t, otherName)
-	waitForUnhealthyWithNamespaceQuota(t, helper, repoName, provisioning.ReasonQuotaExceeded)
-	waitForUnhealthyWithNamespaceQuota(t, helper, otherName, provisioning.ReasonQuotaExceeded)
+	helper.TriggerRepositoryReconciliation(t, quietName)
+	helper.TriggerRepositoryReconciliation(t, dueName)
+	waitForUnhealthyWithNamespaceQuota(t, helper, quietName, provisioning.ReasonQuotaExceeded)
+	waitForUnhealthyWithNamespaceQuota(t, helper, dueName, provisioning.ReasonQuotaExceeded)
+	require.Empty(t, repositoryFieldErrors(t, helper, quietName))
 
-	before := scrapeRepositoryHealthChecks(t, helper)
+	// Remove both repository directories, so Test() would now report the path as not
+	// found. Those field errors reach status.fieldErrors whatever the quota health
+	// override says, which makes them evidence that the repository was tested at all.
+	require.NoError(t, os.RemoveAll(quietPath))
+	require.NoError(t, os.RemoveAll(duePath))
 
-	// Requeue repeatedly while no check is due. None of these may reach the provider.
+	// Requeue repeatedly while the stored health check is still fresh.
 	for range 3 {
-		helper.TriggerRepositoryReconciliation(t, repoName)
+		helper.TriggerRepositoryReconciliation(t, quietName)
 	}
 
-	// Then make one genuinely due. Waiting for it to land proves the controller drained
-	// the requeues above rather than the test outrunning it, which is what makes the
-	// exact count meaningful without a fixed sleep.
-	markHealthCheckOverdue(t, helper, repoName)
+	// Make the other repository's check genuinely due. It is enqueued after the requeues
+	// above, so its field errors landing proves the controller is draining the queue
+	// rather than the test outrunning it -- and that a due check still tests the repo.
+	markHealthCheckOverdue(t, helper, dueName)
 	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		assert.Greater(collect, scrapeRepositoryHealthChecks(t, helper), before)
+		assert.NotEmpty(collect, repositoryFieldErrors(t, helper, dueName),
+			"a repository whose health check is due must still be tested")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
-	assert.Equal(t, before+1, scrapeRepositoryHealthChecks(t, helper),
-		"only the overdue check may have run: the steady-state requeues must not reach the provider")
+	require.Never(t, func() bool {
+		return len(repositoryFieldErrors(t, helper, quietName)) > 0
+	}, 2*time.Second, 250*time.Millisecond,
+		"a steady-state requeue must not test the repository: that is a call against the customer's git provider")
 }
 
 // markHealthCheckOverdue pushes the stored health timestamp outside the recent-unhealthy
@@ -355,27 +360,9 @@ func markHealthCheckOverdue(t *testing.T, helper *common.ProvisioningTestHelper,
 	require.NoError(t, err, "failed to patch health timestamp for repository %s", name)
 }
 
-// scrapeRepositoryHealthChecks sums grafana_provisioning_health_checked_total over its
-// outcome/cause labels for repositories, read from the server's own /metrics. It is the
-// counter whose cluster-wide rate collapsed when this loop was found in production.
-func scrapeRepositoryHealthChecks(t *testing.T, helper *common.ProvisioningTestHelper) float64 {
+func repositoryFieldErrors(t *testing.T, helper *common.ProvisioningTestHelper, name string) []provisioning.ErrorDetails {
 	t.Helper()
-	rsp := apis.DoRequest(helper.K8sTestHelper, apis.RequestParams{
-		Method: http.MethodGet, Path: "/metrics", User: helper.Org1.Admin,
-	}, &metav1.Status{})
-	require.Equal(t, http.StatusOK, rsp.Response.StatusCode)
-
-	var total float64
-	for line := range strings.Lines(string(rsp.Body)) {
-		name, value, found := strings.Cut(strings.TrimSpace(line), " ")
-		if !found ||
-			!strings.HasPrefix(name, "grafana_provisioning_health_checked_total{") ||
-			!strings.Contains(name, `resource="repository"`) {
-			continue
-		}
-		v, err := strconv.ParseFloat(value, 64)
-		require.NoError(t, err)
-		total += v
-	}
-	return total
+	obj, err := helper.Repositories.Resource.Get(t.Context(), name, metav1.GetOptions{})
+	require.NoError(t, err)
+	return common.MustFromUnstructured[provisioning.Repository](t, obj).Status.FieldErrors
 }
