@@ -129,6 +129,7 @@ export function OAuthConnectionFields({
           </Field>
           <Field
             noMargin
+            htmlFor="scopes"
             label={t('provisioning.connection-form.label-scopes', 'Scopes')}
             description={t(
               'provisioning.connection-form.description-scopes',
@@ -139,7 +140,14 @@ export function OAuthConnectionFields({
               name="scopes"
               control={control}
               render={({ field: { value, onChange } }) => (
-                <TagsInput id="scopes" tags={value ?? []} onChange={onChange} addOnBlur autoColors={false} />
+                <TagsInput
+                  id="scopes"
+                  tags={value ?? []}
+                  onChange={onChange}
+                  addOnBlur
+                  autoColors={false}
+                  placeholder={t('provisioning.connection-form.placeholder-scopes', 'Type a scope and press Enter')}
+                />
               )}
             />
           </Field>

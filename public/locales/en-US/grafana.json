@@ -14260,6 +14260,7 @@
       "placeholder-app-id": "123456",
       "placeholder-description": "Optional description",
       "placeholder-installation-id": "12345678",
+      "placeholder-scopes": "Type a scope and press Enter",
       "placeholder-title": "My App",
       "reauthorize-button": "Reauthorize"
     },
