@@ -1,4 +1,4 @@
-package acimpl
+package legacypermissions
 
 import (
 	"context"
