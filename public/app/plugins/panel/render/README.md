@@ -167,7 +167,9 @@ document down, and offers **Retry**, which starts a new frame.
 
 When the dashboard is captured by the image renderer, the panel keeps the capture waiting until the
 frame reports that it finished drawing data that will not change (`Done`, `Error` or
-`PartialResult`), or until an error, a draw timeout, or 30 seconds. Animations and transitions are
+`PartialResult`), or that drawing that data failed (an error thrown by `draw`, or too many
+elements), or until the code fails to start, the frame is stopped, a draw times out, or 30 seconds
+pass. Animations and transitions are
 disabled in that mode, and the frame waits for fonts and images before it reports completion.
 Panels that are scrolled out of view pause drawing, except during image rendering.
 
