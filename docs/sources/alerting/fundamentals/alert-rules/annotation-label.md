@@ -122,6 +122,8 @@ Annotations are displayed in Grafana and are included by default in notification
 
 {{< /shared >}}
 
+Notification policies and silences match labels, not annotations. A value such as `team` that appears only in an annotation does not select a notification policy that matches that label. If no more specific policy matches, the [Default notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/) handles the alert.
+
 For example, you can edit the annotation `summary` to explain why the alert was triggered:
 
 ```
