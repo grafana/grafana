@@ -1,6 +1,7 @@
 import { isEqual } from 'lodash';
 
 import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   NewSceneObjectAddedEvent,
   type SceneObject,
@@ -19,6 +20,7 @@ import { getRepeatCloneSourceKey } from '../utils/clone';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDefaultVizPanel, getLayoutForObject, getDashboardSceneFor } from '../utils/utils';
 
+import { DashboardEditIntegrityTracker, type IntegrityRecord } from './DashboardEditIntegrityTracker';
 import { ElementEditPane } from './ElementEditPane';
 import {
   ConditionalRenderingChangedEvent,
@@ -105,7 +107,31 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public clone(withState: Partial<DashboardSidebarState>): this {
     // Pending requests and edit history belong to the live sidebar, not its snapshots.
-    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false });
+    return super.clone({ ...withState, redoStack: [], undoStack: [], isLoading: false, integrity: undefined });
+  }
+
+  public resetIntegrity() {
+    const dashboard = getDashboardSceneFor(this);
+    this.setState({
+      integrity:
+        getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardUndoRedoIntegrityCheck, false) &&
+        dashboard.state.isEditing
+          ? new DashboardEditIntegrityTracker(() => dashboard.getSaveModel())
+          : undefined,
+    });
+  }
+
+  private runWithIntegrity(trigger: string, operation: () => void, kind: IntegrityRecord['kind'] = 'untracked') {
+    const dashboard = getDashboardSceneFor(this);
+    if (
+      getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardUndoRedoIntegrityCheck, false) &&
+      dashboard.state.isEditing &&
+      this.state.integrity
+    ) {
+      this.state.integrity.run(trigger, operation, kind);
+    } else {
+      operation();
+    }
   }
 
   private onActivate() {
@@ -120,12 +146,15 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     );
 
     if (dashboard.state.isEditing) {
+      if (!this.state.integrity) {
+        this.resetIntegrity();
+      }
       this.enableSelection();
     }
 
     this._subs.add(
       dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
-        this.handleEditAction(payload);
+        this.runWithIntegrity(payload.description ?? 'perform', () => this.handleEditAction(payload));
       })
     );
 
@@ -264,16 +293,24 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * @private
    */
   private handleStateCommitted(payload: StateCommittedPayload) {
-    this.handleEditAction(
-      {
-        source: payload.source,
-        description: payload.description,
-        perform: payload.replay,
-        undo: payload.revert,
+    // The event arrives after mutation and has no before snapshot. Preserve the uncertain
+    // interval as a diagnostic instead of either blaming the action or hiding preceding edits.
+    this.runWithIntegrity(
+      payload.description,
+      () => {
+        this.handleEditAction(
+          {
+            source: payload.source,
+            description: payload.description,
+            perform: payload.replay,
+            undo: payload.revert,
+          },
+          true
+        );
+        payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
       },
-      true
+      'committed'
     );
-    payload.source.publishEvent(new DashboardStateChangedEvent({ source: payload.source }), true);
   }
 
   /**
@@ -286,7 +323,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       return;
     }
 
-    this.undoSingleAction(action);
+    this.runWithIntegrity(`undo: ${action.description ?? ''}`, () => this.undoSingleAction(action));
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
     reportInteraction('grafana_dashboard_undo');
@@ -343,7 +380,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       return;
     }
 
-    this.performAction(action);
+    this.runWithIntegrity(`redo: ${action.description ?? ''}`, () => this.performAction(action));
 
     this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
     reportInteraction('grafana_dashboard_redo');

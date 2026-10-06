@@ -1560,6 +1560,20 @@
     },
     {
       "metadata": {
+        "name": "dashboardUndoRedoIntegrityCheck",
+        "resourceVersion": "1791189276439",
+        "creationTimestamp": "2026-10-05T08:34:36Z"
+      },
+      "spec": {
+        "description": "Enable development diagnostics for untracked dashboard edits",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboardUnifiedDrilldownControls",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

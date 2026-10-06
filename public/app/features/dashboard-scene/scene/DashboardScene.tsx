@@ -475,6 +475,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._changeTracker.startTrackingChanges();
 
     if (!wasEditing) {
+      this.state.sidebar.resetIntegrity();
       DashboardInteractions.editSessionStarted({ dashboard_uid: this.state.uid, source });
     }
   };
@@ -508,6 +509,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     result: SaveDashboardResponseDTO,
     folderUid?: string
   ) {
+    const integrity = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardUndoRedoIntegrityCheck, false)
+      ? this.state.sidebar.state.integrity
+      : undefined;
+    integrity?.check('save');
     this.serializer.onSaveComplete(saveModel, result);
 
     this._changeTracker.stopTrackingChanges();
@@ -530,6 +535,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: undefined,
     });
 
+    integrity?.accept();
     this.state.editPanel?.dashboardSaved();
 
     // Re-apply denylist before re-baselining on in-place saves. Skip awaiting on Save As —

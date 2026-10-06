@@ -5,7 +5,9 @@ import { render } from 'test/test-utils';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
 import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -85,8 +87,28 @@ describe('DashboardSidebarRenderer', () => {
   });
 
   afterEach(() => {
+    act(() => setTestFlags({}));
     jest.clearAllMocks();
     window.localStorage.clear();
+  });
+
+  it.each([true, false])('gates integrity diagnostics with its flag (%s)', async (enabled) => {
+    act(() => setTestFlags({ [FlagKeys.DashboardUndoRedoIntegrityCheck]: enabled }));
+    const scene = buildTestScene();
+    let deactivate!: () => void;
+    act(() => {
+      deactivate = scene.state.sidebar.activate();
+    });
+    const { user, unmount } = render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeVisible();
+    if (enabled) {
+      await user.click(screen.getByRole('button', { name: 'Check undo/redo integrity' }));
+      expect(await screen.findByText('No untracked changes detected.')).toBeVisible();
+    } else {
+      expect(screen.queryByRole('button', { name: 'Check undo/redo integrity' })).not.toBeInTheDocument();
+    }
+    unmount();
+    act(() => deactivate());
   });
 
   it('Should render sidebar', async () => {

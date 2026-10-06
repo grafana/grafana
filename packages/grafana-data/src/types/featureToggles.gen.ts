@@ -290,6 +290,11 @@ export interface FeatureToggles {
   */
   disableScriptedDashboards?: boolean;
   /**
+  * Enable development diagnostics for untracked dashboard edits
+  * @default false
+  */
+  dashboardUndoRedoIntegrityCheck?: boolean;
+  /**
   * Enables undo/redo in dynamic dashboards
   * @default false
   */

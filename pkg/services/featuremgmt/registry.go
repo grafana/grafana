@@ -678,6 +678,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboardUndoRedoIntegrityCheck",
+			Description: "Enable development diagnostics for untracked dashboard edits",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{LegacyFrontend: true, React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardUndoRedo",
 			Description: "Enables undo/redo in dynamic dashboards",
 			Stage:       FeatureStageExperimental,

@@ -1,6 +1,7 @@
 import { type SceneObjectState, type SceneObject } from '@grafana/scenes';
 import { type ElementSelectionContextState, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 
+import { type DashboardEditIntegrityTracker } from './DashboardEditIntegrityTracker';
 import { type DashboardEditActionEvent, type DashboardEditActionEventPayload } from './events';
 import { type DashboardOutline } from './outline/DashboardOutline';
 
@@ -12,6 +13,7 @@ export interface DashboardSidebarState extends SceneObjectState {
   outlinePane?: DashboardOutline;
   openPane?: DashboardSidebarPane;
   isLoading?: boolean;
+  integrity?: DashboardEditIntegrityTracker;
   /** Temp hack for Link and LinkSet that are not part of the scene but need to be selected for now  */
   selectedDisconnectedObject?: SceneObject;
   /** Previous state */
@@ -38,6 +40,7 @@ export interface DashboardSidebarLike extends SceneObject<DashboardSidebarState>
   closePane(): void;
   refreshAfterRebuild(): void;
   getSelectedObject(key?: string): SceneObject | undefined;
+  resetIntegrity(): void;
   undoAction(): void;
   redoAction(): void;
   goBackToPrevious(): void;

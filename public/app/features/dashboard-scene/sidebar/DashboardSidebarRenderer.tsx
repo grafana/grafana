@@ -7,6 +7,7 @@ import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
   useFlagDashboardUndoRedo,
+  useFlagDashboardUndoRedoIntegrityCheck,
   useFlagGrafanaDashboardGlobalVariables,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
@@ -27,6 +28,7 @@ import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
 import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
+import { IntegrityCheckButton } from './integrity/IntegrityCheckButton';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
 
@@ -39,7 +41,7 @@ export interface Props {
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
-  const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
+  const { openPane, selectionContext, outlinePane, isLoading, integrity } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
@@ -52,6 +54,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
+  const integrityCheck = useFlagDashboardUndoRedoIntegrityCheck();
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
       const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
@@ -152,6 +155,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
                 active={openPane instanceof DashboardCrossDashboardVariablesPane}
               />
             )}
+            {integrityCheck && integrity && <IntegrityCheckButton tracker={integrity} />}
             {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
