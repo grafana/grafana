@@ -128,6 +128,58 @@ describe('useAdHocColumnState', () => {
     expect(sourceFrame.fields[0].state).toBeUndefined();
   });
 
+  it.each(['removed', 'reordered'])('matches the source frame when output frames are %s', (change) => {
+    const sourceSeries = ['A', 'B'].map((refId) =>
+      makeFrame({ refId, fields: [{ name: refId, type: FieldType.number, config: {}, values: [1] }] })
+    );
+    const frames = change === 'removed' ? [sourceSeries[1]] : [sourceSeries[1], sourceSeries[0]];
+    const context = contextWithSource(sourceSeries);
+    const { result } = renderHook(() => useAdHocColumnState(frames, 0, true), {
+      wrapper: wrapperWith(context),
+    });
+
+    expect(result.current?.columnCatalog).toEqual(['B']);
+    act(() => result.current?.onHiddenColumnsChange(new Set(['B'])));
+    expect(context.adHocTransformations?.set).toHaveBeenCalledWith('grafana:table-view', [
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'B' },
+        options: { indexByName: {}, excludeByName: { B: true }, renameByName: {} },
+      },
+    ]);
+  });
+
+  it('checks column support on the matching source frame', () => {
+    const frames = [makeFrame({ refId: 'B' })];
+    const sourceSeries = [makeFrame({ refId: 'A' }), makeFrame({ refId: 'B' })];
+    const { result, rerender } = renderHook(() => useAdHocColumnState(frames, 0, true), {
+      wrapper: wrapperWith(contextWithSource(sourceSeries)),
+    });
+    expect(result.current?.columnCatalog).toEqual(['value']);
+
+    sourceSeries[1] = makeFrame({
+      refId: 'B',
+      fields: [{ name: 'nested', type: FieldType.nestedFrames, config: {}, values: [[]] }],
+    });
+    rerender();
+
+    expect(result.current).toBeUndefined();
+  });
+
+  it('disables column controls when the source match becomes ambiguous', () => {
+    const frames = [makeFrame({ refId: 'A' })];
+    const sourceSeries = [...frames];
+    const { result, rerender } = renderHook(() => useAdHocColumnState(frames, 0, true), {
+      wrapper: wrapperWith(contextWithSource(sourceSeries)),
+    });
+    expect(result.current?.columnCatalog).toEqual(['value']);
+
+    sourceSeries.push(makeFrame({ refId: 'A' }));
+    rerender();
+
+    expect(result.current).toBeUndefined();
+  });
+
   it('does not enable column management for a nested table', () => {
     const sourceFrame = makeFrame({
       fields: [{ name: 'nested', type: FieldType.nestedFrames, config: {}, values: [[]] }],
@@ -224,17 +276,18 @@ describe('useAdHocColumnState', () => {
 
   it.each([undefined, 'A'])('disables ambiguous multi-frame column management for refId %s', (refId) => {
     const frames = [makeFrame({ refId }), makeFrame({ refId })];
+    const context = contextWithSource(frames);
     const { result, rerender } = renderHook(({ frames }) => useAdHocColumnState(frames, 0, true), {
       initialProps: { frames },
-      wrapper: wrapperWith(contextWithSource(frames)),
+      wrapper: wrapperWith(context),
     });
     expect(result.current).toBeUndefined();
-    rerender({
-      frames: [
-        { ...frames[0], refId: 'A' },
-        { ...frames[1], refId: 'B' },
-      ],
-    });
+    const nextFrames = [
+      { ...frames[0], refId: 'A' },
+      { ...frames[1], refId: 'B' },
+    ];
+    context.adHocTransformations!.getSourceSeries = () => nextFrames;
+    rerender({ frames: nextFrames });
     expect(result.current?.columnCatalog).toEqual(['value']);
   });
 });

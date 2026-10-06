@@ -116,7 +116,7 @@ export function encodeHiddenColumns(
  * Scopes a column transformation to the selected query when a table contains multiple frames.
  * Returns no filter for a single frame, or when the selected frame has no refId that can be matched safely.
  */
-export function frameFilterFor(frames: DataFrame[], frameIndex: number): MatcherConfig | undefined {
+export function frameFilterFor(frames: readonly DataFrame[], frameIndex: number): MatcherConfig | undefined {
   const refId = frames.length > 1 ? frames[frameIndex]?.refId : undefined;
 
   // An unresolvable frame matcher is dropped, which would apply the transform to every frame.

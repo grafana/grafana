@@ -24,7 +24,7 @@ import { getConfig } from 'app/core/config';
 
 import { decodeAdHocColumns, encodeHiddenColumns, frameFilterFor } from './adHocColumns';
 import { supportsColumnManagement } from './tableCapabilities';
-import { getCellActions } from './utils';
+import { getCellActions, getSourceFrameIndex } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
@@ -148,17 +148,14 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
   const adHoc = useAdHocTransformations(TABLE_TRANSFORMATIONS_OWNER);
   const api = usePanelContext().adHocTransformations;
   const transformations = adHoc?.transformations;
-  // With multiple frames, we need a unique refId so changes affect only the selected frame.
-  const refId = frames[frameIndex]?.refId;
-  const hasSafeScope =
-    frames.length === 1 || Boolean(refId && frames.filter((frame) => frame.refId === refId).length === 1);
-  const sourceFrame =
-    enabled && hasSafeScope && supportsColumnManagement(frames[frameIndex])
-      ? adHoc?.sourceSeries[frameIndex]
-      : undefined;
+  const sourceSeries = adHoc?.sourceSeries;
+  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, frameIndex, sourceSeries) : undefined;
+  const sourceFrame = sourceFrameIndex !== undefined ? sourceSeries?.[sourceFrameIndex] : undefined;
+  const canManageColumns =
+    enabled && supportsColumnManagement(frames[frameIndex]) && supportsColumnManagement(sourceFrame);
 
   const catalog = useMemo(() => {
-    if (!sourceFrame || !adHoc) {
+    if (!sourceFrame || !adHoc || !canManageColumns || sourceFrameIndex === undefined) {
       return undefined;
     }
 
@@ -169,16 +166,19 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
     }));
     cacheFieldDisplayNames(source);
 
-    const catalogFrame = source[frameIndex];
+    const catalogFrame = source[sourceFrameIndex];
     const names = getVisibleFields(catalogFrame.fields).map((field) =>
       getFieldDisplayName(field, catalogFrame, source)
     );
 
     // Display names are the column identity, so duplicates cannot be managed independently.
     return new Set(names).size === names.length ? names : undefined;
-  }, [adHoc, sourceFrame, frameIndex]);
+  }, [adHoc, sourceFrame, canManageColumns, sourceFrameIndex]);
 
-  const frameFilter = useMemo(() => frameFilterFor(frames, frameIndex), [frames, frameIndex]);
+  const frameFilter = useMemo(
+    () => (sourceSeries && sourceFrameIndex !== undefined ? frameFilterFor(sourceSeries, sourceFrameIndex) : undefined),
+    [sourceSeries, sourceFrameIndex]
+  );
 
   // Read the latest transformations on each change so quick successive edits do not overwrite each other.
   const onHiddenColumnsChange = useCallback(
