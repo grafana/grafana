@@ -517,7 +517,7 @@ describe('HeatmapPanel (canvas)', () => {
       await assertCanvasOutput();
     });
 
-    it('updates plot data when a sparse frame object is reused with new values', async () => {
+    it('renders updated sparse cells when a frame object is reused', async () => {
       const frame = createSparseHeatmapCellsFrame();
       const options: Options = {
         ...fullDefaultOptions,
@@ -540,7 +540,6 @@ describe('HeatmapPanel (canvas)', () => {
       });
       const { rerender } = render(<HeatmapPanel {...initialProps} />);
       await assertUPlotReady();
-      expect(uPlotInstance!.data[1]?.[0]).toHaveLength(4);
 
       frame.fields.forEach((field) => {
         field.values = field.values.slice(0, 2);
@@ -548,7 +547,7 @@ describe('HeatmapPanel (canvas)', () => {
       rerender(<HeatmapPanel {...initialProps} data={{ ...initialProps.data, series: [frame] }} />);
 
       uPlotInstance!.redraw();
-      expect(uPlotInstance!.data[1]?.[0]).toHaveLength(2);
+      await assertCanvasOutput(compactCanvas);
     });
 
     it('cellGap', async () => {
