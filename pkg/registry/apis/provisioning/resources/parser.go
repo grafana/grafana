@@ -333,6 +333,23 @@ func (f *ParsedResource) ExistingFolder() string {
 	return meta.GetFolder()
 }
 
+func (f *ParsedResource) IsFolder() bool {
+	return f.GVR.GroupResource() == FolderResource.GroupResource()
+}
+
+// GetFolderPath returns the source file's containing directory when folder lookup applies.
+// A folder manifest represents its containing directory, even when its parent
+// folder annotation is empty.
+func (f *ParsedResource) GetFolderPath() (string, bool) {
+	if !f.FolderScoped || f.Info == nil || f.Info.Path == "" || (f.Meta.GetFolder() == "" && !f.IsFolder()) {
+		return "", false
+	}
+	if IsPathSupported(f.Info.Path) != nil || safepath.IsDir(f.Info.Path) {
+		return "", false
+	}
+	return safepath.Dir(f.Info.Path), true
+}
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)

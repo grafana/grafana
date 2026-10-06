@@ -877,7 +877,7 @@ func TestAuthorizeResource_ReadRequiresFolderManager(t *testing.T) {
 			reader := repository.NewMockReaderWriter(t)
 
 			err := NewAuthorizer(cfg, reader, access, clients, nil, true).AuthorizeResource(ctx, parsed, utils.VerbGet)
-			require.EqualError(t, err, "folder manager is required for read authorization")
+			require.EqualError(t, err, "folder manager is required for preview authorization")
 		})
 	}
 }
@@ -985,7 +985,15 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 		modify func(*ParsedResource)
 	}
 	tests := []testCase{
+		{name: "default branch read", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Info.Ref = "" }},
+		{name: "default branch read denied", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Ref = "" }},
+		{name: "explicit configured branch read", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Info.Ref = "main" }},
+		{name: "explicit configured branch read denied", verb: utils.VerbGet, result: denied, modify: func(p *ParsedResource) { p.Info.Ref = "main" }},
+		{name: "moved resource on configured branch", verb: utils.VerbGet, modify: func(p *ParsedResource) { p.Info.Ref = "main"; move(p) }},
 		{name: "same-folder existing resource update", verb: utils.VerbUpdate, modify: func(p *ParsedResource) { p.Existing = p.Obj.DeepCopy() }},
+		{name: "create at sync commit", verb: utils.VerbCreate, modify: func(p *ParsedResource) { p.Info.Ref = "0123456789012345678901234567890123456789" }},
+		{name: "update at sync commit", verb: utils.VerbUpdate, modify: func(p *ParsedResource) { p.Info.Ref = "0123456789012345678901234567890123456789" }},
+		{name: "delete at sync commit", verb: utils.VerbDelete, modify: func(p *ParsedResource) { p.Info.Ref = "0123456789012345678901234567890123456789" }},
 		{name: "create", verb: utils.VerbCreate, result: denied},
 		{name: "update", verb: utils.VerbUpdate, result: denied},
 		{name: "delete", verb: utils.VerbDelete, result: denied},
@@ -1019,7 +1027,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			require.NoError(t, err)
 			meta.SetFolder("destination")
 			parsed := &ParsedResource{Obj: obj, Meta: meta, GVR: gvr, FolderScoped: true,
-				Info: &repository.FileInfo{Path: "team/new/resource.json"}}
+				Info: &repository.FileInfo{Path: "team/new/resource.json", Ref: "feature"}}
 			if tt.modify != nil {
 				tt.modify(parsed)
 			}
@@ -1035,7 +1043,7 @@ func testResourceDirectAuthorization(t *testing.T, gvr schema.GroupVersionResour
 			access.On("Check", mock.Anything, req, parsed.Meta.GetFolder()).Return(tt.result).Once()
 			clients := NewMockResourceClients(t)
 			reader := repository.NewMockReaderWriter(t)
-			err = NewAuthorizer(&provisioning.Repository{}, reader, access, clients, nil, true).
+			err = NewAuthorizer(&provisioning.Repository{Spec: provisioning.RepositorySpec{Type: provisioning.GitRepositoryType, Git: &provisioning.GitRepositoryConfig{Branch: "main"}}}, reader, access, clients, nil, true).
 				AuthorizeResource(context.Background(), parsed, tt.verb)
 			assert.Equal(t, tt.result, err)
 		})

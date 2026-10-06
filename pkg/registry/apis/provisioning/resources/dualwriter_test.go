@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/nanogit/storage"
 )
 
 func TestGetPathType(t *testing.T) {
@@ -1698,15 +1697,16 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 		ref                   string
 		folderMetadata        bool
 		metadataOnlyOnFeature bool
-		canReadAncestor       bool
+		canRead               bool
 	}{
-		{name: "feature branch with one missing hash folder", path: "new/dashboard.json", ref: "feature", canReadAncestor: true},
-		{name: "feature branch with multiple missing hash folders", path: "new/nested/dashboard.json", ref: "feature", canReadAncestor: true},
-		{name: "feature branch with one missing metadata folder", path: "new/dashboard.json", ref: "feature", folderMetadata: true, canReadAncestor: true},
-		{name: "feature branch with multiple missing metadata folders", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, canReadAncestor: true},
-		{name: "folder metadata exists only on feature branch", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, metadataOnlyOnFeature: true, canReadAncestor: true},
-		{name: "configured branch awaiting sync", path: "new/nested/dashboard.json", ref: "main", folderMetadata: true, canReadAncestor: true},
-		{name: "empty ref uses configured branch", path: "new/dashboard.json", canReadAncestor: true},
+		{name: "feature branch with one missing hash folder", path: "new/dashboard.json", ref: "feature", canRead: true},
+		{name: "feature branch with multiple missing hash folders", path: "new/nested/dashboard.json", ref: "feature", canRead: true},
+		{name: "feature branch with one missing metadata folder", path: "new/dashboard.json", ref: "feature", folderMetadata: true, canRead: true},
+		{name: "feature branch with multiple missing metadata folders", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, canRead: true},
+		{name: "folder metadata exists only on feature branch", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true, metadataOnlyOnFeature: true, canRead: true},
+		{name: "configured branch awaiting sync", path: "new/nested/dashboard.json", ref: "main", folderMetadata: true, canRead: true},
+		{name: "empty ref uses configured branch", path: "new/dashboard.json", canRead: true},
+		{name: "configured branch read denied", path: "new/dashboard.json", ref: "main"},
 		{name: "hash folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature"},
 		{name: "metadata folder ancestor permission denied", path: "new/nested/dashboard.json", ref: "feature", folderMetadata: true},
 	} {
@@ -1719,8 +1719,9 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 				},
 			}
+			preview := tt.ref != "" && tt.ref != cfg.Branch()
 			repo := repository.NewMockReaderWriter(t)
-			repo.EXPECT().Config().Return(cfg)
+			repo.EXPECT().Config().Return(cfg).Maybe()
 			repo.EXPECT().Read(mock.Anything, tt.path, tt.ref).Return(&repository.FileInfo{
 				Path: tt.path,
 				Ref:  tt.ref,
@@ -1750,7 +1751,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 					}
 					if tt.metadataOnlyOnFeature {
 						repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(nil, repository.ErrFileNotFound).Once()
-					} else {
+					} else if preview {
 						repo.EXPECT().Read(mock.Anything, metadataPath, "").Return(file, nil).Once()
 					}
 				}
@@ -1760,11 +1761,17 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 				if tt.metadataOnlyOnFeature {
 					folderID = ParseFolder(dir, cfg.Name).ID
 				}
-				folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
-					Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+				if preview {
+					folders.On("Get", provisioningContext, folderID, metav1.GetOptions{}, mock.Anything).
+						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), folderID)).Once()
+				}
 			}
-			folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
-				Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
+			checkedFolder := destination
+			if preview {
+				checkedFolder = cfg.Name
+				folders.On("Get", provisioningContext, cfg.Name, metav1.GetOptions{}, mock.Anything).
+					Return(newManagedAncestorFolder(t, cfg, cfg.Name, ""), nil).Once()
+			}
 
 			resourceClient := &MockDynamicResourceInterface{}
 			t.Cleanup(func() { resourceClient.AssertExpectations(t) })
@@ -1794,21 +1801,20 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-				require.NotNil(t, storage.FromContext(checkCtx))
 				require.Same(t, caller, id)
 				require.Equal(t, authlib.CheckRequest{
 					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource,
 					Verb: utils.VerbGet, Name: resourceName,
 				}, req)
 				checkedFolders = append(checkedFolders, folder)
-				return authlib.CheckResponse{Allowed: tt.canReadAncestor && folder == cfg.Name}, nil
+				return authlib.CheckResponse{Allowed: tt.canRead && folder == checkedFolder}, nil
 			})).WithFallbackRole(identity.RoleViewer)
 			fm := NewFolderManager(repo, folders, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.folderMetadata))
 			authorizer := NewAuthorizer(cfg, repo, access, clients, fm, tt.folderMetadata)
 			readWriter := NewDualReadWriter(repo, parser, nil, authorizer, tt.folderMetadata)
 
 			parsed, err := readWriter.Read(ctx, tt.path, tt.ref)
-			if tt.canReadAncestor {
+			if tt.canRead {
 				require.NoError(t, err)
 				require.NotNil(t, parsed)
 				assert.Nil(t, parsed.Existing)
@@ -1823,7 +1829,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 			meta, err := utils.MetaAccessor(dryRunObject)
 			require.NoError(t, err)
 			assert.Equal(t, destination, meta.GetFolder())
-			assert.Equal(t, []string{cfg.Name}, checkedFolders)
+			assert.Equal(t, []string{checkedFolder}, checkedFolders)
 			assert.Len(t, resourceClient.Calls, 2, "preview only gets the resource and dry-runs its creation")
 			for _, call := range folders.Calls {
 				assert.Equal(t, "Get", call.Method, "preview must not create folders")
@@ -1930,7 +1936,6 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 			var checkedFolders []string
 			access := tt.newChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				require.Same(t, caller, id)
-				require.NotNil(t, storage.FromContext(checkCtx))
 				require.Equal(t, authlib.CheckRequest{
 					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource, Name: resourceName, Verb: utils.VerbGet,
 				}, req, "root authorization must retain the resource name, including Folder previews")
@@ -2172,7 +2177,6 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-				require.NotNil(t, storage.FromContext(checkCtx))
 				require.Same(t, caller, id)
 				require.Equal(t, authlib.CheckRequest{
 					Namespace: cfg.Namespace, Group: resource.Group, Resource: resource.Resource,
@@ -2317,7 +2321,6 @@ func TestDualReadWriter_ReadNewFolderPreviewUsesParentAncestors(t *testing.T) {
 			}
 			var checkedFolders []string
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-				require.NotNil(t, storage.FromContext(checkCtx))
 				require.Same(t, caller, id)
 				require.Equal(t, authlib.CheckRequest{
 					Namespace: cfg.Namespace, Group: FolderResource.Group, Resource: FolderResource.Resource,
@@ -2626,7 +2629,6 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 				reader: repo, config: cfg, clients: clients, folderMetadataEnabled: f.folderMetadata,
 			}
 			access := auth.NewTokenAccessChecker(previewTokenAccessChecker(func(checkCtx context.Context, id authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
-				require.NotNil(t, storage.FromContext(checkCtx))
 				require.Same(t, caller, id)
 				name := f.resourceName
 				if f.isFolder && (!f.checkSource && f.resourceName == f.resolvedFolder || len(checkedFolders) > 0) {

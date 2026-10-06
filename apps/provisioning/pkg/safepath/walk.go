@@ -9,6 +9,22 @@ import (
 
 type WalkFunc = func(ctx context.Context, path string) error
 
+type WalkUpFunc = func(ctx context.Context, path string) (stop bool, err error)
+
+// WalkUp visits a directory and its parents, ending with the root "".
+// Non-root paths have a trailing slash. Returning true or an error stops the walk.
+func WalkUp(ctx context.Context, p string, fn WalkUpFunc) error {
+	for p = EnsureTrailingSlash(p); ; p = Dir(p) {
+		stop, err := fn(ctx, p)
+		if err != nil {
+			return err
+		}
+		if stop || p == "" {
+			return nil
+		}
+	}
+}
+
 // Walk walks the given folder path and calls the given function for each folder.
 func Walk(ctx context.Context, p string, fn WalkFunc) error {
 	if p == "." || p == "/" {

@@ -124,6 +124,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		wantID          string
 		wantProbes      []string
 		wantErr         error
+		wantNotFound    bool
 	}{
 		{
 			name: "stops at the starting directory", dir: "a/b/c/",
@@ -146,8 +147,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantProbes: []string{leafID, parentID, ancestorID, repoName},
 		},
 		{
-			name: "returns no ancestor when the repository root is also missing", dir: "a/b/c/",
-			wantProbes: []string{leafID, parentID, ancestorID, repoName},
+			name: "no ancestor found including the repository root returns an error", dir: "a/b/c/",
+			wantProbes: []string{leafID, parentID, ancestorID, repoName}, wantNotFound: true,
 		},
 		{
 			name: "instance target has no root to probe", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
@@ -175,7 +176,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantID: repoName, wantProbes: []string{repoName},
 		},
 		{
-			name: "missing root for an empty path", wantProbes: []string{repoName},
+			name: "missing root for an empty path returns an error", wantProbes: []string{repoName}, wantNotFound: true,
 		},
 		{
 			name: "empty instance root does not look up a folder", target: provisioning.SyncTargetTypeInstance,
@@ -190,6 +191,10 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		},
 		{
 			name: "empty folderless root does not look up a folder", target: provisioning.SyncTargetTypeFolderless,
+		},
+		{
+			name: "unknown repository target cannot use an implicit root", dir: "a/b/c/", target: provisioning.SyncTargetType("unknown"),
+			wantProbes: []string{leafID, parentID, ancestorID}, wantNotFound: true,
 		},
 		{
 			name: "lookup error stops before a higher existing ancestor", dir: "a/b/c/",
@@ -337,7 +342,9 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			}
 			manager := NewFolderManager(repo, client, tree, FolderKind, WithFolderMetadataEnabled(tt.metadataEnabled))
 			ancestor, err := manager.FindExistingAncestor(ctx, tt.dir, tt.ref)
-			if tt.wantErr != nil {
+			if tt.wantNotFound {
+				require.True(t, apierrors.IsNotFound(err), "expected not found, got %v", err)
+			} else if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
@@ -347,21 +354,21 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			client.AssertExpectations(t)
 		})
 	}
+}
 
-	for _, tt := range []struct {
-		name   string
-		client dynamic.ResourceInterface
-	}{
-		{name: "nil client"},
-		{name: "typed nil client", client: (*MockDynamicResourceInterface)(nil)},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			manager := NewFolderManager(repository.NewMockReaderWriter(t), tt.client, NewEmptyFolderTree(), FolderKind)
-			ancestor, err := manager.FindExistingAncestor(context.Background(), "a/b/", "")
-			require.EqualError(t, err, "folder client is required to find an existing ancestor")
-			require.Empty(t, ancestor)
-		})
-	}
+func TestFolderManager_ReadOnlyRepositoryCannotWriteFolderTree(t *testing.T) {
+	repo := repository.NewMockReader(t)
+	repo.EXPECT().Read(mock.Anything, "team/", "").Return(nil, repository.ErrFileNotFound)
+	tree := NewEmptyFolderTree()
+	tree.Add(Folder{ID: "team", Path: "team/"}, "")
+	manager := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
+	err := manager.EnsureFolderTreeExists(t.Context(), tree, EnsureFolderTreeExistsOptions{
+		OnFolder: func(_ Folder, created bool, _ time.Time, err error) error {
+			require.False(t, created)
+			return err
+		},
+	})
+	require.EqualError(t, err, "repository does not support writing folders")
 }
 
 func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {

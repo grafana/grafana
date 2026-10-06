@@ -36,6 +36,7 @@ import (
 // tests that never reach the authorizer (e.g. non-reader repositories).
 func newJobAuthClients(t *testing.T) *resources.MockClientFactory {
 	rc := resources.NewMockResourceClients(t)
+	rc.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Maybe()
 	rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
 		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
@@ -659,6 +660,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		rc := resources.NewMockResourceClients(t)
+		rc.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Maybe()
 		rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
 			func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
@@ -764,6 +766,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
 			Group: "dashboard.grafana.app", Kind: "Dashboard",
@@ -787,6 +790,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		dynClient.On("Get", mock.Anything, "missing-dash", metav1.GetOptions{}, []string(nil)).Return(nil, notFound)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, mock.Anything).Return(dynClient, dashGVR, nil)
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
@@ -890,6 +894,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
 			Group: "dashboard.grafana.app", Kind: "Dashboard",

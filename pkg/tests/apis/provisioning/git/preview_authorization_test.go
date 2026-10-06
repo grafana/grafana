@@ -227,6 +227,29 @@ func TestIntegrationGitFiles_PreviewRootAcrossTargets(t *testing.T) {
 	}
 }
 
+func TestIntegrationGitFiles_ConfiguredBranchReadWithoutSyncedFolders(t *testing.T) {
+	helper := sharedGitHelper(t)
+	const repoName = "configured-read-unsynced"
+	const uid = "configured-read-dashboard"
+	const path = "team/dashboard.json"
+	helper.CreateFolderTargetGitRepo(t, repoName, map[string][]byte{
+		path: common.DashboardJSON(uid, "Read before sync", 1),
+	}, "write", "branch")
+	for _, ref := range []string{"", "main"} {
+		t.Run("ref="+ref, func(t *testing.T) {
+			raw, err := helper.AdminREST.Get().Namespace("default").Resource("repositories").Name(repoName).
+				Suffix("files/"+path).Param("ref", ref).Do(t.Context()).Raw()
+			require.NoError(t, err)
+			var wrapper provisioning.ResourceWrapper
+			require.NoError(t, json.Unmarshal(raw, &wrapper))
+			require.Empty(t, wrapper.Errors)
+			require.Equal(t, uid, common.MustNestedString(wrapper.Resource.File.Object, "metadata", "name"))
+			helper.RequireFoldersNotFound(t, repoName, resources.ParseFolder("team/", repoName).ID)
+			helper.RequireDashboardsNotFound(t, uid)
+		})
+	}
+}
+
 func TestIntegrationGitFiles_PreviewWithoutRepositoryRoot(t *testing.T) {
 	helper := sharedGitHelper(t)
 	const (
@@ -249,7 +272,7 @@ func TestIntegrationGitFiles_PreviewWithoutRepositoryRoot(t *testing.T) {
 	result := helper.AdminREST.Get().Namespace("default").Resource("repositories").Name(repoName).
 		Suffix("files/"+path).Param("ref", branch).Do(t.Context())
 	require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden even for an admin, got %v", result.Error())
-	require.ErrorContains(t, result.Error(), "no existing folder for read authorization")
+	require.ErrorContains(t, result.Error(), "no existing folder for preview authorization")
 	helper.RequireFoldersNotFound(t, repoName, resources.ParseFolder("new/", repoName).ID, resources.ParseFolder("new/deep/", repoName).ID)
 	helper.RequireDashboardsNotFound(t, uid)
 }

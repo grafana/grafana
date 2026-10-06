@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
+	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/safepath"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -99,7 +100,7 @@ type FolderCreationInterceptor func(ctx context.Context, folder Folder) error
 type FolderManagerOption func(*FolderManager)
 
 type FolderManager struct {
-	repo                  repository.ReaderWriter
+	repo                  repository.Reader
 	tree                  FolderTree
 	client                dynamic.ResourceInterface
 	beforeCreate          FolderCreationInterceptor
@@ -107,7 +108,7 @@ type FolderManager struct {
 	folderGVK             schema.GroupVersionKind
 }
 
-func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
+func NewFolderManager(repo repository.Reader, client dynamic.ResourceInterface, lookup FolderTree, folderGVK schema.GroupVersionKind, opts ...FolderManagerOption) *FolderManager {
 	fm := &FolderManager{
 		repo:      repo,
 		tree:      lookup,
@@ -151,63 +152,59 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
-// FindExistingAncestor resolves directories nearest-first, including the repository
-// root, and verifies the stored folder belongs to that repository path. An empty
-// result means no real folder exists; callers must still check read permission.
+// FindExistingAncestor resolves directories nearest-first and validates repository
+// ownership. It returns the folder's metadata.name, or an empty ID for the implicit
+// root of an instance or folderless repository. If no ancestor exists and the
+// repository has no implicit root, it returns a not-found error.
 func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (string, error) {
-	if grafanautil.IsInterfaceNil(fm.client) {
-		return "", errors.New("folder client is required to find an existing ancestor")
-	}
-
 	cfg := fm.repo.Config()
-	// Existence must not depend on the caller's permissions, but repository metadata
-	// is still read with the original caller context below.
 	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
 	if err != nil {
 		return "", fmt.Errorf("create identity for ancestor lookup: %w", err)
 	}
 
-	root := RootFolder(cfg)
-	for dir = safepath.EnsureTrailingSlash(dir); ; dir = safepath.Dir(dir) {
-		folderID := root
+	var ancestor string
+	err = safepath.WalkUp(ctx, dir, func(ctx context.Context, dir string) (bool, error) {
+		folderID := RootFolder(cfg)
 		if dir != "" {
-			// Authorization callers must see invalid metadata, not the sync resolver's
-			// fallback to a cached folder or a hash-derived UID.
+			// Invalid metadata must not fall back to a cached folder or hash-derived UID.
 			var err error
 			folderID, err = GetFolderID(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
 			if err != nil {
-				return "", fmt.Errorf("resolve ancestor %q: %w", dir, err)
+				return false, fmt.Errorf("resolve ancestor %q: %w", dir, err)
 			}
 		}
-
-		// Instance and folderless repositories have no wrapper root folder to probe.
-		if folderID != "" {
-			obj, err := fm.client.Get(folderCtx, folderID, metav1.GetOptions{})
-			if err == nil {
-				meta, err := utils.MetaAccessor(obj)
-				if err != nil {
-					return "", fmt.Errorf("get ancestor folder metadata: %w", err)
-				}
-				manager, _ := meta.GetManagerProperties()
-				source, _ := meta.GetSourceProperties()
-				// UIDs can collide with unrelated folders. Such a folder cannot stand
-				// in for this path, even if the caller can read it. The repository
-				// root legitimately has no source path annotation.
-				if manager.Kind != utils.ManagerKindRepo || manager.Identity != cfg.Name || safepath.EnsureTrailingSlash(source.Path) != dir {
-					return "", apierrors.NewForbidden(FolderResource.GroupResource(), folderID, errors.New("folder does not belong to the configured repository path"))
-				}
-				return folderID, nil
-			}
-			if !apierrors.IsNotFound(err) {
-				return "", fmt.Errorf("get ancestor folder %q: %w", folderID, err)
-			}
+		if folderID == "" {
+			return true, nil
 		}
-
-		// Stop at the repository root, after checking its wrapper folder if applicable.
-		if dir == "" {
-			return "", nil
+		obj, err := fm.GetFolder(folderCtx, folderID)
+		if apierrors.IsNotFound(err) {
+			return false, nil
 		}
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+		}
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder metadata: %w", err)
+		}
+		manager, _ := meta.GetManagerProperties()
+		source, _ := meta.GetSourceProperties()
+		// A matching UID alone does not establish repository and directory ownership.
+		// Repository roots legitimately have no source path annotation.
+		if manager.Kind != utils.ManagerKindRepo || manager.Identity != cfg.Name || safepath.EnsureTrailingSlash(source.Path) != dir {
+			return false, apierrors.NewForbidden(FolderResource.GroupResource(), folderID, errors.New("folder does not belong to the configured repository path"))
+		}
+		ancestor = folderID
+		return true, nil
+	})
+	if err != nil {
+		return "", err
 	}
+	if ancestor == "" && cfg.Spec.Sync.Target != provisioning.SyncTargetTypeInstance && cfg.Spec.Sync.Target != provisioning.SyncTargetTypeFolderless {
+		return "", apierrors.NewNotFound(FolderResource.GroupResource(), cfg.Name)
+	}
+	return ancestor, nil
 }
 
 // EnsureFolderPathExist creates the folder structure in the cluster.
@@ -692,6 +689,10 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			return opts.OnFolder(folder, false, startedAt, nil)
 		}
 
+		writer, ok := fm.repo.(repository.ReaderWriter)
+		if !ok {
+			return opts.OnFolder(folder, false, startedAt, errors.New("repository does not support writing folders"))
+		}
 		if fm.folderMetadataEnabled {
 			manifestID := folder.ID
 			if opts.GenerateNewFolderIDs {
@@ -699,12 +700,12 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, tree Folder
 			}
 			msg := fmt.Sprintf("Add folder and folder metadata %s", p)
 			manifest := NewFolderManifest(manifestID, folder.Title, fm.folderGVK)
-			if _, err := WriteFolderMetadata(ctx, fm.repo, p, manifest, opts.Ref, msg); err != nil {
+			if _, err := WriteFolderMetadata(ctx, writer, p, manifest, opts.Ref, msg); err != nil {
 				return opts.OnFolder(folder, true, startedAt, err)
 			}
 		} else {
 			msg := fmt.Sprintf("Add folder %s", p)
-			if err := fm.repo.Create(ctx, p, opts.Ref, nil, msg); err != nil {
+			if err := writer.Create(ctx, p, opts.Ref, nil, msg); err != nil {
 				return opts.OnFolder(folder, true, startedAt, fmt.Errorf("write folder in repo: %w", err))
 			}
 		}

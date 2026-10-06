@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/nanogit/storage"
 )
 
 // DualReadWriter is a wrapper around a repository that can read from and write resources
@@ -63,10 +62,6 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	if safepath.IsDir(path) {
 		return nil, fmt.Errorf("folder read not supported")
 	}
-
-	// Share immutable Git objects across the file, metadata, and ancestor reads.
-	// A fresh cache keeps objects isolated from other requests and repositories.
-	ctx = storage.ToContext(ctx, storage.NewInMemoryStorage(ctx))
 
 	info, err := r.repo.Read(ctx, path, ref)
 	if err != nil {
