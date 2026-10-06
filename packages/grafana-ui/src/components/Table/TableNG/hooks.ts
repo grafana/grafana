@@ -614,18 +614,15 @@ export function useColumnResize(
 export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
-  const updateScrollbarDimensions = debounce(() => {
-    const el = ref.current?.element;
-    if (el) {
-      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
-    }
-  }, 150);
-
   useLayoutEffect(() => {
     const el = ref.current?.element;
     if (!el || IS_SAFARI_26) {
       return;
     }
+
+    const updateScrollbarDimensions = debounce(() => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }, 150);
 
     updateScrollbarDimensions();
 
@@ -633,8 +630,9 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
     resizeObserver.observe(el);
     return () => {
       resizeObserver.disconnect();
+      updateScrollbarDimensions.cancel();
     };
-  }, [ref, height, updateScrollbarDimensions]);
+  }, [ref, height]);
 
   return scrollbarWidth;
 }
