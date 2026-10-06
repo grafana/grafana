@@ -414,4 +414,78 @@ describe('content frame bootstrap', () => {
       expect(window.document.getElementById('root')?.children).toHaveLength(4);
     });
   });
+
+  describe('nonce concealment', () => {
+    // Built at runtime so the probe's own text never contains the nonce.
+    const NONCE_PROBE_CODE = `
+      var nonce = ['test', 'Nonce'].join('');
+      function leaks(value) { return typeof value === 'string' && value.indexOf(nonce) >= 0; }
+      var scripts = Array.prototype.slice.call(document.querySelectorAll('script'));
+      window.seen = {
+        bootstrapGone: scripts.every(function (s) { return s.textContent.indexOf(['hardenRealm', '()'].join('')) < 0; }),
+        textLeaks: scripts.some(function (s) { return leaks(s.textContent); }),
+        meta: document.querySelectorAll('meta[http-equiv]').length,
+      };
+      panel.onRender(function () {});
+    `;
+
+    const leaksNonce = (value: unknown) => typeof value === 'string' && value.includes('testNonce');
+
+    it('leaves no nonce in any script, attribute or markup after the bootstrap', () => {
+      const { window } = mountFrame(NONCE_PROBE_CODE);
+      const doc: Document = window.document;
+      const scripts = doc.querySelectorAll('script');
+      // Both the bootstrap script and the user script are gone once the bootstrap has run.
+      expect(scripts).toHaveLength(0);
+      scripts.forEach((script) => {
+        expect(leaksNonce(script.textContent)).toBe(false);
+        expect(leaksNonce(script.nonce)).toBe(false);
+        expect(leaksNonce(script.getAttribute('nonce'))).toBe(false);
+      });
+      expect(leaksNonce(window.document.documentElement.outerHTML)).toBe(false);
+      expect(window.document.querySelector('meta[http-equiv]')).toBeNull();
+    });
+
+    // jsdom runs no script inside a shadow root, so the bootstrap falls back to a light-DOM script
+    // here. Hiding the user script's own nonce while it runs is verified in a real browser.
+    it('removes the bootstrap script and the policy element before the user code runs', () => {
+      const { window } = mountFrame(NONCE_PROBE_CODE);
+      expect(Reflect.get(window, 'seen')).toEqual({ bootstrapGone: true, textLeaks: false, meta: 0 });
+    });
+
+    it('keeps policy violation events, which carry the policy text, from the user code', () => {
+      const code = `
+        window.violations = 0;
+        document.addEventListener('securitypolicyviolation', function () { window.violations++; }, true);
+        window.addEventListener('securitypolicyviolation', function () { window.violations++; }, true);
+        panel.onRender(function () {});
+      `;
+      const { window, port } = connect(code);
+      const event = Object.assign(new window.Event('securitypolicyviolation', { bubbles: true }), {
+        violatedDirective: 'img-src',
+        blockedURI: 'https://example.com/x.png',
+        originalPolicy: "script-src 'nonce-testNonce'",
+      });
+      window.document.getElementById('root')!.dispatchEvent(event);
+      expect(Reflect.get(window, 'violations')).toBe(0);
+      expect(messagesOfType(port, 'error')).toEqual([
+        { type: 'error', kind: 'csp', message: 'img-src https://example.com/x.png' },
+      ]);
+    });
+
+    it('replaces ReportingObserver, which also reports the policy text', () => {
+      const code = `
+        try { new ReportingObserver(function () {}); window.observer = 'created'; } catch (e) { window.observer = e.message; }
+        panel.onRender(function () {});
+      `;
+      const { window } = mountFrame(code, (frameWindow) => {
+        Object.defineProperty(frameWindow, 'ReportingObserver', {
+          value: function ReportingObserver() {},
+          writable: true,
+          configurable: true,
+        });
+      });
+      expect(Reflect.get(window, 'observer')).toBe('ReportingObserver is not available in the render panel.');
+    });
+  });
 });

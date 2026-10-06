@@ -95,6 +95,8 @@ Only these parameters are allowed: `viewPanel`, `from`, `to`, `var-<name>` and t
 per second is followed, and only right after a user click. Links to an element inside the frame
 (`#section`) scroll the frame and never leave it.
 
+`document.currentScript` is `null` while the code runs.
+
 ### Not available
 
 Network access (`fetch`, XHR, WebSocket, WebRTC, remote images and fonts), `eval` and
@@ -147,7 +149,13 @@ invalid messages or too many messages is stopped; the panel then offers **Reload
   The guards use references captured before the code runs, so replacing globals or prototype
   methods later does not disable them.
 - The code is never spliced into HTML. It is embedded as an escaped JSON string and inserted as a
-  script that carries the CSP nonce. The panel never allows `unsafe-eval`.
+  script that carries the CSP nonce. The panel never allows `unsafe-eval` or `'strict-dynamic'`.
+- The nonce is Grafana's page nonce when there is one, so the code never sees it. Before the code
+  runs, the bootstrap clears the nonce and the text of its own script, removes that script and the
+  CSP `meta` element (the parsed policy stays in force), keeps `securitypolicyviolation` events and
+  `ReportingObserver`, which carry the policy text, from the code, and runs the code's script inside
+  a closed shadow root, where `document.currentScript` is `null` and no query reaches it. That
+  script loses its nonce and text and leaves the document as soon as it has run.
 - The frame talks to Grafana only over a versioned message channel. Grafana validates every message
   and every link. There is no model at view time: the panel runs the stored code as it is.
 - Public dashboards serve the stored code and run it in the same sandbox, but links are ignored
@@ -194,5 +202,9 @@ comment at the top.
   Chromium does not recognize it today (it logs an unrecognized directive), so it is not set.
 - DNS prefetch and preconnect hints (`<link rel="dns-prefetch">`) are not governed by CSP in every
   browser, so a drawing could leak a few bytes through DNS lookups of attacker-chosen host names.
+- A browser that does not run scripts inside a shadow root gets the code's script in the light
+  DOM, where the code can read that script's nonce while its top level runs. The bootstrap checks
+  before relying on it. Chromium runs them; Firefox and Safari should, per the HTML spec, but this
+  was not verified.
 - `window.length` and `window[0]` cannot be intercepted from script. They stay empty only because
   no frame element can be inserted.
