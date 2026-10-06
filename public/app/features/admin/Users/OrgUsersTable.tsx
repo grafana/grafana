@@ -31,6 +31,8 @@ import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
+import { getUserLastActive } from './getUserLastActive';
+
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
 const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
@@ -115,25 +117,9 @@ export const OrgUsersTable = ({
       {
         id: 'lastSeenAtAge',
         header: 'Last active',
-        cell: ({ cell: { value }, row: { original } }: Cell<'lastSeenAtAge'>) => {
-          // If lastSeenAt is before created, user has never logged in
-          const neverLoggedIn =
-            original.lastSeenAt && original.created && new Date(original.lastSeenAt) < new Date(original.created);
-          return (
-            <>
-              {value && (
-                <>
-                  {neverLoggedIn ? (
-                    <Text color={'disabled'}>
-                      <Trans i18nKey="admin.org-uers.last-seen-never">Never</Trans>
-                    </Text>
-                  ) : (
-                    value
-                  )}
-                </>
-              )}
-            </>
-          );
+        cell: ({ row: { original } }: Cell<'lastSeenAtAge'>) => {
+          const { text, neverLoggedIn } = getUserLastActive(original);
+          return neverLoggedIn ? <Text color="disabled">{text}</Text> : text;
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt).getTime() - new Date(b.original.lastSeenAt).getTime(),
       },

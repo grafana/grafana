@@ -18,13 +18,34 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   render(
-    <MemoryRouter>
+    <MemoryRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <UsersTable {...props} />
     </MemoryRouter>
   );
 };
 
 describe('Render', () => {
+  it.each([
+    { lastSeenAt: '2026-10-01', expected: 'Never' },
+    { lastSeenAt: '2026-10-03', expected: '3 days' },
+  ])('shows $expected when last seen at $lastSeenAt', async ({ lastSeenAt, expected }) => {
+    const user: UserDTO = {
+      id: 1,
+      uid: 'alice',
+      login: 'alice',
+      email: 'alice@example.com',
+      name: 'Alice',
+      isGrafanaAdmin: false,
+      isDisabled: false,
+      created: '2026-10-02',
+      lastSeenAt,
+      lastSeenAtAge: '3 days',
+    };
+    setup({ users: [user] });
+
+    expect(await screen.findByRole('cell', { name: expected })).toBeInTheDocument();
+  });
+
   it('should render component', async () => {
     //Adding this due to React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7.
     jest.spyOn(console, 'warn').mockImplementation(() => {});

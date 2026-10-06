@@ -20,6 +20,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
+import { getUserLastActive } from './getUserLastActive';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
@@ -135,29 +136,9 @@ export const UsersTable = ({
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({
-          cell: { value },
-          row: {
-            original: { lastSeenAt, created },
-          },
-        }: Cell<'lastSeenAtAge'>) => {
-          // The user has never logged in if lastSeenAt is before its creation date.
-          const neverLoggedIn = lastSeenAt && created && new Date(lastSeenAt) < new Date(created);
-          return (
-            <>
-              {value && (
-                <>
-                  {neverLoggedIn ? (
-                    <Text color={'disabled'}>
-                      <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
-                    </Text>
-                  ) : (
-                    value
-                  )}
-                </>
-              )}
-            </>
-          );
+        cell: ({ row: { original } }: Cell<'lastSeenAtAge'>) => {
+          const { text, neverLoggedIn } = getUserLastActive(original);
+          return neverLoggedIn ? <Text color="disabled">{text}</Text> : text;
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },

@@ -4,6 +4,7 @@ import Papa from 'papaparse';
 import { t } from '@grafana/i18n';
 import { type OrgUser, type UserDTO } from 'app/types/user';
 
+import { getUserLastActive } from './getUserLastActive';
 import { canShowRoles, getOrgUsers, getUserRoles, getUsersPage, type UserSearchOptions } from './userSearch';
 
 export type UserExportOptions = UserSearchOptions & { scope: 'all' | 'organization' };
@@ -46,15 +47,6 @@ export async function exportUsers({ scope, ...options }: UserExportOptions): Pro
   saveAs(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${scope}-users.csv`, { autoBom: true });
 }
 
-function lastActive(user: Pick<UserDTO, 'lastSeenAt' | 'created' | 'lastSeenAtAge'>): string {
-  if (!user.lastSeenAtAge) {
-    return '';
-  }
-  return user.lastSeenAt && user.created && new Date(user.lastSeenAt) < new Date(user.created)
-    ? t('admin.users-table.last-seen-never', 'Never')
-    : user.lastSeenAtAge;
-}
-
 function statusCells(user: Pick<UserDTO, 'authLabels' | 'isProvisioned' | 'isDisabled'>): string[] {
   return [user.authLabels?.[0] ?? '', user.isProvisioned ? 'Provisioned' : '', user.isDisabled ? 'Disabled' : ''];
 }
@@ -94,7 +86,7 @@ export function usersToCsv(users: UserDTO[]): string {
                 : (user.licensedRole ?? ''),
             ]
           : []),
-        lastActive(user),
+        getUserLastActive(user).text,
         ...statusCells(user),
       ]),
     },
@@ -110,7 +102,7 @@ export function orgUsersToCsv(users: OrgUser[]): string {
         user.login,
         user.email,
         user.name,
-        lastActive(user),
+        getUserLastActive(user).text,
         [user.role, ...(user.roles?.map((role) => `${role.group}:${role.displayName || role.name}`) ?? [])].join('; '),
         ...statusCells(user),
       ]),
