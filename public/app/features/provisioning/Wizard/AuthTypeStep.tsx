@@ -13,7 +13,7 @@ import { isGitHubBased, supportsConnections } from '../utils/repositoryTypes';
 
 import { AppConnectionFields } from './AppConnectionFields';
 import { RepositoryField } from './components/RepositoryField';
-import { RepositoryTokenInput } from './components/RepositoryTokenInput';
+import { RepositoryTokenInput, RepositoryTokenUserInput } from './components/RepositoryTokenInput';
 import { type ConnectionCreationResult, type GitHubAuthType, type RepoType, type WizardFormData } from './types';
 
 interface AuthTypeOption {
@@ -195,7 +195,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
               onAuthorizingChange={setIsConnectionAuthorizing}
             />
             {shouldShowRepositories && <RepositoryField isSelectedConnectionReady={isSelectedConnectionReady} />}
-            {shouldShowRepositories && isGit && <RepositoryTokenInput tokenUserOnly />}
+            {shouldShowRepositories && isGit && <RepositoryTokenUserInput />}
           </>
         ) : (
           <>
