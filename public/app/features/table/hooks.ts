@@ -7,7 +7,6 @@ import {
   type DataFrame,
   type Field,
   type FieldConfigSource,
-  getFieldDisplayName,
   type InterpolateFunction,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -18,13 +17,11 @@ import {
   useFlagTableRefreshNewFeatures,
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
-import { useAdHocTransformations, usePanelContext } from '@grafana/ui';
-import { getVisibleFields } from '@grafana/ui/internal';
+import { usePanelContext } from '@grafana/ui';
+import { useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
-import { decodeAdHocColumns, encodeColumnOrder, encodeHiddenColumns, frameFilterFor } from './adHocColumns';
-import { supportsColumnManagement } from './tableCapabilities';
-import { getCellActions, getSourceFrameIndex } from './utils';
+import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
@@ -145,67 +142,6 @@ export function useTableRefreshNewFeatures(): boolean {
 
 /** Returns column state when column controls are supported for the selected frame. */
 export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
-  const adHoc = useAdHocTransformations(TABLE_TRANSFORMATIONS_OWNER);
   const api = usePanelContext().adHocTransformations;
-  const transformations = adHoc?.transformations;
-  const sourceSeries = adHoc?.sourceSeries;
-  const sourceFrameIndex = sourceSeries ? getSourceFrameIndex(frames, frameIndex, sourceSeries) : undefined;
-  const sourceFrame = sourceFrameIndex !== undefined ? sourceSeries?.[sourceFrameIndex] : undefined;
-  const canManageColumns =
-    enabled && supportsColumnManagement(frames[frameIndex]) && supportsColumnManagement(sourceFrame);
-
-  const catalog = useMemo(() => {
-    if (!sourceFrame || !adHoc || !canManageColumns || sourceFrameIndex === undefined) {
-      return undefined;
-    }
-
-    // Use the source data so hidden columns stay in the list. Copy it before caching display names.
-    const source = adHoc.sourceSeries.map((frame) => ({
-      ...frame,
-      fields: frame.fields.map((field) => ({ ...field, state: field.state ? { ...field.state } : undefined })),
-    }));
-    cacheFieldDisplayNames(source);
-
-    const catalogFrame = source[sourceFrameIndex];
-    const names = getVisibleFields(catalogFrame.fields).map((field) =>
-      getFieldDisplayName(field, catalogFrame, source)
-    );
-
-    // Display names are the column identity, so duplicates cannot be managed independently.
-    return new Set(names).size === names.length ? names : undefined;
-  }, [adHoc, sourceFrame, canManageColumns, sourceFrameIndex]);
-
-  const frameFilter = useMemo(
-    () => (sourceSeries && sourceFrameIndex !== undefined ? frameFilterFor(sourceSeries, sourceFrameIndex) : undefined),
-    [sourceSeries, sourceFrameIndex]
-  );
-
-  // Read the latest transformations on each change so quick successive edits do not overwrite each other.
-  const onColumnOrderChange = useCallback(
-    (order: string[]) =>
-      adHoc?.setTransformations(encodeColumnOrder(api?.get(TABLE_TRANSFORMATIONS_OWNER) ?? [], order, frameFilter)),
-    [adHoc, api, frameFilter]
-  );
-
-  const onHiddenColumnsChange = useCallback(
-    (hidden: ReadonlySet<string>) =>
-      adHoc?.setTransformations(encodeHiddenColumns(api?.get(TABLE_TRANSFORMATIONS_OWNER) ?? [], hidden, frameFilter)),
-    [adHoc, api, frameFilter]
-  );
-
-  return useMemo(() => {
-    if (!catalog || !transformations) {
-      return undefined;
-    }
-
-    const { columnOrder, hiddenColumns } = decodeAdHocColumns(transformations, catalog, frameFilter);
-
-    return {
-      columnOrder,
-      hiddenColumns,
-      columnCatalog: columnOrder ?? catalog,
-      onColumnOrderChange,
-      onHiddenColumnsChange,
-    };
-  }, [catalog, transformations, frameFilter, onColumnOrderChange, onHiddenColumnsChange]);
+  return useColumnTransformations(frames, frameIndex, enabled, api, TABLE_TRANSFORMATIONS_OWNER);
 }
