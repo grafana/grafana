@@ -340,16 +340,16 @@ type ResourceIndex interface {
 	// only in part is included, and stays until ForgetType.
 	DocumentTypes() ([]schema.GroupResource, error)
 
-	// ImportTimes returns every resource type the index has written in full, with
-	// the import time storage reported when it last caught up with that type,
-	// zero if it had none. A type missing from it may still have documents, as
-	// one written only in part; DocumentTypes lists those. Kept inside the index,
-	// so a restarted server does not redo work the index already did.
-	ImportTimes() (map[schema.GroupResource]time.Time, error)
+	// CompletedTypeBuilds returns every resource type the index has written in
+	// full, by an index build or a type rebuild, with what storage reported then.
+	// A type missing from it may still have documents, as one written only in
+	// part; DocumentTypes lists those. Kept inside the index, so a restarted
+	// server does not redo work the index already did.
+	CompletedTypeBuilds() (map[schema.GroupResource]TypeBuild, error)
 
-	// RecordImportTime records that the index has written one resource type in
-	// full and caught up with its import that storage reports at t, zero if none.
-	RecordImportTime(gr schema.GroupResource, t time.Time) error
+	// RecordCompletedTypeBuild records that the index has written one resource
+	// type in full.
+	RecordCompletedTypeBuild(gr schema.GroupResource, build TypeBuild) error
 
 	// ReconciledAt returns when the index was last compared with storage, or
 	// built from it, zero if never. Kept inside the index, so a restarted server
@@ -360,7 +360,7 @@ type ResourceIndex interface {
 	RecordReconciledAt(t time.Time) error
 
 	// ForgetType records that the index no longer holds one resource type,
-	// removing it from both ImportTimes and DocumentTypes.
+	// removing it from both CompletedTypeBuilds and DocumentTypes.
 	ForgetType(gr schema.GroupResource) error
 
 	// UpdateIndex updates the index with the latest data (using update function provided when index was built) to guarantee strong consistency during the search.
@@ -369,6 +369,16 @@ type ResourceIndex interface {
 
 	// BuildInfo returns build information about the index.
 	BuildInfo() (IndexBuildInfo, error)
+}
+
+// TypeBuild is what an index records when it has written one resource type in
+// full.
+type TypeBuild struct {
+	// StorageImportTime is the import time storage reported for the type when
+	// the build read it, zero if the type was never imported. Storage reporting a
+	// newer one means an import has replaced the type since, and the index is
+	// behind.
+	StorageImportTime time.Time
 }
 
 // DocumentRef is what an index knows about one document without reading it.
@@ -2392,7 +2402,7 @@ func (s *searchServer) build(ctx context.Context, nsr NamespacedResource, size i
 			// Recorded even with no import, because the record also says which
 			// types the index has written in full.
 			if nsr.IsGlobal() {
-				if err := index.RecordImportTime(groupResourceOf(src), importedAt); err != nil {
+				if err := index.RecordCompletedTypeBuild(groupResourceOf(src), TypeBuild{StorageImportTime: importedAt}); err != nil {
 					return indexRV, err
 				}
 			}
