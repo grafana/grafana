@@ -237,6 +237,57 @@ describe('RenderPanel', () => {
     expect(latestHold().released).toBe(true);
   });
 
+  it('takes a new readiness hold for each draw of final data', () => {
+    const { rerender } = setup({ data: makeData([1], LoadingState.Done) });
+    const complete = (seq: number) =>
+      act(() => latestController().handlers.onRenderComplete({ seq, durationMs: 1, nodeCount: 1 }));
+    expect(mockHolds).toHaveLength(1);
+    complete(1);
+    expect(mockHolds[0].released).toBe(true);
+
+    // A second Done update: the capture must wait for this draw too.
+    rerender({ data: makeData([1, 2], LoadingState.Done) });
+    expect(mockHolds).toHaveLength(2);
+    expect(mockHolds[1].released).toBe(false);
+    // A late completion of the earlier draw does not end the new wait.
+    complete(1);
+    expect(mockHolds[1].released).toBe(false);
+    complete(2);
+    expect(mockHolds[1].released).toBe(true);
+
+    // A failed draw of final data ends its own wait.
+    rerender({ data: makeData([1, 2, 3], LoadingState.Done) });
+    expect(mockHolds).toHaveLength(3);
+    act(() => latestController().handlers.onError({ kind: 'runtime', seq: 3, fatal: false, message: 'boom' }));
+    expect(mockHolds[2].released).toBe(true);
+
+    // Two Done updates before the frame draws share one hold, released by the latest draw.
+    rerender({ data: makeData([4], LoadingState.Done) });
+    rerender({ data: makeData([5], LoadingState.Done) });
+    expect(mockHolds).toHaveLength(4);
+    complete(4);
+    expect(mockHolds[3].released).toBe(false);
+    complete(5);
+    expect(mockHolds[3].released).toBe(true);
+    expect(mockHolds.every((hold) => hold.release.mock.calls.length >= 1)).toBe(true);
+  });
+
+  it('takes a hold for a resize of final data and not for data that is still loading', () => {
+    const data = makeData([1], LoadingState.Done);
+    const { rerender } = setup({ data });
+    act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 1, nodeCount: 1 }));
+
+    rerender({ data, width: 500, height: 200 });
+    expect(latestController().resize).toHaveBeenCalledTimes(1);
+    expect(mockHolds).toHaveLength(2);
+
+    act(() => latestController().handlers.onRenderComplete({ seq: 2, durationMs: 1, nodeCount: 1 }));
+    expect(mockHolds[1].released).toBe(true);
+
+    rerender({ data: makeData([1, 2], LoadingState.Loading) });
+    expect(mockHolds).toHaveLength(2);
+  });
+
   it.each([
     ['runtime', 1],
     ['output-limit', 1],
