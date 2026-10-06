@@ -80,6 +80,7 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
     onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
@@ -198,6 +199,7 @@ export function TableFlat(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
@@ -218,6 +220,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
@@ -300,6 +303,7 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
@@ -325,6 +329,7 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,

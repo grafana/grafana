@@ -420,6 +420,7 @@ export const useNestedRows = (
 };
 
 interface UseHeaderHeightOptions {
+  hasAssistantAction?: boolean;
   lastColumnExtraPadding?: number;
   enabled: boolean;
   fields: Field[];
@@ -447,6 +448,7 @@ export function useHeaderHeight({
   tableRefreshEnabled = false,
   filter,
   lastColumnExtraPadding = 0,
+  hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
   const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
@@ -470,10 +472,20 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasAssistantAction,
         });
         return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys, lastColumnExtraPadding]
+    [
+      fields,
+      columnWidths,
+      showTypeIcons,
+      noPanelPadding,
+      tableRefreshEnabled,
+      filteredKeys,
+      lastColumnExtraPadding,
+      hasAssistantAction,
+    ]
   );
 
   const headerHeight = useMemo(() => {
@@ -1006,6 +1018,7 @@ export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
 }
 
 interface UseContentAwareWidthsOptions {
+  hasAssistantAction?: boolean;
   enabled: boolean;
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -1032,6 +1045,7 @@ export function useContentAwareWidths({
   filter,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
+  hasAssistantAction = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
@@ -1041,6 +1055,7 @@ export function useContentAwareWidths({
         ? {
             typographyCtx,
             headerTypographyCtx,
+            hasAssistantAction,
             theme,
             showTypeIcons,
             hasHeader,
@@ -1055,6 +1070,7 @@ export function useContentAwareWidths({
       enabled,
       typographyCtx,
       headerTypographyCtx,
+      hasAssistantAction,
       showTypeIcons,
       hasHeader,
       getActions,

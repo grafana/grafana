@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -30,6 +30,8 @@ import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_
 // react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
 // this the grid renders no rows at all.
 beforeAll(() => {
+  // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
+  mockBoundingClientRect({ width: 800, height: 600 });
   mockClientSize({ width: 800, height: 600 });
   // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
   mockBoundingClientRect({ width: 800, height: 600 });
@@ -84,6 +86,39 @@ const createBasicDataFrame = (): DataFrame =>
       ],
     })
   );
+
+it.each([false, true])('adds the entire field from its header after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: filtered };
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+    />
+  );
+  const menu = screen.getByRole('button', { name: 'Column options for Column A' });
+  if (filtered) {
+    await userEvent.click(menu);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+    expect(screen.getByText('A2')).toBeInTheDocument();
+    expect(screen.queryByText('A1')).not.toBeInTheDocument();
+  }
+  act(() => menu.focus());
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledTimes(1);
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] })
+  );
+});
 
 it.each([false, true])('adds the original cell to Assistant after sorting (filtered=%s)', async (filtered) => {
   const frame = createBasicDataFrame();
@@ -275,6 +310,21 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
     })
   );
 };
+
+it('attaches the nested field from its own frame', async () => {
+  const frame = createNestedDataFrame();
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG data={frame} width={800} height={600} tableRefreshEnabled onFieldAddToAssistant={onFieldAddToAssistant} />
+  );
+  await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for Nested B' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'NestedData' }),
+    expect.objectContaining({ name: 'Nested B', values: [10, 20] })
+  );
+});
 
 /**
  * A nested table where the apply-to-row background lives on a field *inside the nested frame*
@@ -1222,6 +1272,8 @@ describe('TableNG', () => {
     });
 
     it("leaves a nested frame's hidden header label out of its content-aware auto widths", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
       // A nested frame carries its own header visibility in `meta.custom.noHeader`, so the nested
       // columns can't inherit the outer table's `hasHeader`. The outer header stays visible in both
       // renders; only the nested frame's own `noHeader` changes.
@@ -1237,6 +1289,10 @@ describe('TableNG', () => {
         );
 
         await user.click(container.querySelector('[aria-label="Expand row"]')!);
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+        const initialWidths = grid.style.gridTemplateColumns;
+        act(() => jest.advanceTimersByTime(150));
+        expect(grid.style.gridTemplateColumns).toBe(initialWidths);
 
         // The outer grid is a treegrid; the nested DataGrid is the only plain grid in the tree.
         const widths = container
@@ -1247,11 +1303,15 @@ describe('TableNG', () => {
         return widths;
       };
 
-      const [withNestedHeader] = await renderNestedWidths(false);
-      const [withoutNestedHeader] = await renderNestedWidths(true);
+      try {
+        const [withNestedHeader] = await renderNestedWidths(false);
+        const [withoutNestedHeader] = await renderNestedWidths(true);
 
-      expect(withNestedHeader).toBeGreaterThan(0);
-      expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+        expect(withNestedHeader).toBeGreaterThan(0);
+        expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+      } finally {
+        jest.useRealTimers();
+      }
     });
 
     it('shows full column name in title attribute for truncated headers', () => {
@@ -2555,7 +2615,14 @@ describe('TableNG', () => {
       expect(screen.getAllByTestId(inspectButton)).toHaveLength(4);
       expect(getComputedStyle(screen.getByRole('gridcell', { name: 'parent one' })).whiteSpace).toBe('pre-line');
       for (const grid of screen.getAllByRole('grid')) {
-        expect(getComputedStyle(grid).gridTemplateRows).toBe('repeat(1, 34px) 34px 34px');
+        // JSDOM preserves repeat() syntax instead of resolving it to individual track heights.
+        const rowHeights = getComputedStyle(grid)
+          .gridTemplateRows.replace(/repeat\((\d+),\s*([\d.]+px)\)/g, (_, count, height) =>
+            `${height} `.repeat(Number(count))
+          )
+          .trim()
+          .split(/\s+/);
+        expect(rowHeights).toEqual(['34px', '34px', '34px']);
       }
       expect(first.fields[0].config.custom?.wrapText).toBe(true);
 
