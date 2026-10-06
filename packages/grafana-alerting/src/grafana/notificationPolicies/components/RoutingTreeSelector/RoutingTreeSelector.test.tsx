@@ -5,7 +5,7 @@ import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { act, render, screen } from '../../../../../tests/test-utils';
-import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTrees';
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTree.utils';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
 import {

@@ -7,7 +7,7 @@ import {
   getRoutingTreeDisplayName,
   isDefaultRoutingTree,
   isDefaultRoutingTreeName,
-} from './routingTrees';
+} from './routingTree.utils';
 
 describe('isDefaultRoutingTreeName', () => {
   it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS, '', undefined])(

@@ -6,7 +6,7 @@ import { Alert, Combobox, type ComboboxOption, MultiCombobox } from '@grafana/ui
 
 import { type CustomComboBoxProps } from '../../../common/ComboBox.types';
 import { useRoutingTrees } from '../../hooks/useRoutingTrees';
-import { buildRoutingTreeOptions, findRoutingTreeByName } from '../../routingTrees';
+import { buildRoutingTreeOptions, findRoutingTreeByName } from '../../routingTree.utils';
 
 type SingleSelectProps = CustomComboBoxProps<RoutingTree> & { multi?: false };
 type MultiSelectProps = Omit<ComponentProps<typeof MultiCombobox<string>>, 'options' | 'loading' | 'onChange'> & {

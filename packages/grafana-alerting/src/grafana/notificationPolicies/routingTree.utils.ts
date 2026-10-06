@@ -1,6 +1,8 @@
-import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type RoutingTree, type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { t } from '@grafana/i18n';
 import { type ComboboxOption } from '@grafana/ui';
+
+import { type Route } from './types';
 
 /** The name the backend emits for the default (root) routing tree and the name the frontend SENDS. */
 export const USER_DEFINED_TREE_NAME = 'user-defined';
@@ -82,4 +84,33 @@ export function buildRoutingTreeOptions(trees: RoutingTree[]): Array<ComboboxOpt
       }
       return collator.compare(a.label, b.label);
     });
+}
+
+/**
+ * Converts a RoutingTree to a Route by merging defaults with routes.
+ *
+ * @param routingTree - The RoutingTree from the API
+ * @returns A Route that can be used with the matching functions
+ */
+export function convertRoutingTreeToRoute(routingTree: RoutingTree): Route {
+  const convertRoutingTreeRoutes = (routes: RoutingTreeRoute[]): Route[] => {
+    return routes.map(
+      (route): Route => ({
+        ...route,
+        routes: route.routes ? convertRoutingTreeRoutes(route.routes) : [],
+      })
+    );
+  };
+
+  // Create the root route by merging defaults with the route structure
+  const rootRoute: Route = {
+    ...routingTree.spec.defaults,
+    continue: false,
+    active_time_intervals: [],
+    mute_time_intervals: [],
+    matchers: [], // Root route has no matchers (catch-all)
+    routes: convertRoutingTreeRoutes(routingTree.spec.routes),
+  };
+
+  return rootRoute;
 }

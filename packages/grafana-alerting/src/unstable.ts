@@ -23,7 +23,7 @@ export {
   getRoutingTreeDisplayName,
   isDefaultRoutingTreeName,
   isDefaultRoutingTree,
-} from './grafana/notificationPolicies/routingTrees';
+} from './grafana/notificationPolicies/routingTree.utils';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
