@@ -1,7 +1,7 @@
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
+import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 export interface TableRowTransformations {
-  api: VizPanelRuntimeTransformations;
+  api: PanelRuntimeTransformations;
   owner: string;
   frameKey: string;
 }

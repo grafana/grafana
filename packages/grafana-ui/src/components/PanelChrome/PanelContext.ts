@@ -10,11 +10,22 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
+
+/** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
+export interface PanelRuntimeTransformations {
+  /** Returns the same immutable snapshot until this owner changes. */
+  get(owner: string): readonly DataTransformerConfig[];
+  /** Replaces one owner's transformations. An empty list removes the owner. */
+  set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+  /** Returns the frames entering this owner's transformation stage. */
+  getSourceSeries(owner: string): readonly DataFrame[];
+  /** Subscribes to changes for one owner. Returns an unsubscribe function. */
+  subscribe(owner: string, callback: () => void): () => void;
+}
 
 /** Reactive view of one owner's runtime transformation stage. @alpha */
 export interface AdHocTransformationsState {
@@ -114,7 +125,7 @@ export interface PanelContext {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
-  adHocTransformations?: VizPanelRuntimeTransformations;
+  adHocTransformations?: PanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({
