@@ -46,12 +46,20 @@ export interface TextTemplate {
 export interface RenderedContent {
   content: string;
   error?: string;
+  /** The character ceiling cut the output short, so what renders is incomplete. */
+  truncated?: boolean;
+}
+
+/** Interpolated output, and whether the character ceiling cut it short. */
+export interface InterpolatedContent {
+  content: string;
+  truncated: boolean;
 }
 
 /** Turns a broken Handlebars template into an error to display instead of content. */
-export function catchTemplateError(render: () => string): RenderedContent {
+export function catchTemplateError(render: () => InterpolatedContent): RenderedContent {
   try {
-    return { content: render() };
+    return render();
   } catch (error) {
     return {
       content: '',
@@ -66,7 +74,10 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
-export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
+export function interpolateTemplate(
+  template: TextTemplate,
+  replaceVariables: InterpolateFunction
+): InterpolatedContent {
   const { content, mode, series = [], renderMode, format } = template;
 
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
@@ -80,7 +91,7 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
   const scopedVars = buildOnceContext(series);
 
   if (!compiled) {
-    return replaceVariables(content, scopedVars, format);
+    return { content: replaceVariables(content, scopedVars, format), truncated: false };
   }
 
   const rendered = replaceVariables(compiled(buildAllRowsContext(series, MAX_RENDERED_ROWS)), scopedVars, format);
@@ -91,13 +102,17 @@ export function interpolateTemplate(template: TextTemplate, replaceVariables: In
 
 // Cut on a line break so the tail lands between elements rather than inside a tag, but
 // only a nearby one - a single-line block's nearest break can be the top of the output.
-function cutToMaxChars(rendered: string): string {
+function cutToMaxChars(rendered: string): InterpolatedContent {
   if (rendered.length <= MAX_RENDERED_CHARS) {
-    return rendered;
+    return { content: rendered, truncated: false };
   }
 
   const boundary = rendered.lastIndexOf('\n', MAX_RENDERED_CHARS);
-  return rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS);
+
+  return {
+    content: rendered.slice(0, boundary >= MAX_RENDERED_CHARS - CUT_BACKTRACK_CHARS ? boundary : MAX_RENDERED_CHARS),
+    truncated: true,
+  };
 }
 
 // Never the time field, where ${__field.labels.x} is always empty.
@@ -146,7 +161,7 @@ function interpolateEveryRow(
   series: DataFrame[],
   replaceVariables: InterpolateFunction,
   compiled?: CompiledTemplate
-): string {
+): InterpolatedContent {
   const { content, mode, format, rowWindow } = template;
   const windowStart = rowWindow?.start ?? 0;
   const maxBlocks = Math.min(rowWindow?.count ?? MAX_RENDERED_ROWS, MAX_RENDERED_ROWS);
@@ -196,6 +211,8 @@ export function renderContent(
   template: TextTemplate,
   replaceVariables: InterpolateFunction,
   disableSanitizeHtml: boolean
-): string {
-  return transformContent(template.mode, interpolateTemplate(template, replaceVariables), disableSanitizeHtml);
+): InterpolatedContent {
+  const { content, truncated } = interpolateTemplate(template, replaceVariables);
+
+  return { content: transformContent(template.mode, content, disableSanitizeHtml), truncated };
 }

@@ -11,7 +11,9 @@ import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
 import { FOOTER_TEST_ID } from './TextNGFooter';
 import { type Props, TextNGPanel } from './TextNGPanel';
+import { TRUNCATION_NOTICE_TEST_ID } from './TextNGTruncationNotice';
 import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
+import { MAX_RENDERED_CHARS } from './renderContent';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
@@ -923,5 +925,33 @@ describe('TextNGPanel', () => {
 
     expect(screen.getByTestId('TextNGPanel-error')).toHaveTextContent('Handlebars error:');
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
+  });
+
+  describe('truncation notice', () => {
+    /** A row wide enough to pass the character ceiling, if the template emits it. */
+    function setupWide(content: string) {
+      const wide = toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }] });
+      const props = createProps((target) => target, {
+        data: createData([wide]),
+        options: { content, mode: TextMode.HTML, renderMode: RenderMode.Once },
+      });
+
+      setup(props, CoreApp.Dashboard);
+    }
+
+    it('says the render was cut short, and still shows what fit', async () => {
+      setupWide('<b>kept</b>\n<!-- {{#each data}}{{n}}{{/each}} -->');
+      const footer = await screen.findByTestId(FOOTER_TEST_ID);
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(within(footer).getByTestId(TRUNCATION_NOTICE_TEST_ID)).toHaveTextContent('Content truncated');
+    });
+
+    it('stays quiet when the render fit under the ceiling', () => {
+      setupWide('<b>kept</b>');
+
+      expect(screen.getByText('kept')).toBeInTheDocument();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+    });
   });
 });

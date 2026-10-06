@@ -16740,6 +16740,10 @@
     "render-mode": {
       "once": "Once",
       "per-row": "Per row"
+    },
+    "truncation": {
+      "label": "Content truncated",
+      "tooltip": "The rendered output passed {{max, number}} characters, so the rest was dropped. Shorten the template, or query fewer rows, to see all of it."
     }
   },
   "theme-playground": {

@@ -84,7 +84,7 @@ function interpolate(
   mode = TextMode.Markdown,
   rowWindow?: RowWindow
 ) {
-  return interpolateTemplate({ content, series, renderMode, mode, rowWindow }, createReplaceVariables());
+  return interpolateTemplate({ content, series, renderMode, mode, rowWindow }, createReplaceVariables()).content;
 }
 
 /** One page of a per-row render, in markdown mode. */
@@ -425,6 +425,20 @@ describe('interpolateTemplate', () => {
       expect(rendered).toHaveLength(MAX_RENDERED_CHARS);
     });
 
+    it('reports a cut render as truncated, and one that fit as not', () => {
+      const wide = toDataFrame({
+        fields: [{ name: 'n', type: FieldType.string, values: ['x'.repeat(MAX_RENDERED_CHARS * 2)] }],
+      });
+      const template = {
+        content: '{{#each data}}{{n}}{{/each}}',
+        mode: TextMode.Markdown,
+        renderMode: RenderMode.Once,
+      };
+
+      expect(interpolateTemplate({ ...template, series: [wide] }, createReplaceVariables()).truncated).toBe(true);
+      expect(interpolateTemplate({ ...template, series: [hosts] }, createReplaceVariables()).truncated).toBe(false);
+    });
+
     it('exposes every frame for Once', () => {
       expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
         'frameA:2 frameB:1 '
@@ -460,7 +474,7 @@ describe('interpolateTemplate', () => {
 
 describe('renderContent', () => {
   function render(content: string, renderMode: RenderMode, mode = TextMode.Markdown) {
-    return renderContent({ content, series: [hosts], renderMode, mode }, createReplaceVariables(), false);
+    return renderContent({ content, series: [hosts], renderMode, mode }, createReplaceVariables(), false).content;
   }
 
   it('renders repeated list items as a single list', () => {
@@ -494,7 +508,7 @@ describe('renderContent', () => {
       },
       createReplaceVariables(),
       false
-    );
+    ).content;
   }
 
   it('keeps threshold colors through markdown rendering and sanitization', () => {
@@ -526,8 +540,11 @@ describe('renderContent', () => {
 });
 
 describe('catchTemplateError', () => {
-  it('passes the content through when nothing throws', () => {
-    expect(catchTemplateError(() => 'hello')).toEqual({ content: 'hello' });
+  it('passes the content and the truncation flag through when nothing throws', () => {
+    expect(catchTemplateError(() => ({ content: 'hello', truncated: true }))).toEqual({
+      content: 'hello',
+      truncated: true,
+    });
   });
 
   it('describes the failure instead', () => {
