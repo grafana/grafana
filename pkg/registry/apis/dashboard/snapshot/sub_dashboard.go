@@ -12,18 +12,22 @@ import (
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Currently only works with v0alpha1
 type dashboardREST struct {
 	getter rest.Getter
+	blobs  resourcepb.BlobStoreClient
 }
 
 func NewDashboardREST(
 	getter rest.Getter,
+	blobs resourcepb.BlobStoreClient,
 ) (rest.Storage, error) {
 	return &dashboardREST{
 		getter: getter,
+		blobs:  blobs,
 	}, nil
 }
 
@@ -72,6 +76,13 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
+	content := snap.Spec.Dashboard
+	if fromBlob, ok, err := readDashboardBlob(ctx, r.blobs, snap); err != nil {
+		return nil, err
+	} else if ok {
+		content = fromBlob
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO... support conversions (not required in v0)
 		dash := &dashv0.Dashboard{
@@ -79,7 +90,7 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 				Namespace: ns.Value,
 			},
 			Spec: v0alpha1.Unstructured{
-				Object: snap.Spec.Dashboard,
+				Object: content,
 			},
 		}
 		responder.Object(200, dash)
