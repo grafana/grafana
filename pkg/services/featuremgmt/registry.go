@@ -2446,6 +2446,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersDeterministicUID",
+			Description:  "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "kubernetesAuthInfoApi",
 			Description:  "Enables auth info APIs in the app platform",
 			Stage:        FeatureStageExperimental,

@@ -283,6 +283,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirectNoFallback,experimental,@grafana/identity-access-team,false,false,false
+2026-10-06,kubernetesUsersDeterministicUID,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
