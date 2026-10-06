@@ -26,6 +26,7 @@ import {
   useRowCompiler,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -111,6 +112,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const wrapFallback = useTextWrapFallback(data);
   // Row-height and column-width measurement must both see the same rendered value column-building
   // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
   // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
@@ -231,6 +233,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const rowHeight = useFlatRowHeight({
+    wrapFallback,
     columnWidths: widths,
     fields: preparedFields,
     defaultHeight: defaultRowHeight,
@@ -283,6 +286,7 @@ export function TableFlat(props: TableNGProps) {
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -309,6 +313,7 @@ export function TableFlat(props: TableNGProps) {
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,

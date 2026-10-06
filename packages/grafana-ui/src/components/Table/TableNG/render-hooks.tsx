@@ -68,6 +68,7 @@ import {
   type TableRow,
   type TableSummaryRow,
   type TypographyCtx,
+  type TextWrapFallback,
 } from './types';
 import {
   type ApplyFilterResult,
@@ -150,6 +151,8 @@ export function useDataGridRows(
 // -----------------------------------------------------------------------------
 
 export interface ColumnBuildConfig {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
   disableKeyboardEvents?: boolean;
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
@@ -250,6 +253,7 @@ function buildColumnsFromFields(
   config: ColumnBuildConfig
 ): FromFieldsResult {
   const {
+    wrapFallback,
     theme,
     getCellColorInlineStyles,
     getTextColorForBackground,
@@ -343,7 +347,8 @@ function buildColumnsFromFields(
     const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
-    const cellInspect = isCellInspectEnabled(field);
+    const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
+    const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showActions = cellInspect || showFilters;
     const width = widths[i];
@@ -359,9 +364,12 @@ function buildColumnsFromFields(
       : undefined;
 
     const shouldOverflow =
-      !IS_SAFARI_26 && typeof rowHeight !== 'string' && (shouldTextOverflow(field) || Boolean(maxRowHeight));
+      !wrappingDisabled &&
+      !IS_SAFARI_26 &&
+      typeof rowHeight !== 'string' &&
+      (shouldTextOverflow(field) || Boolean(maxRowHeight));
     const textWidthCache = new Map<string, number>();
-    const textWrap = typeof rowHeight === 'string' || shouldTextWrap(field);
+    const textWrap = !wrappingDisabled && (typeof rowHeight === 'string' || shouldTextWrap(field));
     const canBeColorized = canFieldBeColorized(cellType, applyToRowBgFn);
     const fieldAppliesToRow =
       cellOptions.type === TableCellDisplayMode.ColorBackground && cellOptions.applyToRow === true;
@@ -645,6 +653,7 @@ export function useColumnBuilderFromFields(
         parentIndex == null || nestedRows == null ? filterResult : nestedRows[parentIndex].filterResult;
       return buildColumnsFromFields(fields, widths, frame, rawRows, visibleRows, resolvedFilterResult, {
         ...config,
+        wrapFallback: rawRows[0]?.__parentIndex != null ? config.nestedWrapFallback : config.wrapFallback,
         lastColumnExtraPadding,
       });
     },
