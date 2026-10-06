@@ -286,7 +286,7 @@ export function fetchUsers(): ThunkResult<void> {
       const result = await getUsersPage({ perPage, page, query, filters, sort });
       dispatch(usersFetched(result));
     } catch (error) {
-      usersFetchEnd();
+      dispatch(usersFetchEnd());
       console.error(error);
     }
   };
