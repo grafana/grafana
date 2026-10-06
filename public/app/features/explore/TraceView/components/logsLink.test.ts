@@ -252,3 +252,48 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     });
   });
 });
+
+const splunkSettings = {
+  uid: 'splunk1_uid',
+  name: 'Splunk',
+  type: 'grafana-splunk-datasource',
+} as DataSourceInstanceSettings<DataSourceJsonData>;
+
+describe('getTraceToLogsQuery Splunk custom query', () => {
+  const tags = [{ key: 'cluster', value: 'cluster1' }];
+  const customQueryText = 'index=app $__span.traceId';
+
+  it('Case A: uses custom query when customQuery is true', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      { customQuery: true, query: customQueryText, filterByTraceID: true },
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
+  it('Case B: ignores leftover query text when customQuery is explicitly false', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      { customQuery: false, query: customQueryText, filterByTraceID: true },
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: '${__tags} "7946b05c2e2e4e5a"', refId: '' });
+  });
+
+  it('Case C: uses configured query when customQuery is omitted and query is set', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      // Provisioned / hand-edited V2 may omit the boolean while still setting query.
+      { query: customQueryText, filterByTraceID: true } as TraceToLogsOptionsV2,
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+});
