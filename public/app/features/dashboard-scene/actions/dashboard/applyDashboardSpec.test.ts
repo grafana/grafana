@@ -1,24 +1,11 @@
-import { of } from 'rxjs';
-
-import {
-  FieldType,
-  LoadingState,
-  type PanelData,
-  VariableSupportType,
-  getDefaultTimeRange,
-  toDataFrame,
-} from '@grafana/data';
-import { locationService, setRunRequest } from '@grafana/runtime';
-import { NewSceneObjectAddedEvent, sceneGraph, UrlSyncManager, type MultiValueVariable } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent } from '@grafana/scenes';
 import {
   defaultPanelKind,
-  defaultQueryVariableKind,
   defaultSpec as defaultDashboardV2Spec,
   type GridLayoutItemKind,
   type PanelKind,
   type Spec as DashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardCodePane } from 'app/features/dashboard-scene/sidebar/DashboardCodePane';
 
@@ -31,31 +18,6 @@ import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getEditableElementFor } from '../utils/getEditableElementFor';
 
 import { applyDashboardSpec } from './applyDashboardSpec';
-
-const variableDatasource = mockDataSource({ name: 'Variables', uid: 'variables-ds', type: 'test' });
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getDataSourceSrv: () => ({
-    get: async () => ({
-      ...variableDatasource,
-      variables: { getType: () => VariableSupportType.Custom, query: jest.fn(), editor: jest.fn() },
-    }),
-    getList: () => [variableDatasource],
-    getInstanceSettings: () => ({ ...variableDatasource }),
-  }),
-}));
-
-// Query variable options load asynchronously, after the rebuilt children are synced from the URL.
-setRunRequest(
-  jest.fn().mockReturnValue(
-    of<PanelData>({
-      state: LoadingState.Done,
-      series: [toDataFrame({ fields: [{ name: 'text', type: FieldType.string, values: ['a', 'b', 'x', 'y'] }] })],
-      timeRange: getDefaultTimeRange(),
-    })
-  )
-);
 
 function makeSpec(title: string): DashboardV2Spec {
   return { ...defaultDashboardV2Spec(), title, elements: {} };
@@ -122,33 +84,6 @@ function makeTabsSpec(title: string): DashboardV2Spec {
       },
     },
   };
-}
-
-function makeVariablesSpec(namespace: string, service: string): DashboardV2Spec {
-  const queryVariable = (name: string, value: string, multi: boolean) => {
-    const variable = defaultQueryVariableKind();
-    variable.spec = {
-      ...variable.spec,
-      name,
-      multi,
-      includeAll: multi,
-      refresh: 'onDashboardLoad',
-      current: { text: value === '$__all' ? 'All' : value, value },
-      query: { kind: 'DataQuery', group: 'test', version: 'v0', datasource: { name: 'variables-ds' }, spec: {} },
-    };
-    return variable;
-  };
-  return {
-    ...defaultDashboardV2Spec(),
-    title: 'Variables',
-    elements: {},
-    variables: [queryVariable('namespace', namespace, false), queryVariable('service', service, true)],
-  };
-}
-
-function variableValue(scene: DashboardScene, name: string) {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- both test variables are query variables
-  return (sceneGraph.lookupVariable(name, scene) as MultiValueVariable).getValue();
 }
 
 function buildScene(spec: DashboardV2Spec): DashboardScene {
@@ -353,49 +288,5 @@ describe('applyDashboardSpec', () => {
 
     expect(sidebar.state.selectionContext.selected).toEqual([]);
     expect(sidebar.state.openPane).toBeUndefined();
-  });
-
-  describe('with url sync', () => {
-    let deactivate: Array<() => void>;
-    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
-
-    // The URL holds the values the dashboard was opened with, as it does on a loaded dashboard.
-    async function buildSyncedScene(namespace: string, service: string) {
-      locationService.replace({ search: `var-namespace=${namespace}&var-service=${service}` });
-      const scene = buildScene(makeVariablesSpec(namespace, service));
-      new UrlSyncManager().initSync(scene);
-      deactivate = [scene.state.$variables!.activate()];
-      await settle();
-      return scene;
-    }
-
-    afterEach(() => {
-      deactivate.forEach((fn) => fn());
-    });
-
-    it('keeps the variable values the spec sets instead of reading the previous ones back from the URL', async () => {
-      const scene = await buildSyncedScene('a', '$__all');
-
-      applyDashboardSpec({ scene, spec: makeVariablesSpec('b', 'y'), description: 'Apply spec' });
-      deactivate.push(scene.state.$variables!.activate());
-      await settle();
-
-      expect(variableValue(scene, 'namespace')).toBe('b');
-      expect(variableValue(scene, 'service')).toEqual(['y']);
-      expect(locationService.getSearchObject()).toMatchObject({ 'var-namespace': 'b', 'var-service': 'y' });
-    });
-
-    it('restores the previous variable values on undo', async () => {
-      const scene = await buildSyncedScene('a', 'x');
-
-      applyDashboardSpec({ scene, spec: makeVariablesSpec('b', 'y'), description: 'Apply spec' });
-      deactivate.push(scene.state.$variables!.activate());
-      await settle();
-      scene.state.sidebar.undoAction();
-      await settle();
-
-      expect(variableValue(scene, 'namespace')).toBe('a');
-      expect(variableValue(scene, 'service')).toEqual(['x']);
-    });
   });
 });

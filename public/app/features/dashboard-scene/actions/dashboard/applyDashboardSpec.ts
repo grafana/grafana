@@ -1,16 +1,24 @@
+import { isEqual } from 'lodash';
+
 import { locationService } from '@grafana/runtime';
 import {
   NewSceneObjectAddedEvent,
   sceneGraph,
   SceneVariableSet,
   sceneUtils,
+  type SceneObject,
+  type SceneObjectUrlValue,
   type SceneObjectUrlValues,
 } from '@grafana/scenes';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { type DashboardScene } from '../../scene/DashboardScene';
 import { buildDashboardWithAccessInfoFromScene } from '../../serialization/buildDashboardWithAccessInfoFromScene';
-import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
+import {
+  createSceneVariableFromVariableModel,
+  transformSaveModelSchemaV2ToScene,
+} from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { edit } from '../utils/edit';
 
 // Minimal structural type for the bits of DashboardSceneUrlSync the rebuild drives, without
@@ -58,6 +66,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
         urlSync?.retainEditPanelAcrossRebuild(editPanelKey);
       }
 
+      const variablesBefore = variableUrlStateAsSpec(scene);
       scene.setState({ ...newState, editPanel: undefined, isDirty: true });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
@@ -69,40 +78,74 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       // layout writes its default over `?dtab=`. Per child rather than for the scene itself: that
       // keeps the dashboard's own keys out of the pass, leaving the re-open below the only path
       // into panel edit.
-      syncRebuiltChildrenFromUrl(scene);
+      syncRebuiltChildrenFromUrl(scene, variablesBefore);
 
       if (editPanelKey) {
         urlSync?.updateFromUrl({ editPanel: editPanelKey });
       }
     },
     undo: () => {
+      const variablesBefore = variableUrlStateAsSpec(scene);
       scene.setState(previousState);
       scene.state.sidebar.refreshAfterRebuild();
-      syncRebuiltChildrenFromUrl(scene);
+      syncRebuiltChildrenFromUrl(scene, variablesBefore);
     },
   });
 }
 
 /**
  * Re-attaches the swapped-in children to url sync, which restores url-only state such as the
- * selected tab. Variable values are not url-only: the spec carries them, so the URL is first
- * rewritten to the rebuilt values. Otherwise the sync reads the pre-swap `var-*` params back
- * and silently reverts every variable value the spec just set.
+ * selected tab. Variable values are url-synced too, so for every variable the swap changed the
+ * URL is first rewritten to the new value; otherwise the sync reads the pre-swap `var-*` params
+ * back and reverts it. Variables the swap did not change are left to the sync: their URL value
+ * can carry more than a spec holds (restorable ad hoc filters), and rewriting it would drop that.
  */
-function syncRebuiltChildrenFromUrl(scene: DashboardScene) {
+function syncRebuiltChildrenFromUrl(scene: DashboardScene, variablesBefore: SceneObjectUrlValues) {
+  const variablesAfter = variableUrlStateAsSpec(scene);
+  const liveValues: SceneObjectUrlValues = {};
+  for (const set of findVariableSets(scene)) {
+    Object.assign(liveValues, sceneUtils.getUrlState(set));
+  }
+
   const search = locationService.getSearch();
-  const variableUrlState: SceneObjectUrlValues = {};
-  for (const set of sceneGraph.findAllObjects(scene, (obj) => obj instanceof SceneVariableSet)) {
-    for (const [key, value] of Object.entries(sceneUtils.getUrlState(set))) {
-      // Only keys the URL already holds: those are the ones the sync below would read back.
-      if (search.has(key)) {
-        variableUrlState[key] = value;
-      }
+  const updates: SceneObjectUrlValues = {};
+  for (const [key, value] of Object.entries(variablesAfter)) {
+    // A key missing from the URL is not read back, so it needs no rewrite.
+    if (!search.has(key) || isSameUrlValue(variablesBefore[key], value)) {
+      continue;
+    }
+    if (!isSameUrlValue(search.getAll(key), liveValues[key])) {
+      updates[key] = liveValues[key];
     }
   }
-  if (Object.keys(variableUrlState).length > 0) {
-    locationService.partial(variableUrlState, true);
+  if (Object.keys(updates).length > 0) {
+    locationService.partial(updates, true);
   }
 
   scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));
+}
+
+const isVariableSet = (obj: SceneObject): obj is SceneVariableSet => obj instanceof SceneVariableSet;
+
+function findVariableSets(scene: DashboardScene): SceneVariableSet[] {
+  return sceneGraph.findAllObjects(scene, isVariableSet).filter(isVariableSet);
+}
+
+/**
+ * The URL state of every dashboard and section variable as a spec describes it, so that two
+ * states compare equal when the spec they serialize to is the same.
+ */
+function variableUrlStateAsSpec(scene: DashboardScene): SceneObjectUrlValues {
+  const state: SceneObjectUrlValues = {};
+  for (const set of findVariableSets(scene)) {
+    for (const model of sceneVariablesSetToSchemaV2Variables(set)) {
+      Object.assign(state, createSceneVariableFromVariableModel(model).urlSync?.getUrlState());
+    }
+  }
+  return state;
+}
+
+function isSameUrlValue(a: SceneObjectUrlValue, b: SceneObjectUrlValue) {
+  const values = (value: SceneObjectUrlValue) => (value == null ? [] : Array.isArray(value) ? value : [value]);
+  return isEqual(values(a), values(b));
 }
