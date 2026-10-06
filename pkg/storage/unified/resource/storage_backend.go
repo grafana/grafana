@@ -79,14 +79,16 @@ type GarbageCollectionConfig struct {
 
 // kvStorageBackend Unified storage backend based on KV storage.
 type kvStorageBackend struct {
-	resourceVersions        *snowflakeResourceVersionGenerator
-	resourceVersionMaxWait  time.Duration
-	kv                      KV
-	bulkLock                *BulkLock
-	dataStore               *dataStore
-	eventStore              *eventStore
-	notifier                notifier
-	eventPublisher          EventPublisher
+	resourceVersions       *snowflakeResourceVersionGenerator
+	resourceVersionMaxWait time.Duration
+	kv                     KV
+	bulkLock               *BulkLock
+	dataStore              *dataStore
+	eventStore             *eventStore
+	notifier               notifier
+	eventPublisher         EventPublisher
+	// eventSubscriber, when set, lets search watch written keys straight from the bus.
+	eventSubscriber         EventSubscriber
 	natsShadow              *natsShadow
 	log                     logging.Logger
 	disableStorageServices  bool
@@ -460,6 +462,7 @@ func NewKVStorageBackend(opts KVBackendOptions) (KVBackend, error) {
 			invalidator:        opts.WatchInvalidator,
 		}),
 		eventPublisher:          opts.EventPublisher,
+		eventSubscriber:         opts.EventSubscriber,
 		watchOpts:               opts.WatchOptions.normalize(),
 		resourceVersions:        processResourceVersions,
 		resourceVersionMaxWait:  resourceVersionMaxWait,

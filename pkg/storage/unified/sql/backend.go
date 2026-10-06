@@ -24,6 +24,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
@@ -1511,6 +1512,12 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 		return cb(iter)
 	})
 	return iter.listRV, err
+}
+
+// WatchWrittenKeys is not supported: only the KV backend reads written keys
+// from NATS.
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func()) (<-chan *resourcepb.ResourceKey, error) {
+	return nil, resource.ErrWrittenKeysUnsupported
 }
 
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
