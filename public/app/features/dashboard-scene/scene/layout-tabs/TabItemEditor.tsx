@@ -3,6 +3,7 @@ import { useMemo, useRef } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useSceneObjectState } from '@grafana/scenes';
 import { Alert, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -25,7 +26,7 @@ import {
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
-import { getQueryRunnerFor } from '../../utils/utils';
+import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
@@ -33,7 +34,8 @@ import { type TabItem } from './TabItem';
 
 export function useSidebarOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
-  const { layout } = model.useState();
+  // The canvas can remount during DnD loading while this editor remains mounted.
+  const { layout } = useSceneObjectState(model, { shouldActivateOrKeepAlive: true });
 
   const tabCategory = useMemo(
     () =>
@@ -165,8 +167,8 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
   );
 }
 
-function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
-  const { layout } = tab.useState();
+export function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
+  const { layout, repeatByVariable } = tab.useState();
 
   const isAnyPanelUsingDashboardDS = layout.getVizPanels().some((vizPanel) => {
     const runner = getQueryRunnerFor(vizPanel);
@@ -182,8 +184,22 @@ function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
       <RepeatRowSelect2
         id={id}
         sceneContext={tab}
-        repeat={tab.state.repeatByVariable}
-        onChange={(repeat) => tab.onChangeRepeat(repeat)}
+        repeat={repeatByVariable}
+        onChange={(repeat) => {
+          // The select reports "Disable repeating" as an empty string
+          const nextRepeat = repeat || undefined;
+
+          if (nextRepeat === repeatByVariable) {
+            return;
+          }
+
+          edit({
+            description: t('dashboard.edit-actions.tab-repeat-variable', 'Tab repeat by'),
+            source: tab,
+            perform: () => tab.onChangeRepeat(nextRepeat),
+            undo: () => tab.onChangeRepeat(repeatByVariable),
+          });
+        }}
       />
       {isAnyPanelUsingDashboardDS ? (
         <Alert

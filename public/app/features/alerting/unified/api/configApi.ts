@@ -5,7 +5,6 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-/** Wired up by a later PR in this migration's stack; not consumed yet. @lintignore */
 export const configApi = generatedAPI;
 
 /**
@@ -16,11 +15,7 @@ export const CONFIG_SINGLETON_NAME = 'default';
 
 type GetConfigQueryOptions = Parameters<typeof configApi.useGetConfigQuery>[1];
 
-/**
- * Auto-sync specific: the flag gate would be wrong for a consumer of some other Config field.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
- */
+/** Auto-sync specific: the flag gate would be wrong for a consumer of some other Config field. */
 export function useAutoSyncConfigQuery(options?: GetConfigQueryOptions) {
   const flagOn = config.featureToggles['alerting.syncExternalAlertmanager'] === true;
   const canReadConfig = contextSrv.hasPermission(AccessControlAction.ActionAlertingNotificationsConfigRead);

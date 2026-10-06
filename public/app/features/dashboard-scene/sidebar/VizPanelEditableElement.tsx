@@ -26,7 +26,8 @@ import {
 } from '../scene/types/EditableDashboardElement';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
-import { getDashboardSceneFor, getPanelIdForVizPanel } from '../utils/utils';
+import { getDashboardSceneFor } from '../utils/utils';
+import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 
@@ -38,7 +39,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'Panel options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.sidebar.viz-panel.options.title-option', 'Title'),
@@ -55,6 +56,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
           title: t('dashboard.sidebar.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
+          skipField: true,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
         })
       )
@@ -153,7 +155,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
-    return new MultiSelectedVizPanelsEditableElement(items);
+    return new MultiSelectedVizPanelsEditableElement(items, getDashboardSceneFor(this.panel));
   }
 
   public scrollIntoView() {

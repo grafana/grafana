@@ -1,17 +1,12 @@
 package query
 
 import (
-	"encoding/json"
-	"net/http"
-
-	"github.com/gorilla/mux"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
@@ -108,12 +103,6 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		},
 	}
 
-	// Get a list of all datasource instances
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if !b.features.IsEnabledGlobally(featuremgmt.FlagQueryServiceWithConnections) {
-		return routes
-	}
-
 	searchResults := defs[queryV1.OpenAPIPrefix+"DataSourceConnectionList"].Schema
 	routes.Namespace = append(routes.Namespace, builder.APIRouteHandler{
 		Path: "connections",
@@ -145,10 +134,17 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 						},
 						{
 							ParameterProps: spec3.ParameterProps{
-								Name:        "plugin",
+								Name:        "limit",
 								In:          "query",
-								Description: "plugin identifier",
-								Required:    false,
+								Description: "Maximum number of connections to return; zero means no limit",
+								Schema:      spec.Int64Property(),
+							},
+						},
+						{
+							ParameterProps: spec3.ParameterProps{
+								Name:        "continue",
+								In:          "query",
+								Description: "Continuation token from the previous page",
 								Schema:      spec.StringProperty(),
 							},
 						},
@@ -173,25 +169,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 				},
 			},
 		},
-		Handler: func(w http.ResponseWriter, r *http.Request) {
-			query := r.URL.Query()
-			list, err := b.connections.ListConnections(r.Context(), queryV1.DataSourceConnectionQuery{
-				Namespace: mux.Vars(r)["namespace"],
-				Name:      query.Get("name"),
-				Plugin:    query.Get("plugin"),
-			})
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			encoder := json.NewEncoder(w)
-			encoder.SetIndent("", "  ") // pretty print
-			if err := encoder.Encode(list); err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-		},
+		Handler: b.GetConnections,
 	})
 	return routes
 }

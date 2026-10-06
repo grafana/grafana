@@ -132,10 +132,12 @@ describe('deserialization', () => {
       setTestFlags({ [FlagKeys.GrafanaDashboardsAutoHeightPanels]: true });
     });
 
-    it('lets rows grow when the layout default is fit-content', () => {
+    it('lets rows grow when the layout default is fit-content, flooring at the min height', () => {
+      // minMaxBoundsLayout configures a custom min height of 100px, which
+      // becomes the row track floor while fit-content is active.
       const manager = deserializeAutoGridLayout(minMaxBoundsLayout, elements, false);
 
-      expect(manager.state.layout.state.autoRows).toBe('minmax(320px, max-content)');
+      expect(manager.state.layout.state.autoRows).toBe('minmax(100px, max-content)');
     });
 
     it('lets rows grow when only a single item opts into fit-content', () => {

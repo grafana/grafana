@@ -39,6 +39,8 @@ composableKinds: PanelCfg: {
 					mode:        TextMode & (*"markdown" | _)
 					renderMode?: RenderMode & (*"once" | _)
 					code?:       CodeOptions
+					// Rows per page once a per-row render pages its content. Unset fits the page to the panel height.
+					pageSize?: number
 					content: string | *"""
 						# Title
 

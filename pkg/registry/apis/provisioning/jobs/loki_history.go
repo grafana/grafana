@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"sort"
 	"time"
 
@@ -142,9 +143,7 @@ func (h *LokiJobHistory) jobToStream(ctx context.Context, job *provisioning.Job)
 	labels := make(map[string]string)
 
 	// Add external labels
-	for k, v := range h.externalLabels {
-		labels[k] = v
-	}
+	maps.Copy(labels, h.externalLabels)
 
 	// Add system labels
 	labels[JobHistoryLabelKey] = JobHistoryLabelValue

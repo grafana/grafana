@@ -1,28 +1,15 @@
 import { skipToken } from '@reduxjs/toolkit/query/react';
-import { useEffect, useRef } from 'react';
 
 import { isFetchError } from '@grafana/runtime';
-import { type Folder } from 'app/api/clients/folder/v1beta1';
-import {
-  type RepositoryView,
-  useGetRepositoryFilesWithPathQuery,
-  useListRepositoryQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
-import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { useGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 
-import { useGetResourceRepositoryView } from './useGetResourceRepositoryView';
+import { useRefetchOnRepoSync } from './useRefetchOnRepoSync';
 
 export type FolderReadmeStatus = 'loading' | 'missing' | 'error' | 'ok';
 
 export interface UseFolderReadmeResult {
-  repository?: RepositoryView;
-  folder?: Folder;
-  /** Path of the README relative to the repository's configured root. */
-  readmePath: string;
   status: FolderReadmeStatus;
-  /** True while fetching, unlike `status === 'loading'` which a non-provisioned folder reports forever. */
-  isLoading: boolean;
-  /** Markdown body of the README, or undefined when not loaded successfully. */
+  /** Markdown body of the doc, or undefined when not loaded successfully. */
   markdownContent: string | undefined;
   refetch: () => void;
   /**
@@ -34,8 +21,12 @@ export interface UseFolderReadmeResult {
 }
 
 /**
- * Resolves a folder's README.md path (using the source-path annotation when
- * present) and fetches it through the provisioning files API.
+ * Fetches a folder documentation file (`docPath`, relative to the repository's
+ * configured root) from `repositoryName` through the provisioning files API.
+ * The fetch, live-refresh, and status machinery are identical for every doc.
+ *
+ * Reports `status: 'loading'` until a repository name is known — callers resolve
+ * the repository once (see `useFolderDocs`) and pass its name in.
  *
  * Callers must gate on the `provisioning.readmes` OpenFeature toggle before
  * mounting any component that invokes this hook.
@@ -43,57 +34,23 @@ export interface UseFolderReadmeResult {
  * Returns a tagged `status` instead of raw boolean flags so callers can
  * exhaustively switch on the four states without reconstructing the machine.
  */
-export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
-  const { repository, folder, isLoading: isRepoLoading } = useGetResourceRepositoryView({ folderName: folderUID });
-
-  const sourcePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] || '';
-  const readmePath = sourcePath ? `${sourcePath.replace(/\/+$/, '')}/README.md` : 'README.md';
-
-  const shouldFetch = !!repository && !!folderUID && !isRepoLoading;
-
+export function useFolderReadme(repositoryName: string | undefined, docPath: string): UseFolderReadmeResult {
   const {
-    data: fileData,
+    // `currentData` (not `data`) reflects the CURRENT arg — RTK keeps the
+    // previous doc's `data` while a newly selected doc is still fetching, which
+    // would otherwise render the old content beneath the new tab's label.
+    currentData: fileData,
     isLoading: isFileLoading,
+    isFetching: isFileFetching,
     error,
     refetch,
-  } = useGetRepositoryFilesWithPathQuery(
-    shouldFetch
-      ? {
-          name: repository.name,
-          path: readmePath,
-        }
-      : skipToken
-  );
+  } = useGetRepositoryFilesWithPathQuery(repositoryName ? { name: repositoryName, path: docPath } : skipToken);
 
-  const isLoading = isRepoLoading || isFileLoading;
+  // No current-arg data while a request is in flight = still loading (covers the
+  // first load and switching to a not-yet-cached doc).
+  const isLoading = isFileLoading || (isFileFetching && !fileData);
 
-  // Watch repo sync, not the Job: the Job is deleted on completion so its
-  // terminal state is never observed (#1223).
-  const { data: repoData } = useListRepositoryQuery(
-    repository?.name ? { fieldSelector: `metadata.name=${repository.name}`, watch: true } : skipToken
-  );
-  const repo = repoData?.items?.[0];
-  const sync = repo?.status?.sync;
-  const syncFinished = sync?.finished;
-
-  // `finished` advances once per completed sync; dedupes repeat watch events and
-  // seeds a baseline so mount-loaded content isn't refetched.
-  const lastFinishedRef = useRef<number | undefined>(undefined);
-  useEffect(() => {
-    if (!repo) {
-      return;
-    }
-    const finished = syncFinished ?? 0;
-    if (lastFinishedRef.current === undefined) {
-      lastFinishedRef.current = finished;
-      return;
-    }
-    // sync only advances on pull, so push/pr/move/delete never reach here.
-    if (finished > lastFinishedRef.current && (sync?.state === 'success' || sync?.state === 'warning')) {
-      lastFinishedRef.current = finished;
-      refetch();
-    }
-  }, [repo, sync, syncFinished, refetch]);
+  const syncFinished = useRefetchOnRepoSync(repositoryName, refetch);
 
   let status: FolderReadmeStatus;
   if (isLoading) {
@@ -124,11 +81,7 @@ export function useFolderReadme(folderUID: string): UseFolderReadmeResult {
   }
 
   return {
-    repository,
-    folder,
-    readmePath,
     status,
-    isLoading,
     markdownContent,
     refetch,
     syncFinished,

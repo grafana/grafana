@@ -8,7 +8,6 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	dashboardapp "github.com/grafana/grafana/apps/dashboard/pkg/apis"
@@ -48,7 +47,7 @@ const DASHBOARD_ERRORS_TODAY = "errors_today"
 // fields (no resource path); DashboardDocumentBuilder fills them in from the
 // parsed spec and the usage-insights stats.
 var DashboardSearchFields = resource.NewManifestBackedProvider(
-	[]app.Manifest{dashboardapp.LocalManifest()},
+	dashboardapp.LocalManifest().ManifestData,
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
 func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
@@ -93,7 +92,7 @@ type DashboardStats interface {
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 
-var _ resource.DocumentBuilder = &DashboardDocumentBuilder{}
+var _ resource.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
 
 func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {

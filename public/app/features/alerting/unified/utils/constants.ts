@@ -2,8 +2,10 @@ export const RULER_NOT_SUPPORTED_MSG = 'ruler not supported';
 
 /** The name used to identify the built-in Grafana rules/alertmanager source */
 export const GRAFANA_RULES_SOURCE_NAME = 'grafana';
+export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
 
 export const RULE_LIST_POLL_INTERVAL_MS = 30000;
+export const STATE_HISTORY_POLL_INTERVAL_MS = 10000;
 
 export const ALERTMANAGER_NAME_QUERY_KEY = 'alertmanager';
 export const ALERTMANAGER_NAME_LOCAL_STORAGE_KEY = 'alerting-alertmanager';
@@ -14,12 +16,11 @@ export const CONTACT_POINTS_STATE_INTERVAL_MS = 20000;
  * The Config singleton is seeded by the external Alertmanager sync worker rather than by the UI, and
  * nothing the settings page can do invalidates it. Polling is what turns the pre-seed 404 — and any
  * change made outside this tab — into something a user who waits on the page eventually observes.
- * Wired up by a later PR in this migration's stack; not consumed yet.
- * @lintignore
  */
 export const AUTO_SYNC_CONFIG_POLL_INTERVAL_MS = 30000;
 
 export const DEFAULT_PER_PAGE_PAGINATION_RULES_PER_GROUP = 100;
+export const GROUPS_PER_PAGE = 100;
 
 export enum Annotation {
   description = 'description',
@@ -30,14 +31,14 @@ export enum Annotation {
   panelID = '__panelId__',
 }
 
-export const annotationLabels: Record<Annotation, string> = {
+export const annotationLabels: Record<string, string | undefined> = {
   [Annotation.description]: 'Description',
   [Annotation.summary]: 'Summary',
   [Annotation.runbookURL]: 'Runbook URL',
   [Annotation.dashboardUID]: 'Dashboard UID',
   [Annotation.panelID]: 'Panel ID',
   [Annotation.alertId]: 'Alert ID',
-};
+} satisfies Record<Annotation, string>;
 
 export const annotationDescriptions: Record<Annotation, string> = {
   [Annotation.description]: 'Description of what the alert rule does.',

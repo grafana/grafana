@@ -29,7 +29,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   meta?: QueryResultMeta;
   fields: MutableField[] = [];
 
-  private first: any[] = [];
+  private first: unknown[] = [];
   private creator: MutableVectorCreator;
 
   constructor(source?: DataFrame | DataFrameDTO, creator?: MutableVectorCreator) {
@@ -38,7 +38,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // This creates the underlying storage buffers
     this.creator = creator
       ? creator
-      : (buffer?: any[]) => {
+      : (buffer?: unknown[]) => {
           return buffer ?? [];
         };
 
@@ -75,6 +75,10 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
+  // Writes are ignored because length is derived, but a setter has to exist so object copiers
+  // like cloneDeep can write back the value they just read instead of throwing.
+  set length(_value: number) {}
+
   addFieldFor(value: unknown, name?: string): Field {
     return this.addField({
       name: name || '', // Will be filled in
@@ -83,7 +87,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   }
 
   addField(f: Field | FieldDTO, startLength?: number): Field {
-    let buffer: any[] | undefined = undefined;
+    let buffer: unknown[] | undefined = undefined;
 
     if (f.values) {
       buffer = f.values;

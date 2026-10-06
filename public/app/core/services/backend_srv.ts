@@ -266,11 +266,6 @@ export class BackendSrv implements BackendService {
       }
     }
 
-    if (!!this.deviceID) {
-      options.headers = options.headers ?? {};
-      options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
-    }
-
     return parseUrlFromOptions(options).pipe(
       this.getFromFetchStream<T>(options),
       this.handleStreamResponse<T>(options),
@@ -301,6 +296,11 @@ export class BackendSrv implements BackendService {
       if (orgId) {
         options.headers = options.headers ?? {};
         options.headers['X-Grafana-Org-Id'] = orgId;
+      }
+
+      if (!!this.deviceID) {
+        options.headers = options.headers ?? {};
+        options.headers['X-Grafana-Device-Id'] = `${this.deviceID}`;
       }
 
       if (options.url.startsWith('/')) {
@@ -520,6 +520,9 @@ export class BackendSrv implements BackendService {
                   if (expired) {
                     authChecker = this.rotateToken();
                   }
+                }
+                if (error.data?.messageId === 'session.token.rotate') {
+                  authChecker = this.rotateToken();
                 }
 
                 return from(authChecker).pipe(

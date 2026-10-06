@@ -9,7 +9,7 @@ import { Button, useStyles2, useTheme2 } from '@grafana/ui';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getPanelIdForVizPanel } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { getDashboardSceneLike } from '../types/dashboard';
 
 import {

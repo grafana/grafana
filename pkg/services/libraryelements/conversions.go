@@ -3,11 +3,13 @@ package libraryelements
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -17,7 +19,7 @@ func ToCreateLibraryElementCommand(raw runtime.Object) (*model.CreateLibraryElem
 	if err != nil {
 		return nil, err
 	}
-	folder := obj.GetFolder()
+	folder := foldermodel.ToLegacyFolderUID(obj.GetFolder())
 	cmd := &model.CreateLibraryElementCommand{
 		UID:       obj.GetName(),
 		FolderUID: &folder,
@@ -43,9 +45,9 @@ func ToPatchLibraryElementCommand(raw runtime.Object, previous runtime.Object) (
 	if err != nil {
 		return nil, err
 	}
-	folder := obj.GetFolder()
+	folder := foldermodel.ToLegacyFolderUID(obj.GetFolder())
 	var folderUID *string
-	if folder != previousObj.GetFolder() {
+	if folder != foldermodel.ToLegacyFolderUID(previousObj.GetFolder()) {
 		folderUID = &folder
 	}
 	cmd := &model.PatchLibraryElementCommand{
@@ -79,9 +81,7 @@ func toRawMessage(raw runtime.Object) (json.RawMessage, error) {
 func LibraryPanelToLegacyModel(panel *v0alpha1.LibraryPanel) (json.RawMessage, error) {
 	legacyModel := map[string]any{}
 	if panel.Status != nil {
-		for k, v := range panel.Status.Missing.Object {
-			legacyModel[k] = v
-		}
+		maps.Copy(legacyModel, panel.Status.Missing.Object)
 	}
 
 	spec := panel.Spec

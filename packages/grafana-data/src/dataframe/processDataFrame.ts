@@ -13,7 +13,6 @@ import {
   type DataFrameWithValue,
   type DataFrameDTO,
   type FieldDTO,
-  type FieldConfig,
 } from '../types/dataFrame';
 import { type DataQueryResponseData } from '../types/datasource';
 import { type GraphSeriesXY, type GraphSeriesValue } from '../types/graph';
@@ -23,10 +22,12 @@ import { arrayToDataFrame } from './ArrayDataFrame';
 import { dataFrameFromJSON } from './DataFrameJSON';
 import { guessFieldTypeForField, guessFieldTypes } from './guessFieldType';
 
+type LegacyColumn = Column & { type?: FieldType };
+
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map((c) => {
     // TODO: should be Column but type does not exists there so not sure whats up here.
-    const { text, type, ...disp } = c as Column & { type?: FieldType };
+    const { text, type, ...disp }: LegacyColumn = c;
     const values: unknown[] = [];
     return {
       name: text ?? c, // rename 'text' to the 'name' field
@@ -75,7 +76,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
     times.push(point[1] as number);
   }
 
-  const fields = [
+  const fields: [Field<number, never>, Field<TimeSeriesValue, never>] = [
     {
       name: TIME_SERIES_TIME_FIELD_NAME,
       type: FieldType.time,
@@ -94,7 +95,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   ];
 
   if (timeSeries.title) {
-    (fields[1].config as FieldConfig).displayNameFromDS = timeSeries.title;
+    fields[1].config.displayNameFromDS = timeSeries.title;
   }
 
   return {

@@ -8,7 +8,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { getCloneKey } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
-import { getPanelIdForVizPanel } from '../../utils/utils';
+import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 import { DashboardScene } from '../DashboardScene';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';

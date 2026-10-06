@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"os"
@@ -1610,6 +1611,16 @@ func WithNATSReListOnly(resync time.Duration) GrafanaOption {
 	}
 }
 
+// WithKeysOnlyReList sets [provisioning] keys_only_relist, so the connection
+// informer's periodic re-list asks storage for keys instead of whole objects.
+// Off by default in Grafana, so a test that wants the keys path must say so, and
+// the tests that do not keep covering the full-object path.
+func WithKeysOnlyReList() GrafanaOption {
+	return func(opts *testinfra.GrafanaOpts) {
+		opts.ProvisioningKeysOnlyReList = true
+	}
+}
+
 // WithProvisioningHistoryExpiration overrides [provisioning] history_expiration,
 // which is both the HistoricJob retention and the historic-job informer's
 // resync. A short value lets tests exercise the re-list-driven cleanup quickly.
@@ -2322,6 +2333,45 @@ func (h *ProvisioningTestHelper) CleanupAllRepos(t *testing.T) {
 		}
 		assert.Equal(collect, 0, len(list.Items), "repositories should be cleaned up")
 	}, WaitTimeoutDefault, WaitIntervalDefault, "repositories should be cleaned up between subtests")
+}
+
+// GithubConnectionObject builds a minimal GitHub connection body: the fields the
+// API requires and nothing test-specific, so a caller only has to name it. Pass
+// it to CreateGithubConnection, which installs the mocked GitHub client.
+func (h *ProvisioningTestHelper) GithubConnectionObject(name string) *unstructured.Unstructured {
+	return &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": provisioning.APIVERSION,
+		"kind":       "Connection",
+		"metadata": map[string]any{
+			"name":      name,
+			"namespace": h.Namespace,
+		},
+		"spec": map[string]any{
+			"title": name,
+			"type":  provisioning.GitHubRepositoryType,
+			"github": map[string]any{
+				"appID":          "123456",
+				"installationID": "454545",
+			},
+		},
+		"secure": map[string]any{
+			"privateKey": map[string]any{
+				"create": base64.StdEncoding.EncodeToString([]byte(TestGithubPrivateKeyPEM)),
+			},
+		},
+	}}
+}
+
+// CreateNamedGithubConnection builds and creates a connection in one step, and
+// removes it when the test ends.
+func (h *ProvisioningTestHelper) CreateNamedGithubConnection(t *testing.T, name string) *unstructured.Unstructured {
+	t.Helper()
+	created, err := h.CreateGithubConnection(t, h.GithubConnectionObject(name))
+	require.NoError(t, err, "failed to create connection %q", name)
+	t.Cleanup(func() {
+		_ = h.Connections.Resource.Delete(context.WithoutCancel(t.Context()), created.GetName(), metav1.DeleteOptions{})
+	})
+	return created
 }
 
 func (h *ProvisioningTestHelper) CreateGithubConnection(
@@ -3452,9 +3502,7 @@ func (h *GitTestHelper) createRepo(
 		"Token":         user.Password,
 		"WorkflowsJSON": string(workflowsJSON),
 	}
-	for k, v := range opts.templateVariables {
-		templateValues[k] = v
-	}
+	maps.Copy(templateValues, opts.templateVariables)
 
 	tmpl := TestdataPath(repoType + ".json.tmpl")
 	repoObj := h.RenderObject(t, tmpl, templateValues)

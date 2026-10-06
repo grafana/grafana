@@ -8,6 +8,7 @@ import { LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { useFocusExtension } from './focusExtension';
+import { headingStyles } from './markdownHeadingStyles';
 
 const MarkdownCellEditor = lazy(() =>
   import(/* webpackChunkName: "notebook-markdown-editor" */ './MarkdownCellEditor').then((m) => ({
@@ -21,9 +22,13 @@ export interface MarkdownCellProps {
   autoFocus?: boolean;
   focusRequestId?: number;
   caretOffset?: number;
+  /** Which edge of the cell to reveal on that same grant — see useFocusExtension's own doc comment. */
+  scrollAlign?: ScrollLogicalPosition;
   onChange: (content: CellContentKind) => void;
   placeholder?: string;
   onSubmit?: (remainder: string, marker?: string) => void;
+  /** ArrowUp/ArrowDown once the caret has nowhere further to go inside this cell. See navigationKeymap. */
+  onNavigate?: (direction: 'up' | 'down') => void;
 }
 
 export function MarkdownCell({
@@ -32,12 +37,20 @@ export function MarkdownCell({
   autoFocus,
   focusRequestId,
   caretOffset,
+  scrollAlign,
   onChange,
   placeholder,
   onSubmit,
+  onNavigate,
 }: MarkdownCellProps) {
   const styles = useStyles2(getStyles);
-  const focusExtension = useFocusExtension({ autoFocus, isEditing, focusRequestId, caretOnFocus: caretOffset });
+  const focusExtension = useFocusExtension({
+    autoFocus,
+    isEditing,
+    focusRequestId,
+    caretOnFocus: caretOffset,
+    scrollAlign,
+  });
 
   if (content.kind !== 'Markdown') {
     return null;
@@ -58,6 +71,7 @@ export function MarkdownCell({
         onChange={onChange}
         placeholder={placeholder}
         onSubmit={onSubmit}
+        onNavigate={onNavigate}
         focusExtension={focusExtension}
       />
     </Suspense>
@@ -69,20 +83,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     'h1, h2, h3, h4, h5, h6': {
       marginTop: theme.spacing(2),
       marginBottom: theme.spacing(1),
-      fontWeight: theme.typography.fontWeightMedium,
     },
     '& > :first-child': {
       marginTop: 0,
     },
-    h1: { fontSize: theme.typography.h1.fontSize, lineHeight: theme.typography.h1.lineHeight },
+    h1: headingStyles(theme.typography.h1),
     h2: {
-      fontSize: theme.typography.h2.fontSize,
-      lineHeight: theme.typography.h2.lineHeight,
+      ...headingStyles(theme.typography.h2),
       paddingBottom: theme.spacing(1),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     },
-    h3: { fontSize: theme.typography.h3.fontSize, lineHeight: theme.typography.h3.lineHeight },
-    h4: { fontSize: theme.typography.h4.fontSize },
+    h3: headingStyles(theme.typography.h3),
+    h4: headingStyles(theme.typography.h4),
     p: { marginBottom: theme.spacing(1) },
     blockquote: {
       margin: theme.spacing(1, 0),

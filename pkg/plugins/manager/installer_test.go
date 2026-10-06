@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/pluginfakes"
@@ -684,4 +685,137 @@ func TestPluginInstaller_Removal(t *testing.T) {
 		_, err = os.Stat(pluginDir)
 		require.True(t, os.IsNotExist(err))
 	})
+}
+
+func TestPluginInstaller_RemoveUnloadsNestedChildrenBeforeParent(t *testing.T) {
+	parentRemoved := 0
+	childRemoved := 0
+	parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+			parentRemoved++
+			return nil
+		}}
+	})
+	child := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "1.0.0"
+		plugin.Parent = parent
+		plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+			childRemoved++
+			return nil
+		}}
+	})
+	unrelated := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+		plugin.Info.Version = "9.9.9"
+	})
+	parent.Children = []*plugins.Plugin{nil, child, unrelated}
+
+	var unloaded []string
+	var cleaned []string
+	auth := &pluginfakes.FakeAuthService{Result: &auth.ExternalService{}}
+	inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+		Store: map[string]*plugins.Plugin{
+			"parent-app":  parent,
+			"child-panel": child,
+		},
+	}, &pluginfakes.FakeLoader{
+		UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+			unloaded = append(unloaded, p.ID)
+			return p, nil
+		},
+	}, &pluginfakes.FakePluginRepo{}, &pluginfakes.FakePluginStorage{}, storage.SimpleDirNameGeneratorFunc, auth, &pluginfakes.FakeRBACCleaner{
+		CleanupFunc: func(_ context.Context, pluginIDs []string) error {
+			cleaned = append(cleaned, pluginIDs...)
+			return nil
+		},
+	})
+
+	require.NoError(t, inst.Remove(context.Background(), "parent-app", "1.0.0"))
+	require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
+	require.Equal(t, 1, parentRemoved)
+	require.Equal(t, 0, childRemoved)
+	require.Equal(t, []string{"parent-app", "child-panel"}, cleaned)
+	require.Equal(t, []string{"child-panel", "parent-app"}, auth.Removed)
+}
+
+func TestPluginInstaller_UpdateKeepsRBACAndExternalService(t *testing.T) {
+	const updateURL = "https://grafanaplugins.com/parent-app-2.0.0.zip"
+
+	for _, tc := range []struct {
+		name string
+		url  string
+	}{
+		{name: "from catalog"},
+		{name: "from URL", url: updateURL},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			parentRemoved := 0
+			parent := createPlugin(t, "parent-app", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.0.0"
+				plugin.FS = &pluginfakes.FakePluginFS{RemoveFunc: func() error {
+					parentRemoved++
+					return nil
+				}}
+			})
+			child := createPlugin(t, "child-panel", plugins.ClassExternal, true, false, func(plugin *plugins.Plugin) {
+				plugin.Info.Version = "1.0.0"
+				plugin.Parent = parent
+			})
+			parent.Children = []*plugins.Plugin{child}
+
+			mockZip := &zip.ReadCloser{Reader: zip.Reader{File: []*zip.File{{
+				FileHeader: zip.FileHeader{Name: "parent-app-2.0.0.zip"},
+			}}}}
+			pluginRepo := &pluginfakes.FakePluginRepo{
+				GetPluginArchiveInfoFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
+					return &repo.PluginArchiveInfo{Version: "2.0.0"}, nil
+				},
+				GetPluginArchiveFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+					return &repo.PluginArchive{File: mockZip}, nil
+				},
+				GetPluginArchiveByURLFunc: func(_ context.Context, url string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+					require.Equal(t, updateURL, url)
+					return &repo.PluginArchive{File: mockZip}, nil
+				},
+			}
+			fs := &pluginfakes.FakePluginStorage{
+				ExtractFunc: func(_ context.Context, id string, _ storage.DirNameGeneratorFunc, _ *zip.ReadCloser) (*storage.ExtractedPluginArchive, error) {
+					return &storage.ExtractedPluginArchive{ID: id, Version: "2.0.0", Path: "parent-app"}, nil
+				},
+			}
+
+			var unloaded []string
+			loader := &pluginfakes.FakeLoader{
+				UnloadFunc: func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+					unloaded = append(unloaded, p.ID)
+					return p, nil
+				},
+				LoadFunc: func(_ context.Context, _ plugins.PluginSource) ([]*plugins.Plugin, error) {
+					return []*plugins.Plugin{}, nil
+				},
+			}
+
+			cleanupCalled := false
+			authSvc := &pluginfakes.FakeAuthService{Result: &auth.ExternalService{}}
+			inst := New(&config.PluginManagementCfg{}, &pluginfakes.FakePluginRegistry{
+				Store: map[string]*plugins.Plugin{
+					"parent-app":  parent,
+					"child-panel": child,
+				},
+			}, loader, pluginRepo, fs, storage.SimpleDirNameGeneratorFunc, authSvc, &pluginfakes.FakeRBACCleaner{
+				CleanupFunc: func(_ context.Context, _ []string) error {
+					cleanupCalled = true
+					return nil
+				},
+			})
+
+			err := inst.Add(context.Background(), "parent-app", "2.0.0", plugins.NewAddOpts("10.0.0", runtime.GOOS, runtime.GOARCH, tc.url))
+			require.NoError(t, err)
+
+			require.Equal(t, []string{"child-panel", "parent-app"}, unloaded)
+			require.Equal(t, 1, parentRemoved)
+			require.False(t, cleanupCalled, "an update must not delete the plugin's RBAC roles or their assignments")
+			require.Empty(t, authSvc.Removed, "an update must not remove the plugin's external service")
+		})
+	}
 }

@@ -38,15 +38,13 @@ import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboar
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
-  getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { canGroupSelection } from '../layouts-shared/groupLayout';
@@ -713,6 +711,10 @@ SceneGridRow.Component = SceneGridRowRenderer;
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext?.renderRow) {
+    return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
+  }
 
   if (soloPanelContext) {
     return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);
