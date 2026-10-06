@@ -124,4 +124,3 @@ export { sanitize, sanitizeUrl } from '../text/sanitize';
 
 export { NewThemeOptionsSchema } from '../themes/createTheme';
 export { createFieldsOrdererAuto } from '../transformations/transformers/order';
-export { getRowIdentity } from '../transformations/frameIdentity';

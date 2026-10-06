@@ -30,7 +30,6 @@ import {
   type VizLegendOptions,
 } from '@grafana/schema';
 import { type PanelContext, PanelContextProvider, type SeriesVisibilityChangeMode, useTheme2 } from '@grafana/ui';
-import { useStructureRev } from 'app/core/hooks/useStructureRev';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { type Options as TimeSeriesOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
 import { type ExploreGraphStyle } from 'app/types/explore';
@@ -42,6 +41,7 @@ import {
 import { useExploreDataLinkPostProcessor } from '../hooks/useExploreDataLinkPostProcessor';
 
 import { applyGraphStyle, applyThresholdsConfig } from './exploreGraphStyleUtils';
+import { useStructureRev } from './useStructureRev';
 
 interface Props {
   data: DataFrame[];

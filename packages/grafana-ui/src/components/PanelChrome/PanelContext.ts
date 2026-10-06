@@ -10,21 +10,32 @@ import {
   type EventBus,
   EventBusSrv,
 } from '@grafana/data';
-import { type VizPanelRuntimeTransformations } from '@grafana/scenes';
 
 import { type AdHocFilterItem } from '../Table/types';
 
 import { type OnSelectRangeCallback, type SeriesVisibilityChangeMode } from './types';
 
-/** Reactive view of one owner's runtime transformation stage. @alpha */
+/** Runtime transformations supplied by a panel host, grouped by owner. @alpha */
+export interface PanelRuntimeTransformations {
+  /** Returns the same immutable snapshot until this owner changes. */
+  get(owner: string): readonly DataTransformerConfig[];
+  /** Replaces one owner's transformations. An empty list removes the owner. */
+  set(owner: string, transformations: readonly DataTransformerConfig[]): void;
+  /** Returns data before this owner's transformations. */
+  getSourceSeries(owner: string): readonly DataFrame[];
+  /** Subscribes to changes for one owner. Returns an unsubscribe function. */
+  subscribe(owner: string, callback: () => void): () => void;
+}
+
+/** Reactive view of one owner's runtime transformations. @alpha */
 export interface AdHocTransformationsState {
   /** Transformations currently applied after the panel's saved transformations. */
   transformations: readonly DataTransformerConfig[];
 
-  /** Raw frames entering the ad-hoc stage, including fields removed by its transformations. */
+  /** Data before this owner's transformations, including columns they hide. */
   sourceSeries: readonly DataFrame[];
 
-  /** Replaces the ad-hoc stage. Pass `[]` to clear it. */
+  /** Replaces this owner's transformations. Pass `[]` to clear them. */
   setTransformations(transformations: readonly DataTransformerConfig[]): void;
 }
 
@@ -114,7 +125,7 @@ export interface PanelContext {
   dataLinkPostProcessor?: DataLinkPostProcessor;
 
   /** Present when the panel host supports ad-hoc transformations. @alpha */
-  adHocTransformations?: VizPanelRuntimeTransformations;
+  adHocTransformations?: PanelRuntimeTransformations;
 }
 
 export const PanelContextRoot = createContext<PanelContext>({

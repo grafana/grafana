@@ -7,15 +7,13 @@ import {
   type DataTransformerConfig,
   type MatcherConfig,
 } from '@grafana/data';
-import { createOrderFieldsComparer, type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
+import { type OrganizeFieldsTransformerOptions } from '@grafana/data/internal';
 
 export interface AdHocColumnState {
-  /** Undefined preserves the frame's field order. */
-  columnOrder?: string[];
   hiddenColumns: ReadonlySet<string>;
 }
 
-const NO_COLUMN_STATE: AdHocColumnState = { columnOrder: undefined, hiddenColumns: new Set() };
+const NO_COLUMN_STATE: AdHocColumnState = { hiddenColumns: new Set() };
 
 const EMPTY_OPTIONS: OrganizeFieldsTransformerOptions = { indexByName: {}, excludeByName: {}, renameByName: {} };
 
@@ -29,14 +27,14 @@ interface ColumnsEntry {
  * Other organize transformations and entries for other frames are left alone.
  */
 export function findColumnsEntry(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   frameFilter?: MatcherConfig
 ): ColumnsEntry | undefined {
-  const index = stage.findIndex(
+  const index = transformations.findIndex(
     (config) => config.id === DataTransformerID.organize && isEqual(config.filter, frameFilter)
   );
 
-  return index === -1 ? undefined : { index, options: stage[index].options ?? {} };
+  return index === -1 ? undefined : { index, options: transformations[index].options ?? {} };
 }
 
 /**
@@ -44,22 +42,19 @@ export function findColumnsEntry(
  * The catalog must contain display names from the untransformed source frame so hidden columns remain available.
  */
 export function decodeAdHocColumns(
-  stage: readonly DataTransformerConfig[],
-  catalog: string[],
+  transformations: readonly DataTransformerConfig[],
+  _catalog: string[],
   frameFilter?: MatcherConfig
 ): AdHocColumnState {
-  const entry = findColumnsEntry(stage, frameFilter);
+  const entry = findColumnsEntry(transformations, frameFilter);
 
   if (!entry) {
     return NO_COLUMN_STATE;
   }
 
-  const { indexByName = {}, excludeByName = {} } = entry.options;
+  const { excludeByName = {} } = entry.options;
 
   return {
-    // Avoid freezing the current field order until the user reorders a column.
-    columnOrder:
-      Object.keys(indexByName).length > 0 ? [...catalog].sort(createOrderFieldsComparer(indexByName)) : undefined,
     hiddenColumns: new Set(Object.keys(excludeByName).filter((name) => excludeByName[name])),
   };
 }
@@ -69,18 +64,18 @@ export function decodeAdHocColumns(
  * Removes the entry when none of its organize options has an effect.
  */
 function writeColumnsEntry(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   next: OrganizeFieldsTransformerOptions,
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
-  const entry = findColumnsEntry(stage, frameFilter);
+  const entry = findColumnsEntry(transformations, frameFilter);
   const isEmpty =
     Object.keys(next.indexByName ?? {}).length === 0 &&
     Object.values(next.excludeByName ?? {}).every((hidden) => !hidden) &&
     Object.keys(next.renameByName ?? {}).length === 0;
 
   if (isEmpty) {
-    return entry ? stage.filter((_, index) => index !== entry.index) : [...stage];
+    return entry ? transformations.filter((_, index) => index !== entry.index) : [...transformations];
   }
 
   const config: DataTransformerConfig = {
@@ -90,31 +85,10 @@ function writeColumnsEntry(
   };
 
   if (!entry) {
-    return [...stage, config];
+    return [...transformations, config];
   }
 
-  return stage.map((existing, index) => (index === entry.index ? config : existing));
-}
-
-/**
- * Stores a TableNG column order in the matching organize-fields transformation.
- * The complete order is recorded because the transformer places fields missing from its index map last.
- */
-export function encodeColumnOrder(
-  stage: readonly DataTransformerConfig[],
-  order: string[],
-  frameFilter?: MatcherConfig
-): DataTransformerConfig[] {
-  const indexByName = order.reduce<Record<string, number>>((acc, name, index) => {
-    acc[name] = index;
-    return acc;
-  }, {});
-
-  return writeColumnsEntry(
-    stage,
-    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, indexByName },
-    frameFilter
-  );
+  return transformations.map((existing, index) => (index === entry.index ? config : existing));
 }
 
 /**
@@ -122,7 +96,7 @@ export function encodeColumnOrder(
  * Existing column order, renames, and transformations outside this frame scope are preserved.
  */
 export function encodeHiddenColumns(
-  stage: readonly DataTransformerConfig[],
+  transformations: readonly DataTransformerConfig[],
   hidden: ReadonlySet<string>,
   frameFilter?: MatcherConfig
 ): DataTransformerConfig[] {
@@ -132,8 +106,8 @@ export function encodeHiddenColumns(
   }, {});
 
   return writeColumnsEntry(
-    stage,
-    { ...EMPTY_OPTIONS, ...findColumnsEntry(stage, frameFilter)?.options, excludeByName },
+    transformations,
+    { ...EMPTY_OPTIONS, ...findColumnsEntry(transformations, frameFilter)?.options, excludeByName },
     frameFilter
   );
 }

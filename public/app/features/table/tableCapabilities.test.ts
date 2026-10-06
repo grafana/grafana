@@ -11,18 +11,18 @@ const frame = () =>
   });
 
 describe('withRefreshedTableCapabilities', () => {
-  it('opts every column into filtering and hiding', () => {
+  it('opts every column into hiding', () => {
     const withCapabilities = withRefreshedTableCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true, hideable: true });
+      expect(field.config.custom).toMatchObject({ hideable: true });
     }
   });
 
-  it('overrides a capability the field config turned off', () => {
+  it('preserves the existing filter setting', () => {
     const [, b] = withRefreshedTableCapabilities(frame()).fields;
 
-    expect(b.config.custom?.filterable).toBe(true);
+    expect(b.config.custom?.filterable).toBe(false);
   });
 
   it('leaves the rest of the field config alone', () => {
@@ -58,7 +58,7 @@ describe('withRefreshedTableCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withRefreshedTableCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ filterable: true, hideable: false });
+      expect(field.config.custom).toMatchObject({ hideable: false });
     }
   });
 });

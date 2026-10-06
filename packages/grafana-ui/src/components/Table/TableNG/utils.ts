@@ -1200,28 +1200,6 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
-/** Reorders fields by display name and appends unmentioned fields. @internal */
-export function orderFieldsByDisplayNames(fields: Field[], order?: string[]): Field[] {
-  if (!order || order.length === 0) {
-    return fields;
-  }
-  const byDisplayName = new Map(fields.map((field) => [getDisplayName(field), field]));
-  const ordered: Field[] = [];
-  for (const name of order) {
-    const field = byDisplayName.get(name);
-    if (field) {
-      ordered.push(field);
-      byDisplayName.delete(name);
-    }
-  }
-  for (const field of fields) {
-    if (byDisplayName.has(getDisplayName(field))) {
-      ordered.push(field);
-    }
-  }
-  return ordered;
-}
-
 /** Removes fields hidden through table controls. @internal */
 export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
   if (!hiddenColumns || hiddenColumns.size === 0) {

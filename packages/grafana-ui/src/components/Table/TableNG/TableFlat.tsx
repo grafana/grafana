@@ -56,7 +56,6 @@ import {
   getVisibleFields,
   makeStripedRowClass,
   markEdgeColumns,
-  orderFieldsByDisplayNames,
   canManageColumns,
   isFieldHideable,
 } from './utils';
@@ -111,8 +110,6 @@ export function TableFlat(props: TableNGProps) {
     preventHorizontalOverflow = false,
     zebraStriping = false,
     showColumnsSidebar = false,
-    columnOrder: columnOrderProp,
-    onColumnOrderChange,
     hiddenColumns: hiddenColumnsProp,
     onHiddenColumnsChange,
     columnCatalog,
@@ -145,15 +142,13 @@ export function TableFlat(props: TableNGProps) {
     [hasFooter, visibleFields]
   );
 
-  const { columnOrder, hiddenColumns, setHiddenColumns } = useColumnViewState({
-    columnOrder: columnOrderProp,
-    onColumnOrderChange,
+  const { hiddenColumns, setHiddenColumns } = useColumnViewState({
     hiddenColumns: hiddenColumnsProp,
     onHiddenColumnsChange,
     structureRev,
   });
 
-  const orderedVisibleFields = orderFieldsByDisplayNames(preparedFields, columnOrder);
+  const orderedVisibleFields = preparedFields;
 
   // Use the pre-hide fields so the sidebar remains available after hiding a column.
   const hasColumnSidebar = canManageColumns(orderedVisibleFields);
