@@ -155,22 +155,33 @@ func TestKVStorageBackendListResourceLastImportTimes(t *testing.T) {
 	}
 }
 
-func TestKVStorageBackendListResourceLastImportTimesReturnsPartialResult(t *testing.T) {
+func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testing.T) {
 	backend := setupTestStorageBackend(t)
-	entry := ResourceLastImportTime{
-		NamespacedResource: NamespacedResource{Namespace: "namespace", Group: "dashboards", Resource: "dashboard"},
-		LastImportTime:     time.Now().UTC().Truncate(time.Second),
+	now := time.Now().UTC().Truncate(time.Second)
+	expected := map[NamespacedResource]time.Time{
+		{Namespace: "aaa", Group: "dashboards", Resource: "dashboard"}: now.Add(-time.Minute),
+		{Namespace: "zzz", Group: "dashboards", Resource: "dashboard"}: now,
 	}
-	require.NoError(t, backend.lastImportStore.Save(t.Context(), entry))
-	writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, "zzz-invalid-key")
-	require.NoError(t, err)
-	_, err = writer.Write([]byte{1})
-	require.NoError(t, err)
-	require.NoError(t, writer.Close())
+	for key, importedAt := range expected {
+		require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+			NamespacedResource: key, LastImportTime: importedAt,
+		}))
+	}
+	malformed := []string{"bbb-invalid-key", "yyy-invalid-key"}
+	for _, key := range malformed {
+		writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, key)
+		require.NoError(t, err)
+		_, err = writer.Write([]byte{1})
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
 
 	times, err := backend.ListResourceLastImportTimes(t.Context())
 	require.Error(t, err)
-	require.Equal(t, map[NamespacedResource]time.Time{entry.NamespacedResource: entry.LastImportTime}, times)
+	for _, key := range malformed {
+		require.ErrorContains(t, err, key)
+	}
+	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
 }
 
 func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {

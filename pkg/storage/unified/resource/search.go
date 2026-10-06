@@ -1709,9 +1709,13 @@ func (s *searchServer) runPeriodicScanForIndexesToRebuild(ctx context.Context) {
 
 func (s *searchServer) scanForIndexesToRebuild(ctx context.Context, checkFullRebuilds bool) {
 	keys := s.search.GetOpenIndexes()
-	importTimes, err := s.listLastImportTimes(ctx)
+	importTimes, err := s.storage.ListResourceLastImportTimes(ctx)
 	if err != nil {
 		s.log.Error("failed to get import times", "error", err)
+	}
+	if importTimes == nil {
+		// An empty map prevents per-type fallback reads after a failed scan.
+		importTimes = make(map[NamespacedResource]time.Time)
 	}
 	if checkFullRebuilds {
 		s.findIndexesToRebuild(importTimes, keys, time.Now(), true)
@@ -1850,16 +1854,6 @@ func (s *searchServer) getLastImportTimes(ctx context.Context, keys []Namespaced
 		result[key] = lastImportTime
 	}
 	return result, nil
-}
-
-func (s *searchServer) listLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error) {
-	result, err := s.storage.ListResourceLastImportTimes(ctx)
-	if result == nil {
-		// Avoid per-type fallback reads while still returning the error below.
-		result = make(map[NamespacedResource]time.Time)
-	}
-	// Keep any times collected before an error so scans can still check those indexes.
-	return result, err
 }
 
 // runIndexRebuilder is a goroutine waiting for rebuild requests, and rebuilds indexes specified in those requests.

@@ -1194,11 +1194,6 @@ func TestScanForIndexesToRebuildContinuesAfterImportTimeReadError(t *testing.T) 
 				}
 			}
 
-			times, err := server.listLastImportTimes(t.Context())
-			require.ErrorIs(t, err, storage.readErr)
-			require.NotNil(t, times, "an empty map must not hide the read error")
-			storage.listCalls = 0
-
 			server.scanForIndexesToRebuild(t.Context(), true)
 
 			require.Equal(t, 1, storage.listCalls)
