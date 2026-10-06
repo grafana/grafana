@@ -359,6 +359,34 @@ describe('QueryCoauthoring', () => {
     }
   );
 
+  it.each(['prompt', 'follow-up'])(
+    'keeps the %s mention menu closed after one Escape and select until typing or leaving the token',
+    async (view) => {
+      const { user, dismissInvocation } = await setup(0, true, mentionContext);
+      if (view === 'follow-up') {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+      }
+      const input = screen.getByRole<HTMLTextAreaElement>('textbox');
+      await user.type(input, 'Use @in');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      const caret = input.value.length - 1;
+      fireEvent.select(input, { target: { selectionStart: caret, selectionEnd: caret } });
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+      await user.keyboard('{End}s');
+      expect(input).toHaveValue('Use @ins');
+      expect(await screen.findByRole('option', { name: 'instance (Label)' })).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      fireEvent.select(input, { target: { selectionStart: 0, selectionEnd: 0 } });
+      fireEvent.select(input, { target: { selectionStart: input.value.length, selectionEnd: input.value.length } });
+      expect(await screen.findByRole('option', { name: 'instance (Label)' })).toBeInTheDocument();
+    }
+  );
+
   it('leaves @ as plain text without metadata and keeps Shift+Enter for a newline', async () => {
     const { user } = await setup(0, true, { ...mentionContext, metadata: [] });
     const input = screen.getByRole('textbox');

@@ -44,6 +44,7 @@ interface SessionData {
   requestMode?: 'modify' | 'explain';
   requestResume?: SessionSnapshot;
   mention?: QueryCoauthoringMention;
+  closedMentionFrom?: number;
   cursorPosition?: number;
 }
 
@@ -187,6 +188,7 @@ export function queryCoauthoringSessionReducer(
           ...state.data,
           prompt,
           mention: event.caret === undefined ? undefined : findQueryCoauthoringMention(event.intent, event.caret),
+          closedMentionFrom: undefined,
           cursorPosition: undefined,
         },
       };
@@ -198,17 +200,33 @@ export function queryCoauthoringSessionReducer(
     case 'feedback-changed':
       return { ...state, data: { ...state.data, feedback: event.feedback } };
     case 'mention-closed':
-      return { ...state, data: { ...state.data, mention: undefined } };
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          closedMentionFrom: state.data.mention?.from ?? state.data.closedMentionFrom,
+          mention: undefined,
+        },
+      };
     case 'mention-caret-changed': {
       if (state.kind !== 'prompt' && state.kind !== 'explain') {
         return state;
       }
       const mention = findQueryCoauthoringMention(state.intent, event.caret);
-      const previous = state.data.mention;
-      if (mention?.from === previous?.from && mention?.to === previous?.to && mention?.query === previous?.query) {
+      // React can emit selection after Escape keyup without changing the mention token.
+      if (state.data.closedMentionFrom !== undefined && mention?.from === state.data.closedMentionFrom) {
         return state;
       }
-      return { ...state, data: { ...state.data, mention, cursorPosition: undefined } };
+      const previous = state.data.mention;
+      if (
+        state.data.closedMentionFrom === undefined &&
+        mention?.from === previous?.from &&
+        mention?.to === previous?.to &&
+        mention?.query === previous?.query
+      ) {
+        return state;
+      }
+      return { ...state, data: { ...state.data, mention, closedMentionFrom: undefined, cursorPosition: undefined } };
     }
     case 'mention-moved': {
       if (!state.data.mention || (state.kind !== 'prompt' && state.kind !== 'explain')) {
@@ -244,7 +262,12 @@ export function queryCoauthoringSessionReducer(
       const intent = prefix + separator + suffix;
       const next = {
         ...state,
-        data: { ...state.data, mention: undefined, cursorPosition: prefix.length + separator.length },
+        data: {
+          ...state.data,
+          mention: undefined,
+          closedMentionFrom: undefined,
+          cursorPosition: prefix.length + separator.length,
+        },
       };
       return transition(
         next,
@@ -293,6 +316,7 @@ export function queryCoauthoringSessionReducer(
           requestMode: event.mode,
           requestResume,
           mention: undefined,
+          closedMentionFrom: undefined,
           cursorPosition: undefined,
         },
       };
@@ -394,6 +418,7 @@ export function queryCoauthoringSessionReducer(
           data: {
             ...state.data,
             mention: event.caret === undefined ? undefined : findQueryCoauthoringMention(event.intent, event.caret),
+            closedMentionFrom: undefined,
             cursorPosition: undefined,
           },
         },
@@ -402,7 +427,10 @@ export function queryCoauthoringSessionReducer(
     case 'modify-started': {
       const prompt = { ...state.data.prompt, intent: '', clarification: undefined };
       return transition(
-        { ...state, data: { ...state.data, prompt, mention: undefined, cursorPosition: undefined } },
+        {
+          ...state,
+          data: { ...state.data, prompt, mention: undefined, closedMentionFrom: undefined, cursorPosition: undefined },
+        },
         updateSession(current, () => prompt)
       );
     }
