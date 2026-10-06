@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 import { type Field, type RangeValueMatcherOptions, type SelectableValue } from '@grafana/data';
 import { type ValueSetOptions } from '@grafana/data/internal';
 
-import { editableTableFilter, tableFilterKey, useTableView } from '../TableViewContext';
+import { useTableView } from '../TableViewContext';
+import { tableFilterKey } from '../transformations/filterByValue';
+import { editableTableFilter, tableTransformations } from '../transformations/registry';
 import { FilterOperator, type FilterType, type TableRow } from '../types';
 
 import { type FilterPopupProps } from './FilterPopup';
@@ -97,23 +99,12 @@ export function useFilterPopupState({
               } else {
                 view.applyFilter(
                   field,
-                  {
-                    id: 'inSet',
-                    options: {
-                      ...selection,
-                      values: values.map((item) => item.value),
-                      mode: 'display',
-                      displayConfig: selection?.displayConfig ?? {
-                        unit: field.config.unit,
-                        decimals: field.config.decimals,
-                        mappings: field.config.mappings,
-                        noValue: field.config.noValue,
-                        min: field.config.min,
-                        max: field.config.max,
-                      },
-                      timeZone: selection?.timeZone ?? view.timeZone,
-                    } satisfies ValueSetOptions,
-                  },
+                  tableTransformations.valueFilter.createPredicate(
+                    field,
+                    values.map((item) => item.value),
+                    selection,
+                    view.timeZone
+                  ),
                   parentIndex
                 );
               }
@@ -124,16 +115,7 @@ export function useFilterPopupState({
           ? ({ min, max, includeMissing }) =>
               view.applyFilter(
                 field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
+                tableTransformations.rangeFilter.createPredicate({ min, max, includeMissing }),
                 parentIndex
               )
           : undefined,

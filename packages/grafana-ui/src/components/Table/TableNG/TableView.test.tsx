@@ -24,7 +24,9 @@ import { mockClientSize } from '@grafana/test-utils';
 import { type PanelRuntimeTransformations } from '../../PanelChrome/PanelContext';
 
 import { TableNG } from './TableNG';
-import { editableTableFilter, transformTableFilters, tableFilterKey } from './TableViewContext';
+import { tableFilterKey } from './transformations/filterByValue';
+import { editableTableFilter } from './transformations/registry';
+import { transformTableFilters } from './transformations/rowProjection';
 import { compileFrameToRecords } from './utils';
 
 standardTransformersRegistry.setInit(() =>
