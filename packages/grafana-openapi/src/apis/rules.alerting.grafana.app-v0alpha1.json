@@ -3893,6 +3893,74 @@
           }
         }
       ]
+    },
+    "/search/hybrid": {
+      "get": {
+        "description": "Experimental hybrid search for alert rules",
+        "operationId": "getHybridSearchAlertRules",
+        "responses": {
+          "default": {
+            "description": "Default Response."
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "folder",
+          "in": "query",
+          "description": "Filter by the stored folder UID",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "limit",
+          "in": "query",
+          "description": "Maximum number of results (default 50)",
+          "schema": {
+            "type": "integer",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "minRelevance",
+          "in": "query",
+          "description": "Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "query",
+          "in": "query",
+          "description": "Search text for lexical and semantic retrieval",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "semanticQuery",
+          "in": "query",
+          "description": "Optional text to embed for semantic retrieval instead of query",
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "skipRerank",
+          "in": "query",
+          "description": "Skip reranking and return the fused lexical and semantic ordering",
+          "schema": {
+            "type": "boolean",
+            "uniqueItems": true
+          }
+        }
+      ]
     }
   },
   "components": {
@@ -3935,6 +4003,31 @@
       "AlertRuleAlertRuleHealth": {
         "type": "string",
         "enum": ["Unknown", "OK", "Paused", "Error", "NoData"]
+      },
+      "AlertRuleAlertRuleInstanceTotals": {
+        "description": "Count of alert instances per state. error also counts instances whose evaluation\nerrored but were mapped to another state via execErrState, so it can overlap.",
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "integer"
+          },
+          "firing": {
+            "type": "integer"
+          },
+          "healthy": {
+            "type": "integer"
+          },
+          "nodata": {
+            "type": "integer"
+          },
+          "pending": {
+            "type": "integer"
+          },
+          "recovering": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
       },
       "AlertRuleAlertRuleState": {
         "type": "string",
@@ -4266,6 +4359,9 @@
           },
           "stateReason": {
             "$ref": "#/components/schemas/AlertRuleAlertRuleStateReason"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/AlertRuleAlertRuleInstanceTotals"
           }
         },
         "additionalProperties": false

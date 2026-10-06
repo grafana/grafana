@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -325,7 +326,7 @@ func (f *ParsedResource) SameIdentity(other *ParsedResource) bool {
 }
 
 // ExistingFolder returns the grafana.app/folder annotation from the existing
-// Grafana object, or "" if Existing is nil or has no folder annotation.
+// Grafana object, or "" when it has no real parent folder.
 func (f *ParsedResource) ExistingFolder() string {
 	if f.Existing == nil {
 		return ""
@@ -334,7 +335,7 @@ func (f *ParsedResource) ExistingFolder() string {
 	if err != nil {
 		return ""
 	}
-	return meta.GetFolder()
+	return foldermodel.ToLegacyFolderUID(meta.GetFolder())
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
