@@ -2,6 +2,7 @@ package federated
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -77,6 +78,13 @@ func (s *LegacyStatsGetter) GetStats(ctx context.Context, in *resourcepb.Resourc
 	}
 
 	helper, err := s.SQL(ctx)
+	if errors.Is(err, legacysql.ErrNamespaceNotFound) {
+		// The namespace no longer resolves to a legacy database (e.g. the stack was deleted or
+		// archived and its namespace is being torn down). Fall back to the unified storage counts
+		// alone, as when legacy counts are disabled; failing here turns every folder delete in
+		// that namespace into a 500.
+		return &resourcepb.ResourceStatsResponse{}, nil
+	}
 	if err != nil {
 		return nil, err
 	}
