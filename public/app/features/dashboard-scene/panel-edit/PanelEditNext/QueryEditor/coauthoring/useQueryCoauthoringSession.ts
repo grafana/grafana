@@ -10,6 +10,7 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
+import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,
@@ -41,6 +42,7 @@ import {
   trackQueryCoauthoringExplainFollowUpSubmitted,
   trackQueryCoauthoringExploreSimilarUsed,
   trackQueryCoauthoringGenerationStopped,
+  trackQueryCoauthoringMentionInserted,
   trackQueryCoauthoringOpened,
   trackQueryCoauthoringPromptSubmitted,
   trackQueryCoauthoringProposalAccepted,
@@ -68,7 +70,7 @@ interface PromptSessionState {
   promptUserGestureRef: MutableRefObject<boolean>;
   submittedModifyCount: number;
   continueInAssistant(): void;
-  setIntent(intent: string): void;
+  setIntent(intent: string, caret?: number): void;
   submit(): void;
   explain(): void;
   exploreSimilar(): void;
@@ -83,7 +85,7 @@ export type QueryCoauthoringSessionState =
       context: QueryEditorCoauthoringContextV1;
       answer: QueryExplanation;
       intent: string;
-      setIntent(intent: string): void;
+      setIntent(intent: string, caret?: number): void;
       submitFollowUp(question?: string): void;
       modify(): void;
     }
@@ -166,8 +168,8 @@ export function useQueryCoauthoringSession({
   const { intent, clarification } = session.data.prompt;
   const proposal = session.kind === 'proposal' ? session.proposal : undefined;
   const fallback = session.kind === 'fallback' ? session.fallback : undefined;
-  const setIntent = (intent: string): void => {
-    send({ type: 'intent-changed', intent });
+  const setIntent = (intent: string, caret?: number): void => {
+    send({ type: 'intent-changed', intent, caret });
   };
   const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
     send({ type: 'feedback-changed', feedback });
@@ -460,7 +462,7 @@ export function useQueryCoauthoringSession({
         context: session.context,
         answer: session.answer,
         intent: session.intent,
-        setIntent: (intent) => send({ type: 'follow-up-changed', intent }),
+        setIntent: (intent, caret) => send({ type: 'follow-up-changed', intent, caret }),
         submitFollowUp: (question) =>
           void explain(question ?? session.intent, question === undefined ? 'typed' : 'generated'),
         modify: () => send({ type: 'modify-started' }),
@@ -521,5 +523,38 @@ export function useQueryCoauthoringSession({
       };
   }
 
-  return { closeFeedback, dismiss: dismissPopover, dismissUntouched, feedback: session.data.feedback, state };
+  const options =
+    session.data.mention && (session.kind === 'prompt' || session.kind === 'explain')
+      ? queryCoauthoringMentionOptions(session.context, session.data.mention.query)
+      : [];
+  const mention: QueryCoauthoringMentionMenu | undefined =
+    options.length && session.data.mention
+      ? {
+          options,
+          selectedIndex: Math.min(session.data.mention.selectedIndex, options.length - 1),
+          move: (direction) => send({ type: 'mention-moved', direction }),
+          select: (index) => {
+            const current = sessionRef.current;
+            if (!current.data.mention || (current.kind !== 'prompt' && current.kind !== 'explain')) {
+              return;
+            }
+            const selectedIndex = index ?? current.data.mention.selectedIndex;
+            const option = queryCoauthoringMentionOptions(current.context, current.data.mention.query)[selectedIndex];
+            if (option && send({ type: 'mention-selected', index: selectedIndex })) {
+              trackQueryCoauthoringMentionInserted(option.kind);
+            }
+          },
+        }
+      : undefined;
+  return {
+    closeFeedback,
+    dismiss: dismissPopover,
+    dismissUntouched,
+    feedback: session.data.feedback,
+    state,
+    mention,
+    cursorPosition: session.data.cursorPosition,
+    setCaret: (caret: number) => send({ type: 'mention-caret-changed', caret }),
+    closeMention: () => send({ type: 'mention-closed' }),
+  };
 }

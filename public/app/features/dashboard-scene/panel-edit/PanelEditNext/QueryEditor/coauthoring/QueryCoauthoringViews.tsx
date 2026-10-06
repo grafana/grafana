@@ -1,9 +1,19 @@
 import { cx } from '@emotion/css';
-import { type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode, useEffect, useRef } from 'react';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import {
+  type ChangeEvent,
+  type KeyboardEvent,
+  type MutableRefObject,
+  type ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -11,6 +21,7 @@ import {
   type QueryEditorCoauthoringChangeV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
+import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
@@ -66,8 +77,12 @@ interface PromptInputProps {
   ariaDescribedBy?: string;
   actionLabel: string;
   disabled: boolean;
-  onChange: (value: string) => void;
+  onChange: (value: string, caret?: number) => void;
   onSubmit: () => void;
+  mention?: QueryCoauthoringMentionMenu;
+  mentionMenuRef?: MutableRefObject<HTMLDivElement | null>;
+  cursorPosition?: number;
+  onCaretChange?: (caret: number) => void;
 }
 
 export function QueryCoauthoringPromptInput({
@@ -81,11 +96,29 @@ export function QueryCoauthoringPromptInput({
   disabled,
   onChange,
   onSubmit,
+  mention,
+  mentionMenuRef,
+  cursorPosition,
+  onCaretChange,
 }: PromptInputProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const localUserGestureRef = useRef(false);
   const hasOutsideUserGestureRef = userGestureRef ?? localUserGestureRef;
+  const menuId = useId();
+  const { refs, floatingStyles } = useFloating({
+    open: !!mention,
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  useLayoutEffect(() => {
+    if (cursorPosition !== undefined) {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(cursorPosition, cursorPosition);
+    }
+  }, [cursorPosition, value]);
 
   useEffect(() => {
     const recordOutsideUserGesture = (event: Event) => {
@@ -148,40 +181,98 @@ export function QueryCoauthoringPromptInput({
     return cancelFocus;
   }, [focusTrigger, hasOutsideUserGestureRef]);
 
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.currentTarget.value);
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) =>
+    onChange(event.currentTarget.value, event.currentTarget.selectionStart);
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.nativeEvent.isComposing) {
       return;
     }
+    if (mention && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+      event.preventDefault();
+      mention.move(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      if (!disabled) {
+      if (mention) {
+        mention.select();
+      } else if (!disabled) {
         onSubmit();
       }
     }
   };
 
   return (
-    <div className={styles.promptRow}>
-      <TextArea
-        ref={inputRef}
-        className={styles.promptInput}
-        value={value}
-        rows={1}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        aria-describedby={ariaDescribedBy}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-      />
-      <IconButton
-        className={styles.promptSubmit}
-        name="enter"
-        aria-label={actionLabel}
-        disabled={disabled}
-        onClick={onSubmit}
-      />
-    </div>
+    <>
+      <div className={styles.promptRow}>
+        <TextArea
+          ref={(element) => {
+            inputRef.current = element;
+            refs.setReference(element);
+          }}
+          className={styles.promptInput}
+          value={value}
+          rows={1}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+          aria-autocomplete={mention ? 'list' : undefined}
+          aria-controls={mention ? menuId : undefined}
+          aria-activedescendant={mention ? `${menuId}-${mention.selectedIndex}` : undefined}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onSelect={(event) => onCaretChange?.(event.currentTarget.selectionStart)}
+        />
+        <IconButton
+          className={styles.promptSubmit}
+          name="enter"
+          aria-label={actionLabel}
+          disabled={disabled}
+          onClick={onSubmit}
+        />
+      </div>
+      {mention && (
+        <Portal>
+          <div
+            id={menuId}
+            ref={(element) => {
+              refs.setFloating(element);
+              if (mentionMenuRef) {
+                mentionMenuRef.current = element;
+              }
+            }}
+            role="listbox"
+            aria-label={t('query-editor-coauthoring.mention-suggestions', 'Metrics and labels')}
+            className={styles.mentionMenu}
+            style={floatingStyles}
+          >
+            {mention.options.map((option, index) => (
+              <button
+                key={`${option.kind}:${option.name}`}
+                type="button"
+                role="option"
+                id={`${menuId}-${index}`}
+                tabIndex={-1}
+                aria-selected={index === mention.selectedIndex}
+                aria-label={t('query-editor-coauthoring.mention-option', '{{name}} ({{kind}})', {
+                  name: option.name,
+                  kind:
+                    option.kind === 'metric'
+                      ? t('query-editor-coauthoring.mention-metric', 'Metric')
+                      : t('query-editor-coauthoring.mention-label', 'Label'),
+                })}
+                className={cx(styles.mentionOption, index === mention.selectedIndex && styles.mentionSelected)}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => mention.select(index)}
+              >
+                <Icon name={option.kind === 'metric' ? 'graph-bar' : 'tag-alt'} size="sm" />
+                {option.name}
+              </button>
+            ))}
+          </div>
+        </Portal>
+      )}
+    </>
   );
 }
 
@@ -203,13 +294,21 @@ export function QueryCoauthoringExplain({
   onFollowUp,
   onModify,
   onClose,
+  mention,
+  mentionMenuRef,
+  cursorPosition,
+  onCaretChange,
 }: {
   answer: QueryExplanation;
   intent: string;
-  onIntentChange: (intent: string) => void;
+  onIntentChange: (intent: string, caret?: number) => void;
   onFollowUp: (question?: string) => void;
   onModify: () => void;
   onClose: () => void;
+  mention?: QueryCoauthoringMentionMenu;
+  mentionMenuRef?: MutableRefObject<HTMLDivElement | null>;
+  cursorPosition?: number;
+  onCaretChange?: (caret: number) => void;
 }) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
@@ -237,6 +336,10 @@ export function QueryCoauthoringExplain({
         disabled={!intent.trim()}
         onChange={onIntentChange}
         onSubmit={() => onFollowUp()}
+        mention={mention}
+        mentionMenuRef={mentionMenuRef}
+        cursorPosition={cursorPosition}
+        onCaretChange={onCaretChange}
       />
       <div className={styles.footer}>
         <Button size="sm" variant="secondary" fill="text" onClick={onModify}>
@@ -265,7 +368,7 @@ export function QueryCoauthoringWorking({
             {mode === 'explain' ? (
               <Trans i18nKey="query-editor-coauthoring.explaining">Explaining query…</Trans>
             ) : (
-              <Trans i18nKey="query-editor-coauthoring.building">Building query...</Trans>
+              <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
             )}
           </Text>
           {context && (
