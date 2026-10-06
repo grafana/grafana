@@ -163,7 +163,7 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func initPluginRoles(ctx context.Context, deps PluginLoaderDependencies) error {
+func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error {
 	// Declare roles during dependency construction, before startup registers fixed
 	// roles. Reconciliation must not append the same declarations on every load.
 	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources, false)
@@ -171,6 +171,11 @@ func initPluginRoles(ctx context.Context, deps PluginLoaderDependencies) error {
 		return err
 	}
 	for _, plugin := range pluginDefs {
+		// The handler installs settings on a copy of the storage config, so resolve
+		// the wildcard default where the shared dual-write service reads it.
+		if deps.Cfg != nil {
+			appplugin.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
+		}
 		if plugin.Manifest == nil {
 			continue
 		}

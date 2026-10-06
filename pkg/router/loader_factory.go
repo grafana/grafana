@@ -27,8 +27,8 @@ func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (Route
 		//nolint:staticcheck
 		middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
 		if middleware {
-			// When running in ST grafana as middleware, setup the plugin roles
-			if err := initPluginRoles(context.Background(), deps); err != nil {
+			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
+			if err := initLocalPlugins(context.Background(), deps); err != nil {
 				return nil, err
 			}
 		}

@@ -286,15 +286,29 @@ func (b *AppPluginAPIBuilder) applyDefaultStorageConfig(opts builder.APIGroupOpt
 	if opts.StorageOpts == nil {
 		return
 	}
-	key := ri.GroupResource().String()
-	if _, exists := opts.StorageOpts.UnifiedStorageConfig[key]; exists {
+	applyDefaultSettingsStorageConfig(opts.StorageOpts.UnifiedStorageConfig, ri)
+}
+
+// ApplyDefaultSettingsStorageConfig resolves the wildcard settings storage config
+// for pluginID into cfg. The dual-write service reads the shared config map, so
+// callers that install settings on a copy of it must resolve the default here first.
+func ApplyDefaultSettingsStorageConfig(cfg map[string]setting.UnifiedStorageConfig, pluginID string) {
+	applyDefaultSettingsStorageConfig(cfg, apppluginV0.SettingsResourceInfo.WithGroupAndShortName(pluginID, pluginID))
+}
+
+func applyDefaultSettingsStorageConfig(cfg map[string]setting.UnifiedStorageConfig, ri utils.ResourceInfo) {
+	if cfg == nil {
 		return
 	}
-	fallback, hasFallback := opts.StorageOpts.UnifiedStorageConfig[appPluginSettingsWildcard]
+	key := ri.GroupResource().String()
+	if _, exists := cfg[key]; exists {
+		return
+	}
+	fallback, hasFallback := cfg[appPluginSettingsWildcard]
 	if !hasFallback {
 		return
 	}
-	opts.StorageOpts.UnifiedStorageConfig[key] = setting.UnifiedStorageConfig{
+	cfg[key] = setting.UnifiedStorageConfig{
 		DualWriterMode: fallback.DualWriterMode,
 	}
 }

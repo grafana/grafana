@@ -366,7 +366,7 @@ func TestInitPluginRolesDeclarationFailure(t *testing.T) {
 			if missingService {
 				service = nil
 			}
-			err := initPluginRoles(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service})
+			err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service})
 			require.ErrorContains(t, err, "error declaring roles for manifest-app")
 			if !missingService {
 				require.ErrorIs(t, err, failure)
@@ -451,7 +451,7 @@ func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
 		}}}
 	}}
 	deps := PluginLoaderDependencies{PluginSources: source, ACService: roles}
-	err := initPluginRoles(ctx, deps)
+	err := initLocalPlugins(ctx, deps)
 	require.NoError(t, err, "schema failures must not prevent role declaration")
 	require.Equal(t, 1, roles.calls)
 	require.Len(t, roles.roles, 2)
@@ -459,4 +459,24 @@ func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
 	_, err = loader.Load(ctx)
 	require.ErrorContains(t, err, "error loading schema manifest-app")
 	require.Equal(t, 1, roles.calls, "Load must not redeclare roles")
+}
+
+func TestInitLocalPluginsResolvesSettingsStorageWildcard(t *testing.T) {
+	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{
+				{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "wildcard-app", Type: plugins.TypeApp}, FS: plugins.NewInMemoryFS(nil)}},
+				{Primary: plugins.FoundPlugin{JSONData: plugins.JSONData{ID: "explicit-app", Type: plugins.TypeApp}, FS: plugins.NewInMemoryFS(nil)}},
+			}, nil
+		}}}
+	}}
+	cfg := setting.NewCfg()
+	cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
+		"app.*-app":        {DualWriterMode: 1},
+		"app.explicit-app": {DualWriterMode: 3},
+	}
+	err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, PluginDependencies: PluginDependencies{Cfg: cfg}})
+	require.NoError(t, err)
+	require.EqualValues(t, 1, cfg.UnifiedStorage["app.wildcard-app"].DualWriterMode, "the shared dual-write service must see the wildcard default")
+	require.EqualValues(t, 3, cfg.UnifiedStorage["app.explicit-app"].DualWriterMode, "explicit config wins over the wildcard")
 }
