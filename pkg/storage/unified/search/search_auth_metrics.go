@@ -56,7 +56,7 @@ func (o *searchAuthObservation) observe(mode, queryType string, started time.Tim
 	if err != nil || result == nil || result.Error != nil {
 		outcome = "error"
 	} else {
-		returned := 0
+		returned := len(result.Rows)
 		if result.Results != nil {
 			returned = len(result.Results.Rows)
 		}

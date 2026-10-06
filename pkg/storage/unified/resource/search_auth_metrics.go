@@ -18,7 +18,7 @@ type SearchAuthMetrics struct {
 func newSearchAuthMetrics(reg prometheus.Registerer) *SearchAuthMetrics {
 	histogram := func(name, help string, labels ...string) *prometheus.HistogramVec {
 		return promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "index_server_search_auth_" + name,
+			Name:                            name,
 			Help:                            help,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
@@ -26,11 +26,11 @@ func newSearchAuthMetrics(reg prometheus.Registerer) *SearchAuthMetrics {
 		}, labels)
 	}
 	return &SearchAuthMetrics{
-		Duration: histogram("execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (pre_rank, post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
-		Returned: histogram("returned_documents", "Documents returned per successful executed search.", "mode", "query_type"),
-		Checks:   histogram("checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
+		Duration: histogram("grafana_index_server_search_auth_execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (pre_rank, post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
+		Returned: histogram("grafana_index_server_search_auth_returned_documents", "Documents returned per successful executed search.", "mode", "query_type"),
+		Checks:   histogram("grafana_index_server_search_auth_checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
 		Events: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "index_server_search_auth_events_total",
+			Name: "grafana_index_server_search_auth_events_total",
 			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget stop a PostRank scan with unseen matches.",
 		}, []string{"reason"}),
 	}

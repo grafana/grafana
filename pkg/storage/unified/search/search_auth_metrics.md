@@ -1,8 +1,8 @@
 # PreRank vs PostRank auth metrics
 
-The `index_server_search_auth_*` metrics describe executed Bleve searches, after
+The `grafana_index_server_search_auth_*` metrics describe executed Bleve searches, after
 request validation. They do not count incoming RPCs rejected before execution.
-Deployment registries may add a `grafana_` prefix, as with other index metrics.
+Metric names include the `grafana_` prefix in every deployment.
 
 `mode` records the path actually executed: `pre_rank`, `post_rank`, or `none`
 (no authorization client). A request falling back because of a cursor created

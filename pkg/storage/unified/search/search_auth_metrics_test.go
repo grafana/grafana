@@ -23,7 +23,7 @@ func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzCo
 	t.Helper()
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root: t.TempDir(), FileThreshold: threshold, IndexDeletedDocuments: true,
+		Root: t.TempDir(), FileThreshold: threshold,
 		PostRankAuthzEnabled: postRank, PostRankAuthz: cfg,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
@@ -124,4 +124,23 @@ func TestSearchAuthMetricsCursorFallback(t *testing.T) {
 	require.EqualValues(t, 1, testutil.ToFloat64(metrics.Events.WithLabelValues("cursor_fallback")))
 	require.EqualValues(t, 1, authHistogram(t, metrics.Duration, "pre_rank", "page", "success").GetSampleCount())
 	require.Zero(t, authHistogram(t, metrics.Duration, "post_rank", "page", "success").GetSampleCount())
+}
+
+func TestSearchAuthMetricsFieldValues(t *testing.T) {
+	for _, mode := range []string{"pre_rank", "post_rank"} {
+		t.Run(mode, func(t *testing.T) {
+			index, metrics := newAuthMetricsIndex(t, mode == "post_rank", search.PostRankAuthzConfig{})
+			requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
+			ctx := authlib.WithAuthInfo(context.Background(), requester)
+			query := listQuery(10)
+			query.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
+			response, err := index.Search(ctx, &countingAccessClient{allowAll: true}, query, nil, nil)
+			require.NoError(t, err)
+			require.Nil(t, response.Error)
+			require.Nil(t, response.Results)
+			require.Len(t, response.Rows, 10)
+			require.EqualValues(t, 10, authHistogram(t, metrics.Returned, mode, "page").GetSampleSum())
+			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "success").GetSampleCount())
+		})
+	}
 }
