@@ -10,6 +10,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
@@ -140,8 +141,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public onDuplicate(source: PanelActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.duplicatePanel?.(this.panel);
+    duplicatePanel(this.panel);
   }
 
   public onCopy(source: PanelActionSource = 'edit_pane') {

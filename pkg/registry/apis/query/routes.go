@@ -136,7 +136,7 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 							ParameterProps: spec3.ParameterProps{
 								Name:        "limit",
 								In:          "query",
-								Description: "Maximum number of connections to return; zero means no limit",
+								Description: "Maximum number of connections to return; zero means no limit (server side maximum applies)",
 								Schema:      spec.Int64Property(),
 							},
 						},
