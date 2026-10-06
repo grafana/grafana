@@ -11,7 +11,6 @@ import (
 	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
-	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
 func TestMergePreferences(t *testing.T) {
@@ -159,7 +158,7 @@ func TestMergePreferences(t *testing.T) {
 			},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
-					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
 				}},
 			},
 			expect: preferences.PreferencesSpec{
@@ -173,7 +172,7 @@ func TestMergePreferences(t *testing.T) {
 			},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
-					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
 				}},
 				{Spec: preferences.PreferencesSpec{
 					HomeDashboardUID: new("team-dash"),
@@ -188,10 +187,27 @@ func TestMergePreferences(t *testing.T) {
 			defaults: preferences.PreferencesSpec{},
 			items: []preferences.Preferences{
 				{Spec: preferences.PreferencesSpec{
-					HomeDashboardUID: new(pref.GlobalHomeDashboardUID),
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
 				}},
 			},
 			expect: preferences.PreferencesSpec{},
+		},
+		{
+			name: "lower-level global home sentinel loses to a higher-level dashboard",
+			defaults: preferences.PreferencesSpec{
+				HomeDashboardUID: new(home.DASHBOARD_NAME),
+			},
+			items: []preferences.Preferences{
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new("team-dash"),
+				}},
+				{Spec: preferences.PreferencesSpec{
+					HomeDashboardUID: new(preferences.GlobalHomeDashboardUID),
+				}},
+			},
+			expect: preferences.PreferencesSpec{
+				HomeDashboardUID: new("team-dash"),
+			},
 		},
 	}
 	for _, tt := range tests {
