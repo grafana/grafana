@@ -401,7 +401,7 @@ export const getGridStyles = memoize(
       }),
       cellNested: css({
         [SELECTED_CELL_SELECTOR]: { outline: 'none' },
-        // beta.61 paints row hover/selection on `.rdg-row`, not `.rdg-cell`, so a transparent
+        // beta.60 paints row hover/selection on `.rdg-row`, not `.rdg-cell`, so a transparent
         // container cell lets that color bleed through around the nested grid. Paint the full-width
         // container with the opaque base row background so it stays neutral.
         backgroundColor: 'var(--rdg-row-background-color)',
