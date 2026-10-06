@@ -32,7 +32,6 @@ type manifestBuilder struct {
 	manifest      *app.ManifestData
 	pluginJSON    plugins.JSONData
 	clientV3      appclientv3.Client
-	settings      *appplugin.AppPluginAPIBuilder
 	decrypter     *secureValueLookup
 	accessChecker appplugin.PluginAccessChecker
 	search        resourcepb.ResourceIndexClient
@@ -45,17 +44,8 @@ type manifestBuilder struct {
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
-// Legacy settings add v0alpha1 only when settings are enabled.
 func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
-	settingsGV := schema.GroupVersion{
-		Group:   b.group,
-		Version: apppluginV0.VERSION,
-	}
-	if b.manifest == nil {
-		return []schema.GroupVersion{settingsGV}
-	}
-
-	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions)+1)
+	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
 	for _, v := range b.manifest.Versions {
 		if !v.Served {
 			continue
@@ -69,10 +59,6 @@ func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
 		} else {
 			gvs = append(gvs, gv)
 		}
-	}
-	// Keep the legacy settings version last so it does not become preferred.
-	if !slices.Contains(gvs, settingsGV) && b.includeSettings() {
-		gvs = append(gvs, settingsGV)
 	}
 	return gvs
 }
@@ -136,13 +122,6 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	if opts.OptsGetter == nil {
 		return fmt.Errorf("apps require a storage options getter")
 	}
-	var settingsStorage map[string]rest.Storage
-	if b.settings != nil {
-		if err := b.settings.UpdateAPIGroupInfo(apiGroupInfo, opts); err != nil {
-			return err
-		}
-		settingsStorage = apiGroupInfo.VersionedResourcesStorageMap[apppluginV0.VERSION]
-	}
 	kinds := make(map[schema.GroupVersionResource]*kindstore.Store)
 
 	defs := kindstore.LoadOpenAPIDefinitions(func(name string) spec.Ref {
@@ -151,10 +130,6 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 
 	for _, gv := range b.GetGroupVersions() {
 		storage := map[string]rest.Storage{}
-
-		for key, value := range settingsStorage {
-			storage[key] = value
-		}
 
 		// Configure storage for manifest-defined kinds.
 		if b.manifest != nil {
@@ -171,8 +146,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 						return err
 					}
 
-					// Without this, a kind whose plural shadows the settings resource
-					// (or an earlier kind) would silently replace it in the map.
+					// Reject duplicate plurals rather than silently replacing a kind.
 					resource := store.DefaultQualifiedResource.Resource
 					if _, taken := storage[resource]; taken {
 						return fmt.Errorf("kind %s in %s claims the already registered resource %q",
@@ -213,7 +187,6 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 	return nil
 }
 
-func (b *manifestBuilder) includeSettings() bool { return b.settings != nil }
 func (b *manifestBuilder) AllowedV0Alpha1Resources() []string {
 	return []string{builder.AllResourcesAllowed}
 }

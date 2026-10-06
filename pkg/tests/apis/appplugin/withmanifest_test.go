@@ -29,9 +29,8 @@ import (
 // A manifest kind is served under the group the manifest declares, not the plugin id.
 const thingAPIVersion = testAppGroup + "/v1"
 
-// The manifest declares only v1, but a plugin's settings API must keep working
-// after a manifest ships, so v0alpha1 is served alongside the manifest versions.
-func TestIntegrationPluginManifestDiscoveryWithSettings(t *testing.T) {
+// A manifest serves only its declared API; settings stay under the plugin ID.
+func TestIntegrationPluginManifestSettingsUsePluginID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := setupHelperWithManifest(t, rest.Mode5,
@@ -42,185 +41,96 @@ func TestIntegrationPluginManifestDiscoveryWithSettings(t *testing.T) {
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
 	require.JSONEq(t, `[
-		{
-			"version": "v1",
-			"freshness": "Current",
-			"resources": [
-				{
-					"resource": "app",
-					"responseKind": {
-						"group": "",
-						"kind": "Settings",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "app",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "HealthCheckResult",
-								"version": ""
-							},
-							"subresource": "health",
-							"verbs": [
-								"get"
-							]
-						},
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Status",
-								"version": ""
-							},
-							"subresource": "resources",
-							"verbs": [
-								"create",
-								"delete",
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				},
-				{
-					"resource": "things",
-					"responseKind": {
-						"group": "",
-						"kind": "Thing",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "thing",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Thing",
-								"version": ""
-							},
-							"subresource": "status",
-							"verbs": [
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				},
-				{
-					"resource": "widgets",
-					"responseKind": {
-						"group": "",
-						"kind": "Widget",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "widget",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Widget",
-								"version": ""
-							},
-							"subresource": "status",
-							"verbs": [
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				}
-			]
-		},
-		{
-			"version": "v0alpha1",
-			"freshness": "Current",
-			"resources": [
-				{
-					"resource": "app",
-					"responseKind": {
-						"group": "",
-						"kind": "Settings",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "app",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "HealthCheckResult",
-								"version": ""
-							},
-							"subresource": "health",
-							"verbs": [
-								"get"
-							]
-						},
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Status",
-								"version": ""
-							},
-							"subresource": "resources",
-							"verbs": [
-								"create",
-								"delete",
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				}
-			]
-		}
-	]`, disco)
+  {
+    "version": "v1",
+    "freshness": "Current",
+    "resources": [
+      {
+        "resource": "things",
+        "responseKind": {
+          "group": "",
+          "kind": "Thing",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "thing",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "Thing",
+              "version": ""
+            },
+            "subresource": "status",
+            "verbs": [
+              "get",
+              "patch",
+              "update"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "resource": "widgets",
+        "responseKind": {
+          "group": "",
+          "kind": "Widget",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "widget",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "Widget",
+              "version": ""
+            },
+            "subresource": "status",
+            "verbs": [
+              "get",
+              "patch",
+              "update"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      }
+    ]
+  }
+]`, disco)
+	settingsDiscovery, err := helper.GetGroupVersionInfoJSON(testAppID)
+	require.NoError(t, err)
+	require.Contains(t, settingsDiscovery, `"resource": "app"`)
+	require.Contains(t, settingsDiscovery, `"version": "v0alpha1"`)
+	for _, version := range []string{"v1", "v0alpha1"} {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  schema.GroupVersionResource{Group: testAppGroup, Version: version, Resource: "app"},
+		})
+		_, err := client.Resource.List(t.Context(), metav1.ListOptions{})
+		require.True(t, apierrors.IsNotFound(err), "settings must not be served under the manifest group: %v", err)
+	}
+
 }
 
 // TestIntegrationPluginManifestOpenAPIV3 verifies discovery links resolve the plugin's schemas.
@@ -240,14 +150,14 @@ func TestIntegrationPluginManifestOpenAPIV3(t *testing.T) {
 			require.NoError(t, err)
 			require.Contains(t, paths, "apis/"+testAppGroup+"/v1")
 			_, hasSettingsVersion := paths["apis/"+testAppGroup+"/v0alpha1"]
-			require.Equal(t, keepSettings, hasSettingsVersion)
+			require.False(t, hasSettingsVersion)
 			require.Contains(t, paths, "apis/folder.grafana.app/v1", "embedded APIs must remain discoverable")
 
 			raw, err := paths["apis/"+testAppGroup+"/v1"].Schema("application/json")
 			require.NoError(t, err)
 			doc, err := openapi3.NewLoader().LoadFromData(raw)
 			require.NoError(t, err, "all schema references must resolve")
-			require.Equal(t, keepSettings, doc.Paths.Find("/apis/"+testAppGroup+"/v1/namespaces/{namespace}/app/instance") != nil)
+			require.Nil(t, doc.Paths.Find("/apis/"+testAppGroup+"/v1/namespaces/{namespace}/app/instance"))
 			path := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things/{name}"
 			thing := doc.Paths.Find(path)
 			require.NotNil(t, thing)

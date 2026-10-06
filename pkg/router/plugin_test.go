@@ -32,7 +32,7 @@ import (
 
 func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 	legacy := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
-		JSONData: plugins.JSONData{ID: "legacy-app", Type: plugins.TypeApp},
+		JSONData: plugins.JSONData{ID: "test-app-with-backend", Type: plugins.TypeApp},
 		FS:       plugins.NewFakeFS(),
 	}}
 	manifest := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
@@ -85,7 +85,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			for _, entry := range router.served {
 				t.Cleanup(entry.handler.(interface{ Destroy() }).Destroy)
 			}
-			require.Len(t, router.served, 2)
+			require.Len(t, router.served, 3)
 			require.Equal(t, 1, roles.calls, "reconciliation must not redeclare roles")
 			require.Equal(t, 3, discoveries, "each Load must discover backends afresh")
 
@@ -98,7 +98,7 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			require.Equal(t, http.StatusOK, res.Code, res.Body.String())
 			var discovery handler3.OpenAPIV3Discovery
 			require.NoError(t, json.Unmarshal(res.Body.Bytes(), &discovery))
-			for _, gv := range []string{"legacy-app/v0alpha1", "manifest.ext.grafana.app/v1"} {
+			for _, gv := range []string{"test-app-with-backend/v0alpha1", "manifest-app/v0alpha1", "manifest.ext.grafana.app/v1"} {
 				require.Contains(t, discovery.Paths, "apis/"+gv)
 				path := discovery.Paths["apis/"+gv].ServerRelativeURL
 				document := httptest.NewRecorder()
@@ -295,7 +295,7 @@ func TestPluginOpenAPIAuthorizationAfterSuccessfulRequest(t *testing.T) {
 	}
 }
 
-func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
+func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 	valid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
 		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
 		FS:       plugins.NewFakeFS(),
@@ -327,8 +327,10 @@ func TestPluginLoaderSkipsInvalidPlugins(t *testing.T) {
 	require.NoError(t, err)
 	backends, err := loader.Load(t.Context())
 	require.NoError(t, err)
-	require.Len(t, backends, 1)
-	require.Equal(t, "valid-app", backends[0].Group().Name)
+	require.Len(t, backends, 2)
+	groups := []string{backends[0].Group().Name, backends[1].Group().Name}
+	require.ElementsMatch(t, []string{"valid-app", "invalid-app"}, groups, "settings remain available under plugin IDs")
+	require.NotContains(t, groups, "dashboard.grafana.app", "an invalid manifest must not shadow a core API")
 }
 
 type recordingManifestRoleService struct {

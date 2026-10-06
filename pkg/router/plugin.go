@@ -195,7 +195,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry) 
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				if jsonData.ID == "v1" || !strings.HasSuffix(jsonData.ID, "-app") {
+				if jsonData.ID == "v1" || !isPluginAPIGroup(jsonData.ID) {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -219,6 +219,14 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 		return nil, err
 	}
 
+	// Settings retain the plugin ID even when the manifest declares another group.
+	for _, plugin := range pluginDefs {
+		if plugin.Manifest != nil {
+			settings := plugin
+			settings.Manifest = nil
+			pluginDefs = append(pluginDefs, settings)
+		}
+	}
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
 		backend, err := NewPluginBackend(plugin,

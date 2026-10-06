@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -238,28 +237,15 @@ func NewAPI(plugin definition.PluginDefinition, opts Options) (PluginAPI, error)
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	var settings *appplugin.AppPluginAPIBuilder
-	keepSettings := plugin.Manifest == nil || openfeature.NewDefaultClient().Boolean(context.Background(), featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings, false, openfeature.EvaluationContext{})
-	if keepSettings {
-		var err error
-		settings, err = appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient,
-			opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Runner, opts.Tracer, opts.Features)
-		if err != nil {
-			return nil, err
-		}
-	}
 	if plugin.Manifest == nil {
-		return settings, nil
-	}
-	if opts.PluginClient == nil || opts.ContextProvider == nil {
-		settings = nil
+		return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient,
+			opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Runner, opts.Tracer, opts.Features)
 	}
 	return &manifestBuilder{
 		group:         plugin.Manifest.Group,
 		manifest:      plugin.Manifest,
 		pluginJSON:    plugin.JSONData,
 		clientV3:      opts.ClientV3,
-		settings:      settings,
 		decrypter:     newSecureValueLookup(opts.Decrypter),
 		accessChecker: opts.AccessChecker,
 		search:        opts.Search,

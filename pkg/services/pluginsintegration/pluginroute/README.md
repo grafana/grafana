@@ -10,18 +10,16 @@ and manifest OpenAPI processing live in this package. `NewAPI` selects the manif
 implementation for plugins with manifests and `appplugin.AppPluginAPIBuilder` for
 settings-only plugins. Offline OpenAPI generation uses the same selection.
 
-The handler serves group and resource discovery, manifest kinds, settings and their
-subresources, custom v3 routes, and OpenAPI v3. `APIGroup(plugin, opts)` describes the
-same served versions, including the existing settings version and excluding
-manifest versions with `served: false`. Plugins without a manifest keep their
-plugin ID as the API group and serve settings and their subresources at `v0alpha1`.
-When the router middleware is enabled, it serves both kinds of plugins;
-`RegisterAPIService` leaves API installation to the router. The router always loads
-plugin APIs and manifests, independently of `appplugins.registerAPIServer` and
-`appplugins.loadAppManifest`; `appplugins.registerAPIServer` controls shared-server settings registration only.
-Manifest APIs require the router. Settings are included in manifest APIs only when
-`appplugins.loadAppManifestAndKeepSettings` is enabled and a v2 client and context
-provider are available.
+Manifest handlers serve only the manifest's declared kinds, routes, and served
+versions. Settings and their subresources are served exclusively at
+`/apis/{plugin-id}/v0alpha1`. The single-tenant router loads a separate settings
+backend for plugins with manifests; settings never appear under the manifest's
+`ext.grafana.app` group, even when `appplugins.loadAppManifestAndKeepSettings` is enabled.
+
+The router loads plugin APIs and manifests independently of
+`appplugins.registerAPIServer` and `appplugins.loadAppManifest`.
+`appplugins.registerAPIServer` controls shared-server settings registration only.
+Manifest APIs require the router.
 
 Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for

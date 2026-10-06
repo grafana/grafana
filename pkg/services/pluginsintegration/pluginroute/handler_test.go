@@ -75,8 +75,8 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
-	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
-	require.Contains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+	require.NotContains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
 }
 
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
@@ -487,6 +487,14 @@ func TestHandlerLegacySettings(t *testing.T) {
 				}})
 			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
 			handler := withRequester(loadHandler(t, plugin, opts))
+			if withManifest {
+				for _, version := range group.Versions {
+					res := httptest.NewRecorder()
+					handler.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance", nil))
+					require.Equal(t, http.StatusNotFound, res.Code)
+				}
+				return
+			}
 			for _, version := range group.Versions {
 				var settings apppluginV0.Settings
 				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)

@@ -78,9 +78,6 @@ func (b *manifestBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	oas.Info.AddExtension("x-grafana-plugin", info)
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
-	if b.settings != nil {
-		return b.settings.PostProcessOpenAPI(oas)
-	}
 	return oas, nil
 }
 
