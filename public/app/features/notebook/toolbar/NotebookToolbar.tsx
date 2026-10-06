@@ -42,8 +42,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
   const [isDeclaring, setIsDeclaring] = useState(false);
   const [isAttaching, setIsAttaching] = useState(false);
   const notifyApp = useAppNotification();
-  // Embedded hosts (e.g. Assistant's canvas) get only the edit toggle — Delete would navigate the
-  // whole host away.
+  // Embedded hosts (e.g. Assistant's canvas) get no kebab — Delete would navigate the whole host away.
   const isEmbedded = useIsNotebookEmbedded();
 
   const onCopyLink = async () => {
@@ -105,14 +104,12 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
 
   return (
     <>
-      {!isEmbedded && (
-        <ToolbarButton
-          variant="canvas"
-          icon="share-alt"
-          tooltip={t('notebooks.view.copy-link', 'Copy link')}
-          onClick={onCopyLink}
-        />
-      )}
+      <ToolbarButton
+        variant="canvas"
+        icon="share-alt"
+        tooltip={t('notebooks.view.copy-link', 'Copy link')}
+        onClick={onCopyLink}
+      />
       <NotebookEditToggle notebook={scene} />
       {!isEmbedded && (
         <Dropdown overlay={moreMenu} placement="bottom-end">

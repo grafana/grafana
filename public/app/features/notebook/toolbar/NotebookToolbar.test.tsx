@@ -205,9 +205,9 @@ describe('NotebookToolbar', () => {
   });
 
   // NotebookView.tsx's embed component (grafana/notebook-view/v1) renders this same toolbar for a
-  // notebook that exists, but its contract only promises the edit toggle — not copy/export/delete,
-  // whose Delete would navigate the whole embedding host to /notebooks on success.
-  it('hides copy link and the kebab when embedded, keeping only the edit toggle', () => {
+  // notebook that exists. Copy link works from inside a host, but the kebab does not: its Delete
+  // would navigate the whole embedding host to /notebooks on success.
+  it('keeps copy link and the edit toggle but hides the kebab when embedded', () => {
     const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
     render(
@@ -216,7 +216,7 @@ describe('NotebookToolbar', () => {
       </NotebookEmbeddedHost>
     );
 
-    expect(screen.queryByRole('button', { name: 'Copy link' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More actions' })).not.toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'View' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Edit' })).toBeInTheDocument();
@@ -225,7 +225,7 @@ describe('NotebookToolbar', () => {
   });
 
   // A draft embed (NotebookView.tsx's DraftNotebookView) never gets a uid, so it renders this
-  // branch for its whole session — same embedded contract as the real actions above.
+  // branch for its whole session — a disabled copy link there would never become enabled.
   it('hides the disabled copy link and kebab placeholders when embedded with no uid yet', () => {
     const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 
