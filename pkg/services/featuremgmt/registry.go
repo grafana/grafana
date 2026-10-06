@@ -317,7 +317,7 @@ var (
 		{
 			Name:        "reportingHeaderSettings",
 			Description: "Enables configuration of PDF report settings",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -325,7 +325,7 @@ var (
 		{
 			Name:        "reportingFooterSettings",
 			Description: "Enables the configurable footer settings for PDF reports",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaOperatorExperienceSquad,
 			Expression:  "false",
@@ -1511,6 +1511,14 @@ var (
 		{
 			Name:        "datasources.teamHttpHeadersFromAppPlatformMT",
 			Description: "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{Go: true},
+			Owner:       identityAccessTeam,
+			Expression:  "false",
+		},
+		{
+			Name:        "datasources.teamHttpHeadersWriteGuard",
+			Description: "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{Go: true},
 			Owner:       identityAccessTeam,

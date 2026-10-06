@@ -9,6 +9,7 @@ import (
 	structuralschema "k8s.io/apiextensions-apiserver/pkg/apiserver/schema"
 	"k8s.io/apiextensions-apiserver/pkg/apiserver/validation"
 	"k8s.io/apiextensions-apiserver/pkg/registry/customresource/tableconvertor"
+	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,9 +23,11 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"sigs.k8s.io/structured-merge-diff/v6/fieldpath"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
@@ -61,6 +64,11 @@ type Store struct {
 
 	gvk           schema.GroupVersionKind
 	clusterScoped bool
+
+	// userReadable marks a cluster-scoped kind users may read. Storage rejects
+	// users on cluster-scoped objects, since their identity is bound to a
+	// namespace, so reads the authorizer allowed are served as the service.
+	userReadable bool
 
 	// used for admission hooks
 	admission appclientv3.AdmissionClient
@@ -122,6 +130,7 @@ func New(
 		NameGenerator: names.SimpleNameGenerator,
 		gvk:           gvk,
 		clusterScoped: clusterScoped,
+		userReadable:  clusterScoped && kind.UserReadable,
 		admission:     admission,
 	}
 
@@ -240,6 +249,28 @@ func newTableConvertor(gr schema.GroupResource, gvk schema.GroupVersionKind, kin
 // decides whether [NewStatusStore] has anything to serve.
 func (s *Store) HasStatus() bool {
 	return s.hasStatus
+}
+
+func (s *Store) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+	return s.Store.Get(s.readContext(ctx), name, options)
+}
+
+func (s *Store) List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error) {
+	return s.Store.List(s.readContext(ctx), options)
+}
+
+// readContext serves a user's read of a userReadable cluster-scoped kind as the
+// service identity. The appplugin authorizer only lets users get & list
+// these kinds, so this never widens what a user can do.
+func (s *Store) readContext(ctx context.Context) context.Context {
+	if !s.userReadable {
+		return ctx
+	}
+	user, err := identity.GetRequester(ctx)
+	if err != nil || user.IsIdentityType(claims.TypeAccessPolicy) {
+		return ctx
+	}
+	return identity.WithServiceIdentityContext(ctx, user.GetOrgID())
 }
 
 // NamespaceScoped avoids recursion through the embedded store's strategy.
