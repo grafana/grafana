@@ -2482,11 +2482,6 @@
       }
     },
     "panel-alert-tab-content": {
-      "alert": {
-        "title-errors-loading-rules": "Erreurs lors du chargement des règles"
-      },
-      "failed-to-load-error": "Échec du chargement de l’état des règles Grafana : {{error}}",
-      "text-loading-rules": "Chargement des règles...",
       "title-dashboard-not-saved": "Tableau de bord non enregistré"
     },
     "payload-editor": {
@@ -4647,6 +4642,8 @@
       "error-saving": "Une erreur s’est produite lors de la création du dossier.",
       "folder-name-input-placeholder-enter-folder-name": "Saisir le nom du dossier",
       "label-folder-name": "Nom du dossier",
+      "text-destination-path": "",
+      "text-destination-root": "",
       "text-pull-request-created": "Une demande de fusion a été créée avec des modifications dans ce dossier :",
       "title-pull-request-created": "Demande de fusion créée",
       "title-this-repository-is-read-only": "Ce référentiel est en lecture seule"
@@ -5180,6 +5177,7 @@
       "dashboard-search-results": "Tableaux de bord",
       "deep-search": "Recherche approfondie dans les tableaux de bord",
       "folder-search-results": "Dossiers",
+      "notebook-search-results": "",
       "pages": "Pages",
       "preferences": "Préférences",
       "recent-dashboards": "Tableaux de bord récents",
@@ -5670,12 +5668,6 @@
         "title": "Afficher / masquer les règles"
       }
     },
-    "confirm-plugin-dashboard-save-modal": {
-      "body-plugin-dashboard": "Vos modifications seront perdues lors de la mise à jour du plugin.<br/><2>Utilisez la fonction <strong>Enregistrer sous</strong> pour créer une version personnalisée.</2>",
-      "cancel": "Annuler",
-      "overwrite": "Écraser",
-      "title-plugin-dashboard": "Tableau de bord du plugin"
-    },
     "controls": {
       "menu": {
         "aria-label": "",
@@ -5890,11 +5882,6 @@
       "footer-text": "Ce contenu est généré par l’IA à l’aide du <2>plugin Grafana LLM</2>",
       "placeholder-tell-ai-what-to-do-next": "Dites à l’IA que faire ensuite..."
     },
-    "get-debug-dashboard": {
-      "title": {
-        "annotations": "Annotations"
-      }
-    },
     "get-field-override-categories": {
       "body-matcher-no-editor": "Ce remplacement est actif, mais ce type de matcher ne peut être modifié que dans le JSON du tableau de bord.",
       "body-unknown-matcher": "Ce remplacement n’a aucun effet. Supprimez-le ou corrigez l’identifiant du matcher dans le JSON du tableau de bord.",
@@ -5929,13 +5916,6 @@
         "name": "Nom"
       }
     },
-    "get-panel-editor-tabs": {
-      "text": {
-        "alert": "Alerte",
-        "query": "Requête",
-        "transform-data": "Transformer les données"
-      }
-    },
     "get-panel-frame-category": {
       "descriptor": {
         "title": {
@@ -5958,28 +5938,6 @@
         "title": "Titre",
         "transparent-background": "Arrière-plan transparent"
       }
-    },
-    "help-wizard": {
-      "copy-to-clipboard": "Copier dans le presse-papiers",
-      "description-obfuscate-data": "Modifier les données d’origine pour masquer les informations sensibles.  Notez que les longueurs resteront les mêmes et que les valeurs en double seront égales.",
-      "description-support-snapshot": "Panneau : {{panelTitle}}",
-      "download-snapshot": "Télécharger ({{snapshotSize}})",
-      "label-obfuscate-data": "Données obfusquées",
-      "label-support-snapshot": "Instantané de soutien",
-      "label-template": "Modèle",
-      "randomize-field-names-label-field-names": "Noms des champs",
-      "randomize-labels-label-labels": "Étiquettes",
-      "randomize-string-values-label-string-values": "Valeurs des chaînes de caractères",
-      "support-snapshot-editor": "",
-      "tabs": {
-        "label": {
-          "data": "Données",
-          "snapshot": "Instantané"
-        }
-      },
-      "title-complete-git-hub-comment-clipboard": "Copier un commentaire GitHub complet dans le presse-papiers",
-      "title-get-help-with-this-panel": "Obtenir de l’aide sur ce panneau",
-      "troubleshooting-docs": "Documents de dépannage"
     },
     "inspect": {
       "data-tab": "Données",
@@ -6109,13 +6067,6 @@
       "title-placeholder": "Ajoutez un titre",
       "title-required": "Veuillez saisir un titre"
     },
-    "on-create-new-row": {
-      "new-row": {
-        "title": {
-          "row-title": "Titre de la ligne"
-        }
-      }
-    },
     "options-pane-category": {
       "aria-label-collapse": "Replier la catégorie {{title}}",
       "aria-label-expand": "Développer la catégorie {{title}}"
@@ -6160,9 +6111,6 @@
       "only-overrides-button-tooltip": "Afficher uniquement les remplacements",
       "placeholder-search-options": "Options de recherche",
       "visualization-button-tooltip": "Options de recherche"
-    },
-    "panel-not-supported": {
-      "go-back-to-queries": "Revenir aux requêtes"
     },
     "plan-placeholder-badge": {
       "text": "",
@@ -6254,58 +6202,11 @@
       "ungroup-convert-text": "Toutes les grilles doivent être converties vers le même type et les positions seront perdues.",
       "ungroup-convert-title": "Convertir les grilles mixtes ?"
     },
-    "save-dashboard": {
-      "message-dashboard-saved": "Tableau de bord enregistré"
-    },
-    "save-dashboard-as-button": {
-      "save-as": "Enregistrer sous"
-    },
-    "save-dashboard-as-form": {
-      "aria-label-save-dashboard-button": "Bouton Enregistrer le tableau de bord",
-      "aria-label-save-dashboard-description-field": "Enregistrer le champ de description du tableau de bord",
-      "aria-label-save-dashboard-title-field": "Enregistrer le champ de titre du tableau de bord",
-      "cancel": "Annuler",
-      "description": "Description",
-      "label-copy-tags": "Copier les balises",
-      "label-folder": "Dossier",
-      "save": "Enregistrer",
-      "saving": "Enregistrement en cours...",
-      "title": "Titre"
-    },
     "save-dashboard-diff": {
       "no-changes-in-the-dashboard-json": "Aucune modification dans le tableau de bord JSON",
       "title-because-dashboard-migrated-grafana-format": "La différence est difficile à lire, car le tableau de bord a été migré vers le nouveau format de tableau de bord Grafana",
       "title-folder": "dossier",
       "title-predefined-variables": "variables prédéfinies"
-    },
-    "save-dashboard-drawer": {
-      "label-changes": "Modifications",
-      "label-details": "Détails",
-      "title": "Enregistrer le tableau de bord",
-      "title-copy": "Enregistrer une copie du tableau de bord",
-      "title-provisioned": "Tableau de bord provisionné"
-    },
-    "save-dashboard-error-proxy": {
-      "body-version-mismatch": "Quelqu’un d’autre a mis à jour ce tableau de bord<br/><2>Souhaitez-vous quand même enregistrer ce tableau de bord ?</2>",
-      "confirmText-save-and-overwrite": "Enregistrer et écraser",
-      "title-version-mismatch": "Conflits"
-    },
-    "save-dashboard-form": {
-      "cancel": "Annuler",
-      "label-current-range-dashboard-default": "Enregistrer la plage temporelle actuelle comme valeur par défaut du tableau de bord",
-      "label-current-variable-values-dashboard-default": "Enregistrer les valeurs de variables actuelles comme valeurs par défaut du tableau de bord",
-      "no-changes-to-save": "Aucun changement à enregistrer",
-      "placeholder-describe-changes": "Ajoutez une note pour décrire vos modifications.",
-      "save": "Enregistrer",
-      "saving": "Enregistrement en cours..."
-    },
-    "save-provisioned-dashboard-form": {
-      "cancel": "Annuler",
-      "cannot-be-saved": "Ce tableau de bord ne peut pas être enregistré à partir de l’interface utilisateur Grafana, car il a été mis en service à partir d’une autre source. Copiez le JSON ou enregistrez-le dans un fichier ci-dessous, puis vous pourrez mettre à jour votre tableau de bord dans la source de mise en service.",
-      "copy-json-to-clipboard": "Copier JSON dans le presse-papiers",
-      "file-path": "<strong>Chemin du fichier :</strong> {{filePath}}",
-      "save-json-to-file": "Enregistrer le fichier JSON",
-      "see-docs": "Consultez la <2>documentation</2> pour en savoir plus sur la mise en service."
     },
     "schema-editor": {
       "identifier-change-unsupported": "Impossible de modifier l’identifiant depuis l’éditeur JSON",
@@ -6620,18 +6521,6 @@
     "source-link": {
       "tooltip": "Afficher le fichier source dans le référentiel"
     },
-    "support-snapshot-service": {
-      "description": {
-        "dashboard-troubleshoot-visualization-issues": "JSON du tableau de bord utilisé pour aider à résoudre les problèmes de visualisation"
-      },
-      "label": {
-        "git-hub-comment": "Commentaire GitHub",
-        "panel-support-snapshot": "Instantané de support du panneau"
-      },
-      "title": {
-        "copy-to-clipboard-failed": "Échec de la copie dans le presse-papiers"
-      }
-    },
     "tabs-layout": {
       "delete-tab-text": "La suppression de cet onglet supprimera également tous les panneaux. Voulez-vous vraiment continuer ?",
       "delete-tab-title": "Supprimer l’onglet ?",
@@ -6744,7 +6633,6 @@
       "playlist-next": "Accéder au tableau de bord suivant",
       "playlist-previous": "Accéder au tableau de bord précédent",
       "playlist-stop": "Arrêter la liste de lecture",
-      "refresh": "Actualiser le tableau de bord",
       "save-as-template": {
         "label": "Enregistrer comme modèle"
       },
@@ -6820,19 +6708,6 @@
     "transformation-type-picker": {
       "sql-cta-button": "Ajouter une expression SQL",
       "sql-cta-description": "Vous préférez le SQL ? Ajoutez plutôt une expression SQL à vos requêtes."
-    },
-    "un-theme-transformations-editor": {
-      "body-delete-all-transformations": "En supprimant toutes les transformations, vous serez redirigé vers l’écran principal de sélection."
-    },
-    "un-themed-transformations-editor": {
-      "actions": {
-        "add-another-transformation": "Ajouter une autre transformation"
-      },
-      "confirmText-delete-all": "Tout supprimer",
-      "delete-all-transformations": "Supprimer toutes les transformations",
-      "title-delete-all-transformations": "Supprimer toutes les transformations ?",
-      "tooltip-clear-search": "Effacer la recherche",
-      "tooltip-close-picker": "Fermer le sélecteur"
     },
     "validation": {
       "invalid-dashboard-id": "Impossible de trouver un ID Grafana.com valide",
@@ -9091,12 +8966,6 @@
         "trace": "Trace"
       }
     },
-    "search-bar-input": {
-      "placeholder-find": "Rechercher...",
-      "suffix": {
-        "tooltip-clear-input": "Effacer la saisie"
-      }
-    },
     "secondary-actions": {
       "add-from-query-library": "Ajouter depuis les requêtes sauvegardées",
       "query-add-button": "Ajouter une requête",
@@ -9132,6 +9001,7 @@
       "attribute-category": {
         "other": "Autre"
       },
+      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -11215,12 +11085,6 @@
     },
     "title": "Raccourcis"
   },
-  "help-wizard": {
-    "download-snapshot": "Télécharger l’instantané ({{snapshotSize}})",
-    "github-comment": "Copier le commentaire Github",
-    "support-bundle": "Vous pouvez également récupérer un ensemble d'outils d'assistance contenant des informations concernant votre instance Grafana et les sources de données configurées dans la <1>section des ensembles d'outils d'assistance</1>.",
-    "troubleshooting-help": "Pour demander une aide au dépannage, envoyez un instantané de ce tableau de bord à l'assistance technique de Grafana Labs. L'instantané contient les données de réponse de la requête et les paramètres du tableau de bord."
-  },
   "histogram": {
     "category-histogram": "Histogramme",
     "histogram-panel": {
@@ -12394,9 +12258,6 @@
     "invalid-syntax": "",
     "render-error": ""
   },
-  "metric-select": {
-    "noOptionsMessage-no-options-found": "Aucune option trouvée"
-  },
   "migrate-to-cloud": {
     "building-snapshot": {
       "description": "Nous rassemblons vos ressources pour la migration vers Grafana Cloud. Cela ne devrait prendre qu’un instant.",
@@ -13156,6 +13017,17 @@
       "add-arc": "Ajouter un arc",
       "title-remove-arc": "Supprimer un arc"
     },
+    "data-error": {
+      "edge-example": "",
+      "ensure-matching-nodes": "",
+      "missing-endpoint": "",
+      "missing-field": "",
+      "title": "",
+      "missing-endpoints_one": "",
+      "missing-endpoints_other": "",
+      "omitted-edges_one": "",
+      "omitted-edges_other": ""
+    },
     "edge": {
       "aria-label-from-to": "Bord de : {{from}} à : {{to}}"
     },
@@ -13251,6 +13123,14 @@
       "failed-to-load": "Échec du chargement du notebook",
       "not-found-title": "Introuvable"
     },
+    "leave-prompt": {
+      "conflict-body": "",
+      "conflict-title": "",
+      "leave": "",
+      "saving-body": "",
+      "saving-title": "",
+      "stay": ""
+    },
     "panel-changes": {
       "confirm-cancel": "Annuler",
       "confirm-discard": "Ignorer",
@@ -13297,6 +13177,13 @@
       "target-label": "Notebook cible",
       "target-new": "Nouveau notebook",
       "title": "Ajouter le panneau au notebook"
+    },
+    "autosave": {
+      "conflict-cancel": "",
+      "conflict-confirm": "",
+      "conflict-text": "",
+      "conflict-title": "",
+      "error-conflict": ""
     },
     "delete": {
       "body": "Voulez-vous vraiment supprimer « {{title}} » ?",
@@ -15027,6 +14914,10 @@
       "error-saving": "Échec de l’enregistrement des modifications",
       "missing-info": "Champs obligatoires manquants pour l’enregistrement",
       "read-only-message": "Pour modifier cette ressource, veuillez la mettre à jour directement dans votre référentiel."
+    },
+    "save-target-switch": {
+      "create-in-database": "",
+      "create-in-git": ""
     },
     "setup-modal": {
       "done": "Terminé",
@@ -18067,9 +17958,6 @@
     "legacy-variable-query-editor": {
       "placeholder-metric-name-or-tags-query": "Nom de la métrique ou requête de balises"
     },
-    "no-unknowns": {
-      "no-renamed-or-missing-variables-found": "Aucune variable renommée ou manquante n’a été trouvée."
-    },
     "query-variable-refresh-select": {
       "description-update-values-variable": "Quand mettre à jour les valeurs de cette variable",
       "label-refresh": "Actualiser"
@@ -18100,13 +17988,6 @@
     "static-options": {
       "add-option-button-label": "Ajouter une nouvelle option"
     },
-    "transform-usages-to-network": {
-      "result": {
-        "label": {
-          "dashboard": "tableau de bord"
-        }
-      }
-    },
     "unknown-table": {
       "loading": "Chargement en cours...",
       "no-unknowns": "Aucune variable renommée ou manquante n'a été trouvée.",
@@ -18119,15 +18000,6 @@
     },
     "variables-dependencies-button": {
       "show-dependencies": "Afficher les dépendances"
-    },
-    "variables-unknown-button": {
-      "usage-title": "Afficher les usages pour : {{variableId}}",
-      "VariablesUnknownButton-tooltip-show-usages": "Afficher les usages"
-    },
-    "variables-unknown-table": {
-      "collapse-label": "Variables renommées ou manquantes",
-      "collapse-tooltip": "Cliquez pour développer une liste avec toutes les références de variables qui ont été renommées ou qui sont manquantes dans le tableau de bord.",
-      "loading": "Chargement en cours..."
     }
   },
   "variables-management": {

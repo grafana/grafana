@@ -39,6 +39,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ManagedBy{}.OpenAPIModelName():                                                             schema_pkg_apis_dashboard_v0alpha1_ManagedBy(ref),
 		SearchResults{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
 		Snapshot{}.OpenAPIModelName():                                                              schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref),
+		SnapshotBlobReference{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref),
+		SnapshotBlobs{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobs(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SnapshotClient":     schema_pkg_apis_dashboard_v0alpha1_SnapshotClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SnapshotJSONCodec":  schema_pkg_apis_dashboard_v0alpha1_SnapshotJSONCodec(ref),
 		SnapshotList{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref),
@@ -606,6 +608,12 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 							Ref:         ref(SnapshotSpec{}.OpenAPIModelName()),
 						},
 					},
+					"blobs": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(SnapshotBlobs{}.OpenAPIModelName()),
+						},
+					},
 					"deleteKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The delete key is only returned when the item is created.  It is not returned from a get request",
@@ -614,11 +622,11 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 						},
 					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "blobs"},
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SnapshotBlobs{}.OpenAPIModelName(), SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -1178,12 +1186,75 @@ func schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref common.ReferenceCallback) c
 							Ref:         ref(SnapshotSpec{}.OpenAPIModelName()),
 						},
 					},
+					"blobs": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(SnapshotBlobs{}.OpenAPIModelName()),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "blobs"},
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SnapshotBlobs{}.OpenAPIModelName(), SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"contentType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"uid"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(SnapshotBlobReference{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			SnapshotBlobReference{}.OpenAPIModelName()},
 	}
 }
 

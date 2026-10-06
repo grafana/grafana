@@ -18,5 +18,6 @@ export const SECTION_PAGES = 'pages';
 export const SECTION_PREFERENCES = 'preferences';
 export const SECTION_DASHBOARDS = 'dashboards';
 export const SECTION_FOLDERS = 'folders';
+export const SECTION_NOTEBOOKS = 'notebooks';
 export const SECTION_EXTENSIONS = 'extensions';
 export const SECTION_DEEP_SEARCH = 'deep-search';

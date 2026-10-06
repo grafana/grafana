@@ -1432,16 +1432,19 @@
     {
       "metadata": {
         "name": "dashboard.recentlyDeletedViaTrash",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791194326048",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 09:58:46.048328 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/search-and-storage",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -1784,6 +1787,19 @@
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.teamHttpHeadersWriteGuard",
+        "resourceVersion": "1790977358513",
+        "creationTimestamp": "2026-10-02T21:42:38Z"
+      },
+      "spec": {
+        "description": "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
@@ -3686,6 +3702,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersDeterministicUID",
+        "resourceVersion": "1791287388877",
+        "creationTimestamp": "2026-10-06T11:11:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-06 11:49:48.877899 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUsersRedirect",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -4927,12 +4960,15 @@
     {
       "metadata": {
         "name": "reportingFooterSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791199794641",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 11:29:54.641468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the configurable footer settings for PDF reports",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"
@@ -4941,12 +4977,15 @@
     {
       "metadata": {
         "name": "reportingHeaderSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791199794641",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 11:29:54.641468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables configuration of PDF report settings",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"

@@ -53,7 +53,7 @@ const (
 const (
 	internalRVKey                    = "rv"                      // Encoded as big-endian int64
 	internalBuildInfoKey             = "build_info"              // Encoded as JSON of buildInfo struct
-	internalImportTimesKey           = "import_times"            // Encoded as JSON of "group/resource" to unix nanoseconds, 0 for no import
+	internalCompletedTypeBuildsKey   = "import_times"            // Completed type builds, encoded as JSON of "group/resource" to the storage import time in unix nanoseconds, 0 for none. Named for its first use; renaming the key would make existing indexes forget their types.
 	internalDocumentTypesKey         = "document_types"          // Encoded as JSON list of "group/resource"
 	internalReconciledAtKey          = "reconciled_at"           // Encoded as big-endian int64 unix nanoseconds
 	internalSnapshotMutationCountKey = "snapshot_mutation_count" // Encoded as big-endian int64
@@ -869,7 +869,7 @@ type preparedBuildIndex struct {
 // BuildIndex builds an index from scratch or retrieves it from the filesystem.
 // If built successfully, the new index replaces the old index in the cache (if there was any).
 // Existing index in the file system is reused, if it exists, and lastImportTime
-// check passes (if the index was built before lastImportTime, it will be rebuilt).
+// check passes (the index must be built after lastImportTime to be reused).
 // The return value of "builder" should be the RV returned from List. This will be stored as the index RV.
 //
 // maxFreshSnapshotAge is the maximum age (by BuildTime) of a remote snapshot
@@ -1220,8 +1220,8 @@ func (b *bleveBackend) tryReuseFileIndex(resourceDir string, lastImportTime time
 		reason = fmt.Sprintf("index requires features this instance does not understand %v", unknown)
 	} else if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		reason = fmt.Sprintf("index is missing required features %v", missing)
-	} else if !lastImportTime.IsZero() && indexBuildTime.Before(lastImportTime) {
-		reason = "index was built before the last import"
+	} else if !lastImportTime.IsZero() && !indexBuildTime.After(lastImportTime) {
+		reason = "index was not built after the last import"
 	}
 	if reason == "" {
 		return idx, name, rv, nil
@@ -1774,7 +1774,7 @@ type bleveIndex struct {
 	// False on an index built before deleted documents were kept, until it rebuilds.
 	keepsDeletedDocuments bool
 
-	// Guards the read and rewrite of the recorded import times and document types.
+	// Guards the read and rewrite of the completed type builds and document types.
 	typeRecordsMu sync.Mutex
 	// The recorded document types, loaded on first use, so a batch does not read
 	// them from the index each time.
@@ -2327,7 +2327,9 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 		}
 	}
 	return &resourcepb.ResourceSearchResponse{
-		Error:           b.verifyKey(req.Options.Key),
+		Error: b.verifyKey(req.Options.Key),
+		// For a global index this is the version it was built at: it replays no
+		// events, so its resource version does not move after the build.
 		ResourceVersion: b.resourceVersion.Load(),
 		ResultFormat:    resultFormat,
 	}
@@ -2386,9 +2388,7 @@ func (b *bleveIndex) Search(
 			Group:     b.key.Group,
 			Resource:  b.key.Resource,
 		}, func(err error) {
-			// Swallowed (the caller is treated as not an admin), so without this the
-			// failure would be invisible.
-			b.logger.FromContext(ctx).Error("trash folder admin check failed, treating user as not an admin", "error", err)
+			b.logger.FromContext(ctx).Error("Trash folder admin check failed", "error", err)
 		})
 	}
 
@@ -2697,60 +2697,60 @@ func (b *bleveIndex) RecordReconciledAt(t time.Time) error {
 	return b.index.SetInternal([]byte(internalReconciledAtKey), buf)
 }
 
-// ImportTimes implements resource.ResourceIndex.
-func (b *bleveIndex) ImportTimes() (map[schema.GroupResource]time.Time, error) {
-	raw, err := b.index.GetInternal([]byte(internalImportTimesKey))
+// CompletedTypeBuilds implements resource.ResourceIndex.
+func (b *bleveIndex) CompletedTypeBuilds() (map[schema.GroupResource]resource.TypeBuild, error) {
+	raw, err := b.index.GetInternal([]byte(internalCompletedTypeBuildsKey))
 	if err != nil {
 		return nil, err
 	}
-	times := map[schema.GroupResource]time.Time{}
+	builds := map[schema.GroupResource]resource.TypeBuild{}
 	if len(raw) == 0 {
-		return times, nil
+		return builds, nil
 	}
 	// Our own encoding, so the stored format does not depend on how
 	// schema.GroupResource happens to marshal.
 	stored := map[string]int64{}
 	if err := json.Unmarshal(raw, &stored); err != nil {
-		return nil, fmt.Errorf("reading import times: %w", err)
+		return nil, fmt.Errorf("reading completed type builds: %w", err)
 	}
 	for key, nanos := range stored {
 		group, res, ok := strings.Cut(key, "/")
 		if !ok {
-			return nil, fmt.Errorf("reading import times: unexpected key %q", key)
+			return nil, fmt.Errorf("reading completed type builds: unexpected key %q", key)
 		}
-		var t time.Time
+		var build resource.TypeBuild
 		if nanos != 0 {
-			t = time.Unix(0, nanos).UTC()
+			build.StorageImportTime = time.Unix(0, nanos).UTC()
 		}
-		times[schema.GroupResource{Group: group, Resource: res}] = t
+		builds[schema.GroupResource{Group: group, Resource: res}] = build
 	}
-	return times, nil
+	return builds, nil
 }
 
-// RecordImportTime implements resource.ResourceIndex.
-func (b *bleveIndex) RecordImportTime(gr schema.GroupResource, t time.Time) error {
+// RecordCompletedTypeBuild implements resource.ResourceIndex.
+func (b *bleveIndex) RecordCompletedTypeBuild(gr schema.GroupResource, build resource.TypeBuild) error {
 	// Held across the read and the write, so two callers cannot each write back a
 	// record missing the other's type.
 	b.typeRecordsMu.Lock()
 	defer b.typeRecordsMu.Unlock()
-	times, err := b.ImportTimes()
+	builds, err := b.CompletedTypeBuilds()
 	if err != nil {
 		return err
 	}
-	times[gr] = t
-	return b.writeImportTimesLocked(times)
+	builds[gr] = build
+	return b.writeCompletedTypeBuildsLocked(builds)
 }
 
 // ForgetType implements resource.ResourceIndex.
 func (b *bleveIndex) ForgetType(gr schema.GroupResource) error {
 	b.typeRecordsMu.Lock()
 	defer b.typeRecordsMu.Unlock()
-	times, err := b.ImportTimes()
+	builds, err := b.CompletedTypeBuilds()
 	if err != nil {
 		return err
 	}
-	delete(times, gr)
-	if err := b.writeImportTimesLocked(times); err != nil {
+	delete(builds, gr)
+	if err := b.writeCompletedTypeBuildsLocked(builds); err != nil {
 		return err
 	}
 	types, err := b.loadDocumentTypesLocked()
@@ -2765,13 +2765,13 @@ func (b *bleveIndex) ForgetType(gr schema.GroupResource) error {
 	return b.writeDocumentTypesLocked(types)
 }
 
-func (b *bleveIndex) writeImportTimesLocked(times map[schema.GroupResource]time.Time) error {
-	stored := make(map[string]int64, len(times))
-	for key, value := range times {
+func (b *bleveIndex) writeCompletedTypeBuildsLocked(builds map[schema.GroupResource]resource.TypeBuild) error {
+	stored := make(map[string]int64, len(builds))
+	for key, build := range builds {
 		// The zero time has no unix nanoseconds.
 		nanos := int64(0)
-		if !value.IsZero() {
-			nanos = value.UnixNano()
+		if !build.StorageImportTime.IsZero() {
+			nanos = build.StorageImportTime.UnixNano()
 		}
 		stored[key.Group+"/"+key.Resource] = nanos
 	}
@@ -2779,7 +2779,7 @@ func (b *bleveIndex) writeImportTimesLocked(times map[schema.GroupResource]time.
 	if err != nil {
 		return err
 	}
-	return b.index.SetInternal([]byte(internalImportTimesKey), raw)
+	return b.index.SetInternal([]byte(internalCompletedTypeBuildsKey), raw)
 }
 
 // documentsOfQuery matches the documents of one resource type. A global index

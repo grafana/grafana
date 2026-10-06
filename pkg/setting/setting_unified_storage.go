@@ -280,6 +280,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
+	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
 	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 

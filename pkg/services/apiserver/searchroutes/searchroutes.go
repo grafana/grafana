@@ -26,14 +26,6 @@ import (
 // namespace. Cluster-scoped kinds have no namespace to search within.
 const namespacedScope = "Namespaced"
 
-// trashAllowlist holds the kinds allowed to serve the trash endpoint.
-//
-// Trash grants access to whoever deleted the object, or to folder admins, which
-// only makes sense for kinds that live in folders.
-var trashAllowlist = map[string]bool{
-	"dashboard.grafana.app/dashboards": true,
-}
-
 type Options struct {
 	HybridEnabled bool
 }
@@ -42,7 +34,8 @@ type Options struct {
 // there is no client to serve them with.
 //
 // Each endpoint has its own switch. Trash also has a separate allowlist because
-// it grants access differently from search.
+// it grants access differently from search. See resource.TrashSearchAllowed and
+// searchapi.ConfigKeyTrash.
 //
 // builders and installers are the two ways a kind reaches the apiserver; a route
 // is only mounted on a group version one of them actually serves.
@@ -184,7 +177,7 @@ func BuildForServedGroupVersions(
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.SearchRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}
-				if trashEnabled && trashAllowlist[gv.Group+"/"+resourceName] && kind.HasTrashEndpoint() {
+				if trashEnabled && resource.TrashSearchAllowed(gv.Group, resourceName) && kind.HasTrashEndpoint() {
 					byGroupVersion[gv] = append(byGroupVersion[gv],
 						handler.TrashRoute(gv.Group, gv.Version, resourceName, kind.Kind))
 				}

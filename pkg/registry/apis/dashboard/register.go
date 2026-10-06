@@ -537,8 +537,8 @@ func (b *DashboardsAPIBuilder) validateLibraryPanelDelete(ctx context.Context, n
 		Limit:        1,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	})
-	if err != nil {
-		return fmt.Errorf("check library panel connections: %w", err)
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
+		return err
 	}
 	if result.GetTotalHits() > 0 {
 		return apierrors.NewForbidden(
@@ -671,7 +671,7 @@ func (b *DashboardsAPIBuilder) validateCreate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder access permissions and existence if specified
-	if !a.IsDryRun() && accessor.GetFolder() != "" {
+	if !a.IsDryRun() && !folder.IsRootFolderUID(accessor.GetFolder()) {
 		if err := b.verifyFolderAccessPermissions(ctx, id, accessor.GetFolder()); err != nil {
 			return err
 		}
@@ -745,7 +745,7 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder existence if specified and changed
-	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && newAccessor.GetFolder() != "" {
+	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() && !folder.IsRootFolderUID(newAccessor.GetFolder()) {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
@@ -792,7 +792,7 @@ func (b *DashboardsAPIBuilder) validateVariableCreate(ctx context.Context, a adm
 		return err
 	}
 
-	if !a.IsDryRun() && folderUID != "" {
+	if !a.IsDryRun() && !folder.IsRootFolderUID(folderUID) {
 		id, err := identity.GetRequester(ctx)
 		if err != nil {
 			return fmt.Errorf("error getting requester: %w", err)
@@ -835,7 +835,7 @@ func (b *DashboardsAPIBuilder) validateVariableUpdate(ctx context.Context, a adm
 		return apierrors.NewBadRequest("spec.spec.name cannot be changed; delete the variable and create a new one")
 	}
 
-	if newAccessor.GetFolder() != oldAccessor.GetFolder() {
+	if folder.ToLegacyFolderUID(newAccessor.GetFolder()) != folder.ToLegacyFolderUID(oldAccessor.GetFolder()) {
 		return apierrors.NewBadRequest("folder scope cannot be changed; delete the variable and create a new one")
 	}
 
@@ -1502,7 +1502,7 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 		return nil
 	}
 
-	if obj.GetFolder() != "" {
+	if !folder.IsRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 
