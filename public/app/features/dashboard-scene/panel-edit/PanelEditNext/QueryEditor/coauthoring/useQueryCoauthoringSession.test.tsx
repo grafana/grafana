@@ -285,6 +285,22 @@ describe('useQueryCoauthoringSession', () => {
     expect(mockGenerate).toHaveBeenCalledTimes(2);
   });
 
+  it('restores the clarification question and submitted answer when generation is stopped', async () => {
+    const { user, rerender, queryCoauthoringProps } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Group the requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    act(() => mockGenerate.mock.calls[0][0].onComplete('Which label should I group by?'));
+    await user.type(screen.getByRole('textbox', { name: 'Add extra detail' }), 'Use handler');
+    await user.click(screen.getByRole('button', { name: 'Continue' }));
+    mockIsGenerating = true;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    await user.click(screen.getByRole('button', { name: 'Stop' }));
+    mockIsGenerating = false;
+    rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
+    expect(screen.getByText('Which label should I group by?')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Add extra detail' })).toHaveValue('Use handler');
+  });
+
   it('preserves entered text when invocation loading finishes without an Assistant request', async () => {
     const initial = await setup();
     initial.unmount();

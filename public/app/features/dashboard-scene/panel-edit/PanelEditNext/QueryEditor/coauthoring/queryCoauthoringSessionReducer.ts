@@ -273,17 +273,16 @@ export function queryCoauthoringSessionReducer(
           ...state.data,
           requestId: state.data.requestId + 1,
           activeRequestId: undefined,
-          prompt: { ...state.data.prompt, clarification: undefined },
         },
       };
+      const previousView = state.data.requestResume ?? next.data.prompt;
+      const resume =
+        previousView.kind === 'prompt'
+          ? { ...previousView, submittedIterationCount: next.data.prompt.submittedIterationCount }
+          : previousView;
       return transition(
         next,
-        updateSession(
-          current,
-          () =>
-            state.data.requestMode === 'explain' ? (state.data.requestResume ?? next.data.prompt) : next.data.prompt,
-          state.data.requestMode === 'explain' ? 'request' : 'context-error'
-        )
+        updateSession(current, () => resume, 'request')
       );
     }
     case 'follow-up-changed':
