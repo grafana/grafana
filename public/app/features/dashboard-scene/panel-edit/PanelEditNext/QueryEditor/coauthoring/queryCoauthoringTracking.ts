@@ -57,3 +57,7 @@ export function trackQueryCoauthoringExplainFollowUpSubmitted(source: 'generated
 export function trackQueryCoauthoringExploreSimilarUsed() {
   reportInteraction('grafana_query_coauthoring_explore_similar_used', {});
 }
+
+export function trackQueryCoauthoringMentionInserted(kind: 'metric' | 'label') {
+  reportInteraction('grafana_query_coauthoring_mention_inserted', { kind });
+}

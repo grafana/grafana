@@ -206,6 +206,153 @@ describe('QueryCoauthoring', () => {
     mockAssistantLoading = false;
   });
 
+  const mentionContext: QueryEditorCoauthoringContextV1 = {
+    revision: '1',
+    query: 'rate(http_requests_total[5m])',
+    focusRanges: [{ from: 0, to: 4 }],
+    language: { id: 'promql', displayName: 'PromQL' },
+    metadata: [
+      { kind: 'metric', name: 'http_inflight_requests' },
+      { kind: 'metric', name: 'pending_requests_total' },
+      { kind: 'label', name: 'instance' },
+      { kind: 'label', name: 'origin' },
+    ],
+  };
+
+  it('matches metric and label substrings with their icons and caps suggestions at six', async () => {
+    const { user, unmount } = await setup(0, true, mentionContext);
+    await user.type(screen.getByRole('textbox'), 'Use @in');
+    const options = await screen.findAllByRole('option');
+    expect(options.map((option) => option.textContent)).toEqual([
+      'http_inflight_requests',
+      'pending_requests_total',
+      'instance',
+      'origin',
+    ]);
+    expect(within(options[0]).getByTestId('icon-graph-bar')).toBeInTheDocument();
+    expect(within(options[1]).getByTestId('icon-graph-bar')).toBeInTheDocument();
+    expect(within(options[2]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    expect(within(options[3]).getByTestId('icon-tag-alt')).toBeInTheDocument();
+    unmount();
+    await setup(0, true, {
+      ...mentionContext,
+      metadata: [
+        { kind: 'metric', name: 'in_a' },
+        { kind: 'metric', name: 'in_b' },
+        { kind: 'label', name: 'in_c' },
+        { kind: 'label', name: 'in_d' },
+        { kind: 'metric', name: 'in_e' },
+        { kind: 'label', name: 'in_f' },
+        { kind: 'metric', name: 'in_g' },
+        { kind: 'label', name: 'in_h' },
+      ],
+    });
+    await user.type(screen.getByRole('textbox'), '@in');
+    expect(screen.getAllByRole('option').map((option) => option.textContent)).toEqual([
+      'in_a',
+      'in_b',
+      'in_c',
+      'in_d',
+      'in_e',
+      'in_f',
+    ]);
+  });
+
+  it('moves mention selection with arrow keys and inserts with Enter before a later Enter submits', async () => {
+    const { user } = await setup(0, true, mentionContext);
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Use @in');
+    expect(screen.getByRole('option', { name: 'http_inflight_requests (Metric)' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('option', { name: 'pending_requests_total (Metric)' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await user.keyboard('{ArrowUp}{ArrowUp}');
+    expect(screen.getByRole('option', { name: 'origin (Label)' })).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+    expect(input).toHaveValue('Use pending_requests_total ');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_mention_inserted', {
+      kind: 'metric',
+    });
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use pending_requests_total');
+  });
+
+  it('clicks a portal mention item without dismissing an untouched prompt and reports only its kind', async () => {
+    const { user, dismissInvocation } = await setup(0, true, mentionContext);
+    const input = screen.getByRole('textbox');
+    await user.type(input, 'Group by @in');
+    const listbox = await screen.findByRole('listbox');
+    expect(screen.getByRole('dialog', { name: 'Query coauthor' })).not.toContainElement(listbox);
+    expect(listbox).toHaveStyle({ position: 'fixed' });
+    await user.click(screen.getByRole('option', { name: 'instance (Label)' }));
+    expect(input).toHaveValue('Group by instance ');
+    expect(input).toHaveFocus();
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(mockGenerate).not.toHaveBeenCalled();
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_mention_inserted', { kind: 'label' });
+  });
+
+  it.each([false, true])(
+    'Escape closes only the mention menu before applying engaged=%s close rules',
+    async (engaged) => {
+      const { user, dismissInvocation } = await setup(0, true, mentionContext);
+      if (engaged) {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        act(() => mockGenerate.mock.calls[0][0].onComplete('It calculates the request rate.'));
+        await user.click(screen.getByRole('button', { name: 'Modify this query' }));
+      }
+      await user.type(screen.getByRole('textbox'), 'Use @in');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.getByRole('textbox')).toHaveValue('Use @in');
+      expect(screen.getByRole('dialog', { name: 'Query coauthor' })).toBeInTheDocument();
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(dismissInvocation).not.toHaveBeenCalled();
+      await user.keyboard('{Escape}');
+      expect(dismissInvocation).toHaveBeenCalledTimes(engaged ? 0 : 1);
+    }
+  );
+
+  it('leaves @ as plain text without metadata and keeps Shift+Enter for a newline', async () => {
+    const { user } = await setup(0, true, { ...mentionContext, metadata: [] });
+    const input = screen.getByRole('textbox');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await user.type(input, 'Use @in');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    await user.type(input, 'and preserve the labels');
+    expect(input).toHaveValue('Use @in\nand preserve the labels');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(mockGenerate.mock.calls[0][0].prompt).toBe('Use @in\nand preserve the labels');
+  });
+
+  it('disables submission until context loads even when a mention prefix has been typed', async () => {
+    const initial = await setup(0, true, mentionContext);
+    initial.unmount();
+    let resolve!: (value: { baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }) => void;
+    const pendingContext = new Promise<{ baseline: DataQuery; context: QueryEditorCoauthoringContextV1 }>(
+      (nextResolve) => {
+        resolve = nextResolve;
+      }
+    );
+    initial.readInvocation.mockReturnValue(pendingContext);
+    render(<QueryCoauthoring {...initial.queryCoauthoringProps} />);
+    await initial.user.type(screen.getByRole('textbox'), '@in');
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeDisabled();
+    await initial.user.keyboard('{Enter}');
+    expect(mockGenerate).not.toHaveBeenCalled();
+    await act(async () => resolve({ baseline: initial.baseline, context: initial.context }));
+    expect(screen.getByRole('button', { name: 'Coauthor' })).toBeEnabled();
+  });
+
   it('shows the focused query summary using the highlighted query treatment', async () => {
     const { baseline, onBaseline } = await setup();
 
@@ -785,7 +932,7 @@ describe('QueryCoauthoring', () => {
 
     await setup(0, false);
 
-    expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+    expect(screen.getByRole('status')).toHaveTextContent('Building query…');
     expect(await screen.findByLabelText('Query focus')).toHaveTextContent('Focus');
     expect(screen.getByLabelText('Query focus')).toHaveTextContent('rate');
     expect(screen.getByLabelText('Relevant query context')).toHaveTextContent('http_requests_total');
@@ -803,7 +950,7 @@ describe('QueryCoauthoring', () => {
       metadata: undefined,
     } as unknown as QueryEditorCoauthoringContextV1);
 
-    expect(screen.getByText('Building query...')).toBeInTheDocument();
+    expect(screen.getByText('Building query…')).toBeInTheDocument();
     expect(await screen.findByLabelText('Relevant query context')).toHaveTextContent('PromQL');
   });
 
@@ -1086,7 +1233,7 @@ describe('QueryCoauthoring', () => {
 
       mockIsGenerating = true;
       rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
-      expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
 
       mockIsGenerating = false;
       act(() => request.onComplete('Should I group by handler, route, or both?'));
@@ -1106,7 +1253,7 @@ describe('QueryCoauthoring', () => {
 
       mockIsGenerating = true;
       rerender(<QueryCoauthoring {...queryCoauthoringProps} />);
-      expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
 
       mockIsGenerating = false;
       act(() => secondRequest.onComplete('Would you also group by status code?'));
@@ -1158,7 +1305,7 @@ describe('QueryCoauthoring', () => {
       drainAnimationFrames();
 
       const dialog = screen.getByRole('dialog', { name: 'Query coauthor' });
-      expect(screen.getByRole('status')).toHaveTextContent('Building query...');
+      expect(screen.getByRole('status')).toHaveTextContent('Building query…');
       expect(dialog).toHaveFocus();
 
       mockIsGenerating = false;

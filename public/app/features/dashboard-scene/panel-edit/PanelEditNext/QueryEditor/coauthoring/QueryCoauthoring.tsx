@@ -31,6 +31,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   const promptMessageId = useId();
   const availableHeight = useQueryCoauthoringViewport(portalTarget);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mentionMenuRef = useRef<HTMLDivElement | null>(null);
   const session = useQueryCoauthoringSession(sessionOptions);
   const { dismissUntouched } = session;
   const focusState = session.state.kind;
@@ -38,7 +39,11 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
 
   useEffect(() => {
     const onOutsidePointerDown = (event: PointerEvent) => {
-      if (event.target instanceof Node && !containerRef.current?.contains(event.target)) {
+      if (
+        event.target instanceof Node &&
+        !containerRef.current?.contains(event.target) &&
+        !mentionMenuRef.current?.contains(event.target)
+      ) {
         dismissUntouched();
       }
     };
@@ -84,7 +89,9 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       }
       event.preventDefault();
       event.stopPropagation();
-      if (session.feedback) {
+      if (session.mention) {
+        session.closeMention();
+      } else if (session.feedback) {
         session.closeFeedback();
       } else {
         session.dismissUntouched();
@@ -168,7 +175,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             placeholder={
               state.clarification
                 ? t('query-editor-coauthoring.clarification-placeholder', 'Add extra detail…')
-                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change...')
+                : t('query-editor-coauthoring.prompt-placeholder', 'Describe a quick change…')
             }
             ariaLabel={
               state.clarification
@@ -184,6 +191,10 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
             disabled={!state.intent.trim() || !state.context}
             onChange={state.setIntent}
             onSubmit={state.submit}
+            mention={session.mention}
+            mentionMenuRef={mentionMenuRef}
+            cursorPosition={session.cursorPosition}
+            onCaretChange={session.setCaret}
           />
           {!state.clarification && (
             <div className={styles.quickActions}>
@@ -208,6 +219,10 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           onFollowUp={state.submitFollowUp}
           onModify={state.modify}
           onClose={session.dismiss}
+          mention={session.mention}
+          mentionMenuRef={mentionMenuRef}
+          cursorPosition={session.cursorPosition}
+          onCaretChange={session.setCaret}
         />
       )}
       {state.kind === 'working' && (

@@ -1,5 +1,10 @@
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import {
+  findQueryCoauthoringMention,
+  queryCoauthoringMentionOptions,
+  type QueryCoauthoringMention,
+} from './queryCoauthoringMentions';
 import { type QueryExplanation } from './queryCoauthoringPrompts';
 import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
 import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
@@ -38,6 +43,8 @@ interface SessionData {
   activeRequestId?: number;
   requestMode?: 'modify' | 'explain';
   requestResume?: SessionSnapshot;
+  mention?: QueryCoauthoringMention;
+  cursorPosition?: number;
 }
 
 export type QueryCoauthoringReducerState = SessionSnapshot & { data: SessionData };
@@ -47,7 +54,11 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'assistant-ready' }
   | { type: 'invocation-cleared' }
   | { type: 'request-invalidated' }
-  | { type: 'intent-changed'; intent: string }
+  | { type: 'intent-changed'; intent: string; caret?: number }
+  | { type: 'mention-caret-changed'; caret: number }
+  | { type: 'mention-moved'; direction: 1 | -1 }
+  | { type: 'mention-selected'; index?: number }
+  | { type: 'mention-closed' }
   | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
   | {
       type: 'invocation-updated';
@@ -60,7 +71,7 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'generation-started' }
   | { type: 'generation-settled' }
   | { type: 'generation-stopped' }
-  | { type: 'follow-up-changed'; intent: string }
+  | { type: 'follow-up-changed'; intent: string; caret?: number }
   | { type: 'modify-started' }
   | {
       type: 'explanation-completed';
@@ -170,7 +181,15 @@ export function queryCoauthoringSessionReducer(
       return { ...state, data: { ...state.data, requestId: state.data.requestId + 1, activeRequestId: undefined } };
     case 'intent-changed': {
       const prompt = { ...state.data.prompt, intent: event.intent };
-      const next = { ...state, data: { ...state.data, prompt } };
+      const next = {
+        ...state,
+        data: {
+          ...state.data,
+          prompt,
+          mention: event.caret === undefined ? undefined : findQueryCoauthoringMention(event.intent, event.caret),
+          cursorPosition: undefined,
+        },
+      };
       return transition(
         next,
         updateSession(current, (view) => (view.kind === 'prompt' ? prompt : view))
@@ -178,6 +197,62 @@ export function queryCoauthoringSessionReducer(
     }
     case 'feedback-changed':
       return { ...state, data: { ...state.data, feedback: event.feedback } };
+    case 'mention-closed':
+      return { ...state, data: { ...state.data, mention: undefined } };
+    case 'mention-caret-changed': {
+      if (state.kind !== 'prompt' && state.kind !== 'explain') {
+        return state;
+      }
+      const mention = findQueryCoauthoringMention(state.intent, event.caret);
+      const previous = state.data.mention;
+      if (mention?.from === previous?.from && mention?.to === previous?.to && mention?.query === previous?.query) {
+        return state;
+      }
+      return { ...state, data: { ...state.data, mention, cursorPosition: undefined } };
+    }
+    case 'mention-moved': {
+      if (!state.data.mention || (state.kind !== 'prompt' && state.kind !== 'explain')) {
+        return state;
+      }
+      const count = queryCoauthoringMentionOptions(state.context, state.data.mention.query).length;
+      if (!count) {
+        return state;
+      }
+      return {
+        ...state,
+        data: {
+          ...state.data,
+          mention: {
+            ...state.data.mention,
+            selectedIndex: (state.data.mention.selectedIndex + event.direction + count) % count,
+          },
+        },
+      };
+    }
+    case 'mention-selected': {
+      const mention = state.data.mention;
+      if (!mention || (state.kind !== 'prompt' && state.kind !== 'explain')) {
+        return state;
+      }
+      const option = queryCoauthoringMentionOptions(state.context, mention.query)[event.index ?? mention.selectedIndex];
+      if (!option) {
+        return state;
+      }
+      const prefix = state.intent.slice(0, mention.from) + option.name;
+      const suffix = state.intent.slice(mention.to);
+      const separator = /^\s/.test(suffix) ? '' : ' ';
+      const intent = prefix + separator + suffix;
+      const next = {
+        ...state,
+        data: { ...state.data, mention: undefined, cursorPosition: prefix.length + separator.length },
+      };
+      return transition(
+        next,
+        updateSession(current, (view) =>
+          view.kind === 'prompt' || view.kind === 'explain' ? { ...view, intent } : view
+        )
+      );
+    }
     case 'invocation-updated': {
       const prompt = {
         ...state.data.prompt,
@@ -217,6 +292,8 @@ export function queryCoauthoringSessionReducer(
           activeRequestId: requestId,
           requestMode: event.mode,
           requestResume,
+          mention: undefined,
+          cursorPosition: undefined,
         },
       };
     }
@@ -295,13 +372,20 @@ export function queryCoauthoringSessionReducer(
     }
     case 'follow-up-changed':
       return transition(
-        state,
+        {
+          ...state,
+          data: {
+            ...state.data,
+            mention: event.caret === undefined ? undefined : findQueryCoauthoringMention(event.intent, event.caret),
+            cursorPosition: undefined,
+          },
+        },
         updateSession(current, (view) => (view.kind === 'explain' ? { ...view, intent: event.intent } : view))
       );
     case 'modify-started': {
       const prompt = { ...state.data.prompt, intent: '', clarification: undefined };
       return transition(
-        { ...state, data: { ...state.data, prompt } },
+        { ...state, data: { ...state.data, prompt, mention: undefined, cursorPosition: undefined } },
         updateSession(current, () => prompt)
       );
     }

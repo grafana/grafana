@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { QueryCoauthoringPromptInput } from './QueryCoauthoringViews';
 
 const initialPrompt = {
-  placeholder: 'Describe a quick change...',
+  placeholder: 'Describe a quick change…',
   ariaLabel: 'Describe a query change',
   actionLabel: 'Coauthor',
 };
