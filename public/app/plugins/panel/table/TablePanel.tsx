@@ -12,7 +12,6 @@ import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
-import { supportsColumnManagement } from '@grafana/ui/internal';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useAdHocColumnState,
@@ -22,7 +21,7 @@ import {
   useCommonTableProps,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
+import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';

@@ -1,22 +1,17 @@
 import { useCallback, useMemo } from 'react';
 
-import { type DataFrame } from '@grafana/data';
-
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 
-import { prepareColumnContext, resolveColumnSourceIndex } from './columnContext';
+import { prepareColumnContext } from './columnContext';
 import { tableTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
-  frames: readonly DataFrame[],
-  frameIndex: number,
-  enabled: boolean,
+  sourceIndex: number | undefined,
   api: PanelRuntimeTransformations | undefined,
   owner: string
 ) {
   const { transformations, sourceSeries, update } = useTableTransformations(api, owner);
-  const sourceIndex = enabled ? resolveColumnSourceIndex(frames, frameIndex, sourceSeries) : undefined;
   const sourceFrame = sourceIndex !== undefined ? sourceSeries?.[sourceIndex] : undefined;
   const context = useMemo(
     () =>

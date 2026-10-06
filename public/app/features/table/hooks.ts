@@ -18,9 +18,10 @@ import {
 } from '@grafana/runtime/internal';
 import { type TableOptions } from '@grafana/schema';
 import { usePanelContext } from '@grafana/ui';
-import { useColumnTransformations } from '@grafana/ui/internal';
+import { getSourceFrameIndex, useColumnTransformations } from '@grafana/ui/internal';
 import { getConfig } from 'app/core/config';
 
+import { supportsColumnManagement } from './tableCapabilities';
 import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
@@ -143,5 +144,13 @@ export function useTableRefreshNewFeatures(): boolean {
 /** Returns column state when column controls are supported for the selected frame. */
 export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
   const api = usePanelContext().adHocTransformations;
-  return useColumnTransformations(frames, frameIndex, enabled, api, TABLE_TRANSFORMATIONS_OWNER);
+  const sourceSeries = api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
+  const sourceIndex =
+    enabled && supportsColumnManagement(frames[frameIndex]) && sourceSeries
+      ? getSourceFrameIndex(frames, frameIndex, sourceSeries)
+      : undefined;
+  const eligibleSourceIndex =
+    sourceIndex !== undefined && supportsColumnManagement(sourceSeries?.[sourceIndex]) ? sourceIndex : undefined;
+
+  return useColumnTransformations(eligibleSourceIndex, api, TABLE_TRANSFORMATIONS_OWNER);
 }

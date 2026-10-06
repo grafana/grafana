@@ -1,7 +1,6 @@
 import { FieldType, toDataFrame } from '@grafana/data';
-import { supportsColumnManagement } from '@grafana/ui/internal';
 
-import { withRefreshedTableCapabilities } from './tableCapabilities';
+import { supportsColumnManagement, withRefreshedTableCapabilities } from './tableCapabilities';
 
 const frame = () =>
   toDataFrame({
