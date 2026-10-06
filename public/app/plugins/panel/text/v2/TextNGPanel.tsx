@@ -161,7 +161,12 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+      if (
+        next.content !== processed.content ||
+        next.mode !== processed.mode ||
+        next.error !== processed.error ||
+        next.truncated !== processed.truncated
+      ) {
         setProcessed(next);
       }
     },

@@ -844,6 +844,27 @@ describe('TextNGPanel', () => {
       expect(html()).toContain('second');
     });
 
+    // Both passes cut on the ceiling, so the output is byte-identical and only the flag moves.
+    it('shows the truncation notice when a refresh crosses the ceiling without changing the output', () => {
+      const dataOf = (length: number) =>
+        createData([toDataFrame({ fields: [{ name: 'n', values: ['x'.repeat(length)] }] })]);
+      const props = createProps((target) => target, {
+        data: dataOf(MAX_RENDERED_CHARS),
+        options: { content: '{{#each data}}{{n}}{{/each}}', mode: TextMode.HTML },
+      });
+
+      const { rerender } = render(viewing(props));
+      settle();
+      const before = html();
+      expect(screen.queryByTestId(TRUNCATION_NOTICE_TEST_ID)).not.toBeInTheDocument();
+
+      rerender(viewing(Object.assign({}, props, { data: dataOf(MAX_RENDERED_CHARS + 1) })));
+      settle();
+
+      expect(html()).toBe(before);
+      expect(screen.getByTestId(TRUNCATION_NOTICE_TEST_ID)).toBeInTheDocument();
+    });
+
     it('re-renders the content when a referenced variable changes', () => {
       let value = 'first';
       const props = createProps((target) => target.replace('${host}', value), {
