@@ -3,8 +3,8 @@
  */
 import { LabelMatcherFactory, RouteFactory } from '../api/notifications/v1beta1/mocks/fakes/Routes';
 
+import { findMatchingRoutes } from './route.utils';
 import { type Route } from './types';
-import { findMatchingRoutes } from './utils';
 
 const CATCH_ALL_ROUTE: Route = RouteFactory.build({
   receiver: 'ALL',

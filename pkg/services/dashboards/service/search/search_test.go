@@ -199,7 +199,6 @@ func TestParseResults(t *testing.T) {
 		_, err := ParseResults(resSearchResp, 0)
 		require.Error(t, err)
 	})
-
 	t.Run("should preserve the status of a response error", func(t *testing.T) {
 		resSearchResp := &resourcepb.ResourceSearchResponse{
 			Error: resource.AsErrorResult(apierrors.NewServiceUnavailable("search unavailable")),
@@ -239,17 +238,23 @@ func makeResponse(names []string, totalHits int64) *resourcepb.ResourceSearchRes
 }
 
 func TestSearchAll_Errors(t *testing.T) {
+	result := dashboardSearchRateLimitResult()
+	grpcStatus, err := status.New(codes.ResourceExhausted, result.Message).WithDetails(result)
+	require.NoError(t, err)
 	for _, tc := range []struct {
 		name string
 		resp *resourcepb.ResourceSearchResponse
 		err  error
 	}{
-		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: dashboardSearchRateLimitResult()}},
-		{name: "grpc", err: wrappedDashboardSearchRateLimitGRPCError(t)},
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}},
+		{name: "grpc", err: grpcStatus.Err()},
+		{name: "wrapped grpc", err: fmt.Errorf("search: %w", grpcStatus.Err())},
 		{name: "canceled", err: context.Canceled},
 		{name: "wrapped canceled", err: fmt.Errorf("search: %w", context.Canceled)},
 		{name: "deadline exceeded", err: context.DeadlineExceeded},
+		{name: "unstructured grpc", err: status.Error(codes.Unavailable, "private transport details")},
 		{name: "other transport error", err: fmt.Errorf("connection refused")},
+		{name: "transport takes precedence", resp: &resourcepb.ResourceSearchResponse{Error: result}, err: fmt.Errorf("connection refused")},
 	} {
 		for _, errorPage := range []int{1, 2} {
 			t.Run(fmt.Sprintf("%s/page %d", tc.name, errorPage), func(t *testing.T) {
@@ -266,7 +271,7 @@ func TestSearchAll_Errors(t *testing.T) {
 				results, err := SearchAll(context.Background(), 1, request, searchFn)
 
 				if tc.err != nil {
-					require.ErrorIs(t, err, tc.err, "transport errors must retain their original chain and gRPC status")
+					require.True(t, err == tc.err, "transport errors must be returned unchanged") //nolint:errorlint // Assert identity, not merely membership in the error chain.
 				} else {
 					requireDashboardSearchRateLimitStatus(t, err)
 				}
@@ -288,23 +293,16 @@ func dashboardSearchRateLimitResult() *resourcepb.ErrorResult {
 			Kind:              "dashboards",
 			Uid:               "uid",
 			RetryAfterSeconds: 12,
+			Causes:            []*resourcepb.ErrorCause{{Reason: "TooManyRequests", Field: "query", Message: "retry later"}},
 		},
 	}
-}
-
-func wrappedDashboardSearchRateLimitGRPCError(t *testing.T) error {
-	t.Helper()
-
-	grpcStatus, err := status.New(codes.ResourceExhausted, "search is busy").WithDetails(dashboardSearchRateLimitResult())
-	require.NoError(t, err)
-	return fmt.Errorf("search: %w", grpcStatus.Err())
 }
 
 func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
 	t.Helper()
 
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
+	require.IsType(t, &apierrors.StatusError{}, err)
+	apiStatus := err.(apierrors.APIStatus)
 	require.Equal(t, metav1.Status{
 		Status:  metav1.StatusFailure,
 		Code:    http.StatusTooManyRequests,
@@ -316,6 +314,7 @@ func requireDashboardSearchRateLimitStatus(t *testing.T, err error) {
 			Kind:              "dashboards",
 			UID:               "uid",
 			RetryAfterSeconds: 12,
+			Causes:            []metav1.StatusCause{{Type: "TooManyRequests", Field: "query", Message: "retry later"}},
 		},
 	}, apiStatus.Status())
 }
