@@ -265,6 +265,7 @@
 /devenv/dev-dashboards/panel-histogram @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-library @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-piechart @grafana/dataviz-squad
+/devenv/dev-dashboards/panel-render @grafana/dashboards-squad
 /devenv/dev-dashboards/panel-stat @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-status-history @grafana/dataviz-squad
 /devenv/dev-dashboards/panel-table @grafana/dataviz-squad
@@ -1108,6 +1109,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
 /public/app/plugins/panel/live/ @grafana/dashboards-squad
 /public/app/plugins/panel/news/ @grafana/dataviz-squad
+/public/app/plugins/panel/render/ @grafana/dashboards-squad
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/dataviz-squad
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad
