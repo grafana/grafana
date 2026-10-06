@@ -4,10 +4,14 @@ import { initReactI18next, setDefaults, setI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE } from './constants';
 import {
+  addResourceBundle,
+  changeLanguage,
   loadNamespacedResources,
   initDefaultI18nInstance,
   initDefaultReactI18nInstance,
+  initializeI18n,
   initPluginTranslations,
+  t,
 } from './i18n';
 import { type ResourceLoader } from './types';
 
@@ -206,6 +210,27 @@ describe('i18n', () => {
       expect(loaders[0]).not.toHaveBeenCalled();
       expect(loaders[1]).not.toHaveBeenCalled();
       expect(addResourceBundleSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('initializeI18n', () => {
+    beforeEach(() => {
+      // earlier tests replace i18n.init and i18n.options, and resetAllMocks leaves those replacements in place
+      jest.restoreAllMocks();
+    });
+
+    afterEach(async () => {
+      await changeLanguage(DEFAULT_LANGUAGE);
+    });
+
+    it('resolves t() keys from a namespace after the first one in ns', async () => {
+      // react-i18next is mocked without initReactI18next, which i18next refuses to register
+      jest.spyOn(i18n, 'use').mockReturnValue(i18n);
+
+      await initializeI18n({ language: 'it-IT', ns: ['grafana', 'grafana-enterprise'] });
+      addResourceBundle('it-IT', 'grafana-enterprise', { 'enterprise-key': 'Chiave enterprise' });
+
+      expect(t('enterprise-key', 'Enterprise key')).toBe('Chiave enterprise');
     });
   });
 });
