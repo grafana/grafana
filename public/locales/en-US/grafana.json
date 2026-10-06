@@ -191,9 +191,6 @@
     "org-role-picker": {
       "placeholder-choose-role": "Choose role..."
     },
-    "org-uers": {
-      "last-seen-never": "Never"
-    },
     "org-users": {
       "not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
     },
@@ -328,6 +325,11 @@
     },
     "users-create": {
       "create-button": "Create user"
+    },
+    "users-export": {
+      "download": "Download table as CSV",
+      "error": "Failed to export users. Please try again.",
+      "exporting": "Exporting…"
     },
     "users-list": {
       "create-button": "New user"
