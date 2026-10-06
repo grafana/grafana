@@ -29,11 +29,7 @@ export function encodeHiddenColumns(
   );
 }
 
-export const columnVisibility: TableTransformation<
-  { hiddenColumns: ReadonlySet<string> },
-  ReadonlySet<string>,
-  ColumnContext
-> = {
+export const columnVisibility = {
   read: (configs, { frameFilter }) => readColumnVisibility(configs, frameFilter),
   write: (configs, hidden, { frameFilter }) => encodeHiddenColumns(configs, hidden, frameFilter),
-};
+} satisfies TableTransformation<{ hiddenColumns: ReadonlySet<string> }, ReadonlySet<string>, ColumnContext>;
