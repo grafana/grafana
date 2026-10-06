@@ -1,21 +1,20 @@
 import { t } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 
-import { AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
+import { getNextPanelId } from '../../utils/getNextPanelId';
 import { getGridItemKeyForPanelId, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { edit } from '../utils/edit';
 
 export function duplicateAutoGridPanel(layout: AutoGridLayoutManager, panel: VizPanel) {
-  const gridItem = panel.parent;
-  if (!(gridItem instanceof AutoGridItem)) {
+  const grid = layout.state.layout;
+  const gridItem = grid.state.children.find((child) => child === panel.parent);
+  if (!gridItem) {
     console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
     return;
   }
 
-  const newPanelId = dashboardSceneGraph.getNextPanelId(layout);
-  const grid = layout.state.layout;
+  const newPanelId = getNextPanelId(layout);
 
   const newPanel = panel.clone({
     key: getVizPanelKeyForPanelId(newPanelId),
@@ -27,17 +26,19 @@ export function duplicateAutoGridPanel(layout: AutoGridLayoutManager, panel: Viz
   });
 
   edit({
+    meta: { actionId: 'panel.duplicate', scope: 'auto-grid' },
     description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
     source: layout,
     addedObject: newPanel,
     perform: () => {
-      newGridItem = newPanel.parent instanceof AutoGridItem ? newPanel.parent : newGridItem;
       const sourceIndex = grid.state.children.findIndex((child) => child.state.body.state.key === panel.state.key);
       const newChildren = [...grid.state.children];
       newChildren.splice(sourceIndex + 1, 0, newGridItem);
       grid.setState({ children: newChildren });
     },
     undo: () => {
+      newGridItem =
+        grid.state.children.find((child) => child.state.body.state.key === newPanel.state.key) ?? newGridItem;
       grid.setState({
         children: grid.state.children.filter((child) => child.state.body.state.key !== newPanel.state.key),
       });

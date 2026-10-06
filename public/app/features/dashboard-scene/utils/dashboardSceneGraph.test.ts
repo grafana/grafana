@@ -10,8 +10,9 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
-import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
+import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './findVizPanel';
+import { getNextPanelId } from './getNextPanelId';
 
 describe('dashboardSceneGraph', () => {
   describe('getPanelLinks', () => {

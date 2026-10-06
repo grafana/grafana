@@ -107,6 +107,24 @@ describe('duplicateAutoGridPanel', () => {
     expect(sidebar.state.redoStack).toEqual([]);
   });
 
+  it('restores the current grid item wrapper on redo after it has been replaced', () => {
+    const { manager, panel, item, sibling, layout, sidebar } = setup();
+    duplicateAutoGridPanel(manager, panel);
+    const duplicate = layout.state.children[1];
+    duplicate.state.body.clearParent();
+    const replacement = new AutoGridItem({ key: duplicate.state.key, body: duplicate.state.body });
+    layout.setState({ children: [item, replacement, sibling] });
+
+    sidebar.undoAction();
+    expect(layout.state.children).toEqual([item, sibling]);
+
+    sidebar.redoAction();
+
+    expect(layout.state.children).toEqual([item, replacement, sibling]);
+    expect(layout.state.children[1]).toBe(replacement);
+    expect(replacement.state.body.parent).toBe(replacement);
+  });
+
   it('keeps one duplicate after repeated undo and redo', () => {
     const { manager, panel, item, sibling, layout, sidebar } = setup();
     duplicateAutoGridPanel(manager, panel);
