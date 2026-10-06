@@ -2910,6 +2910,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.scopesDashboardsMegaMenu",
+        "resourceVersion": "1791299236241",
+        "creationTimestamp": "2026-10-06T15:07:16Z"
+      },
+      "spec": {
+        "description": "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.secretsReferenceValueUI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
