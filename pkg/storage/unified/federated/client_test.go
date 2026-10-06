@@ -42,13 +42,13 @@ func TestFederatedGetStatsErrors(t *testing.T) {
 	}
 }
 
-func TestFederatedGetStatsMissingLegacyNamespace(t *testing.T) {
+func TestFederatedGetStatsDeletedLegacyNamespace(t *testing.T) {
 	stats := []*resourcepb.ResourceStatsResponse_Stats{{Group: "dashboard.grafana.app", Resource: "dashboards", Count: 2}}
 	base := resource.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{Stats: stats}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-		return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceNotFound)
+		return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceDeleted)
 	}, nil)
 
 	response, err := client.GetStats(t.Context(), in)
@@ -68,14 +68,14 @@ func TestFederatedGetStatsLegacyLookupError(t *testing.T) {
 	require.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
-func TestFederatedGetStatsArchivedLegacyNamespace(t *testing.T) {
+func TestFederatedGetStatsUnavailableLegacyNamespace(t *testing.T) {
 	base := resource.NewMockResourceClient(t)
 	in := &resourcepb.ResourceStatsRequest{Namespace: "stacks-123", Folder: []string{"f1"}}
 	base.On("GetStats", mock.Anything, in).Return(&resourcepb.ResourceStatsResponse{}, nil).Once()
 	client := NewFederatedClient(base, func(context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-		return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceArchived)
+		return nil, fmt.Errorf("lookup stack: %w", legacysql.ErrNamespaceNotFound)
 	}, nil)
 
 	_, err := client.GetStats(t.Context(), in)
-	require.ErrorIs(t, err, legacysql.ErrNamespaceArchived)
+	require.ErrorIs(t, err, legacysql.ErrNamespaceNotFound)
 }
