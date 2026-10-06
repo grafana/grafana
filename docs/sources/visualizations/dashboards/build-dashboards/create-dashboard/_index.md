@@ -519,7 +519,7 @@ To make a copy of a dashboard, follow these steps:
 
 1. Navigate to the dashboard you want to update.
 1. Click **Edit**.
-1. Click the **More save options** icon next to **Save** and select **Save as copy**.
+1. Click the **Save** drop-down list and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.

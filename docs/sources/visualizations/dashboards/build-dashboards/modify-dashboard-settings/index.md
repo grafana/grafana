@@ -142,6 +142,6 @@ Dashboard links enable you to place links to other dashboards and web sites dire
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from panels, template variables, panel queries, and so on.
 
-To view a dashboard JSON model, click **Edit**, and then click the **Edit as code** icon in the toolbar.
+To view a dashboard JSON model, on the **Settings** page, click the **JSON Model** tab.
 
 For more information about the JSON fields, refer to [JSON fields](ref:json-fields).
