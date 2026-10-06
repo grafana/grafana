@@ -50,6 +50,10 @@ export function isOAuthConnectionType(type?: string): type is OAuthConnectionTyp
   return type != null && type in OAUTH_TO_PROVIDER;
 }
 
+export function canListRepositories(type?: ConnectionSpec['type']): boolean {
+  return type !== 'gitOAuth';
+}
+
 // OAuth app connections talk to the same provider as their app-based counterparts
 export function connectionProviderType(
   type?: ConnectionSpec['type']
