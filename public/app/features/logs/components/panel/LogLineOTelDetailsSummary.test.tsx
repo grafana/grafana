@@ -13,7 +13,7 @@ import {
 
 import { createLogLine } from '../mocks/logRow';
 
-import { LogLineOTelDetailsSummary } from './LogLineOTelDetailsSummary';
+import { LogLineDetailsSummary } from './LogLineDetailsSummary';
 import { LogListContext, type LogListContextData } from './LogListContext';
 import { defaultValue } from './__mocks__/LogListContext';
 
@@ -72,14 +72,14 @@ function createLogWithLinks(logLevel: LogLevel = LogLevel.error) {
 function renderSummary(log = createLogWithLinks(), contextOverrides: Partial<LogListContextData> = {}) {
   return render(
     <LogListContext.Provider value={{ ...defaultValue, timestampResolution: 'ms', ...contextOverrides }}>
-      <LogLineOTelDetailsSummary log={log} />
+      <LogLineDetailsSummary log={log} />
     </LogListContext.Provider>
   );
 }
 
 const theme = createTheme();
 
-describe('LogLineOTelDetailsSummary', () => {
+describe('LogLineDetailsSummary', () => {
   it('shows the error level in a red badge, the millisecond timestamp, and each link', () => {
     const log = createLogWithLinks();
     renderSummary(log);
