@@ -120,6 +120,7 @@ export function FilterByNameTransformerEditor({ input, options, onChange }: Filt
     }
     if (isNewFieldNames || (isNewOptions && prev.pattern !== options.include?.pattern)) {
       setRegex(options.include?.pattern);
+      setIsRegexValid(true);
     }
   }
 

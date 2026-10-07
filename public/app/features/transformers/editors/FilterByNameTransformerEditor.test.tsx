@@ -63,6 +63,24 @@ describe('FilterByNameTransformerEditor', () => {
     expect(screen.getByRole('textbox')).toHaveValue('x|');
   });
 
+  it('drops a stale invalid-pattern state when another transformation brings its own pattern', async () => {
+    const onChange = jest.fn();
+    const editor = (options: FilterFieldsByNameTransformerOptions) => (
+      <FilterByNameTransformerEditor input={frameWithFields('x', 'y')} options={options} onChange={onChange} />
+    );
+    const { rerender } = render(editor({}));
+
+    await userEvent.type(screen.getByRole('textbox'), '(');
+    await userEvent.tab();
+    expect(screen.getByText('Invalid pattern')).toBeInTheDocument();
+
+    rerender(editor({ include: { pattern: 'y' } }));
+    await userEvent.click(getPill('x'));
+
+    expect(screen.queryByText('Invalid pattern')).not.toBeInTheDocument();
+    expect(onChange).toHaveBeenLastCalledWith({ include: { names: ['y', 'x'], pattern: 'y' } });
+  });
+
   it.each([
     { button: 'Select all', pressed: 'true' },
     { button: 'Deselect all', pressed: 'false' },
