@@ -337,5 +337,38 @@ describe('useMetricCatalog', () => {
       await waitFor(() => expect(result.current.error?.message).toBe('search failed'));
       expect(result.current.metrics).toEqual([]);
     });
+
+    it('drops a failed search’s error as soon as the user types a new term', async () => {
+      const { result, rerender, search } = renderSearch(truncated);
+      search.mockRejectedValue(new Error('search failed'));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.error?.message).toBe('search failed'));
+
+      rerender({ searchText: 'quickpizza' });
+
+      expect(result.current.loading).toBe(true);
+      expect(result.current.error).toBeUndefined();
+    });
+
+    it('shows the truncated catalog’s matches during a search started before the catalog arrived', async () => {
+      const catalogPending = deferred<Catalog>();
+      const searchPending = deferred<MetricInfo[]>();
+      jest.spyOn(client, 'fetchCatalog').mockReturnValue(catalogPending.promise);
+      const search = jest.spyOn(client, 'searchCatalog').mockReturnValue(searchPending.promise);
+      const { result, rerender } = renderHook(
+        ({ searchText }) => useMetricCatalog({ uid: 'p1' }, range, { searchText }),
+        { initialProps: { searchText: '' } }
+      );
+
+      rerender({ searchText: 'load' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await act(async () => catalogPending.resolve(truncated));
+
+      expect(search).toHaveBeenCalledWith({ uid: 'p1' }, range, 'load');
+      expect(result.current.metrics.map((m) => m.name)).toEqual(['node_load1']);
+      expect(result.current.loading).toBe(true);
+    });
   });
 });
