@@ -2,9 +2,11 @@ import { t } from '@grafana/i18n';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
-import { collectSelectedItems } from 'app/features/browse-dashboards/utils/dashboards';
+import { findItem } from 'app/features/browse-dashboards/state/utils';
+import { type BrowseDashboardsState, type DashboardTreeSelection } from 'app/features/browse-dashboards/types';
+import { collectSelectedItems, getSelectedItemRefs } from 'app/features/browse-dashboards/utils/dashboards';
 import { type WorkflowOption } from 'app/features/provisioning/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { joinPath } from '../utils/path';
@@ -133,6 +135,24 @@ export function isResourceAlreadyInTarget(currentPath: string, targetFolderPath:
   return normalizeRepoPath(currentPath) === normalizeRepoPath(getResourceTargetPath(currentPath, targetFolderPath));
 }
 
-export function isSameFolderPath(currentFolderPath: string | undefined, targetFolderPath: string): boolean {
-  return normalizeRepoPath(currentFolderPath || '') === normalizeRepoPath(targetFolderPath);
+/**
+ * True when every selected item already sits directly under the target folder, so the move would be a no-op.
+ * Items missing from the browse tree can't be checked here; the backend skips them if they're already in place.
+ */
+export function isSelectionAlreadyInFolder(
+  selectedItems: BulkActionProvisionResourceProps['selectedItems'],
+  targetFolderUID: string,
+  rootItems: DashboardViewItem[],
+  childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
+): boolean {
+  const refs = getSelectedItemRefs(selectedItems);
+  if (refs.length === 0) {
+    return false;
+  }
+
+  return refs.every(({ kind, uid }) => {
+    const item = findItem(rootItems, childrenByParentUID, kind, uid);
+    // Root items have no parentUID; the picker reports the whole-instance root as ''.
+    return item !== undefined && (item.parentUID ?? '') === targetFolderUID;
+  });
 }
