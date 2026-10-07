@@ -1,7 +1,10 @@
 /** @jest-environment-options {"customExportConditions": ["@grafana-app/source", "node", "node-addons"]} */
 
 import { CompletionContext, type CompletionSource } from '@codemirror/autocomplete';
+import { forceParsing } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
+import { EditorView } from '@codemirror/view';
+import { Draft07 } from 'json-schema-library';
 
 import type { BackendSrv } from '@grafana/runtime';
 
@@ -416,6 +419,45 @@ describe('CodeMirror compatibility with checked-in Dashboard OpenAPI schemas', (
         'RowsLayout',
         'TabsLayout',
       ]);
+
+      const editing = JSON.parse(text);
+      editing.spec.title = 'New dashboard';
+      const editingText = JSON.stringify(editing);
+      const editingView = new EditorView({
+        state: EditorState.create({ doc: editingText, extensions: createDashboardSchemaExtensions(schema) }),
+      });
+      const editingPos = editingText.indexOf('New dashboard') + 3;
+      const resolveSchema = jest.spyOn(Draft07.prototype, 'getSchema');
+      const compileSchema = jest.spyOn(Draft07.prototype, 'setSchema');
+      try {
+        forceParsing(editingView, editingView.state.doc.length, 1000);
+        const [editingComplete] = editingView.state.languageDataAt<CompletionSource>('autocomplete', editingPos);
+        await editingComplete(new CompletionContext(editingView.state, editingPos, false));
+        expect(resolveSchema).toHaveBeenCalledTimes(1);
+
+        delete editing.spec.title;
+        editing.spec.ti = '';
+        const propertyText = JSON.stringify(editing);
+        editingView.dispatch({ changes: { from: 0, to: editingView.state.doc.length, insert: propertyText } });
+        forceParsing(editingView, editingView.state.doc.length, 1000);
+        const propertyPos = propertyText.indexOf('"ti"') + 3;
+        const propertyCompletions = await editingComplete(new CompletionContext(editingView.state, propertyPos, true));
+        expect(resolveSchema).toHaveBeenCalledTimes(2);
+        expect(propertyCompletions?.options.map((option) => option.label)).toContain('title');
+
+        const layoutText = JSON.stringify(resource);
+        editingView.dispatch({ changes: { from: 0, to: editingView.state.doc.length, insert: layoutText } });
+        forceParsing(editingView, editingView.state.doc.length, 1000);
+        const layoutPos = layoutText.indexOf('RowsLayout"') + 1;
+        const layoutCompletions = await editingComplete(new CompletionContext(editingView.state, layoutPos, true));
+        expect(resolveSchema).toHaveBeenCalledTimes(3);
+        expect(layoutCompletions?.options.map((option) => option.label)).toContain('RowsLayout');
+        expect(compileSchema).not.toHaveBeenCalled();
+      } finally {
+        resolveSchema.mockRestore();
+        compileSchema.mockRestore();
+        editingView.destroy();
+      }
     });
   });
 });

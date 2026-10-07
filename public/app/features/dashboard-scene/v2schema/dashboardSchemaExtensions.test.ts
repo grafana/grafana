@@ -188,6 +188,11 @@ describe('Dashboard schema extensions', () => {
     });
     const propertyResult = await complete(properties, properties.doc.toString().indexOf('ti') + 2);
     expect(propertyResult?.options.map((option) => option.label)).toContain('title');
+    const title = propertyResult!.options.find((option) => option.label === 'title')!;
+    const edited = properties.update({
+      changes: { from: propertyResult!.from, to: propertyResult!.to, insert: title.apply as string },
+    }).state;
+    expect(JSON.parse(edited.doc.toString())).toEqual({ kind: 'Dashboard', spec: { title: '' } });
 
     const values = EditorState.create({
       doc: '{"kind":"Dashboard","spec":{"theme":""}}',
@@ -195,6 +200,25 @@ describe('Dashboard schema extensions', () => {
     });
     const valueResult = await complete(values, values.doc.toString().indexOf('""') + 1);
     expect(valueResult?.options.map((option) => option.label)).toEqual(['light', 'dark']);
+  });
+
+  it.each([
+    [{ type: 'boolean' }, ['false', 'true']],
+    [{ type: 'null' }, ['null']],
+    [{ type: 'string', default: 'quoted "value"' }, ['quoted "value"']],
+  ])('completes missing values and inserts valid JSON for schema %j', async (property, labels) => {
+    const state = EditorState.create({
+      doc: '{"value": }',
+      extensions: createDashboardSchemaExtensions({ type: 'object', properties: { value: property } }),
+    });
+    const result = await complete(state, state.doc.length - 1);
+    expect(result?.options.map((option) => option.label).sort()).toEqual(labels);
+    const option = result!.options[0];
+    expect(typeof option.apply).toBe('string');
+    const edited = state.update({
+      changes: { from: result!.from, to: result!.to, insert: option.apply as string },
+    }).state;
+    expect(() => JSON.parse(edited.doc.toString())).not.toThrow();
   });
 
   it('updates completion and validation together without affecting another editor', async () => {

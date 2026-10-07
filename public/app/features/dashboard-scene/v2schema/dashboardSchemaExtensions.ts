@@ -1,4 +1,4 @@
-import { type CompletionContext } from '@codemirror/autocomplete';
+import { type CompletionContext, type Completion } from '@codemirror/autocomplete';
 import { json, jsonLanguage, jsonParseLinter } from '@codemirror/lang-json';
 import { syntaxTree } from '@codemirror/language';
 import { type Diagnostic, linter } from '@codemirror/lint';
@@ -7,13 +7,12 @@ import { type EditorView, ViewPlugin } from '@codemirror/view';
 import {
   getJSONSchema,
   getJsonPointerAt,
-  jsonCompletion,
   parseJSONDocumentState,
   stateExtensions,
   updateSchema,
 } from 'codemirror-json-schema';
 import yaml from 'js-yaml';
-import { Draft07 } from 'json-schema-library';
+import { Draft07, isJsonError, reduceSchema } from 'json-schema-library';
 
 import { type SchemaEditorFormat } from './DashboardSchemaEditor';
 
@@ -157,39 +156,100 @@ export function createDashboardSchemaExtensions(
   return [
     json(),
     stateExtensions(schema),
-    jsonLanguage.data.of({ autocomplete: dashboardSchemaCompletion() }),
+    jsonLanguage.data.of({ autocomplete: dashboardSchemaCompletion(schema) }),
     schemaUpdate,
     validation,
   ];
 }
 
-function dashboardSchemaCompletion() {
-  let editingProperty: string | undefined;
-  const complete = jsonCompletion({
-    jsonParser: (state) => {
-      const parsed = parseJSONDocumentState(state);
-      if (editingProperty) {
-        const path = editingProperty
-          .slice(1)
-          .split('/')
-          .map((part) => part.replaceAll('~1', '/').replaceAll('~0', '~'));
-        const key = path.pop()!;
-        let parent = parsed.data;
-        for (const part of path) {
-          parent = parent?.[part];
-        }
-        // A partially typed property is not data from which to infer a schema.
-        // Otherwise the library infers e.g. `ti: ""` as a string and loses `title` suggestions.
-        if (parent && typeof parent === 'object') {
-          delete parent[key];
-        }
-      }
-      return parsed;
-    },
-  });
+function dashboardSchemaCompletion(initialSchema: Record<string, unknown>) {
+  let schema: object = initialSchema;
+  let draft = new Draft07(initialSchema);
   return (context: CompletionContext) => {
     const node = syntaxTree(context.state).resolveInner(context.pos, -1);
-    editingProperty = node.name === 'PropertyName' ? getJsonPointerAt(context.state.doc, node, 'json4') : undefined;
-    return complete(context);
+    const object = node.name === 'Object' ? node : node.name === '{' ? node.parent : null;
+    const propertyName = node.name === 'PropertyName' || object?.name === 'Object';
+    const primitive = ['String', 'Number', 'True', 'False', 'Null'].includes(node.name);
+    const property = node.name === 'Property' ? node : node.parent?.name === 'Property' ? node.parent : null;
+    const colon = property?.getChild(':');
+    const incompleteValue = !propertyName && !primitive && colon && context.pos >= colon.to;
+    if (!propertyName && !primitive && !incompleteValue) {
+      return null;
+    }
+    const currentSchema = getJSONSchema(context.state);
+    if (!currentSchema) {
+      return null;
+    }
+    if (currentSchema !== schema) {
+      schema = currentSchema;
+      draft = new Draft07(currentSchema);
+    }
+    const { data } = parseJSONDocumentState(context.state);
+    const pointer = getJsonPointerAt(
+      context.state.doc,
+      incompleteValue ? property!.firstChild! : (object ?? node),
+      'json4'
+    );
+    const targetPointer = object ? pointer : propertyName ? pointer.slice(0, pointer.lastIndexOf('/')) : pointer;
+    // Resolve only the cursor's schema. The package completion source resolves
+    // every sibling property's schema, which blocks typing on Dashboard schemas.
+    const target = draft.getSchema({ pointer: targetPointer || '#', data });
+    if (!target || isJsonError(target)) {
+      return null;
+    }
+    const from = object
+      ? context.pos
+      : incompleteValue
+        ? (context.matchBefore(/[\w-]*/)?.from ?? context.pos)
+        : node.from;
+    const to = object || incompleteValue ? context.pos : node.to;
+    const prefix = context.state.sliceDoc(from, context.pos).replace(/^"/, '');
+    const options: Completion[] = [];
+    if (propertyName) {
+      const path = targetPointer
+        .split('/')
+        .slice(1)
+        .map((part) => part.replaceAll('~1', '/').replaceAll('~0', '~'));
+      const parent = path.reduce((value, key) => value?.[key], data);
+      const objectSchema = reduceSchema(draft, target, parent, targetPointer || '#');
+      const currentKey = pointer
+        .slice(pointer.lastIndexOf('/') + 1)
+        .replaceAll('~1', '/')
+        .replaceAll('~0', '~');
+      for (const [key, property] of Object.entries(objectSchema.properties ?? {})) {
+        if (!key.startsWith(prefix) || (key !== currentKey && parent && key in parent)) {
+          continue;
+        }
+        const resolved = property && typeof property === 'object' ? draft.resolveRef(property) : undefined;
+        options.push({
+          label: key,
+          type: 'property',
+          apply: JSON.stringify(key) + (node.parent?.getChild(':') ? '' : ': '),
+          info: resolved?.description,
+        });
+      }
+    } else {
+      const values: unknown[] = [...(target.enum ?? [])];
+      if (target.const !== undefined) {
+        values.push(target.const);
+      }
+      if (target.default !== undefined) {
+        values.push(target.default);
+      }
+      const types = Array.isArray(target.type) ? target.type : [target.type];
+      if (types.includes('boolean')) {
+        values.push(true, false);
+      }
+      if (types.includes('null')) {
+        values.push(null);
+      }
+      for (const value of new Set(values)) {
+        const label = typeof value === 'string' ? value : JSON.stringify(value);
+        if (label?.startsWith(prefix)) {
+          options.push({ label, apply: JSON.stringify(value), type: typeof value });
+        }
+      }
+    }
+    return { from, to, options, filter: false };
   };
 }
