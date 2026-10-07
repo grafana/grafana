@@ -94,6 +94,8 @@ export const FlagKeys = {
   GrafanaCmdkHybridSearch: "grafana.cmdkHybridSearch",
   /** Enables custom dashboard templates for enterprise */
   GrafanaCustomDashboardTemplates: "grafana.customDashboardTemplates",
+  /** Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled */
+  GrafanaCustomPanel: "grafana.customPanel",
   /** Allows users to customise the mega menu by hiding top-level navigation items they are not interested in */
   GrafanaCustomizableMegaMenu: "grafana.customizableMegaMenu",
   /** Uses auto grid as the default layout for new dashboards */
@@ -696,6 +698,17 @@ export const useFlagGrafanaCmdkHybridSearch = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaCustomDashboardTemplates = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.customDashboardTemplates", false, options).value;
+};
+
+/**
+ * Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled
+ *
+ * **Details:**
+ * - flag key: `grafana.customPanel`
+ * - default value: `false`
+ */
+export const useFlagGrafanaCustomPanel = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.customPanel", false, options).value;
 };
 
 /**
