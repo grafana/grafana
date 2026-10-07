@@ -1040,10 +1040,10 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	assert.True(t, spy.withTransactionalDbSessionCalled, "the whole delete should run on dbHelper.DB, not st.SQLStore directly")
 }
 
-// TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession is a regression test: the
-// write path shares conn/sess with the reads, so a routed delete must not reuse an ambient
-// session from a different db.DB either. A wrong-engine write would silently leave the real rows
-// untouched while reporting success, which is worse than the equivalent bug on a read.
+// TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession is a regression test:
+// sqlstore.startSessionOrUseExisting reuses whatever session is on ctx regardless of which db.DB
+// created it, so a routed delete must strip that session first or it silently writes through the
+// wrong connection while reporting success.
 func TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 

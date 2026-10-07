@@ -70,8 +70,8 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		// Read the parent folders before the delete, since the rows carrying namespace_uid are gone
 		// afterwards and RuleChangeEvent subscribers need to know which folders were affected. Gated
 		// because this is an extra query on every delete and the only subscriber is behind the flag.
-		// Reads and writes now share conn/sess, so this stays in the delete's own transaction either
-		// way and a concurrent folder move can't leave FolderKeys pointing at the wrong folder.
+		// This runs in the same transaction as the delete below, so a concurrent folder move can't
+		// leave FolderKeys pointing at the wrong folder.
 		var folderKeys []ngmodels.FolderKey
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertingFolderHasRulesLabel) {
