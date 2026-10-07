@@ -165,12 +165,6 @@ func (m *MockResourceIndex) ReconciledAt() (time.Time, error) {
 	return m.reconciledAt, nil
 }
 
-func (m *MockResourceIndex) reconciledAtValue() time.Time {
-	m.updateIndexMu.Lock()
-	defer m.updateIndexMu.Unlock()
-	return m.reconciledAt
-}
-
 func (m *MockResourceIndex) RecordReconciledAt(t time.Time) error {
 	m.updateIndexMu.Lock()
 	defer m.updateIndexMu.Unlock()

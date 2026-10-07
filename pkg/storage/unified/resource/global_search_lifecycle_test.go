@@ -1778,7 +1778,8 @@ func TestReconcileWorkerRunsQueuedReconciles(t *testing.T) {
 
 	server.queueReconcile(GlobalSearchKey("ns"))
 	require.Eventually(t, func() bool {
-		return idx.reconciledAtValue() != (time.Time{})
+		at, err := idx.ReconciledAt()
+		return err == nil && !at.IsZero()
 	}, 5*time.Second, 10*time.Millisecond)
 	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, idx))
 	cancel()
@@ -1809,4 +1810,46 @@ func TestOnlyReconcile(t *testing.T) {
 	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true, staleTypes: []schema.GroupResource{dashboardsGroupResource}}.onlyReconcile())
 	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true, minBuildTime: time.Now()}.onlyReconcile())
 	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns")}.onlyReconcile())
+}
+
+// The other order: a rebuild that arrives while the index is being reconciled is
+// set aside, goes back to the rebuild queue, not the reconcile queue, and reports
+// completion only once it has run.
+func TestRebuildDeferredBehindAReconcileReturnsToTheRebuildQueue(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	state := &rebuildState{}
+	server.inFlightRebuilds[GlobalSearchKey("ns")] = state // a reconcile is running
+
+	done := make(chan struct{})
+	server.rebuildIndex(t.Context(), rebuildRequest{
+		NamespacedResource: GlobalSearchKey("ns"),
+		// Built before this, so a full rebuild is due.
+		minBuildTime:     time.Now().Add(time.Hour),
+		completeChannels: []chan<- struct{}{done},
+	})
+	require.NotNil(t, state.deferred, "set aside while the reconcile runs")
+	requireOpen(t, done, "not complete while set aside")
+
+	server.finishRebuild(GlobalSearchKey("ns"), state)
+	assert.Zero(t, server.reconcileQueue.Len())
+	require.Equal(t, 1, server.rebuildQueue.Len())
+	requireOpen(t, done, "not complete until the follow-up runs")
+
+	req, err := server.rebuildQueue.Next(t.Context())
+	require.NoError(t, err)
+	server.rebuildIndex(t.Context(), req)
+	select {
+	case <-done:
+	default:
+		t.Fatal("not complete after the follow-up ran")
+	}
+}
+
+func requireOpen(t *testing.T, ch <-chan struct{}, msg string) {
+	t.Helper()
+	select {
+	case <-ch:
+		t.Fatal(msg)
+	default:
+	}
 }
