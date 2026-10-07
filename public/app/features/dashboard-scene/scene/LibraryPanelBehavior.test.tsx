@@ -347,6 +347,18 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
+    it('preserves instance repeat options when library panel repeats are unresolved', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'host',
+        meta: { libraryPanelRepeatUnresolved: true },
+        resolvedRepeat: { variableName: 'region', repeatDirection: 'v', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('region');
+      expect(gridItem.state.repeatDirection).toBe('v');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
     it('skips the migration when the server already resolved it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
@@ -447,7 +459,7 @@ interface BuildTestSceneOptions {
   meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatUnresolved?: boolean };
   /**
    * Seeded on the grid item the way DefaultGridLayoutSerializer builds it from
-   * GridLayoutItemKind.spec.repeat, standing in for a repeat the server already resolved.
+   * GridLayoutItemKind.spec.repeat, either preserved from the instance or resolved by the server.
    */
   resolvedRepeat?: { variableName: string; repeatDirection?: 'h' | 'v'; maxPerRow?: number };
 }

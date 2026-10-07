@@ -119,7 +119,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
     // (a notebook cell included). Inside this branch the root is necessarily a DashboardScene, so the
     // lookup below cannot fail — if it ever does, that is a bug worth surfacing rather than skipping.
     if (libPanelModel.repeat && layoutElement instanceof DashboardGridItem) {
-      if (this.shouldMigrateRepeat()) {
+      if (this.shouldMigrateRepeat(layoutElement)) {
         layoutElement.setState({
           variableName: libPanelModel.repeat,
           repeatDirection: libPanelModel.repeatDirection === 'h' ? 'h' : 'v',
@@ -132,12 +132,17 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
   }
 
   /**
-   * A library panel's repeat has to be copied onto the grid item only where nothing resolved it already.
+   * With server-resolution handling enabled, copy the library repeat only when
+   * the dashboard is unresolved and the grid item has no instance repeat.
    */
-  private shouldMigrateRepeat(): boolean {
+  private shouldMigrateRepeat(layoutElement: DashboardGridItem): boolean {
     const dashboard = getDashboardSceneFor(this);
 
     if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution, false)) {
+      if (layoutElement.state.variableName) {
+        return false;
+      }
+
       return dashboard.state.meta.libraryPanelRepeatUnresolved === true;
     }
 
