@@ -4,8 +4,8 @@ package server
 // and the two answers are compared.
 //
 //	permissions ([]accesscontrol.Permission) + folder tree
-//	   ├─► RBAC:    rbac.NewTestService -> Service.Check / Service.List
-//	   └─► Zanzana: common.TranslateToResourceTuple -> OpenFGA tuples -> Server.Check / Server.List
+//	   ├─► RBAC:    rbac.NewTestService -> Service.Check / Service.List / Service.BatchCheck
+//	   └─► Zanzana: common.TranslateToResourceTuple -> OpenFGA tuples -> Server.Check / Server.List / Server.BatchCheck
 //
 // Both engines are driven through their public entry points, so a difference
 // here is a real behavioural difference and not an artefact of the harness.
@@ -127,10 +127,31 @@ func TestIntegrationRBACParityCheck(t *testing.T) {
 			expected:    false,
 		},
 		{
+			name:        "dashboard get denied by folders:read on its parent folder",
+			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:folder1"}},
+			folders:     []rbacstore.Folder{{UID: "folder1"}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "folder1"),
+			expected:    false,
+		},
+		{
+			name:        "dashboard get denied by folders:read on an ancestor folder",
+			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:parent"}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "child"),
+			expected:    false,
+		},
+		{
 			name:        "dashboard get via folders:view action set",
 			permissions: []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:folder1"}},
 			folders:     []rbacstore.Folder{{UID: "folder1"}},
 			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "folder1"),
+			expected:    true,
+		},
+		{
+			name:        "dashboard get via folders:view action set on an ancestor folder",
+			permissions: []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:parent"}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:         parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbGet, "dash1", "child"),
 			expected:    true,
 		},
 		{
@@ -396,6 +417,27 @@ func TestIntegrationRBACParityList(t *testing.T) {
 			expected:    parityListResult{Folders: []string{"folder1"}},
 		},
 		{
+			name:        "dashboards via folders:view action set includes descendants",
+			permissions: []accesscontrol.Permission{{Action: "folders:view", Scope: "folders:uid:parent"}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:         parityListReq(dashboardGroup, dashboardResource, "", utils.VerbGet),
+			expected:    parityListResult{Folders: []string{"parent", "child"}},
+		},
+		{
+			name:        "dashboards excluded by folders:read on their parent folder",
+			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:folder1"}},
+			folders:     []rbacstore.Folder{{UID: "folder1"}},
+			req:         parityListReq(dashboardGroup, dashboardResource, "", utils.VerbGet),
+			expected:    parityListResult{},
+		},
+		{
+			name:        "dashboards excluded by folders:read on an ancestor folder",
+			permissions: []accesscontrol.Permission{{Action: "folders:read", Scope: "folders:uid:parent"}},
+			folders:     []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}},
+			req:         parityListReq(dashboardGroup, dashboardResource, "", utils.VerbGet),
+			expected:    parityListResult{},
+		},
+		{
 			name:        "dashboards with a wildcard grant",
 			permissions: []accesscontrol.Permission{{Action: "dashboards:read", Scope: "dashboards:uid:*"}},
 			req:         parityListReq(dashboardGroup, dashboardResource, "", utils.VerbGet),
@@ -449,6 +491,84 @@ func TestIntegrationRBACParityList(t *testing.T) {
 			compareEngines(t, gaps, tc.name, normalizeParityList(tc.expected),
 				normalizeParityListPtr(tc.zanzanaToday), tc.divergence,
 				toParityListResult(zanzanaRes), gotRBAC)
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// BatchCheck parity
+// ---------------------------------------------------------------------------
+
+func TestIntegrationRBACParityBatchCheck(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	testCases := []struct {
+		name     string
+		action   string
+		expected map[string]bool
+	}{
+		{
+			name:   "folders:read grants folders but not dashboards",
+			action: "folders:read",
+			expected: map[string]bool{
+				"folder-parent":    true,
+				"folder-child":     true,
+				"dashboard-parent": false,
+				"dashboard-child":  false,
+			},
+		},
+		{
+			name:   "folders:view grants folders and dashboards",
+			action: "folders:view",
+			expected: map[string]bool{
+				"folder-parent":    true,
+				"folder-child":     true,
+				"dashboard-parent": true,
+				"dashboard-child":  true,
+			},
+		},
+	}
+
+	srv := setupOpenFGAServer(t)
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			ns := parityNamespace(i)
+			permissions := []accesscontrol.Permission{{Action: tc.action, Scope: "folders:uid:parent"}}
+			folders := []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}}
+			req := &authzv1.BatchCheckRequest{
+				Namespace: ns,
+				Subject:   paritySubject,
+				Checks: []*authzv1.BatchCheckItem{
+					{CorrelationId: "folder-parent", Group: folderGroup, Resource: folderResource, Verb: utils.VerbGet, Name: "parent"},
+					{CorrelationId: "folder-child", Group: folderGroup, Resource: folderResource, Verb: utils.VerbGet, Name: "child", Folder: "parent"},
+					{CorrelationId: "dashboard-parent", Group: dashboardGroup, Resource: dashboardResource, Verb: utils.VerbGet, Name: "dash-parent", Folder: "parent"},
+					{CorrelationId: "dashboard-child", Group: dashboardGroup, Resource: dashboardResource, Verb: utils.VerbGet, Name: "dash-child", Folder: "child"},
+				},
+			}
+
+			rbacRes, err := rbac.NewTestService(parityUserUID, permissions, folders).
+				BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+			require.NoError(t, err)
+			require.Len(t, rbacRes.GetResults(), len(tc.expected))
+
+			writeParityTuples(t, srv, ns, permissions, folders)
+			zanzanaRes, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+			require.NoError(t, err)
+			require.Len(t, zanzanaRes.GetResults(), len(tc.expected))
+
+			for _, item := range req.GetChecks() {
+				id := item.GetCorrelationId()
+				t.Run(id, func(t *testing.T) {
+					require.Contains(t, rbacRes.GetResults(), id)
+					require.Contains(t, zanzanaRes.GetResults(), id)
+					rbacResult := rbacRes.GetResults()[id]
+					zanzanaResult := zanzanaRes.GetResults()[id]
+					require.Empty(t, rbacResult.GetError())
+					require.Empty(t, zanzanaResult.GetError())
+					require.Equal(t, tc.expected[id], rbacResult.GetAllowed(), "RBAC answer changed")
+					assert.Equal(t, tc.expected[id], zanzanaResult.GetAllowed(), "Zanzana diverges from RBAC")
+				})
+			}
 		})
 	}
 }
