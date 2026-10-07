@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type MutableRefObject,
   type ReactNode,
+  Fragment,
   useEffect,
   useId,
   useLayoutEffect,
@@ -17,10 +18,8 @@ import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useSt
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
-import {
-  type QueryEditorCoauthoringChangeV1,
-  type QueryEditorCoauthoringContextV1,
-} from './internalCoauthoringContract';
+import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import { type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
@@ -450,7 +449,8 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
 
 interface ProposalProps {
   why: string[];
-  changes: QueryEditorCoauthoringChangeV1[];
+  baseline: string;
+  diff: QueryCoauthoringDiffHunk[];
   unconfirmedValues?: string[];
   optionCount: number;
   selectedIndex: number;
@@ -464,7 +464,8 @@ interface ProposalProps {
 
 export function QueryCoauthoringProposal({
   why,
-  changes,
+  baseline,
+  diff,
   unconfirmedValues,
   optionCount,
   selectedIndex,
@@ -487,7 +488,7 @@ export function QueryCoauthoringProposal({
         role="tablist"
         tabIndex={-1}
         aria-label={t('query-editor-coauthoring.options', 'Query options')}
-        className={styles.footerActions}
+        className={styles.optionTabs}
         onKeyDown={(event) => {
           let next: number;
           switch (event.key) {
@@ -554,53 +555,22 @@ export function QueryCoauthoringProposal({
               ? t('query-editor-coauthoring.original-query', 'Original query')
               : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
           </Text>
+          {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
           {why.map((reason, index) => (
             <Text variant="body" key={index}>
               {reason}
             </Text>
           ))}
           {unconfirmedValues?.map((value, index) => (
-            <div key={index}>
-              <Icon
-                name="exclamation-triangle"
-                size="sm"
-                title={t('query-editor-coauthoring.unconfirmed-value', 'Unconfirmed filter value')}
-              />{' '}
+            <div key={index} className={styles.unconfirmedValue}>
+              <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
+              <Text variant="bodySmall" color="secondary">
+                {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
+              </Text>{' '}
               <Text variant="body">{value}</Text>
             </div>
           ))}
         </div>
-        {changes.length > 0 && (
-          <div className={styles.changes}>
-            {changes.slice(0, 4).map((change) => (
-              <div className={styles.changePair} key={change.id}>
-                <div
-                  className={styles.change}
-                  aria-label={t('query-editor-coauthoring.original-change', 'Original {{kind}}', {
-                    kind: change.kind ?? 'change',
-                  })}
-                >
-                  <Text variant="bodySmall" color="secondary">
-                    {(change.kind ?? 'change').toUpperCase()}
-                  </Text>
-                  <code>{change.original || 'added'}</code>
-                </div>
-                <Icon className={styles.flowArrow} name="arrow-right" />
-                <div
-                  className={cx(styles.change, styles.proposedChange)}
-                  aria-label={t('query-editor-coauthoring.proposed-change', 'Proposed {{kind}}', {
-                    kind: change.kind ?? 'change',
-                  })}
-                >
-                  <Text variant="bodySmall" color="secondary">
-                    {(change.kind ?? 'change').toUpperCase()}
-                  </Text>
-                  <code>{change.proposed || 'removed'}</code>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
       <div className={styles.footer}>
         <div className={styles.footerActions}>
@@ -623,6 +593,41 @@ export function QueryCoauthoringProposal({
         </div>
       </div>
     </div>
+  );
+}
+
+function QueryCoauthoringInlineDiff({ baseline, hunks }: { baseline: string; hunks: QueryCoauthoringDiffHunk[] }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  let cursor = 0;
+  const fragments = hunks.map((hunk, index) => {
+    const unchanged = baseline.slice(cursor, hunk.from);
+    cursor = hunk.to;
+    const label =
+      hunk.focus === 'outside'
+        ? t('query-editor-coauthoring.change-outside-focus', 'Change outside Focus')
+        : t('query-editor-coauthoring.change-inside-focus', 'Change inside Focus');
+    return (
+      <Fragment key={index}>
+        {unchanged}
+        <span
+          role="group"
+          aria-label={label}
+          title={label}
+          className={hunk.focus === 'outside' ? styles.outsideFocus : undefined}
+        >
+          {hunk.original && <del className={styles.diffRemoved}>{hunk.original}</del>}
+          {hunk.proposed && <ins className={styles.diffAdded}>{hunk.proposed}</ins>}
+        </span>
+      </Fragment>
+    );
+  });
+  return (
+    <pre className={styles.inlineDiff} aria-label={t('query-editor-coauthoring.query-diff', 'Query diff')}>
+      <code>
+        {fragments}
+        {baseline.slice(cursor)}
+      </code>
+    </pre>
   );
 }
 

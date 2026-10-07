@@ -569,8 +569,11 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
     expect(screen.getByText('increase')).toBeInTheDocument();
     const proposalDetails = screen.getByRole('region', { name: 'Query proposal details' });
-    const original = within(proposalDetails).getByLabelText('Original function');
-    const proposed = within(proposalDetails).getByLabelText('Proposed function');
+    const diff = within(proposalDetails).getByLabelText('Query diff');
+    const original = within(diff).getByText('rate');
+    const proposed = within(diff).getByText('increase');
+    expect(original.tagName).toBe('DEL');
+    expect(proposed.tagName).toBe('INS');
     expect(original).toHaveTextContent('rate');
     expect(proposed).toHaveTextContent('increase');
     expect(original.compareDocumentPosition(proposed) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

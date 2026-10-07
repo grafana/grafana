@@ -269,6 +269,57 @@ async function setup(
 }
 
 describe('QueryCoauthoring', () => {
+  it('shows the selected token diff above why, using Core Focus ranges rather than adapter annotations', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return {
+        status: 'ready',
+        query,
+        changes: [
+          {
+            id: 'misleading',
+            original: 'wrong-original',
+            proposed: 'wrong-proposed',
+            focus: 'inside',
+            kind: 'expression',
+          },
+        ],
+      };
+    });
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'sum(rate(http_requests_total[5m]))',
+            why: ['Aggregate the rate.'],
+            unconfirmedValues: ['code="999"'],
+          },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Count the requests.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const diff = screen.getByLabelText('Query diff');
+    expect(within(diff).getAllByLabelText('Change outside Focus')).toHaveLength(2);
+    expect(
+      diff.compareDocumentPosition(screen.getByText('Aggregate the rate.')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByText('wrong-original')).not.toBeInTheDocument();
+    expect(screen.getByText('Unconfirmed:')).toBeVisible();
+    expect(screen.getByTestId('icon-exclamation-triangle')).toHaveAttribute('aria-hidden', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByLabelText('Query diff')).toHaveTextContent('increase');
+    expect(
+      within(screen.getByLabelText('Query diff')).queryByLabelText('Change outside Focus')
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.queryByLabelText('Query diff')).not.toBeInTheDocument();
+  });
+
   it('keeps the editor and selected card together through rapid option and Original switches', async () => {
     const { user, dismissInvocation, onAccept } = await setup(0, true, undefined, { transaction: true });
     await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
@@ -1285,7 +1336,7 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps long proposal messages and changes in a bounded body with actions outside it', async () => {
+  it('keeps long proposal messages and the inline diff in a bounded body with actions outside it', async () => {
     const { user, stagePreview } = await setup();
     stagePreview.mockReturnValue({
       status: 'ready',
@@ -1320,9 +1371,11 @@ describe('QueryCoauthoring', () => {
     const details = screen.getByRole('region', { name: 'Query proposal details' });
     expect(details).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
     expect(details.children[0]).toHaveStyle({ flex: '0 0 auto' });
-    expect(details.children[1]).toHaveStyle({ flex: '0 0 auto' });
-    expect(within(details).getAllByLabelText(/^Original expression$/)).toHaveLength(4);
-    expect(within(details).getAllByLabelText(/^Proposed expression$/)).toHaveLength(4);
+    expect(within(details).getByLabelText('Query diff').textContent).toBe(
+      'sum by (handler) (rate(http_requests_total[5m]))'
+    );
+    expect(within(details).queryByLabelText(/^Original expression$/)).not.toBeInTheDocument();
+    expect(within(details).queryByLabelText(/^Proposed expression$/)).not.toBeInTheDocument();
     expect(within(details).queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();

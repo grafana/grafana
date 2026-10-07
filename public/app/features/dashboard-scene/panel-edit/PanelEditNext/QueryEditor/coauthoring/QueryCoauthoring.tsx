@@ -281,7 +281,8 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
           why={state.proposal.options[state.proposal.selectedIndex]?.why ?? []}
-          changes={state.proposal.options[state.proposal.selectedIndex]?.prepared.changes ?? []}
+          baseline={state.proposal.context.query}
+          diff={state.proposal.options[state.proposal.selectedIndex]?.diff ?? []}
           unconfirmedValues={state.proposal.options[state.proposal.selectedIndex]?.unconfirmedValues}
           optionCount={state.proposal.options.length}
           selectedIndex={state.proposal.selectedIndex}

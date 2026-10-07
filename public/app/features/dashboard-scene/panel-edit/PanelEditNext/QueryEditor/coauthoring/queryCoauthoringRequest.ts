@@ -5,6 +5,7 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
+import { queryCoauthoringDiff, type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import {
   buildInvalidProposalRepairMessage,
   buildProposalToolDescription,
@@ -26,6 +27,7 @@ import {
 type PreparedQuery = Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
 export interface PreparedQueryProposal extends QueryProposal {
   prepared: PreparedQuery;
+  diff: QueryCoauthoringDiffHunk[];
 }
 const MAX_INVALID_PROPOSAL_REPAIR_ATTEMPTS = 1;
 
@@ -79,7 +81,11 @@ export function createQueryCoauthoringRequest({
           seen.add(normalized);
           const prepared = adapter.prepareProposal(invocationId, option.proposedQuery);
           if (prepared.status === 'ready') {
-            options.push({ ...option, prepared });
+            options.push({
+              ...option,
+              prepared,
+              diff: queryCoauthoringDiff(context.query, option.proposedQuery, context.focusRanges),
+            });
           } else if (prepared.reason === 'stale' || (rejection !== 'stale' && prepared.reason === 'invalid')) {
             rejection = prepared.reason;
           }
