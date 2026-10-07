@@ -878,8 +878,11 @@ describe('DataSourceWithBackend', () => {
     test.each([true, false])('strips leading slashes from the path (new APIs: %s)', (enabled) => {
       mockGetBooleanValue.mockReturnValue(enabled);
       const { ds } = createMockDatasource();
-      expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).toBe(ds.buildResourcesDatasourceUrl('api/v1/labels'));
-      expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).not.toContain('//api');
+const expectedUrl = enabled
+        ? '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+        : '/api/datasources/uid/abc/resources/api/v1/labels';
+      expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).toBe(expectedUrl);
+      expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).toBe(expectedUrl);
     });
 
     test('prefers meta.id over type when meta is present', () => {
