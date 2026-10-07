@@ -57,20 +57,14 @@ declare module "@openfeature/core" {
     | "vizActionsAuth"
     | "useSessionStorageForRedirection"
     | "enableExtensionsAdminPage"
-    | "alertingUIOptimizeReducer"
     | "azureMonitorEnableUserAuth"
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
     | "alerting.ruleQuality"
-    | "alertingNotificationsStepMode"
-    | "alertingRuleVersionHistoryRestore"
     | "alertRuleRestore"
-    | "alertingMigrationUI"
     | "datasources.azureMonitorBatchAPI"
-    | "alertingRulePermanentlyDelete"
     | "alertingRuleRecoverDeleted"
     | "unifiedNavbars"
-    | "alertingBulkActionsInUI"
     | "recentlyViewedDashboards"
     | "experimentRecentlyViewedDashboards"
     | "foldersAppPlatformAPI"
@@ -111,6 +105,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
+    | "grafana.scopesDashboardsMegaMenu"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "paneledit.buttonLabels"
@@ -127,6 +122,7 @@ declare module "@openfeature/core" {
     | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
+    | "dataviz.tabularNums"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
@@ -147,7 +143,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

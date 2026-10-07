@@ -24,12 +24,8 @@ export const FlagKeys = {
   AlertingRuleQuality: "alerting.ruleQuality",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
-  /** Enables the alerting bulk actions in the UI */
-  AlertingBulkActionsInUI: "alertingBulkActionsInUI",
   /** Enables the new alert list view design */
   AlertingListViewV2: "alertingListViewV2",
-  /** Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules */
-  AlertingMigrationUI: "alertingMigrationUI",
   /** Enables the new Alerting navigation structure with improved menu grouping */
   AlertingNavigationV2: "alertingNavigationV2",
   /** Enables the notification history detail page */
@@ -40,18 +36,10 @@ export const FlagKeys = {
   AlertingNotificationHistoryRuleViewer: "alertingNotificationHistoryRuleViewer",
   /** Enables the notification history timeline in the triage instance details drawer */
   AlertingNotificationHistoryTriage: "alertingNotificationHistoryTriage",
-  /** Enables simplified step mode in the notifications section */
-  AlertingNotificationsStepMode: "alertingNotificationsStepMode",
-  /** Enables UI functionality to permanently delete alert rules */
-  AlertingRulePermanentlyDelete: "alertingRulePermanentlyDelete",
   /** Enables the UI functionality to recover and view deleted alert rules */
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
-  /** Enables the alert rule version history restore feature */
-  AlertingRuleVersionHistoryRestore: "alertingRuleVersionHistoryRestore",
   /** Enables the alerting triage feature */
   AlertingTriage: "alertingTriage",
-  /** Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query */
-  AlertingUIOptimizeReducer: "alertingUIOptimizeReducer",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
@@ -100,6 +88,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables tabular numerals for visualization legend values */
+  DatavizTabularNums: "dataviz.tabularNums",
   /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
   DisableScriptedDashboards: "disableScriptedDashboards",
   /** Enables new colorblind safe palette and line fill patterns for panels */
@@ -140,6 +130,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Offers the reserved Grafana home option in the home dashboard preference */
+  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -174,6 +166,8 @@ export const FlagKeys = {
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer */
+  GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
@@ -350,17 +344,6 @@ export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvalu
 };
 
 /**
- * Enables the alerting bulk actions in the UI
- *
- * **Details:**
- * - flag key: `alertingBulkActionsInUI`
- * - default value: `true`
- */
-export const useFlagAlertingBulkActionsInUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingBulkActionsInUI", true, options).value;
-};
-
-/**
  * Enables the new alert list view design
  *
  * **Details:**
@@ -369,17 +352,6 @@ export const useFlagAlertingBulkActionsInUI = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagAlertingListViewV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingListViewV2", true, options).value;
-};
-
-/**
- * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
- *
- * **Details:**
- * - flag key: `alertingMigrationUI`
- * - default value: `true`
- */
-export const useFlagAlertingMigrationUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingMigrationUI", true, options).value;
 };
 
 /**
@@ -438,28 +410,6 @@ export const useFlagAlertingNotificationHistoryTriage = (options?: ReactFlagEval
 };
 
 /**
- * Enables simplified step mode in the notifications section
- *
- * **Details:**
- * - flag key: `alertingNotificationsStepMode`
- * - default value: `true`
- */
-export const useFlagAlertingNotificationsStepMode = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingNotificationsStepMode", true, options).value;
-};
-
-/**
- * Enables UI functionality to permanently delete alert rules
- *
- * **Details:**
- * - flag key: `alertingRulePermanentlyDelete`
- * - default value: `true`
- */
-export const useFlagAlertingRulePermanentlyDelete = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingRulePermanentlyDelete", true, options).value;
-};
-
-/**
  * Enables the UI functionality to recover and view deleted alert rules
  *
  * **Details:**
@@ -471,17 +421,6 @@ export const useFlagAlertingRuleRecoverDeleted = (options?: ReactFlagEvaluationO
 };
 
 /**
- * Enables the alert rule version history restore feature
- *
- * **Details:**
- * - flag key: `alertingRuleVersionHistoryRestore`
- * - default value: `true`
- */
-export const useFlagAlertingRuleVersionHistoryRestore = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingRuleVersionHistoryRestore", true, options).value;
-};
-
-/**
  * Enables the alerting triage feature
  *
  * **Details:**
@@ -490,17 +429,6 @@ export const useFlagAlertingRuleVersionHistoryRestore = (options?: ReactFlagEval
  */
 export const useFlagAlertingTriage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingTriage", false, options).value;
-};
-
-/**
- * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
- *
- * **Details:**
- * - flag key: `alertingUIOptimizeReducer`
- * - default value: `true`
- */
-export const useFlagAlertingUIOptimizeReducer = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingUIOptimizeReducer", true, options).value;
 };
 
 /**
@@ -629,10 +557,10 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
+  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
 };
 
 /**
@@ -765,6 +693,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables tabular numerals for visualization legend values
+ *
+ * **Details:**
+ * - flag key: `dataviz.tabularNums`
+ * - default value: `false`
+ */
+export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.tabularNums", false, options).value;
 };
 
 /**
@@ -988,6 +927,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Offers the reserved Grafana home option in the home dashboard preference
+ *
+ * **Details:**
+ * - flag key: `grafana.globalHomePreference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.globalHomePreference", false, options).value;
+};
+
+/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -1172,6 +1122,17 @@ export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer
+ *
+ * **Details:**
+ * - flag key: `grafana.scopesDashboardsMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scopesDashboardsMegaMenu", false, options).value;
 };
 
 /**
