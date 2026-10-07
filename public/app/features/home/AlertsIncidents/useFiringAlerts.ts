@@ -14,9 +14,10 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
-import { type AlertFilterScope, type AlertFilterSelection, resolveAlertFilter } from './alertFilter';
+import { type AlertFilterSelection } from './alertFilter';
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
+import { type FilterScope, resolveFilterScope } from './teamFilter';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
 function alertSeverityLevel(alert: AlertmanagerAlert) {
@@ -55,7 +56,7 @@ function buildTolerantTeamMatchers(teamNames: string[]) {
  * an explicit "All" pick means no filter at all, a picked label wins next,
  * and with no selection we fall back to the user's own teams when they have any.
  */
-function resolveMatchers(scope: AlertFilterScope, userTeamNames: string[]) {
+function resolveMatchers(scope: FilterScope, userTeamNames: string[]) {
   switch (scope.kind) {
     case 'all':
       return [];
@@ -98,7 +99,7 @@ export function useFiringAlerts(selectedFilter: AlertFilterSelection = '') {
   const teamNames = (teams ?? []).map((t) => t.name);
   const hasTeams = teamNames.length > 0;
 
-  const filterScope = resolveAlertFilter(selectedFilter);
+  const filterScope = resolveFilterScope(selectedFilter);
   // No memo needed: RTK Query serializes query args, so referential identity doesn't matter.
   const matchers = resolveMatchers(filterScope, teamNames);
 

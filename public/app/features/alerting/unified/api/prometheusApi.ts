@@ -168,7 +168,7 @@ export const prometheusApi = alertingApi.injectEndpoints({
         notificationOptions: { showErrorAlert: false },
       }),
       transformResponse: toRuleLabels,
-      // Rule labels rarely change and the homepage asks on every visit. Saving a rule clears the cache.
+      // Rule labels rarely change, so they're kept for 10 minutes. Saving a rule clears them sooner.
       providesTags: ['CombinedAlertRule'],
       keepUnusedDataFor: 600,
     }),

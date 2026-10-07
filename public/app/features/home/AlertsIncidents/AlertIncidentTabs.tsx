@@ -13,8 +13,8 @@ import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { TeamFilterCombobox } from './TeamFilterCombobox';
-import { type AlertFilterSelection, alertFilterLabel } from './alertFilter';
-import { type IncidentFilterSelection, incidentFilterLabel } from './incidentFilter';
+import { type AlertFilterSelection } from './alertFilter';
+import { type IncidentFilterSelection } from './incidentFilter';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
@@ -116,7 +116,6 @@ export function AlertIncidentTabs({
               onChange: onAlertsFilterChange,
               offersYourTeams: hasTeams,
               allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
-              selectionLabel: alertFilterLabel,
               ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
             },
           },
@@ -139,7 +138,6 @@ export function AlertIncidentTabs({
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,
               allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
-              selectionLabel: incidentFilterLabel,
               ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
             },
           },

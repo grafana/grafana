@@ -6,7 +6,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { prometheusApi } from 'app/features/alerting/unified/api/prometheusApi';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { canEncodeAlertFilter, encodeAlertFilter } from './alertFilter';
+import { canEncodeFilterLabel, encodeFilterLabel } from './teamFilter';
 
 // Stable so the combobox's sort memo doesn't rerun on every render while hidden.
 const NO_OPTIONS: Array<ComboboxOption<string>> = [];
@@ -22,8 +22,8 @@ export function useAlertFilterOptions(enabled: boolean): Array<ComboboxOption<st
   const options = useMemo(
     () =>
       data
-        ?.filter(canEncodeAlertFilter)
-        .map((label) => ({ label: label.value, value: encodeAlertFilter(label), group: label.key })),
+        ?.filter(canEncodeFilterLabel)
+        .map((label) => ({ label: label.value, value: encodeFilterLabel(label), group: label.key })),
     [data]
   );
   return isLoading || error ? NO_OPTIONS : (options ?? NO_OPTIONS);

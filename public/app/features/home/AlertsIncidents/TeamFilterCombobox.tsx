@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { ALL_TEAMS, resolveTeamScope } from './teamFilter';
+import { ALL_TEAMS, resolveFilterScope } from './teamFilter';
 
 const collator = new Intl.Collator();
 
@@ -29,8 +29,8 @@ function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOpti
 
 interface Props {
   /**
-   * Options to offer, each with `group` set to render a header above the options sharing it.
-   * The caller hides the dropdown when there are none.
+   * Options to offer, each valued with encodeFilterLabel and with `group` set to render a header
+   * above the options sharing it. The caller hides the dropdown when there are none.
    */
   options: Array<ComboboxOption<string>>;
   /** '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
@@ -44,11 +44,6 @@ interface Props {
   offersYourTeams: boolean;
   /** Label of the unfiltered option, e.g. "All alerts" or "All incidents". */
   allOptionLabel: string;
-  /**
-   * How to display a picked option value when it isn't its own label, e.g. the value
-   * part of an encoded `key:value`.
-   */
-  selectionLabel?: (selection: string) => string;
   ariaLabel: string;
 }
 
@@ -56,15 +51,7 @@ interface Props {
  * Dropdown to filter a homepage view. Presentational: the caller supplies the options
  * (alert rule label values or incident label values) and owns the selection.
  */
-export function TeamFilterCombobox({
-  options,
-  selected,
-  onChange,
-  offersYourTeams,
-  allOptionLabel,
-  selectionLabel,
-  ariaLabel,
-}: Props) {
+export function TeamFilterCombobox({ options, selected, onChange, offersYourTeams, allOptionLabel, ariaLabel }: Props) {
   const sortedOptions = useMemo(() => sortOptions(options), [options]);
 
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
@@ -77,18 +64,18 @@ export function TeamFilterCombobox({
   // Must be memoized: a new object every render makes downshift think the
   // selection changed, which wipes the input while the user is typing.
   const valueOption = useMemo(() => {
-    const scope = resolveTeamScope(selected);
+    const scope = resolveFilterScope(selected);
     switch (scope.kind) {
       case 'all':
         return allOption;
-      case 'team':
+      case 'label':
         // Built from the selection alone, so a pick whose option is gone (e.g. archived) still shows.
-        return { label: selectionLabel?.(scope.team) ?? scope.team, value: scope.team };
+        return { label: selected, value: selected };
       case 'default':
         // Without a "your teams" scope the default already means everything, so show that.
         return offersYourTeams ? getYourTeamsOption() : allOption;
     }
-  }, [selected, offersYourTeams, allOption, selectionLabel]);
+  }, [selected, offersYourTeams, allOption]);
 
   const loadOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {

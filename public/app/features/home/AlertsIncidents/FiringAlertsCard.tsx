@@ -10,8 +10,8 @@ import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
-import { type AlertFilterScope } from './alertFilter';
 import { severityLevelColor } from './severity';
+import { type FilterScope } from './teamFilter';
 import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
@@ -48,7 +48,7 @@ function severityLabel(level?: SeverityLevel): string {
  * "your teams" default filter, so the copy names the picked value instead
  * of claiming it's the user's own teams.
  */
-function emptyMessage(filterScope: AlertFilterScope, hasTeams: boolean): string {
+function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
   switch (filterScope.kind) {
     case 'all':
       return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
