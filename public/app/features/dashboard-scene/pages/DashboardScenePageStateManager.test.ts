@@ -236,6 +236,10 @@ beforeEach(() => {
   testStore = createTestStore();
 });
 
+afterEach(() => {
+  setTestFlags({});
+});
+
 describe('DashboardScenePageStateManager v1', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
@@ -2833,7 +2837,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
     it('should always use v1 manager for Grafana dashboard templates even when dashboardNewLayouts is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true });
-      config.featureToggles.suggestedDashboards = true;
 
       // Mock location service with gnetId and mappings parameters
       locationService.getLocation = jest.fn().mockReturnValue({
@@ -2869,7 +2872,6 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
     it('should reset to V2 manager when loading a new dashboard after template', async () => {
       setTestFlags({ dashboardNewLayouts: true });
-      config.featureToggles.suggestedDashboards = true;
 
       // Mock locationService for this test too
       locationService.getLocation = jest.fn().mockReturnValue({
