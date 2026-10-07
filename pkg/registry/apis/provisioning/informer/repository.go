@@ -44,7 +44,7 @@ type RepositoryGetter interface {
 // storage and in the operator over HTTP.
 func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Interface, keys keysapi.Lister, resync time.Duration, metrics *RelistProjectionMetrics) (DeltaSource, RepositoryGetter) {
 	if nats.Enabled(subscriber) {
-		store := usinformer.NewStore()
+		store := NewRepositorySnapshot(usinformer.NewStore())
 		recorder := metrics.Recorder(provisioningapis.RepositoryResourceInfo.GroupVersionResource())
 		source := NewRepositoryInformer(subscriber, client, "", resync, store, keys, recorder)
 		// The informer is the repository controller's only feed, and everything
@@ -238,45 +238,37 @@ func (g cachedRepositoryGetter) CountActiveRepositories(_ context.Context, names
 }
 
 // NewClientRepositoryGetter backs Get with the API client — fresh, for the
-// reconcile — and the count with the NATS informer's snapshot (a
-// unified-storage informer Cache). The quota count is the only reader and
-// tolerates the snapshot's staleness (as stale as the resync interval), so
-// reading it avoids an API LIST on every quota check. Each reconcile Get is
-// written back into the store (or removed on NotFound), keeping the count warm
-// between re-lists rather than only as fresh as the last resync.
-func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, store usinformer.Cache) RepositoryGetter {
-	return clientRepositoryGetter{client: c, store: store}
+// reconcile — and the count with the NATS informer's snapshot. The quota count is
+// the only reader and tolerates the snapshot's staleness (as stale as the resync
+// interval), so reading it avoids an API LIST on every quota check. Each
+// reconcile Get is written back into the snapshot (or removed on NotFound),
+// keeping the count warm between re-lists rather than only as fresh as the last
+// resync.
+func NewClientRepositoryGetter(c typedclient.ProvisioningV0alpha1Interface, snapshot *RepositorySnapshot) RepositoryGetter {
+	return clientRepositoryGetter{client: c, snapshot: snapshot}
 }
 
 type clientRepositoryGetter struct {
-	client typedclient.ProvisioningV0alpha1Interface
-	store  usinformer.Cache
+	client   typedclient.ProvisioningV0alpha1Interface
+	snapshot *RepositorySnapshot
 }
 
 func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string) (*provisioningapis.Repository, error) {
 	repo, err := g.client.Repositories(namespace).Get(ctx, name, metav1.GetOptions{})
 	if apierrors.IsNotFound(err) {
-		g.store.Delete(ctx, namespace, name)
+		g.snapshot.Delete(ctx, namespace, name)
 		return nil, err
 	}
 	if err != nil {
 		return nil, err
 	}
 	// Trimmed, so a warm snapshot costs the same as a re-listed one.
-	g.store.Update(ctx, trimRepository(repo))
+	g.snapshot.Update(ctx, trimRepository(repo))
 	return repo, nil
 }
 
-func (g clientRepositoryGetter) CountActiveRepositories(ctx context.Context, namespace string) (int, error) {
-	count := 0
-	for _, obj := range g.store.List(ctx) {
-		repo, ok := obj.(*provisioningapis.Repository)
-		if !ok || repo.Namespace != namespace || repo.DeletionTimestamp != nil {
-			continue
-		}
-		count++
-	}
-	return count, nil
+func (g clientRepositoryGetter) CountActiveRepositories(_ context.Context, namespace string) (int, error) {
+	return g.snapshot.CountActive(namespace), nil
 }
 
 // trimRepository keeps what the snapshot's readers need and drops the body: the

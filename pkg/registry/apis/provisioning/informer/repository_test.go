@@ -42,11 +42,24 @@ func terminating(r *provisioningapis.Repository) *provisioningapis.Repository {
 	return r
 }
 
-// fakeStore is a minimal usinformer.Cache for asserting the client getter's
+// fakeStore is a minimal usinformer.Store for asserting the client getter's
 // write-through behaviour.
 type fakeStore struct {
 	objs    map[string]runtime.Object
 	deleted []string
+}
+
+// newSeededSnapshot fills a snapshot the way the informer does, through Replace,
+// so the tallies reflect it. Seeding the wrapped store directly would leave them
+// empty -- the snapshot only knows the mutations that pass through it.
+func newSeededSnapshot(objs ...*provisioningapis.Repository) *RepositorySnapshot {
+	snapshot := NewRepositorySnapshot(newFakeStore())
+	runtimeObjs := make([]runtime.Object, 0, len(objs))
+	for _, obj := range objs {
+		runtimeObjs = append(runtimeObjs, obj)
+	}
+	snapshot.Replace(runtimeObjs, 1)
+	return snapshot
 }
 
 func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
@@ -68,6 +81,35 @@ func (s *fakeStore) List(_ context.Context) []runtime.Object {
 func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
 	r := obj.(*provisioningapis.Repository)
 	s.objs[r.Namespace+"/"+r.Name] = r
+}
+
+func (s *fakeStore) Replace(objs []runtime.Object, _ int64) (added, updated, removed []runtime.Object) {
+	next := make(map[string]runtime.Object, len(objs))
+	for _, obj := range objs {
+		namespace, name, _, ok := repositoryState(obj)
+		if !ok {
+			continue
+		}
+		next[repositoryKey(namespace, name)] = obj
+	}
+	for key, obj := range next {
+		if _, had := s.objs[key]; had {
+			updated = append(updated, obj)
+		} else {
+			added = append(added, obj)
+		}
+	}
+	for key, obj := range s.objs {
+		if _, still := next[key]; !still {
+			removed = append(removed, obj)
+		}
+	}
+	s.objs = next
+	return added, updated, removed
+}
+
+func (s *fakeStore) DeleteAt(ctx context.Context, namespace, name string, _ int64) {
+	s.Delete(ctx, namespace, name)
 }
 
 func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
@@ -141,7 +183,7 @@ func TestCachedRepositoryGetter_CountExcludesTerminating(t *testing.T) {
 func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 	client := fake.NewClientset(repo("ns", "fresh"))
 	store := newFakeStore()
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -160,7 +202,7 @@ func TestClientRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
 	full.Finalizers = []string{"provisioning.grafana.app/cleanup"}
 	client := fake.NewClientset(full)
 	store := newFakeStore()
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
 
 	got, err := g.Get(context.Background(), "ns", "fresh")
 	require.NoError(t, err)
@@ -178,7 +220,7 @@ func TestClientRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
 func TestClientRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 	client := fake.NewClientset()
 	store := newFakeStore(repo("ns", "stale"))
-	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), store)
+	g := NewClientRepositoryGetter(client.ProvisioningV0alpha1(), NewRepositorySnapshot(store))
 
 	_, err := g.Get(context.Background(), "ns", "stale")
 	require.True(t, apierrors.IsNotFound(err))
@@ -192,8 +234,8 @@ func TestClientRepositoryGetter_GetNotFoundRemoves(t *testing.T) {
 // The count reads only the requested namespace out of the cluster-wide snapshot,
 // and skips repositories awaiting their finalizers.
 func TestClientRepositoryGetter_CountFiltersNamespaceAndTerminating(t *testing.T) {
-	store := newFakeStore(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
-	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), store)
+	snapshot := newSeededSnapshot(repo("ns-a", "one"), repo("ns-a", "two"), terminating(repo("ns-a", "going")), repo("ns-b", "other"))
+	g := NewClientRepositoryGetter(fake.NewClientset().ProvisioningV0alpha1(), snapshot)
 
 	count, err := g.CountActiveRepositories(context.Background(), "ns-a")
 	require.NoError(t, err)
