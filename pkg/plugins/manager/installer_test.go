@@ -832,13 +832,11 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 		inst       *PluginInstaller
 		pluginsDir string
 		events     []string
-		// loadOK decides whether loading a path registers the plugin.
-		loadOK func(path string) bool
 	}
 
-	newSetup := func(t *testing.T, previousDir string, archive func() (*repo.PluginArchive, error)) *setup {
+	newSetup := func(t *testing.T, previousDir string, archive func(pluginID string) (*repo.PluginArchive, error)) *setup {
 		t.Helper()
-		s := &setup{pluginsDir: t.TempDir(), loadOK: func(string) bool { return true }}
+		s := &setup{pluginsDir: t.TempDir()}
 		previous := createPlugin(t, pluginID, plugins.ClassExternal, true, false, func(p *plugins.Plugin) {
 			p.Info.Version = "1.0.0"
 			p.FS = plugins.NewLocalFS(previousDir)
@@ -851,9 +849,6 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 			LoadFunc: func(_ context.Context, src plugins.PluginSource) ([]*plugins.Plugin, error) {
 				path := src.(*sources.LocalSource).Paths()[0]
 				s.events = append(s.events, "load "+path)
-				if !s.loadOK(path) {
-					return []*plugins.Plugin{}, nil
-				}
 				return []*plugins.Plugin{{JSONData: plugins.JSONData{ID: pluginID}}}, nil
 			},
 		}
@@ -861,8 +856,8 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 			GetPluginArchiveInfoFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
 				return &repo.PluginArchiveInfo{Version: "2.0.0"}, nil
 			},
-			GetPluginArchiveFunc: func(_ context.Context, _, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
-				return archive()
+			GetPluginArchiveFunc: func(_ context.Context, id, _ string, _ repo.CompatOpts) (*repo.PluginArchive, error) {
+				return archive(id)
 			},
 		}
 		registry := &pluginfakes.FakePluginRegistry{Store: map[string]*plugins.Plugin{pluginID: previous}}
@@ -871,8 +866,8 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 			&pluginfakes.FakeAuthService{}, &pluginfakes.FakeRBACCleaner{})
 		return s
 	}
-	newArchive := func(t *testing.T) func() (*repo.PluginArchive, error) {
-		return func() (*repo.PluginArchive, error) {
+	newArchive := func(t *testing.T) func(string) (*repo.PluginArchive, error) {
+		return func(string) (*repo.PluginArchive, error) {
 			return &repo.PluginArchive{File: pluginZip(t, pluginID, "2.0.0")}, nil
 		}
 	}
@@ -935,7 +930,7 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 	t.Run("download failure keeps the previous version loaded", func(t *testing.T) {
 		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
 
-		s := newSetup(t, previousDir, func() (*repo.PluginArchive, error) {
+		s := newSetup(t, previousDir, func(string) (*repo.PluginArchive, error) {
 			return nil, errors.New("network timeout")
 		})
 		require.ErrorContains(t, update(s), "network timeout")
@@ -948,7 +943,7 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 	t.Run("extract failure keeps the previous version loaded", func(t *testing.T) {
 		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
 
-		s := newSetup(t, previousDir, func() (*repo.PluginArchive, error) {
+		s := newSetup(t, previousDir, func(string) (*repo.PluginArchive, error) {
 			return &repo.PluginArchive{File: zipWithFiles(t, map[string]string{"../escape.txt": "x"})}, nil
 		})
 		require.Error(t, update(s))
@@ -957,37 +952,22 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 		requireOnlyEntries(t, s.pluginsDir)
 	})
 
-	t.Run("new version that fails to load is rolled back", func(t *testing.T) {
-		t.Run("previous version in another plugins path", func(t *testing.T) {
-			previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
+	t.Run("dependency failure keeps the previous version loaded", func(t *testing.T) {
+		previousDir := writePluginDir(t, t.TempDir(), pluginID, "1.0.0")
 
-			s := newSetup(t, previousDir, newArchive(t))
-			s.loadOK = func(path string) bool { return path == previousDir }
-			require.Error(t, update(s))
-
-			targetDir := filepath.Join(s.pluginsDir, pluginID)
-			require.Equal(t, []string{"unload 1.0.0", "load " + targetDir, "load " + previousDir}, s.events)
-			require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
-			requireOnlyEntries(t, s.pluginsDir)
-		})
-
-		t.Run("previous version in the install path", func(t *testing.T) {
-			pluginsDir := t.TempDir()
-			previousDir := writePluginDir(t, pluginsDir, pluginID, "1.0.0")
-
-			s := newSetup(t, previousDir, newArchive(t))
-			s.inst.pluginStorage = storage.FileSystem(log.NewPrettyLogger("test"), pluginsDir)
-			loads := 0
-			s.loadOK = func(string) bool {
-				loads++
-				return loads > 1
+		s := newSetup(t, previousDir, func(id string) (*repo.PluginArchive, error) {
+			if id != pluginID {
+				return nil, errors.New("network timeout")
 			}
-			require.Error(t, update(s))
-
-			require.Equal(t, []string{"unload 1.0.0", "load " + previousDir, "load " + previousDir}, s.events)
-			require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
-			requireOnlyEntries(t, pluginsDir, pluginID)
+			return &repo.PluginArchive{File: zipWithFiles(t, map[string]string{
+				pluginID + "/plugin.json": fmt.Sprintf(`{"id": %q, "type": "datasource", "info": {"version": "2.0.0"}, "dependencies": {"plugins": [{"id": "dep-panel", "type": "panel"}]}}`, pluginID),
+			})}, nil
 		})
+		require.ErrorContains(t, update(s), "network timeout")
+
+		require.Empty(t, s.events)
+		require.Equal(t, "1.0.0", pluginVersionInDir(t, previousDir))
+		requireOnlyEntries(t, s.pluginsDir)
 	})
 }
 
