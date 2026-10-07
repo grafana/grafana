@@ -31,10 +31,12 @@ jobs:
 
       - name: Generate token
         id: generate_token
-        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          app-id: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GITHUB_APP_ID }}
+          private-key: ${{ fromJSON(steps.vault-secrets.outputs.secrets).GITHUB_APP_PRIVATE_KEY }}
+          permission-issues: write
+          permission-organization-projects: read
       - name: Check if issue is in target project
         env:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}

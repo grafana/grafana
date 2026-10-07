@@ -25,12 +25,13 @@ runs:
 
     - name: Generate GitHub App token
       id: generate_token
-      uses: actions/create-github-app-token@v1
+      uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
       with:
         app-id: ${{ env.APP_ID }}
         private-key: ${{ env.PRIVATE_KEY }}
         repositories: "grafana-bench"
         owner: "grafana"
+        permission-contents: read
 
     - name: Setup Bench
       shell: bash

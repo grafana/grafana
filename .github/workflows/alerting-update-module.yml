@@ -115,10 +115,12 @@ jobs:
 
       - name: "Generate token"
         id: generate_token
-        uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # 1.11.5
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
         with:
-          app-id: ${{ env.GITHUB_APP_ID }}
-          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
+          app-id: ${{ fromJSON(steps.get-secrets.outputs.secrets).GITHUB_APP_ID }}
+          private-key: ${{ fromJSON(steps.get-secrets.outputs.secrets).GITHUB_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # 7.0.6
