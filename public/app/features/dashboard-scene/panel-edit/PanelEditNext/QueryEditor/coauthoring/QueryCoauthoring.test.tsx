@@ -852,6 +852,29 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
+  it.each([false, true])('handles an outside click that stops propagation with engaged=%s', async (engaged) => {
+    const { user, dismissInvocation } = await setup();
+    const chart = document.createElement('div');
+    chart.addEventListener('pointerdown', (event) => event.stopPropagation());
+    document.body.append(chart);
+    try {
+      expect(screen.getByRole('textbox', { name: 'Describe a query change' })).toBeInTheDocument();
+      if (engaged) {
+        await user.click(screen.getByRole('button', { name: 'Explain this query' }));
+        expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+      }
+      await user.click(chart);
+      if (engaged) {
+        expect(screen.getByRole('button', { name: 'Stop' })).toBeInTheDocument();
+        expect(dismissInvocation).not.toHaveBeenCalled();
+      } else {
+        expect(dismissInvocation).toHaveBeenCalledTimes(1);
+      }
+    } finally {
+      chart.remove();
+    }
+  });
+
   it.each(['clarification', 'error', 'nudge'])('keeps an engaged %s open on outside click and Escape', async (view) => {
     const { user, dismissInvocation } = await setup();
     const attempts = view === 'nudge' ? 3 : 1;

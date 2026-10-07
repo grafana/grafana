@@ -142,6 +142,28 @@ describe('QueryCoauthoringSurface', () => {
     expect(screen.queryByRole('button', { name: /Explain or modify/ })).not.toBeInTheDocument();
   });
 
+  it('dismisses the pill on stopped outside pointer events while preserving its owning editor', async () => {
+    const { queryText, portalTarget } = createEditorTarget();
+    queryText.addEventListener('pointerdown', (event) => event.stopPropagation());
+    const chart = document.createElement('div');
+    chart.addEventListener('pointerdown', (event) => event.stopPropagation());
+    document.body.append(chart);
+    const { adapter, publish } = createAdapter({ mode: 'selection', portalTarget });
+    adapter.dismiss = jest.fn(() => publish({ mode: 'hidden' }));
+    const user = userEvent.setup();
+    renderSurface(adapter);
+    try {
+      await user.click(queryText);
+      expect(screen.getByRole('button', { name: /Explain or modify/ })).toBeInTheDocument();
+      expect(adapter.dismiss).not.toHaveBeenCalled();
+      await user.click(chart);
+      expect(adapter.dismiss).toHaveBeenCalledTimes(1);
+      expect(screen.queryByRole('button', { name: /Explain or modify/ })).not.toBeInTheDocument();
+    } finally {
+      chart.remove();
+    }
+  });
+
   it('replaces the toolbar with the Core session when the adapter publishes an invocation', () => {
     const portalTarget = document.createElement('div');
     document.body.append(portalTarget);
