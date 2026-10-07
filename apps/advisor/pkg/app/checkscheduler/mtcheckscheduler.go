@@ -95,27 +95,28 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 	}()
 
 	// List Check metadata cluster-wide (namespace ""); discovery only reads
-	// each Check's namespace and creation timestamp.
-	items, err := r.listChecksMetadata(ctx, log, metav1.NamespaceAll)
+	// each Check's namespace and creation timestamp, so pages are folded into
+	// lastCreated as they arrive and memory stays proportional to the number
+	// of namespaces, not the number of Checks.
+	lastCreated := make(map[string]time.Time)
+	checksTotal, skipped := 0, 0
+	err := r.forEachCheckMetadata(ctx, log, metav1.NamespaceAll, func(item *metav1.PartialObjectMetadata) {
+		checksTotal++
+		ns := item.GetNamespace()
+		info, parseErr := types.ParseNamespace(ns)
+		if parseErr != nil || info.StackID == 0 {
+			skipped++
+			return
+		}
+		itemCreated := item.GetCreationTimestamp().Time
+		if itemCreated.After(lastCreated[ns]) {
+			lastCreated[ns] = itemCreated
+		}
+	})
 	if err != nil {
 		log.Debug("checkscheduler discoverNamespaces cluster-wide Check list failed", "error", err)
 		discoveryErr = err
 		return nil, nil, err
-	}
-
-	lastCreated := make(map[string]time.Time)
-	skipped := 0
-	for i := range items {
-		ns := items[i].GetNamespace()
-		info, parseErr := types.ParseNamespace(ns)
-		if parseErr != nil || info.StackID == 0 {
-			skipped++
-			continue
-		}
-		itemCreated := items[i].GetCreationTimestamp().Time
-		if itemCreated.After(lastCreated[ns]) {
-			lastCreated[ns] = itemCreated
-		}
 	}
 
 	namespaces := make([]string, 0, len(lastCreated))
@@ -124,7 +125,7 @@ func (r *Runner) discoverNamespaces(ctx context.Context, log logging.Logger) ([]
 	}
 	sort.Strings(namespaces)
 	metrics.MTSchedulerNamespacesDiscovered.Set(float64(len(namespaces)))
-	log.Debug("checkscheduler discoverNamespaces complete", "checks_total", len(items),
+	log.Debug("checkscheduler discoverNamespaces complete", "checks_total", checksTotal,
 		"skipped_non_stack", skipped, "stack_namespace_count", len(namespaces))
 	return namespaces, lastCreated, nil
 }

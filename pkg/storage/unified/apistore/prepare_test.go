@@ -1038,7 +1038,7 @@ func TestEncodeMaxVersionEnforcement(t *testing.T) {
 		}
 		raw, err := s.encode(context.Background(), dashboardAt("v1"), true)
 		require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
-		require.Contains(t, err.Error(), "does not match resource group")
+		require.Contains(t, err.Error(), "does not match storage group")
 		require.Nil(t, raw)
 	})
 
