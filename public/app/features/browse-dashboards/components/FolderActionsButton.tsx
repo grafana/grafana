@@ -181,9 +181,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary">
+        <Button variant="secondary" icon={isOpen ? 'angle-up' : 'angle-down'} iconPlacement="right">
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showPermissionsDrawer && (

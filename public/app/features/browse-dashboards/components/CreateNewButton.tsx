@@ -176,11 +176,12 @@ export default function CreateNewButton({
         <Button
           disabled={isReadOnlyRepo}
           tooltip={isReadOnlyRepo ? getReadOnlyTooltipText({ isLocal: repoType === 'local' }) : undefined}
-          variant="secondary"
+          variant="primary"
+          icon={isOpen ? 'angle-up' : 'angle-down'}
+          iconPlacement="right"
           data-testid={selectors.components.CreateNewButton.newButton}
         >
           {getNewPhrase()}
-          <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>
       </Dropdown>
       {showNewFolderDrawer && (
