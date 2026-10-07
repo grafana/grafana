@@ -249,6 +249,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex: '1 1 0',
     minHeight: 0,
     overflow: 'visible',
+    '.cm-theme': {
+      height: '100%',
+    },
   }),
   loadingContainer: css({
     display: 'flex',
