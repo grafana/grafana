@@ -4,6 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -56,7 +60,7 @@ func New(cfg *config.PluginManagementCfg, pluginRegistry registry.Service, plugi
 	}
 }
 
-func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) error {
+func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (err error) {
 	if ok, _ := m.installing.Load(pluginID); ok != nil {
 		return nil
 	}
@@ -65,9 +69,18 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		m.installing.Delete(pluginID)
 	}()
 
-	archive, err := m.install(ctx, pluginID, version, opts)
+	archive, update, err := m.install(ctx, pluginID, version, opts)
 	if err != nil {
 		return err
+	}
+	if update != nil {
+		defer func() {
+			if err != nil {
+				m.rollbackUpdate(ctx, update)
+				return
+			}
+			m.finishUpdate(update)
+		}()
 	}
 
 	for _, dep := range archive.Dependencies {
@@ -83,28 +96,50 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		}
 	}
 
-	_, err = m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{archive.Path}))
+	loaded, err := m.pluginLoader.Load(ctx, sources.NewLocalSource(plugins.ClassExternal, []string{archive.Path}))
 	if err != nil {
 		m.log.Error("Could not load plugins", "path", archive.Path, "error", err)
 		return err
 	}
 
+	// The loader records a plugin that fails validation or initialization instead of returning an error.
+	if update != nil && !slices.ContainsFunc(loaded, func(p *plugins.Plugin) bool { return p.ID == pluginID }) {
+		return fmt.Errorf("plugin %s could not be loaded after the update", pluginID)
+	}
+
 	return nil
 }
 
-func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, error) {
+// pluginUpdate tracks an update that has unloaded the previous version of a plugin, so that the
+// previous version can be restored if the new one doesn't end up loaded.
+type pluginUpdate struct {
+	previous   *plugins.Plugin
+	stagingDir string
+	targetDir  string
+	// backupDir holds what was in targetDir before the update, if it existed.
+	backupDir string
+	// swapped is set once the new version has been moved into targetDir.
+	swapped bool
+	// previousElsewhere is set when the previous version was loaded from outside targetDir, so its
+	// files are still in place once the update finishes.
+	previousElsewhere bool
+}
+
+func (m *PluginInstaller) install(ctx context.Context, pluginID, version string, opts plugins.AddOpts) (*storage.ExtractedPluginArchive, *pluginUpdate, error) {
 	var pluginArchive *repo.PluginArchive
+	var update *pluginUpdate
+	dirNameFunc := m.pluginStorageDirFunc
 	compatOpts, err := RepoCompatOpts(opts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if plugin, exists := m.plugin(ctx, pluginID, version); exists {
 		if plugin.IsCorePlugin() {
-			return nil, plugins.ErrInstallCorePlugin
+			return nil, nil, plugins.ErrInstallCorePlugin
 		}
 
 		if plugin.Info.Version == version {
-			return nil, plugins.DuplicateError{
+			return nil, nil, plugins.DuplicateError{
 				PluginID: plugin.ID,
 			}
 		}
@@ -114,7 +149,12 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 			pluginArchive, err = m.updateFromCatalog(ctx, plugin, version, compatOpts)
 		}
 		if err != nil {
-			return nil, err
+			return nil, nil, err
+		}
+		update = &pluginUpdate{previous: plugin}
+		// The previous version keeps running from its own files until the new one is fully extracted.
+		dirNameFunc = func(pluginID string) string {
+			return "." + m.pluginStorageDirFunc(pluginID) + ".staging"
 		}
 	} else {
 		var err error
@@ -124,19 +164,18 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 			pluginArchive, err = m.pluginRepo.GetPluginArchive(ctx, pluginID, version, compatOpts)
 		}
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		m.log.Info("Installing plugin", "pluginId", pluginID, "version", version)
 	}
 
-	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, m.pluginStorageDirFunc, pluginArchive.File)
+	extractedArchive, err := m.pluginStorage.Extract(ctx, pluginID, dirNameFunc, pluginArchive.File)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Check that the extracted plugin archive has the expected ID and version
 	// but avoid a hard error for backwards compatibility with older plugins
-	// and because in the case of an update, the previous version has been already uninstalled
 	if extractedArchive.ID != pluginID {
 		m.log.Error("Installed plugin ID mismatch", "expected", pluginID, "got", extractedArchive.ID)
 	}
@@ -144,16 +183,110 @@ func (m *PluginInstaller) install(ctx context.Context, pluginID, version string,
 		m.log.Error("Installed plugin version mismatch", "expected", version, "got", extractedArchive.Version)
 	}
 
-	return extractedArchive, nil
+	if update != nil {
+		if err := m.swapUpdate(ctx, update, extractedArchive); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return extractedArchive, update, nil
+}
+
+// swapUpdate unloads the previous version and moves the staged new version into the install
+// directory. Whatever was in that directory is moved aside until the update finishes, and a
+// previous version loaded from any other plugins path is left in place until then.
+func (m *PluginInstaller) swapUpdate(ctx context.Context, u *pluginUpdate, staged *storage.ExtractedPluginArchive) error {
+	pluginsDir := filepath.Dir(staged.Path)
+	dirName := m.pluginStorageDirFunc(u.previous.ID)
+	u.stagingDir = staged.Path
+	u.targetDir = filepath.Join(pluginsDir, dirName)
+	u.previousElsewhere = !isWithinDir(u.targetDir, u.previous.FS.Base())
+
+	if _, err := m.unload(ctx, u.previous); err != nil {
+		m.rollbackUpdate(ctx, u)
+		return err
+	}
+
+	if _, err := os.Lstat(u.targetDir); err == nil {
+		backupDir := filepath.Join(pluginsDir, "."+dirName+".backup")
+		if err := os.RemoveAll(backupDir); err != nil {
+			m.rollbackUpdate(ctx, u)
+			return err
+		}
+		if err := os.Rename(u.targetDir, backupDir); err != nil {
+			m.rollbackUpdate(ctx, u)
+			return err
+		}
+		u.backupDir = backupDir
+	} else if !os.IsNotExist(err) {
+		m.rollbackUpdate(ctx, u)
+		return err
+	}
+
+	if err := os.Rename(u.stagingDir, u.targetDir); err != nil {
+		m.rollbackUpdate(ctx, u)
+		return err
+	}
+	u.swapped = true
+	staged.Path = u.targetDir
+
+	return nil
+}
+
+// rollbackUpdate puts the previous version's files back where they were and loads it again.
+func (m *PluginInstaller) rollbackUpdate(ctx context.Context, u *pluginUpdate) {
+	pluginID := u.previous.ID
+	m.log.Warn("Plugin update failed, restoring previous version", "pluginId", pluginID, "version", u.previous.Info.Version)
+
+	if err := os.RemoveAll(u.stagingDir); err != nil {
+		m.log.Error("Failed to remove staged plugin update", "pluginId", pluginID, "path", u.stagingDir, "error", err)
+	}
+	if u.swapped {
+		if err := os.RemoveAll(u.targetDir); err != nil {
+			m.log.Error("Failed to remove updated plugin", "pluginId", pluginID, "path", u.targetDir, "error", err)
+			return
+		}
+	}
+	if u.backupDir != "" {
+		if err := os.Rename(u.backupDir, u.targetDir); err != nil {
+			m.log.Error("Failed to restore previous plugin version", "pluginId", pluginID, "path", u.backupDir, "error", err)
+			return
+		}
+	}
+
+	path := u.previous.FS.Base()
+	if _, err := m.pluginLoader.Load(ctx, sources.NewLocalSource(u.previous.Class, []string{path})); err != nil {
+		m.log.Error("Failed to load previous plugin version", "pluginId", pluginID, "path", path, "error", err)
+	}
+}
+
+// finishUpdate removes the previous version's files. It's best effort: the new version is loaded
+// and takes precedence on the next start, so a copy that can't be removed (e.g. from a read-only
+// plugins path) is only reported.
+func (m *PluginInstaller) finishUpdate(u *pluginUpdate) {
+	if u.backupDir != "" {
+		if err := os.RemoveAll(u.backupDir); err != nil {
+			m.log.Warn("Failed to remove previous plugin version", "pluginId", u.previous.ID, "path", u.backupDir, "error", err)
+		}
+	}
+
+	if !u.previousElsewhere {
+		return
+	}
+	if remover, ok := u.previous.FS.(plugins.FSRemover); ok {
+		if err := remover.Remove(); err != nil {
+			m.log.Warn("Failed to remove previous plugin version, keeping it alongside the new one", "pluginId", u.previous.ID, "path", u.previous.FS.Base(), "error", err)
+		}
+	}
+}
+
+func isWithinDir(dir, path string) bool {
+	rel, err := filepath.Rel(dir, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func (m *PluginInstaller) updateFromURL(ctx context.Context, plugin *plugins.Plugin, url string, compatOpts repo.CompatOpts) (*repo.PluginArchive, error) {
 	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "url", url)
-
-	// remove existing installation of plugin
-	if _, err := m.unloadAndDelete(ctx, plugin.ID, plugin.Info.Version); err != nil {
-		return nil, err
-	}
 
 	return m.pluginRepo.GetPluginArchiveByURL(ctx, url, compatOpts)
 }
@@ -176,11 +309,6 @@ func (m *PluginInstaller) updateFromCatalog(ctx context.Context, plugin *plugins
 
 	if pluginArchiveInfo.URL == "" && pluginArchiveInfo.Version == "" {
 		return nil, fmt.Errorf("could not determine update options for %s", plugin.ID)
-	}
-
-	// remove existing installation of plugin
-	if _, err = m.unloadAndDelete(ctx, plugin.ID, plugin.Info.Version); err != nil {
-		return nil, err
 	}
 
 	if pluginArchiveInfo.URL != "" {
@@ -225,6 +353,22 @@ func (m *PluginInstaller) unloadAndDelete(ctx context.Context, pluginID, version
 	// Unload nested plugins so they release files, then let the parent Remove
 	// delete the tree. Removing each child directory first can leave the
 	// parent half-deleted if a later child fails.
+	childIDs, err := m.unload(ctx, plugin)
+	if err != nil {
+		return nil, err
+	}
+
+	if remover, ok := plugin.FS.(plugins.FSRemover); ok {
+		if err = remover.Remove(); err != nil {
+			return nil, err
+		}
+	}
+
+	return childIDs, nil
+}
+
+// unload unloads the plugin and its nested children, returning the IDs of the unloaded children.
+func (m *PluginInstaller) unload(ctx context.Context, plugin *plugins.Plugin) ([]string, error) {
 	var childIDs []string
 	for _, child := range plugin.Children {
 		if child == nil {
@@ -242,15 +386,8 @@ func (m *PluginInstaller) unloadAndDelete(ctx context.Context, pluginID, version
 		childIDs = append(childIDs, child.ID)
 	}
 
-	p, err := m.pluginLoader.Unload(ctx, plugin)
-	if err != nil {
+	if _, err := m.pluginLoader.Unload(ctx, plugin); err != nil {
 		return nil, err
-	}
-
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err = remover.Remove(); err != nil {
-			return nil, err
-		}
 	}
 
 	return childIDs, nil
