@@ -772,6 +772,10 @@ It never changes the dashboard; `reveal` changes only what is in view.
 - `diagnostics`: non-fatal problems reported during a draw that still finished, such as a resource
   the sandbox blocked.
 - `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
+- `layout`: a bounded summary of where the last draw put its content, to spot a bad layout
+  without an image: `coverage` (0 to 1), `emptyRegions`, and `overflowing`, `clippedText` and
+  `overlaps`, each with an exact `count` and at most 5 `samples`. Diagnostics only; see "Layout
+  report" in the Custom panel README for the fields.
 
 Requested panels that are not on the dashboard, or do not report, and Custom panels that are
 `not-mounted`, are named in `warnings`.

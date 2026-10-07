@@ -214,6 +214,26 @@ describe('createRenderFrameController', () => {
     expect(handlers.onError).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'render-timeout' }));
   });
 
+  it('passes the layout report of a draw through', () => {
+    const { controller, handlers, connect, fromFrame } = setup();
+    connect();
+    const seq = controller.render(input());
+    const layout = {
+      width: 400,
+      height: 300,
+      coverage: 0.4,
+      emptyRegions: [{ x: 0, y: 150, width: 400, height: 150, share: 0.5 }],
+      overflowing: { count: 0, samples: [] },
+      clippedText: { count: 1, samples: [{ element: 'div.card', text: 'Long label', visible: 0.5, ellipsis: false }] },
+      overlaps: { count: 0, samples: [] },
+      inspected: 12,
+      truncated: false,
+      durationMs: 0.4,
+    };
+    fromFrame({ type: 'render-complete', seq, durationMs: 3, nodeCount: 5, layout });
+    expect(handlers.onRenderComplete).toHaveBeenCalledWith({ seq, durationMs: 3, nodeCount: 5, layout });
+  });
+
   it('forwards frame errors as non-fatal', () => {
     const { handlers, connect, fromFrame, controller } = setup();
     connect();
@@ -233,6 +253,10 @@ describe('createRenderFrameController', () => {
     ['a height over the limit', { type: 'height', height: 10_001 }],
     ['an oversized link', { type: 'link', href: 'x'.repeat(2049) }],
     ['a wrong ready version', { type: 'ready', version: 2 }],
+    [
+      'a layout report with extra payload',
+      { type: 'render-complete', seq: 0, durationMs: 1, nodeCount: 1, layout: { width: 1, extra: 'x' } },
+    ],
   ])('fails with a protocol error on %s', (_, message) => {
     const { handlers, connect, fromFrame, controller, port } = setup();
     connect();

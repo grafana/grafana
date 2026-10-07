@@ -5,6 +5,10 @@ import {
   MAX_DIAGNOSTIC_LENGTH,
   MAX_HEIGHT_HINT_PX,
   MAX_HREF_LENGTH,
+  MAX_LAYOUT_ELEMENTS,
+  MAX_LAYOUT_EMPTY_REGIONS,
+  MAX_LAYOUT_LABEL_LENGTH,
+  MAX_LAYOUT_SAMPLES,
   RENDER_PROTOCOL_VERSION,
 } from './constants';
 
@@ -138,6 +142,48 @@ export interface RenderInitMessage {
 /** A capture is a PNG data URL and nothing else, so the host can show it as an image. */
 const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/;
 
+const layoutNumber = z.number().finite();
+const layoutShare = z.number().finite().min(0).max(1);
+const layoutLabel = z.string().max(MAX_LAYOUT_LABEL_LENGTH);
+const layoutRect = { x: layoutNumber, y: layoutNumber, width: layoutNumber.min(0), height: layoutNumber.min(0) };
+
+function layoutFinding<Sample extends z.ZodType>(sample: Sample) {
+  return z.strictObject({ count: z.number().int().min(0), samples: z.array(sample).max(MAX_LAYOUT_SAMPLES) });
+}
+
+/** The layout report of a draw; see PanelRenderLayout. Every array and string is capped. */
+export const layoutReportSchema = z.strictObject({
+  width: layoutNumber.min(0),
+  height: layoutNumber.min(0),
+  coverage: layoutShare,
+  emptyRegions: z.array(z.strictObject({ ...layoutRect, share: layoutShare })).max(MAX_LAYOUT_EMPTY_REGIONS),
+  overflowing: layoutFinding(
+    z.strictObject({
+      ...layoutRect,
+      element: layoutLabel,
+      sides: z.array(z.enum(['left', 'top', 'right', 'bottom'])).max(4),
+    })
+  ),
+  clippedText: layoutFinding(
+    z.strictObject({ element: layoutLabel, text: layoutLabel, visible: layoutShare, ellipsis: z.boolean() })
+  ),
+  overlaps: layoutFinding(
+    z.strictObject({
+      kind: z.enum(['text', 'box']),
+      a: layoutLabel,
+      b: layoutLabel,
+      area: layoutNumber.min(0),
+      aText: layoutLabel.optional(),
+      bText: layoutLabel.optional(),
+    })
+  ),
+  inspected: z.number().int().min(0).max(MAX_LAYOUT_ELEMENTS),
+  truncated: z.boolean(),
+  durationMs: layoutNumber.min(0),
+});
+
+export type LayoutReport = z.infer<typeof layoutReportSchema>;
+
 export const frameErrorKindSchema = z.enum(['startup', 'runtime', 'csp', 'output-limit']);
 
 /**
@@ -151,6 +197,7 @@ export const frameMessageSchema = z.discriminatedUnion('type', [
     seq: z.number().int().min(0),
     durationMs: z.number().finite().min(0),
     nodeCount: z.number().int().min(0),
+    layout: layoutReportSchema.optional(),
   }),
   z.strictObject({ type: z.literal('height'), height: z.number().finite().min(0).max(MAX_HEIGHT_HINT_PX) }),
   z.strictObject({

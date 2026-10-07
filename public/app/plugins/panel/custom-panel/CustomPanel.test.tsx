@@ -418,6 +418,28 @@ describe('CustomPanel', () => {
       );
     });
 
+    it('reports the layout report of the draw', () => {
+      const { props } = setup();
+      const layout = {
+        width: 400,
+        height: 300,
+        coverage: 0.1,
+        emptyRegions: [],
+        overflowing: {
+          count: 1,
+          samples: [{ element: 'div.wide', x: 0, y: 0, width: 500, height: 20, sides: ['right' as const] }],
+        },
+        clippedText: { count: 0, samples: [] },
+        overlaps: { count: 0, samples: [] },
+        inspected: 3,
+        truncated: false,
+        durationMs: 0.2,
+      };
+      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 4, nodeCount: 2, layout }));
+
+      expect(getPanelRenderStatus(props.id)).toEqual(expect.objectContaining({ state: 'drawn', layout }));
+    });
+
     it('reports a draw error, and keeps non-fatal problems with a draw that still finishes', () => {
       const { props } = setup();
       act(() =>

@@ -14,6 +14,7 @@ import {
   describeInvalidFrameMessage,
   type FrameMessage,
   type HostMessage,
+  type LayoutReport,
   parseFrameMessage,
   type RenderInput,
   type RenderSize,
@@ -40,7 +41,7 @@ export interface RenderFrameError {
 
 export interface RenderFrameHandlers {
   onReady(): void;
-  onRenderComplete(event: { seq: number; durationMs: number; nodeCount: number }): void;
+  onRenderComplete(event: { seq: number; durationMs: number; nodeCount: number; layout?: LayoutReport }): void;
   onHeight(height: number): void;
   onError(error: RenderFrameError): void;
   /** Raw href, already rate-limited; the host validates it with validateRenderLink. */
@@ -338,7 +339,12 @@ export function createRenderFrameController(
           awaitingSeq = undefined;
           clearRenderTimer();
         }
-        handlers.onRenderComplete({ seq: message.seq, durationMs: message.durationMs, nodeCount: message.nodeCount });
+        handlers.onRenderComplete({
+          seq: message.seq,
+          durationMs: message.durationMs,
+          nodeCount: message.nodeCount,
+          ...(message.layout && { layout: message.layout }),
+        });
         return;
       case 'height':
         handlers.onHeight(message.height);

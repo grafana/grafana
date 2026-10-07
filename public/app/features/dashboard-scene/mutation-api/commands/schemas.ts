@@ -953,7 +953,7 @@ export const payloads = {
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   getPanelRenderStatus: getPanelRenderStatusPayloadSchema.describe(
-    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, whether the panel is paused out of view, and optionally a capture of the drawing and the shape of the data it received. A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted; reveal brings one panel into view and waitMs waits for its draw.'
+    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, a layout report (coverage, empty regions, overflow, clipped text, overlaps), whether the panel is paused out of view, and optionally a capture of the drawing and the shape of the data it received. A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted; reveal brings one panel into view and waitMs waits for its draw.'
   ),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'

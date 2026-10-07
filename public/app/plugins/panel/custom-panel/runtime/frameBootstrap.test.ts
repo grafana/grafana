@@ -1,6 +1,6 @@
 import { type DOMWindow, JSDOM, VirtualConsole } from 'jsdom';
 
-import { MAX_DOM_NODES, RENDER_INIT_MESSAGE_TYPE, RENDER_PROTOCOL_VERSION } from './constants';
+import { MAX_DOM_NODES, MAX_LAYOUT_ELEMENTS, RENDER_INIT_MESSAGE_TYPE, RENDER_PROTOCOL_VERSION } from './constants';
 import { contentDocument } from './document';
 import type { RenderInput } from './protocol';
 
@@ -42,8 +42,8 @@ function mountFrame(code: string, beforeParse?: (window: DOMWindow) => void) {
   return { dom, window, dispatchInit };
 }
 
-function connect(code: string) {
-  const frame = mountFrame(code);
+function connect(code: string, beforeParse?: (window: DOMWindow) => void) {
+  const frame = mountFrame(code, beforeParse);
   const port = createPort();
   frame.dispatchInit(port);
   const send = (data: unknown) => port.onmessage?.({ data });
@@ -103,6 +103,56 @@ const RECORDING_CODE = `
     ctx.root.textContent = 'drawn ' + ctx.title;
   });
 `;
+
+/**
+ * jsdom has no layout, so boxes come from attributes: data-rect="x,y,width,height" for an element
+ * and data-text-rect for its text (else the element's box). The frame is 400x300.
+ */
+function stubLayout(window: DOMWindow) {
+  const rectOf = (element: Element, attribute = 'data-rect') => {
+    const [x, y, width, height] = (element.getAttribute(attribute) ?? element.getAttribute('data-rect') ?? '0,0,0,0')
+      .split(',')
+      .map(Number);
+    return { x, y, width, height, left: x, top: y, right: x + width, bottom: y + height };
+  };
+  const define = (target: object, name: string, descriptor: PropertyDescriptor) =>
+    Object.defineProperty(target, name, { configurable: true, ...descriptor });
+  const isFrame = (element: Element) => element === element.ownerDocument.documentElement;
+  define(window.Element.prototype, 'getBoundingClientRect', {
+    value(this: Element) {
+      return rectOf(this);
+    },
+  });
+  define(window.Element.prototype, 'clientWidth', {
+    get(this: Element) {
+      return isFrame(this) ? 400 : rectOf(this).width;
+    },
+  });
+  define(window.Element.prototype, 'clientHeight', {
+    get(this: Element) {
+      return isFrame(this) ? 300 : rectOf(this).height;
+    },
+  });
+  define(window.Range.prototype, 'getClientRects', {
+    value(this: Range) {
+      const parent = this.startContainer.parentElement;
+      return parent ? [rectOf(parent, 'data-text-rect')] : [];
+    },
+  });
+}
+
+const LAYOUT_CODE = `panel.onRender(function (ctx) {
+  ctx.root.setAttribute('data-rect', '0,0,400,300');
+  ctx.root.innerHTML =
+    '<div class="chart" data-rect="0,0,100,50" style="background-color:red"></div>' +
+    '<div class="wide" data-rect="0,60,500,20" style="background-color:red"><span data-rect="0,60,500,20">wide</span></div>' +
+    '<div class="card" data-rect="0,100,100,20" data-text-rect="0,100,100,40" style="overflow-x:hidden;overflow-y:hidden">Long label</div>' +
+    '<div style="position:relative" data-rect="0,150,400,80">' +
+    '<span class="a" style="position:absolute" data-rect="200,200,80,20">Requests</span>' +
+    '<span class="b" style="position:absolute" data-rect="210,205,80,20">Errors</span></div>' +
+    '<div class="x" data-rect="0,250,100,30" style="background-color:blue"></div>' +
+    '<div class="y" data-rect="0,260,100,30" style="background-color:blue"></div>';
+});`;
 
 describe('content frame bootstrap', () => {
   it('reports ready after a valid init', () => {
@@ -261,6 +311,68 @@ describe('content frame bootstrap', () => {
       .getElementById('local')!
       .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(messagesOfType(port, 'link')).toHaveLength(1);
+  });
+
+  describe('layout report', () => {
+    it('reports coverage, empty regions, overflow, clipped text and overlaps with the draw', async () => {
+      const { port, send } = connect(LAYOUT_CODE, stubLayout);
+      send({ type: 'render', seq: 1, input: makeInput() });
+      await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+      const [complete] = messagesOfType(port, 'render-complete');
+      expect(complete.layout).toEqual({
+        width: 400,
+        height: 300,
+        coverage: expect.any(Number),
+        // The grid is 25x19 cells of 16x15.8 px; the right side between the drawn rows is empty.
+        emptyRegions: [
+          { x: 112, y: 95, width: 288, height: 95, share: 0.23 },
+          { x: 112, y: 237, width: 288, height: 63, share: 0.15 },
+          { x: 112, y: 0, width: 288, height: 47, share: 0.11 },
+        ],
+        overflowing: {
+          count: 1,
+          samples: [{ element: 'div.wide', x: 0, y: 60, width: 500, height: 20, sides: ['right'] }],
+        },
+        clippedText: {
+          count: 1,
+          samples: [{ element: 'div.card', text: 'Long label', visible: 0.5, ellipsis: false }],
+        },
+        overlaps: {
+          count: 2,
+          samples: [
+            { kind: 'text', a: 'div > span.a', b: 'div > span.b', area: 1050, aText: 'Requests', bText: 'Errors' },
+            { kind: 'box', a: 'div.x', b: 'div.y', area: 2000 },
+          ],
+        },
+        inspected: 10,
+        truncated: false,
+        durationMs: expect.any(Number),
+      });
+      // 21,550 px² of 120,000 drawn; boxes stacked inside one cell count once per box, up to the cell.
+      expect(complete.layout).toHaveProperty('coverage', 0.19);
+    });
+
+    it('looks at a bounded number of elements and says when it stopped early', async () => {
+      const code = `panel.onRender(function (ctx) {
+        ctx.root.setAttribute('data-rect', '0,0,400,300');
+        ctx.root.innerHTML = new Array(${MAX_LAYOUT_ELEMENTS + 100}).join('<i data-rect="0,0,4,4"></i>');
+      });`;
+      const { port, send } = connect(code, stubLayout);
+      send({ type: 'render', seq: 1, input: makeInput() });
+      await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+      const [complete] = messagesOfType(port, 'render-complete');
+      expect(complete.layout).toEqual(expect.objectContaining({ inspected: MAX_LAYOUT_ELEMENTS, truncated: true }));
+    });
+
+    it('leaves the report out when the frame has no size', async () => {
+      const { port, send } = connect(LAYOUT_CODE);
+      send({ type: 'render', seq: 1, input: makeInput() });
+      await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+      expect(messagesOfType(port, 'render-complete')[0]).not.toHaveProperty('layout');
+    });
   });
 
   it('answers ping with pong', () => {

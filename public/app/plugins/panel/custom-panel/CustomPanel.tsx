@@ -203,10 +203,19 @@ function RenderFrameHost({
 
     const created = createRenderFrameController({
       onReady: () => {},
-      onRenderComplete: ({ seq, durationMs, nodeCount }) => {
+      onRenderComplete: ({ seq, durationMs, nodeCount, layout }) => {
         setFrameError(null);
         const diagnostics = diagnosticsRef.current;
-        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) }, seq);
+        report(
+          {
+            state: 'drawn',
+            durationMs,
+            nodeCount,
+            ...(diagnostics.length > 0 && { diagnostics }),
+            ...(layout && { layout }),
+          },
+          seq
+        );
         settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),

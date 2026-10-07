@@ -4,6 +4,12 @@ import {
   MAX_DOM_NODES,
   MAX_HEIGHT_HINT_PX,
   MAX_HREF_LENGTH,
+  LAYOUT_GRID_CELLS,
+  MAX_LAYOUT_ELEMENTS,
+  MAX_LAYOUT_EMPTY_REGIONS,
+  MAX_LAYOUT_LABEL_LENGTH,
+  MAX_LAYOUT_SAMPLES,
+  MAX_LAYOUT_TEXT_RECTS,
   RENDER_INIT_MESSAGE_TYPE,
   RENDER_PROTOCOL_VERSION,
   RENDER_TARGET_CLASS,
@@ -88,6 +94,12 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var MAX_HEIGHT = ${MAX_HEIGHT_HINT_PX};
   var MAX_HREF_LENGTH = ${MAX_HREF_LENGTH};
   var MAX_CAPTURE_LENGTH = ${MAX_CAPTURE_LENGTH};
+  var MAX_LAYOUT_ELEMENTS = ${MAX_LAYOUT_ELEMENTS};
+  var MAX_LAYOUT_TEXT_RECTS = ${MAX_LAYOUT_TEXT_RECTS};
+  var MAX_LAYOUT_SAMPLES = ${MAX_LAYOUT_SAMPLES};
+  var MAX_LAYOUT_EMPTY_REGIONS = ${MAX_LAYOUT_EMPTY_REGIONS};
+  var MAX_LAYOUT_LABEL = ${MAX_LAYOUT_LABEL_LENGTH};
+  var LAYOUT_GRID = ${LAYOUT_GRID_CELLS};
   var MAX_BUFFERED_ERRORS = 20;
   var RESIZE_OBSERVER_LOOP = 'ResizeObserver loop';
   var XLINK = 'http://www.w3.org/1999/xlink';
@@ -676,6 +688,421 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     });
   }
 
+  /*
+   * The layout report: a bounded summary of where the draw put its content, so a caller that
+   * cannot see the panel can tell a bad layout (content cut, spilling out, piled up or lost in a
+   * mostly empty panel). It reads the DOM only. The drawing runs in this realm and can skew its own
+   * report, so the host bounds and validates it like any other message.
+   */
+  var LAYOUT_MEDIA = { img: true, svg: true, canvas: true, video: true, input: true, select: true, textarea: true, progress: true, meter: true };
+
+  function layoutArea(rect) {
+    return rect ? (rect.right - rect.left) * (rect.bottom - rect.top) : 0;
+  }
+
+  function layoutIntersect(a, b) {
+    var left = Math.max(a.left, b.left);
+    var top = Math.max(a.top, b.top);
+    var right = Math.min(a.right, b.right);
+    var bottom = Math.min(a.bottom, b.bottom);
+    return right > left && bottom > top ? { left: left, top: top, right: right, bottom: bottom } : null;
+  }
+
+  function layoutCut(text, max) {
+    return text.length > max ? text.slice(0, max - 1) + '…' : text;
+  }
+
+  function layoutName(element) {
+    var name = String(element.tagName || '').toLowerCase();
+    if (typeof element.id === 'string' && element.id) {
+      name += '#' + element.id;
+    }
+    var classes = element.classList;
+    for (var i = 0; classes && i < classes.length && i < 2; i++) {
+      name += '.' + classes[i];
+    }
+    return name;
+  }
+
+  function layoutLabel(element) {
+    var parent = element.parentElement;
+    var name = parent && parent !== root && parent !== document.body ? layoutName(parent) + ' > ' + layoutName(element) : layoutName(element);
+    return layoutCut(name, MAX_LAYOUT_LABEL);
+  }
+
+  function layoutText(value) {
+    return layoutCut(String(value).split(/\\s+/).join(' ').trim(), MAX_LAYOUT_LABEL);
+  }
+
+  function layoutBox(rect) {
+    return {
+      x: Math.round(rect.left),
+      y: Math.round(rect.top),
+      width: Math.round(rect.right - rect.left),
+      height: Math.round(rect.bottom - rect.top)
+    };
+  }
+
+  function layoutRound(value) {
+    return Math.round(value * 100) / 100;
+  }
+
+  function isPainted(style) {
+    if (style.backgroundImage && style.backgroundImage !== 'none') {
+      return true;
+    }
+    if (!isTransparentColor(style.backgroundColor)) {
+      return true;
+    }
+    if (style.boxShadow && style.boxShadow !== 'none') {
+      return true;
+    }
+    if (style.borderStyle === 'none' || style.borderStyle === '') {
+      return false;
+    }
+    var sides = ['Top', 'Right', 'Bottom', 'Left'];
+    for (var i = 0; i < sides.length; i++) {
+      if (parseFloat(style['border' + sides[i] + 'Width']) > 0 && style['border' + sides[i] + 'Style'] !== 'none' &&
+        !isTransparentColor(style['border' + sides[i] + 'Color'])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** The clip a box with this overflow puts on its content, per axis; null when it clips nothing. */
+  function overflowClip(box, overflowX, overflowY, values) {
+    var clipX = values[overflowX] === true;
+    var clipY = values[overflowY] === true;
+    if (!clipX && !clipY) {
+      return null;
+    }
+    return {
+      left: clipX ? box.left : -Infinity,
+      right: clipX ? box.right : Infinity,
+      top: clipY ? box.top : -Infinity,
+      bottom: clipY ? box.bottom : Infinity
+    };
+  }
+
+  var CLIPPING = { hidden: true, clip: true, auto: true, scroll: true };
+  var CUTTING = { hidden: true, clip: true };
+  var NOTHING = { left: 0, top: 0, right: 0, bottom: 0 };
+
+  function narrow(clip, next) {
+    if (!next) {
+      return clip;
+    }
+    return clip ? layoutIntersect(clip, next) || NOTHING : next;
+  }
+
+  /** The largest rectangle of empty cells, as [col, row, cols, rows], or null. */
+  function largestEmpty(empty, cols, rows) {
+    var heights = [];
+    for (var c = 0; c < cols; c++) {
+      heights.push(0);
+    }
+    var best = null;
+    var bestArea = 0;
+    for (var r = 0; r < rows; r++) {
+      for (var x = 0; x < cols; x++) {
+        heights[x] = empty[r * cols + x] ? heights[x] + 1 : 0;
+      }
+      var stack = [];
+      for (var i = 0; i <= cols; i++) {
+        var h = i < cols ? heights[i] : 0;
+        while (stack.length > 0 && heights[stack[stack.length - 1]] >= h) {
+          var top = stack.pop();
+          var start = stack.length > 0 ? stack[stack.length - 1] + 1 : 0;
+          var area = heights[top] * (i - start);
+          if (area > bestArea) {
+            bestArea = area;
+            best = [start, r - heights[top] + 1, i - start, heights[top]];
+          }
+        }
+        stack.push(i);
+      }
+    }
+    return best;
+  }
+
+  function measureLayout(fitContent) {
+    var started = now();
+    var html = document.documentElement;
+    var width = html.clientWidth;
+    var height = html.clientHeight;
+    if (!(width > 0 && height > 0)) {
+      return null;
+    }
+    var view = { left: 0, top: 0, right: width, bottom: height };
+    var viewArea = width * height;
+    var cols = Math.max(1, Math.min(LAYOUT_GRID, Math.ceil(width / 16)));
+    var rows = Math.max(1, Math.min(LAYOUT_GRID, Math.ceil(height / 16)));
+    var cellWidth = width / cols;
+    var cellHeight = height / rows;
+    var cells = [];
+    for (var n = 0; n < cols * rows; n++) {
+      cells.push(0);
+    }
+
+    function cover(rect) {
+      var onView = rect && layoutIntersect(rect, view);
+      if (!onView) {
+        return;
+      }
+      var c0 = Math.floor(onView.left / cellWidth);
+      var c1 = Math.min(cols - 1, Math.ceil(onView.right / cellWidth) - 1);
+      var r0 = Math.floor(onView.top / cellHeight);
+      var r1 = Math.min(rows - 1, Math.ceil(onView.bottom / cellHeight) - 1);
+      for (var y = r0; y <= r1; y++) {
+        var overlapY = Math.min(onView.bottom, (y + 1) * cellHeight) - Math.max(onView.top, y * cellHeight);
+        for (var x = c0; x <= c1; x++) {
+          var overlapX = Math.min(onView.right, (x + 1) * cellWidth) - Math.max(onView.left, x * cellWidth);
+          if (overlapX > 0 && overlapY > 0) {
+            cells[y * cols + x] += overlapX * overlapY;
+          }
+        }
+      }
+    }
+
+    var overflowing = { count: 0, samples: [] };
+    var clippedText = { count: 0, samples: [] };
+    var overlaps = { count: 0, samples: [] };
+    var outside = new Map();
+    var siblings = new Map();
+    var runs = [];
+    var textRects = 0;
+    var range = typeof document.createRange === 'function' ? document.createRange() : null;
+    var inspected = 0;
+    var truncated = false;
+    var queue = [{ element: root, clip: null, cut: null }];
+
+    while (queue.length > 0) {
+      var item = queue.pop();
+      var element = item.element;
+      if (inspected >= MAX_LAYOUT_ELEMENTS) {
+        truncated = true;
+        break;
+      }
+      inspected++;
+      var style = safeComputedStyle.call(window, element);
+      if (style.display === 'none' || style.opacity === '0') {
+        continue;
+      }
+      var tag = String(element.tagName || '').toLowerCase();
+      var visible = style.visibility === 'visible';
+      var r = element.getBoundingClientRect();
+      var box = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+      var shown = item.clip ? layoutIntersect(box, item.clip) : layoutArea(box) > 0 ? box : null;
+
+      if (shown && visible) {
+        var sides = [];
+        if (shown.left < -1) {
+          sides.push('left');
+        }
+        if (shown.top < -1) {
+          sides.push('top');
+        }
+        if (shown.right > width + 1) {
+          sides.push('right');
+        }
+        if (!fitContent && shown.bottom > height + 1) {
+          sides.push('bottom');
+        }
+        if (sides.length > 0) {
+          outside.set(element, true);
+          if (!outside.has(element.parentElement)) {
+            overflowing.count++;
+            if (overflowing.samples.length < MAX_LAYOUT_SAMPLES) {
+              var sample = layoutBox(shown);
+              sample.element = layoutLabel(element);
+              sample.sides = sides;
+              overflowing.samples.push(sample);
+            }
+          }
+        }
+        if (element !== root && (LAYOUT_MEDIA[tag] === true || (layoutArea(shown) <= viewArea / 2 && isPainted(style)))) {
+          cover(shown);
+        }
+      }
+
+      if (element !== root && visible && shown && layoutArea(shown) >= 16) {
+        var parent = element.parentElement;
+        var list = siblings.get(parent);
+        if (!list) {
+          list = [];
+          siblings.set(parent, list);
+        }
+        if (list.length < 40 && (style.float === 'none' || !style.float) && style.position !== 'absolute' && style.position !== 'fixed') {
+          list.push({ element: element, rect: shown });
+        }
+      }
+
+      if (LAYOUT_MEDIA[tag] === true) {
+        continue;
+      }
+      var overflowX = style.overflowX;
+      var overflowY = style.overflowY;
+      var clips = overflowX !== 'visible' || overflowY !== 'visible';
+      var clip = clips ? narrow(item.clip, overflowClip(box, overflowX, overflowY, CLIPPING)) : item.clip;
+      var cut = clips ? narrow(item.cut, overflowClip(box, overflowX, overflowY, CUTTING)) : item.cut;
+
+      if (visible && range) {
+        var total = 0;
+        var kept = 0;
+        var excerpt = null;
+        for (var node = element.firstChild; node; node = node.nextSibling) {
+          if (node.nodeType !== 3 || !String(node.data).trim()) {
+            continue;
+          }
+          if (!excerpt) {
+            excerpt = node;
+          }
+          range.selectNodeContents(node);
+          var fragments = typeof range.getClientRects === 'function' ? range.getClientRects() : [];
+          var run = { element: element, node: node, rects: [], bounds: null };
+          for (var f = 0; f < fragments.length; f++) {
+            var fragment = { left: fragments[f].left, top: fragments[f].top, right: fragments[f].right, bottom: fragments[f].bottom };
+            var fragmentArea = layoutArea(fragment);
+            if (!(fragmentArea > 0)) {
+              continue;
+            }
+            total += fragmentArea;
+            kept += cut ? layoutArea(layoutIntersect(fragment, cut)) : fragmentArea;
+            var seen = clip ? layoutIntersect(fragment, clip) : fragment;
+            if (seen) {
+              cover(seen);
+              if (textRects < MAX_LAYOUT_TEXT_RECTS) {
+                run.rects.push(seen);
+                run.bounds = run.bounds ? {
+                  left: Math.min(run.bounds.left, seen.left),
+                  top: Math.min(run.bounds.top, seen.top),
+                  right: Math.max(run.bounds.right, seen.right),
+                  bottom: Math.max(run.bounds.bottom, seen.bottom)
+                } : seen;
+                textRects++;
+              }
+            }
+          }
+          if (run.rects.length > 0) {
+            runs.push(run);
+          }
+        }
+        var share = total > 0 ? kept / total : 1;
+        var tooWide = excerpt && cut && element.clientWidth > 0 &&
+          (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1) &&
+          (CUTTING[overflowX] === true || CUTTING[overflowY] === true);
+        if (excerpt && (share < 0.98 || tooWide)) {
+          clippedText.count++;
+          if (clippedText.samples.length < MAX_LAYOUT_SAMPLES) {
+            clippedText.samples.push({
+              element: layoutLabel(element),
+              text: layoutText(excerpt.data),
+              visible: layoutRound(Math.max(0, Math.min(1, tooWide && share >= 0.98 ? element.clientWidth / element.scrollWidth : share))),
+              ellipsis: style.textOverflow === 'ellipsis'
+            });
+          }
+        }
+      }
+
+      var children = element.children;
+      for (var k = children.length - 1; k >= 0; k--) {
+        queue.push({ element: children[k], clip: clip, cut: cut });
+      }
+    }
+    if (queue.length > 0) {
+      truncated = true;
+    }
+
+    function addOverlap(entry) {
+      overlaps.count++;
+      if (overlaps.samples.length < MAX_LAYOUT_SAMPLES) {
+        overlaps.samples.push(entry);
+      }
+    }
+
+    // Text lines over other text lines: almost never intended. Sorted by top, so each run is only
+    // compared with the runs that start above its bottom.
+    runs.sort(function (left, right) {
+      return left.bounds.top - right.bounds.top;
+    });
+    for (var a = 0; a < runs.length; a++) {
+      var first = runs[a];
+      for (var b = a + 1; b < runs.length && runs[b].bounds.top < first.bounds.bottom; b++) {
+        var second = runs[b];
+        if (second.bounds.left >= first.bounds.right || second.bounds.right <= first.bounds.left) {
+          continue;
+        }
+        var worst = 0;
+        for (var i = 0; i < first.rects.length; i++) {
+          for (var j = 0; j < second.rects.length; j++) {
+            var common = layoutArea(layoutIntersect(first.rects[i], second.rects[j]));
+            if (common >= 16 && common > worst &&
+              common >= Math.min(layoutArea(first.rects[i]), layoutArea(second.rects[j])) * 0.3) {
+              worst = common;
+            }
+          }
+        }
+        if (worst > 0) {
+          addOverlap({ kind: 'text', a: layoutLabel(first.element), b: layoutLabel(second.element), area: Math.round(worst), aText: layoutText(first.node.data), bText: layoutText(second.node.data) });
+        }
+      }
+    }
+
+    // In-flow siblings over each other: absolute and fixed boxes are layered on purpose.
+    siblings.forEach(function (list) {
+      for (var a = 0; a < list.length; a++) {
+        for (var b = a + 1; b < list.length; b++) {
+          var common = layoutArea(layoutIntersect(list[a].rect, list[b].rect));
+          if (common >= 16 && common >= Math.min(layoutArea(list[a].rect), layoutArea(list[b].rect)) * 0.25) {
+            addOverlap({ kind: 'box', a: layoutLabel(list[a].element), b: layoutLabel(list[b].element), area: Math.round(common) });
+          }
+        }
+      }
+    });
+
+    var cellArea = cellWidth * cellHeight;
+    var covered = 0;
+    var empty = [];
+    for (var e = 0; e < cells.length; e++) {
+      covered += Math.min(cells[e], cellArea);
+      empty.push(cells[e] < cellArea * 0.1);
+    }
+    var emptyRegions = [];
+    while (emptyRegions.length < MAX_LAYOUT_EMPTY_REGIONS) {
+      var found = largestEmpty(empty, cols, rows);
+      if (!found || found[2] * found[3] < cells.length * 0.1) {
+        break;
+      }
+      for (var y = found[1]; y < found[1] + found[3]; y++) {
+        for (var x = found[0]; x < found[0] + found[2]; x++) {
+          empty[y * cols + x] = false;
+        }
+      }
+      var region = layoutBox({
+        left: found[0] * cellWidth,
+        top: found[1] * cellHeight,
+        right: (found[0] + found[2]) * cellWidth,
+        bottom: (found[1] + found[3]) * cellHeight
+      });
+      region.share = layoutRound((found[2] * found[3]) / cells.length);
+      emptyRegions.push(region);
+    }
+
+    return {
+      width: Math.round(width),
+      height: Math.round(height),
+      coverage: layoutRound(Math.min(1, covered / viewArea)),
+      emptyRegions: emptyRegions,
+      overflowing: overflowing,
+      clippedText: clippedText,
+      overlaps: overlaps,
+      inspected: inspected,
+      truncated: truncated,
+      durationMs: Math.round((now() - started) * 10) / 10
+    };
+  }
+
   function afterDraw(job, started) {
     var nodeCount = root.getElementsByTagName('*').length;
     if (nodeCount > MAX_DOM_NODES) {
@@ -686,7 +1113,17 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     scheduleHeight();
     waitForPaint().then(function () {
-      post({ type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount });
+      var message = { type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount };
+      var layout = null;
+      try {
+        layout = measureLayout(job.input.fitContent === true);
+      } catch (e) {
+        // The report is optional; a drawing that breaks the DOM APIs only loses it.
+      }
+      if (layout) {
+        message.layout = layout;
+      }
+      post(message);
       finish();
     });
   }

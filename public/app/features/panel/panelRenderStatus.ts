@@ -27,12 +27,70 @@ export interface PanelRenderStatus {
   durationMs?: number;
   /** Elements in the drawing after the last draw. */
   nodeCount?: number;
+  /** Where the last draw put its content in the panel, to spot a bad layout without an image. */
+  layout?: PanelRenderLayout;
   /** True while the panel is out of view: it does not draw until it is scrolled into view. */
   paused?: boolean;
   /** The scene key of the mounted panel; repeat clones of one panel differ only here. */
   instanceKey?: string;
   /** Epoch ms of the last change. */
   updatedAt: number;
+}
+
+/** A box in panel pixels, from the panel's top left corner. */
+export interface PanelRenderRect {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** An element label: tag, id and up to two classes, with its parent's (div.card > span.value). */
+export type PanelRenderElementLabel = string;
+
+export interface PanelRenderLayoutFinding<Sample> {
+  /** Every match, even past the samples. */
+  count: number;
+  samples: Sample[];
+}
+
+/**
+ * A bounded summary of the layout after a draw. Diagnostics only: it reads the drawing, it is not
+ * a way to draw. Samples are capped; counts are exact for the elements looked at.
+ */
+export interface PanelRenderLayout {
+  /** The panel area, in pixels. */
+  width: number;
+  height: number;
+  /** Share of the panel area (0 to 1) covered by text, media and filled boxes smaller than half the panel. */
+  coverage: number;
+  /** The largest empty rectangles, each at least a tenth of the panel; share is of the panel area. */
+  emptyRegions: Array<PanelRenderRect & { share: number }>;
+  /** Outermost visible elements that reach past the panel edges. */
+  overflowing: PanelRenderLayoutFinding<PanelRenderRect & { element: PanelRenderElementLabel; sides: string[] }>;
+  /** Text cut by its own box or an ancestor with overflow hidden; visible is the share still shown. */
+  clippedText: PanelRenderLayoutFinding<{
+    element: PanelRenderElementLabel;
+    text: string;
+    visible: number;
+    /** True when the cut is a text-overflow: ellipsis the code asked for. */
+    ellipsis: boolean;
+  }>;
+  /** Text lines over other text lines, and in-flow sibling boxes over each other; area in px². */
+  overlaps: PanelRenderLayoutFinding<{
+    kind: 'text' | 'box';
+    a: PanelRenderElementLabel;
+    b: PanelRenderElementLabel;
+    area: number;
+    /** For text overlaps, an excerpt of each text. */
+    aText?: string;
+    bText?: string;
+  }>;
+  /** Elements looked at, and whether the drawing had more than the report looks at. */
+  inspected: number;
+  truncated: boolean;
+  /** Time the report took inside the frame. */
+  durationMs: number;
 }
 
 export type PanelRenderStatusUpdate = Omit<
