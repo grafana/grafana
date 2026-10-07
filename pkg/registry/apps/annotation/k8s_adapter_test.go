@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -162,8 +161,8 @@ func TestK8sAdapter_StoreErrorMapping(t *testing.T) {
 
 			t.Run("Create", func(t *testing.T) {
 				obj := &annotationV0.Annotation{
-					ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
-					Spec:       annotationV0.AnnotationSpec{Time: 1000},
+					Name: "obj", Namespace: ns,
+					Spec: annotationV0.AnnotationSpec{Time: 1000},
 				}
 				_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 				assert.True(t, tc.predicate(err), "got %v", err)
@@ -186,8 +185,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Time: 1000},
+			Name: "obj", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Time: 1000},
 		}
 		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -202,8 +201,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "point", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -219,8 +218,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 
 		timeEnd := int64(2000)
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "range", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, TimeEnd: &timeEnd},
+			Name: "range", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000, TimeEnd: &timeEnd},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -235,8 +234,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "test-anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -251,12 +250,10 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "backfilled",
-				Namespace: ns,
-				Labels:    map[string]string{LabelKeyLegacyID: "12345"},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "backfilled", Time: 1000},
+			Name:      "backfilled",
+			Namespace: ns,
+			Labels:    map[string]string{LabelKeyLegacyID: "12345"},
+			Spec:      annotationV0.AnnotationSpec{Text: "backfilled", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -269,8 +266,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "no-id", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "no-id", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -285,8 +282,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		seen := make(map[int64]struct{}, 50)
 		for i := range 50 {
 			obj := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: fmt.Sprintf("anno-%d", i), Namespace: ns},
-				Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: int64(1000 + i)},
+				Name: fmt.Sprintf("anno-%d", i), Namespace: ns,
+				Spec: annotationV0.AnnotationSpec{Text: "hello", Time: int64(1000 + i)},
 			}
 			result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -303,12 +300,10 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "with-data",
-				Namespace:   ns,
-				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name:        "with-data",
+			Namespace:   ns,
+			Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			Spec:        annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -321,8 +316,8 @@ func TestK8sAdapter_Create(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "no-data", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "no-data", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		result, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -342,8 +337,8 @@ func TestK8sAdapter_DryRun(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "obj", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{DryRun: dryRunOpt})
 		require.Error(t, err)
@@ -357,14 +352,14 @@ func TestK8sAdapter_DryRun(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
 		}
 		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{DryRun: dryRunOpt})
 		require.Error(t, err)
@@ -379,8 +374,8 @@ func TestK8sAdapter_DryRun(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "obj", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -402,12 +397,10 @@ func TestK8sAdapter_Get(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		obj := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "with-data",
-				Namespace:   ns,
-				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name:        "with-data",
+			Namespace:   ns,
+			Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			Spec:        annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}
 		_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
@@ -422,8 +415,8 @@ func TestK8sAdapter_Get(t *testing.T) {
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "gone", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: "gone", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 		_, _, err = adapter.Delete(ctx, "gone", nil, &metav1.DeleteOptions{})
@@ -445,12 +438,10 @@ func TestK8sAdapter_Update(t *testing.T) {
 		adapter := newTestAdapterWithLegacyID(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "anno",
-				Namespace:   ns,
-				Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name:        "anno",
+			Namespace:   ns,
+			Annotations: map[string]string{AnnotationKeyLegacyData: `{"foo":"bar"}`},
+			Spec:        annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 		return adapter, ctx
@@ -459,7 +450,7 @@ func TestK8sAdapter_Update(t *testing.T) {
 	t.Run("pre-fetch returns NotFound", func(t *testing.T) {
 		adapter := newTestAdapter(&errStore{err: ErrNotFound}, allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
-		obj := &annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: "obj", Namespace: ns}}
+		obj := &annotationV0.Annotation{Name: "obj", Namespace: ns}
 		_, _, err := adapter.Update(ctx, "obj", &updatedObjectInfo{obj: obj}, nil, nil, false, &metav1.UpdateOptions{})
 		assert.True(t, apierrors.IsNotFound(err), "got %v", err)
 	})
@@ -469,8 +460,8 @@ func TestK8sAdapter_Update(t *testing.T) {
 
 		// Incoming object has no legacy data annotation — the omitted case.
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: new(int64(1000))},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -486,12 +477,10 @@ func TestK8sAdapter_Update(t *testing.T) {
 
 		// Present-but-empty annotation signals an explicit clear.
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "anno",
-				Namespace:   ns,
-				Annotations: map[string]string{AnnotationKeyLegacyData: ""},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
+			Name:        "anno",
+			Namespace:   ns,
+			Annotations: map[string]string{AnnotationKeyLegacyData: ""},
+			Spec:        annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: new(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -505,12 +494,10 @@ func TestK8sAdapter_Update(t *testing.T) {
 		adapter, ctx := seedWithData(t)
 
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        "anno",
-				Namespace:   ns,
-				Annotations: map[string]string{AnnotationKeyLegacyData: `{"baz":"qux"}`},
-			},
-			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
+			Name:        "anno",
+			Namespace:   ns,
+			Annotations: map[string]string{AnnotationKeyLegacyData: `{"baz":"qux"}`},
+			Spec:        annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: new(int64(1000))},
 		}
 		_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -526,8 +513,8 @@ func TestK8sAdapter_Update(t *testing.T) {
 		require.NoError(t, err)
 
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
 		}
 		_, _, err = adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		assert.True(t, apierrors.IsGone(err), "expected 410 Gone, got %v", err)
@@ -547,8 +534,8 @@ func TestK8sAdapter_Update(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				adapter, ctx := seedWithData(t)
 				incoming := &annotationV0.Annotation{
-					ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-					Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: ptr.To(int64(1000))},
+					Name: "anno", Namespace: ns,
+					Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000, TimeEnd: new(int64(1000))},
 				}
 				tc.mutate(incoming)
 				_, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
@@ -560,8 +547,8 @@ func TestK8sAdapter_Update(t *testing.T) {
 	t.Run("allows updates that leave immutable fields unchanged", func(t *testing.T) {
 		adapter, ctx := seedWithData(t)
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, TimeEnd: ptr.To(int64(1000)), Tags: []string{"new"}},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated text", Time: 1000, TimeEnd: new(int64(1000)), Tags: []string{"new"}},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
@@ -571,12 +558,12 @@ func TestK8sAdapter_Update(t *testing.T) {
 	t.Run("treats omitted timeEnd on a point annotation as unchanged", func(t *testing.T) {
 		adapter, ctx := seedWithData(t)
 		incoming := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated text", Time: 1000},
+			Name: "anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated text", Time: 1000},
 		}
 		updated, _, err := adapter.Update(ctx, "anno", &updatedObjectInfo{obj: incoming}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, ptr.To(int64(1000)), updated.(*annotationV0.Annotation).Spec.TimeEnd)
+		assert.Equal(t, new(int64(1000)), updated.(*annotationV0.Annotation).Spec.TimeEnd)
 	})
 }
 
@@ -589,8 +576,8 @@ func TestK8sAdapter_Delete(t *testing.T) {
 		adapter := newTestAdapter(NewMemoryStore(), allowAll)
 		ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 		return adapter, ctx
@@ -644,12 +631,10 @@ func TestK8sAdapter_List(t *testing.T) {
 			{"anno-b", "200"},
 		} {
 			obj := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      tc.name,
-					Namespace: ns,
-					Labels:    map[string]string{LabelKeyLegacyID: tc.id},
-				},
-				Spec: annotationV0.AnnotationSpec{Text: tc.name, Time: 1000},
+				Name:      tc.name,
+				Namespace: ns,
+				Labels:    map[string]string{LabelKeyLegacyID: tc.id},
+				Spec:      annotationV0.AnnotationSpec{Text: tc.name, Time: 1000},
 			}
 			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 			require.NoError(t, err)
@@ -725,8 +710,8 @@ func TestK8sAdapter_MaxScopeCount(t *testing.T) {
 
 			name := "anno"
 			obj := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-				Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(tc.scopeCount)},
+				Name: name, Namespace: ns,
+				Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(tc.scopeCount)},
 			}
 			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 
@@ -752,15 +737,15 @@ func TestK8sAdapter_MaxScopeCount(t *testing.T) {
 
 		name := "original"
 		orig := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(1)},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(1)},
 		}
 		_, err := adapter.Create(ctx, orig, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		updated := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(3)},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "hello", Time: 1000, Scopes: buildScopes(3)},
 		}
 		_, _, err = adapter.Update(ctx, name, &updatedObjectInfo{obj: updated}, nil, nil, false, &metav1.UpdateOptions{})
 		require.Error(t, err)
@@ -822,8 +807,8 @@ func TestK8sAdapter_ValidateAnnotation(t *testing.T) {
 
 			name := "anno"
 			obj := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, DeletionTimestamp: tc.deletionTimestamp},
-				Spec:       annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd},
+				Name: name, Namespace: ns, DeletionTimestamp: tc.deletionTimestamp,
+				Spec: annotationV0.AnnotationSpec{Text: "test", Time: tc.time, TimeEnd: tc.timeEnd},
 			}
 			_, err := adapter.Create(ctx, obj, nil, &metav1.CreateOptions{})
 

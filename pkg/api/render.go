@@ -78,20 +78,14 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 	}
 
 	result, err := hs.RenderService.Render(c.Req.Context(), renderType, rendering.Opts{
-		CommonOpts: rendering.CommonOpts{
-			TimeoutOpts: rendering.TimeoutOpts{
-				Timeout: time.Duration(timeout) * time.Second,
-			},
-			AuthOpts: rendering.AuthOpts{
-				OrgID:   c.GetOrgID(),
-				UserID:  userID,
-				OrgRole: c.GetOrgRole(),
-			},
-			Path:            web.Params(c.Req)["*"] + queryParams,
-			Timezone:        queryReader.Get("tz", ""),
-			ConcurrentLimit: hs.Cfg.RendererConcurrentRequestLimit,
-			Headers:         headers,
-		},
+		Timeout:           time.Duration(timeout) * time.Second,
+		OrgID:             c.GetOrgID(),
+		UserID:            userID,
+		OrgRole:           c.GetOrgRole(),
+		Path:              web.Params(c.Req)["*"] + queryParams,
+		Timezone:          queryReader.Get("tz", ""),
+		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
+		Headers:           headers,
 		Width:             width,
 		Height:            height,
 		DeviceScaleFactor: scale,

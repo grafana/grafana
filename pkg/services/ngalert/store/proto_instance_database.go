@@ -130,10 +130,8 @@ func (st ProtoInstanceDBStore) FullSync(ctx context.Context, instances []models.
 	ruleGroups := make(map[models.AlertRuleKeyWithGroup][]models.AlertInstance)
 	for _, instance := range instances {
 		ruleKey := models.AlertRuleKeyWithGroup{
-			AlertRuleKey: models.AlertRuleKey{
-				OrgID: instance.RuleOrgID,
-				UID:   instance.RuleUID,
-			},
+			OrgID:     instance.RuleOrgID,
+			UID:       instance.RuleUID,
 			RuleGroup: "",
 		}
 		ruleGroups[ruleKey] = append(ruleGroups[ruleKey], instance)
@@ -268,11 +266,9 @@ func alertInstanceProtoToModel(ruleUID string, ruleOrgID int64, protoInstance *p
 	}
 
 	return &models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  ruleOrgID,
-			RuleUID:    ruleUID,
-			LabelsHash: protoInstance.LabelsHash,
-		},
+		RuleOrgID:          ruleOrgID,
+		RuleUID:            ruleUID,
+		LabelsHash:         protoInstance.LabelsHash,
 		Labels:             protoInstance.Labels,
 		Annotations:        protoInstance.Annotations,
 		CurrentState:       models.InstanceStateType(protoInstance.CurrentState),

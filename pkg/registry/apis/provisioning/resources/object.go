@@ -3,8 +3,6 @@ package resources
 import (
 	"context"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -98,10 +96,8 @@ func (o *ResourceListerFromSearch) Stats(ctx context.Context, namespace, reposit
 		})
 	}
 	stats := &provisioning.ResourceStats{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: provisioning.SchemeGroupVersion.String(),
-			Kind:       "ResourceStats",
-		},
+		APIVersion: provisioning.SchemeGroupVersion.String(),
+		Kind:       "ResourceStats",
 	}
 	for _, v := range lookup {
 		stats.Managed = append(stats.Managed, *v)

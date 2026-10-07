@@ -227,13 +227,11 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 				EvaluationDurationNs: int64(500 * time.Millisecond),
 			},
 			expected: &models.AlertInstance{
-				Labels:      map[string]string{"key": "value"},
-				Annotations: annotations,
-				AlertInstanceKey: models.AlertInstanceKey{
-					RuleUID:    ruleUID,
-					RuleOrgID:  orgID,
-					LabelsHash: "hash123",
-				},
+				Labels:             map[string]string{"key": "value"},
+				Annotations:        annotations,
+				RuleUID:            ruleUID,
+				RuleOrgID:          orgID,
+				LabelsHash:         "hash123",
 				CurrentState:       models.InstanceStateFiring,
 				CurrentStateSince:  currentStateSince,
 				CurrentStateEnd:    currentStateEnd,
@@ -260,12 +258,10 @@ func TestAlertInstanceProtoToModel(t *testing.T) {
 				},
 			},
 			expected: &models.AlertInstance{
-				Labels: map[string]string{"key": "value"},
-				AlertInstanceKey: models.AlertInstanceKey{
-					RuleUID:    ruleUID,
-					RuleOrgID:  orgID,
-					LabelsHash: "hash123",
-				},
+				Labels:            map[string]string{"key": "value"},
+				RuleUID:           ruleUID,
+				RuleOrgID:         orgID,
+				LabelsHash:        "hash123",
 				CurrentState:      models.InstanceStateFiring,
 				CurrentStateSince: currentStateSince,
 				CurrentStateEnd:   currentStateEnd,
@@ -343,11 +339,9 @@ func TestConvertAndCompressAlertInstances(t *testing.T) {
 
 	modelInstances := []models.AlertInstance{
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleUID:    "rule-uid-1",
-				RuleOrgID:  1,
-				LabelsHash: "hash-1",
-			},
+			RuleUID:           "rule-uid-1",
+			RuleOrgID:         1,
+			LabelsHash:        "hash-1",
 			Labels:            map[string]string{"label-1": "value-1"},
 			Annotations:       map[string]string{"anno-1": "value-1"},
 			CurrentState:      models.InstanceStateFiring,
@@ -361,11 +355,9 @@ func TestConvertAndCompressAlertInstances(t *testing.T) {
 			ResultFingerprint: "fingerprint-1",
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleUID:    "rule-uid-1",
-				RuleOrgID:  1,
-				LabelsHash: "hash-2",
-			},
+			RuleUID:           "rule-uid-1",
+			RuleOrgID:         1,
+			LabelsHash:        "hash-2",
 			Labels:            map[string]string{"label-2": "value-2"},
 			Annotations:       map[string]string{"anno-2": "value-2"},
 			CurrentState:      models.InstanceStateNormal,
@@ -417,11 +409,9 @@ func TestFullSyncGroupingLogic(t *testing.T) {
 	// Test instances from multiple rules to verify grouping logic
 	instances := []models.AlertInstance{
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleUID:    "rule-1",
-				RuleOrgID:  1,
-				LabelsHash: "hash-1-1",
-			},
+			RuleUID:           "rule-1",
+			RuleOrgID:         1,
+			LabelsHash:        "hash-1-1",
 			Labels:            models.InstanceLabels{"rule1": "instance1"},
 			CurrentState:      models.InstanceStateFiring,
 			CurrentStateSince: now,
@@ -431,11 +421,9 @@ func TestFullSyncGroupingLogic(t *testing.T) {
 			ResultFingerprint: "fingerprint-1-1",
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleUID:    "rule-1",
-				RuleOrgID:  1,
-				LabelsHash: "hash-1-2",
-			},
+			RuleUID:           "rule-1",
+			RuleOrgID:         1,
+			LabelsHash:        "hash-1-2",
 			Labels:            models.InstanceLabels{"rule1": "instance2"},
 			CurrentState:      models.InstanceStateNormal,
 			CurrentStateSince: now,
@@ -445,11 +433,9 @@ func TestFullSyncGroupingLogic(t *testing.T) {
 			ResultFingerprint: "fingerprint-1-2",
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleUID:    "rule-2",
-				RuleOrgID:  1,
-				LabelsHash: "hash-2-1",
-			},
+			RuleUID:           "rule-2",
+			RuleOrgID:         1,
+			LabelsHash:        "hash-2-1",
 			Labels:            models.InstanceLabels{"rule2": "instance1"},
 			CurrentState:      models.InstanceStatePending,
 			CurrentStateSince: now,
@@ -464,10 +450,8 @@ func TestFullSyncGroupingLogic(t *testing.T) {
 	ruleGroups := make(map[models.AlertRuleKeyWithGroup][]models.AlertInstance)
 	for _, instance := range instances {
 		ruleKey := models.AlertRuleKeyWithGroup{
-			AlertRuleKey: models.AlertRuleKey{
-				OrgID: instance.RuleOrgID,
-				UID:   instance.RuleUID,
-			},
+			OrgID:     instance.RuleOrgID,
+			UID:       instance.RuleUID,
 			RuleGroup: "",
 		}
 		ruleGroups[ruleKey] = append(ruleGroups[ruleKey], instance)
@@ -477,12 +461,12 @@ func TestFullSyncGroupingLogic(t *testing.T) {
 	require.Len(t, ruleGroups, 2, "Should have 2 rule groups")
 
 	rule1Key := models.AlertRuleKeyWithGroup{
-		AlertRuleKey: models.AlertRuleKey{OrgID: 1, UID: "rule-1"},
-		RuleGroup:    "",
+		OrgID: 1, UID: "rule-1",
+		RuleGroup: "",
 	}
 	rule2Key := models.AlertRuleKeyWithGroup{
-		AlertRuleKey: models.AlertRuleKey{OrgID: 1, UID: "rule-2"},
-		RuleGroup:    "",
+		OrgID: 1, UID: "rule-2",
+		RuleGroup: "",
 	}
 
 	require.Len(t, ruleGroups[rule1Key], 2, "Rule 1 should have 2 instances")

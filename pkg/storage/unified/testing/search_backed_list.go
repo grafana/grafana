@@ -202,23 +202,23 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		return rv
 	}
 
-	for i := 0; i < authorized; i++ {
+	for i := range authorized {
 		name := fmt.Sprintf("ok-%02d", i)
 		rv := write(name, matchTeam, okFolder, "created "+name)
 		wantByName[name] = want{title: "created " + name, rv: rv}
 	}
 	// Update a subset so the read resolves updated storage keys (new body + RV).
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		name := fmt.Sprintf("ok-%02d", i)
 		rv := write(name, matchTeam, okFolder, "updated "+name)
 		wantByName[name] = want{title: "updated " + name, rv: rv}
 	}
 	// Selector-matching but unauthorized (denied folder) — must be absent.
-	for i := 0; i < unauthorized; i++ {
+	for i := range unauthorized {
 		write(fmt.Sprintf("denied-%02d", i), matchTeam, deniedFolder, "denied")
 	}
 	// Authorized but not selector-matching (other team) — must be absent.
-	for i := 0; i < otherLabel; i++ {
+	for i := range otherLabel {
 		write(fmt.Sprintf("other-%02d", i), otherTeam, okFolder, "other")
 	}
 

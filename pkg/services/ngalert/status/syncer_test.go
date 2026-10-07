@@ -110,16 +110,16 @@ func (g *fakeGenerator) GetCustomRouteClient(schema.GroupVersion, string) (resou
 func (g *fakeGenerator) DiscoveryClient() (resource.DiscoveryClient, error) { return nil, nil }
 
 func alertRuleObj(uid string) model.AlertRule {
-	r := model.AlertRule{}
-	r.Name = uid
-	r.Namespace = "default"
+	r := model.AlertRule{
+		Name:      uid,
+		Namespace: "default"}
 	return r
 }
 
 func recordingRuleObj(uid string) model.RecordingRule {
-	r := model.RecordingRule{}
-	r.Name = uid
-	r.Namespace = "default"
+	r := model.RecordingRule{
+		Name:      uid,
+		Namespace: "default"}
 	return r
 }
 

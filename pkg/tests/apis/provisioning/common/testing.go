@@ -566,11 +566,11 @@ func (h *ProvisioningTestHelper) AwaitJobs(t *testing.T, repoName string) {
 }
 
 func getNameBeforeLastDash(name string) string {
-	lastDashIndex := strings.LastIndex(name, "-")
-	if lastDashIndex == -1 {
+	before, _, ok := strings.CutLast(name, "-")
+	if !ok {
 		return name
 	}
-	return name[:lastDashIndex]
+	return before
 }
 
 // TestdataPath returns the absolute path to a file in the shared testdata directory.
@@ -2180,11 +2180,9 @@ func (c *FilesClient) Delete(t *testing.T, filePath string) *FilesResponse {
 func FolderBody(t *testing.T, uid, title string) []byte {
 	t.Helper()
 	f := folder.Folder{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: folder.GroupVersion.String(),
-			Kind:       "Folder",
-		},
-		Spec: folder.FolderSpec{Title: title},
+		APIVersion: folder.GroupVersion.String(),
+		Kind:       "Folder",
+		Spec:       folder.FolderSpec{Title: title},
 	}
 	if uid != "" {
 		f.Name = uid

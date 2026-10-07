@@ -56,9 +56,8 @@ func TestResolveCurrentUserPermissions_SkipsFailingAction(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &capturingZanzanaClient{
+		listResp: &authzv1.ListResponse{}}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:      claims.TypeUser,
@@ -77,9 +76,8 @@ func TestResolveCurrentUserPermissions_UsesRequesterNamespace(t *testing.T) {
 }
 
 func TestResolveCurrentUserPermissions_DerivesNamespaceFromOrgWhenRequesterNamespaceIsEmpty(t *testing.T) {
-	client := &capturingZanzanaClient{fakeZanzanaClient: fakeZanzanaClient{
-		listResp: &authzv1.ListResponse{},
-	}}
+	client := &capturingZanzanaClient{
+		listResp: &authzv1.ListResponse{}}
 	r := NewZanzanaPermissionResolver(client, &usertest.FakeUserService{}, nil, false)
 	usr := &identity.StaticRequester{
 		Type:    claims.TypeUser,
@@ -351,9 +349,7 @@ func TestListPermissions_ScopeFilter_WildcardScopeQuery(t *testing.T) {
 
 func TestSearchPermissionsForIdentity_ServiceAccount_SubjectType(t *testing.T) {
 	fake := &capturingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
@@ -373,9 +369,7 @@ func TestSearchPermissionsForIdentity_ServiceAccount_SubjectType(t *testing.T) {
 
 func TestSearchPermissionsForIdentity_User_SubjectType(t *testing.T) {
 	fake := &capturingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
@@ -399,9 +393,7 @@ func TestSearchPermissionsForIdentity_User_SubjectType(t *testing.T) {
 
 func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.T) {
 	fake := &capturingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"something"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"something"}},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
@@ -427,9 +419,7 @@ func TestSearchPermissionsForIdentity_UnsupportedAction_ReturnsEmpty(t *testing.
 
 func TestSearchPermissionsForIdentity_ActionPrefix_FiltersToMatchingActions(t *testing.T) {
 	fake := &capturingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"uid-1"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"uid-1"}},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 
@@ -516,9 +506,7 @@ func TestSearchAllUsers_NoActionOrPrefix_ReturnsEmpty(t *testing.T) {
 
 func TestSearchPermissionsForIdentity_NamespaceDerivedFromOrgID(t *testing.T) {
 	fake := &capturingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"dash-1"}},
 	}
 	r := &ZanzanaPermissionResolver{client: fake}
 

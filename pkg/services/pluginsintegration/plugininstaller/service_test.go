@@ -88,13 +88,13 @@ func TestService_Run(t *testing.T) {
 			shouldThrowError: false,
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin"}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin"}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin"}},
 		},
 		{
 			name:             "Still installs a plugin if the plugin version does not match",
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: "2.0.0"}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}},
 		},
 		{
 			name:             "Install multiple plugins",
@@ -123,21 +123,21 @@ func TestService_Run(t *testing.T) {
 			name:             "Updates a plugin",
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.1"},
 		},
 		{
 			name:             "Should not update a plugin if the latest version is installed",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0"},
 		},
 		{
 			name:             "Should not update a plugin if the latest version is a major version",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "2.0.0"},
 		},
 		{
@@ -149,14 +149,14 @@ func TestService_Run(t *testing.T) {
 			name:             "Should not update a plugin if the current version is greater than the latest version",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.1"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.1"}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0"},
 		},
 		{
 			name:             "Should not update a plugin if the current version is equal to the latest version, ignoring the prerelease",
 			shouldInstall:    false,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
-			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			existingPlugins:  []*plugins.Plugin{{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}},
 			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0-rc.1"},
 		},
 		{
@@ -169,7 +169,7 @@ func TestService_Run(t *testing.T) {
 			name:                 "should install a plugin with a URL regardless of versioning",
 			shouldInstall:        true,
 			pluginsToInstallSync: []setting.InstallPlugin{{ID: "our-plugin-datasource", URL: "https://s3.our.domain/grafana-plugins/our-plugin-datasource-1.2.1+linux.zip"}},
-			existingPlugins:      []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "our-plugin-datasource", Info: plugins.Info{Version: "1.2.2"}}}},
+			existingPlugins:      []*plugins.Plugin{{ID: "our-plugin-datasource", Info: plugins.Info{Version: "1.2.2"}}},
 		},
 	}
 	for _, tt := range tests {

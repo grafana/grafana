@@ -237,8 +237,8 @@ func TestOneFlagHandler_Unauth(t *testing.T) {
 
 func TestAllFlagsHandler_Unauth(t *testing.T) {
 	upstreamFlags := []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "publicFlag", Metadata: map[string]any{"public": true}}},
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "privateFlag", Metadata: map[string]any{"public": false}}},
+		{Key: "publicFlag", Metadata: map[string]any{"public": true}},
+		{Key: "privateFlag", Metadata: map[string]any{"public": false}},
 	}
 
 	b := newBulkEvalBuilder(t, upstreamFlags, http.StatusOK)
@@ -372,7 +372,7 @@ func TestGrafanaHTTPHandler_AuthenticatedInjectsIdentity(t *testing.T) {
 // the standalone-apiserver routes it registers actually dispatch to the OFREP handlers.
 func TestSetup_RegistersRoutesOnStandaloneMux(t *testing.T) {
 	b := newBulkEvalBuilder(t, []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{Key: "publicFlag", Metadata: map[string]any{"public": true}}},
+		{Key: "publicFlag", Metadata: map[string]any{"public": true}},
 	}, http.StatusOK)
 
 	m := k8smux.NewPathRecorderMux("ofrep-test")

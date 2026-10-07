@@ -35,26 +35,23 @@ func NewHandler(client authlib.UserPermissionsClient, useExternalGroups bool) *H
 func (h *Handler) GetAPIRoutes(_ map[string]common.OpenAPIDefinition) *builder.APIRoutes {
 	return &builder.APIRoutes{Namespace: []builder.APIRouteHandler{{
 		Path: currentUserPermissionsPath,
-		Spec: &spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{
+		Spec: &spec3.PathProps{Get: &spec3.Operation{
 			OperationId: "getCurrentUserPermissions",
 			Tags:        []string{"User"},
 			Description: "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
 			Deprecated:  true,
-			Parameters: []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
+			Parameters: []*spec3.Parameter{{
 				Name:        "namespace",
 				In:          "path",
 				Required:    true,
 				Description: "workspace",
-				Schema:      spec.StringProperty(),
-			}}},
-			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+				Schema:      spec.StringProperty()}},
+			Responses: &spec3.Responses{StatusCodeResponses: map[int]*spec3.Response{
 				200: {ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
-					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: &spec.Schema{SchemaProps: spec.SchemaProps{
-						Ref: spec.MustCreateRef("#/components/schemas/" + iam.UserPermissions{}.OpenAPIModelName()),
-					}}}},
+					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: &spec.Schema{
+						Ref: spec.MustCreateRef("#/components/schemas/" + iam.UserPermissions{}.OpenAPIModelName())}}},
 				}}},
-			}}},
-		}}},
+			}}}},
 		Handler: h.handle,
 	}}}
 }

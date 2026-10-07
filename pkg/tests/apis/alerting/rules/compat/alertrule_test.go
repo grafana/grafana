@@ -47,13 +47,11 @@ func TestIntegrationAlertRuleCompatCreateViaK8s(t *testing.T) {
 	).Generate()
 
 	alertRule := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-				// use provenance api to allow use of the provisioning api
-				"grafana.com/provenance": string(ngmodels.ProvenanceAPI),
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
+			// use provenance api to allow use of the provisioning api
+			"grafana.com/provenance": string(ngmodels.ProvenanceAPI),
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
@@ -318,14 +316,12 @@ func TestIntegrationAlertRuleManagerPropertiesRoundTrip(t *testing.T) {
 		).Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "mp-test-folder",
-					// Set ManagerKindTerraform so the storage layer persists manager_kind="terraform"
-					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-					utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "mp-test-folder",
+				// Set ManagerKindTerraform so the storage layer persists manager_kind="terraform"
+				utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+				utils.AnnoKeyManagerIdentity: "my-terraform-workspace",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,

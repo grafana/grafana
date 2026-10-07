@@ -116,8 +116,8 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 func TestDiscoveryResultMetrics(t *testing.T) {
 	svc := newService(&mutableLoader{backends: []Backend{
 		&providerBackend{
-			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: "provided.ext.grafana.app"}, key: "1"},
-			discovery:   thingsDiscovery("provided.ext.grafana.app"),
+			group: metav1.APIGroup{Name: "provided.ext.grafana.app"}, key: "1",
+			discovery: thingsDiscovery("provided.ext.grafana.app"),
 		},
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
 	}}, nil, prometheus.NewRegistry())

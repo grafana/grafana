@@ -503,9 +503,8 @@ func TestTrashListServicePermissionErrors(t *testing.T) {
 				}
 				t.Run(name, func(t *testing.T) {
 					key := &resourcepb.ResourceKey{Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "deleted-a"}
-					backend := &trashHistoryBackend{trashBatchFakeBackend: trashBatchFakeBackend{
-						value: trashObjectJSON(t, key, "folder-1", "user:alice", false),
-					}}
+					backend := &trashHistoryBackend{
+						value: trashObjectJSON(t, key, "folder-1", "user:alice", false)}
 					s, _ := newSearchBackedTrashTestServer(&resourcepb.ResourceSearchResponse{
 						ResourceVersion: 100,
 						ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,

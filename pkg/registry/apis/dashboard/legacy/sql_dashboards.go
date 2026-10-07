@@ -487,8 +487,8 @@ func (a *dashboardSqlAccess) parseDashboard(dash *dashboardV1.Dashboard, data []
 
 func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRow, error) {
 	dash := &dashboardV1.Dashboard{
-		TypeMeta:   dashboardV1.DashboardResourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{Annotations: make(map[string]string)},
+		TypeMeta:    dashboardV1.DashboardResourceInfo.TypeMeta(),
+		Annotations: make(map[string]string),
 	}
 	row := &dashboardRow{Dash: dash}
 
@@ -727,16 +727,12 @@ func collectLibraryPanelPage(
 
 func parseLibraryPanelRow(p panel) (dashboardV0.LibraryPanel, error) {
 	item := dashboardV0.LibraryPanel{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: dashboardV0.APIVERSION,
-			Kind:       "LibraryPanel",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              p.UID,
-			CreationTimestamp: metav1.NewTime(p.Created),
-			ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
-		},
-		Spec: dashboardV0.LibraryPanelSpec{},
+		APIVersion:        dashboardV0.APIVERSION,
+		Kind:              "LibraryPanel",
+		Name:              p.UID,
+		CreationTimestamp: metav1.NewTime(p.Created),
+		ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
+		Spec:              dashboardV0.LibraryPanelSpec{},
 	}
 
 	status := &dashboardV0.LibraryPanelStatus{

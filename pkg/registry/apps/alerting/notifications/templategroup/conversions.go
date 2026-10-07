@@ -1,7 +1,6 @@
 package templategroup
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -27,16 +26,12 @@ func convertToK8sResources(orgID int64, list []v1.TemplateGroup, namespacer requ
 
 func convertToK8sResource(orgID int64, template v1.TemplateGroup, namespacer request.NamespaceMapper) *model.TemplateGroup {
 	result := &model.TemplateGroup{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
-			Kind:       kind.Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			UID:             types.UID(template.UID),
-			Name:            string(template.UID),
-			Namespace:       namespacer(orgID),
-			ResourceVersion: template.Version,
-		},
+		APIVersion:      kind.GroupVersionKind().GroupVersion().String(),
+		Kind:            kind.Kind(),
+		UID:             types.UID(template.UID),
+		Name:            string(template.UID),
+		Namespace:       namespacer(orgID),
+		ResourceVersion: template.Version,
 		Spec: model.TemplateGroupSpec{
 			Title:   template.Title,
 			Content: template.Content,
@@ -54,13 +49,11 @@ func convertToDomainModel(template *model.TemplateGroup) (v1.TemplateGroup, erro
 		return v1.TemplateGroup{}, err
 	}
 	return v1.TemplateGroup{
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(template.Name),
-			Version:    template.ResourceVersion,
-			Provenance: prov,
-		},
-		Title:   template.Spec.Title,
-		Content: template.Spec.Content,
-		Kind:    v1.TemplateKind(template.Spec.Kind),
+		UID:        v1.ResourceUID(template.Name),
+		Version:    template.ResourceVersion,
+		Provenance: prov,
+		Title:      template.Spec.Title,
+		Content:    template.Spec.Content,
+		Kind:       v1.TemplateKind(template.Spec.Kind),
 	}, nil
 }

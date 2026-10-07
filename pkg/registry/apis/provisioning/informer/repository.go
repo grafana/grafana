@@ -57,7 +57,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return &provisioningapis.Repository{Namespace: ns, Name: name}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {

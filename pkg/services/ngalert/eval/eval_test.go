@@ -18,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -394,10 +393,8 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -420,10 +417,8 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 				return models.Condition{
 					Condition: "",
@@ -483,15 +478,11 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds1.Type,
-						Backend: false,
-					},
+					ID:      ds1.Type,
+					Backend: false,
 				}, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds2.Type,
-						Backend: true,
-					},
+					ID:      ds2.Type,
+					Backend: true,
 				})
 				// do not update the plugin store
 				return models.Condition{
@@ -514,10 +505,8 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -540,10 +529,8 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -567,10 +554,8 @@ func TestValidate(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -640,10 +625,8 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -668,10 +651,8 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{
@@ -695,10 +676,8 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
 				services.pluginsStore.PluginList = append(services.pluginsStore.PluginList, pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID:      ds.Type,
-						Backend: true,
-					},
+					ID:      ds.Type,
+					Backend: true,
 				})
 
 				return models.Condition{

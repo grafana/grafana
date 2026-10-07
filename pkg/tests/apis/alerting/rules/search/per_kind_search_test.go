@@ -574,11 +574,9 @@ func createPerKindAlertRule(t *testing.T, ctx context.Context, client *apis.Type
 	).Generate()
 
 	rule := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Name:        base.UID,
-			Namespace:   "default",
-			Annotations: map[string]string{v0alpha1.FolderAnnotationKey: perKindSearchFolder},
-		},
+		Name:        base.UID,
+		Namespace:   "default",
+		Annotations: map[string]string{v0alpha1.FolderAnnotationKey: perKindSearchFolder},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title:        perKindTitle,
 			Paused:       new(paused),
@@ -608,11 +606,9 @@ func createPerKindRecordingRule(t *testing.T, ctx context.Context, client *apis.
 	).Generate()
 
 	rule := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Name:        base.UID,
-			Namespace:   "default",
-			Annotations: map[string]string{v0alpha1.FolderAnnotationKey: perKindSearchFolder},
-		},
+		Name:        base.UID,
+		Namespace:   "default",
+		Annotations: map[string]string{v0alpha1.FolderAnnotationKey: perKindSearchFolder},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               perKindTitle,
 			Metric:              v0alpha1.RecordingRuleMetricName(metric),

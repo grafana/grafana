@@ -35,9 +35,7 @@ func TestGetPrometheusDataSources_Amazon_ReturnsOnlyAmazonPrometheus(t *testing.
 		dataSources: []*datasources.DataSource{ds1, ds2, ds3, ds4},
 	}
 	svc := &AmazonPromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mock,
-		},
+		dataSourcesService: mock,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())
@@ -52,9 +50,7 @@ func TestGetPrometheusDataSources_Amazon_ErrorFromService(t *testing.T) {
 		err: errors.New("service error"),
 	}
 	svc := &AmazonPromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mockSvc,
-		},
+		dataSourcesService: mockSvc,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())
@@ -70,9 +66,7 @@ func TestGetPrometheusDataSources_Amazon_NoSigV4Auth(t *testing.T) {
 		dataSources: []*datasources.DataSource{ds},
 	}
 	svc := &AmazonPromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mockSvc,
-		},
+		dataSourcesService: mockSvc,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())

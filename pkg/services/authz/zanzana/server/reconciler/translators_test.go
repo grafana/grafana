@@ -84,7 +84,7 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rp := &iamv0.ResourcePermission{
-				ObjectMeta: metav1.ObjectMeta{Name: "rp-test"},
+				Name: "rp-test",
 				Spec: iamv0.ResourcePermissionSpec{
 					Resource: iamv0.ResourcePermissionspecResource{
 						ApiGroup: "dashboard.grafana.app",
@@ -144,7 +144,7 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 		for _, level := range levels {
 			t.Run(subject.name+"/"+level.name, func(t *testing.T) {
 				rp := &iamv0.ResourcePermission{
-					ObjectMeta: metav1.ObjectMeta{Name: "loki.datasource.grafana.app-datasources-ds-1"},
+					Name: "loki.datasource.grafana.app-datasources-ds-1",
 					Spec: iamv0.ResourcePermissionSpec{
 						Resource: iamv0.ResourcePermissionspecResource{
 							ApiGroup: group,
@@ -176,7 +176,7 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 func TestTranslateTeamToMemberTuples(t *testing.T) {
 	t.Run("admin and member", func(t *testing.T) {
 		team := &iamv0.Team{
-			ObjectMeta: metav1.ObjectMeta{Name: "teamA"},
+			Name: "teamA",
 			Spec: iamv0.TeamSpec{
 				Members: []iamv0.TeamTeamMember{
 					{Kind: "User", Name: "user1", Permission: iamv0.TeamTeamPermissionAdmin},
@@ -202,8 +202,8 @@ func TestTranslateTeamToMemberTuples(t *testing.T) {
 
 	t.Run("no members", func(t *testing.T) {
 		team := &iamv0.Team{
-			ObjectMeta: metav1.ObjectMeta{Name: "teamB"},
-			Spec:       iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{}},
+			Name: "teamB",
+			Spec: iamv0.TeamSpec{Members: []iamv0.TeamTeamMember{}},
 		}
 
 		tuples, err := TranslateTeamToMemberTuples(toUnstructured(t, team))
@@ -213,7 +213,7 @@ func TestTranslateTeamToMemberTuples(t *testing.T) {
 
 	t.Run("member with empty name is skipped", func(t *testing.T) {
 		team := &iamv0.Team{
-			ObjectMeta: metav1.ObjectMeta{Name: "teamC"},
+			Name: "teamC",
 			Spec: iamv0.TeamSpec{
 				Members: []iamv0.TeamTeamMember{
 					{Kind: "User", Name: "", Permission: iamv0.TeamTeamPermissionMember},
@@ -259,7 +259,7 @@ func TestTranslateRoleBindingToTuples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rb := &iamv0.RoleBinding{
-				ObjectMeta: metav1.ObjectMeta{Name: "rb-test"},
+				Name: "rb-test",
 				Spec: iamv0.RoleBindingSpec{
 					Subject: iamv0.RoleBindingspecSubject{
 						Kind: tt.subjectKind,
@@ -321,8 +321,8 @@ func TestTranslateUserToTuples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			user := &iamv0.User{
-				ObjectMeta: metav1.ObjectMeta{Name: "user-test"},
-				Spec:       iamv0.UserSpec{Role: tt.role},
+				Name: "user-test",
+				Spec: iamv0.UserSpec{Role: tt.role},
 			}
 
 			tuples, err := TranslateUserToTuples(toUnstructured(t, user))
@@ -387,8 +387,8 @@ func TestTranslateServiceAccountToTuples(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sa := &iamv0.ServiceAccount{
-				ObjectMeta: metav1.ObjectMeta{Name: "sa-test"},
-				Spec:       iamv0.ServiceAccountSpec{Role: tt.role},
+				Name: "sa-test",
+				Spec: iamv0.ServiceAccountSpec{Role: tt.role},
 			}
 
 			tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
@@ -410,11 +410,9 @@ func TestTranslateServiceAccountToTuples(t *testing.T) {
 func TestTranslateFolderToTuples(t *testing.T) {
 	t.Run("folder with parent", func(t *testing.T) {
 		folder := &folderv1.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "child-folder",
-				Annotations: map[string]string{
-					"grafana.app/folder": "parent-folder",
-				},
+			Name: "child-folder",
+			Annotations: map[string]string{
+				"grafana.app/folder": "parent-folder",
 			},
 			Spec: folderv1.FolderSpec{Title: "Child"},
 		}
@@ -430,8 +428,8 @@ func TestTranslateFolderToTuples(t *testing.T) {
 
 	t.Run("root folder without parent", func(t *testing.T) {
 		folder := &folderv1.Folder{
-			ObjectMeta: metav1.ObjectMeta{Name: "root-folder"},
-			Spec:       folderv1.FolderSpec{Title: "Root"},
+			Name: "root-folder",
+			Spec: folderv1.FolderSpec{Title: "Root"},
 		}
 
 		tuples, err := TranslateFolderToTuples(toUnstructured(t, folder))
@@ -443,11 +441,9 @@ func TestTranslateFolderToTuples(t *testing.T) {
 		// Verify the reconciler produces the same tuple as the mutation path
 		// (common.NewFolderParentTuple(child, parent)) to prevent argument swap regression.
 		folder := &folderv1.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "grandchild",
-				Annotations: map[string]string{
-					"grafana.app/folder": "child",
-				},
+			Name: "grandchild",
+			Annotations: map[string]string{
+				"grafana.app/folder": "child",
 			},
 			Spec: folderv1.FolderSpec{Title: "Grandchild"},
 		}
@@ -616,7 +612,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 
 	t.Run("role with RoleRefs inherits and applies delta", func(t *testing.T) {
 		role := &iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{Name: "ns-role"},
+			Name: "ns-role",
 			Spec: iamv0.RoleSpec{
 				RoleRefs: []iamv0.RolespecRoleRef{
 					{Kind: "GlobalRole", Name: "global-role-a"},
@@ -639,7 +635,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 
 	t.Run("role without RoleRefs uses own permissions only", func(t *testing.T) {
 		role := &iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{Name: "custom-ns-role"},
+			Name: "custom-ns-role",
 			Spec: iamv0.RoleSpec{
 				Permissions: []iamv0.RolespecPermission{
 					{Action: "dashboards:read", Scope: "dashboards:uid:d1"},
@@ -654,7 +650,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 
 	t.Run("nil globalRolePerms — no composition even with RoleRefs", func(t *testing.T) {
 		role := &iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{Name: "wrapper-role"},
+			Name: "wrapper-role",
 			Spec: iamv0.RoleSpec{
 				RoleRefs: []iamv0.RolespecRoleRef{
 					{Kind: "GlobalRole", Name: "global-role-a"},
@@ -680,7 +676,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 
 	t.Run("role with RoleRefs but nil globalRolePerms falls back to own permissions", func(t *testing.T) {
 		role := &iamv0.Role{
-			ObjectMeta: metav1.ObjectMeta{Name: "fallback-role"},
+			Name: "fallback-role",
 			Spec: iamv0.RoleSpec{
 				RoleRefs: []iamv0.RolespecRoleRef{
 					{Kind: "GlobalRole", Name: "global-role-a"},
@@ -700,8 +696,8 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 	for _, kind := range []string{"Role", "", "Unknown", "globalrole"} {
 		t.Run("unsupported ref kind "+kind, func(t *testing.T) {
 			role := &iamv0.Role{
-				ObjectMeta: metav1.ObjectMeta{Name: "invalid-role"},
-				Spec:       iamv0.RoleSpec{RoleRefs: []iamv0.RolespecRoleRef{{Kind: kind, Name: "global-role-a"}}},
+				Name: "invalid-role",
+				Spec: iamv0.RoleSpec{RoleRefs: []iamv0.RolespecRoleRef{{Kind: kind, Name: "global-role-a"}}},
 			}
 			tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
 			require.Error(t, err)
@@ -723,7 +719,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 // the IAM roles/globalroles APIs.
 func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 	role := &iamv0.Role{
-		ObjectMeta: metav1.ObjectMeta{Name: "role-admin"},
+		Name: "role-admin",
 		Spec: iamv0.RoleSpec{
 			Permissions: []iamv0.RolespecPermission{
 				{Action: "roles:read", Scope: "roles:*"},
@@ -879,7 +875,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		for _, k := range kinds {
 			t.Run(string(k.kind), func(t *testing.T) {
 				rp := &iamv0.ResourcePermission{
-					ObjectMeta: metav1.ObjectMeta{Name: "rp-schema-test"},
+					Name: "rp-schema-test",
 					Spec: iamv0.ResourcePermissionSpec{
 						Resource: iamv0.ResourcePermissionspecResource{
 							ApiGroup: "dashboard.grafana.app",
@@ -917,7 +913,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			for _, verb := range []string{"Query", "Edit", "Admin"} {
 				t.Run(string(k.kind)+"/"+verb, func(t *testing.T) {
 					rp := &iamv0.ResourcePermission{
-						ObjectMeta: metav1.ObjectMeta{Name: "rp-datasource-schema-test"},
+						Name: "rp-datasource-schema-test",
 						Spec: iamv0.ResourcePermissionSpec{
 							Resource: iamv0.ResourcePermissionspecResource{
 								ApiGroup: "loki.datasource.grafana.app",
@@ -948,7 +944,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		} {
 			t.Run(string(perm), func(t *testing.T) {
 				team := &iamv0.Team{
-					ObjectMeta: metav1.ObjectMeta{Name: "teamA"},
+					Name: "teamA",
 					Spec: iamv0.TeamSpec{
 						Members: []iamv0.TeamTeamMember{
 							{Kind: "User", Name: "user1", Permission: perm},
@@ -979,7 +975,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		for _, s := range subjects {
 			t.Run(string(s.kind), func(t *testing.T) {
 				rb := &iamv0.RoleBinding{
-					ObjectMeta: metav1.ObjectMeta{Name: "rb-schema-test"},
+					Name: "rb-schema-test",
 					Spec: iamv0.RoleBindingSpec{
 						Subject: iamv0.RoleBindingspecSubject{
 							Kind: s.kind,
@@ -1005,8 +1001,8 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		for _, role := range []string{"Viewer", "Editor", "Admin"} {
 			t.Run(role, func(t *testing.T) {
 				user := &iamv0.User{
-					ObjectMeta: metav1.ObjectMeta{Name: "user-schema-test"},
-					Spec:       iamv0.UserSpec{Role: role},
+					Name: "user-schema-test",
+					Spec: iamv0.UserSpec{Role: role},
 				}
 
 				tuples, err := TranslateUserToTuples(toUnstructured(t, user))
@@ -1028,8 +1024,8 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 		} {
 			t.Run(string(role), func(t *testing.T) {
 				sa := &iamv0.ServiceAccount{
-					ObjectMeta: metav1.ObjectMeta{Name: "sa-schema-test"},
-					Spec:       iamv0.ServiceAccountSpec{Role: role},
+					Name: "sa-schema-test",
+					Spec: iamv0.ServiceAccountSpec{Role: role},
 				}
 
 				tuples, err := TranslateServiceAccountToTuples(toUnstructured(t, sa))
@@ -1044,11 +1040,9 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 
 	t.Run("folder parent relationship", func(t *testing.T) {
 		folder := &folderv1.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "child",
-				Annotations: map[string]string{
-					"grafana.app/folder": "parent",
-				},
+			Name: "child",
+			Annotations: map[string]string{
+				"grafana.app/folder": "parent",
 			},
 			Spec: folderv1.FolderSpec{Title: "Child"},
 		}

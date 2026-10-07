@@ -936,13 +936,9 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	schema := oas.Components.Schemas[compBase+"DisplayList"].Properties["display"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "Display"),
-						},
-					},
+			AllOf: []spec.Schema{
+				{
+					Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "Display"),
 				},
 			},
 		},
@@ -952,31 +948,23 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	schema = oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "UserPermission"),
-			},
+			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "UserPermission"),
 		},
 	}
 	oas.Components.Schemas[compBase+"UserPermissions"].Properties["permissions"] = schema
 	oas.Components.Schemas[compBase+"DisplayList"].Properties["metadata"] = spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			AllOf: []spec.Schema{
-				{
-					SchemaProps: spec.SchemaProps{
-						Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
-					},
-				},
-			}},
+		AllOf: []spec.Schema{
+			{
+				Ref: spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"),
+			},
+		},
 	}
 	oas.Components.Schemas[compBase+"Display"].Properties["identity"] = spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			AllOf: []spec.Schema{
-				{
-					SchemaProps: spec.SchemaProps{
-						Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
-					},
-				},
-			}},
+		AllOf: []spec.Schema{
+			{
+				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "IdentityRef"),
+			},
+		},
 	}
 
 	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
@@ -995,34 +983,28 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 			}
 			p.Get.Parameters = append(p.Get.Parameters,
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "limit",
-						In:          "query",
-						Description: "number of results to return",
-						Example:     30,
-						Required:    false,
-						Schema:      spec.Int64Property(),
-					},
+					Name:        "limit",
+					In:          "query",
+					Description: "number of results to return",
+					Example:     30,
+					Required:    false,
+					Schema:      spec.Int64Property(),
 				},
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "page",
-						In:          "query",
-						Description: "page number (starting from 1)",
-						Example:     1,
-						Required:    false,
-						Schema:      spec.Int64Property(),
-					},
+					Name:        "page",
+					In:          "query",
+					Description: "page number (starting from 1)",
+					Example:     1,
+					Required:    false,
+					Schema:      spec.Int64Property(),
 				},
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "offset",
-						In:          "query",
-						Description: "number of results to skip",
-						Example:     0,
-						Required:    false,
-						Schema:      spec.Int64Property(),
-					},
+					Name:        "offset",
+					In:          "query",
+					Description: "number of results to skip",
+					Example:     0,
+					Required:    false,
+					Schema:      spec.Int64Property(),
 				},
 			)
 		}
@@ -1033,25 +1015,21 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 		if p, ok := oas.Paths.Paths[userTeamsPath]; ok && p.Get != nil {
 			p.Get.Parameters = append(p.Get.Parameters,
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "limit",
-						In:          "query",
-						Description: "maximum number of results to return per page",
-						Example:     30,
-						Required:    false,
-						Schema:      spec.Int64Property(),
-					},
+					Name:        "limit",
+					In:          "query",
+					Description: "maximum number of results to return per page",
+					Example:     30,
+					Required:    false,
+					Schema:      spec.Int64Property(),
 				},
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name: "continue",
-						In:   "query",
-						Description: "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. " +
-							"The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, " +
-							"otherwise '+' will silently decode to a space on the server and pagination will fail.",
-						Required: false,
-						Schema:   spec.StringProperty(),
-					},
+					Name: "continue",
+					In:   "query",
+					Description: "Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. " +
+						"The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, " +
+						"otherwise '+' will silently decode to a space on the server and pagination will fail.",
+					Required: false,
+					Schema:   spec.StringProperty(),
 				},
 			)
 
@@ -1062,7 +1040,7 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 				if r200, ok := p.Get.Responses.StatusCodeResponses[200]; ok && r200.Content != nil {
 					ref := spec.MustCreateRef("#/components/schemas/" + iamv0.GetUserTeamsResponse{}.OpenAPIModelName())
 					for ct, mt := range r200.Content {
-						mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+						mt.Schema = &spec.Schema{Ref: ref}
 						r200.Content[ct] = mt
 					}
 					p.Get.Responses.StatusCodeResponses[200] = r200

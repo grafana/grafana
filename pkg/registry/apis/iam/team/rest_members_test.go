@@ -163,8 +163,8 @@ func TestTeamMembersREST_Connect(t *testing.T) {
 
 func teamWithMembers(name string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
 	return &iamv0alpha1.Team{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
-		Spec:       iamv0alpha1.TeamSpec{Title: "t", Members: members},
+		Name: name, Namespace: "default",
+		Spec: iamv0alpha1.TeamSpec{Title: "t", Members: members},
 	}
 }
 

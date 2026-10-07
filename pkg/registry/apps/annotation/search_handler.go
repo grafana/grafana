@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -62,7 +61,7 @@ func newSearchHandler(
 
 		response := &annotationV0.AnnotationList{
 			Items:    filtered,
-			ListMeta: metav1.ListMeta{Continue: result.Continue},
+			Continue: result.Continue,
 		}
 
 		writer.Header().Set("Content-Type", "application/json")

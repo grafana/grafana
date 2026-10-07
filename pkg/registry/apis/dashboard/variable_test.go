@@ -593,9 +593,7 @@ func newCustomVariable(variableName, metadataName string) *dashv2beta1.Variable 
 	spec.CustomVariableKind = customVariable
 
 	return &dashv2beta1.Variable{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: metadataName,
-		},
+		Name: metadataName,
 		Spec: *spec,
 	}
 }

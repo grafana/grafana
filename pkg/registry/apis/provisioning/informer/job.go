@@ -48,7 +48,7 @@ func NewJobDeltaSource(subscriber nats.Subscriber, client versioned.Interface, r
 func NewJobInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, onRequest func()) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Job{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return &provisioningapis.Job{Namespace: ns, Name: name}
 	}
 	list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {

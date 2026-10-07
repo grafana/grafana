@@ -14,7 +14,6 @@ import (
 	"testing"
 	"time"
 
-	prometheus "github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -2205,20 +2204,20 @@ func TestApiGetSnapshots(t *testing.T) {
 				{StartMinute: 50, EndMinute: 60},
 			},
 			Weekdays: []timeinterval.WeekdayRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 2}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 5, End: 6}},
+				{Begin: 1, End: 2},
+				{Begin: 5, End: 6},
 			},
 			DaysOfMonth: []timeinterval.DayOfMonthRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 10}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 20, End: 25}},
+				{Begin: 1, End: 10},
+				{Begin: 20, End: 25},
 			},
 			Months: []timeinterval.MonthRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 3}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 7, End: 9}},
+				{Begin: 1, End: 3},
+				{Begin: 7, End: 9},
 			},
 			Years: []timeinterval.YearRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2020, End: 2022}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2025, End: 2026}},
+				{Begin: 2020, End: 2022},
+				{Begin: 2025, End: 2026},
 			},
 			Location: &timeinterval.Location{Location: location},
 		}
@@ -2581,17 +2580,13 @@ func createInvalidContactPoint() definitions.EmbeddedContactPoint {
 
 func createInvalidMuteTiming() definitions.MuteTimeInterval {
 	return definitions.MuteTimeInterval{
-		MuteTimeInterval: prometheus.MuteTimeInterval{
-			Name: "interval",
-			TimeIntervals: []timeinterval.TimeInterval{
-				{
-					Weekdays: []timeinterval.WeekdayRange{
-						{
-							InclusiveRange: timeinterval.InclusiveRange{
-								Begin: -1,
-								End:   7,
-							},
-						},
+		Name: "interval",
+		TimeIntervals: []timeinterval.TimeInterval{
+			{
+				Weekdays: []timeinterval.WeekdayRange{
+					{
+						Begin: -1,
+						End:   7,
 					},
 				},
 			},

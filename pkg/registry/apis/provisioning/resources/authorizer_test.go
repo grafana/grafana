@@ -94,7 +94,7 @@ func makeAuthorizeResourceParsed(t *testing.T, fileFolderID, existingFolder stri
 
 // TestAuthorizeResource tests authorization checks for resource operations.
 func TestAuthorizeResource(t *testing.T) {
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+	repo := &provisioning.Repository{Name: "test-repo"}
 
 	t.Run("new resource uses destination folder only", func(t *testing.T) {
 		parsed := makeAuthorizeResourceParsed(t, "dest-folder", "", false)
@@ -457,7 +457,7 @@ func testAuthorizeResourceReadExistingAncestor(t *testing.T, gvr schema.GroupVer
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			metadataEnabled := tt.metadataEnabled
-			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "stacks-123"}}
+			cfg := &provisioning.Repository{Name: repoName, Namespace: "stacks-123"}
 			cfg.Spec.Sync.Target = tt.target
 			if cfg.Spec.Sync.Target == "" {
 				cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
@@ -598,7 +598,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 				{name: "matching metadata source denied", state: "same-folder", denySource: true},
 			} {
 				t.Run(tt.name, func(t *testing.T) {
-					cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+					cfg := &provisioning.Repository{Name: "preview-repo", Namespace: "default"}
 					cfg.Spec.Sync.Target = target
 					caller := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace}
 					ctx := identity.WithRequester(context.Background(), caller)
@@ -665,7 +665,7 @@ func testAuthorizeResourceReadUsesRoot(t *testing.T, target provisioning.SyncTar
 }
 
 func TestAuthorizeResourcePreview_SkipsUnrelatedAncestors(t *testing.T) {
-	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+	cfg := &provisioning.Repository{Name: "preview-repo", Namespace: "default"}
 	cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
 	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
 	otherRepo := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo"}
@@ -886,7 +886,7 @@ func TestAuthorizeResourcePreview_PanicsWithoutFolderManager(t *testing.T) {
 		{name: "same-folder existing resource", existingFolder: "destination-folder"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+			cfg := &provisioning.Repository{Name: "preview-repo", Namespace: "default"}
 			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 				Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
 			})
@@ -927,7 +927,7 @@ func TestAuthorizeResourcePreview_RequiresSourceAccess(t *testing.T) {
 				{name: "forbidden-wrapped access service error", err: apierrors.NewForbidden(gvr.GroupResource(), "existing-resource", serviceErr)},
 			} {
 				t.Run(tt.name, func(t *testing.T) {
-					cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+					cfg := &provisioning.Repository{Name: "preview-repo", Namespace: "default"}
 					ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 						Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
 					})
@@ -962,7 +962,7 @@ func TestAuthorizeResourcePreview_MatchingPRMetadataRetainsSourceCheck(t *testin
 		{Group: "example.grafana.app", Version: "v1alpha1", Resource: "widgets"},
 	} {
 		t.Run(gvr.Resource, func(t *testing.T) {
-			cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"}}
+			cfg := &provisioning.Repository{Name: "preview-repo", Namespace: "default"}
 			cfg.Spec.Sync.Target = provisioning.SyncTargetTypeFolder
 			ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 				Type: authlib.TypeUser, UserID: 42, Namespace: cfg.Namespace,
@@ -1112,7 +1112,7 @@ func TestAuthorizeResourcePreview_StopsOnWrappedAccessErrors(t *testing.T) {
 			} {
 				t.Run(tt.name, func(t *testing.T) {
 					cfg := &provisioning.Repository{
-						ObjectMeta: metav1.ObjectMeta{Name: "preview-repo", Namespace: "default"},
+						Name: "preview-repo", Namespace: "default",
 						Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeFolder,
 						}},
@@ -1239,9 +1239,7 @@ func TestAuthorizeCreateFolder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: tt.repoName,
-				},
+				Name: tt.repoName,
 			}
 
 			if tt.shouldAllow {
@@ -1297,9 +1295,7 @@ func TestAuthorizeDeleteByPath_Folders(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			mockReader := repository.NewMockReader(t)
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: tt.repoName,
-				},
+				Name: tt.repoName,
 			}
 
 			// Mock Config() call for GetFolderID
@@ -1384,9 +1380,7 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			mockReader := repository.NewMockReader(t)
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: tt.repoName,
-				},
+				Name: tt.repoName,
 			}
 
 			// Mock Config() call for GetFolderID
@@ -1454,9 +1448,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 				}
 				// Mock Config() for GetFolderID calls (may be called multiple times for parent)
 				rw.On("Config").Return(repo).Maybe()
@@ -1480,9 +1472,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 				}
 				// Mock Config() for GetFolderID fallback (may be called multiple times)
 				rw.On("Config").Return(repo).Maybe()
@@ -1503,9 +1493,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			reader := tt.setupReader(t)
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
+				Name: "test-repo",
 			}
 
 			// Set up expectation for the check with the expected folder ID
@@ -1545,9 +1533,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 				}
 				// Mock Config() for GetFolderID calls (may be called multiple times)
 				rw.On("Config").Return(repo).Maybe()
@@ -1571,9 +1557,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 			setupReader: func(t *testing.T) repository.Reader {
 				rw := repository.NewMockReaderWriter(t)
 				repo := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 				}
 				// Mock Config() for GetFolderID fallback (may be called multiple times)
 				rw.On("Config").Return(repo).Maybe()
@@ -1594,9 +1578,7 @@ func TestAuthorizeCreateFolderWithMetadata(t *testing.T) {
 			mockAccess := auth.NewMockAccessChecker(t)
 			reader := tt.setupReader(t)
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
+				Name: "test-repo",
 			}
 
 			// Expect check on the parent folder
@@ -1626,7 +1608,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 	t.Run("both source and target use stable UIDs from metadata", func(t *testing.T) {
 		rw := repository.NewMockReaderWriter(t)
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 
 		// Mock Config() for GetFolderID calls (may be called multiple times)
@@ -1672,7 +1654,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 func TestAuthorizeReadAllSupported(t *testing.T) {
 	t.Run("authorized - checks get on all supported resources at root", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
@@ -1693,7 +1675,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 
 	t.Run("unauthorized on first resource - returns error immediately", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -1708,7 +1690,7 @@ func TestAuthorizeReadAllSupported(t *testing.T) {
 func TestAuthorizeCreateAllSupported(t *testing.T) {
 	t.Run("folder sync target - checks create on all supported resources in target folder", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
@@ -1732,7 +1714,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 
 	t.Run("instance sync target - checks create at root", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
 			},
@@ -1756,7 +1738,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 
 	t.Run("unauthorized on create - returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
@@ -1774,7 +1756,7 @@ func TestAuthorizeCreateAllSupported(t *testing.T) {
 func TestAuthorizeDeleteAllSupported(t *testing.T) {
 	t.Run("authorized - checks delete on all supported resources at root", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
@@ -1795,7 +1777,7 @@ func TestAuthorizeDeleteAllSupported(t *testing.T) {
 
 	t.Run("unauthorized on first resource - returns error immediately", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo"},
+			Name: "my-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
@@ -1818,7 +1800,7 @@ func dashboardFileInfo() *repository.FileInfo {
 func TestAuthorizeDeleteByPath(t *testing.T) {
 	t.Run("file path checks dashboard delete on parent folder", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1843,7 +1825,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("root-level file checks dashboard delete on root folder", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		rootFolder := RootFolder(repo)
 		mockAccess := auth.NewMockAccessChecker(t)
@@ -1868,7 +1850,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("directory path delegates to AuthorizeDeleteFolder", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1891,7 +1873,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("unauthorized file path returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1911,7 +1893,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("non-existent file returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1928,7 +1910,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("unsupported resource type returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1949,7 +1931,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("folder resource in file returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -1970,7 +1952,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 
 	t.Run("file path with folder metadata uses stable UID", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 
@@ -2002,7 +1984,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 func TestAuthorizeMoveByPath(t *testing.T) {
 	t.Run("file path checks update on source and create on target", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -2032,7 +2014,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 
 	t.Run("directory path delegates to AuthorizeMoveFolder", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -2060,7 +2042,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 
 	t.Run("unauthorized on source returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -2082,7 +2064,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 
 	t.Run("unauthorized on target returns error", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 		}
 		mockAccess := auth.NewMockAccessChecker(t)
 		mockReader := repository.NewMockReader(t)
@@ -2141,7 +2123,7 @@ func testReadNewResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVers
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
+				Name: "synced-dashboards", Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitRepositoryType,
 					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -2298,7 +2280,7 @@ func testReadPreviewAtRoot(t *testing.T, kind schema.GroupVersionKind, resource 
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "root-preview", Namespace: "default"},
+				Name: "root-preview", Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitRepositoryType,
 					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -2395,7 +2377,7 @@ func TestDualReadWriter_ReadRejectsReadableUnmanagedAncestor(t *testing.T) {
 	const resourcePath = "team/new/dashboard.json"
 	const resourceName = "decoy-preview-dashboard"
 	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "decoy-preview-repo", Namespace: "default"},
+		Name: "decoy-preview-repo", Namespace: "default",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitRepositoryType,
 			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -2509,7 +2491,7 @@ func testReadNewResourcePreviewValidatesConfiguredFolder(t *testing.T, kind sche
 				target = provisioning.SyncTargetTypeFolder
 			}
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "synced-dashboards", Namespace: "default"},
+				Name: "synced-dashboards", Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitRepositoryType,
 					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -2808,7 +2790,7 @@ func testReadMovedResourcePreviewWithTokenAuth(t *testing.T, kind schema.GroupVe
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "synced-resources", Namespace: "default"},
+				Name: "synced-resources", Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.GitRepositoryType,
 					Git:  &provisioning.GitRepositoryConfig{Branch: "main"},

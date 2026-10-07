@@ -439,7 +439,7 @@ func NewNamespace(f *folder.Folder) Namespace {
 // NewNamespaceUID creates a Namespace with just a UID (no fullpath for optimized checks).
 func NewNamespaceUID(uid string) Namespace {
 	return Namespace{
-		FolderReference: folder.FolderReference{UID: uid},
+		UID: uid,
 	}
 }
 

@@ -5,8 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -24,10 +22,8 @@ func TestAfterUserCreate(t *testing.T) {
 	t.Run("should create zanzana entry for user with Admin role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "df2p421det1q8c",
-				Namespace: "org-1",
-			},
+			Name:      "df2p421det1q8c",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -56,10 +52,8 @@ func TestAfterUserCreate(t *testing.T) {
 	t.Run("should create zanzana entry for user with Editor role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "user123",
-				Namespace: "org-2",
-			},
+			Name:      "user123",
+			Namespace: "org-2",
 			Spec: iamv0.UserSpec{
 				Role: "Editor",
 			},
@@ -88,10 +82,8 @@ func TestAfterUserCreate(t *testing.T) {
 	t.Run("should create zanzana entry for user with Viewer role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "viewer456",
-				Namespace: "org-3",
-			},
+			Name:      "viewer456",
+			Namespace: "org-3",
 			Spec: iamv0.UserSpec{
 				Role: "Viewer",
 			},
@@ -119,10 +111,8 @@ func TestAfterUserCreate(t *testing.T) {
 
 	t.Run("should skip when user has no role", func(t *testing.T) {
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "norole789",
-				Namespace: "org-4",
-			},
+			Name:      "norole789",
+			Namespace: "org-4",
 			Spec: iamv0.UserSpec{
 				Role: "",
 			},
@@ -136,10 +126,8 @@ func TestAfterUserCreate(t *testing.T) {
 
 	t.Run("should skip when user has None role", func(t *testing.T) {
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "nonerole",
-				Namespace: "org-5",
-			},
+			Name:      "nonerole",
+			Namespace: "org-5",
 			Spec: iamv0.UserSpec{
 				Role: "None",
 			},
@@ -157,10 +145,8 @@ func TestAfterUserCreate(t *testing.T) {
 		}
 
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -183,20 +169,16 @@ func TestBeginUserUpdate(t *testing.T) {
 	t.Run("should update zanzana entry when role changes from Viewer to Admin", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Viewer",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -236,20 +218,16 @@ func TestBeginUserUpdate(t *testing.T) {
 	t.Run("should only delete old role when new role is None", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser2",
-				Namespace: "org-2",
-			},
+			Name:      "testuser2",
+			Namespace: "org-2",
 			Spec: iamv0.UserSpec{
 				Role: "Editor",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser2",
-				Namespace: "org-2",
-			},
+			Name:      "testuser2",
+			Namespace: "org-2",
 			Spec: iamv0.UserSpec{
 				Role: "None",
 			},
@@ -282,20 +260,16 @@ func TestBeginUserUpdate(t *testing.T) {
 	t.Run("should be able to add a new role when old role was empty", func(t *testing.T) {
 		wg.Add(1)
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser3",
-				Namespace: "org-3",
-			},
+			Name:      "testuser3",
+			Namespace: "org-3",
 			Spec: iamv0.UserSpec{
 				Role: "",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser3",
-				Namespace: "org-3",
-			},
+			Name:      "testuser3",
+			Namespace: "org-3",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -334,20 +308,16 @@ func TestBeginUserUpdate(t *testing.T) {
 
 	t.Run("should skip update when role hasn't changed", func(t *testing.T) {
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser4",
-				Namespace: "org-4",
-			},
+			Name:      "testuser4",
+			Namespace: "org-4",
 			Spec: iamv0.UserSpec{
 				Role: "Editor",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser4",
-				Namespace: "org-4",
-			},
+			Name:      "testuser4",
+			Namespace: "org-4",
 			Spec: iamv0.UserSpec{
 				Role: "Editor",
 			},
@@ -360,20 +330,16 @@ func TestBeginUserUpdate(t *testing.T) {
 
 	t.Run("should not call zanzana when update fails", func(t *testing.T) {
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser5",
-				Namespace: "org-5",
-			},
+			Name:      "testuser5",
+			Namespace: "org-5",
 			Spec: iamv0.UserSpec{
 				Role: "Viewer",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser5",
-				Namespace: "org-5",
-			},
+			Name:      "testuser5",
+			Namespace: "org-5",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -404,20 +370,16 @@ func TestBeginUserUpdate(t *testing.T) {
 		}
 
 		oldUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Viewer",
 			},
 		}
 
 		newUser := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -440,10 +402,8 @@ func TestAfterUserDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for user with Admin role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "df2p421det1q8c",
-				Namespace: "org-1",
-			},
+			Name:      "df2p421det1q8c",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},
@@ -473,10 +433,8 @@ func TestAfterUserDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for user with Editor role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "editor123",
-				Namespace: "org-2",
-			},
+			Name:      "editor123",
+			Namespace: "org-2",
 			Spec: iamv0.UserSpec{
 				Role: "Editor",
 			},
@@ -506,10 +464,8 @@ func TestAfterUserDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for user with Viewer role", func(t *testing.T) {
 		wg.Add(1)
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "viewer456",
-				Namespace: "org-3",
-			},
+			Name:      "viewer456",
+			Namespace: "org-3",
 			Spec: iamv0.UserSpec{
 				Role: "Viewer",
 			},
@@ -538,10 +494,8 @@ func TestAfterUserDelete(t *testing.T) {
 
 	t.Run("should skip when user has no role", func(t *testing.T) {
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "norole789",
-				Namespace: "org-4",
-			},
+			Name:      "norole789",
+			Namespace: "org-4",
 			Spec: iamv0.UserSpec{
 				Role: "",
 			},
@@ -555,10 +509,8 @@ func TestAfterUserDelete(t *testing.T) {
 
 	t.Run("should skip when user has None role", func(t *testing.T) {
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "nonerole",
-				Namespace: "org-5",
-			},
+			Name:      "nonerole",
+			Namespace: "org-5",
 			Spec: iamv0.UserSpec{
 				Role: "None",
 			},
@@ -576,10 +528,8 @@ func TestAfterUserDelete(t *testing.T) {
 		}
 
 		user := iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "testuser",
-				Namespace: "org-1",
-			},
+			Name:      "testuser",
+			Namespace: "org-1",
 			Spec: iamv0.UserSpec{
 				Role: "Admin",
 			},

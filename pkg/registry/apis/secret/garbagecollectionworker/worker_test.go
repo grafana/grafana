@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"pgregory.net/rapid"
 
@@ -108,10 +107,8 @@ func TestBasic(t *testing.T) {
 		require.NoError(t, sut.KeeperMetadataStorage.SetAsActive(t.Context(), xkube.Namespace(keeper.Namespace), keeper.Name))
 
 		sv, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: keeper.Namespace,
-				Name:      "sv1",
-			},
+			Namespace: keeper.Namespace,
+			Name:      "sv1",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         new("ref1"),
@@ -192,10 +189,8 @@ func TestGCDoesNotDeleteInFlightVersion(t *testing.T) {
 	// Create from metadata storage directly to insert v2 as *inactive*
 	// Here we do not call SetVersionToActive explicitly to simulate the in-flight window
 	sv2, err := sut.SecureValueMetadataStorage.Create(t.Context(), sv1.Status.Keeper, &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      sv1.Name,
-			Namespace: sv1.Namespace,
-		},
+		Name:      sv1.Name,
+		Namespace: sv1.Namespace,
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "v2",
 			Value:       new(secretv1beta1.NewExposedSecureValue("new-value")),

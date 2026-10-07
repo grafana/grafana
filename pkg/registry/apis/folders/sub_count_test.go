@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -43,7 +42,7 @@ func (c *capturingStatsClient) HybridSearch(ctx context.Context, in *resourcepb.
 }
 
 func TestSubCount_RequestIncludesRecordingRules(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingStatsClient{resp: &resourcepb.ResourceStatsResponse{}}
 	rest := &subCountREST{getter: getter, searcher: search}
 
@@ -60,7 +59,7 @@ func TestSubCount_RequestIncludesRecordingRules(t *testing.T) {
 }
 
 func TestSubCount_SurfacesBothAlertAndRecordingRuleCounts(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingStatsClient{resp: &resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{Group: "rules.alerting.grafana.app", Resource: "alertrules", Count: 0},
@@ -85,7 +84,7 @@ func TestSubCount_SurfacesBothAlertAndRecordingRuleCounts(t *testing.T) {
 }
 
 func TestSubCount_OnlyAlertRulesStillWorks(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingStatsClient{resp: &resourcepb.ResourceStatsResponse{
 		Stats: []*resourcepb.ResourceStatsResponse_Stats{
 			{Group: "rules.alerting.grafana.app", Resource: "alertrules", Count: 3},
@@ -115,7 +114,7 @@ func TestSubCount_GetterErrorPropagates(t *testing.T) {
 }
 
 func TestSubCount_StatsErrorSurfaces(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingStatsClient{err: errors.New("boom")}
 	rest := &subCountREST{getter: getter, searcher: search}
 

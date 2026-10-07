@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -20,9 +19,7 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "missing permissions - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "folder.grafana.app-folders-test_folder",
-				},
+				Name: "folder.grafana.app-folders-test_folder",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "folder.grafana.app",
@@ -37,18 +34,14 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "invalid name - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "some-invalid-name",
-				},
+				Name: "some-invalid-name",
 			},
 			want: errInvalidName,
 		},
 		{
 			name: "wildcard resource name - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "folder.grafana.app-folders-*",
-				},
+				Name: "folder.grafana.app-folders-*",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "folder.grafana.app",
@@ -69,9 +62,7 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "mismatched name and spec - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "folder.grafana.app-folders-test_folder",
-				},
+				Name: "folder.grafana.app-folders-test_folder",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "folder.grafana.app",
@@ -92,9 +83,7 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "valid spec - should pass",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "folder.grafana.app-folders-test_folder",
-				},
+				Name: "folder.grafana.app-folders-test_folder",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "folder.grafana.app",
@@ -125,9 +114,7 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "duplicate entities - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "dashboard.grafana.app-dashboards-test_dashboard",
-				},
+				Name: "dashboard.grafana.app-dashboards-test_dashboard",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "dashboard.grafana.app",
@@ -153,9 +140,7 @@ func TestValidateOnCreate(t *testing.T) {
 		{
 			name: "duplicate names but different kinds - should pass",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{
-					Name: "dashboard.grafana.app-dashboards-test_dashboard",
-				},
+				Name: "dashboard.grafana.app-dashboards-test_dashboard",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "dashboard.grafana.app",
@@ -214,7 +199,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 		{
 			name: "serviceaccount with BasicRole kind - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Name: "iam.grafana.app-serviceaccounts-sa-abc123",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "iam.grafana.app",
@@ -231,7 +216,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 		{
 			name: "serviceaccount with view verb - should fail",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Name: "iam.grafana.app-serviceaccounts-sa-abc123",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "iam.grafana.app",
@@ -248,7 +233,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 		{
 			name: "serviceaccount with User kind and edit verb - should pass",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Name: "iam.grafana.app-serviceaccounts-sa-abc123",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "iam.grafana.app",
@@ -265,7 +250,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 		{
 			name: "serviceaccount with Team kind and admin verb - should pass",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{Name: "iam.grafana.app-serviceaccounts-sa-abc123"},
+				Name: "iam.grafana.app-serviceaccounts-sa-abc123",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "iam.grafana.app",
@@ -282,7 +267,7 @@ func TestValidateOnCreate_KindAndVerbRestrictions(t *testing.T) {
 		{
 			name: "folder with BasicRole kind - should still pass (no kind restriction)",
 			obj: &iamv0alpha1.ResourcePermission{
-				ObjectMeta: v1.ObjectMeta{Name: "folder.grafana.app-folders-test_folder"},
+				Name: "folder.grafana.app-folders-test_folder",
 				Spec: iamv0alpha1.ResourcePermissionSpec{
 					Resource: iamv0alpha1.ResourcePermissionspecResource{
 						ApiGroup: "folder.grafana.app",

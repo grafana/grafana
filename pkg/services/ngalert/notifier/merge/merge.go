@@ -198,7 +198,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		InhibitionRules: managedInhibitionRules,
 		TimeIntervals:   mergedTimeIntervals,
 	}, MergeResult{
-		RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
+		Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates,
 		AddedRoute:           mimirCfg.Identifier,
 		AddedReceivers:       addedReceivers,
 		AddedTimeIntervals:   addedTimeIntervals,

@@ -78,14 +78,10 @@ func createMathNode() (models.AlertQuery, error) {
 	}
 
 	model := MathQueryModel{
-		CommonQueryModel: CommonQueryModel{
-			Datasource: *ds,
-			RefID:      prometheusMathRefID,
-			Type:       expr.QueryTypeMath,
-		},
-		MathQuery: expr.MathQuery{
-			Expression: fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", queryRefID),
-		},
+		Datasource: *ds,
+		RefID:      prometheusMathRefID,
+		Type:       expr.QueryTypeMath,
+		Expression: fmt.Sprintf("is_number($%[1]s) || is_nan($%[1]s) || is_inf($%[1]s)", queryRefID),
 	}
 
 	return createAlertQueryWithDefaults(expr.DatasourceUID, model, prometheusMathRefID, nil, string(expr.QueryTypeMath))
@@ -103,19 +99,15 @@ func createThresholdNode() (models.AlertQuery, error) {
 	}
 
 	model := ThresholdQueryModel{
-		CommonQueryModel: CommonQueryModel{
-			Datasource: *ds,
-			RefID:      thresholdRefID,
-			Type:       expr.QueryTypeThreshold,
-		},
-		ThresholdQuery: expr.ThresholdQuery{
-			Expression: prometheusMathRefID,
-			Conditions: []expr.ThresholdConditionJSON{
-				{
-					Evaluator: expr.ConditionEvalJSON{
-						Type:   expr.ThresholdIsAbove,
-						Params: []float64{0},
-					},
+		Datasource: *ds,
+		RefID:      thresholdRefID,
+		Type:       expr.QueryTypeThreshold,
+		Expression: prometheusMathRefID,
+		Conditions: []expr.ThresholdConditionJSON{
+			{
+				Evaluator: expr.ConditionEvalJSON{
+					Type:   expr.ThresholdIsAbove,
+					Params: []float64{0},
 				},
 			},
 		},

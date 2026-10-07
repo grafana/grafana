@@ -20,15 +20,11 @@ func TestAlertmanager_ExtraDedupStage(t *testing.T) {
 
 		s.Start(t, 20, "15s", true)
 		s.Provision(t, ProvisionCfg{
-			AlertRuleConfig: AlertRuleConfig{
-				PendingPeriod:                  "30s",
-				GroupEvaluationIntervalSeconds: 10,
-			},
-			NotificationPolicyCfg: NotificationPolicyCfg{
-				GroupWait:      "30s",
-				GroupInterval:  "1m",
-				RepeatInterval: "30m",
-			},
+			PendingPeriod:                  "30s",
+			GroupEvaluationIntervalSeconds: 10,
+			GroupWait:                      "30s",
+			GroupInterval:                  "1m",
+			RepeatInterval:                 "30m",
 		})
 
 		wc, err := s.NewWebhookClient()

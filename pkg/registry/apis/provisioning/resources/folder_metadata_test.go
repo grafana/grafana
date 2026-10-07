@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIsFolderMetadataFile(t *testing.T) {
@@ -85,8 +84,8 @@ func TestParseFolderWithMetadata_MetadataHash(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "repo-a", Namespace: "default"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		Name: "repo-a", Namespace: "default",
+		Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
 	}
 
 	t.Run("populates MetadataHash when metadata exists", func(t *testing.T) {

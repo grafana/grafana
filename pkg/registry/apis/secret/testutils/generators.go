@@ -3,7 +3,6 @@ package testutils
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -18,10 +17,8 @@ var (
 	// Generator for secure values that specify a secret value
 	AnySecureValueGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
 		return &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      SecureValueNameGen.Draw(t, "name"),
-				Namespace: NamespaceGen.Draw(t, "ns"),
-			},
+			Name:      SecureValueNameGen.Draw(t, "name"),
+			Namespace: NamespaceGen.Draw(t, "ns"),
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
 				Value:       new(secretv1beta1.NewExposedSecureValue(rapid.SampledFrom([]string{"v1", "v2", "v3", "v4", "v5"}).Draw(t, "value"))),
@@ -33,10 +30,8 @@ var (
 	// Generator for secure values that reference values from 3rd party stores
 	AnySecureValueWithRefGen = rapid.Custom(func(t *rapid.T) *secretv1beta1.SecureValue {
 		return &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      SecureValueNameGen.Draw(t, "name"),
-				Namespace: NamespaceGen.Draw(t, "ns"),
-			},
+			Name:      SecureValueNameGen.Draw(t, "name"),
+			Namespace: NamespaceGen.Draw(t, "ns"),
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: rapid.SampledFrom([]string{"d1", "d2", "d3", "d4", "d5"}).Draw(t, "description"),
 				Ref:         new(SecretsToRefGen.Draw(t, "ref")),
@@ -74,11 +69,9 @@ var (
 		}
 
 		return &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      KeeperNameGen.Draw(t, "name"),
-				Namespace: NamespaceGen.Draw(t, "ns"),
-			},
-			Spec: spec,
+			Name:      KeeperNameGen.Draw(t, "name"),
+			Namespace: NamespaceGen.Draw(t, "ns"),
+			Spec:      spec,
 		}
 	})
 )

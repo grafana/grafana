@@ -80,14 +80,12 @@ func NewTemplateGroup(uid ResourceUID, name, content string, kind TemplateKind, 
 		uid = TemplateUID(kind, name)
 	}
 	return TemplateGroup{
-		ResourceMetadata: ResourceMetadata{
-			UID:        uid,
-			Version:    calculateTemplateFingerprint(content),
-			Provenance: provenance,
-		},
-		Title:   name,
-		Content: content,
-		Kind:    kind,
+		UID:        uid,
+		Version:    calculateTemplateFingerprint(content),
+		Provenance: provenance,
+		Title:      name,
+		Content:    content,
+		Kind:       kind,
 	}
 }
 

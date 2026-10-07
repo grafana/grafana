@@ -39,10 +39,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "ok",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": "p2"},
-				},
+				Name:        "p1",
+				Annotations: map[string]string{"grafana.app/folder": "p2"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -70,55 +68,47 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "reserved name - general",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: folder.GeneralFolderUID,
-				},
+				Name: folder.GeneralFolderUID,
 			},
 			expectedErr: folder.ErrInvalidUID,
 		},
 		{
 			name: "reserved name - sharedwithme",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: folder.SharedWithMeFolderUID,
-				},
+				Name: folder.SharedWithMeFolderUID,
 			},
 			expectedErr: folder.ErrInvalidUID,
 		},
 		{
 			name: "empty title rejected",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
-				Spec:       folders.FolderSpec{Title: ""},
+				Name: "abc",
+				Spec: folders.FolderSpec{Title: ""},
 			},
 			expectedErr: folder.ErrTitleEmpty,
 		},
 		{
 			name: "whitespace-only title rejected after trim",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "abc"},
-				Spec:       folders.FolderSpec{Title: "   \t  "},
+				Name: "abc",
+				Spec: folders.FolderSpec{Title: "   \t  "},
 			},
 			expectedErr: folder.ErrTitleEmpty,
 		},
 		{
 			name: "root parent annotation - empty",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": ""},
-				},
-				Spec: folders.FolderSpec{Title: "ok"},
+				Name:        "p1",
+				Annotations: map[string]string{"grafana.app/folder": ""},
+				Spec:        folders.FolderSpec{Title: "ok"},
 			},
 		},
 		{
 			name: "root parent annotation - general",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-				},
-				Spec: folders.FolderSpec{Title: "ok"},
+				Name:        "p1",
+				Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+				Spec:        folders.FolderSpec{Title: "ok"},
 			},
 		},
 		{
@@ -142,10 +132,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "can not be a parent of yourself",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": "p1"},
-				},
+				Name:        "p1",
+				Annotations: map[string]string{"grafana.app/folder": "p1"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -155,10 +143,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "error to create a folder inside the k6 folder",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
-				},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -178,10 +164,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "error to create a folder under an existing descendant of the k6 folder",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
-				},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "legacy-k6-child"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -210,10 +194,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "service account can create a folder inside the k6 folder",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
-				},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: accesscontrol.K6FolderUID},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -233,10 +215,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "service account can create a folder deeper in the k6 tree",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "k6-child"},
-				},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "k6-child"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -265,9 +245,7 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "the k6 folder itself can be created at root",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: accesscontrol.K6FolderUID,
-				},
+				Name: accesscontrol.K6FolderUID,
 				Spec: folders.FolderSpec{
 					Title: "k6",
 				},
@@ -276,10 +254,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "can not create a tree that is too deep",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "p1",
-					Annotations: map[string]string{"grafana.app/folder": "p2"},
-				},
+				Name:        "p1",
+				Annotations: map[string]string{"grafana.app/folder": "p2"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -327,10 +303,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "can create a folder in max depth",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "5",
-					Annotations: map[string]string{"grafana.app/folder": "4"},
-				},
+				Name:        "5",
+				Annotations: map[string]string{"grafana.app/folder": "4"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -377,9 +351,7 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "title is reserved name General",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "abc123",
-				},
+				Name: "abc123",
 				Spec: folders.FolderSpec{
 					Title: "General",
 				},
@@ -389,9 +361,7 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "title is reserved name General case insensitive",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "abc123",
-				},
+				Name: "abc123",
 				Spec: folders.FolderSpec{
 					Title: "GENERAL",
 				},
@@ -401,9 +371,7 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "title is reserved name General with surrounding whitespace",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "abc123",
-				},
+				Name: "abc123",
 				Spec: folders.FolderSpec{
 					Title: "  General  ",
 				},
@@ -413,10 +381,8 @@ func TestValidateCreate(t *testing.T) {
 		{
 			name: "cannot create a circular reference",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "3",
-					Annotations: map[string]string{"grafana.app/folder": "2"},
-				},
+				Name:        "3",
+				Annotations: map[string]string{"grafana.app/folder": "2"},
 				Spec: folders.FolderSpec{
 					Title: "some title",
 				},
@@ -508,17 +474,13 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "change title",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "changed",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -527,17 +489,13 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "title is reserved name General",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "General",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -547,17 +505,13 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "title is reserved name General case insensitive",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "GENERAL",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -567,17 +521,13 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "title is reserved name General with surrounding whitespace",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "  General  ",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -587,100 +537,80 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "empty title rejected on update",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "nnn"},
-				Spec:       folders.FolderSpec{Title: "   "},
+				Name: "nnn",
+				Spec: folders.FolderSpec{Title: "   "},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "nnn"},
-				Spec:       folders.FolderSpec{Title: "old"},
+				Name: "nnn",
+				Spec: folders.FolderSpec{Title: "old"},
 			},
 			expectedErr: "folder.title-empty",
 		},
 		{
 			name: "no folder change skips tree validation",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
-				},
-				Spec: folders.FolderSpec{Title: "new title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
+				Spec:        folders.FolderSpec{Title: "new title"},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
-				},
-				Spec: folders.FolderSpec{Title: "old title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "same-parent"},
+				Spec:        folders.FolderSpec{Title: "old title"},
 			},
 		},
 		{
 			name: "move to root - empty parent annotation",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: ""},
-				},
-				Spec: folders.FolderSpec{Title: "new title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: ""},
+				Spec:        folders.FolderSpec{Title: "new title"},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
-				},
-				Spec: folders.FolderSpec{Title: "old title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				Spec:        folders.FolderSpec{Title: "old title"},
 			},
 		},
 		{
 			name: "move to root - general parent annotation",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
-				},
-				Spec: folders.FolderSpec{Title: "new title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
+				Spec:        folders.FolderSpec{Title: "new title"},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
-				},
-				Spec: folders.FolderSpec{Title: "old title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				Spec:        folders.FolderSpec{Title: "old title"},
 			},
 		},
 		{
 			name: "move to root - root parent annotation",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
-				},
-				Spec: folders.FolderSpec{Title: "new title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: folder.GeneralFolderUID},
+				Spec:        folders.FolderSpec{Title: "new title"},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "nnn",
-					Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
-				},
-				Spec: folders.FolderSpec{Title: "old title"},
+				Name:        "nnn",
+				Annotations: map[string]string{utils.AnnoKeyFolder: "old-parent"},
+				Spec:        folders.FolderSpec{Title: "old title"},
 			},
 		},
 		{
 			name: "error to move into k6 folder",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "k6-app",
-					},
+				Name: "nnn",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "k6-app",
 				},
 				Spec: folders.FolderSpec{
 					Title: "changed",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -690,20 +620,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error to move into an existing descendant of the k6 folder",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "legacy-k6-child",
-					},
+				Name: "nnn",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "legacy-k6-child",
 				},
 				Spec: folders.FolderSpec{
 					Title: "changed",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-				},
+				Name: "nnn",
 				Spec: folders.FolderSpec{
 					Title: "old title",
 				},
@@ -719,22 +645,18 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error to move a folder out of the k6 tree",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: folder.GeneralFolderUID,
-					},
+				Name: "nnn",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: folder.GeneralFolderUID,
 				},
 				Spec: folders.FolderSpec{
 					Title: "changed",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "nnn",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "legacy-k6-child",
-					},
+				Name: "nnn",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "legacy-k6-child",
 				},
 				Spec: folders.FolderSpec{
 					Title: "old title",
@@ -752,20 +674,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error to move the k6 folder itself",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "somewhere",
-					},
+				Name: "k6-app",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "somewhere",
 				},
 				Spec: folders.FolderSpec{
 					Title: "k6",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-				},
+				Name: "k6-app",
 				Spec: folders.FolderSpec{
 					Title: "k6",
 				},
@@ -775,22 +693,18 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error to move the k6 folder to root",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: folder.LegacyRootFolderUID, // nolint:staticcheck
-					},
+				Name: "k6-app",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: folder.LegacyRootFolderUID, // nolint:staticcheck
 				},
 				Spec: folders.FolderSpec{
 					Title: "k6",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "somewhere",
-					},
+				Name: "k6-app",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "somewhere",
 				},
 				Spec: folders.FolderSpec{
 					Title: "k6",
@@ -801,17 +715,13 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "no-op update on k6 folder is allowed (title change, parent unchanged)",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-				},
+				Name: "k6-app",
 				Spec: folders.FolderSpec{
 					Title: "renamed",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "k6-app",
-				},
+				Name: "k6-app",
 				Spec: folders.FolderSpec{
 					Title: "k6",
 				},
@@ -820,11 +730,9 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "can move a folder to max depth",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "4",
-					},
+				Name: "test",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "4",
 				},
 				Spec: folders.FolderSpec{
 					Title: "changed",
@@ -850,11 +758,9 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error when moving exceeds max depth",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "5",
-					},
+				Name: "test",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "5",
 				},
 				Spec: folders.FolderSpec{
 					Title: "changed",
@@ -882,20 +788,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error when moving folder under its own descendant (direct child)",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "parent",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "child",
-					},
+				Name: "parent",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "child",
 				},
 				Spec: folders.FolderSpec{
 					Title: "parent folder",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "parent",
-				},
+				Name: "parent",
 				Spec: folders.FolderSpec{
 					Title: "parent folder",
 				},
@@ -914,20 +816,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error when moving folder under its grandchild",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "grandparent",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "grandchild",
-					},
+				Name: "grandparent",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "grandchild",
 				},
 				Spec: folders.FolderSpec{
 					Title: "grandparent folder",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "grandparent",
-				},
+				Name: "grandparent",
 				Spec: folders.FolderSpec{
 					Title: "grandparent folder",
 				},
@@ -947,20 +845,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "error when moving folder from root to level2 with children exceeds max depth",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "folderWithChildren",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "level2",
-					},
+				Name: "folderWithChildren",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "level2",
 				},
 				Spec: folders.FolderSpec{
 					Title: "folder with children",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "folderWithChildren",
-				},
+				Name: "folderWithChildren",
 				Spec: folders.FolderSpec{
 					Title: "folder with children",
 				},
@@ -973,8 +867,8 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			allFolders: []folders.Folder{
-				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}}},
+				{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}},
+				{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}},
 			},
 			maxDepth:    4,
 			expectedErr: "[folder.maximum-depth-reached]",
@@ -982,20 +876,16 @@ func TestValidateUpdate(t *testing.T) {
 		{
 			name: "can move folder from root level to level1 with children when within max depth",
 			folder: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "folderWithChildren",
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "level1",
-					},
+				Name: "folderWithChildren",
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "level1",
 				},
 				Spec: folders.FolderSpec{
 					Title: "folder with children",
 				},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "folderWithChildren",
-				},
+				Name: "folderWithChildren",
 				Spec: folders.FolderSpec{
 					Title: "folder with children",
 				},
@@ -1007,8 +897,8 @@ func TestValidateUpdate(t *testing.T) {
 				},
 			},
 			allFolders: []folders.Folder{
-				{ObjectMeta: metav1.ObjectMeta{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}}},
+				{Name: "child1", Annotations: map[string]string{utils.AnnoKeyFolder: "folderWithChildren"}},
+				{Name: "grandchild1", Annotations: map[string]string{utils.AnnoKeyFolder: "child1"}},
 			},
 			maxDepth: 4,
 		},
@@ -1024,9 +914,7 @@ func TestValidateUpdate(t *testing.T) {
 			if tt.parents != nil {
 				for _, v := range tt.parents.Items {
 					m.On("Get", context.Background(), v.Name, &metav1.GetOptions{}).Return(&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: v.Name,
-						}, Spec: folders.FolderSpec{
+						Name: v.Name, Spec: folders.FolderSpec{
 							Title: v.Title,
 						},
 					}, nil).Maybe()
@@ -1068,9 +956,7 @@ func TestValidateDelete(t *testing.T) {
 	}{{
 		name: "simple delete",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1081,9 +967,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "stats error - nil stats",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{},
@@ -1092,9 +976,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "stats error - search error",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			statsErr: fmt.Errorf("error running stats"),
@@ -1103,9 +985,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "stats error - error result",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1120,9 +1000,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is allowed",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1140,9 +1018,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty with gracePeriodSeconds=0 is blocked when feature is disabled",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1161,9 +1037,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains dashboards",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1180,9 +1054,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains variables",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1199,9 +1071,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains alertrules",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1218,9 +1088,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains library_elements",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1237,9 +1105,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains folders",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1256,9 +1122,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - contains recordingrules",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1275,9 +1139,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder can be deleted when it only contains non-validated resource types",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1298,9 +1160,7 @@ func TestValidateDelete(t *testing.T) {
 	}, {
 		name: "folder not empty - mixed resources with validated types",
 		folder: &folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "nnn",
-			},
+			Name: "nnn",
 		},
 		searcher: &mockSearchClient{
 			stats: &resourcepb.ResourceStatsResponse{
@@ -1349,94 +1209,80 @@ func TestValidateOwnerReferencesOnManagedFolder(t *testing.T) {
 		{
 			name: "neither managed - owner refs allowed on create",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef}},
+				Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 		},
 		{
 			name: "neither managed - owner refs allowed on update",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef}},
+				Name: "f", OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f"},
+				Name: "f",
 			},
 		},
 		{
 			name: "new managed on create with no owner refs - ok",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+				Name: "f", Annotations: repoAnnotations,
 			},
 		},
 		{
 			name: "new managed on create with owner refs - forbidden",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			forbidden: true,
 		},
 		{
 			name: "old managed, owner refs unchanged - ok",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 		},
 		{
 			name: "old managed, owner refs added - forbidden",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+				Name: "f", Annotations: repoAnnotations,
 			},
 			forbidden: true,
 		},
 		{
 			name: "old managed, owner refs changed - forbidden",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{differentOwnerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{differentOwnerRef},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					Annotations:     repoAnnotations,
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				Annotations:     repoAnnotations,
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			forbidden: true,
 		},
 		{
 			name: "new object loses managed-by but had owner refs - rejected because old was managed",
 			obj: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "f",
-					OwnerReferences: []metav1.OwnerReference{ownerRef},
-				},
+				Name:            "f",
+				OwnerReferences: []metav1.OwnerReference{ownerRef},
 			},
 			old: &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{Name: "f", Annotations: repoAnnotations},
+				Name: "f", Annotations: repoAnnotations,
 			},
 			forbidden: true,
 		},
@@ -1463,10 +1309,8 @@ func TestGetChildrenBatchPagination(t *testing.T) {
 		out := make([]folders.Folder, 0, n)
 		for i := range n {
 			out = append(out, folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        fmt.Sprintf("c%d", i),
-					Annotations: map[string]string{"grafana.app/folder": parent},
-				},
+				Name:        fmt.Sprintf("c%d", i),
+				Annotations: map[string]string{"grafana.app/folder": parent},
 			})
 		}
 		return out
@@ -1522,10 +1366,8 @@ func TestCheckSubtreeDepthIteratesAllPages(t *testing.T) {
 	all := make([]folders.Folder, 0, childCount)
 	for i := range childCount {
 		all = append(all, folders.Folder{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:        fmt.Sprintf("c%d", i),
-				Annotations: map[string]string{"grafana.app/folder": parent},
-			},
+			Name:        fmt.Sprintf("c%d", i),
+			Annotations: map[string]string{"grafana.app/folder": parent},
 		})
 	}
 

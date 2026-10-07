@@ -290,7 +290,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: "stacks-123"},
+				Name: repoName, Namespace: "stacks-123",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 				},
@@ -356,8 +356,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 
 func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "ancestor-repo", Namespace: "stacks-123"},
-		Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+		Name: "ancestor-repo", Namespace: "stacks-123",
+		Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
 	}
 	owner := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
 	for _, tt := range []struct {
@@ -453,10 +453,8 @@ func TestEnsureFolderPathExistWithBeforeCreate(t *testing.T) {
 
 	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "repo-a",
-				Namespace: "default",
-			},
+			Name:      "repo-a",
+			Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{
 					Target: provisioning.SyncTargetTypeFolder,
@@ -614,10 +612,8 @@ func TestEnsureFolderExists_TitleUpdate(t *testing.T) {
 
 	newRepo := func(t *testing.T) (*repository.MockReaderWriter, *provisioning.Repository) {
 		cfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "repo-a",
-				Namespace: "default",
-			},
+			Name:      "repo-a",
+			Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{
 					Target: provisioning.SyncTargetTypeFolder,
@@ -1048,10 +1044,8 @@ func TestEnsureFolderExists_TakeoverAllowlist(t *testing.T) {
 
 	newRepo := func(t *testing.T) *repository.MockReaderWriter {
 		cfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      repoName,
-				Namespace: "default",
-			},
+			Name:      repoName,
+			Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
@@ -1924,7 +1918,7 @@ func TestEnsureFolderExists_MetadataHashUpdate(t *testing.T) {
 
 	newTestRepoConfig := func(name string) *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+			Name: name, Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},
@@ -2097,7 +2091,7 @@ func TestEnsureFolderExists_ParentUpdate(t *testing.T) {
 
 	newTestRepoConfig := func(name string) *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+			Name: name, Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
 			},

@@ -132,32 +132,26 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		stars.Parameters[0], // name
 		stars.Parameters[1], // namespace
 		{
-			ParameterProps: spec3.ParameterProps{
-				Name:        "group",
-				In:          "path",
-				Example:     "dashboard.grafana.app",
-				Description: "API group for stared item",
-				Schema:      spec.StringProperty(),
-				Required:    true,
-			},
+			Name:        "group",
+			In:          "path",
+			Example:     "dashboard.grafana.app",
+			Description: "API group for stared item",
+			Schema:      spec.StringProperty(),
+			Required:    true,
 		}, {
-			ParameterProps: spec3.ParameterProps{
-				Name:        "kind",
-				In:          "path",
-				Example:     "Dashboard",
-				Description: "Kind for stared item",
-				Schema:      spec.StringProperty(),
-				Required:    true,
-			},
+			Name:        "kind",
+			In:          "path",
+			Example:     "Dashboard",
+			Description: "Kind for stared item",
+			Schema:      spec.StringProperty(),
+			Required:    true,
 		}, {
-			ParameterProps: spec3.ParameterProps{
-				Name:        "id",
-				In:          "path",
-				Example:     "",
-				Description: "The k8s name for the selected item",
-				Schema:      spec.StringProperty(),
-				Required:    true,
-			},
+			Name:        "id",
+			In:          "path",
+			Example:     "",
+			Description: "The k8s name for the selected item",
+			Schema:      spec.StringProperty(),
+			Required:    true,
 		},
 	}
 	stars.Put.Description = "Add a starred item"

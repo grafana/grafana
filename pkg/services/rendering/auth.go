@@ -132,9 +132,7 @@ func (j *jwtRenderKeyProvider) buildJWTClaims(opts AuthOpts) renderJWT {
 			UserID:  opts.UserID,
 			OrgRole: string(opts.OrgRole),
 		},
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(j.keyExpiry)),
-		},
+		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(j.keyExpiry)),
 	}
 }
 

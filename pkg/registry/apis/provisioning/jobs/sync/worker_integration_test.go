@@ -30,11 +30,9 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 		MockVersioned:  repository.NewMockVersioned(t),
 	}
 	repoConfig := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-repo",
-			Namespace:  "test-namespace",
-			Generation: 3,
-		},
+		Name:       "test-repo",
+		Namespace:  "test-namespace",
+		Generation: 3,
 		Status: provisioning.RepositoryStatus{
 			Sync: provisioning.SyncStatus{
 				LastRef: "existing-ref",
@@ -65,7 +63,7 @@ func TestIntegrationSyncWorker_EarlySetupFailure(t *testing.T) {
 	}, nil, provisioning.JobActionPull)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionPull,
 			Pull:   &provisioning.SyncJobOptions{},

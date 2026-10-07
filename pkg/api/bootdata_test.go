@@ -357,12 +357,10 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							// ModuleHash: "sha256-test",
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
+							ID:              "test-app",
+							Info:            plugins.Info{Version: "0.5.0"},
+							Type:            plugins.TypeApp,
+							Preload:         true,
 							FS:              &pluginfakes.FakePluginFS{},
 							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
@@ -396,12 +394,10 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
 							// ModuleHash: "sha256-test",
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
+							ID:              "test-app",
+							Info:            plugins.Info{Version: "0.5.0"},
+							Type:            plugins.TypeApp,
+							Preload:         true,
 							FS:              &pluginfakes.FakePluginFS{},
 							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
@@ -433,13 +429,11 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
+							Module:          fmt.Sprintf("/%s/module.js", "test-app"),
+							ID:              "test-app",
+							Info:            plugins.Info{Version: "0.5.0"},
+							Type:            plugins.TypeApp,
+							Preload:         true,
 							Angular:         plugins.AngularMeta{Detected: true},
 							FS:              &pluginfakes.FakePluginFS{},
 							LoadingStrategy: plugins.LoadingStrategyFetch,
@@ -472,13 +466,11 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
+							Module:          fmt.Sprintf("/%s/module.js", "test-app"),
+							ID:              "test-app",
+							Info:            plugins.Info{Version: "0.5.0"},
+							Type:            plugins.TypeApp,
+							Preload:         true,
 							LoadingStrategy: plugins.LoadingStrategyScript,
 						},
 					},
@@ -514,14 +506,12 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Class:  plugins.ClassExternal,
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeApp,
-								Preload: true,
-							},
+							Class:   plugins.ClassExternal,
+							Module:  fmt.Sprintf("/%s/module.js", "test-app"),
+							ID:      "test-app",
+							Info:    plugins.Info{Version: "0.5.0"},
+							Type:    plugins.TypeApp,
+							Preload: true,
 							FS: &pluginfakes.FakePluginFS{TypeFunc: func() plugins.FSType {
 								return plugins.FSTypeCDN
 							}},
@@ -599,13 +589,11 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 				return &pluginstore.FakePluginStore{
 					PluginList: []pluginstore.Plugin{
 						{
-							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeDataSource,
-								BuiltIn: true,
-							},
+							Module:  fmt.Sprintf("/%s/module.js", "test-app"),
+							ID:      "test-app",
+							Info:    plugins.Info{Version: "0.5.0"},
+							Type:    plugins.TypeDataSource,
+							BuiltIn: true,
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
@@ -620,13 +608,11 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 						Type:     string(plugins.TypeDataSource),
 						JSONData: make(map[string]any),
 						PluginMeta: &plugins.PluginMetaDTO{
-							JSONData: plugins.JSONData{
-								ID:      "test-app",
-								Info:    plugins.Info{Version: "0.5.0"},
-								Type:    plugins.TypeDataSource,
-								BuiltIn: true,
-							},
-							Module: "/test-app/module.js",
+							ID:      "test-app",
+							Info:    plugins.Info{Version: "0.5.0"},
+							Type:    plugins.TypeDataSource,
+							BuiltIn: true,
+							Module:  "/test-app/module.js",
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
@@ -645,11 +631,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:   "test-app",
-								Info: plugins.Info{Version: "0.5.0"},
-								Type: plugins.TypeDataSource,
-							},
+							ID:     "test-app",
+							Info:   plugins.Info{Version: "0.5.0"},
+							Type:   plugins.TypeDataSource,
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
@@ -671,12 +655,10 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 						JSONData: make(map[string]any),
 						Module:   "/test-app/module.js",
 						PluginMeta: &plugins.PluginMetaDTO{
-							Module: "/test-app/module.js",
-							JSONData: plugins.JSONData{
-								ID:   "test-app",
-								Info: plugins.Info{Version: "0.5.0"},
-								Type: plugins.TypeDataSource,
-							},
+							Module:          "/test-app/module.js",
+							ID:              "test-app",
+							Info:            plugins.Info{Version: "0.5.0"},
+							Type:            plugins.TypeDataSource,
 							LoadingStrategy: "script",
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
@@ -696,11 +678,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:   "test-app",
-								Info: plugins.Info{Version: "0.5.0"},
-								Type: plugins.TypePanel,
-							},
+							ID:     "test-app",
+							Info:   plugins.Info{Version: "0.5.0"},
+							Type:   plugins.TypePanel,
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
@@ -737,11 +717,9 @@ func TestIntegrationHTTPServer_GetFrontendSettings_translations(t *testing.T) {
 					PluginList: []pluginstore.Plugin{
 						{
 							Module: fmt.Sprintf("/%s/module.js", "test-app"),
-							JSONData: plugins.JSONData{
-								ID:   "test-app",
-								Info: plugins.Info{Version: "0.5.0"},
-								Type: plugins.TypeApp,
-							},
+							ID:     "test-app",
+							Info:   plugins.Info{Version: "0.5.0"},
+							Type:   plugins.TypeApp,
 							Translations: map[string]string{
 								"en-US": "public/plugins/test-app/locales/en-US/test-app.json",
 								"pt-BR": "public/plugins/test-app/locales/pt-BR/test-app.json",
@@ -833,8 +811,8 @@ func TestIntegrationHTTPServer_GetFrontendSettings_publicDashboardDataSourceFilt
 	pluginSettingsList := make(map[string]*pluginsettings.DTO, len(enabledPlugins))
 	for i, name := range enabledPlugins {
 		pluginList[i] = pluginstore.Plugin{
-			Module:          fmt.Sprintf("/%s/module.js", name),
-			JSONData:        plugins.JSONData{ID: name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource},
+			Module: fmt.Sprintf("/%s/module.js", name),
+			ID:     name, Info: plugins.Info{Version: "1.0.0"}, Type: plugins.TypeDataSource,
 			FS:              &pluginfakes.FakePluginFS{},
 			LoadingStrategy: plugins.LoadingStrategyScript,
 		}

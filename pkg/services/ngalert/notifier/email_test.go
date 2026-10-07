@@ -42,10 +42,8 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			name: "single alert with templated message",
 			alerts: []*types.Alert{
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 			messageTmpl: `Hi, this is a custom template.
@@ -64,16 +62,12 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			name: "multiple alerts with templated message",
 			alerts: []*types.Alert{
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 			messageTmpl: `Hi, this is a custom template.
@@ -93,16 +87,12 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			name: "empty message with alerts uses default template content",
 			alerts: []*types.Alert{
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "FiringOne", "severity": "warning"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "FiringTwo", "severity": "critical"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 			messageTmpl: "",
@@ -124,10 +114,8 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			name: "message containing HTML gets HTMLencoded",
 			alerts: []*types.Alert{
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 			messageTmpl: `<marquee>Hi, this is a custom template.</marquee>
@@ -146,10 +134,8 @@ func TestEmailNotifierIntegration(t *testing.T) {
 			name: "single alert with templated subject",
 			alerts: []*types.Alert{
 				{
-					Alert: model.Alert{
-						Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
-						Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
-					},
+					Labels:      model.LabelSet{"alertname": "AlwaysFiring", "severity": "warning"},
+					Annotations: model.LabelSet{"runbook_url": "http://fix.me", "__dashboardUid__": "abc", "__panelId__": "5"},
 				},
 			},
 			subjectTmpl: `This notification is {{ .Status }}!`,

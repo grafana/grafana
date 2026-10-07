@@ -355,8 +355,8 @@ func TestCreateMuteTimings(t *testing.T) {
 	}
 
 	expected := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test")},
-		Title:            "Test",
+		UID:   v1.TimeIntervalUID("Test"),
+		Title: "Test",
 		TimeIntervals: []timeinterval.TimeInterval{
 			{
 				Times: []timeinterval.TimeRange{
@@ -369,16 +369,16 @@ func TestCreateMuteTimings(t *testing.T) {
 	}
 	expectedProvenance := models.ProvenanceAPI
 	timing := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test"), Provenance: expectedProvenance},
-		Title:            expected.Title,
-		TimeIntervals:    expected.TimeIntervals,
+		UID: v1.TimeIntervalUID("Test"), Provenance: expectedProvenance,
+		Title:         expected.Title,
+		TimeIntervals: expected.TimeIntervals,
 	}
 
 	t.Run("returns ErrTimeIntervalInvalid if mute timings fail validation", func(t *testing.T) {
 		sut, _, _ := createMuteTimingSvcSut()
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{Provenance: models.ProvenanceFile},
-			Title:            "",
+			Provenance: models.ProvenanceFile,
+			Title:      "",
 		}
 
 		_, err := sut.CreateMuteTiming(context.Background(), timing, orgID)
@@ -512,8 +512,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
 	original := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test")},
-		Title:            "Test",
+		UID:   v1.TimeIntervalUID("Test"),
+		Title: "Test",
 	}
 	originalVersion := v1.TimeIntervalFingerprint(original)
 	initialConfig := func() *v1.AMConfigV1 {
@@ -538,8 +538,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 	}
 
 	expected := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test")},
-		Title:            "Test",
+		UID:   v1.TimeIntervalUID("Test"),
+		Title: "Test",
 		TimeIntervals: []timeinterval.TimeInterval{
 			{
 				Times: []timeinterval.TimeRange{
@@ -554,16 +554,16 @@ func TestUpdateMuteTimings(t *testing.T) {
 	expectedVersion := v1.TimeIntervalFingerprint(expected)
 	expectedUID := v1.TimeIntervalUID(expected.Title)
 	timing := v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID(expected.Title), Version: originalVersion, Provenance: expectedProvenance},
-		Title:            expected.Title,
-		TimeIntervals:    expected.TimeIntervals,
+		UID: v1.TimeIntervalUID(expected.Title), Version: originalVersion, Provenance: expectedProvenance,
+		Title:         expected.Title,
+		TimeIntervals: expected.TimeIntervals,
 	}
 
 	t.Run("rejects mute timings that fail validation", func(t *testing.T) {
 		sut, _, _ := createMuteTimingSvcSut()
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{Provenance: models.ProvenanceFile},
-			Title:            "",
+			Provenance: models.ProvenanceFile,
+			Title:      "",
 		}
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -599,8 +599,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 			return nil
 		}
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("Test2"), Provenance: expectedProvenance},
-			Title:            "Test",
+			UID: v1.TimeIntervalUID("Test2"), Provenance: expectedProvenance,
+			Title: "Test",
 			TimeIntervals: []timeinterval.TimeInterval{
 				{
 					Times: []timeinterval.TimeRange{
@@ -654,8 +654,8 @@ func TestUpdateMuteTimings(t *testing.T) {
 
 		t.Run("when only Name is specified", func(t *testing.T) {
 			timing := v1.TimeInterval{
-				ResourceMetadata: v1.ResourceMetadata{Provenance: expectedProvenance},
-				Title:            "not-found",
+				Provenance: expectedProvenance,
+				Title:      "not-found",
 			}
 
 			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -707,15 +707,13 @@ func TestUpdateMuteTimings(t *testing.T) {
 		t.Run("bypass optimistic concurrency check if version is empty", func(t *testing.T) {
 			store.Calls = nil
 			timing := v1.TimeInterval{
-				ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID(expected.Title), Provenance: expectedProvenance},
-				Title:            expected.Title,
+				UID: v1.TimeIntervalUID(expected.Title), Provenance: expectedProvenance,
+				Title: expected.Title,
 				TimeIntervals: []timeinterval.TimeInterval{
 					{Months: []timeinterval.MonthRange{
 						{
-							InclusiveRange: timeinterval.InclusiveRange{
-								Begin: 1,
-								End:   10,
-							},
+							Begin: 1,
+							End:   10,
 						}},
 					},
 				},
@@ -827,9 +825,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		interval := expected
 		interval.Title = "another-time-interval"
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance},
-			Title:            interval.Title,
-			TimeIntervals:    interval.TimeIntervals,
+			UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance,
+			Title:         interval.Title,
+			TimeIntervals: interval.TimeIntervals,
 		}
 
 		result, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -897,9 +895,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		interval := expected
 		interval.Title = "another-time-interval"
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance},
-			Title:            interval.Title,
-			TimeIntervals:    interval.TimeIntervals,
+			UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance,
+			Title:         interval.Title,
+			TimeIntervals: interval.TimeIntervals,
 		}
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -934,9 +932,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 		interval := expected
 		interval.Title = "another-time-interval"
 		timing := v1.TimeInterval{
-			ResourceMetadata: v1.ResourceMetadata{UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance},
-			Title:            interval.Title,
-			TimeIntervals:    interval.TimeIntervals,
+			UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance,
+			Title:         interval.Title,
+			TimeIntervals: interval.TimeIntervals,
 		}
 
 		_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -1032,9 +1030,9 @@ func TestUpdateMuteTimings(t *testing.T) {
 			interval := expected
 			interval.Title = "another-time-interval"
 			timing := v1.TimeInterval{
-				ResourceMetadata: v1.ResourceMetadata{UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance},
-				Title:            interval.Title,
-				TimeIntervals:    interval.TimeIntervals,
+				UID: expectedUID, Version: originalVersion, Provenance: expectedProvenance,
+				Title:         interval.Title,
+				TimeIntervals: interval.TimeIntervals,
 			}
 
 			_, err := sut.UpdateMuteTiming(context.Background(), timing, orgID)
@@ -1046,7 +1044,7 @@ func TestUpdateMuteTimings(t *testing.T) {
 func TestDeleteMuteTimings(t *testing.T) {
 	orgID := int64(1)
 
-	timingToDelete := v1.TimeInterval{ResourceMetadata: v1.ResourceMetadata{UID: v1.TimeIntervalUID("unused-timing")}, Title: "unused-timing"}
+	timingToDelete := v1.TimeInterval{UID: v1.TimeIntervalUID("unused-timing"), Title: "unused-timing"}
 	correctVersion := v1.TimeIntervalFingerprint(timingToDelete)
 	usedMuteTiming := "used-timing"
 	usedActiveTiming := "used-active-timing"

@@ -59,7 +59,7 @@ func TestPrepareObjectForStorageSearchErrors(t *testing.T) {
 			}
 			ctx := authlib.WithAuthInfo(context.Background(),
 				&identity.StaticRequester{UserID: 1, UserUID: "user-uid", Type: authlib.TypeUser})
-			dash := &dashv1.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "dash-a", Namespace: "stacks-1"}}
+			dash := &dashv1.Dashboard{Name: "dash-a", Namespace: "stacks-1"}
 			meta, err := utils.MetaAccessor(dash)
 			require.NoError(t, err)
 			meta.SetDeprecatedInternalID(42) // nolint:staticcheck

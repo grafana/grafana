@@ -2013,12 +2013,10 @@ func TestSearchProvisionedDashboardsThroughK8sRaw(t *testing.T) {
 	assert.Equal(t, []*dashboardProvisioningWithUID{
 		{
 			DashboardUID: "uid",
-			DashboardProvisioning: dashboards.DashboardProvisioning{
-				Name:       "test",
-				ExternalID: "path/to/file",
-				CheckSum:   "hash",
-				Updated:    provisioningTimestamp,
-			},
+			Name:         "test",
+			ExternalID:   "path/to/file",
+			CheckSum:     "hash",
+			Updated:      provisioningTimestamp,
 		},
 	}, res) // only should return the one provisioned dashboard
 	assert.Equal(t, "dash-db", query.Type) // query type should be added as dashboards only
@@ -2165,9 +2163,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				// Create test object
 				key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
 				obj := &dashboardv0.Dashboard{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: "dashboard.grafana.app/v0alpha1",
-					},
+					APIVersion: "dashboard.grafana.app/v0alpha1",
 				}
 				meta, err := utils.MetaAccessor(obj)
 				require.NoError(t, err)

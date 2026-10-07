@@ -29,51 +29,51 @@ func TestIntegrationTagsHandler(t *testing.T) {
 	annotations := []*annotationV0.Annotation{
 		// namespace default annotations
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment", "env-prod"}},
+			Name: "a-1", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment", "env-prod"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-2", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment", "env-staging"}},
+			Name: "a-2", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment", "env-staging"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-3", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"incident"}},
+			Name: "a-3", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"incident"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-4", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment"}},
+			Name: "a-4", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"deployment"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-5", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"release", "env-prod"}},
+			Name: "a-5", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"release", "env-prod"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-11", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"service_a", "servicexb"}},
+			Name: "a-11", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"service_a", "servicexb"}},
 		},
 		// namespace1 annotations
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-6", Namespace: "namespace1"},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1", "tag2"}},
+			Name: "a-6", Namespace: "namespace1",
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1", "tag2"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-7", Namespace: "namespace1"},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}},
+			Name: "a-7", Namespace: "namespace1",
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}},
 		},
 		// namespace2 annotations
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-8", Namespace: "namespace2"},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}},
+			Name: "a-8", Namespace: "namespace2",
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}},
 		},
 		// namespace3 annotations
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-9", Namespace: "namespace3"},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"aardvark", "zebra"}},
+			Name: "a-9", Namespace: "namespace3",
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"aardvark", "zebra"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-10", Namespace: "namespace3"},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"zebra"}},
+			Name: "a-10", Namespace: "namespace3",
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"zebra"}},
 		},
 	}
 	for _, anno := range annotations {
@@ -336,8 +336,8 @@ func TestIntegrationTagsHandler(t *testing.T) {
 func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
 	store := newTestPostgresStore(t)
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
-		Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"secret-canary"}},
+		Name: "a-1", Namespace: metav1.NamespaceDefault,
+		Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"secret-canary"}},
 	}
 	setupCtx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), anno.Namespace)
 	_, err := store.Create(setupCtx, anno)

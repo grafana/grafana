@@ -386,10 +386,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a 3rd party keeper
 		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Name:      "k1",
-			},
+			Namespace: "default",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},
@@ -399,10 +397,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value
 		sv := &secretv1beta1.SecureValue{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Name:      "sv-test",
-			},
+			Namespace: "default",
+			Name:      "sv-test",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{tokenSvcIdentity},
@@ -434,10 +430,8 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Activate a 3rd party keeper
 		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Name:      "k1",
-			},
+			Namespace: "default",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},
@@ -447,15 +441,13 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Inline secure values are identified by having OwnerReferences
 		sv := &secretv1beta1.SecureValue{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Name:      "sv-inline",
-				OwnerReferences: []v1.OwnerReference{{
-					APIVersion: "prometheus.datasource.grafana.app/v0alpha1",
-					Kind:       "DataSource",
-					Name:       "test-ds",
-				}},
-			},
+			Namespace: "default",
+			Name:      "sv-inline",
+			OwnerReferences: []v1.OwnerReference{{
+				APIVersion: "prometheus.datasource.grafana.app/v0alpha1",
+				Kind:       "DataSource",
+				Name:       "test-ds",
+			}},
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Decrypters:  []string{svcIdentity},

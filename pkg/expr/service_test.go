@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -261,7 +260,7 @@ func newMockQueryService(responses map[string]backend.DataResponse, queries []Qu
 	}
 	pCtxProvider := plugincontext.ProvideService(setting.NewCfg(), nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
+			{ID: "test"},
 		},
 	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
@@ -310,7 +309,7 @@ func TestTransformDataDegradedPipeline(t *testing.T) {
 		cfg.ExpressionsEnabled = true
 		pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "test"}},
+				{ID: "test"},
 			},
 		}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 
@@ -421,7 +420,7 @@ func TestTransformDataDegradedHiddenBrokenNode(t *testing.T) {
 	cfg.ExpressionsEnabled = true
 	pCtxProvider := plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: "test"}},
+			{ID: "test"},
 		},
 	}, &datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{}, nil, pluginconfig.NewFakePluginRequestConfigProvider())
 

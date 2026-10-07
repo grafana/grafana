@@ -139,7 +139,7 @@ func TestSubChildren_GeneralFolderSkipsGetterAndFiltersOnEmptyParent(t *testing.
 }
 
 func TestSubChildren_NamedFolderHitsGetterAndFiltersOnUID(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingSearchClient{
 		resp: childrenResponseWith([]*resourcepb.ResourceTableRow{
 			childRow("c1", "Child One"),
@@ -174,7 +174,7 @@ func TestSubChildren_GetterErrorPropagates(t *testing.T) {
 }
 
 func TestSubChildren_PaginationProducesContinue(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingSearchClient{
 		resp: childrenResponseWith([]*resourcepb.ResourceTableRow{
 			childRow("c1", "A"),
@@ -199,7 +199,7 @@ func TestSubChildren_PaginationProducesContinue(t *testing.T) {
 }
 
 func TestSubChildren_InvalidContinueRejected(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	rest := &subChildrenREST{getter: getter, searcher: &capturingSearchClient{}}
 
 	resp := &recordingResponder{}
@@ -212,7 +212,7 @@ func TestSubChildren_InvalidContinueRejected(t *testing.T) {
 }
 
 func TestSubChildren_SearchErrorSurfaces(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingSearchClient{err: errors.New("boom")}
 	rest := &subChildrenREST{getter: getter, searcher: search}
 
@@ -226,7 +226,7 @@ func TestSubChildren_SearchErrorSurfaces(t *testing.T) {
 }
 
 func TestSubChildren_EmptyResults(t *testing.T) {
-	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+	getter := &stubGetter{obj: &folders.Folder{Name: "parent"}}
 	search := &capturingSearchClient{resp: childrenResponseWith(nil, 0)}
 	rest := &subChildrenREST{getter: getter, searcher: search}
 

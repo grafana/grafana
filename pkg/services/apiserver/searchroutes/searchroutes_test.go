@@ -8,7 +8,6 @@ import (
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapiserver "k8s.io/apiserver/pkg/server"
@@ -333,8 +332,8 @@ func TestBuild_BuilderAdvertisedKindsUseOnlyStandardSearchFields(t *testing.T) {
 	gvr := gv.WithResource("widgets")
 
 	standard := &searchv0.SearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-		Fields:   []string{"title"},
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
+		Fields: []string{"title"},
 	}
 	_, errs := searchapi.TranslateSearchQuery(standard, gvr, "default", provider)
 	assert.Empty(t, errs)

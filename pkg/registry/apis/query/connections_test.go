@@ -13,7 +13,6 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	queryV1 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -45,9 +44,9 @@ func TestGetConnectionsPagination(t *testing.T) {
 		w := httptest.NewRecorder()
 
 		provider := &testConnectionsProvider{list: &queryV1.DataSourceConnectionList{
-			TypeMeta: metav1.TypeMeta{Kind: "DataSourceConnectionList", APIVersion: "v0alpha1"},
-			ListMeta: metav1.ListMeta{ResourceVersion: "42"},
-			Items:    items,
+			Kind: "DataSourceConnectionList", APIVersion: "v0alpha1",
+			ResourceVersion: "42",
+			Items:           items,
 		}}
 		builder := &QueryAPIBuilder{instanceProvider: mockInstanceProvider{}, connections: provider}
 
@@ -62,7 +61,7 @@ func TestGetConnectionsPagination(t *testing.T) {
 
 	// the max-limit is a high number (1000), so we need an array that is longer than that
 	items2500 := make([]queryV1.DataSourceConnection, 3000)
-	for i := 0; i < len(items2500); i++ {
+	for i := range items2500 {
 		items2500[i].Name = fmt.Sprintf("n_%d", i)
 	}
 

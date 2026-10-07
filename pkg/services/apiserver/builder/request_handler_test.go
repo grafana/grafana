@@ -39,7 +39,7 @@ func postRoute(path string, reached *string, name string) APIRouteHandler {
 		Path: path,
 		Spec: &spec3.PathProps{
 			Post: &spec3.Operation{
-				OperationProps: spec3.OperationProps{OperationId: "list" + name},
+				OperationId: "list" + name,
 			},
 		},
 		Handler: func(w http.ResponseWriter, _ *http.Request) {
@@ -167,12 +167,8 @@ func TestAugmentWebServices_DoesNotRejectUndeclaredAccept(t *testing.T) {
 	var reached string
 	route := postRoute("widgets/stream", &reached, "Stream")
 	route.Spec.Post.Responses = &spec3.Responses{
-		ResponsesProps: spec3.ResponsesProps{
-			Default: &spec3.Response{
-				ResponseProps: spec3.ResponseProps{
-					Content: map[string]*spec3.MediaType{"application/json": {}},
-				},
-			},
+		Default: &spec3.Response{
+			Content: map[string]*spec3.MediaType{"application/json": {}},
 		},
 	}
 	err := AugmentWebServicesWithCustomRoutes(container, nil, nil, enabledConfig(testGV),

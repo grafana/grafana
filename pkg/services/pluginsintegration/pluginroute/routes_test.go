@@ -131,7 +131,7 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 // that declares one loses that method, not the server.
 func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 	manifest := testManifest(t)
-	op := &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "unservable"}}
+	op := &spec3.Operation{OperationId: "unservable"}
 	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}
 	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op}
 	manifest.Versions[1].Kinds[0].Routes["/kindhead"] = spec3.PathProps{Head: op}
@@ -225,12 +225,10 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 		Plural: "ClusterKinds",
 		Scope:  kindstore.ClusterScope,
 		Routes: map[string]spec3.PathProps{
-			"/rebuild": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
+			"/rebuild": {Post: &spec3.Operation{
 				OperationId: "rebuildClusterKind",
-				Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-					Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-				}},
-			}}},
+				Responses: &spec3.Responses{
+					Default: &spec3.Response{Description: "OK"}}}},
 		},
 	})
 	// Reserved because the kind store serves <plural>/{name}/status itself.
@@ -276,14 +274,12 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 // A route that already documents a path parameter must not have it added twice;
 // the duplicate would be rejected when the web service is built.
 func TestWithPathParametersIsIdempotent(t *testing.T) {
-	declared := &spec3.Parameter{ParameterProps: spec3.ParameterProps{
-		Name: nameParameter, In: "path", Required: true, Description: "declared by the plugin",
-	}}
+	declared := &spec3.Parameter{
+		Name: nameParameter, In: "path", Required: true, Description: "declared by the plugin"}
 	props := spec3.PathProps{
-		Get: &spec3.Operation{OperationProps: spec3.OperationProps{
+		Get: &spec3.Operation{
 			Parameters: []*spec3.Parameter{declared},
-			Tags:       []string{"manifest"},
-		}},
+			Tags:       []string{"manifest"}},
 		// A nil operation is left alone rather than being materialised.
 		Post: nil,
 	}

@@ -251,9 +251,7 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 										Type: []string{"array"},
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"),
-												},
+												Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.Repository"),
 											},
 										},
 									},
@@ -277,9 +275,7 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 										Type: []string{"array"},
 										Items: &spec.SchemaOrArray{
 											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.Repository"),
-												},
+												Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.Repository"),
 											},
 										},
 									},
@@ -299,9 +295,7 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 							Type: []string{"object"},
 							AllOf: []spec.Schema{
 								{
-									SchemaProps: spec.SchemaProps{
-										Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BaseRepository"),
-									},
+									Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v0alpha1.BaseRepository"),
 								},
 							},
 						},
@@ -318,9 +312,7 @@ func TestReplaceOpenAPIVersion(t *testing.T) {
 							Type: []string{"object"},
 							AllOf: []spec.Schema{
 								{
-									SchemaProps: spec.SchemaProps{
-										Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.BaseRepository"),
-									},
+									Ref: spec.MustCreateRef("com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.BaseRepository"),
 								},
 							},
 						},
@@ -655,21 +647,15 @@ func TestReplaceOpenAPISpecVersion(t *testing.T) {
 							"/api/resources": {
 								PathProps: spec3.PathProps{
 									Get: &spec3.Operation{
-										OperationProps: spec3.OperationProps{
-											Responses: &spec3.Responses{
-												ResponsesProps: spec3.ResponsesProps{
-													StatusCodeResponses: map[int]*spec3.Response{
-														200: {
-															ResponseProps: spec3.ResponseProps{
-																Content: map[string]*spec3.MediaType{
-																	"application/json": {
-																		MediaTypeProps: spec3.MediaTypeProps{
-																			Schema: &spec.Schema{
-																				SchemaProps: spec.SchemaProps{
-																					Ref: spec.MustCreateRef("#/components/schemas/com.example.provisioning.v0alpha1.Resource"),
-																				},
-																			},
-																		},
+										Responses: &spec3.Responses{
+											StatusCodeResponses: map[int]*spec3.Response{
+												200: {
+													ResponseProps: spec3.ResponseProps{
+														Content: map[string]*spec3.MediaType{
+															"application/json": {
+																MediaTypeProps: spec3.MediaTypeProps{
+																	Schema: &spec.Schema{
+																		Ref: spec.MustCreateRef("#/components/schemas/com.example.provisioning.v0alpha1.Resource"),
 																	},
 																},
 															},
@@ -680,18 +666,12 @@ func TestReplaceOpenAPISpecVersion(t *testing.T) {
 										},
 									},
 									Post: &spec3.Operation{
-										OperationProps: spec3.OperationProps{
-											RequestBody: &spec3.RequestBody{
-												RequestBodyProps: spec3.RequestBodyProps{
-													Content: map[string]*spec3.MediaType{
-														"application/json": {
-															MediaTypeProps: spec3.MediaTypeProps{
-																Schema: &spec.Schema{
-																	SchemaProps: spec.SchemaProps{
-																		Ref: spec.MustCreateRef("#/components/schemas/com.example.provisioning.v0alpha1.Resource"),
-																	},
-																},
-															},
+										RequestBody: &spec3.RequestBody{
+											Content: map[string]*spec3.MediaType{
+												"application/json": {
+													MediaTypeProps: spec3.MediaTypeProps{
+														Schema: &spec.Schema{
+															Ref: spec.MustCreateRef("#/components/schemas/com.example.provisioning.v0alpha1.Resource"),
 														},
 													},
 												},

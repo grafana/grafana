@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
 
 	"github.com/grafana/authlib/types"
@@ -339,7 +338,7 @@ func TestValidateOnUpdate(t *testing.T) {
 }
 
 func TestValidateOnDelete(t *testing.T) {
-	team := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "team-a", Namespace: "org-1"}}
+	team := &iamv0alpha1.Team{Name: "team-a", Namespace: "org-1"}
 
 	t.Run("allows deleting a team that does not own folders", func(t *testing.T) {
 		searcher := &deleteValidationSearchClient{response: &resourcepb.ResourceSearchResponse{}}
@@ -528,8 +527,8 @@ func TestValidateTitleUniqueSearchErrors(t *testing.T) {
 func TestValidateOnCreate_TitleUniqueness(t *testing.T) {
 	requester := &identity.StaticRequester{Type: types.TypeServiceAccount, OrgRole: identity.RoleAdmin, Namespace: "stacks-1"}
 	newTeam := &iamv0alpha1.Team{
-		ObjectMeta: metav1.ObjectMeta{Name: "new-uid"},
-		Spec:       iamv0alpha1.TeamSpec{Title: "Engineering"},
+		Name: "new-uid",
+		Spec: iamv0alpha1.TeamSpec{Title: "Engineering"},
 	}
 
 	for _, tt := range []struct {
@@ -593,8 +592,8 @@ func TestValidateOnUpdate_TitleUniqueness(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := identity.WithRequester(t.Context(), requester)
-			old := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: tt.oldTitle}}
-			obj := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: tt.title}}
+			old := &iamv0alpha1.Team{Name: "uid-1", Spec: iamv0alpha1.TeamSpec{Title: tt.oldTitle}}
+			obj := &iamv0alpha1.Team{Name: "uid-1", Spec: iamv0alpha1.TeamSpec{Title: tt.title}}
 			backend := &fakeSearchBackend{hits: tt.hits}
 			err := ValidateOnUpdate(ctx, selectorForBackend(backend), obj, old, legacy.NoopExternalGroupReconciler{})
 			if tt.conflict {
@@ -613,10 +612,10 @@ func TestValidateOnUpdate_TitleUniqueness(t *testing.T) {
 
 	t.Run("hits reported without attributable rows is not a conflict", func(t *testing.T) {
 		ctx := identity.WithRequester(t.Context(), requester)
-		old := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "Old"}}
-		obj := &iamv0alpha1.Team{ObjectMeta: metav1.ObjectMeta{Name: "uid-1"}, Spec: iamv0alpha1.TeamSpec{Title: "New"}}
+		old := &iamv0alpha1.Team{Name: "uid-1", Spec: iamv0alpha1.TeamSpec{Title: "Old"}}
+		obj := &iamv0alpha1.Team{Name: "uid-1", Spec: iamv0alpha1.TeamSpec{Title: "New"}}
 		backend := &fakeSearchBackend{searchFunc: func(context.Context, SearchQuery) (*iamv0alpha1.GetSearchTeamsResponse, error) {
-			return &iamv0alpha1.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0alpha1.GetSearchTeamsBody{TotalHits: 1}}, nil
+			return &iamv0alpha1.GetSearchTeamsResponse{TotalHits: 1}, nil
 		}}
 		err := ValidateOnUpdate(ctx, selectorForBackend(backend), obj, old, legacy.NoopExternalGroupReconciler{})
 		require.NoError(t, err)

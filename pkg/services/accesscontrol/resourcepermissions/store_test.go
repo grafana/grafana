@@ -307,31 +307,25 @@ func TestIntegrationStore_SetResourcePermissions(t *testing.T) {
 			resourceAttribute: "uid",
 			commands: []SetResourcePermissionsCommand{
 				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
+					User:              accesscontrol.User{ID: 1},
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 				{
-					TeamID: 3,
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
+					TeamID:            3,
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 				{
-					BuiltinRole: "Admin",
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
+					BuiltinRole:       "Admin",
+					Actions:           []string{"datasources:query"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			},
 		},
@@ -764,39 +758,33 @@ func TestIntegrationStore_DeleteResourcePermissions(t *testing.T) {
 
 			_, err := store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
 				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query", "datasources:write"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
+					User:              accesscontrol.User{ID: 1},
+					Actions:           []string{"datasources:query", "datasources:write"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			}, ResourceHooks{})
 			require.NoError(t, err)
 
 			_, err = store.SetResourcePermissions(context.Background(), 1, []SetResourcePermissionsCommand{
 				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query", "datasources:write"},
-						Resource:          "datasources",
-						ResourceID:        "2",
-						ResourceAttribute: "uid",
-					},
+					User:              accesscontrol.User{ID: 1},
+					Actions:           []string{"datasources:query", "datasources:write"},
+					Resource:          "datasources",
+					ResourceID:        "2",
+					ResourceAttribute: "uid",
 				},
 			}, ResourceHooks{})
 			require.NoError(t, err)
 
 			_, err = store.SetResourcePermissions(context.Background(), 2, []SetResourcePermissionsCommand{
 				{
-					User: accesscontrol.User{ID: 1},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           []string{"datasources:query", "datasources:write"},
-						Resource:          "datasources",
-						ResourceID:        "1",
-						ResourceAttribute: "uid",
-					},
+					User:              accesscontrol.User{ID: 1},
+					Actions:           []string{"datasources:query", "datasources:write"},
+					Resource:          "datasources",
+					ResourceID:        "1",
+					ResourceAttribute: "uid",
 				},
 			}, ResourceHooks{})
 			require.NoError(t, err)
@@ -974,14 +962,12 @@ func TestIntegrationStore_setResourcePermission(t *testing.T) {
 			// Set new permission
 			_, err := store.SetResourcePermissions(context.Background(), test.orgID, []SetResourcePermissionsCommand{
 				{
-					User: accesscontrol.User{ID: test.userID},
-					SetResourcePermissionCommand: SetResourcePermissionCommand{
-						Actions:           test.actions,
-						Resource:          test.resource,
-						ResourceID:        test.resourceID,
-						ResourceAttribute: test.resourceAttribute,
-						Permission:        test.permission,
-					},
+					User:              accesscontrol.User{ID: test.userID},
+					Actions:           test.actions,
+					Resource:          test.resource,
+					ResourceID:        test.resourceID,
+					ResourceAttribute: test.resourceAttribute,
+					Permission:        test.permission,
 				},
 			}, ResourceHooks{})
 			require.NoError(t, err)

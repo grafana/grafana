@@ -21,12 +21,10 @@ import (
 var (
 	timeNow     = time.Now()
 	simpleAlert = amv2.PostableAlert{
-		Alert: amv2.Alert{
-			Labels: amv2.LabelSet{
-				alertingModels.RuleUIDLabel:    "rule uid",
-				prometheusModel.AlertNameLabel: "alert1",
-				"lbl1":                         "val1",
-			},
+		Labels: amv2.LabelSet{
+			alertingModels.RuleUIDLabel:    "rule uid",
+			prometheusModel.AlertNameLabel: "alert1",
+			"lbl1":                         "val1",
 		},
 		Annotations: amv2.LabelSet{
 			"ann1":                                "annv1",
@@ -39,12 +37,10 @@ var (
 		EndsAt:   strfmt.DateTime(timeNow.Add(time.Hour)), // Firing.
 	}
 	resolvedAlert = amv2.PostableAlert{
-		Alert: amv2.Alert{
-			Labels: amv2.LabelSet{
-				alertingModels.RuleUIDLabel:    "rule uid",
-				prometheusModel.AlertNameLabel: "alert1",
-				"lbl1":                         "val1",
-			},
+		Labels: amv2.LabelSet{
+			alertingModels.RuleUIDLabel:    "rule uid",
+			prometheusModel.AlertNameLabel: "alert1",
+			"lbl1":                         "val1",
 		},
 		Annotations: amv2.LabelSet{
 			"ann1":                                "annv1",
@@ -190,7 +186,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 	}, {
 		name: "GeneratorURL generation ",
 		input: apimodels.TestTemplatesConfigBodyParams{
-			Alerts:   []*amv2.PostableAlert{{Alert: amv2.Alert{GeneratorURL: "http://localhost:3000"}}},
+			Alerts:   []*amv2.PostableAlert{{GeneratorURL: "http://localhost:3000"}},
 			Name:     "slack.title",
 			Template: `{{ define "slack.title" }}{{ (index .Alerts 0 ).GeneratorURL }}{{ end }}`,
 		},
@@ -205,7 +201,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 	}, {
 		name: "Alerts scoped templated ",
 		input: apimodels.TestTemplatesConfigBodyParams{
-			Alerts: []*amv2.PostableAlert{{Alert: amv2.Alert{GeneratorURL: "http://localhost:3000"}}},
+			Alerts: []*amv2.PostableAlert{{GeneratorURL: "http://localhost:3000"}},
 			Name:   "slack.title",
 			Template: `{{ define "slack.title" }}
 	{{ range . }}
@@ -225,7 +221,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 	}, {
 		name: "Alert scoped templated ",
 		input: apimodels.TestTemplatesConfigBodyParams{
-			Alerts: []*amv2.PostableAlert{{Alert: amv2.Alert{GeneratorURL: "http://localhost:3000"}}},
+			Alerts: []*amv2.PostableAlert{{GeneratorURL: "http://localhost:3000"}},
 			Name:   "slack.title",
 			Template: `{{ define "slack.title" }}
 	Status: {{ .Status }}

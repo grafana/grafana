@@ -50,15 +50,11 @@ func TestUserK8sService_Create(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "some-uid",
-						Namespace:         "org-1",
-						CreationTimestamp: metav1.NewTime(now),
-					},
+					APIVersion:        v0alpha1.GroupVersion.Identifier(),
+					Kind:              "User",
+					Name:              "some-uid",
+					Namespace:         "org-1",
+					CreationTimestamp: metav1.NewTime(now),
 					Spec: v0alpha1.UserSpec{
 						Login: "jdoe",
 						Email: "jdoe@example.com",
@@ -91,14 +87,10 @@ func TestUserK8sService_Create(t *testing.T) {
 			},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "admin-uid",
-						Namespace: "org-2",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "admin-uid",
+					Namespace:  "org-2",
 					Spec: v0alpha1.UserSpec{
 						Login:         "admin-user",
 						Email:         "admin@example.com",
@@ -146,12 +138,10 @@ func TestUserK8sService_Create(t *testing.T) {
 				}
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
-					Spec:       sent.Spec,
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid", Namespace: "org-1",
+					Spec: sent.Spec,
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -181,15 +171,11 @@ func TestUserK8sService_Create(t *testing.T) {
 				assert.Equal(t, "explicit-uid", meta["name"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "explicit-uid",
-						Namespace: "org-1",
-					},
-					Spec: v0alpha1.UserSpec{Login: "user2"},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "explicit-uid",
+					Namespace:  "org-1",
+					Spec:       v0alpha1.UserSpec{Login: "user2"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -213,14 +199,10 @@ func TestUserK8sService_Create(t *testing.T) {
 				assert.Equal(t, "jdoe", spec["email"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "some-uid",
-						Namespace: "org-1",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid",
+					Namespace:  "org-1",
 					Spec: v0alpha1.UserSpec{
 						Login: "jdoe",
 						Email: "jdoe",
@@ -251,14 +233,10 @@ func TestUserK8sService_Create(t *testing.T) {
 				assert.Equal(t, "Viewer", spec["role"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "some-uid",
-						Namespace: "org-1",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid",
+					Namespace:  "org-1",
 					Spec: v0alpha1.UserSpec{
 						Login: "jdoe",
 						Email: "jdoe@example.com",
@@ -293,10 +271,10 @@ func TestUserK8sService_Create(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "k8s error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "k8s error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -404,16 +382,12 @@ func TestUserK8sService_GetByID(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 				u := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "admin-uid",
-						Namespace:         "org-2",
-						Labels:            map[string]string{"grafana.app/deprecatedInternalID": "7"},
-						CreationTimestamp: metav1.NewTime(now),
-					},
+					APIVersion:        v0alpha1.GroupVersion.Identifier(),
+					Kind:              "User",
+					Name:              "admin-uid",
+					Namespace:         "org-2",
+					Labels:            map[string]string{"grafana.app/deprecatedInternalID": "7"},
+					CreationTimestamp: metav1.NewTime(now),
 					Spec: v0alpha1.UserSpec{
 						Login:         "admin",
 						Email:         "admin@example.com",
@@ -470,10 +444,10 @@ func TestUserK8sService_GetByID(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "k8s error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "k8s error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -582,10 +556,10 @@ func TestUserK8sService_GetByUID(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Reason:   metav1.StatusReasonNotFound,
-					Code:     http.StatusNotFound,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Reason: metav1.StatusReasonNotFound,
+					Code:   http.StatusNotFound,
 				})
 			},
 			expectErr:   true,
@@ -599,10 +573,10 @@ func TestUserK8sService_GetByUID(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "k8s error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "k8s error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -656,16 +630,12 @@ func TestUserK8sService_GetByUID(t *testing.T) {
 func TestUserK8sService_ListByIdOrUID(t *testing.T) {
 	mkUser := func(uid string) v0alpha1.User {
 		return v0alpha1.User{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: v0alpha1.GroupVersion.Identifier(),
-				Kind:       "User",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      uid,
-				Namespace: "org-1",
-				Labels:    map[string]string{"grafana.app/deprecatedInternalID": "42"},
-			},
-			Spec: v0alpha1.UserSpec{Login: uid, Email: uid + "@example.com"},
+			APIVersion: v0alpha1.GroupVersion.Identifier(),
+			Kind:       "User",
+			Name:       uid,
+			Namespace:  "org-1",
+			Labels:     map[string]string{"grafana.app/deprecatedInternalID": "42"},
+			Spec:       v0alpha1.UserSpec{Login: uid, Email: uid + "@example.com"},
 		}
 	}
 
@@ -688,10 +658,10 @@ func TestUserK8sService_ListByIdOrUID(t *testing.T) {
 			}
 			w.WriteHeader(http.StatusNotFound)
 			_ = json.NewEncoder(w).Encode(metav1.Status{
-				TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-				Status:   metav1.StatusFailure,
-				Reason:   metav1.StatusReasonNotFound,
-				Code:     http.StatusNotFound,
+				APIVersion: "v1", Kind: "Status",
+				Status: metav1.StatusFailure,
+				Reason: metav1.StatusReasonNotFound,
+				Code:   http.StatusNotFound,
 			})
 		}
 	}
@@ -700,9 +670,9 @@ func TestUserK8sService_ListByIdOrUID(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(metav1.Status{
-			TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-			Status:   metav1.StatusFailure,
-			Code:     http.StatusInternalServerError,
+			APIVersion: "v1", Kind: "Status",
+			Status: metav1.StatusFailure,
+			Code:   http.StatusInternalServerError,
 		})
 	}
 
@@ -860,21 +830,15 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 				assert.Contains(t, r.URL.RawQuery, "fieldSelector=spec.email%3Djdoe%40example.com")
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 				resp := v0alpha1.UserList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
 					Items: []v0alpha1.User{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: v0alpha1.GroupVersion.Identifier(),
-								Kind:       "User",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name:              "some-uid",
-								Namespace:         "org-1",
-								CreationTimestamp: metav1.NewTime(now),
-							},
+							APIVersion:        v0alpha1.GroupVersion.Identifier(),
+							Kind:              "User",
+							Name:              "some-uid",
+							Namespace:         "org-1",
+							CreationTimestamp: metav1.NewTime(now),
 							Spec: v0alpha1.UserSpec{
 								Login: "jdoe",
 								Email: "jdoe@example.com",
@@ -906,20 +870,14 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				assert.Contains(t, r.URL.RawQuery, "fieldSelector=spec.email%3Djdoe%40example.com")
 				resp := v0alpha1.UserList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
 					Items: []v0alpha1.User{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: v0alpha1.GroupVersion.Identifier(),
-								Kind:       "User",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "some-uid",
-								Namespace: "org-1",
-							},
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+							Name:       "some-uid",
+							Namespace:  "org-1",
 							Spec: v0alpha1.UserSpec{
 								Login: "jdoe",
 								Email: "jdoe@example.com",
@@ -947,20 +905,14 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 			cmd:            &user.GetUserByEmailQuery{Email: "admin@example.com"},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				resp := v0alpha1.UserList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
 					Items: []v0alpha1.User{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: v0alpha1.GroupVersion.Identifier(),
-								Kind:       "User",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name:      "admin-uid",
-								Namespace: "org-2",
-							},
+							APIVersion: v0alpha1.GroupVersion.Identifier(),
+							Kind:       "User",
+							Name:       "admin-uid",
+							Namespace:  "org-2",
 							Spec: v0alpha1.UserSpec{
 								Login:         "admin",
 								Email:         "admin@example.com",
@@ -1010,10 +962,10 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "k8s error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "k8s error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -1074,11 +1026,9 @@ func TestUserK8sService_GetByEmail(t *testing.T) {
 func TestUserK8sService_GetByLogin(t *testing.T) {
 	userList := func(users ...v0alpha1.User) v0alpha1.UserList {
 		return v0alpha1.UserList{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: v0alpha1.GroupVersion.Identifier(),
-				Kind:       "User",
-			},
-			Items: users,
+			APIVersion: v0alpha1.GroupVersion.Identifier(),
+			Kind:       "User",
+			Items:      users,
 		}
 	}
 
@@ -1166,9 +1116,9 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Code:   http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -1189,9 +1139,9 @@ func TestUserK8sService_GetByLogin(t *testing.T) {
 						// Second call: login lookup returns error
 						w.WriteHeader(http.StatusInternalServerError)
 						_ = json.NewEncoder(w).Encode(metav1.Status{
-							TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-							Status:   metav1.StatusFailure,
-							Code:     http.StatusInternalServerError,
+							APIVersion: "v1", Kind: "Status",
+							Status: metav1.StatusFailure,
+							Code:   http.StatusInternalServerError,
 						})
 					}
 				}
@@ -1271,16 +1221,12 @@ func TestUserK8sService_Update(t *testing.T) {
 				if r.Method == http.MethodGet {
 					// List response
 					resp := v0alpha1.User{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: v0alpha1.GroupVersion.Identifier(),
-							Kind:       "User",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "some-uid",
-							Namespace: "org-1",
-							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "42"},
-						},
-						Spec: v0alpha1.UserSpec{Login: "jdoe", Email: "jdoe@example.com"},
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+						Name:       "some-uid",
+						Namespace:  "org-1",
+						Labels:     map[string]string{"grafana.app/deprecatedInternalID": "42"},
+						Spec:       v0alpha1.UserSpec{Login: "jdoe", Email: "jdoe@example.com"},
 					}
 					list := map[string]any{
 						"apiVersion": "v1",
@@ -1300,12 +1246,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				assert.Equal(t, "janedoe", spec["login"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
-					Spec:       v0alpha1.UserSpec{Login: "janedoe", Email: "jane@example.com", Title: "Jane Doe"},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid", Namespace: "org-1",
+					Spec: v0alpha1.UserSpec{Login: "janedoe", Email: "jane@example.com", Title: "Jane Doe"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -1324,16 +1268,12 @@ func TestUserK8sService_Update(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodGet {
 					resp := v0alpha1.User{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: v0alpha1.GroupVersion.Identifier(),
-							Kind:       "User",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "some-uid",
-							Namespace: "org-1",
-							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
-						},
-						Spec: v0alpha1.UserSpec{Login: "user7"},
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+						Name:       "some-uid",
+						Namespace:  "org-1",
+						Labels:     map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						Spec:       v0alpha1.UserSpec{Login: "user7"},
 					}
 					list := map[string]any{
 						"apiVersion": "v1",
@@ -1353,12 +1293,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				assert.Equal(t, false, spec["provisioned"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
-					Spec:       v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid", Namespace: "org-1",
+					Spec: v0alpha1.UserSpec{Login: "user7", Disabled: true, GrafanaAdmin: true},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -1377,16 +1315,12 @@ func TestUserK8sService_Update(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodGet {
 					resp := v0alpha1.User{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: v0alpha1.GroupVersion.Identifier(),
-							Kind:       "User",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "some-uid",
-							Namespace: "org-1",
-							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
-						},
-						Spec: v0alpha1.UserSpec{Login: "user7"},
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+						Name:       "some-uid",
+						Namespace:  "org-1",
+						Labels:     map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						Spec:       v0alpha1.UserSpec{Login: "user7"},
 					}
 					list := map[string]any{
 						"apiVersion": "v1",
@@ -1410,12 +1344,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				}
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
-					Spec:       sent.Spec,
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid", Namespace: "org-1",
+					Spec: sent.Spec,
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -1431,16 +1363,12 @@ func TestUserK8sService_Update(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodGet {
 					resp := v0alpha1.User{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: v0alpha1.GroupVersion.Identifier(),
-							Kind:       "User",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      "some-uid",
-							Namespace: "org-1",
-							Labels:    map[string]string{"grafana.app/deprecatedInternalID": "7"},
-						},
-						Spec: v0alpha1.UserSpec{Login: "user7", Role: "Admin"},
+						APIVersion: v0alpha1.GroupVersion.Identifier(),
+						Kind:       "User",
+						Name:       "some-uid",
+						Namespace:  "org-1",
+						Labels:     map[string]string{"grafana.app/deprecatedInternalID": "7"},
+						Spec:       v0alpha1.UserSpec{Login: "user7", Role: "Admin"},
 					}
 					list := map[string]any{
 						"apiVersion": "v1",
@@ -1457,12 +1385,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				assert.Equal(t, "Editor", spec["role"])
 
 				resp := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{Name: "some-uid", Namespace: "org-1"},
-					Spec:       v0alpha1.UserSpec{Login: "user7", Role: "Editor"},
+					APIVersion: v0alpha1.GroupVersion.Identifier(),
+					Kind:       "User",
+					Name:       "some-uid", Namespace: "org-1",
+					Spec: v0alpha1.UserSpec{Login: "user7", Role: "Editor"},
 				}
 				w.Header().Set("Content-Type", "application/json")
 				_ = json.NewEncoder(w).Encode(resp)
@@ -1507,14 +1433,14 @@ func TestUserK8sService_Update(t *testing.T) {
 			cmd:            &user.UpdateUserCommand{UserID: 5},
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				user1 := v0alpha1.User{
-					TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
-					ObjectMeta: metav1.ObjectMeta{Name: "uid-1", Namespace: "org-1"},
-					Spec:       v0alpha1.UserSpec{Login: "user-a"},
+					APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User",
+					Name: "uid-1", Namespace: "org-1",
+					Spec: v0alpha1.UserSpec{Login: "user-a"},
 				}
 				user2 := v0alpha1.User{
-					TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
-					ObjectMeta: metav1.ObjectMeta{Name: "uid-2", Namespace: "org-1"},
-					Spec:       v0alpha1.UserSpec{Login: "user-b"},
+					APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User",
+					Name: "uid-2", Namespace: "org-1",
+					Spec: v0alpha1.UserSpec{Login: "user-b"},
 				}
 				list := map[string]any{
 					"apiVersion": "v1",
@@ -1534,10 +1460,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "internal server error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "internal server error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -1549,9 +1475,9 @@ func TestUserK8sService_Update(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				if r.Method == http.MethodGet {
 					resp := v0alpha1.User{
-						TypeMeta:   metav1.TypeMeta{APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User"},
-						ObjectMeta: metav1.ObjectMeta{Name: "uid-1", Namespace: "org-1"},
-						Spec:       v0alpha1.UserSpec{Login: "user-a"},
+						APIVersion: v0alpha1.GroupVersion.Identifier(), Kind: "User",
+						Name: "uid-1", Namespace: "org-1",
+						Spec: v0alpha1.UserSpec{Login: "user-a"},
 					}
 					list := map[string]any{
 						"apiVersion": "v1",
@@ -1565,10 +1491,10 @@ func TestUserK8sService_Update(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusConflict)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "conflict",
-					Code:     http.StatusConflict,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "conflict",
+					Code:    http.StatusConflict,
 				})
 			},
 			expectErr: true,
@@ -1626,9 +1552,9 @@ func TestUserK8sService_Delete(t *testing.T) {
 				assert.Contains(t, r.URL.Path, "some-uid")
 				w.WriteHeader(http.StatusOK)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusSuccess,
-					Code:     http.StatusOK,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusSuccess,
+					Code:   http.StatusOK,
 				})
 			},
 		},
@@ -1671,10 +1597,10 @@ func TestUserK8sService_Delete(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "internal server error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "internal server error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -1695,10 +1621,10 @@ func TestUserK8sService_Delete(t *testing.T) {
 				}
 				w.WriteHeader(http.StatusConflict)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "conflict",
-					Code:     http.StatusConflict,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "conflict",
+					Code:    http.StatusConflict,
 				})
 			},
 			expectErr: true,
@@ -1852,9 +1778,9 @@ func TestUserK8sService_UpdateLastSeenAt(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Code:   http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -1956,11 +1882,9 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 		return func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			list := v0alpha1.UserList{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: v0alpha1.GroupVersion.Identifier(),
-					Kind:       "UserList",
-				},
-				Items: users,
+				APIVersion: v0alpha1.GroupVersion.Identifier(),
+				Kind:       "UserList",
+				Items:      users,
 			}
 			_ = json.NewEncoder(w).Encode(list)
 		}
@@ -2200,9 +2124,9 @@ func TestUserK8sService_GetSignedInUser(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Code:   http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -2361,16 +2285,12 @@ func TestUserK8sService_GetProfile(t *testing.T) {
 			serverResponse: func(w http.ResponseWriter, r *http.Request) {
 				now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
 				u := v0alpha1.User{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: v0alpha1.GroupVersion.Identifier(),
-						Kind:       "User",
-					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "admin-uid",
-						Namespace:         "org-2",
-						Labels:            map[string]string{"grafana.app/deprecatedInternalID": "7"},
-						CreationTimestamp: metav1.NewTime(now),
-					},
+					APIVersion:        v0alpha1.GroupVersion.Identifier(),
+					Kind:              "User",
+					Name:              "admin-uid",
+					Namespace:         "org-2",
+					Labels:            map[string]string{"grafana.app/deprecatedInternalID": "7"},
+					CreationTimestamp: metav1.NewTime(now),
 					Spec: v0alpha1.UserSpec{
 						Login:        "admin",
 						Email:        "admin@example.com",
@@ -2424,10 +2344,10 @@ func TestUserK8sService_GetProfile(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusNotFound)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Reason:   metav1.StatusReasonNotFound,
-					Code:     http.StatusNotFound,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Reason: metav1.StatusReasonNotFound,
+					Code:   http.StatusNotFound,
 				})
 			},
 			expectErr:   true,
@@ -2459,10 +2379,10 @@ func TestUserK8sService_GetProfile(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Message:  "k8s error",
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status:  metav1.StatusFailure,
+					Message: "k8s error",
+					Code:    http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -2647,9 +2567,9 @@ func TestUserK8sService_Search(t *testing.T) {
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(http.StatusInternalServerError)
 				_ = json.NewEncoder(w).Encode(metav1.Status{
-					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-					Status:   metav1.StatusFailure,
-					Code:     http.StatusInternalServerError,
+					APIVersion: "v1", Kind: "Status",
+					Status: metav1.StatusFailure,
+					Code:   http.StatusInternalServerError,
 				})
 			},
 			expectErr: true,
@@ -2716,15 +2636,11 @@ func TestUserK8sService_Search(t *testing.T) {
 
 func newTestK8sUser(uid, namespace, login, email string) v0alpha1.User {
 	return v0alpha1.User{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: v0alpha1.GroupVersion.Identifier(),
-			Kind:       "User",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      uid,
-			Namespace: namespace,
-			Labels:    map[string]string{"grafana.app/deprecatedInternalID": "42"},
-		},
+		APIVersion: v0alpha1.GroupVersion.Identifier(),
+		Kind:       "User",
+		Name:       uid,
+		Namespace:  namespace,
+		Labels:     map[string]string{"grafana.app/deprecatedInternalID": "42"},
 		Spec: v0alpha1.UserSpec{
 			Login:         login,
 			Email:         email,

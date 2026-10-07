@@ -279,7 +279,6 @@ func stripBOMReflect(v reflect.Value) {
 	case reflect.Struct:
 		// Recurse into all struct fields
 		for _, field := range v.Fields() {
-			field := field
 			if field.CanInterface() {
 				stripBOMReflect(field)
 			}

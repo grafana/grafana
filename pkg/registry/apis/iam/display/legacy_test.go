@@ -11,7 +11,6 @@ import (
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type fakeLegacyIdentityStore struct {
@@ -78,9 +77,9 @@ func TestLegacyDisplayProvider_GetDisplayList(t *testing.T) {
 	t.Run("user result is mapped to a Display with name fallback, avatar, and internal id", func(t *testing.T) {
 		store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{
 			Items: []common.UserWithRole{
-				{User: user.User{ID: 1, UID: "u1", Name: "Alice", Email: "alice@example.com"}},
-				{User: user.User{ID: 2, UID: "u2", Login: "bob"}},
-				{User: user.User{ID: 3, UID: "u3", Email: "carol@example.com"}},
+				{ID: 1, UID: "u1", Name: "Alice", Email: "alice@example.com"},
+				{ID: 2, UID: "u2", Login: "bob"},
+				{ID: 3, UID: "u3", Email: "carol@example.com"},
 			},
 		}}
 		p := NewLegacyDisplayProvider(store)
@@ -101,7 +100,7 @@ func TestLegacyDisplayProvider_GetDisplayList(t *testing.T) {
 	t.Run("service account users get the service-account identity type", func(t *testing.T) {
 		store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{
 			Items: []common.UserWithRole{
-				{User: user.User{ID: 10, UID: "sa1", Name: "svc", IsServiceAccount: true}},
+				{ID: 10, UID: "sa1", Name: "svc", IsServiceAccount: true},
 			},
 		}}
 		p := NewLegacyDisplayProvider(store)
@@ -116,7 +115,7 @@ func TestLegacyDisplayProvider_GetDisplayList(t *testing.T) {
 	t.Run("terminal display entries from key parsing are appended after store results", func(t *testing.T) {
 		store := &fakeLegacyIdentityStore{result: &legacy.ListUserResult{
 			Items: []common.UserWithRole{
-				{User: user.User{ID: 1, UID: "u1", Name: "Alice"}},
+				{ID: 1, UID: "u1", Name: "Alice"},
 			},
 		}}
 		p := NewLegacyDisplayProvider(store)

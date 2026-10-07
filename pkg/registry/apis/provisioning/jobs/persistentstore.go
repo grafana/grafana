@@ -549,14 +549,12 @@ func (s *persistentStore) Insert(ctx context.Context, namespace string, spec pro
 	// context, while background callers (repository controller, webhooks)
 	// establish the provisioning identity themselves before calling Insert.
 	job := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Labels: map[string]string{
-				LabelRepository: spec.Repository,
-			},
-			Annotations: webhookAttributionFromContext(ctx),
+		Namespace: namespace,
+		Labels: map[string]string{
+			LabelRepository: spec.Repository,
 		},
-		Spec: spec,
+		Annotations: webhookAttributionFromContext(ctx),
+		Spec:        spec,
 	}
 	if err := mutateJobAction(job); err != nil {
 		span.RecordError(err)

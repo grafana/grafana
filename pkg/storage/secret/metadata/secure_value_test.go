@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"pgregory.net/rapid"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -19,10 +18,8 @@ func TestModel(t *testing.T) {
 	t.Parallel()
 
 	sv := &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "sv1",
-			Namespace: "ns1",
-		},
+		Name:      "sv1",
+		Namespace: "ns1",
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "desc1",
 			Value:       new(secretv1beta1.NewExposedSecureValue("v1")),
@@ -163,10 +160,8 @@ func TestModel(t *testing.T) {
 		now := time.Now()
 
 		keeper, err := m.CreateKeeper(&secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns1",
-				Name:      "k1",
-			},
+			Namespace: "ns1",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},
@@ -180,10 +175,8 @@ func TestModel(t *testing.T) {
 
 		// Create a secure value that references the secret on the 3rd party secret store
 		sv, err := m.Create(now, &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sv1",
-				Namespace: "ns1",
-			},
+			Name:      "sv1",
+			Namespace: "ns1",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         new("ref1"),
@@ -381,10 +374,8 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 
 		// - Create a secret with k1
 		k1, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "n1",
-				Name:      "k1",
-			},
+			Namespace: "n1",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -396,7 +387,7 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 
 		value := secretv1beta1.NewExposedSecureValue("v1")
 		sv1, err := sut.CreateSv(t.Context(), testutils.CreateSvWithSv(&secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{Namespace: k1.Namespace, Name: "s1"},
+			Namespace: k1.Namespace, Name: "s1",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc",
 				Value:       &value,
@@ -407,10 +398,8 @@ func TestSecureValueServiceExampleBased(t *testing.T) {
 
 		// - Set a new keeper as active
 		k2, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "n1",
-				Name:      "k2",
-			},
+			Namespace: "n1",
+			Name:      "k2",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},

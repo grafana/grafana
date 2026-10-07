@@ -59,12 +59,10 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When sending emails synchronously", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"asdf@grafana.com"},
-				SingleEmail: false,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: false,
+			Template:    "welcome_on_signup",
 		}
 		err := ns.SendEmailCommandHandlerSync(context.Background(), cmd)
 		require.NoError(t, err)
@@ -78,12 +76,10 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When using Single Email mode with multiple recipients", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: true,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
+			SingleEmail: true,
+			Template:    "welcome_on_signup",
 		}
 
 		err := ns.SendEmailCommandHandlerSync(context.Background(), cmd)
@@ -95,12 +91,10 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When using Multi Email mode with multiple recipients", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: false,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
+			SingleEmail: false,
+			Template:    "welcome_on_signup",
 		}
 
 		err := ns.SendEmailCommandHandlerSync(context.Background(), cmd)
@@ -112,16 +106,14 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When attaching files to emails", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"asdf@grafana.com"},
-				SingleEmail: true,
-				Template:    "welcome_on_signup",
-				AttachedFiles: []*SendEmailAttachFile{
-					{
-						Name:    "attachment.txt",
-						Content: []byte("text file content"),
-					},
+			Subject:     "subject",
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: true,
+			Template:    "welcome_on_signup",
+			AttachedFiles: []*SendEmailAttachFile{
+				{
+					Name:    "attachment.txt",
+					Content: []byte("text file content"),
 				},
 			},
 		}
@@ -140,14 +132,12 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When embedding readers to emails", func(t *testing.T) {
 		ns, mailer := createSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"asdf@grafana.com"},
-				SingleEmail: true,
-				Template:    "welcome_on_signup",
-				EmbeddedContents: []EmbeddedContent{
-					{Name: "embed.jpg", Content: []byte("image content")},
-				},
+			Subject:     "subject",
+			To:          []string{"asdf@grafana.com"},
+			SingleEmail: true,
+			Template:    "welcome_on_signup",
+			EmbeddedContents: []EmbeddedContent{
+				{Name: "embed.jpg", Content: []byte("image content")},
 			},
 		}
 
@@ -168,12 +158,10 @@ func TestSendEmailSync(t *testing.T) {
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: true,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
+			SingleEmail: true,
+			Template:    "welcome_on_signup",
 		}
 
 		err = ns.SendEmailCommandHandlerSync(context.Background(), cmd)
@@ -188,12 +176,10 @@ func TestSendEmailSync(t *testing.T) {
 		ns, mailer, err := createSutWithConfig(t, bus, cfg)
 		require.NoError(t, err)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: false,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
+			SingleEmail: false,
+			Template:    "welcome_on_signup",
 		}
 
 		err = ns.SendEmailCommandHandlerSync(context.Background(), cmd)
@@ -205,12 +191,10 @@ func TestSendEmailSync(t *testing.T) {
 	t.Run("When SMTP dialer is disconnected", func(t *testing.T) {
 		ns := createDisconnectedSut(t, bus)
 		cmd := &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:     "subject",
-				To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
-				SingleEmail: false,
-				Template:    "welcome_on_signup",
-			},
+			Subject:     "subject",
+			To:          []string{"1@grafana.com", "2@grafana.com", "3@grafana.com"},
+			SingleEmail: false,
+			Template:    "welcome_on_signup",
 		}
 
 		err := ns.SendEmailCommandHandlerSync(context.Background(), cmd)
@@ -306,11 +290,9 @@ func TestSendEmailFollowsLiveSettings(t *testing.T) {
 	bus := newBus(t)
 	newCmd := func() *SendEmailCommandSync {
 		return &SendEmailCommandSync{
-			SendEmailCommand: SendEmailCommand{
-				Subject:  "subject",
-				To:       []string{"asdf@grafana.com"},
-				Template: "welcome_on_signup",
-			},
+			Subject:  "subject",
+			To:       []string{"asdf@grafana.com"},
+			Template: "welcome_on_signup",
 		}
 	}
 

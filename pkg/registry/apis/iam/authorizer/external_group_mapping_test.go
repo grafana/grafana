@@ -15,7 +15,7 @@ import (
 
 func newExternalGroupMapping(teamName, name string) *iamv0.ExternalGroupMapping {
 	return &iamv0.ExternalGroupMapping{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "org-2", Name: name},
+		Namespace: "org-2", Name: name,
 		Spec: iamv0.ExternalGroupMappingSpec{
 			TeamRef: iamv0.ExternalGroupMappingTeamRef{
 				Name: teamName,

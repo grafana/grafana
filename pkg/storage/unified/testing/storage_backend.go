@@ -11,7 +11,6 @@ import (
 	"time"
 	"uuid"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -121,10 +120,8 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 
 func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "testuser",
-		},
-		Rest: authn.AccessTokenClaims{},
+		Subject: "testuser",
+		Rest:    authn.AccessTokenClaims{},
 	}))
 
 	server := newServer(t, backend)
@@ -1431,10 +1428,8 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 
 func runTestIntegrationBackendCreateNewResource(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "testuser",
-		},
-		Rest: authn.AccessTokenClaims{},
+		Subject: "testuser",
+		Rest:    authn.AccessTokenClaims{},
 	}))
 
 	server := newServer(t, backend)
@@ -2120,8 +2115,8 @@ func runTestIntegrationBackendClusterScopedResources(t *testing.T, backend resou
 // until the resource is recreated.
 func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: "testuser"},
-		Rest:   authn.AccessTokenClaims{},
+		Subject: "testuser",
+		Rest:    authn.AccessTokenClaims{},
 	}))
 	ns := nsPrefix + "-read-rv"
 	key := &resourcepb.ResourceKey{
@@ -2205,10 +2200,8 @@ func runTestIntegrationBackendReadAtRVEdgeCases(t *testing.T, backend resource.S
 // status codes, reasons, and details.
 func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
 	ctx := types.WithAuthInfo(testutil.NewTestContext(t, time.Now().Add(30*time.Second)), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "testuser",
-		},
-		Rest: authn.AccessTokenClaims{},
+		Subject: "testuser",
+		Rest:    authn.AccessTokenClaims{},
 	}))
 
 	server := newServer(t, backend)

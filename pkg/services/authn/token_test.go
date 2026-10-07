@@ -80,8 +80,8 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 	}
 	validClaims := func() authnlib.Claims[authnlib.AccessTokenClaims] {
 		return authnlib.Claims[authnlib.AccessTokenClaims]{
-			Claims: jwt.Claims{Subject: "access-policy:policy-1", Audience: jwt.Audience{"grafana"}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour))},
-			Rest:   authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
+			Subject: "access-policy:policy-1", Audience: jwt.Audience{"grafana"}, Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
+			Rest: authnlib.AccessTokenClaims{Namespace: "stacks-5457", Permissions: []string{"plugins.grafana.app:*"}, DelegatedPermissions: []string{"plugins.grafana.app/plugins:get"}, ServiceIdentity: "edge"},
 		}
 	}
 	for _, prefix := range []string{"", "Bearer "} {
@@ -120,7 +120,7 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			claims.Rest.Actor = &authnlib.ActorClaims{Subject: "access-policy:intermediate", Actor: &authnlib.ActorClaims{
 				Subject:         types.NewTypeID(typ, "42"),
 				ServiceIdentity: "origin",
-				IDTokenClaims:   authnlib.IDTokenClaims{Type: typ, Identifier: "user-uid", Username: "alice", Email: "alice@example.com", EmailVerified: true, Groups: []string{"team-1"}},
+				Type:            typ, Identifier: "user-uid", Username: "alice", Email: "alice@example.com", EmailVerified: true, Groups: []string{"team-1"},
 			}}
 			requester, err := authenticator.AuthenticateToken(t.Context(), sign(claims, key, authnlib.TokenTypeAccess))
 			require.NoError(t, err)
@@ -158,14 +158,14 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 			claims := validClaims()
 			claims.Rest.Namespace = "org-12"
 			claims.Rest.Actor = &authnlib.ActorClaims{
-				Subject:       types.NewTypeID(tc.typ, "42"),
-				IDTokenClaims: authnlib.IDTokenClaims{Type: tc.typ, Identifier: "actor-uid", Role: string(tc.role)},
+				Subject: types.NewTypeID(tc.typ, "42"),
+				Type:    tc.typ, Identifier: "actor-uid", Role: string(tc.role),
 			}
 			if tc.nested {
 				claims.Rest.Actor = &authnlib.ActorClaims{
-					Subject:       "access-policy:intermediate",
-					IDTokenClaims: authnlib.IDTokenClaims{Role: string(org.RoleEditor)},
-					Actor:         claims.Rest.Actor,
+					Subject: "access-policy:intermediate",
+					Role:    string(org.RoleEditor),
+					Actor:   claims.Rest.Actor,
 				}
 			}
 			requester, err := authenticator.AuthenticateToken(t.Context(), sign(claims, key, authnlib.TokenTypeAccess))
@@ -195,14 +195,14 @@ func TestGrafanaTokenAuthenticator(t *testing.T) {
 		{"malformed subject", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) { c.Subject = "invalid" }},
 		{"malformed namespace", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) { c.Rest.Namespace = "stacks-invalid" }},
 		{"actor type mismatch", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) {
-			c.Rest.Actor = &authnlib.ActorClaims{Subject: "service-account:42", IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser, Identifier: "user-uid"}}
+			c.Rest.Actor = &authnlib.ActorClaims{Subject: "service-account:42", Type: types.TypeUser, Identifier: "user-uid"}
 		}},
 		{"missing actor identifier", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) {
-			c.Rest.Actor = &authnlib.ActorClaims{Subject: "user:42", IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser}}
+			c.Rest.Actor = &authnlib.ActorClaims{Subject: "user:42", Type: types.TypeUser}
 		}},
 		{"invalid namespace", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) { c.Rest.Namespace = "" }},
 		{"invalid actor", func(c *authnlib.Claims[authnlib.AccessTokenClaims]) {
-			c.Rest.Actor = &authnlib.ActorClaims{Subject: "invalid", IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser}}
+			c.Rest.Actor = &authnlib.ActorClaims{Subject: "invalid", Type: types.TypeUser}
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

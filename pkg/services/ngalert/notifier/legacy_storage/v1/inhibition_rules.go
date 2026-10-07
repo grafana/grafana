@@ -85,10 +85,8 @@ func NewInhibitionRule(
 	provenance models.Provenance,
 ) InhibitionRule {
 	ir := InhibitionRule{
-		ResourceMetadata: ResourceMetadata{
-			UID:        ResourceUID(uid),
-			Provenance: provenance,
-		},
+		UID:            ResourceUID(uid),
+		Provenance:     provenance,
 		SourceMatchers: sourceMatchers,
 		TargetMatchers: targetMatchers,
 		Equal:          equal,

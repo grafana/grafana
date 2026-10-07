@@ -56,9 +56,7 @@ var _ marketplacelicensing.Licensing = (*fakeMarketplaceLicensing)(nil)
 func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	t.Run("backend datasource with license", func(t *testing.T) {
 		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID: "test",
-			},
+			ID: "test",
 		}
 
 		licensing := &pluginfakes.FakeLicensingService{
@@ -202,7 +200,7 @@ func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 				GrafanaAppURL:               tc.appURL,
 			}, tc.license, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(tc.appURL))
 
-			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}})
+			envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{ID: tc.pluginID})
 			license, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 			appURL, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
 
@@ -231,7 +229,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 
 	t.Run("prepares the environment for the plugin and uses its identity", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{ID: "acme-widget"})
 
 		require.Equal(t, "acme-widget", environment.preparedWith)
 		require.Equal(t, 1, environment.prepareCalls)
@@ -243,7 +241,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 	t.Run("passes selected token verbatim with path when available", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 		environment.token = " token\n"
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{ID: "acme-widget"})
 
 		require.Equal(t, " token\n", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
 		require.NotEmpty(t, getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_PATH"))
@@ -254,7 +252,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 		environment.token = "database-token"
 		provider := NewEnvVarsProvider(&PluginInstanceCfg{Features: featuremgmt.WithFeatures(featuremgmt.FlagPluginsMarketplaceLicensing)}, &pluginfakes.FakeLicensingService{ValidLicense: true}, &fakeSSOSettingsProvider{}, environment)
-		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{ID: "acme-widget"})
 
 		require.Equal(t, "database-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
 		require.Equal(t, 1, environment.prepareCalls)
@@ -266,7 +264,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		environment := newTestMarketplaceLicensing("https://grafana.example.com/")
 		environment.token = "partial-token"
 		environment.prepareErr = errors.New("prepare environment")
-		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-widget"}})
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), &plugins.Plugin{ID: "acme-widget"})
 
 		licensePath, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 		appURL, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
@@ -320,7 +318,7 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 					MarketplaceLicenseDirectory: tc.directory,
 				}, tc.license, &fakeSSOSettingsProvider{}, environment)
 
-				envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{JSONData: plugins.JSONData{ID: tc.pluginID}})
+				envVars := provider.PluginEnvVars(context.Background(), &plugins.Plugin{ID: tc.pluginID})
 				require.Zero(t, environment.prepareCalls)
 				_, hasLicense := getEnvVarWithExists(envVars, "GF_MARKETPLACE_LICENSE_PATH")
 				_, hasAppURL := getEnvVarWithExists(envVars, "GF_MARKETPLACE_APP_URL")
@@ -347,9 +345,7 @@ func TestPluginEnvVarsProvider_skipHostEnvVars(t *testing.T) {
 	t.Setenv(envVarName, envVarValue)
 
 	p := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "test",
-		},
+		ID: "test",
 	}
 
 	t.Run("without FlagPluginsSkipHostEnvVars should not populate host env vars", func(t *testing.T) {
@@ -419,13 +415,11 @@ func TestPluginEnvVarsProvider_tracingEnvironmentVariables(t *testing.T) {
 	const pluginID = "plugin_id"
 
 	defaultPlugin := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   pluginID,
-			Info: plugins.Info{Version: "1.0.0"},
-		},
+		ID:   pluginID,
+		Info: plugins.Info{Version: "1.0.0"},
 	}
 	pluginWithoutVersion := &plugins.Plugin{
-		JSONData: plugins.JSONData{ID: pluginID},
+		ID: pluginID,
 	}
 
 	defaultOTelCfg := config.OpenTelemetryCfg{
@@ -786,10 +780,8 @@ func getEnvVar(vars []string, wanted string) string {
 func TestPluginEnvVarsProvider_authEnvVars(t *testing.T) {
 	t.Run("backend datasource with auth registration", func(t *testing.T) {
 		p := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:  "test",
-				IAM: &auth.IAM{},
-			},
+			ID:  "test",
+			IAM: &auth.IAM{},
 			ExternalService: &auth.ExternalService{
 				ClientID:     "clientID",
 				ClientSecret: "clientSecret",
@@ -900,9 +892,7 @@ func TestPluginEnvVarsProvider_awsEnvVars(t *testing.T) {
 			}
 
 			p := &plugins.Plugin{
-				JSONData: plugins.JSONData{
-					ID: tc.pluginID,
-				},
+				ID: tc.pluginID,
 			}
 			cfg := &PluginInstanceCfg{
 				AWSAssumeRoleEnabled:      false,
@@ -1244,9 +1234,7 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 			}
 
 			p := &plugins.Plugin{
-				JSONData: plugins.JSONData{
-					ID: tc.pluginID,
-				},
+				ID: tc.pluginID,
 			}
 			cfg := &setting.Cfg{
 				Raw: ini.Empty(),

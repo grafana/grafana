@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
@@ -50,8 +49,8 @@ func TestConfigReader(t *testing.T) {
 	t.Run("Can read correct properties", func(t *testing.T) {
 		pm := &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "test-plugin"}},
-				{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
+				{ID: "test-plugin"},
+				{ID: "test-plugin-2"},
 			},
 		}
 

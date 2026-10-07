@@ -103,10 +103,8 @@ func TestCrud(t *testing.T) {
 
 		ref := "path-to-secret"
 		sv := &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sv1",
-				Namespace: "ns1",
-			},
+			Name:      "sv1",
+			Namespace: "ns1",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
 				Ref:         &ref,
@@ -123,10 +121,8 @@ func TestCrud(t *testing.T) {
 
 		// Create a 3rd party keeper
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "k1",
-				Namespace: "ns1",
-			},
+			Name:      "k1",
+			Namespace: "ns1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "desc",
 				Aws: &secretv1beta1.KeeperAWSConfig{
@@ -159,10 +155,8 @@ func TestCrud(t *testing.T) {
 
 		// Create a keeper because references cannot be used with the system keeper
 		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "k1",
-			},
+			Namespace: "ns",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},
@@ -185,10 +179,8 @@ func TestCrud(t *testing.T) {
 
 		// Create a 3rd party keeper and set it as active in the namespace.
 		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: ns,
-				Name:      "k1",
-			},
+			Namespace: ns,
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},
@@ -497,10 +489,8 @@ func Test_SetAsActive(t *testing.T) {
 
 		// Create a new keeper
 		keeper, err := sut.KeeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "ns",
-				Name:      "k1",
-			},
+			Namespace: "ns",
+			Name:      "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},

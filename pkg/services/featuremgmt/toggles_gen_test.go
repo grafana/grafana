@@ -85,10 +85,8 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 
 	featuresFile := "toggles_gen.json"
 	current := featuretoggleapi.FeatureList{
-		TypeMeta: v1.TypeMeta{
-			Kind:       "FeatureList",
-			APIVersion: featuretoggleapi.APIVERSION,
-		},
+		Kind:       "FeatureList",
+		APIVersion: featuretoggleapi.APIVERSION,
 	}
 	existing := featuretoggleapi.FeatureList{}
 	body, err := os.ReadFile(featuresFile)
@@ -135,12 +133,10 @@ func readFeatureList(t *testing.T) map[string]featuretoggleapi.Feature {
 	// New flags not in the existing list
 	for k, v := range lookup {
 		current.Items = append(current.Items, featuretoggleapi.Feature{
-			ObjectMeta: v1.ObjectMeta{
-				Name:              k,
-				CreationTimestamp: created,
-				ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
-			},
-			Spec: v,
+			Name:              k,
+			CreationTimestamp: created,
+			ResourceVersion:   fmt.Sprintf("%d", created.UnixMilli()),
+			Spec:              v,
 		})
 	}
 

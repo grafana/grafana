@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 )
 
@@ -421,14 +420,10 @@ func itemToAnnotation(item *annotations.Item) (*annotationV0.Annotation, error) 
 	}
 
 	anno := &annotationV0.Annotation{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: annotationV0.GroupVersion.String(),
-			Kind:       annotationV0.AnnotationKind().Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "a-",
-		},
-		Spec: spec,
+		APIVersion:   annotationV0.GroupVersion.String(),
+		Kind:         annotationV0.AnnotationKind().Kind(),
+		GenerateName: "a-",
+		Spec:         spec,
 	}
 
 	if item.Data != nil {

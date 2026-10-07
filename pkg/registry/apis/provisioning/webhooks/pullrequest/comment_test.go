@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -26,8 +25,8 @@ func TestCommenter_UnsupportedFork(t *testing.T) {
 	repo.On("CommentPullRequest", mock.Anything, 123, string(expected)).Return(nil).Once()
 
 	repo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "org-2"},
-		Spec:       v0alpha1.RepositorySpec{Title: "My Repo"},
+		Name: "my-repo", Namespace: "org-2",
+		Spec: v0alpha1.RepositorySpec{Title: "My Repo"},
 	}).Once()
 	urls := URLProvider{
 		Internal: func(_ context.Context, namespace string) string {

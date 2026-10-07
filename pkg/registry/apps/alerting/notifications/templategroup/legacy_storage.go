@@ -222,13 +222,11 @@ func (s *legacyStorage) defaultTemplate() (v1.TemplateGroup, error) {
 	}
 
 	dto := v1.TemplateGroup{
-		Title: model.DefaultTemplateTitle, // User friendly name.
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(defaultTemplate.Name),
-			Provenance: ngmodels.Provenance("system"),
-		},
-		Content: defaultTemplate.Template,
-		Kind:    v1.TemplateKindGrafana,
+		Title:      model.DefaultTemplateTitle, // User friendly name.
+		UID:        v1.ResourceUID(defaultTemplate.Name),
+		Provenance: ngmodels.Provenance("system"),
+		Content:    defaultTemplate.Template,
+		Kind:       v1.TemplateKindGrafana,
 	}
 
 	return dto, nil

@@ -268,9 +268,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("invalid name", func(t *testing.T) {
 		sv := &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: objectMeta.Namespace,
-			},
+			Namespace: objectMeta.Namespace,
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Ref:         new("ref"),
@@ -295,9 +293,7 @@ func TestValidateSecureValue(t *testing.T) {
 
 	t.Run("invalid namespace", func(t *testing.T) {
 		sv := &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: objectMeta.Name,
-			},
+			Name: objectMeta.Name,
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "description",
 				Ref:         new("ref"),

@@ -546,25 +546,23 @@ func (s *legacySQLStore) CreateUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		createdUser = common.UserWithRole{
-			User: user.User{
-				ID:               userID,
-				UID:              cmd.UID,
-				Login:            cmd.Login,
-				Email:            cmd.Email,
-				Name:             cmd.Name,
-				OrgID:            cmd.OrgID,
-				IsAdmin:          cmd.IsAdmin,
-				IsDisabled:       cmd.IsDisabled,
-				EmailVerified:    cmd.EmailVerified,
-				IsProvisioned:    cmd.IsProvisioned,
-				Salt:             cmd.Salt,
-				Rands:            cmd.Rands,
-				Created:          cmd.Created.Time,
-				Updated:          cmd.Updated.Time,
-				LastSeenAt:       cmd.LastSeenAt.Time,
-				IsServiceAccount: false,
-			},
-			Role: cmd.Role,
+			ID:               userID,
+			UID:              cmd.UID,
+			Login:            cmd.Login,
+			Email:            cmd.Email,
+			Name:             cmd.Name,
+			OrgID:            cmd.OrgID,
+			IsAdmin:          cmd.IsAdmin,
+			IsDisabled:       cmd.IsDisabled,
+			EmailVerified:    cmd.EmailVerified,
+			IsProvisioned:    cmd.IsProvisioned,
+			Salt:             cmd.Salt,
+			Rands:            cmd.Rands,
+			Created:          cmd.Created.Time,
+			Updated:          cmd.Updated.Time,
+			LastSeenAt:       cmd.LastSeenAt.Time,
+			IsServiceAccount: false,
+			Role:             cmd.Role,
 		}
 
 		return nil
@@ -868,19 +866,17 @@ func (s *legacySQLStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 		}
 
 		updatedUser = common.UserWithRole{
-			User: user.User{
-				ID:            userInternalID.ID,
-				UID:           cmd.UID,
-				Login:         cmd.Login,
-				Email:         cmd.Email,
-				Name:          cmd.Name,
-				OrgID:         ns.OrgID,
-				IsAdmin:       cmd.IsAdmin,
-				IsDisabled:    cmd.IsDisabled,
-				EmailVerified: cmd.EmailVerified,
-				Updated:       cmd.Updated.Time,
-			},
-			Role: cmd.Role,
+			ID:            userInternalID.ID,
+			UID:           cmd.UID,
+			Login:         cmd.Login,
+			Email:         cmd.Email,
+			Name:          cmd.Name,
+			OrgID:         ns.OrgID,
+			IsAdmin:       cmd.IsAdmin,
+			IsDisabled:    cmd.IsDisabled,
+			EmailVerified: cmd.EmailVerified,
+			Updated:       cmd.Updated.Time,
+			Role:          cmd.Role,
 		}
 
 		return nil

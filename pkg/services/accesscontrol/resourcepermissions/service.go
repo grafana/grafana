@@ -427,17 +427,15 @@ func (s *Service) SetPermissions(
 		}
 
 		dbCommands = append(dbCommands, SetResourcePermissionsCommand{
-			User:        accesscontrol.User{ID: cmd.UserID},
-			TeamID:      cmd.TeamID,
-			BuiltinRole: cmd.BuiltinRole,
-			SetResourcePermissionCommand: SetResourcePermissionCommand{
-				Actions:           actions,
-				Resource:          s.scopeResource(),
-				ResourceID:        resourceID,
-				ResourceAttribute: s.options.ResourceAttribute,
-				Permission:        cmd.Permission,
-				DatasourceType:    datasourceType,
-			},
+			User:              accesscontrol.User{ID: cmd.UserID},
+			TeamID:            cmd.TeamID,
+			BuiltinRole:       cmd.BuiltinRole,
+			Actions:           actions,
+			Resource:          s.scopeResource(),
+			ResourceID:        resourceID,
+			ResourceAttribute: s.options.ResourceAttribute,
+			Permission:        cmd.Permission,
+			DatasourceType:    datasourceType,
 		})
 	}
 

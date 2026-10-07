@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
 	alertingrulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
@@ -101,8 +100,8 @@ func (c *cfgStore) UpdateStatus(ctx context.Context, orgID int64, compute func(p
 			// Create today; a future migration to a real /status subresource would
 			// silently drop this -- at that point swap to UpdateStatus.
 			r := &alertingrulesv0alpha1.Config{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName},
-				Status:     compute(nil),
+				Namespace: ns, Name: alertingrulesv0alpha1.ConfigSingletonName,
+				Status: compute(nil),
 			}
 			if _, createErr := client.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
 				// AlreadyExists -> another writer raced us. Surface as a conflict so

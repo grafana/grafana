@@ -112,7 +112,7 @@ func TestSettingsCreate(t *testing.T) {
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	input := &apppluginV0.Settings{
-		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+		Name: "instance", Namespace: "default",
 		Spec: apppluginV0.SettingsSpec{
 			Enabled: true,
 			Pinned:  true,
@@ -133,7 +133,7 @@ func TestSettingsCreate_DryRunDoesNotPersist(t *testing.T) {
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	input := &apppluginV0.Settings{
-		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+		Name: "instance", Namespace: "default",
 		Spec: apppluginV0.SettingsSpec{
 			Enabled: true,
 			Pinned:  true,
@@ -154,7 +154,7 @@ func TestSettingsCreate_WithValidation(t *testing.T) {
 
 	ctx := request.WithNamespace(context.Background(), "default")
 	input := &apppluginV0.Settings{
-		ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+		Name: "instance", Namespace: "default",
 	}
 
 	validationErr := apierrors.NewBadRequest("validation failed")
@@ -181,7 +181,7 @@ func TestSettingsUpdate(t *testing.T) {
 
 	updater := rest.DefaultUpdatedObjectInfo(
 		&apppluginV0.Settings{
-			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+			Name: "instance", Namespace: "default",
 			Spec: apppluginV0.SettingsSpec{
 				Enabled: false,
 				Pinned:  true,
@@ -213,7 +213,7 @@ func TestSettingsUpdate_DryRunDoesNotPersist(t *testing.T) {
 
 	updater := rest.DefaultUpdatedObjectInfo(
 		&apppluginV0.Settings{
-			ObjectMeta: metav1.ObjectMeta{Name: "instance", Namespace: "default"},
+			Name: "instance", Namespace: "default",
 			Spec: apppluginV0.SettingsSpec{
 				Enabled: false,
 				Pinned:  true,

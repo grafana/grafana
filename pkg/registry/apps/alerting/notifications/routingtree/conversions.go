@@ -7,7 +7,6 @@ import (
 	"slices"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	promModel "github.com/prometheus/common/model"
 
@@ -57,18 +56,14 @@ func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, name string, namespac
 	}
 
 	var result = &model.RoutingTree{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
-			Kind:       kind.Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			// We allow a separate name argument instead of using r.UID so that we can support returning
-			// both the default route canonical name and alias based on the request.
-			Name:            name,
-			Namespace:       namespacer(orgID),
-			ResourceVersion: r.Version,
-		},
-		Spec: spec,
+		APIVersion: kind.GroupVersionKind().GroupVersion().String(),
+		Kind:       kind.Kind(),
+		// We allow a separate name argument instead of using r.UID so that we can support returning
+		// both the default route canonical name and alias based on the request.
+		Name:            name,
+		Namespace:       namespacer(orgID),
+		ResourceVersion: r.Version,
+		Spec:            spec,
 	}
 	if access != nil {
 		for _, action := range ngmodels.RoutePermissions() {

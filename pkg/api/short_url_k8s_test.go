@@ -75,15 +75,11 @@ func TestCreateKubernetesShortURLsHandler(t *testing.T) {
 			cfg.StackID = tt.stackID
 
 			responseBody := mustMarshal(t, v1beta1.ShortURL{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: v1beta1.APIGroup + "/" + v1beta1.APIVersion,
-					Kind:       "ShortURL",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      validUID,
-					Namespace: tt.namespace,
-				},
-				Spec: v1beta1.ShortURLSpec{Path: "explore"},
+				APIVersion: v1beta1.APIGroup + "/" + v1beta1.APIVersion,
+				Kind:       "ShortURL",
+				Name:       validUID,
+				Namespace:  tt.namespace,
+				Spec:       v1beta1.ShortURLSpec{Path: "explore"},
 			})
 
 			handler := &shortURLK8sHandler{
@@ -143,10 +139,10 @@ func TestGetKubernetesRedirectFromShortURL(t *testing.T) {
 			uid:        validUID,
 			statusCode: http.StatusNotFound,
 			responseBody: mustMarshal(t, metav1.Status{
-				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-				Status:   metav1.StatusFailure,
-				Reason:   metav1.StatusReasonNotFound,
-				Code:     http.StatusNotFound,
+				Kind: "Status", APIVersion: "v1",
+				Status: metav1.StatusFailure,
+				Reason: metav1.StatusReasonNotFound,
+				Code:   http.StatusNotFound,
 				Details: &metav1.StatusDetails{
 					Group: v1beta1.APIGroup,
 					Kind:  v1beta1.ShortURLKind().Plural(),
@@ -161,10 +157,10 @@ func TestGetKubernetesRedirectFromShortURL(t *testing.T) {
 			uid:        validUID,
 			statusCode: http.StatusNotFound,
 			responseBody: mustMarshal(t, metav1.Status{
-				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-				Status:   metav1.StatusFailure,
-				Reason:   metav1.StatusReasonNotFound,
-				Code:     http.StatusNotFound,
+				Kind: "Status", APIVersion: "v1",
+				Status: metav1.StatusFailure,
+				Reason: metav1.StatusReasonNotFound,
+				Code:   http.StatusNotFound,
 				Details: &metav1.StatusDetails{
 					Group: "other.grafana.app",
 					Kind:  "widgets",

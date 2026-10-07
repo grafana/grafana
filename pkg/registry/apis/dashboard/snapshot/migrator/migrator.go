@@ -123,15 +123,11 @@ func (m *snapshotMigrator) MigrateSnapshots(ctx context.Context, orgId int64, op
 		chunk := make([]*resourcepb.BulkRequest, 0, len(rawRows))
 		for _, row := range rawRows {
 			snap := &dashV0.Snapshot{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: dashV0.APIVERSION,
-					Kind:       "Snapshot",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              row.key,
-					Namespace:         opts.Namespace,
-					CreationTimestamp: metav1.NewTime(row.created),
-				},
+				APIVersion:        dashV0.APIVERSION,
+				Kind:              "Snapshot",
+				Name:              row.key,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(row.created),
 				Spec: dashV0.SnapshotSpec{
 					Title: &row.name,
 				},

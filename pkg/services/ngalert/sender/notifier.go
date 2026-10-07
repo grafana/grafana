@@ -419,13 +419,11 @@ func alertsToOpenAPIAlerts(alerts []*Alert) models.PostableAlerts {
 		start := strfmt.DateTime(a.StartsAt)
 		end := strfmt.DateTime(a.EndsAt)
 		openAPIAlerts = append(openAPIAlerts, &models.PostableAlert{
-			Annotations: labelsToOpenAPILabelSet(a.Annotations),
-			EndsAt:      end,
-			StartsAt:    start,
-			Alert: models.Alert{
-				GeneratorURL: strfmt.URI(a.GeneratorURL),
-				Labels:       labelsToOpenAPILabelSet(a.Labels),
-			},
+			Annotations:  labelsToOpenAPILabelSet(a.Annotations),
+			EndsAt:       end,
+			StartsAt:     start,
+			GeneratorURL: strfmt.URI(a.GeneratorURL),
+			Labels:       labelsToOpenAPILabelSet(a.Labels),
 		})
 	}
 

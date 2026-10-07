@@ -86,24 +86,22 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 		}
 	}
 	return &grafanaTokenRequester{
-		Identity: Identity{
-			ID:                id,
-			UID:               info.GetIdentifier(),
-			Type:              typ,
-			Name:              info.GetName(),
-			Login:             info.GetUsername(),
-			Email:             info.GetEmail(),
-			EmailVerified:     info.GetEmailVerified(),
-			Groups:            info.GetGroups(),
-			OrgID:             orgID,
-			OrgRoles:          orgRoles,
-			Namespace:         ns.Value,
-			AuthID:            claims.Subject,
-			AuthenticatedBy:   login.ExtendedJWTModule,
-			AccessToken:       token,
-			AccessTokenClaims: claims,
-		},
-		info: info,
+		ID:                id,
+		UID:               info.GetIdentifier(),
+		Type:              typ,
+		Name:              info.GetName(),
+		Login:             info.GetUsername(),
+		Email:             info.GetEmail(),
+		EmailVerified:     info.GetEmailVerified(),
+		Groups:            info.GetGroups(),
+		OrgID:             orgID,
+		OrgRoles:          orgRoles,
+		Namespace:         ns.Value,
+		AuthID:            claims.Subject,
+		AuthenticatedBy:   login.ExtendedJWTModule,
+		AccessToken:       token,
+		AccessTokenClaims: claims,
+		info:              info,
 	}, nil
 }
 

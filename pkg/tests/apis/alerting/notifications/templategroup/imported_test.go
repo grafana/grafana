@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -100,10 +99,8 @@ func TestIntegrationImportedTemplates(t *testing.T) {
 
 	t.Run("should not conflict with Grafana kind", func(t *testing.T) {
 		tpl := v1beta1.TemplateGroup{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
-			Spec: templates.Items[1].Spec,
+			Namespace: "default",
+			Spec:      templates.Items[1].Spec,
 		}
 		tpl.Spec.Kind = v1beta1.TemplateGroupTemplateKindGrafana
 

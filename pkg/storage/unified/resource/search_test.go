@@ -484,7 +484,7 @@ func (m *manifestSearchBackend) LoadOpenIndexStats(_ time.Time, _ time.Duration)
 func TestBuildIndexesUsesOpenIndexStats(t *testing.T) {
 	key := NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
 	storage := &mockStorageBackend{
-		resourceStats: []ResourceStats{{NamespacedResource: NamespacedResource{Namespace: "fallback", Group: "group", Resource: "resource"}, Count: 50}},
+		resourceStats: []ResourceStats{{Namespace: "fallback", Group: "group", Resource: "resource", Count: 50}},
 	}
 	search := &manifestSearchBackend{
 		stats: []ResourceStats{{NamespacedResource: key, Count: 5}},
@@ -591,7 +591,7 @@ func TestSearchGetOrCreateIndex(t *testing.T) {
 	// Setup mock implementations
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
-			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+			{Namespace: "ns", Group: "group", Resource: "resource", Count: 50, ResourceVersion: 11111111},
 		},
 	}
 	search := &mockSearchBackend{}
@@ -639,7 +639,7 @@ func TestSearchGetOrCreateIndexWithIndexUpdate(t *testing.T) {
 	// Setup mock implementations
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
-			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+			{Namespace: "ns", Group: "group", Resource: "resource", Count: 50, ResourceVersion: 11111111},
 		},
 	}
 	failedErr := fmt.Errorf("failed to update index")
@@ -694,7 +694,7 @@ func TestSearchGetOrCreateIndexWithCancellation(t *testing.T) {
 	// Setup mock implementations
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
-			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+			{Namespace: "ns", Group: "group", Resource: "resource", Count: 50, ResourceVersion: 11111111},
 		},
 	}
 	search := newBlockingSearchBackend(nil)
@@ -1236,7 +1236,7 @@ func TestStartupScanDoesNotQueueFullRebuilds(t *testing.T) {
 func TestFindIndexesForRebuild(t *testing.T) {
 	storage := &mockStorageBackend{
 		resourceStats: []ResourceStats{
-			{NamespacedResource: NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}, Count: 50, ResourceVersion: 11111111},
+			{Namespace: "ns", Group: "group", Resource: "resource", Count: 50, ResourceVersion: 11111111},
 		},
 	}
 
@@ -1358,18 +1358,18 @@ func TestFindIndexesForRebuild(t *testing.T) {
 
 	vals := support.rebuildQueue.Elements()
 	expected := []rebuildRequest{
-		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
-		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v5", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
-		{NamespacedResource: NamespacedResource{Namespace: "resource-10h-v6", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{Namespace: "resource-2h-v5", Group: "group", Resource: "folder", minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{Namespace: "resource-10h-v5", Group: "group", Resource: "folder", minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{Namespace: "resource-10h-v6", Group: "group", Resource: "folder", minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 
-		{NamespacedResource: NamespacedResource{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
-		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
-		{NamespacedResource: NamespacedResource{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{Namespace: "resource-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{Namespace: "resource-2h-v5", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
+		{Namespace: "resource-2h-v6", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard},
 
-		{NamespacedResource: NamespacedResource{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
+		{Namespace: "resource-recently-imported", Group: "group", Resource: dashboardv1.DASHBOARD_RESOURCE, minBuildVersion: minBuildVersion, minBuildTime: minBuildTimeDashboard, lastImportTime: lastImportTime},
 
 		// Index built by newer version than running (7.0.0 > 6.5.0)
-		{NamespacedResource: NamespacedResource{Namespace: "resource-newer-version", Group: "group", Resource: "folder"}, minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
+		{Namespace: "resource-newer-version", Group: "group", Resource: "folder", minBuildVersion: minBuildVersion, minBuildTime: minBuildTime},
 	}
 	if diff := cmp.Diff(expected, vals, cmpopts.IgnoreFields(rebuildRequest{}, "completeChannels"), cmp.AllowUnexported(rebuildRequest{})); diff != "" {
 		t.Errorf("rebuildQueue mismatch (-want +got):\n%s", diff)
@@ -1455,36 +1455,36 @@ func TestRebuildIndexes(t *testing.T) {
 
 	t.Run("Don't rebuild if min build version is old", func(t *testing.T) {
 		checkRebuildIndex(t, support, rebuildRequest{
-			NamespacedResource: NamespacedResource{Namespace: "idx1", Group: "group", Resource: "res"},
-			minBuildVersion:    semver.MustParse("4.5"),
+			Namespace: "idx1", Group: "group", Resource: "res",
+			minBuildVersion: semver.MustParse("4.5"),
 		}, true, false)
 	})
 
 	t.Run("Rebuild if min build version is more recent", func(t *testing.T) {
 		checkRebuildIndex(t, support, rebuildRequest{
-			NamespacedResource: NamespacedResource{Namespace: "idx1", Group: "group", Resource: "res"},
-			minBuildVersion:    semver.MustParse("5.5.5"),
+			Namespace: "idx1", Group: "group", Resource: "res",
+			minBuildVersion: semver.MustParse("5.5.5"),
 		}, true, true)
 	})
 
 	t.Run("Don't rebuild if min build time is very old", func(t *testing.T) {
 		checkRebuildIndex(t, support, rebuildRequest{
-			NamespacedResource: NamespacedResource{Namespace: "idx2", Group: "group", Resource: "res"},
-			minBuildTime:       now.Add(-5 * time.Hour),
+			Namespace: "idx2", Group: "group", Resource: "res",
+			minBuildTime: now.Add(-5 * time.Hour),
 		}, true, false)
 	})
 
 	t.Run("Rebuild if min build time is more recent", func(t *testing.T) {
 		checkRebuildIndex(t, support, rebuildRequest{
-			NamespacedResource: NamespacedResource{Namespace: "idx2", Group: "group", Resource: "res"},
-			minBuildTime:       now.Add(-1 * time.Hour),
+			Namespace: "idx2", Group: "group", Resource: "res",
+			minBuildTime: now.Add(-1 * time.Hour),
 		}, true, true)
 	})
 
 	t.Run("Don't rebuild if index doesn't exist.", func(t *testing.T) {
 		checkRebuildIndex(t, support, rebuildRequest{
-			NamespacedResource: NamespacedResource{Namespace: "unknown", Group: "group", Resource: "res"},
-			minBuildTime:       now.Add(-5 * time.Hour),
+			Namespace: "unknown", Group: "group", Resource: "res",
+			minBuildTime: now.Add(-5 * time.Hour),
 		}, false, true)
 	})
 
@@ -1642,11 +1642,10 @@ func TestRebuildIndexesRejectsStaleIndexAfterFailedRebuild(t *testing.T) {
 	storage := &mockStorageBackend{
 		lastImportTimes: []ResourceLastImportTime{{NamespacedResource: key, LastImportTime: importTime}},
 	}
-	search := &failingRebuildSearchBackend{mockSearchBackend: mockSearchBackend{
+	search := &failingRebuildSearchBackend{
 		cache: map[NamespacedResource]ResourceIndex{
 			key: &MockResourceIndex{buildInfo: IndexBuildInfo{BuildTime: importTime}},
-		},
-	}}
+		}}
 	support, err := newSearchServer(SearchOptions{
 		Backend:   search,
 		Resources: &TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
@@ -1966,9 +1965,9 @@ type blockingSearchBackend struct {
 
 func newBlockingSearchBackend(cache map[NamespacedResource]ResourceIndex) *blockingSearchBackend {
 	return &blockingSearchBackend{
-		mockSearchBackend: mockSearchBackend{cache: cache},
-		onStarted:         make(chan struct{}),
-		proceed:           make(chan struct{}),
+		cache:     cache,
+		onStarted: make(chan struct{}),
+		proceed:   make(chan struct{}),
 	}
 }
 

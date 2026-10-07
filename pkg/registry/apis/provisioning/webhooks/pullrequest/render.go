@@ -79,20 +79,14 @@ func (r *screenshotRenderer) RenderScreenshot(ctx context.Context, repo provisio
 		}
 	}
 	result, err := r.render.Render(ctx, rendering.RenderPNG, rendering.Opts{
-		CommonOpts: rendering.CommonOpts{
-			Path: path,
-			AuthOpts: rendering.AuthOpts{
-				OrgID:   orgID,
-				UserID:  userID,
-				OrgRole: orgRole,
-			},
-			TimeoutOpts: rendering.TimeoutOpts{
-				Timeout: time.Second * 30,
-			},
-		},
-		Theme:  models.ThemeDark, // from config?
-		Width:  1024,
-		Height: -1, // full page height
+		Path:    path,
+		OrgID:   orgID,
+		UserID:  userID,
+		OrgRole: orgRole,
+		Timeout: time.Second * 30,
+		Theme:   models.ThemeDark, // from config?
+		Width:   1024,
+		Height:  -1, // full page height
 	})
 	if err != nil {
 		return "", err

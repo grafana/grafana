@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
@@ -165,10 +164,8 @@ func TestExportWorker_ProcessFailedToCreateClients(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -196,10 +193,8 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 
 	mockRepo := repository.NewMockReader(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -232,10 +227,8 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -272,10 +265,8 @@ func TestExportWorker_ProcessStageOptions(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitRepositoryType,
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
@@ -358,10 +349,8 @@ func TestExportWorker_ProcessStageOptionsWithBranch(t *testing.T) {
 
 			mockRepo := repository.NewMockRepository(t)
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "test-namespace",
-				},
+				Name:      "test-repo",
+				Namespace: "test-namespace",
 				Spec: v0alpha1.RepositorySpec{
 					Type:      tt.repoType,
 					Workflows: tt.workflows,
@@ -410,10 +399,8 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -453,10 +440,8 @@ func TestExportWorker_ProcessWrapWithStageFnError(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -512,10 +497,8 @@ func TestExportWorker_ProcessGitRepository(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.GitRepositoryType,
 			Git: &v0alpha1.GitRepositoryConfig{
@@ -565,10 +548,8 @@ func TestExportWorker_ProcessGitRepositoryExportFnError(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.GitRepositoryType,
 			Git: &v0alpha1.GitRepositoryConfig{
@@ -632,7 +613,7 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			job := v0alpha1.Job{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Name: "test-job",
 				Spec: v0alpha1.JobSpec{
 					Action:  v0alpha1.JobActionPush,
 					Message: tt.specMessage,
@@ -645,7 +626,7 @@ func TestExportWorker_CommitMessagePrecedence(t *testing.T) {
 
 			mockRepo := repository.NewMockRepository(t)
 			mockRepo.On("Config").Return(&v0alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-namespace"},
+				Name: "test-repo", Namespace: "test-namespace",
 				Spec: v0alpha1.RepositorySpec{
 					Type:      v0alpha1.GitRepositoryType,
 					Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
@@ -697,10 +678,8 @@ func TestExportWorker_RefURLsSetWithBranch(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitHubRepositoryType,
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
@@ -764,10 +743,8 @@ func TestExportWorker_RefURLsNotSetWithoutBranch(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 
 	mockRepoWithURLs.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitHubRepositoryType,
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
@@ -822,10 +799,8 @@ func TestExportWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepo := repository.NewMockRepository(t)
 
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type:      v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow, v0alpha1.BranchWorkflow},
@@ -1092,10 +1067,8 @@ func TestCheckExportQuota(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &v0alpha1.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      tt.repoName,
-					Namespace: "test-namespace",
-				},
+				Name:      tt.repoName,
+				Namespace: "test-namespace",
 				Status: v0alpha1.RepositoryStatus{
 					Quota: tt.quota,
 					Stats: tt.repoStats,
@@ -1134,10 +1107,8 @@ func TestExportWorker_ProcessQuotaExceeded(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -1186,10 +1157,8 @@ func TestExportWorker_ProcessQuotaNotExceeded(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -1243,10 +1212,8 @@ func TestExportWorker_ProcessQuotaUnlimited(t *testing.T) {
 
 	mockRepo := repository.NewMockRepository(t)
 	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
 		},
@@ -1336,10 +1303,8 @@ func TestExportWorker_ConfigurationDisabled(t *testing.T) {
 
 			// Create a test job
 			job := v0alpha1.Job{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-export-job",
-					Namespace: "default",
-				},
+				Name:      "test-export-job",
+				Namespace: "default",
 				Spec: v0alpha1.JobSpec{
 					Action:     v0alpha1.JobActionPush,
 					Repository: "test-repo",

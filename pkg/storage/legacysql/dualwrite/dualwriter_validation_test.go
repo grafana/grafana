@@ -44,7 +44,7 @@ func TestDualWriter_Create_ValidationErrors(t *testing.T) {
 		require.NoError(t, err)
 
 		nameless := &example.Pod{
-			TypeMeta:   metav1.TypeMeta{Kind: "foo"},
+			Kind:       "foo",
 			ObjectMeta: metav1.ObjectMeta{},
 		}
 

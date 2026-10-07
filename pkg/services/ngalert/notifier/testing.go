@@ -248,7 +248,7 @@ func (n NoValidation) Validate(_ models.NotificationSettings) error {
 type RejectingValidation struct{}
 
 func (n RejectingValidation) Validate(s models.NotificationSettings) error {
-	return ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: s.ContactPointRouting.Receiver}}
+	return ErrorReceiverDoesNotExist{Reference: s.ContactPointRouting.Receiver}
 }
 
 var errInvalidState = fmt.Errorf("invalid state")

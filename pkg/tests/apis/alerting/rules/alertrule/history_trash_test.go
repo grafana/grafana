@@ -30,11 +30,9 @@ func makeAlertRuleSpec(t *testing.T, folder, title string) *v0alpha1.AlertRule {
 		ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 	).Generate()
 	return &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": folder,
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": folder,
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: title,
@@ -318,11 +316,9 @@ func TestIntegrationListTrash(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		recording := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "trash-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "trash-folder",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               "cross-type-recording-trash",

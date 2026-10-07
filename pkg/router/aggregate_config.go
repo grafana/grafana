@@ -93,7 +93,7 @@ func splitGroupPatterns(raw string) []string {
 		return nil
 	}
 	var patterns []string
-	for _, p := range strings.Split(raw, ",") {
+	for p := range strings.SplitSeq(raw, ",") {
 		patterns = append(patterns, strings.TrimSpace(p))
 	}
 	return patterns

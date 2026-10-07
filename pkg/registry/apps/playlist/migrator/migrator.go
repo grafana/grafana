@@ -117,15 +117,11 @@ func (m *playlistMigrator) MigratePlaylists(ctx context.Context, orgId int64, op
 	// Convert to K8s objects and send to stream (order is preserved)
 	for _, pl := range playlists {
 		playlist := &playlistv1.Playlist{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: playlistv1.GroupVersion.String(),
-				Kind:       "Playlist",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              pl.uid,
-				Namespace:         opts.Namespace,
-				CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
-			},
+			APIVersion:        playlistv1.GroupVersion.String(),
+			Kind:              "Playlist",
+			Name:              pl.uid,
+			Namespace:         opts.Namespace,
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(pl.createdAt)),
 			Spec: playlistv1.PlaylistSpec{
 				Title:    pl.name,
 				Interval: pl.interval,

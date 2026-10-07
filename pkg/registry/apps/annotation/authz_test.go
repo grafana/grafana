@@ -13,7 +13,6 @@ import (
 	"go.opentelemetry.io/otel/trace/noop"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	registryrest "k8s.io/apiserver/pkg/registry/rest"
 
@@ -117,7 +116,7 @@ func TestCanAccessAnnotation(t *testing.T) {
 
 	t.Run("org annotation - no dashboard lookup", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+			Name: "org-anno", Namespace: ns,
 		}
 		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
@@ -135,8 +134,8 @@ func TestCanAccessAnnotation(t *testing.T) {
 
 	t.Run("dashboard annotation - folder resolved", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+			Name: "dash-anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 		}
 		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
@@ -154,8 +153,8 @@ func TestCanAccessAnnotation(t *testing.T) {
 	t.Run("dashboard annotation - missing dashboard returns empty folder", func(t *testing.T) {
 		missing := "gone"
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "orphan", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{DashboardUID: &missing},
+			Name: "orphan", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{DashboardUID: &missing},
 		}
 		allowed, err := canAccessAnnotation(ctx, testTracer, accessClient, dashClient, ns, anno, utils.VerbGet)
 		require.NoError(t, err)
@@ -166,8 +165,8 @@ func TestCanAccessAnnotation(t *testing.T) {
 	t.Run("dashboard annotation - lookup error returned", func(t *testing.T) {
 		errClient := &fakeFolderResolver{err: fmt.Errorf("boom"), calls: map[string]int{}}
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+			Name: "dash-anno", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 		}
 		_, err := canAccessAnnotation(ctx, testTracer, accessClient, errClient, ns, anno, utils.VerbGet)
 		require.Error(t, err)
@@ -183,19 +182,19 @@ func TestCanAccessAnnotations(t *testing.T) {
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 	orgAnno := annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+		Name: "org-anno", Namespace: ns,
 	}
 	dashAnno := annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
-		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+		Name: "dash-anno", Namespace: ns,
+		Spec: annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 	}
 	dashAnno2 := annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno-2", Namespace: ns},
-		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+		Name: "dash-anno-2", Namespace: ns,
+		Spec: annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 	}
 	otherDashAnno := annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "other-dash-anno", Namespace: ns},
-		Spec:       annotationV0.AnnotationSpec{DashboardUID: &otherDashUID},
+		Name: "other-dash-anno", Namespace: ns,
+		Spec: annotationV0.AnnotationSpec{DashboardUID: &otherDashUID},
 	}
 
 	t.Run("empty items returns nil", func(t *testing.T) {
@@ -272,8 +271,8 @@ func TestCanAccessAnnotations(t *testing.T) {
 
 	t.Run("checks deduped by scope and results mapped back to items", func(t *testing.T) {
 		orgAnno2 := annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "org-anno-2", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{DashboardUID: new(string)},
+			Name: "org-anno-2", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{DashboardUID: new(string)},
 		}
 		var captured []authtypes.BatchCheckItem
 		client := &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
@@ -305,7 +304,7 @@ func TestK8sRESTAdapter_UpdateScopeEscalation(t *testing.T) {
 	ctx := k8srequest.WithNamespace(identity.WithServiceIdentityContext(t.Context(), 1), ns)
 
 	orgAnno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+		Name: "org-anno", Namespace: ns,
 	}
 
 	store := NewMemoryStore()
@@ -332,11 +331,11 @@ func TestK8sRESTAdapter_ListFiltersUnauthorized(t *testing.T) {
 
 	store := NewMemoryStore()
 	orgAnno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "org-anno", Namespace: ns},
+		Name: "org-anno", Namespace: ns,
 	}
 	dashAnno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{Name: "dash-anno", Namespace: ns},
-		Spec:       annotationV0.AnnotationSpec{DashboardUID: &dashUID},
+		Name: "dash-anno", Namespace: ns,
+		Spec: annotationV0.AnnotationSpec{DashboardUID: &dashUID},
 	}
 	_, err := store.Create(ctx, orgAnno)
 	require.NoError(t, err)

@@ -70,10 +70,8 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	}
 
 	return &iamv0alpha1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns.Value,
-		},
+		Name:      name,
+		Namespace: ns.Value,
 	}, true, nil
 }
 
@@ -243,12 +241,10 @@ func (s *LegacyStore) List(ctx context.Context, options *internalversion.ListOpt
 
 func (s *LegacyStore) toSAItem(sa legacy.ServiceAccount, ns string) iamv0alpha1.ServiceAccount {
 	item := iamv0alpha1.ServiceAccount{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              sa.UID,
-			Namespace:         ns,
-			ResourceVersion:   fmt.Sprintf("%d", sa.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(sa.Created),
-		},
+		Name:              sa.UID,
+		Namespace:         ns,
+		ResourceVersion:   fmt.Sprintf("%d", sa.Updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(sa.Created),
 		Spec: iamv0alpha1.ServiceAccountSpec{
 			Plugin:   extractPluginNameFromTitle(sa.Name),
 			Title:    sa.Name,

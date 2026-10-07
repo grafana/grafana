@@ -29,8 +29,7 @@ func TestConversionSerializer(t *testing.T) {
 	gvk := schema.GroupVersionKind{Group: "example-app", Version: "v2", Kind: "TestKind"}
 	raw := []byte(`{"apiVersion":"example-app/v1","kind":"TestKind","metadata":{"name":"test","resourceVersion":"123"},"spec":{"old":"value"}}`)
 	converted := []byte(`{"apiVersion":"example-app/v2","kind":"TestKind","metadata":{"name":"test","resourceVersion":"123"},"spec":{"new":"value"}}`)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 	recorder := &warningRecorder{}
 	ctx = warning.WithWarningRecorder(ctx, recorder)
 	calls := 0

@@ -583,11 +583,9 @@ func getRestClient(config Config, log logging.Logger, m clientMetrics) (*rest.RE
 		RateLimiter:     rateLimiter,
 		UserAgent:       userAgent,
 		// Configure for our API group
-		APIPath: "/apis",
-		ContentConfig: rest.ContentConfig{
-			GroupVersion:         &settingGroupVersion,
-			NegotiatedSerializer: serializer.NewCodecFactory(scheme).WithoutConversion(),
-		},
+		APIPath:              "/apis",
+		GroupVersion:         &settingGroupVersion,
+		NegotiatedSerializer: serializer.NewCodecFactory(scheme).WithoutConversion(),
 	}
 
 	return rest.RESTClientFor(restConfig)

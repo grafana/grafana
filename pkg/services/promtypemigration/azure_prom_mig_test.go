@@ -31,9 +31,7 @@ func TestGetPrometheusDataSources_Azure_ReturnsOnlyAzurePrometheus(t *testing.T)
 		dataSources: []*datasources.DataSource{ds1, ds2, ds3, ds4},
 	}
 	svc := &AzurePromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mock,
-		},
+		dataSourcesService: mock,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())
@@ -48,9 +46,7 @@ func TestGetPrometheusDataSources_Azure_ErrorFromService(t *testing.T) {
 		err: errors.New("service error"),
 	}
 	svc := &AzurePromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mockSvc,
-		},
+		dataSourcesService: mockSvc,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())
@@ -66,9 +62,7 @@ func TestGetPrometheusDataSources_Azure_NoAzureAuth(t *testing.T) {
 		dataSources: []*datasources.DataSource{ds},
 	}
 	svc := &AzurePromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: mockSvc,
-		},
+		dataSourcesService: mockSvc,
 	}
 
 	got, err := svc.getPrometheusDataSources(context.Background())

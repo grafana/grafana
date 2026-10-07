@@ -83,7 +83,7 @@ func RunFolderController(ctx context.Context, deps server.OperatorDependencies) 
 		}
 
 		newObject := func(ns, name string) runtime.Object {
-			return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+			return &folderv1.Folder{Namespace: ns, Name: name}
 		}
 		list := func(ctx context.Context) ([]runtime.Object, int64, error) {
 			return listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {

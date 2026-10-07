@@ -162,7 +162,7 @@ func newBenchFixture(n int) *benchFixture {
 	numBasic := 2
 	numUsers := max(n-numTeams-numServiceAccounts-numBasic, 0)
 
-	for i := 0; i < numUsers; i++ {
+	for i := range numUsers {
 		uid := fmt.Sprintf("user-uid-%d", i)
 		users[uid] = &user.User{
 			ID:    int64(i + 1),

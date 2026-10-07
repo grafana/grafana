@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datafakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/dsquerierclient"
@@ -60,7 +59,7 @@ func framesPassThroughService(t *testing.T, frames data.Frames) (data.Frames, er
 		features:    features,
 		pCtxProvider: plugincontext.ProvideService(cfg, nil, &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "test"}},
+				{ID: "test"},
 			}},
 			&datafakes.FakeCacheService{}, &datafakes.FakeDataSourceService{},
 			nil, pluginconfig.NewFakePluginRequestConfigProvider()),

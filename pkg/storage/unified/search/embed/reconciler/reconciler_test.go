@@ -1590,8 +1590,7 @@ func TestReconciler_Sweep_LookbackRecovery(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s, st, vec, text := setupEmbeddingRetry(t, snowflakeRV(105))
 			st.lookback, st.latestRvOverride = 10, snowflakeRV(110)
-			var retryErr *embedder.RetryableError
-			if errors.As(tt.failure, &retryErr) {
+			if _, ok := errors.AsType[*embedder.RetryableError](tt.failure); ok {
 				text.failNext = tt.failure
 			} else {
 				vec.upsertErr = tt.failure

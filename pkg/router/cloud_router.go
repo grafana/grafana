@@ -139,12 +139,10 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	var clients *k8s.ClientRegistry
 	if appManifestApiserverURL != "" {
 		restCfg := rest.Config{
-			APIPath: "/apis",
-			Host:    appManifestApiserverURL,
-			TLSClientConfig: rest.TLSClientConfig{
-				Insecure: section.Key("apiserver_insecure").MustBool(false),
-				CAFile:   section.Key("apiserver_ca_file").MustString(""),
-			},
+			APIPath:       "/apis",
+			Host:          appManifestApiserverURL,
+			Insecure:      section.Key("apiserver_insecure").MustBool(false),
+			CAFile:        section.Key("apiserver_ca_file").MustString(""),
 			WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(tokenExchanger, v1alpha2.APIGroup, clientauth.WildcardNamespace),
 		}
 

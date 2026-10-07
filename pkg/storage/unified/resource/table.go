@@ -25,9 +25,7 @@ import (
 // Convert the the protobuf model into k8s (will decode each value)
 func toK8s(x *resourcepb.ResourceTable) (metav1.Table, error) {
 	table := metav1.Table{
-		ListMeta: metav1.ListMeta{
-			Continue: x.NextPageToken,
-		},
+		Continue: x.NextPageToken,
 	}
 	if x.RemainingItemCount > 0 {
 		table.RemainingItemCount = &x.RemainingItemCount
@@ -83,10 +81,8 @@ func toK8s(x *resourcepb.ResourceTable) (metav1.Table, error) {
 					Kind:       r.Key.Resource, // :(
 					APIVersion: r.Key.Group,    // :(
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      r.Key.Name,
-					Namespace: r.Key.Namespace,
-				},
+				Name:      r.Key.Name,
+				Namespace: r.Key.Namespace,
 			}
 			if r.ResourceVersion > 0 {
 				obj.ResourceVersion = strconv.FormatInt(r.ResourceVersion, 10)
@@ -115,9 +111,7 @@ type ResourceColumnEncoder = func(v any) ([]byte, error)
 
 func NewTableBuilder(cols []*resourcepb.ResourceTableColumnDefinition) (*TableBuilder, error) {
 	table := &TableBuilder{
-		ResourceTable: resourcepb.ResourceTable{
-			Columns: cols,
-		},
+		Columns: cols,
 
 		lookup: make(map[string]*resourceTableColumn, len(cols)),
 	}

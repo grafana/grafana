@@ -22,19 +22,17 @@ import (
 func TestLokiJobHistory_WriteJob(t *testing.T) {
 	// Create comprehensive test job with all spec and status fields
 	job := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-job",
-			Namespace:         "test-namespace",
-			UID:               types.UID("test-uid"),
-			CreationTimestamp: metav1.NewTime(time.Now()),
-			Labels: map[string]string{
-				"test":        "label",
-				LabelJobClaim: "should-be-removed",
-				"env":         "production",
-			},
-			Annotations: map[string]string{
-				"description": "Test job for validation",
-			},
+		Name:              "test-job",
+		Namespace:         "test-namespace",
+		UID:               types.UID("test-uid"),
+		CreationTimestamp: metav1.NewTime(time.Now()),
+		Labels: map[string]string{
+			"test":        "label",
+			LabelJobClaim: "should-be-removed",
+			"env":         "production",
+		},
+		Annotations: map[string]string{
+			"description": "Test job for validation",
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
@@ -206,9 +204,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 
 		// Test finished time priority
 		jobWithFinished := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
-			},
+			CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
 			Status: provisioning.JobStatus{
 				Started:  200,
 				Finished: 300,
@@ -219,9 +215,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 
 		// Test started time when no finished time
 		jobWithStarted := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
-			},
+			CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
 			Status: provisioning.JobStatus{
 				Started: 200,
 			},
@@ -231,9 +225,7 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 
 		// Test creation time when no other timestamps
 		jobWithCreation := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
-			},
+			CreationTimestamp: metav1.NewTime(time.Unix(100, 0)),
 		}
 		ts = history.getJobTimestamp(jobWithCreation)
 		assert.Equal(t, time.Unix(100, 0), ts)
@@ -243,15 +235,13 @@ func TestLokiJobHistory_WriteJob(t *testing.T) {
 func TestLokiJobHistory_Integration(t *testing.T) {
 	// Create comprehensive test job with all spec and status fields for integration tests
 	integrationJob := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "integration-job",
-			Namespace:         "test-namespace",
-			UID:               types.UID("integration-uid"),
-			CreationTimestamp: metav1.NewTime(time.Now()),
-			Labels: map[string]string{
-				"test":        "integration",
-				LabelJobClaim: "should-be-removed",
-			},
+		Name:              "integration-job",
+		Namespace:         "test-namespace",
+		UID:               types.UID("integration-uid"),
+		CreationTimestamp: metav1.NewTime(time.Now()),
+		Labels: map[string]string{
+			"test":        "integration",
+			LabelJobClaim: "should-be-removed",
 		},
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionPull,
@@ -320,11 +310,9 @@ func TestLokiJobHistory_Integration(t *testing.T) {
 	t.Run("WriteJob handles push errors", func(t *testing.T) {
 		// Create a simple job for this test
 		testJob := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "error-job",
-				Namespace: "test-namespace",
-				UID:       types.UID("error-uid"),
-			},
+			Name:      "error-job",
+			Namespace: "test-namespace",
+			UID:       types.UID("error-uid"),
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
 				Repository: "test-repo",
@@ -364,11 +352,9 @@ func TestLokiJobHistory_RecentJobs(t *testing.T) {
 
 		// Create test job JSON data
 		testJob := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "recent-job",
-				Namespace: "test-ns",
-				UID:       types.UID("recent-uid"),
-			},
+			Name:      "recent-job",
+			Namespace: "test-ns",
+			UID:       types.UID("recent-uid"),
 			Spec: provisioning.JobSpec{
 				Action:     provisioning.JobActionPull,
 				Repository: "test-repo",
@@ -500,22 +486,18 @@ func TestLokiJobHistory_GetJob(t *testing.T) {
 
 		// Create test jobs
 		job1 := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "job-1",
-				Namespace: "test-ns",
-				UID:       types.UID("uid-1"),
-			},
-			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: "test-repo"},
-			Status: provisioning.JobStatus{State: provisioning.JobStateSuccess},
+			Name:      "job-1",
+			Namespace: "test-ns",
+			UID:       types.UID("uid-1"),
+			Spec:      provisioning.JobSpec{Action: provisioning.JobActionPull, Repository: "test-repo"},
+			Status:    provisioning.JobStatus{State: provisioning.JobStateSuccess},
 		}
 		job2 := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "job-2",
-				Namespace: "test-ns",
-				UID:       types.UID("target-uid"),
-			},
-			Spec:   provisioning.JobSpec{Action: provisioning.JobActionPush, Repository: "test-repo"},
-			Status: provisioning.JobStatus{State: provisioning.JobStateSuccess},
+			Name:      "job-2",
+			Namespace: "test-ns",
+			UID:       types.UID("target-uid"),
+			Spec:      provisioning.JobSpec{Action: provisioning.JobActionPush, Repository: "test-repo"},
+			Status:    provisioning.JobStatus{State: provisioning.JobStateSuccess},
 		}
 
 		job1JSON, _ := json.Marshal(job1)

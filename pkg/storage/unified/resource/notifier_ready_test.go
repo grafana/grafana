@@ -151,7 +151,7 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 				require.Equal(t, established, duringRestoration)
 
 				if mode != "restored" {
-					for i := 0; i < 2; i++ {
+					for range 2 {
 						if mode != "acknowledgment timed out" {
 							sub.responses <- errors.New("capture not acknowledged")
 						}

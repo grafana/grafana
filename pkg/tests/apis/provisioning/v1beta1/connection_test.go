@@ -28,14 +28,10 @@ func TestIntegrationV1Beta1Connection_Create_GitHub(t *testing.T) {
 	namespace := "default"
 
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-github-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-github-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitHub Connection",
 			Type:  provisioning.GithubConnectionType,
@@ -92,14 +88,10 @@ func TestIntegrationV1Beta1Connection_Create_GitLab(t *testing.T) {
 	namespace := "default"
 
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-gitlab-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-gitlab-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test GitLab Connection",
 			Type:  provisioning.GitlabOAuthConnectionType,
@@ -147,14 +139,10 @@ func TestIntegrationV1Beta1Connection_Create_Bitbucket(t *testing.T) {
 	namespace := "default"
 
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-bitbucket-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-bitbucket-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Bitbucket Connection",
 			Type:  provisioning.BitbucketOAuthConnectionType,
@@ -202,14 +190,10 @@ func TestIntegrationV1Beta1Connection_Get(t *testing.T) {
 
 	// Create a connection first
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-get-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-get-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Get Connection",
 			Type:  provisioning.GithubConnectionType,
@@ -263,14 +247,10 @@ func TestIntegrationV1Beta1Connection_List(t *testing.T) {
 
 	// Create a connection first
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-list-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-list-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test List Connection",
 			Type:  provisioning.GithubConnectionType,
@@ -329,14 +309,10 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 
 	// Create a connection first
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-update-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-update-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Update Connection",
 			Type:  provisioning.GithubConnectionType,
@@ -420,14 +396,10 @@ func TestIntegrationV1Beta1Connection_Delete(t *testing.T) {
 
 	// Create a connection first
 	connection := &provisioning.Connection{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "provisioning.grafana.app/v1beta1",
-			Kind:       "Connection",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-delete-connection",
-			Namespace: namespace,
-		},
+		APIVersion: "provisioning.grafana.app/v1beta1",
+		Kind:       "Connection",
+		Name:       "test-delete-connection",
+		Namespace:  namespace,
 		Spec: provisioning.ConnectionSpec{
 			Title: "Test Delete Connection",
 			Type:  provisioning.GithubConnectionType,

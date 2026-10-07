@@ -16,7 +16,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/resource"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 
 	alertingnotifv1beta1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
@@ -447,8 +446,8 @@ func (s *ExternalAMSyncer) writeStatus(ctx context.Context, orgID int64, compute
 			// on Create today; a future migration to a real /status subresource
 			// would silently drop this — at that point swap to UpdateStatus.
 			r := &alertingnotifv1beta1.Config{
-				ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName},
-				Status:     compute(nil),
+				Namespace: ns, Name: alertingnotifv1beta1.ConfigSingletonName,
+				Status: compute(nil),
 			}
 			if _, createErr := c.Create(nsCtx, r, resource.CreateOptions{}); createErr != nil {
 				// AlreadyExists → another writer raced us. Surface as a conflict

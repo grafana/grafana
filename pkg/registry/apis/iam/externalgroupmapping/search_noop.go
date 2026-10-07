@@ -29,30 +29,22 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 				Path: "searchExternalGroupMappings",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Description: "Returns the team UIDs that map to any of the provided external group IDs.",
-							Tags:        []string{"Search"},
-							OperationId: "searchExternalGroupMappings",
-							RequestBody: &spec3.RequestBody{
-								RequestBodyProps: spec3.RequestBodyProps{
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: &spec.Schema{
+						Description: "Returns the team UIDs that map to any of the provided external group IDs.",
+						Tags:        []string{"Search"},
+						OperationId: "searchExternalGroupMappings",
+						RequestBody: &spec3.RequestBody{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											Type: []string{"object"},
+											Properties: map[string]spec.Schema{
+												"externalGroups": {
 													SchemaProps: spec.SchemaProps{
-														Type: []string{"object"},
-														Properties: map[string]spec.Schema{
-															"externalGroups": {
-																SchemaProps: spec.SchemaProps{
-																	Type: []string{"array"},
-																	Items: &spec.SchemaOrArray{
-																		Schema: &spec.Schema{
-																			SchemaProps: spec.SchemaProps{
-																				Type: []string{"string"},
-																			},
-																		},
-																	},
-																},
+														Type: []string{"array"},
+														Items: &spec.SchemaOrArray{
+															Schema: &spec.Schema{
+																Type: []string{"string"},
 															},
 														},
 													},
@@ -62,67 +54,55 @@ func (n *NoopSearchREST) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 									},
 								},
 							},
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "limit",
-										In:          "query",
-										Description: "number of results to return",
-										Example:     30,
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "page",
-										In:          "query",
-										Description: "page number (starting from 1)",
-										Example:     1,
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "offset",
-										In:          "query",
-										Description: "number of results to skip",
-										Example:     0,
-										Required:    false,
-										Schema:      spec.Int64Property(),
+						},
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "limit",
+								In:          "query",
+								Description: "number of results to return",
+								Example:     30,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "page",
+								In:          "query",
+								Description: "page number (starting from 1)",
+								Example:     1,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "offset",
+								In:          "query",
+								Description: "number of results to skip",
+								Example:     0,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								403: {
+									ResponseProps: spec3.ResponseProps{
+										Description: "Forbidden",
 									},
 								},
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										403: {
-											ResponseProps: spec3.ResponseProps{
-												Description: "Forbidden",
-											},
-										},
-									},
-									Default: &spec3.Response{
-										ResponseProps: spec3.ResponseProps{
-											Description: "Default OK response",
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
-											},
+							Default: &spec3.Response{
+								Description: "Default OK response",
+								Content: map[string]*spec3.MediaType{
+									"application/json": {
+										MediaTypeProps: spec3.MediaTypeProps{
+											Schema: &searchResults,
 										},
 									},
 								},

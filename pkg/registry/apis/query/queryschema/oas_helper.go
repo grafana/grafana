@@ -50,9 +50,7 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 		// The SDK type and api type are not the same so we just recreate it here
 		for _, qt := range options.QueryTypes.Items {
 			builder.QueryTypes = append(builder.QueryTypes, data.QueryTypeDefinition{
-				ObjectMeta: data.ObjectMeta{
-					Name: qt.Name,
-				},
+				Name: qt.Name,
 				Spec: qt.Spec,
 			})
 		}
@@ -68,13 +66,11 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 		query.Post.Tags = []string{"DataSource"}
 		query.Post.Description = options.QueryDescription
 		query.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:   spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
-							Examples: examples,
-						},
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema:   spec.RefSchema("#/components/schemas/" + QueryRequestSchemaKey),
+						Examples: examples,
 					},
 				},
 			},
@@ -93,14 +89,12 @@ func AddQueriesToOpenAPI(options OASQueryOptions) error {
 		validate.Post.Description = "Verify if a query payload matches the expected value and return a clean version"
 		validate.Parameters = []*spec3.Parameter{
 			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "name",
-					In:          "path",
-					Description: "The query type name, or {any}",
-					Example:     "{any}",
-					Required:    true,
-					Schema:      spec.StringProperty().UniqueValues(),
-				},
+				Name:        "name",
+				In:          "path",
+				Description: "The query type name, or {any}",
+				Example:     "{any}",
+				Required:    true,
+				Schema:      spec.StringProperty().UniqueValues(),
 			},
 		}
 
@@ -173,13 +167,11 @@ func getExamples(queryExamples *data.QueryExamples, queryTypes *dsV0.QueryTypeDe
 			q.IntervalMS = 5000 // 5s
 		}
 		examples[fmt.Sprintf("%s-%d", example.Name, idx)] = &spec3.Example{
-			ExampleProps: spec3.ExampleProps{
-				Summary:     example.Name,
-				Description: example.Description,
-				Value: data.QueryDataRequest{
-					TimeRange: tr,
-					Queries:   []data.DataQuery{q},
-				},
+			Summary:     example.Name,
+			Description: example.Description,
+			Value: data.QueryDataRequest{
+				TimeRange: tr,
+				Queries:   []data.DataQuery{q},
 			},
 		}
 	}

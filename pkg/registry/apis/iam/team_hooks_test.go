@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,10 +17,8 @@ import (
 
 func newTeam(namespace, name string, members ...iamv0.TeamTeamMember) *iamv0.Team {
 	return &iamv0.Team{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 		Spec: iamv0.TeamSpec{
 			Title:   name,
 			Members: members,
@@ -218,7 +215,7 @@ func TestAfterTeamCreate(t *testing.T) {
 		}
 
 		require.NotPanics(t, func() {
-			b.AfterTeamCreate(&iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}, nil)
+			b.AfterTeamCreate(&iamv0.User{Name: "user-1", Namespace: "org-1"}, nil)
 		})
 
 		time.Sleep(50 * time.Millisecond)
@@ -630,7 +627,7 @@ func TestBeginTeamUpdate(t *testing.T) {
 		}
 
 		next := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
-		notATeam := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}
+		notATeam := &iamv0.User{Name: "user-1", Namespace: "org-1"}
 
 		finish, err := b.BeginTeamUpdate(context.Background(), next, notATeam, nil)
 		require.NoError(t, err)
@@ -646,7 +643,7 @@ func TestBeginTeamUpdate(t *testing.T) {
 		}
 
 		old := newTeam("org-1", "team-1", member("user-1", iamv0.TeamTeamPermissionMember))
-		notATeam := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}
+		notATeam := &iamv0.User{Name: "user-1", Namespace: "org-1"}
 
 		finish, err := b.BeginTeamUpdate(context.Background(), notATeam, old, nil)
 		require.NoError(t, err)
@@ -840,7 +837,7 @@ func TestAfterTeamDelete(t *testing.T) {
 		}
 
 		require.NotPanics(t, func() {
-			b.AfterTeamDelete(&iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "org-1"}}, nil)
+			b.AfterTeamDelete(&iamv0.User{Name: "user-1", Namespace: "org-1"}, nil)
 		})
 
 		time.Sleep(50 * time.Millisecond)

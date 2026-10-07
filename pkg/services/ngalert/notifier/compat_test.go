@@ -11,7 +11,7 @@ import (
 )
 
 func TestModelToTimeIntervals(t *testing.T) {
-	weekdayRange := timeinterval.WeekdayRange{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 5}}
+	weekdayRange := timeinterval.WeekdayRange{Begin: 1, End: 5}
 
 	ti := func(name string, intervals ...timeinterval.TimeInterval) v1.TimeInterval {
 		return v1.TimeInterval{Title: name, TimeIntervals: intervals}

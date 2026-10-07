@@ -1339,13 +1339,11 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		sub.Post.Description = "Check if the configuration is valid. Deprecated: this will go away in favour of fieldErrors from status"
 		sub.Post.Deprecated = true
 		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Required: false,
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &repoSchema,
-						},
+			Required: false,
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: &repoSchema,
 					},
 				},
 			},
@@ -1353,33 +1351,31 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	}
 
 	ref := &spec3.Parameter{
-		ParameterProps: spec3.ParameterProps{
-			Name:    "ref",
-			In:      "query",
-			Example: "",
-			Examples: map[string]*spec3.Example{
-				"": {
-					ExampleProps: spec3.ExampleProps{
-						Summary: "The default",
-					},
-				},
-				"branch": {
-					ExampleProps: spec3.ExampleProps{
-						Value:   "my-branch",
-						Summary: "Select branch",
-					},
-				},
-				"commit": {
-					ExampleProps: spec3.ExampleProps{
-						Value:   "7f7cc2153",
-						Summary: "Commit hash (or prefix)",
-					},
+		Name:    "ref",
+		In:      "query",
+		Example: "",
+		Examples: map[string]*spec3.Example{
+			"": {
+				ExampleProps: spec3.ExampleProps{
+					Summary: "The default",
 				},
 			},
-			Description: "branch or commit hash",
-			Schema:      spec.StringProperty(),
-			Required:    false,
+			"branch": {
+				ExampleProps: spec3.ExampleProps{
+					Value:   "my-branch",
+					Summary: "Select branch",
+				},
+			},
+			"commit": {
+				ExampleProps: spec3.ExampleProps{
+					Value:   "7f7cc2153",
+					Summary: "Commit hash (or prefix)",
+				},
+			},
 		},
+		Description: "branch or commit hash",
+		Schema:      spec.StringProperty(),
+		Required:    false,
 	}
 
 	sub = oas.Paths.Paths[repoprefix+"/history"]
@@ -1438,62 +1434,54 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 		comment := []*spec3.Parameter{
 			ref,
 			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "message",
-					In:          "query",
-					Description: "optional message sent with any changes",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
+				Name:        "message",
+				In:          "query",
+				Description: "optional message sent with any changes",
+				Schema:      spec.StringProperty(),
+				Required:    false,
 			},
 			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "skipDryRun",
-					In:          "query",
-					Description: "do not pro-actively verify the payload",
-					Schema:      spec.BooleanProperty(),
-					Required:    false,
-				},
+				Name:        "skipDryRun",
+				In:          "query",
+				Description: "do not pro-actively verify the payload",
+				Schema:      spec.BooleanProperty(),
+				Required:    false,
 			},
 			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "originalPath",
-					In:          "query",
-					Description: "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
-					Schema:      spec.StringProperty(),
-					Required:    false,
-				},
+				Name:        "originalPath",
+				In:          "query",
+				Description: "path of file to move (used with POST method for move operations). Must be same type as target path: file-to-file (e.g., 'some/a.json' -> 'c/d.json') or folder-to-folder (e.g., 'some/' -> 'new/')",
+				Schema:      spec.StringProperty(),
+				Required:    false,
 			},
 		}
 		sub.Delete.Parameters = comment
 		sub.Post.Parameters = comment
 		sub.Put.Parameters = comment
 		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:  spec.MapProperty(nil),
-							Example: &unstructured.Unstructured{},
-							Examples: map[string]*spec3.Example{
-								"dashboard": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
-													"hello": "dashboard",
-												},
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema:  spec.MapProperty(nil),
+						Example: &unstructured.Unstructured{},
+						Examples: map[string]*spec3.Example{
+							"dashboard": {
+								ExampleProps: spec3.ExampleProps{
+									Value: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"spec": map[string]interface{}{
+												"hello": "dashboard",
 											},
 										},
 									},
 								},
-								"playlist": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": map[string]interface{}{
-													"hello": "playlist",
-												},
+							},
+							"playlist": {
+								ExampleProps: spec3.ExampleProps{
+									Value: &unstructured.Unstructured{
+										Object: map[string]interface{}{
+											"spec": map[string]interface{}{
+												"hello": "playlist",
 											},
 										},
 									},
@@ -1501,23 +1489,24 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 							},
 						},
 					},
-					"application/x-yaml": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema:  spec.MapProperty(nil),
-							Example: &unstructured.Unstructured{},
-							Examples: map[string]*spec3.Example{
-								"dashboard": {
-									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: dashboard.grafana.app/v0alpha1
+				},
+				"application/x-yaml": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema:  spec.MapProperty(nil),
+						Example: &unstructured.Unstructured{},
+						Examples: map[string]*spec3.Example{
+							"dashboard": {
+								ExampleProps: spec3.ExampleProps{
+									Value: `apiVersion: dashboard.grafana.app/v0alpha1
 kind: Dashboard
 spec:
   title: Sample dashboard
 `,
-									},
 								},
-								"playlist": {
-									ExampleProps: spec3.ExampleProps{
-										Value: `apiVersion: playlist.grafana.app/v0alpha1
+							},
+							"playlist": {
+								ExampleProps: spec3.ExampleProps{
+									Value: `apiVersion: playlist.grafana.app/v0alpha1
 kind: Playlist
 spec:
   title: Playlist from provisioning
@@ -1526,7 +1515,6 @@ spec:
   - type: dashboard_by_tag
     value: panel-tests
 `,
-									},
 								},
 							},
 						},
@@ -1543,35 +1531,31 @@ spec:
 		sub.Post.Description = "Register a job for this repository"
 		sub.Post.Responses = getJSONResponse("#/components/schemas/" + refsBase + "Job")
 		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &spec.Schema{
-								SchemaProps: spec.SchemaProps{
-									Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobSpec"),
-								},
-							},
-							Examples: map[string]*spec3.Example{
-								"incremental": {
-									ExampleProps: spec3.ExampleProps{
-										Summary:     "Pull (incremental)",
-										Description: "look for changes since the last sync",
-										Value: provisioning.JobSpec{
-											Pull: &provisioning.SyncJobOptions{
-												Incremental: true,
-											},
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: &spec.Schema{
+							Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "JobSpec"),
+						},
+						Examples: map[string]*spec3.Example{
+							"incremental": {
+								ExampleProps: spec3.ExampleProps{
+									Summary:     "Pull (incremental)",
+									Description: "look for changes since the last sync",
+									Value: provisioning.JobSpec{
+										Pull: &provisioning.SyncJobOptions{
+											Incremental: true,
 										},
 									},
 								},
-								"pull": {
-									ExampleProps: spec3.ExampleProps{
-										Summary:     "Pull from repository",
-										Description: "pull all files",
-										Value: provisioning.JobSpec{
-											Pull: &provisioning.SyncJobOptions{
-												Incremental: false,
-											},
+							},
+							"pull": {
+								ExampleProps: spec3.ExampleProps{
+									Summary:     "Pull from repository",
+									Description: "pull all files",
+									Value: provisioning.JobSpec{
+										Pull: &provisioning.SyncJobOptions{
+											Incremental: false,
 										},
 									},
 								},
@@ -1612,13 +1596,11 @@ spec:
 		authorizeSchema := defs[compBase+"ConnectionAuthorizeRequest"].Schema
 		sub.Post.Description = "Complete the OAuth authorization of this connection by exchanging an authorization code"
 		sub.Post.RequestBody = &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Required: true,
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: &authorizeSchema,
-						},
+			Required: true,
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: &authorizeSchema,
 					},
 				},
 			},
@@ -1659,13 +1641,9 @@ spec:
 	schema := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["items"]
 	schema.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
-						},
-					},
+			AllOf: []spec.Schema{
+				{
+					Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "RepositoryView"),
 				},
 			},
 		},
@@ -1678,13 +1656,9 @@ spec:
 	availableResources := oas.Components.Schemas[compBase+"RepositoryViewList"].Properties["availableResources"]
 	availableResources.Items = &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "SupportedResource"),
-						},
-					},
+			AllOf: []spec.Schema{
+				{
+					Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "SupportedResource"),
 				},
 			},
 		},
@@ -1697,9 +1671,7 @@ spec:
 	commitSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"]
 	commitSchema.AllOf = []spec.Schema{
 		{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
-			},
+			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "CommitOptions"),
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["commit"] = commitSchema
@@ -1708,9 +1680,7 @@ spec:
 	branchOptionsSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"]
 	branchOptionsSchema.AllOf = []spec.Schema{
 		{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "BranchOptions"),
-			},
+			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "BranchOptions"),
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["branchOptions"] = branchOptionsSchema
@@ -1719,35 +1689,25 @@ spec:
 	pullRequestSchema := oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"]
 	pullRequestSchema.AllOf = []spec.Schema{
 		{
-			SchemaProps: spec.SchemaProps{
-				Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "PullRequestOptions"),
-			},
+			Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "PullRequestOptions"),
 		},
 	}
 	oas.Components.Schemas[compBase+"RepositoryView"].Properties["pullRequest"] = pullRequestSchema
 
 	countSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "ResourceCount"),
-						},
-					},
+			AllOf: []spec.Schema{
+				{
+					Ref: spec.MustCreateRef("#/components/schemas/" + refsBase + "ResourceCount"),
 				},
 			},
 		},
 	}
 	managerSpec := &spec.SchemaOrArray{
 		Schema: &spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				AllOf: []spec.Schema{
-					{
-						SchemaProps: spec.SchemaProps{
-							Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ManagerStats"),
-						},
-					},
+			AllOf: []spec.Schema{
+				{
+					Ref: spec.MustCreateRef("#/components/schemas/" + compBase + "ManagerStats"),
 				},
 			},
 		},
@@ -1899,23 +1859,19 @@ func (b *APIBuilder) asConnection(ctx context.Context, obj runtime.Object, old r
 
 func getJSONResponse(ref string) *spec3.Responses {
 	return &spec3.Responses{
-		ResponsesProps: spec3.ResponsesProps{
-			StatusCodeResponses: map[int]*spec3.Response{
-				200: {
-					ResponseProps: spec3.ResponseProps{
-						Content: map[string]*spec3.MediaType{
-							"application/json": {
-								MediaTypeProps: spec3.MediaTypeProps{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Ref: spec.MustCreateRef(ref),
-										},
-									},
+		StatusCodeResponses: map[int]*spec3.Response{
+			200: {
+				ResponseProps: spec3.ResponseProps{
+					Content: map[string]*spec3.MediaType{
+						"application/json": {
+							MediaTypeProps: spec3.MediaTypeProps{
+								Schema: &spec.Schema{
+									Ref: spec.MustCreateRef(ref),
 								},
 							},
 						},
-						Description: "OK",
 					},
+					Description: "OK",
 				},
 			},
 		},

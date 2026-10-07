@@ -53,11 +53,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	).Generate()
 
 	newResource := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
@@ -151,11 +149,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 	).Generate()
 
 	alertRule := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
@@ -235,12 +231,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder":     "test-folder",
-					"grafana.com/provenance": "",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder":     "test-folder",
+				"grafana.com/provenance": "",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -289,12 +283,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder":     "test-folder",
-					"grafana.com/provenance": "invalid",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder":     "test-folder",
+				"grafana.com/provenance": "invalid",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -324,11 +316,9 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	t.Run("should fail to create rule with invalid config", func(t *testing.T) {
 		invalidRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title:       "invalid-rule",
@@ -351,11 +341,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -403,11 +391,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -440,11 +426,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		).Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -494,11 +478,9 @@ func TestIntegrationPatch(t *testing.T) {
 	).Generate()
 
 	alertRule := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
@@ -596,11 +578,9 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 		rule := baseGen.Generate()
 
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					v0alpha1.FolderAnnotationKey: "test-folder-a",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				v0alpha1.FolderAnnotationKey: "test-folder-a",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -682,15 +662,13 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 	t.Run("should fail to create rule with group labels preset", func(t *testing.T) {
 		rule := baseGen.Generate()
 		alertRule := &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					v0alpha1.FolderAnnotationKey: "test-folder-a",
-				},
-				Labels: map[string]string{
-					v0alpha1.GroupLabelKey:      "some-group",
-					v0alpha1.GroupIndexLabelKey: "0",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				v0alpha1.FolderAnnotationKey: "test-folder-a",
+			},
+			Labels: map[string]string{
+				v0alpha1.GroupLabelKey:      "some-group",
+				v0alpha1.GroupIndexLabelKey: "0",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -732,10 +710,8 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 	require.NoError(t, err)
 
 	testTree := &v1beta1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "test-routing-tree",
-			Namespace: "default",
-		},
+		Name:      "test-routing-tree",
+		Namespace: "default",
 		Spec: v1beta1.RoutingTreeSpec{
 			Defaults: v1beta1.RoutingTreeRouteDefaults{
 				Receiver: "empty",
@@ -760,11 +736,9 @@ func TestIntegrationNotificationSettings(t *testing.T) {
 		t.Helper()
 		rule := baseGen.Generate()
 		return &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -1036,11 +1010,9 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": folder,
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": folder,
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -1120,11 +1092,9 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": folder,
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": folder,
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -1457,19 +1427,15 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 	routingTreeClient, err := v1beta1.NewRoutingTreeClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	matchTree := &v1beta1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "rt-tree-match",
-			Namespace: "default",
-		},
+		Name:      "rt-tree-match",
+		Namespace: "default",
 		Spec: v1beta1.RoutingTreeSpec{
 			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
 		},
 	}
 	otherTree := &v1beta1.RoutingTree{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      "rt-tree-other",
-			Namespace: "default",
-		},
+		Name:      "rt-tree-other",
+		Namespace: "default",
 		Spec: v1beta1.RoutingTreeSpec{
 			Defaults: v1beta1.RoutingTreeRouteDefaults{Receiver: "empty"},
 		},
@@ -1491,11 +1457,9 @@ func TestIntegrationListWithNamedRoutingTreeFieldSelectors(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.AlertRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": folder,
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": folder,
 			},
 			Spec: v0alpha1.AlertRuleSpec{
 				Title: rule.Title,
@@ -1644,10 +1608,8 @@ func TestIntegrationAlertRuleStatusSubresource(t *testing.T) {
 	).Generate()
 
 	ruleResource := &v0alpha1.AlertRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace:   "default",
-			Annotations: map[string]string{"grafana.app/folder": "test-folder"},
-		},
+		Namespace:   "default",
+		Annotations: map[string]string{"grafana.app/folder": "test-folder"},
 		Spec: v0alpha1.AlertRuleSpec{
 			Title: rule.Title,
 			Expressions: v0alpha1.AlertRuleExpressionMap{

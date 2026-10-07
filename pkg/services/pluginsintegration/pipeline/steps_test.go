@@ -163,9 +163,7 @@ func TestDuplicatePluginIDValidation(t *testing.T) {
 			ctx := context.Background()
 			for _, pluginID := range tc.registeredPlugins {
 				err := r.Add(ctx, &plugins.Plugin{
-					JSONData: plugins.JSONData{
-						ID: pluginID,
-					},
+					ID: pluginID,
 				})
 				require.NoError(t, err)
 			}

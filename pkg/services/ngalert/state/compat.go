@@ -117,13 +117,11 @@ func StateToPostableAlert(transition StateTransition, appURL *url.URL) *models.P
 	}
 
 	return &models.PostableAlert{
-		Annotations: models.LabelSet(nA),
-		StartsAt:    startsAt,
-		EndsAt:      strfmt.DateTime(alertState.EndsAt),
-		Alert: models.Alert{
-			Labels:       models.LabelSet(nL),
-			GeneratorURL: strfmt.URI(urlStr),
-		},
+		Annotations:  models.LabelSet(nA),
+		StartsAt:     startsAt,
+		EndsAt:       strfmt.DateTime(alertState.EndsAt),
+		Labels:       models.LabelSet(nL),
+		GeneratorURL: strfmt.URI(urlStr),
 	}
 }
 
@@ -138,13 +136,11 @@ func noDataAlert(labels data.Labels, annotations data.Labels, alertState *State,
 	labels[model.AlertNameLabel] = NoDataAlertName
 
 	return &models.PostableAlert{
-		Annotations: models.LabelSet(annotations),
-		StartsAt:    strfmt.DateTime(alertState.StartsAt),
-		EndsAt:      strfmt.DateTime(alertState.EndsAt),
-		Alert: models.Alert{
-			Labels:       models.LabelSet(labels),
-			GeneratorURL: strfmt.URI(urlStr),
-		},
+		Annotations:  models.LabelSet(annotations),
+		StartsAt:     strfmt.DateTime(alertState.StartsAt),
+		EndsAt:       strfmt.DateTime(alertState.EndsAt),
+		Labels:       models.LabelSet(labels),
+		GeneratorURL: strfmt.URI(urlStr),
 	}
 }
 
@@ -157,13 +153,11 @@ func errorAlert(labels, annotations data.Labels, alertState *State, urlStr strin
 	labels[model.AlertNameLabel] = ErrorAlertName
 
 	return &models.PostableAlert{
-		Annotations: models.LabelSet(annotations),
-		StartsAt:    strfmt.DateTime(alertState.StartsAt),
-		EndsAt:      strfmt.DateTime(alertState.EndsAt),
-		Alert: models.Alert{
-			Labels:       models.LabelSet(labels),
-			GeneratorURL: strfmt.URI(urlStr),
-		},
+		Annotations:  models.LabelSet(annotations),
+		StartsAt:     strfmt.DateTime(alertState.StartsAt),
+		EndsAt:       strfmt.DateTime(alertState.EndsAt),
+		Labels:       models.LabelSet(labels),
+		GeneratorURL: strfmt.URI(urlStr),
 	}
 }
 

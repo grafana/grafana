@@ -184,11 +184,10 @@ func (s *DashboardStarsStorage) write(ctx context.Context, obj *collections.Star
 	stars := getStars(obj, schema.GroupKind{Group: "dashboard.grafana.app", Kind: "Dashboard"})
 	if len(stars) == 0 {
 		err = s.stars.DeleteByUser(ctx, user.ID)
-		return &collections.Stars{ObjectMeta: metav1.ObjectMeta{
+		return &collections.Stars{
 			Name:              obj.Name,
 			Namespace:         obj.Namespace,
-			DeletionTimestamp: new(metav1.Now()),
-		}}, err
+			DeletionTimestamp: new(metav1.Now())}, err
 	}
 
 	current, _, err := s.sql.getDashboardStars(ctx, ns.OrgID, owner.Identifier)
@@ -278,7 +277,7 @@ func (s *DashboardStarsStorage) Update(ctx context.Context, name string, objInfo
 
 // Delete implements rest.GracefulDeleter.
 func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
-	obj, err := s.write(ctx, &collections.Stars{ObjectMeta: metav1.ObjectMeta{Name: name}})
+	obj, err := s.write(ctx, &collections.Stars{Name: name})
 	if err != nil {
 		return nil, false, err
 	}
@@ -288,18 +287,14 @@ func (s *DashboardStarsStorage) Delete(ctx context.Context, name string, deleteV
 func asStarsResource(ns string, v *dashboardStars) collections.Stars {
 	slices.Sort(v.Dashboards) // ensure names are in sorted order
 	stars := collections.Stars{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: collections.APIGroup + "/" + collections.APIVersion,
-			Kind:       collections.StarsKind().Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              fmt.Sprintf("user-%s", v.UserUID),
-			Namespace:         ns,
-			ResourceVersion:   strconv.FormatInt(v.Last, 10),
-			CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
-			Annotations: map[string]string{
-				gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
-			},
+		APIVersion:        collections.APIGroup + "/" + collections.APIVersion,
+		Kind:              collections.StarsKind().Kind(),
+		Name:              fmt.Sprintf("user-%s", v.UserUID),
+		Namespace:         ns,
+		ResourceVersion:   strconv.FormatInt(v.Last, 10),
+		CreationTimestamp: metav1.NewTime(time.UnixMilli(v.First)),
+		Annotations: map[string]string{
+			gutils.AnnoKeyCreatedBy: fmt.Sprintf("user:%s", v.UserUID),
 		},
 		Spec: collections.StarsSpec{
 			Resource: []collections.StarsResource{{

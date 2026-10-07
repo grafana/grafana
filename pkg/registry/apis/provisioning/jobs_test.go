@@ -64,10 +64,8 @@ func testDashboardFileInfo() *repository.FileInfo {
 
 func newTestRepo(name, namespace string) *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 		Spec: provisioning.RepositorySpec{
 			Sync: provisioning.SyncOptions{
 				Target: provisioning.SyncTargetTypeFolder,
@@ -508,10 +506,8 @@ func TestAuthorizeResourceJob(t *testing.T) {
 
 	t.Run("instance sync target checks create at root", func(t *testing.T) {
 		instanceCfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-repo",
-				Namespace: "default",
-			},
+			Name:      "my-repo",
+			Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Sync: provisioning.SyncOptions{
 					Target: provisioning.SyncTargetTypeInstance,
@@ -614,13 +610,13 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 
 	instanceRepo := func() *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Name: "my-repo", Namespace: "default",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		}
 	}
 	folderRepo := func() *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+			Name: "my-repo", Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Type:   provisioning.GitHubRepositoryType,
 				GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
@@ -1116,8 +1112,8 @@ func TestHandleOrphanCleanupJob_RepoNotFound_AdminAllowed(t *testing.T) {
 
 			queueMock := &jobs.MockQueue{}
 			createdJob := &provisioning.Job{
-				ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
-				Spec:       provisioning.JobSpec{Action: action, Repository: "gone-repo"},
+				Name: "job-1", Namespace: "default",
+				Spec: provisioning.JobSpec{Action: action, Repository: "gone-repo"},
 			}
 			queueMock.EXPECT().Insert(mock.Anything, "default", mock.Anything).Return(createdJob, nil)
 
@@ -1146,11 +1142,9 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 
 	now := metav1.Now()
 	repoCfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "dying-repo",
-			Namespace:         "default",
-			DeletionTimestamp: &now,
-		},
+		Name:              "dying-repo",
+		Namespace:         "default",
+		DeletionTimestamp: &now,
 	}
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)
@@ -1163,8 +1157,8 @@ func TestHandleOrphanCleanupJob_RepoTerminating_Allowed(t *testing.T) {
 
 	queueMock := &jobs.MockQueue{}
 	createdJob := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "default"},
-		Spec:       provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "dying-repo"},
+		Name: "job-1", Namespace: "default",
+		Spec: provisioning.JobSpec{Action: provisioning.JobActionReleaseResources, Repository: "dying-repo"},
 	}
 	queueMock.EXPECT().Insert(mock.Anything, "default", mock.Anything).Return(createdJob, nil)
 
@@ -1189,10 +1183,8 @@ func TestHandleOrphanCleanupJob_HealthyRepo_Rejected(t *testing.T) {
 	ctx := request.WithNamespace(context.Background(), "default")
 
 	repoCfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "healthy-repo",
-			Namespace: "default",
-		},
+		Name:      "healthy-repo",
+		Namespace: "default",
 	}
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(repoCfg)

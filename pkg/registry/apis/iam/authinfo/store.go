@@ -421,12 +421,10 @@ func (l *LegacyStore) DeleteCollection(ctx context.Context, deleteValidation res
 
 func mapToAuthInfoObject(ns claims.NamespaceInfo, userUID string, ua *login.UserAuth) iamv0alpha1.AuthInfo {
 	result := iamv0alpha1.AuthInfo{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              iamv0alpha1.EncodeName(userUID, ua.AuthModule),
-			Namespace:         ns.Value,
-			ResourceVersion:   fmt.Sprintf("%d", ua.Created.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(ua.Created),
-		},
+		Name:              iamv0alpha1.EncodeName(userUID, ua.AuthModule),
+		Namespace:         ns.Value,
+		ResourceVersion:   fmt.Sprintf("%d", ua.Created.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(ua.Created),
 		Spec: iamv0alpha1.AuthInfoSpec{
 			UserRef: iamv0alpha1.AuthInfoUserRef{
 				Name: userUID,

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/prometheus/alertmanager/timeinterval"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -63,17 +62,13 @@ func convertToSpec(intervals []timeinterval.TimeInterval) ([]model.TimeIntervalI
 
 func buildTimeInterval(orgID int64, interval v1.TimeInterval, spec model.TimeIntervalSpec, namespacer request.NamespaceMapper) model.TimeInterval {
 	i := model.TimeInterval{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
-			Kind:       kind.Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
-			Name:            string(interval.UID),
-			Namespace:       namespacer(orgID),
-			ResourceVersion: interval.Version,
-		},
-		Spec: spec,
+		APIVersion:      kind.GroupVersionKind().GroupVersion().String(),
+		Kind:            kind.Kind(),
+		UID:             types.UID(interval.UID), // TODO This is needed to make PATCH work
+		Name:            string(interval.UID),
+		Namespace:       namespacer(orgID),
+		ResourceVersion: interval.Version,
+		Spec:            spec,
 	}
 	i.SetProvenanceStatus(string(interval.Provenance))
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
@@ -95,11 +90,9 @@ func convertToDomainModel(interval *model.TimeInterval) (v1.TimeInterval, error)
 	}
 
 	return v1.TimeInterval{
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(interval.Name),
-			Version:    interval.ResourceVersion,
-			Provenance: prov,
-		},
+		UID:           v1.ResourceUID(interval.Name),
+		Version:       interval.ResourceVersion,
+		Provenance:    prov,
 		Title:         interval.Spec.Name,
 		TimeIntervals: timeIntervals,
 	}, nil

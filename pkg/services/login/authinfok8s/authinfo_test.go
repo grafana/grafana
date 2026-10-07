@@ -59,10 +59,10 @@ func writeStatus(w http.ResponseWriter, code int32, reason metav1.StatusReason) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(int(code))
 	_ = json.NewEncoder(w).Encode(metav1.Status{
-		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
-		Status:   metav1.StatusFailure,
-		Reason:   reason,
-		Code:     code,
+		APIVersion: "v1", Kind: "Status",
+		Status: metav1.StatusFailure,
+		Reason: reason,
+		Code:   code,
 	})
 }
 
@@ -73,15 +73,13 @@ func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
 }
 
 func usersResponse(t *testing.T, w http.ResponseWriter, uid string) {
-	writeJSON(t, w, iamv0alpha1.UserList{Items: []iamv0alpha1.User{{ObjectMeta: metav1.ObjectMeta{Name: uid}}}})
+	writeJSON(t, w, iamv0alpha1.UserList{Items: []iamv0alpha1.User{{Name: uid}}})
 }
 
 func userByUIDResponse(t *testing.T, w http.ResponseWriter, uid string, userID int64) {
 	writeJSON(t, w, iamv0alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   uid,
-			Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10)},
-		},
+		Name:   uid,
+		Labels: map[string]string{utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(userID, 10)},
 	})
 }
 
@@ -92,7 +90,7 @@ func noUsersResponse(t *testing.T, w http.ResponseWriter) {
 func authInfoItem(name, userUID, module, authID string, created time.Time) iamv0alpha1.AuthInfo {
 	ms := created.UnixMilli()
 	return iamv0alpha1.AuthInfo{
-		ObjectMeta: metav1.ObjectMeta{Name: name, CreationTimestamp: metav1.NewTime(created)},
+		Name: name, CreationTimestamp: metav1.NewTime(created),
 		Spec: iamv0alpha1.AuthInfoSpec{
 			UserRef:    iamv0alpha1.AuthInfoUserRef{Name: userUID},
 			AuthModule: module,
@@ -767,8 +765,8 @@ func TestStore_DeleteUserAuthInfo(t *testing.T) {
 						w.WriteHeader(http.StatusOK)
 					case strings.HasSuffix(r.URL.Path, "/authinfos"):
 						writeJSON(t, w, iamv0alpha1.AuthInfoList{Items: []iamv0alpha1.AuthInfo{
-							{ObjectMeta: metav1.ObjectMeta{Name: "user-uid.oauth-github"}},
-							{ObjectMeta: metav1.ObjectMeta{Name: "user-uid.ldap"}},
+							{Name: "user-uid.oauth-github"},
+							{Name: "user-uid.ldap"},
 						}})
 					default:
 						t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)

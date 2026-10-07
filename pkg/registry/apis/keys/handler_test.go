@@ -495,7 +495,7 @@ func TestListKeys_HonoursOnlyPagingFields(t *testing.T) {
 // Drives every field of ListOptions, so a field added upstream is covered without
 // anyone updating a list. ShardSelector was reaching the store until this existed.
 func TestListKeys_RefusesEveryUnhonoredField(t *testing.T) {
-	typ := reflect.TypeOf(metav1.ListOptions{})
+	typ := reflect.TypeFor[metav1.ListOptions]()
 	tested := 0
 
 	for i := range typ.NumField() {

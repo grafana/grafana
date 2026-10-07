@@ -173,14 +173,12 @@ func makeShortURLRows(total int) []testShortURLRow {
 	rows := make([]testShortURLRow, 0, total)
 	for i := 1; i <= total; i++ {
 		rows = append(rows, testShortURLRow{
-			id: int64(i),
-			shortURLRow: shortURLRow{
-				uid:        fmt.Sprintf("uid-%04d", i),
-				path:       fmt.Sprintf("/d/%04d", i),
-				createdBy:  42,
-				createdAt:  1710000000 + int64(i),
-				lastSeenAt: 1710001000 + int64(i),
-			},
+			id:         int64(i),
+			uid:        fmt.Sprintf("uid-%04d", i),
+			path:       fmt.Sprintf("/d/%04d", i),
+			createdBy:  42,
+			createdAt:  1710000000 + int64(i),
+			lastSeenAt: 1710001000 + int64(i),
 		})
 	}
 	return rows

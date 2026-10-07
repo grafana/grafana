@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -2491,7 +2490,7 @@ func newCompositeRepoWithConfig(t *testing.T) *compositeRepo {
 	mockVersioned := repository.NewMockVersioned(t)
 	mockReader := repository.NewMockReader(t)
 	mockReader.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Name: "test-repo",
 	}).Maybe()
 
 	return &compositeRepo{

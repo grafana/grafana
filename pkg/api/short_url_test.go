@@ -80,10 +80,10 @@ func TestShortURLDeprecationHeaders(t *testing.T) {
 
 	t.Run("GET /api/short-urls/:uid advertises the replacement even when the request fails", func(t *testing.T) {
 		handler := newHandler(http.StatusNotFound, mustMarshal(t, metav1.Status{
-			TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-			Status:   metav1.StatusFailure,
-			Reason:   metav1.StatusReasonNotFound,
-			Code:     http.StatusNotFound,
+			Kind: "Status", APIVersion: "v1",
+			Status: metav1.StatusFailure,
+			Reason: metav1.StatusReasonNotFound,
+			Code:   http.StatusNotFound,
 		}))
 		ctx, recorder := newTestContext(t, http.MethodGet, "/api/short-urls/"+validUID, map[string]string{":uid": validUID})
 

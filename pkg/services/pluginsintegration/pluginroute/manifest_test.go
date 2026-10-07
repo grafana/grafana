@@ -28,12 +28,10 @@ func testManifest(t *testing.T) *app.ManifestData {
 	t.Helper()
 
 	operation := func(id string) *spec3.Operation {
-		return &spec3.Operation{OperationProps: spec3.OperationProps{
+		return &spec3.Operation{
 			OperationId: id,
-			Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-				Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-			}},
-		}}
+			Responses: &spec3.Responses{
+				Default: &spec3.Response{Description: "OK"}}}
 	}
 
 	return &app.ManifestData{

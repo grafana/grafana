@@ -6,7 +6,6 @@ import (
 
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -75,17 +74,13 @@ func convertToK8sResource(
 	}
 
 	r := &model.Receiver{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
-			Kind:       kind.Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
-			Name:            receiver.GetUID(),
-			Namespace:       namespacer(orgID),
-			ResourceVersion: receiver.Version,
-		},
-		Spec: spec,
+		APIVersion:      kind.GroupVersionKind().GroupVersion().String(),
+		Kind:            kind.Kind(),
+		UID:             types.UID(receiver.GetUID()), // This is needed to make PATCH work
+		Name:            receiver.GetUID(),
+		Namespace:       namespacer(orgID),
+		ResourceVersion: receiver.Version,
+		Spec:            spec,
 	}
 	r.SetProvenanceStatus(string(receiver.Provenance))
 

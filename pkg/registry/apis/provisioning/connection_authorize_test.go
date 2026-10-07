@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	k8testing "k8s.io/client-go/testing"
 
@@ -229,9 +228,7 @@ func newAuthorizeRequest(body string) *http.Request {
 
 func testAuthorizeConnection() *provisioning.Connection {
 	return &provisioning.Connection{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-connection",
-			Namespace: "default",
-		},
+		Name:      "test-connection",
+		Namespace: "default",
 	}
 }

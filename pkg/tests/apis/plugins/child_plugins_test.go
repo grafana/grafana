@@ -136,10 +136,8 @@ func setupHelperWithChildPlugin(t *testing.T) *apis.K8sTestHelper {
 	require.NoError(t, grafanafs.CopyRecursive(pluginSrc, pluginDst))
 
 	helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-		GrafanaOpts: testinfra.GrafanaOpts{
-			Dir:     dir,
-			DirPath: cfgPath,
-		},
+		Dir:     dir,
+		DirPath: cfgPath,
 	})
 	t.Cleanup(func() { helper.Shutdown() })
 	return helper

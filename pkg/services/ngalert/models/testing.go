@@ -923,11 +923,9 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 	currentStateSince := time.Now().Add(-time.Duration(rand.Intn(100) + 1))
 
 	instance := &AlertInstance{
-		AlertInstanceKey: AlertInstanceKey{
-			RuleOrgID:  rand.Int63n(1500),
-			RuleUID:    util.GenerateShortUID(),
-			LabelsHash: util.GenerateShortUID(),
-		},
+		RuleOrgID:         rand.Int63n(1500),
+		RuleUID:           util.GenerateShortUID(),
+		LabelsHash:        util.GenerateShortUID(),
 		Labels:            labels,
 		CurrentState:      randState(),
 		CurrentReason:     "TEST-REASON-" + util.GenerateShortUID(),
@@ -1312,13 +1310,11 @@ func SilenceGen(mutators ...Mutator[Silence]) func() Silence {
 			ID:        new(util.GenerateShortUID()),
 			Status:    new(amv2.SilenceStatus{State: new(amv2.SilenceStatusStateActive)}),
 			UpdatedAt: new(strfmt.DateTime(now.Add(time.Minute))),
-			Silence: amv2.Silence{
-				Comment:   new(util.GenerateShortUID()),
-				CreatedBy: new(util.GenerateShortUID()),
-				StartsAt:  new(strfmt.DateTime(now.Add(-time.Minute))),
-				EndsAt:    new(strfmt.DateTime(now.Add(time.Minute))),
-				Matchers:  []*amv2.Matcher{{Name: new(util.GenerateShortUID()), Value: new(util.GenerateShortUID()), IsRegex: new(false), IsEqual: new(true)}},
-			},
+			Comment:   new(util.GenerateShortUID()),
+			CreatedBy: new(util.GenerateShortUID()),
+			StartsAt:  new(strfmt.DateTime(now.Add(-time.Minute))),
+			EndsAt:    new(strfmt.DateTime(now.Add(time.Minute))),
+			Matchers:  []*amv2.Matcher{{Name: new(util.GenerateShortUID()), Value: new(util.GenerateShortUID()), IsRegex: new(false), IsEqual: new(true)}},
 		}
 		for _, mutator := range mutators {
 			mutator(&c)

@@ -2043,8 +2043,7 @@ func TestDetectRenames(t *testing.T) {
 func unsupportedPaths(changes []ResourceFileChange) []string {
 	var paths []string
 	for _, c := range changes {
-		var unsupported *resources.UnsupportedPathError
-		if errors.As(c.Warning, &unsupported) {
+		if unsupported, ok := errors.AsType[*resources.UnsupportedPathError](c.Warning); ok {
 			paths = append(paths, unsupported.Path)
 		}
 	}

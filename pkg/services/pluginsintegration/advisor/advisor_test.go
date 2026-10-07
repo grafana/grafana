@@ -36,11 +36,9 @@ func TestService_ReportSummary(t *testing.T) {
 			},
 			listItems: []resource.Object{
 				&advisorv0alpha1.Check{
-					ObjectMeta: metav1.ObjectMeta{
-						CreationTimestamp: metav1.Time{Time: earlier},
-						Labels: map[string]string{
-							checks.TypeLabel: plugincheck.CheckID,
-						},
+					CreationTimestamp: metav1.Time{Time: earlier},
+					Labels: map[string]string{
+						checks.TypeLabel: plugincheck.CheckID,
 					},
 					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{
@@ -51,11 +49,9 @@ func TestService_ReportSummary(t *testing.T) {
 					},
 				},
 				&advisorv0alpha1.Check{
-					ObjectMeta: metav1.ObjectMeta{
-						CreationTimestamp: metav1.Time{Time: now},
-						Labels: map[string]string{
-							checks.TypeLabel: plugincheck.CheckID,
-						},
+					CreationTimestamp: metav1.Time{Time: now},
+					Labels: map[string]string{
+						checks.TypeLabel: plugincheck.CheckID,
 					},
 					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{
@@ -67,11 +63,9 @@ func TestService_ReportSummary(t *testing.T) {
 					},
 				},
 				&advisorv0alpha1.Check{
-					ObjectMeta: metav1.ObjectMeta{
-						CreationTimestamp: metav1.Time{Time: now},
-						Labels: map[string]string{
-							checks.TypeLabel: datasourcecheck.CheckID,
-						},
+					CreationTimestamp: metav1.Time{Time: now},
+					Labels: map[string]string{
+						checks.TypeLabel: datasourcecheck.CheckID,
 					},
 					Status: advisorv0alpha1.CheckStatus{
 						Report: advisorv0alpha1.CheckReport{

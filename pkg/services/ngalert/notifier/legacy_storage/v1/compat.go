@@ -43,12 +43,10 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 
 func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) PostableApiAlertingConfig {
 	return PostableApiAlertingConfig{
-		Config: Config{
-			Global:       in.Global,
-			Route:        RouteToModel(in.Route),
-			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
-		},
+		Global:       in.Global,
+		Route:        RouteToModel(in.Route),
+		InhibitRules: slices.Clone(in.InhibitRules),
+		Templates:    slices.Clone(in.Templates),
 	}
 }
 
@@ -264,10 +262,8 @@ func PostableApiReceiverToDB(in *PostableApiReceiver) *definition.PostableApiRec
 		return nil
 	}
 	return &definition.PostableApiReceiver{
-		Name: in.Name,
-		PostableGrafanaReceivers: definition.PostableGrafanaReceivers{
-			GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
-		},
+		Name:                    in.Name,
+		GrafanaManagedReceivers: PostableGrafanaReceiversToDB(in.GrafanaManagedReceivers),
 	}
 }
 
@@ -360,13 +356,11 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 		errs = append(errs, fmt.Errorf("invalid target matchers: %w", err))
 	}
 	return &definitions.InhibitionRule{
-		Name: string(in.UID),
-		InhibitRule: definitions.InhibitRule{
-			SourceMatchers: sourceMatchers,
-			TargetMatchers: targetMatchers,
-			Equal:          slices.Clone(in.Equal),
-		},
-		Provenance: definition.Provenance(in.Provenance),
+		Name:           string(in.UID),
+		SourceMatchers: sourceMatchers,
+		TargetMatchers: targetMatchers,
+		Equal:          slices.Clone(in.Equal),
+		Provenance:     definition.Provenance(in.Provenance),
 	}, errors.Join(errs...)
 }
 

@@ -117,11 +117,9 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 		s, ok := seen[k]
 		if !ok {
 			s = resource.ResourceStats{
-				NamespacedResource: resource.NamespacedResource{
-					Namespace: c.Key.Namespace,
-					Group:     c.Key.Group,
-					Resource:  c.Key.Resource,
-				},
+				Namespace: c.Key.Namespace,
+				Group:     c.Key.Group,
+				Resource:  c.Key.Resource,
 			}
 		}
 		s.Count++

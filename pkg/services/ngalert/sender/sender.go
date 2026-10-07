@@ -158,12 +158,10 @@ func NewExternalAlertmanagerSender(l log.Logger, reg prometheus.Registerer, opts
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 
 	options := &ExternalAMOptions{
-		Options: Options{
-			QueueCapacity:   defaultMaxQueueCapacity,
-			MaxBatchSize:    DefaultMaxBatchSize,
-			Registerer:      reg,
-			DrainOnShutdown: defaultDrainOnShutdown,
-		},
+		QueueCapacity:      defaultMaxQueueCapacity,
+		MaxBatchSize:       DefaultMaxBatchSize,
+		Registerer:         reg,
+		DrainOnShutdown:    defaultDrainOnShutdown,
 		MaxLabelStringSize: DefaultMaxLabelStringSize,
 	}
 

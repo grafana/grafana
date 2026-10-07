@@ -54,7 +54,7 @@ func NewConnectionDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 func NewConnectionInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, onProjection func(keysOnly bool)) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return &provisioningapis.Connection{Namespace: ns, Name: name}
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.ConnectionResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, connectionList(c, namespace, keys, onProjection))
 }
@@ -103,11 +103,10 @@ func listConnectionKeys(ctx context.Context, keys keysapi.Lister) ([]runtime.Obj
 		if err != nil {
 			return nil, 0, err
 		}
-		objs = append(objs, &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{
+		objs = append(objs, &provisioningapis.Connection{
 			Namespace:       k.Namespace,
 			Name:            k.Name,
-			ResourceVersion: k.ResourceVersion,
-		}})
+			ResourceVersion: k.ResourceVersion})
 	}
 	return objs, listRV, nil
 }

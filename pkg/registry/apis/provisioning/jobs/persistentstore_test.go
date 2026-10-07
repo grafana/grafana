@@ -41,8 +41,8 @@ func TestClaim_StampsOwnerToken(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Name: "test-job", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -65,13 +65,11 @@ func TestClaim_AlreadyClaimed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-B",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-B",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -98,13 +96,11 @@ func TestClaim_RecordsContendedWhenAlreadyClaimed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-B",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-B",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -145,8 +141,8 @@ func TestClaim_RetriesOnConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Name: "test-job", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -179,8 +175,8 @@ func TestClaim_ConflictThenClaimedByOther(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Name: "test-job", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -236,8 +232,8 @@ func TestClaim_RollbackSkipsJobOwnedByAnother(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
+		Name: "test-job", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -274,14 +270,12 @@ func TestRenewLease_LostToAnotherOwner(t *testing.T) {
 
 	// The store's job is claimed by owner-B.
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			UID:       "uid-1",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-B",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		UID:       "uid-1",
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-B",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -307,14 +301,12 @@ func TestRenewLease_LostToReincarnatedJob(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			UID:       "uid-2", // reincarnated object has a new UID
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-A",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		UID:       "uid-2", // reincarnated object has a new UID
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-A",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -341,14 +333,12 @@ func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
 
 	// The store holds a job now owned by owner-B (a reincarnation with a new UID).
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			UID:       "uid-2",
-			Labels: map[string]string{
-				LabelJobClaim:      "2000000000000",
-				LabelJobClaimOwner: "owner-B",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		UID:       "uid-2",
+		Labels: map[string]string{
+			LabelJobClaim:      "2000000000000",
+			LabelJobClaimOwner: "owner-B",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -356,14 +346,12 @@ func TestComplete_RefusesJobOwnedByAnother(t *testing.T) {
 
 	// We try to complete our stale claim (original UID, owner-A).
 	stale := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			UID:       "uid-1",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-A",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		UID:       "uid-1",
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-A",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}
@@ -388,14 +376,12 @@ func TestComplete_SucceedsForOwner(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			UID:       "uid-1",
-			Labels: map[string]string{
-				LabelJobClaim:      "1000000000000",
-				LabelJobClaimOwner: "owner-A",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		UID:       "uid-1",
+		Labels: map[string]string{
+			LabelJobClaim:      "1000000000000",
+			LabelJobClaimOwner: "owner-A",
 		},
 		Spec: provisioning.JobSpec{Repository: "test-repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
@@ -452,8 +438,8 @@ func TestClaim_RecordsClaimMetrics(t *testing.T) {
 
 	// The job exists: claim succeeds -> claimed_total{driver=0} = 1.
 	_, err = fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Name: "job-1", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -484,8 +470,8 @@ func TestClaim_WaitRecordedOnlyOnSuccessfulClaim(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "job-a", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Name: "job-a", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -514,8 +500,8 @@ func TestClaim_RecordsErrorOnUpdateFailure(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = cs.ProvisioningV0alpha1().Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "job-1", Namespace: "stacks-123"},
-		Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+		Name: "job-1", Namespace: "stacks-123",
+		Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 
@@ -546,12 +532,10 @@ func TestRenewLease_StaleResourceVersion(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim: "1000000000000",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		Labels: map[string]string{
+			LabelJobClaim: "1000000000000",
 		},
 		Spec: provisioning.JobSpec{
 			Repository: "test-repo",
@@ -596,12 +580,10 @@ func TestRenewLease_ResourceVersionProgresses(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim: "1000000000000",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		Labels: map[string]string{
+			LabelJobClaim: "1000000000000",
 		},
 		Spec: provisioning.JobSpec{
 			Repository: "test-repo",
@@ -647,12 +629,10 @@ func TestRenewLease_ThenUpdateDoesNotConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := fakeClient.Jobs("stacks-123").Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "stacks-123",
-			Labels: map[string]string{
-				LabelJobClaim: "1000000000000",
-			},
+		Name:      "test-job",
+		Namespace: "stacks-123",
+		Labels: map[string]string{
+			LabelJobClaim: "1000000000000",
 		},
 		Spec: provisioning.JobSpec{
 			Repository: "test-repo",

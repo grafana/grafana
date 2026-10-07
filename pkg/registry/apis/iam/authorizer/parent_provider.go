@@ -74,12 +74,10 @@ func NewRemoteConfigProvider(cfg map[schema.GroupResource]DialConfig, exchangeCl
 			return &rest.Config{
 				Host:          dialConfig.Host,
 				WrapTransport: clientauth.NewStaticTokenExchangeTransportWrapper(exchangeClient, dialConfig.Audience, clientauth.WildcardNamespace),
-				TLSClientConfig: rest.TLSClientConfig{
-					Insecure: dialConfig.Insecure,
-					CAFile:   dialConfig.CAFile,
-				},
-				QPS:   50,
-				Burst: 100,
+				Insecure:      dialConfig.Insecure,
+				CAFile:        dialConfig.CAFile,
+				QPS:           50,
+				Burst:         100,
 			}, nil
 		}
 	}

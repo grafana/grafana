@@ -884,8 +884,8 @@ func TestHandleDeleteByKey(t *testing.T) {
 		const deleteKey = "delete-key-abc"
 		const snapshotName = "snap-xyz-123"
 
-		listed := dashv0.Snapshot{}
-		listed.Name = snapshotName
+		listed := dashv0.Snapshot{
+			Name: snapshotName}
 
 		mockStorage := grafanarest.NewMockStorage(t)
 		mockStorage.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {

@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/apis/userstorage/v0alpha1"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -37,9 +36,7 @@ func TestValidate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			requester := &identity.StaticRequester{Type: "user", UserUID: tt.requesterID}
 			obj := &v0alpha1.UserStorage{
-				ObjectMeta: v1.ObjectMeta{
-					Name: tt.objectName,
-				},
+				Name: tt.objectName,
 			}
 			ctx := identity.WithRequester(context.Background(), requester)
 

@@ -8,7 +8,6 @@ import (
 
 	"golang.org/x/sync/singleflight"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -161,7 +160,7 @@ func (r *GrafanaRouter) missedDiscovery(name string, entry servingEntry) apidisc
 // unavailableDiscovery lists a group's versions, marked stale and without
 // resources, for a backend whose discovery could not be read.
 func unavailableDiscovery(name string, entry servingEntry) apidiscoveryv2.APIGroupDiscovery {
-	group := apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	group := apidiscoveryv2.APIGroupDiscovery{Name: name}
 	for _, gv := range entry.group.Versions {
 		group.Versions = append(group.Versions, apidiscoveryv2.APIVersionDiscovery{
 			Version: gv.Version, Freshness: apidiscoveryv2.DiscoveryFreshnessStale,

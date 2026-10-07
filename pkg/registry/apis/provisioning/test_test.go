@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -178,11 +177,9 @@ func (r *staticTestRepository) Test(context.Context) (*provisioningv0alpha1.Test
 
 func testGitHubRepository(name, namespace, url string) *provisioningv0alpha1.Repository {
 	return &provisioningv0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       name,
-			Namespace:  namespace,
-			Finalizers: []string{repository.CleanFinalizer},
-		},
+		Name:       name,
+		Namespace:  namespace,
+		Finalizers: []string{repository.CleanFinalizer},
 		Spec: provisioningv0alpha1.RepositorySpec{
 			Title: "Test Repo",
 			Type:  provisioningv0alpha1.GitHubRepositoryType,

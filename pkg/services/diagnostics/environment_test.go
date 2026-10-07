@@ -26,12 +26,10 @@ func testCfg() *setting.Cfg {
 
 func externalPlugin() pluginstore.Plugin {
 	return pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:      "grafana-mongodb-datasource",
-			Type:    plugins.TypeDataSource,
-			Backend: true,
-			Info:    plugins.Info{Version: "1.4.2"},
-		},
+		ID:            "grafana-mongodb-datasource",
+		Type:          plugins.TypeDataSource,
+		Backend:       true,
+		Info:          plugins.Info{Version: "1.4.2"},
 		Class:         plugins.ClassExternal,
 		Signature:     plugins.SignatureStatusValid,
 		SignatureType: plugins.SignatureTypeCommercial,
@@ -43,15 +41,15 @@ func externalPlugin() pluginstore.Plugin {
 // its own (the loader blanks the "%VERSION%" placeholder).
 func corePlugin() pluginstore.Plugin {
 	return pluginstore.Plugin{
-		JSONData: plugins.JSONData{ID: "prometheus", Type: plugins.TypeDataSource, Backend: true},
-		Class:    plugins.ClassCore,
+		ID: "prometheus", Type: plugins.TypeDataSource, Backend: true,
+		Class: plugins.ClassCore,
 	}
 }
 
 func TestCollectEnvironment(t *testing.T) {
 	store := pluginstore.NewFakePluginStore(externalPlugin(), corePlugin(), pluginstore.Plugin{
-		JSONData: plugins.JSONData{ID: "timeseries", Type: plugins.TypePanel},
-		Class:    plugins.ClassCore,
+		ID: "timeseries", Type: plugins.TypePanel,
+		Class: plugins.ClassCore,
 	})
 
 	var refs EnvironmentRefs

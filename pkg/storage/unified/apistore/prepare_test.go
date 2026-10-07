@@ -73,17 +73,17 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Error on non-empty resource version", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
-		dashboard.ResourceVersion = "123"
+		dashboard := dashv1.Dashboard{
+			Name:            "test-name",
+			ResourceVersion: "123"}
 		_, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.Error(t, err)
 		require.Equal(t, storage.ErrResourceVersionSetOnCreate, err)
 	})
 
 	t.Run("Generate UID and leave deprecated ID empty, if not required", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 
 		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
@@ -108,8 +108,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		ctx, _, err := identity.WithProvisioningIdentity(ctx, "default")
 		require.NoError(t, err)
 
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -144,8 +144,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Update should manage incrementing generation and metadata", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		meta.SetFolder("aaa")
@@ -190,9 +190,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Equal(t, int64(1), meta.GetGeneration())
 
 		// Change the folder -- the generation should increase and the updatedBy metadata
-		dashboard2 := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
-			Name: dashboard.Name,
-		}} // TODO... deep copy, See: https://github.com/grafana/grafana/pull/102258
+		dashboard2 := &dashv1.Dashboard{
+			Name: dashboard.Name} // TODO... deep copy, See: https://github.com/grafana/grafana/pull/102258
 		meta2, err := utils.MetaAccessor(dashboard2)
 		require.NoError(t, err)
 		meta2.SetFolder("xyz") // will bump generation
@@ -204,7 +203,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 	t.Run("Update can not change the deprecated internal ID", func(t *testing.T) {
 		// The previously stored object owns internal ID 50
-		previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		previous := &dashv1.Dashboard{Name: "test-name"}
 		prevMeta, err := utils.MetaAccessor(previous)
 		require.NoError(t, err)
 		prevMeta.SetDeprecatedInternalID(50) // nolint:staticcheck
@@ -222,28 +221,26 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		}
 
 		// Attempting to change it to a different value is ignored
-		changed := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		changed := &dashv1.Dashboard{Name: "test-name"}
 		changedMeta, err := utils.MetaAccessor(changed)
 		require.NoError(t, err)
 		changedMeta.SetDeprecatedInternalID(999) // nolint:staticcheck
 		assertStoredID(t, changed)
 
 		// Attempting to clear it is also ignored
-		cleared := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-name"}}
+		cleared := &dashv1.Dashboard{Name: "test-name"}
 		assertStoredID(t, cleared)
 	})
 
 	t.Run("Update should skip incrementing generation when content is unchanged", func(t *testing.T) {
 		dashboard := dashv1.Dashboard{
-			ObjectMeta: v1.ObjectMeta{
-				Name:       "test",
-				Generation: 123,
-				Annotations: map[string]string{
-					"A":                           "B",
-					utils.AnnoKeyUpdatedTimestamp: "2025-12-17T01:01:00Z",
-				},
-				UID: "XXX",
+			Name:       "test",
+			Generation: 123,
+			Annotations: map[string]string{
+				"A":                           "B",
+				utils.AnnoKeyUpdatedTimestamp: "2025-12-17T01:01:00Z",
 			},
+			UID: "XXX",
 			Spec: v0alpha1.Unstructured{
 				Object: map[string]any{
 					"hello": "world",
@@ -274,8 +271,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	s.opts.Index = searchIndex
 
 	t.Run("Should generate internal id", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 
 		v, err := s.prepareObjectForStorage(ctx, dashboard.DeepCopyObject())
 		require.NoError(t, err)
@@ -289,8 +286,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should use deprecated ID if given it", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -308,8 +305,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should fail if deprecated ID if already in use", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -320,8 +317,8 @@ func TestPrepareObjectForStorage(t *testing.T) {
 	})
 
 	t.Run("Should remove grant permissions annotation", func(t *testing.T) {
-		dashboard := dashv1.Dashboard{}
-		dashboard.Name = "test-name"
+		dashboard := dashv1.Dashboard{
+			Name: "test-name"}
 		obj := dashboard.DeepCopyObject()
 		meta, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
@@ -339,9 +336,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 
 	t.Run("calculate generation", func(t *testing.T) {
 		dash := &dashv1.Dashboard{
-			ObjectMeta: v1.ObjectMeta{
-				Name: "test",
-			},
+			Name: "test",
 			Spec: dashv1.DashboardSpec{
 				Object: map[string]interface{}{
 					"hello": "world",
@@ -415,11 +410,9 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "updated object must have a name")
 
-		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
-			Name: "test-name",
-		}}, &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
-			Name: "not-the-same-name",
-		}})
+		_, err = s.prepareObjectForUpdate(ctx, &dashv1.Dashboard{
+			Name: "test-name"}, &dashv1.Dashboard{
+			Name: "not-the-same-name"})
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "name mismatch between")
 
@@ -461,7 +454,7 @@ func failingDynClient(err error) func(context.Context) (dynamic.Interface, error
 func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 	makeDashboard := func(t *testing.T, folder string, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
 		t.Helper()
-		obj := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test-dash", Namespace: "default"}}
+		obj := &dashv1.Dashboard{Name: "test-dash", Namespace: "default"}
 		acc, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
 		if folder != "" {
@@ -520,7 +513,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		dash := &dashv1.Dashboard{Name: "dash-in-folder"}
 		meta, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		meta.SetFolder("my-folder")
@@ -548,7 +541,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash-in-folder"}}
+		dash := &dashv1.Dashboard{Name: "dash-in-folder"}
 		meta, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		meta.SetFolder("my-folder")
@@ -577,13 +570,12 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{
+		oldDash := &dashv1.Dashboard{
 			Name: "dash",
 			Annotations: map[string]string{
 				utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
 				utils.AnnoKeyManagerIdentity: "my-kubectl",
-			},
-		}}
+			}}
 		oldMeta, err := utils.MetaAccessor(oldDash)
 		require.NoError(t, err)
 		oldMeta.SetFolder("same-folder")
@@ -618,7 +610,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldDash := &dashv1.Dashboard{Name: "dash"}
 		oldMeta, err := utils.MetaAccessor(oldDash)
 		require.NoError(t, err)
 		oldMeta.SetFolder("same-folder")
@@ -652,7 +644,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldDash := &dashv1.Dashboard{Name: "dash"}
 		oldMeta, err := utils.MetaAccessor(oldDash)
 		require.NoError(t, err)
 		oldMeta.SetFolder("same-folder")
@@ -682,7 +674,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
 		)
 
-		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash"}}
+		oldDash := &dashv1.Dashboard{Name: "dash"}
 		oldMeta, err := utils.MetaAccessor(oldDash)
 		require.NoError(t, err)
 		oldMeta.SetFolder("folder-a")
@@ -710,7 +702,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 func TestVerifyFolder(t *testing.T) {
 	makeDash := func(t *testing.T, parent string) utils.GrafanaMetaAccessor {
 		t.Helper()
-		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1", Namespace: "default"}}
+		dash := &dashv1.Dashboard{Name: "d1", Namespace: "default"}
 		dash.SetGroupVersionKind(dashv1.DashboardResourceInfo.GroupVersionKind())
 		acc, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
@@ -789,7 +781,7 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 	)
 
 	t.Run("create: folder annotation returns Invalid (422)", func(t *testing.T) {
-		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		dash := &dashv1.Dashboard{Name: "d1"}
 		meta, err := utils.MetaAccessor(dash)
 		require.NoError(t, err)
 		meta.SetFolder("nope")
@@ -800,7 +792,7 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 	})
 
 	t.Run("update: introducing a folder annotation returns Invalid (422)", func(t *testing.T) {
-		oldDash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d1"}}
+		oldDash := &dashv1.Dashboard{Name: "d1"}
 		newDash := oldDash.DeepCopy()
 		meta, err := utils.MetaAccessor(newDash)
 		require.NoError(t, err)
@@ -812,7 +804,7 @@ func TestPrepareObjectForStorage_FolderSupportDisabled(t *testing.T) {
 	})
 
 	t.Run("create: no folder annotation succeeds", func(t *testing.T) {
-		dash := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "d2"}}
+		dash := &dashv1.Dashboard{Name: "d2"}
 		_, err := s.prepareObjectForStorage(ctx, dash)
 		require.NoError(t, err)
 	})

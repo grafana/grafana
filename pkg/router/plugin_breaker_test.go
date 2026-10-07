@@ -78,7 +78,7 @@ func TestPluginBreakerLeavesStorageReadsAvailable(t *testing.T) {
 		}
 		w.WriteHeader(http.StatusOK)
 	})}}
-	for i := 0; i < 7; i++ {
+	for range 7 {
 		response := httptest.NewRecorder()
 		serveThroughBreaker(cb, "plugin", handler, response, httptest.NewRequest(http.MethodPost, "/plugin", nil))
 		require.Equal(t, http.StatusServiceUnavailable, response.Code)
@@ -152,7 +152,7 @@ func TestPluginStreamBreaker(t *testing.T) {
 	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
 	stream := &stubPluginRouteStream{err: status.Error(codes.Unavailable, "offline")}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: stream}}
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		result, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
 		require.NoError(t, err)
 		_, err = result.Recv()
@@ -166,7 +166,7 @@ func TestPluginResponsesDoNotTripBreaker(t *testing.T) {
 	ctx := context.WithValue(t.Context(), clientBreakerKey{}, cb)
 	stream := &stubPluginRouteStream{}
 	client := &breakerPluginClientV3{Client: &stubPluginClientV3{stream: stream}}
-	for i := 0; i < 7; i++ {
+	for range 7 {
 		_, err := client.AdmissionReview(ctx, &pluginv3.AdmissionReviewRequest{})
 		require.NoError(t, err)
 		result, err := client.CallRoute(ctx, &pluginv3.CallRouteRequest{})
@@ -218,7 +218,7 @@ func TestLegacyPluginBreaker(t *testing.T) {
 				require.Equal(t, http.StatusServiceUnavailable, res.Status)
 				return nil
 			})
-			for i := 0; i < 6; i++ {
+			for range 6 {
 				err := client.CallResource(ctx, &backend.CallResourceRequest{}, sender)
 				if tt.err != nil {
 					require.ErrorIs(t, err, tt.err)
@@ -356,26 +356,26 @@ func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
 				return response
 			}
 			failures := make(chan *httptest.ResponseRecorder, writers)
-			for i := 0; i < writers; i++ {
+			for range writers {
 				go func() { failures <- request(http.MethodPost) }()
 			}
 			// Ensure the first GETs overlap actual client calls, rather than relying on
 			// the scheduler to interleave two fast request loops.
-			for i := 0; i < writers; i++ {
+			for range writers {
 				select {
 				case <-started:
 				case <-ctx.Done():
 					t.Fatal("plugin calls did not start before the deadline")
 				}
 			}
-			for i := 0; i < requestsPerWorker; i++ {
+			for range requestsPerWorker {
 				response := request(http.MethodGet)
 				require.Equal(t, http.StatusOK, response.Code)
 				require.Equal(t, savedResource, response.Body.String())
 			}
 			require.Equal(t, gobreaker.StateClosed, cb.State())
 			releaseCalls()
-			for i := 0; i < writers; i++ {
+			for range writers {
 				select {
 				case response := <-failures:
 					require.Equal(t, http.StatusServiceUnavailable, response.Code)
@@ -388,16 +388,14 @@ func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
 
 			startFlood := make(chan struct{})
 			var workers sync.WaitGroup
-			for i := 0; i < writers+readers; i++ {
+			for i := range writers + readers {
 				method, wantStatus := http.MethodPost, http.StatusServiceUnavailable
 				if i >= writers {
 					method, wantStatus = http.MethodGet, http.StatusOK
 				}
-				workers.Add(1)
-				go func() {
-					defer workers.Done()
+				workers.Go(func() {
 					<-startFlood
-					for j := 0; j < requestsPerWorker; j++ {
+					for range requestsPerWorker {
 						response := request(method)
 						if response.Code != wantStatus {
 							t.Errorf("%s returned %d, want %d: %s", method, response.Code, wantStatus, response.Body.String())
@@ -406,7 +404,7 @@ func TestPluginBreakerGETDuringUnavailableClientFlood(t *testing.T) {
 							t.Errorf("GET returned unexpected resource: %s", response.Body.String())
 						}
 					}
-				}()
+				})
 			}
 			close(startFlood)
 			workers.Wait()

@@ -21,7 +21,7 @@ const cachedGroup = "cached.ext.grafana.app"
 
 func thingsDiscovery(group string) apidiscoveryv2.APIGroupDiscovery {
 	return apidiscoveryv2.APIGroupDiscovery{
-		ObjectMeta: metav1.ObjectMeta{Name: group},
+		Name: group,
 		Versions: []apidiscoveryv2.APIVersionDiscovery{{
 			Version:   "v1",
 			Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent,
@@ -52,8 +52,8 @@ func (b *countingDiscoveryBackend) ServeHTTP(w http.ResponseWriter, req *http.Re
 		return
 	}
 	_ = json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
-		TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
-		Items:    []apidiscoveryv2.APIGroupDiscovery{thingsDiscovery(b.group)},
+		Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2",
+		Items: []apidiscoveryv2.APIGroupDiscovery{thingsDiscovery(b.group)},
 	})
 }
 
@@ -93,8 +93,8 @@ func (b *providerBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 func TestAggregatedDiscoveryUsesProviderWithoutRequests(t *testing.T) {
 	handler := &countingDiscoveryBackend{group: cachedGroup}
 	backend := &providerBackend{
-		fakeBackend: fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: handler},
-		discovery:   thingsDiscovery(cachedGroup),
+		group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: handler,
+		discovery: thingsDiscovery(cachedGroup),
 	}
 	router := NewGrafanaRouter(staticLoader{backends: []Backend{backend}}, nil)
 	require.NoError(t, router.reconcile(t.Context()))
@@ -163,11 +163,9 @@ func TestAggregatedDiscoverySharesConcurrentFetches(t *testing.T) {
 		router := discoveryRouter(t, cachedGroup, handler)
 		var wg sync.WaitGroup
 		for range 5 {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
+			wg.Go(func() {
 				aggregatedDiscovery(t, router)
-			}()
+			})
 		}
 		wg.Wait()
 		require.EqualValues(t, 1, handler.calls.Load())
@@ -213,8 +211,8 @@ func TestAggregateBackendKeepsPolledResources(t *testing.T) {
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
 		_ = json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
-			TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
-			Items:    []apidiscoveryv2.APIGroupDiscovery{resources},
+			Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2",
+			Items: []apidiscoveryv2.APIGroupDiscovery{resources},
 		})
 	}))
 	t.Cleanup(upstream.Close)
@@ -273,8 +271,8 @@ func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
 	for i := range 20 {
 		provided := fmt.Sprintf("provided%d.ext.grafana.app", i)
 		backends = append(backends, &providerBackend{
-			fakeBackend: fakeBackend{group: metav1.APIGroup{Name: provided}, key: "1"},
-			discovery:   thingsDiscovery(provided),
+			group: metav1.APIGroup{Name: provided}, key: "1",
+			discovery: thingsDiscovery(provided),
 		})
 		fetched := fmt.Sprintf("fetched%d.ext.grafana.app", i)
 		backends = append(backends, &fakeBackend{group: metav1.APIGroup{Name: fetched}, key: "1", handler: &countingDiscoveryBackend{group: fetched}})

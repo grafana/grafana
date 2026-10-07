@@ -213,11 +213,9 @@ func (s *LocalInlineSecureValueService) CreateInline(ctx context.Context, owner 
 	}
 
 	obj := &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			GenerateName:    "inline-",
-			Namespace:       owner.Namespace,
-			OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
-		},
+		GenerateName:    "inline-",
+		Namespace:       owner.Namespace,
+		OwnerReferences: []metav1.OwnerReference{owner.ToOwnerReference()},
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: description,
 			Value:       &secret,

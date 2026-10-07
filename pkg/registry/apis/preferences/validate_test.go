@@ -22,8 +22,8 @@ func TestAPIBuilder_Validate(t *testing.T) {
 
 	newPrefs := func(spec preferences.PreferencesSpec) *preferences.Preferences {
 		return &preferences.Preferences{
-			ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "default"},
-			Spec:       spec,
+			Name: "user-1", Namespace: "default",
+			Spec: spec,
 		}
 	}
 

@@ -255,15 +255,13 @@ func (hs *HTTPServer) UpdateOrgAddress(c *contextmodel.ReqContext) response.Resp
 
 func (hs *HTTPServer) updateOrgAddressHelper(ctx context.Context, form dtos.UpdateOrgAddressForm, orgID int64) response.Response {
 	cmd := org.UpdateOrgAddressCommand{
-		OrgID: orgID,
-		Address: org.Address{
-			Address1: form.Address1,
-			Address2: form.Address2,
-			City:     form.City,
-			State:    form.State,
-			ZipCode:  form.ZipCode,
-			Country:  form.Country,
-		},
+		OrgID:    orgID,
+		Address1: form.Address1,
+		Address2: form.Address2,
+		City:     form.City,
+		State:    form.State,
+		ZipCode:  form.ZipCode,
+		Country:  form.Country,
 	}
 
 	if err := hs.orgService.UpdateAddress(ctx, &cmd); err != nil {

@@ -28,36 +28,28 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				Path: "stats",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "getResourceStats",                     // used for RTK client
-							Tags:        []string{"Provisioning", "Repository"}, // includes stats for repositores and provisiong in general
-							Description: "Get resource stats for this namespace",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						OperationId: "getResourceStats",                     // used for RTK client
+						Tags:        []string{"Provisioning", "Repository"}, // includes stats for repositores and provisiong in general
+						Description: "Get resource stats for this namespace",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{
-																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
-																},
-															},
-														},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.ResourceStats{}.OpenAPIModelName()),
 													},
 												},
 											},
@@ -74,38 +66,30 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 				Path: "settings",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "getFrontendSettings", // used for RTK client
-							// includes stats for repositores and provisiong in general
-							// This must include "Repository" so that the RTK client will invalidate when things are deleted
-							Tags:        []string{"Provisioning", "Repository"},
-							Description: "Get the frontend settings for this namespace",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						OperationId: "getFrontendSettings", // used for RTK client
+						// includes stats for repositores and provisiong in general
+						// This must include "Repository" so that the RTK client will invalidate when things are deleted
+						Tags:        []string{"Provisioning", "Repository"},
+						Description: "Get the frontend settings for this namespace",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{
-																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
-																},
-															},
-														},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														Ref: spec.MustCreateRef("#/components/schemas/" + provisioning.RepositoryViewList{}.OpenAPIModelName()),
 													},
 												},
 											},

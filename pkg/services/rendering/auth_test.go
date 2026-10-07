@@ -34,9 +34,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 				UserID:  2,
 				OrgRole: "Viewer",
 			},
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-			},
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 		})
 
 		renderUser, found := j.validate(t.Context(), key)
@@ -48,9 +46,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 	t.Run("returns nil when render user is null", func(t *testing.T) {
 		key := mustSignRenderJWT(t, authToken, renderJWT{
 			RenderUser: nil,
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-			},
+			ExpiresAt:  jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 		})
 
 		assertNotAuthenticated(t, key)
@@ -63,9 +59,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 				UserID:  9,
 				OrgRole: "Admin",
 			},
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-			},
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 		})
 
 		key, err := token.SignedString([]byte(authToken))
@@ -81,9 +75,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 				UserID:  2,
 				OrgRole: "Viewer",
 			},
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(-time.Hour)),
-			},
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(-time.Hour)),
 		})
 
 		assertNotAuthenticated(t, key)
@@ -96,9 +88,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 				UserID:  2,
 				OrgRole: "Admin",
 			},
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-			},
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 		})
 
 		assertNotAuthenticated(t, key)
@@ -134,9 +124,7 @@ func TestRenderingService_GetRenderUserFromJWT(t *testing.T) {
 				UserID:  2,
 				OrgRole: "Admin",
 			},
-			RegisteredClaims: jwt.RegisteredClaims{
-				ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
-			},
+			ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(time.Hour)),
 		}
 
 		t.Run("alg:none", func(t *testing.T) {

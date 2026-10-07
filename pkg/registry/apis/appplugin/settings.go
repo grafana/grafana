@@ -136,12 +136,10 @@ func (s *settingsStorage) get(ctx context.Context) (*apppluginV0.Settings, error
 	}
 
 	obj := &apppluginV0.Settings{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            apppluginV0.INSTANCE_NAME,
-			Namespace:       nsInfo.Value,
-			UID:             getLegacySettingsUID(nsInfo.OrgID, s.pluginID),
-			ResourceVersion: getLegacySettingsResourceVersion(nil),
-		},
+		Name:            apppluginV0.INSTANCE_NAME,
+		Namespace:       nsInfo.Value,
+		UID:             getLegacySettingsUID(nsInfo.OrgID, s.pluginID),
+		ResourceVersion: getLegacySettingsResourceVersion(nil),
 	}
 
 	ps, err := s.pluginSettings.GetPluginSettingByPluginID(ctx, &pluginsettings.GetByPluginIDArgs{

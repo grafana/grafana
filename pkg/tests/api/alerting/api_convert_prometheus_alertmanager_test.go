@@ -10,7 +10,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/alerting/receivers/opsgenie"
 	opsgeniev1 "github.com/grafana/alerting/receivers/opsgenie/v1"
-	"github.com/prometheus/alertmanager/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
@@ -65,7 +64,7 @@ func TestIntegrationConvertPrometheusAlertmanagerEndpoints(t *testing.T) {
 		require.Equal(t, http.StatusAccepted, status)
 	}
 
-	apiClient.EnsureMuteTiming(t, apimodels.MuteTimeInterval{MuteTimeInterval: config.MuteTimeInterval{Name: "maintenance_window"}})
+	apiClient.EnsureMuteTiming(t, apimodels.MuteTimeInterval{Name: "maintenance_window"})
 	apiClient.EnsureReceiver(t, apimodels.EmbeddedContactPoint{Name: "opsgenie", Type: string(opsgenie.Type), Settings: simplejson.MustJson([]byte(opsgeniev1.FullValidConfigForTesting))})
 
 	t.Run("create and get alertmanager configuration", func(t *testing.T) {

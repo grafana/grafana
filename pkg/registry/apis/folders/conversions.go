@@ -54,14 +54,12 @@ func LegacyFolderToUnstructured(v *folder.Folder, namespacer request.NamespaceMa
 
 func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) (*folders.Folder, error) {
 	f := &folders.Folder{
-		TypeMeta: folders.FolderResourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.UID,
-			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(v.Created),
-			Namespace:         namespacer(v.OrgID),
-			Generation:        int64(v.Version),
-		},
+		TypeMeta:          folders.FolderResourceInfo.TypeMeta(),
+		Name:              v.UID,
+		ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(v.Created),
+		Namespace:         namespacer(v.OrgID),
+		Generation:        int64(v.Version),
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
 			Description: &v.Description,

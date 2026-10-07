@@ -1,7 +1,6 @@
 package inhibitionrule
 
 import (
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
 	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
@@ -27,16 +26,12 @@ func ConvertToK8sResources(orgID int64, rules []v1.InhibitionRule, namespacer re
 
 func ConvertToK8sResource(orgID int64, rule v1.InhibitionRule, namespacer request.NamespaceMapper) *model.InhibitionRule {
 	i := model.InhibitionRule{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kind.GroupVersionKind().GroupVersion().String(),
-			Kind:       kind.Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            string(rule.UID),
-			Namespace:       namespacer(orgID),
-			ResourceVersion: rule.Version,
-		},
-		Spec: convertDomainToK8sSpec(rule),
+		APIVersion:      kind.GroupVersionKind().GroupVersion().String(),
+		Kind:            kind.Kind(),
+		Name:            string(rule.UID),
+		Namespace:       namespacer(orgID),
+		ResourceVersion: rule.Version,
+		Spec:            convertDomainToK8sSpec(rule),
 	}
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
@@ -75,10 +70,8 @@ func convertToDomainModel(rule *model.InhibitionRule) (v1.InhibitionRule, error)
 		return v1.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
 	}
 	return v1.InhibitionRule{
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(rule.Name),
-			Provenance: prov,
-		},
+		UID:            v1.ResourceUID(rule.Name),
+		Provenance:     prov,
 		SourceMatchers: convertK8sMatchersToLabels(rule.Spec.SourceMatchers),
 		TargetMatchers: convertK8sMatchersToLabels(rule.Spec.TargetMatchers),
 		Equal:          rule.Spec.Equal,

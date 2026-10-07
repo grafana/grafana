@@ -99,10 +99,8 @@ type mockRepo struct {
 
 func (m mockRepo) Config() *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      m.name,
-			Namespace: m.namespace,
-		},
+		Name:      m.name,
+		Namespace: m.namespace,
 		Status: provisioning.RepositoryStatus{
 			Webhook: &provisioning.WebhookStatus{ID: 1},
 		},
@@ -732,7 +730,7 @@ func TestDeleteExistingItems_ResourcesBeforeFolders(t *testing.T) {
 		maxWorkers:    1,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	count, err := f.deleteExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, count)
@@ -781,7 +779,7 @@ func TestDeleteExistingItems_ReportsFirstNonEmptyFolder(t *testing.T) {
 		maxWorkers: 1,
 	}
 	count, err := f.deleteExistingItems(context.Background(), &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
+		Name: "my-repo", Namespace: "default",
 	})
 
 	require.Error(t, err)
@@ -836,7 +834,7 @@ func TestReleaseExistingItems_FoldersBeforeResources(t *testing.T) {
 		maxWorkers:    1,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	count, err := f.releaseExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 4, count)
@@ -892,7 +890,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 			maxWorkers:    1,
 		}
 
-		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+		repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 		count, err := f.releaseExistingItems(context.Background(), repo)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, count)
@@ -941,7 +939,7 @@ func TestFinalizer_RoutesItemsToVersionlessClient(t *testing.T) {
 			maxWorkers:    1,
 		}
 
-		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+		repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 		count, err := f.deleteExistingItems(context.Background(), repo)
 		assert.NoError(t, err)
 		assert.Equal(t, 2, count)
@@ -995,7 +993,7 @@ func TestReleaseExistingItems_ResourcesConcurrent(t *testing.T) {
 		maxWorkers:    5,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	count, err := f.releaseExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 10, count)
@@ -1113,10 +1111,8 @@ func TestFinalizer_processExistingItems_Concurrency(t *testing.T) {
 			}
 
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "my-repo",
-					Namespace: "default",
-				},
+				Name:      "my-repo",
+				Namespace: "default",
 			}
 
 			count, err := f.deleteExistingItems(
@@ -1184,7 +1180,7 @@ func TestReleaseExistingItems_RetriesOnConflict(t *testing.T) {
 		maxWorkers:    1,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	count, err := f.releaseExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -1230,7 +1226,7 @@ func TestDeleteExistingItems_RetriesOnConflict(t *testing.T) {
 		maxWorkers:    1,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	count, err := f.deleteExistingItems(context.Background(), repo)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, count)
@@ -1274,7 +1270,7 @@ func TestReleaseExistingItems_ReturnsErrorWhenConflictPersists(t *testing.T) {
 		maxWorkers:    1,
 	}
 
-	repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"}}
+	repo := &provisioning.Repository{Name: "my-repo", Namespace: "default"}
 	_, err := f.releaseExistingItems(context.Background(), repo)
 	assert.Error(t, err)
 	assert.Greater(t, calls.Load(), int32(1), "finalizer should have retried at least once before giving up")
@@ -1329,7 +1325,7 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 	metrics := registerFinalizerMetrics(prometheus.NewRegistry())
 	f := &finalizer{repoFactory: factory, metrics: &metrics}
 
-	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
+	cfg := &provisioning.Repository{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}
 
 	err := f.process(t.Context(), cfg)
 	assert.Error(t, err)
@@ -1346,7 +1342,7 @@ func TestProcess_CleanFinalizer_BuildFailureBlocks(t *testing.T) {
 // TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable verifies the
 // cleanup finalizer is a no-op when the built repository has no webhook client.
 func TestProcess_CleanFinalizer_SkipsWebhookWhenNotWebhookCapable(t *testing.T) {
-	cfg := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}}
+	cfg := &provisioning.Repository{Name: "my-repo", Namespace: "default", Finalizers: []string{repository.CleanFinalizer}}
 
 	factory := repository.NewMockFactory(t)
 	factory.EXPECT().Build(mock.Anything, mock.Anything).Return(nonWebhookRepo{cfg: cfg}, nil)

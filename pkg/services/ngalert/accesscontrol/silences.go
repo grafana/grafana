@@ -87,9 +87,7 @@ type SilenceService struct {
 
 func NewSilenceService(ac ac.AccessControl, store rulestore.RuleNamespaceLookup) *SilenceService {
 	return &SilenceService{
-		genericService: genericService{
-			ac: ac,
-		},
+		ac:    ac,
 		store: store,
 	}
 }

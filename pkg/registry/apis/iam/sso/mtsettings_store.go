@@ -356,12 +356,10 @@ func rowsToSSOSetting(ctx context.Context, provider string, rows []*settingsvc.S
 		}
 	}
 	return &iamv0.SSOSetting{
-		TypeMeta: ssoTypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            provider,
-			Namespace:       genericapirequest.NamespaceValue(ctx),
-			ResourceVersion: coarseResourceVersion(settings),
-		},
+		TypeMeta:        ssoTypeMeta(),
+		Name:            provider,
+		Namespace:       genericapirequest.NamespaceValue(ctx),
+		ResourceVersion: coarseResourceVersion(settings),
 		Spec: iamv0.SSOSettingSpec{
 			Source:   source,
 			Settings: common.Unstructured{Object: settings},

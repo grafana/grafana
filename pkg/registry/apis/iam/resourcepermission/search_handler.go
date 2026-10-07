@@ -50,9 +50,9 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 	}
 	var responseSchema spec.Schema
 	if def, ok := defs["github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1.PermissionsSearchResult"]; ok && def.Schema.Ref.String() != "" {
-		responseSchema = spec.Schema{SchemaProps: spec.SchemaProps{Ref: def.Schema.Ref}}
+		responseSchema = spec.Schema{Ref: def.Schema.Ref}
 	} else {
-		responseSchema = spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+		responseSchema = spec.Schema{Type: []string{"object"}}
 	}
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
@@ -60,59 +60,47 @@ func (h *ResourcePermissionsSearchHandler) GetAPIRoutes(defs map[string]common.O
 				Path: "resourcepermissions/search",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "searchResourcePermissions",
-							Tags:        []string{"ResourcePermission"},
-							Description: "Search direct resource permissions by subject. Returns permissions for the given user, team, or basic role.",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Description: "Namespace (org scope)",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        SearchParamUserUID,
-										In:          "query",
-										Required:    false,
-										Description: "User UID to list direct resource permissions for",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        SearchParamTeamUID,
-										In:          "query",
-										Required:    false,
-										Description: "Team UID to list direct resource permissions for",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        SearchParamBasicRole,
-										In:          "query",
-										Required:    false,
-										Description: "Basic org role to list direct resource permissions for (e.g. Viewer, Editor, Admin)",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						OperationId: "searchResourcePermissions",
+						Tags:        []string{"ResourcePermission"},
+						Description: "Search direct resource permissions by subject. Returns permissions for the given user, team, or basic role.",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Description: "Namespace (org scope)",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &responseSchema,
-														},
-													},
+							{
+								Name:        SearchParamUserUID,
+								In:          "query",
+								Required:    false,
+								Description: "User UID to list direct resource permissions for",
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        SearchParamTeamUID,
+								In:          "query",
+								Required:    false,
+								Description: "Team UID to list direct resource permissions for",
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        SearchParamBasicRole,
+								In:          "query",
+								Required:    false,
+								Description: "Basic org role to list direct resource permissions for (e.g. Viewer, Editor, Admin)",
+								Schema:      spec.StringProperty(),
+							},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &responseSchema,
 												},
 											},
 										},

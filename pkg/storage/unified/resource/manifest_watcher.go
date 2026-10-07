@@ -174,10 +174,8 @@ func newManifestRESTConfig(cfg ManifestWatcherConfig) (*rest.Config, error) {
 		Host:          cfg.APIServerURL,
 		Timeout:       manifestPollTimeout,
 		WrapTransport: manifestAuthWrapper(tc),
-		TLSClientConfig: rest.TLSClientConfig{
-			CAFile:   cfg.CAFile,
-			Insecure: cfg.AllowInsecure && cfg.CAFile == "",
-		},
+		CAFile:        cfg.CAFile,
+		Insecure:      cfg.AllowInsecure && cfg.CAFile == "",
 	}, nil
 }
 

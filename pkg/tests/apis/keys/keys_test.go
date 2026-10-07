@@ -346,9 +346,9 @@ func TestIntegrationListKeys_HTTPListerReadsRealStorage(t *testing.T) {
 
 	gv := gvr.GroupVersion()
 	client, err := rest.RESTClientFor(&rest.Config{
-		Host:          srv.URL,
-		APIPath:       "/apis",
-		ContentConfig: rest.ContentConfig{GroupVersion: &gv, NegotiatedSerializer: scheme.Codecs.WithoutConversion()},
+		Host:         srv.URL,
+		APIPath:      "/apis",
+		GroupVersion: &gv, NegotiatedSerializer: scheme.Codecs.WithoutConversion(),
 	})
 	require.NoError(t, err)
 

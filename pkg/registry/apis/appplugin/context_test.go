@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -17,10 +16,10 @@ import (
 
 func TestGetSettingsDecryptsFromSharedGroup(t *testing.T) {
 	settings := &apppluginV0.Settings{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "example-app/v0alpha1", Kind: "Settings"},
-		ObjectMeta: metav1.ObjectMeta{Name: apppluginV0.INSTANCE_NAME, Namespace: "default"},
-		Spec:       apppluginV0.SettingsSpec{Enabled: true},
-		Secure:     common.InlineSecureValues{"token": {Name: "secret-token"}},
+		APIVersion: "example-app/v0alpha1", Kind: "Settings",
+		Name: apppluginV0.INSTANCE_NAME, Namespace: "default",
+		Spec:   apppluginV0.SettingsSpec{Enabled: true},
+		Secure: common.InlineSecureValues{"token": {Name: "secret-token"}},
 	}
 	b := &AppPluginAPIBuilder{
 		group: "example-app",

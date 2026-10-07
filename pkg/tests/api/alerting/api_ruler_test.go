@@ -99,7 +99,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 	allRules, status, _ := apiClient.GetAllRulesWithStatus(t)
 	require.Equal(t, http.StatusOK, status)
 	status, allExportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-		ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+		Format: "json",
 	})
 	require.Equal(t, http.StatusOK, status)
 	var allExport apimodels.AlertingFileExport
@@ -206,8 +206,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		t.Run("Export from one folder", func(t *testing.T) {
 			expected := allExport.Groups[0]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder1"},
+				Format:    "json",
+				FolderUID: []string{"folder1"},
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -220,9 +220,9 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		t.Run("Export from one group", func(t *testing.T) {
 			expected := allExport.Groups[0]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder1"},
-				GroupName:         expected.Name,
+				Format:    "json",
+				FolderUID: []string{"folder1"},
+				GroupName: expected.Name,
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -238,8 +238,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 				expected.Rules[0],
 			}
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				RuleUID:           expected.Rules[0].UID,
+				Format:  "json",
+				RuleUID: expected.Rules[0].UID,
 			})
 
 			require.Equal(t, http.StatusOK, status)
@@ -294,7 +294,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 		t.Run("Export returns all rules", func(t *testing.T) {
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				Format: "json",
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -307,17 +307,17 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 
 		t.Run("Export from one folder", func(t *testing.T) {
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder2"},
+				Format:    "json",
+				FolderUID: []string{"folder2"},
 			})
 			assert.Equal(t, http.StatusForbidden, status)
 		})
 
 		t.Run("Export from one group", func(t *testing.T) {
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder2"},
-				GroupName:         "arulegroup",
+				Format:    "json",
+				FolderUID: []string{"folder2"},
+				GroupName: "arulegroup",
 			})
 			assert.Equal(t, http.StatusForbidden, status)
 		})
@@ -325,8 +325,8 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		t.Run("Export single rule", func(t *testing.T) {
 			uid := allRules["folder2"][0].Rules[0].GrafanaManagedAlert.UID
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				RuleUID:           uid,
+				Format:  "json",
+				RuleUID: uid,
 			})
 			require.Equal(t, http.StatusForbidden, status)
 		})
@@ -346,7 +346,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 			require.Empty(t, rules)
 
 			status, _ = apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				Format: "json",
 			})
 			require.Equal(t, http.StatusNotFound, status)
 		})
@@ -418,7 +418,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 	allRules, status, _ := apiClient.GetAllRulesWithStatus(t)
 	require.Equal(t, http.StatusOK, status)
 	status, allExportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-		ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+		Format: "json",
 	})
 	require.Equal(t, http.StatusOK, status)
 	var allExport apimodels.AlertingFileExport
@@ -551,8 +551,8 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		t.Run("Export from one folder", func(t *testing.T) {
 			expected := allExport.Groups[0]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder1"},
+				Format:    "json",
+				FolderUID: []string{"folder1"},
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -565,8 +565,8 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		t.Run("Export from a subfolder", func(t *testing.T) {
 			expected := allExport.Groups[2]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"subfolder"},
+				Format:    "json",
+				FolderUID: []string{"subfolder"},
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -579,9 +579,9 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		t.Run("Export from one group", func(t *testing.T) {
 			expected := allExport.Groups[0]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder1"},
-				GroupName:         expected.Name,
+				Format:    "json",
+				FolderUID: []string{"folder1"},
+				GroupName: expected.Name,
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -594,9 +594,9 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		t.Run("Export from one group under subfolder", func(t *testing.T) {
 			expected := allExport.Groups[2]
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"subfolder"},
-				GroupName:         expected.Name,
+				Format:    "json",
+				FolderUID: []string{"subfolder"},
+				GroupName: expected.Name,
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -612,8 +612,8 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 				expected.Rules[0],
 			}
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				RuleUID:           expected.Rules[0].UID,
+				Format:  "json",
+				RuleUID: expected.Rules[0].UID,
 			})
 
 			require.Equal(t, http.StatusOK, status)
@@ -659,7 +659,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 		t.Run("Export returns all rules", func(t *testing.T) {
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				Format: "json",
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export apimodels.AlertingFileExport
@@ -673,17 +673,17 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 
 		t.Run("Export from one folder", func(t *testing.T) {
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder2"},
+				Format:    "json",
+				FolderUID: []string{"folder2"},
 			})
 			assert.Equal(t, http.StatusForbidden, status)
 		})
 
 		t.Run("Export from one group", func(t *testing.T) {
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				FolderUID:         []string{"folder2"},
-				GroupName:         "arulegroup",
+				Format:    "json",
+				FolderUID: []string{"folder2"},
+				GroupName: "arulegroup",
 			})
 			assert.Equal(t, http.StatusForbidden, status)
 		})
@@ -691,8 +691,8 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 		t.Run("Export single rule", func(t *testing.T) {
 			uid := allRules["folder2"][0].Rules[0].GrafanaManagedAlert.UID
 			status, _ := apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
-				RuleUID:           uid,
+				Format:  "json",
+				RuleUID: uid,
 			})
 			require.Equal(t, http.StatusForbidden, status)
 		})
@@ -706,7 +706,7 @@ func TestIntegrationAlertRuleNestedPermissions(t *testing.T) {
 			require.Empty(t, rules)
 
 			status, _ = apiClient.ExportRulesWithStatus(t, &apimodels.AlertRulesExportParameters{
-				ExportQueryParams: apimodels.ExportQueryParams{Format: "json"},
+				Format: "json",
 			})
 			require.Equal(t, http.StatusNotFound, status)
 		})

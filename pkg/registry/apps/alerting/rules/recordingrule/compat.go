@@ -37,13 +37,11 @@ func convertToK8sResource(
 		return nil, fmt.Errorf("failed to parse interval: %w", err)
 	}
 	k8sRule := &model.RecordingRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            rule.UID,
-			UID:             types.UID(rule.GUID),
-			Namespace:       namespaceMapper(orgID),
-			ResourceVersion: fmt.Sprint(rule.Version),
-			Labels:          make(map[string]string),
-		},
+		Name:            rule.UID,
+		UID:             types.UID(rule.GUID),
+		Namespace:       namespaceMapper(orgID),
+		ResourceVersion: fmt.Sprint(rule.Version),
+		Labels:          make(map[string]string),
 		Spec: model.RecordingRuleSpec{
 			Title:       rule.Title,
 			Expressions: make(model.RecordingRuleExpressionMap),
@@ -149,10 +147,8 @@ func convertToK8sResources(
 	continueToken string,
 ) (*model.RecordingRuleList, error) {
 	k8sRules := &model.RecordingRuleList{
-		ListMeta: metav1.ListMeta{
-			Continue: continueToken,
-		},
-		Items: make([]model.RecordingRule, 0, len(rules)),
+		Continue: continueToken,
+		Items:    make([]model.RecordingRule, 0, len(rules)),
 	}
 	for _, rule := range rules {
 		managerProps := managerPropsMap[rule.UID]

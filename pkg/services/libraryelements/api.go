@@ -1221,15 +1221,11 @@ func legacyLibraryPanelToUnstructured(uid string, name string, folderUID string,
 		return nil, err
 	}
 	panel := &dashboardV0.LibraryPanel{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: dashboardV0.APIVERSION,
-			Kind:       "LibraryPanel",
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name: uid,
-		},
-		Spec:   spec,
-		Status: status,
+		APIVersion: dashboardV0.APIVERSION,
+		Kind:       "LibraryPanel",
+		Name:       uid,
+		Spec:       spec,
+		Status:     status,
 	}
 	meta, err := utils.MetaAccessor(panel)
 	if err != nil {

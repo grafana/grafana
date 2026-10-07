@@ -45,8 +45,8 @@ func buildAPIGroupList(ctx context.Context, backends []Backend) cachedDoc {
 	}
 
 	list := metav1.APIGroupList{
-		TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"},
-		Groups:   groups,
+		Kind: "APIGroupList", APIVersion: "v1",
+		Groups: groups,
 	}
 	body, err := json.Marshal(list)
 	if err != nil {

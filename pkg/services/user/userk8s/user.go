@@ -14,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
 
@@ -131,10 +130,8 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 	}
 
 	k8sUser := &iamv0alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      uid,
-			Namespace: namespace,
-		},
+		Name:      uid,
+		Namespace: namespace,
 		Spec: iamv0alpha1.UserSpec{
 			Login:            strings.ToLower(cmd.Login),
 			Email:            strings.ToLower(cmd.Email),

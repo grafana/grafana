@@ -180,21 +180,19 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 // here so neither path can omit them.
 func (r *RESTOptionsGetter) restOptions(resource schema.GroupResource, opts StorageOptions) (generic.RESTOptions, error) {
 	storageConfig := &storagebackend.ConfigForResource{
-		Config: storagebackend.Config{
-			Type:                      "resource",
-			Prefix:                    "resource/", // Not actually used
-			Transport:                 storagebackend.TransportConfig{},
-			Codec:                     r.original.Codec,
-			EncodeVersioner:           r.original.EncodeVersioner,
-			Transformer:               r.original.Transformer,
-			CompactionInterval:        0,
-			CountMetricPollPeriod:     0,
-			DBMetricPollInterval:      0,
-			HealthcheckTimeout:        0,
-			ReadycheckTimeout:         0,
-			StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
-		},
-		GroupResource: resource,
+		Type:                      "resource",
+		Prefix:                    "resource/", // Not actually used
+		Transport:                 storagebackend.TransportConfig{},
+		Codec:                     r.original.Codec,
+		EncodeVersioner:           r.original.EncodeVersioner,
+		Transformer:               r.original.Transformer,
+		CompactionInterval:        0,
+		CountMetricPollPeriod:     0,
+		DBMetricPollInterval:      0,
+		HealthcheckTimeout:        0,
+		ReadycheckTimeout:         0,
+		StorageObjectCountTracker: flowcontrolrequest.NewStorageObjectCountTracker(),
+		GroupResource:             resource,
 	}
 
 	ret := generic.RESTOptions{

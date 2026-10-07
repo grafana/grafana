@@ -127,16 +127,14 @@ func (s dbFileStorage) Get(ctx context.Context, path string, options *GetFileOpt
 		}
 
 		result = &File{
-			Contents: contents,
-			FileMetadata: FileMetadata{
-				Name:       getName(table.Path),
-				FullPath:   table.Path,
-				Created:    table.Created,
-				Properties: metaProperties,
-				Modified:   table.Updated,
-				Size:       table.Size,
-				MimeType:   table.MimeType,
-			},
+			Contents:   contents,
+			Name:       getName(table.Path),
+			FullPath:   table.Path,
+			Created:    table.Created,
+			Properties: metaProperties,
+			Modified:   table.Updated,
+			Size:       table.Size,
+			MimeType:   table.MimeType,
 		}
 		return err
 	})
@@ -403,15 +401,14 @@ func (s dbFileStorage) List(ctx context.Context, folderPath string, paging *Pagi
 			} else {
 				contents = []byte{}
 			}
-			files = append(files, &File{Contents: contents, FileMetadata: FileMetadata{
+			files = append(files, &File{Contents: contents,
 				Name:       getName(path),
 				FullPath:   path,
 				Created:    foundFiles[i].Created,
 				Properties: props,
 				Modified:   foundFiles[i].Updated,
 				Size:       foundFiles[i].Size,
-				MimeType:   foundFiles[i].MimeType,
-			}})
+				MimeType:   foundFiles[i].MimeType})
 		}
 
 		lastPath := ""

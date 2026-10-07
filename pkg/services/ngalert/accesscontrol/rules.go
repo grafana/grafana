@@ -32,7 +32,7 @@ type notificationSettingsAuth interface {
 
 func NewRuleService(ac accesscontrol.AccessControl) *RuleService {
 	return &RuleService{
-		genericService:           genericService{ac: ac},
+		ac:                       ac,
 		notificationSettingsAuth: NewReceiverAccess[*models.ContactPointRouting](ac, true),
 	}
 }

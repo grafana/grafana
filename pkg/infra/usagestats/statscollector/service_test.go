@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/infra/usagestats/validator"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -361,10 +360,10 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 
 	s.plugins = &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{ID: datasources.DS_ES}, Signature: "internal"},
-			{JSONData: plugins.JSONData{ID: datasources.DS_PROMETHEUS}, Signature: "internal"},
-			{JSONData: plugins.JSONData{ID: datasources.DS_GRAPHITE}, Signature: "internal"},
-			{JSONData: plugins.JSONData{ID: datasources.DS_MYSQL}, Signature: "internal"},
+			{ID: datasources.DS_ES, Signature: "internal"},
+			{ID: datasources.DS_PROMETHEUS, Signature: "internal"},
+			{ID: datasources.DS_GRAPHITE, Signature: "internal"},
+			{ID: datasources.DS_MYSQL, Signature: "internal"},
 		},
 	}
 }

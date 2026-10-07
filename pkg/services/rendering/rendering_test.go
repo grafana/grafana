@@ -116,7 +116,7 @@ func TestRenderUnavailableError(t *testing.T) {
 		Cfg: &setting.Cfg{},
 		log: log.New("test"),
 	}
-	opts := Opts{ErrorOpts: ErrorOpts{ErrorRenderUnavailable: true}}
+	opts := Opts{ErrorRenderUnavailable: true}
 	result, err := rs.Render(context.Background(), RenderPNG, opts)
 	assert.Equal(t, ErrRenderUnavailable, err)
 	assert.Nil(t, result)
@@ -164,7 +164,7 @@ func TestRenderLimitImage(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			opts := Opts{Theme: tc.theme, CommonOpts: CommonOpts{ConcurrentLimit: 1}}
+			opts := Opts{Theme: tc.theme, ConcurrentLimit: 1}
 			result, err := rs.Render(t.Context(), RenderPNG, opts)
 			require.NoError(t, err)
 			assert.Equal(t, tc.expected, result.FilePath)
@@ -187,9 +187,9 @@ func TestRenderLimitImageError(t *testing.T) {
 	rs.inProgressCount.Store(2)
 
 	opts := Opts{
-		CommonOpts: CommonOpts{ConcurrentLimit: 1},
-		ErrorOpts:  ErrorOpts{ErrorConcurrentLimitReached: true},
-		Theme:      models.ThemeDark,
+		ConcurrentLimit:             1,
+		ErrorConcurrentLimitReached: true,
+		Theme:                       models.ThemeDark,
 	}
 	result, err := rs.Render(t.Context(), RenderPNG, opts)
 	assert.Equal(t, ErrConcurrentLimitReached, err)

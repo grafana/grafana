@@ -153,10 +153,8 @@ receivers:
 func TestAlertmanager_ApplyConfig(t *testing.T) {
 	basicConfig := func() v1.PostableApiAlertingConfig {
 		return v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Route: &v1.Route{
-					Receiver: "default-receiver",
-				},
+			Route: &v1.Route{
+				Receiver: "default-receiver",
 			},
 		}
 	}

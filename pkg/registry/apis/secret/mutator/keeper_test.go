@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -31,9 +30,7 @@ func TestKeeperMutator(t *testing.T) {
 
 	t.Run("when operation is Create and name is already set", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "existing-name",
-			},
+			Name: "existing-name",
 		}
 		originalName := keeper.Name
 
@@ -44,9 +41,7 @@ func TestKeeperMutator(t *testing.T) {
 
 	t.Run("when operation is Create and GenerateName is set", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "custom-prefix-",
-			},
+			GenerateName: "custom-prefix-",
 		}
 
 		err := mutator.Mutate(keeper, admission.Create)
@@ -57,10 +52,8 @@ func TestKeeperMutator(t *testing.T) {
 
 	t.Run("when operation is Create and both name and GenerateName are set", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:         "existing-name",
-				GenerateName: "custom-prefix-",
-			},
+			Name:         "existing-name",
+			GenerateName: "custom-prefix-",
 		}
 		originalName := keeper.Name
 

@@ -221,12 +221,10 @@ func TestTimeInterval_Validate(t *testing.T) {
 func TestTimeIntervalFingerprint(t *testing.T) {
 	baseInterval := func() TimeInterval {
 		return TimeInterval{
-			ResourceMetadata: ResourceMetadata{
-				UID:        TimeIntervalUID("business-hours"),
-				Version:    "some-version",
-				Provenance: models.ProvenanceAPI,
-			},
-			Title: "business-hours",
+			UID:        TimeIntervalUID("business-hours"),
+			Version:    "some-version",
+			Provenance: models.ProvenanceAPI,
+			Title:      "business-hours",
 			TimeIntervals: []timeinterval.TimeInterval{
 				{
 					Times:       []timeinterval.TimeRange{{StartMinute: 540, EndMinute: 1020}},

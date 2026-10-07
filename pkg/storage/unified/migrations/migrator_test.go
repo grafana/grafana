@@ -241,17 +241,15 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 		disableMigrationsForDefaultResources(unifiedConfig)
 
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				UnifiedStorageConfig: unifiedConfig,
-				EnableFeatureToggles: featureToggles,
-				EnableSQLKVBackend:   opts.enableSQLKVBackend,
-			},
-			Org1Users: org1,
-			OrgBUsers: orgB,
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			DisableDBCleanup:     true,
+			APIServerStorageType: "unified",
+			UnifiedStorageConfig: unifiedConfig,
+			EnableFeatureToggles: featureToggles,
+			EnableSQLKVBackend:   opts.enableSQLKVBackend,
+			Org1Users:            org1,
+			OrgBUsers:            orgB,
 		})
 		defer helper.Shutdown()
 
@@ -267,16 +265,14 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 	func() {
 		// Migrations enabled by default will run automatically at startup and mode 5 is enforced by the config
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:    true,
-				DisableAnonymous:     true,
-				DisableDBCleanup:     true,
-				APIServerStorageType: "unified",
-				EnableFeatureToggles: featureToggles,
-				EnableSQLKVBackend:   opts.enableSQLKVBackend,
-			},
-			Org1Users: org1,
-			OrgBUsers: orgB,
+			AppModeProduction:    true,
+			DisableAnonymous:     true,
+			DisableDBCleanup:     true,
+			APIServerStorageType: "unified",
+			EnableFeatureToggles: featureToggles,
+			EnableSQLKVBackend:   opts.enableSQLKVBackend,
+			Org1Users:            org1,
+			OrgBUsers:            orgB,
 		})
 		defer helper.Shutdown()
 
@@ -313,18 +309,16 @@ func runMigrationTestSuite(t *testing.T, testCases []testcases.ResourceMigratorT
 			}
 		}
 		helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-			GrafanaOpts: testinfra.GrafanaOpts{
-				AppModeProduction:      true,
-				DisableAnonymous:       true,
-				APIServerStorageType:   "unified",
-				UnifiedStorageConfig:   unifiedConfig,
-				MigrationParquetBuffer: true,
-				MigrationChunkMaxBytes: opts.chunkMaxBytes,
-				EnableFeatureToggles:   featureToggles,
-				EnableSQLKVBackend:     opts.enableSQLKVBackend,
-			},
-			Org1Users: org1,
-			OrgBUsers: orgB,
+			AppModeProduction:      true,
+			DisableAnonymous:       true,
+			APIServerStorageType:   "unified",
+			UnifiedStorageConfig:   unifiedConfig,
+			MigrationParquetBuffer: true,
+			MigrationChunkMaxBytes: opts.chunkMaxBytes,
+			EnableFeatureToggles:   featureToggles,
+			EnableSQLKVBackend:     opts.enableSQLKVBackend,
+			Org1Users:              org1,
+			OrgBUsers:              orgB,
 		})
 		defer helper.Shutdown()
 

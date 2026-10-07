@@ -22,18 +22,18 @@ func fullTimeIntervals() []timeinterval.TimeInterval {
 				{StartMinute: 50, EndMinute: 60},
 			},
 			Weekdays: []timeinterval.WeekdayRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 2}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 5, End: 6}},
+				{Begin: 1, End: 2},
+				{Begin: 5, End: 6},
 			},
 			DaysOfMonth: []timeinterval.DayOfMonthRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 10}},
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 20, End: 25}},
+				{Begin: 1, End: 10},
+				{Begin: 20, End: 25},
 			},
 			Months: []timeinterval.MonthRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 1, End: 3}},
+				{Begin: 1, End: 3},
 			},
 			Years: []timeinterval.YearRange{
-				{InclusiveRange: timeinterval.InclusiveRange{Begin: 2020, End: 2022}},
+				{Begin: 2020, End: 2022},
 			},
 			Location: &timeinterval.Location{Location: time.UTC},
 		},

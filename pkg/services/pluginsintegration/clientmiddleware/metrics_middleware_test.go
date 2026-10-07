@@ -80,7 +80,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				promRegistry := prometheus.NewRegistry()
 				pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 				require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-					JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+					ID: pluginID, Backend: true,
 				}))
 
 				mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
@@ -159,7 +159,7 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	promRegistry := prometheus.NewRegistry()
 	pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+		ID: pluginID, Backend: true,
 	}))
 	metricsMw := newMetricsMiddleware(promRegistry, pluginsRegistry)
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
@@ -262,7 +262,7 @@ func TestInstrumentationMiddlewareQueryChunkedDataStreamedError(t *testing.T) {
 	promRegistry := prometheus.NewRegistry()
 	pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-		JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+		ID: pluginID, Backend: true,
 	}))
 	mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
 	cdt := handlertest.NewHandlerMiddlewareTest(t, handlertest.WithMiddlewares(
@@ -349,7 +349,7 @@ func TestCallResourceHTTPStatusMetrics(t *testing.T) {
 			promRegistry := prometheus.NewRegistry()
 			pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 			require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-				JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+				ID: pluginID, Backend: true,
 			}))
 
 			mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
@@ -394,7 +394,7 @@ func TestCallResourceNoResponseSentFallbackToError(t *testing.T) {
 		promRegistry := prometheus.NewRegistry()
 		pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 		require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-			JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+			ID: pluginID, Backend: true,
 		}))
 
 		mw := newMetricsMiddleware(promRegistry, pluginsRegistry)
@@ -434,7 +434,7 @@ func TestCallResourceMultipleResponsesUsesFirstStatus(t *testing.T) {
 		promRegistry := prometheus.NewRegistry()
 		pluginsRegistry := pluginfakes.NewFakePluginRegistry()
 		require.NoError(t, pluginsRegistry.Add(context.Background(), &plugins.Plugin{
-			JSONData: plugins.JSONData{ID: pluginID, Backend: true},
+			ID: pluginID, Backend: true,
 		}))
 
 		mw := newMetricsMiddleware(promRegistry, pluginsRegistry)

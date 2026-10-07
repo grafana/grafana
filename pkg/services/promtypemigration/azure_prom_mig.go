@@ -22,13 +22,11 @@ func ProvideAzurePromMigrationService(
 	cfg *setting.Cfg,
 ) *AzurePromMigrationService {
 	return &AzurePromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: dataSourcesService,
-			pluginRegistry:     pluginRegistry,
-			pluginRepo:         pluginRepo,
-			pluginInstaller:    pluginInstaller,
-			cfg:                cfg,
-		},
+		dataSourcesService: dataSourcesService,
+		pluginRegistry:     pluginRegistry,
+		pluginRepo:         pluginRepo,
+		pluginInstaller:    pluginInstaller,
+		cfg:                cfg,
 	}
 }
 

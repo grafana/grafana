@@ -51,29 +51,27 @@ func TestIntegrationDirectSQLStats(t *testing.T) {
 	ruleStore := ngalertstore.SetupStoreForTesting(t, db)
 	dashboardUID := "test"
 	_, err = ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.InsertRule{{
-		AlertRule: ngmodels.AlertRule{
-			DashboardUID: &dashboardUID,
-			UID:          "test",
-			Title:        "test",
-			OrgID:        1,
-			Data: []ngmodels.AlertQuery{
-				{
-					RefID:         "A",
-					Model:         json.RawMessage("{}"),
-					DatasourceUID: expr.DatasourceUID,
-					RelativeTimeRange: ngmodels.RelativeTimeRange{
-						From: ngmodels.Duration(60),
-						To:   ngmodels.Duration(0),
-					},
+		DashboardUID: &dashboardUID,
+		UID:          "test",
+		Title:        "test",
+		OrgID:        1,
+		Data: []ngmodels.AlertQuery{
+			{
+				RefID:         "A",
+				Model:         json.RawMessage("{}"),
+				DatasourceUID: expr.DatasourceUID,
+				RelativeTimeRange: ngmodels.RelativeTimeRange{
+					From: ngmodels.Duration(60),
+					To:   ngmodels.Duration(0),
 				},
 			},
-			Condition:       "ok",
-			Updated:         now,
-			NamespaceUID:    folder2UID,
-			ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
-			NoDataState:     ngmodels.Alerting,
-			IntervalSeconds: 60,
-		}}})
+		},
+		Condition:       "ok",
+		Updated:         now,
+		NamespaceUID:    folder2UID,
+		ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
+		NoDataState:     ngmodels.Alerting,
+		IntervalSeconds: 60}})
 	require.NoError(t, err)
 
 	store := &LegacyStatsGetter{
@@ -184,24 +182,22 @@ func TestIntegrationDirectSQLStatsSplitsRecordingRules(t *testing.T) {
 	insert := func(t *testing.T, uid, folderUID string, record *ngmodels.Record) {
 		t.Helper()
 		_, err := ruleStore.InsertAlertRules(context.Background(), ngmodels.NewUserUID(tempUser), []ngmodels.InsertRule{{
-			AlertRule: ngmodels.AlertRule{
-				UID:   uid,
-				Title: uid,
-				OrgID: 1,
-				Data: []ngmodels.AlertQuery{{
-					RefID:             "A",
-					Model:             json.RawMessage("{}"),
-					DatasourceUID:     expr.DatasourceUID,
-					RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(60), To: ngmodels.Duration(0)},
-				}},
-				Condition:       "A",
-				Updated:         time.Now(),
-				NamespaceUID:    folderUID,
-				ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
-				NoDataState:     ngmodels.Alerting,
-				IntervalSeconds: 60,
-				Record:          record,
-			}}})
+			UID:   uid,
+			Title: uid,
+			OrgID: 1,
+			Data: []ngmodels.AlertQuery{{
+				RefID:             "A",
+				Model:             json.RawMessage("{}"),
+				DatasourceUID:     expr.DatasourceUID,
+				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(60), To: ngmodels.Duration(0)},
+			}},
+			Condition:       "A",
+			Updated:         time.Now(),
+			NamespaceUID:    folderUID,
+			ExecErrState:    ngmodels.ExecutionErrorState(ngmodels.Alerting),
+			NoDataState:     ngmodels.Alerting,
+			IntervalSeconds: 60,
+			Record:          record}})
 		require.NoError(t, err)
 	}
 

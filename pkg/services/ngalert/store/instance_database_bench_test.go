@@ -29,11 +29,9 @@ func BenchmarkSaveAlertInstances(b *testing.B) {
 			_, labelsHash, _ := labels.StringAndHash()
 
 			instance := models.AlertInstance{
-				AlertInstanceKey: models.AlertInstanceKey{
-					RuleOrgID:  alertRule.OrgID,
-					RuleUID:    alertRule.UID,
-					LabelsHash: labelsHash,
-				},
+				RuleOrgID:     alertRule.OrgID,
+				RuleUID:       alertRule.UID,
+				LabelsHash:    labelsHash,
 				CurrentState:  models.InstanceStateFiring,
 				CurrentReason: string(models.InstanceStateError),
 				Labels:        labels,

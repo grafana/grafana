@@ -5,15 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func testStoreWithAliases() *FakePluginStore {
 	return NewFakePluginStore(
-		Plugin{JSONData: plugins.JSONData{ID: "grafana-pyroscope-datasource", AliasIDs: []string{"phlare"}}},
-		Plugin{JSONData: plugins.JSONData{ID: "grafana-testdata-datasource", AliasIDs: []string{"testdata"}}},
-		Plugin{JSONData: plugins.JSONData{ID: "loki"}},
+		Plugin{ID: "grafana-pyroscope-datasource", AliasIDs: []string{"phlare"}},
+		Plugin{ID: "grafana-testdata-datasource", AliasIDs: []string{"testdata"}},
+		Plugin{ID: "loki"},
 	)
 }
 
@@ -74,8 +72,8 @@ func TestSamePlugin(t *testing.T) {
 // these helpers exist for.
 func TestFakePluginStore_PrefersIDsOverAliases(t *testing.T) {
 	store := NewFakePluginStore(
-		Plugin{JSONData: plugins.JSONData{ID: "grafana-pyroscope-datasource", AliasIDs: []string{"phlare"}}},
-		Plugin{JSONData: plugins.JSONData{ID: "phlare"}},
+		Plugin{ID: "grafana-pyroscope-datasource", AliasIDs: []string{"phlare"}},
+		Plugin{ID: "phlare"},
 	)
 
 	p, exists := store.Plugin(context.Background(), "phlare")
@@ -91,8 +89,8 @@ func TestFakePluginStore_PrefersIDsOverAliases(t *testing.T) {
 // fake breaks that tie on slice order. The real registry resolves it by Add order, which PluginList
 // does not model, so neither order is "correct": tests must not depend on which plugin wins.
 func TestFakePluginStore_DuplicateAliasResolvesInSliceOrder(t *testing.T) {
-	a := Plugin{JSONData: plugins.JSONData{ID: "plugin-a", AliasIDs: []string{"shared"}}}
-	b := Plugin{JSONData: plugins.JSONData{ID: "plugin-b", AliasIDs: []string{"shared"}}}
+	a := Plugin{ID: "plugin-a", AliasIDs: []string{"shared"}}
+	b := Plugin{ID: "plugin-b", AliasIDs: []string{"shared"}}
 
 	p, exists := NewFakePluginStore(a, b).Plugin(context.Background(), "shared")
 	require.True(t, exists)

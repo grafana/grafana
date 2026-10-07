@@ -85,7 +85,7 @@ func TestWrapper_Create(t *testing.T) {
 
 		obj := &fakeObject{}
 		createOpts := &metaV1.CreateOptions{}
-		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
+		expectedObj := &fakeObject{Name: "created"}
 
 		// Verify original user identity is used for authorization
 		setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
@@ -134,7 +134,7 @@ func TestWrapper_Observer(t *testing.T) {
 
 		obj := &fakeObject{}
 		createOpts := &metaV1.CreateOptions{}
-		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
+		expectedObj := &fakeObject{Name: "created"}
 
 		mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 		mockStore.On("Create", mock.MatchedBy(matchesServiceIdentity()), obj, mock.Anything, createOpts).Return(expectedObj, nil)
@@ -175,9 +175,9 @@ func TestWrapper_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		setup := newTestSetup(t)
 		version := "1"
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		obj := &fakeObject{Name: "to-delete"}
 		deleteOpts := &metaV1.DeleteOptions{Preconditions: &metaV1.Preconditions{ResourceVersion: &version}}
-		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "deleted"}}
+		expectedObj := &fakeObject{Name: "deleted"}
 
 		// Mock Get to fetch the object before deletion
 		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "to-delete", mock.Anything).Return(obj, nil)
@@ -201,7 +201,7 @@ func TestWrapper_Delete(t *testing.T) {
 	t.Run("unauthorized", func(t *testing.T) {
 		setup := newTestSetup(t)
 		version := "1"
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		obj := &fakeObject{Name: "to-delete"}
 		deleteOpts := &metaV1.DeleteOptions{Preconditions: &metaV1.Preconditions{ResourceVersion: &version}}
 
 		// Mock Get to fetch the object before deletion
@@ -228,7 +228,7 @@ func TestWrapper_Get(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+		obj := &fakeObject{Name: "fetched"}
 
 		// Verify service identity is used to call the underlying store
 		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "fetched", mock.Anything).Return(obj, nil)
@@ -248,7 +248,7 @@ func TestWrapper_Get(t *testing.T) {
 	t.Run("unauthorized", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+		obj := &fakeObject{Name: "fetched"}
 
 		// Verify service identity is used to call the underlying store
 		setup.mockStore.On("Get", mock.MatchedBy(matchesServiceIdentity()), "fetched", mock.Anything).Return(obj, nil)
@@ -273,12 +273,12 @@ func TestWrapper_List(t *testing.T) {
 		setup := newTestSetup(t)
 
 		listObj := &metaV1.List{Items: []runtime.RawExtension{
-			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
-			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item2"}}},
+			{Object: &fakeObject{Name: "item1"}},
+			{Object: &fakeObject{Name: "item2"}},
 		}}
 
 		filteredListObj := &metaV1.List{Items: []runtime.RawExtension{
-			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
+			{Object: &fakeObject{Name: "item1"}},
 		}}
 
 		// Verify service identity is used to call the underlying store
@@ -300,8 +300,8 @@ func TestWrapper_List(t *testing.T) {
 		setup := newTestSetup(t)
 
 		listObj := &metaV1.List{Items: []runtime.RawExtension{
-			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item1"}}},
-			{Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item2"}}},
+			{Object: &fakeObject{Name: "item1"}},
+			{Object: &fakeObject{Name: "item2"}},
 		}}
 
 		// Verify service identity is used to call the underlying store
@@ -325,9 +325,8 @@ func TestWrapper_List(t *testing.T) {
 func TestWrapper_Update(t *testing.T) {
 	setup := newTestSetup(t)
 
-	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{
-		Name: "to-update", ResourceVersion: "2", Labels: map[string]string{"updated": "false"},
-	}}
+	oldObj := &fakeObject{
+		Name: "to-update", ResourceVersion: "2", Labels: map[string]string{"updated": "false"}}
 	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
 	updateOpts := &metaV1.UpdateOptions{}
 
@@ -375,7 +374,7 @@ func TestWrapper_UpdateAuthorizationUsesExecutionContext(t *testing.T) {
 	requestCtx, cancelRequest := context.WithCancel(identity.WithRequester(context.Background(), requester))
 	requestCtx = context.WithValue(requestCtx, authorizationContextKey, "fake-request-value")
 
-	oldObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fake-object"}}
+	oldObj := &fakeObject{Name: "fake-object"}
 	objInfo := &fakeUpdatedObjectInfo{obj: oldObj}
 	updateOpts := &metaV1.UpdateOptions{}
 
@@ -502,7 +501,7 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 
 		obj := &fakeObject{}
 		createOpts := &metaV1.CreateOptions{}
-		expectedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "created"}}
+		expectedObj := &fakeObject{Name: "created"}
 
 		setup.mockAuth.On("BeforeCreate", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
 		// Inner store must receive original user identity, not service identity.
@@ -519,7 +518,7 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 	t.Run("Get passes original user identity to inner store", func(t *testing.T) {
 		setup := newTestSetupWithPreserveIdentity(t)
 
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "fetched"}}
+		obj := &fakeObject{Name: "fetched"}
 
 		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "fetched", mock.Anything).Return(obj, nil)
 		setup.mockAuth.On("AfterGet", mock.MatchedBy(matchesOriginalUser()), obj).Return(nil)
@@ -551,7 +550,7 @@ func TestWrapper_WithPreserveIdentity(t *testing.T) {
 	t.Run("Delete passes original user identity to inner store", func(t *testing.T) {
 		setup := newTestSetupWithPreserveIdentity(t)
 
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "to-delete"}}
+		obj := &fakeObject{Name: "to-delete"}
 		deleteOpts := &metaV1.DeleteOptions{}
 
 		setup.mockStore.On("Get", mock.MatchedBy(matchesOriginalUser()), "to-delete", mock.Anything).Return(obj, nil)
@@ -580,8 +579,8 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("filters out unauthorized events and forwards authorized ones", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		allowedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "allowed"}}
-		deniedObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "denied"}}
+		allowedObj := &fakeObject{Name: "allowed"}
+		deniedObj := &fakeObject{Name: "denied"}
 
 		allowedEvent := watch.Event{Type: watch.Added, Object: allowedObj}
 
@@ -640,7 +639,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("always forwards Bookmark events without filtering", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		bookmarkObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{ResourceVersion: "42"}}
+		bookmarkObj := &fakeObject{ResourceVersion: "42"}
 
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
@@ -671,7 +670,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("always forwards Error events without filtering", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		errObj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "err"}}
+		errObj := &fakeObject{Name: "err"}
 
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
@@ -752,7 +751,7 @@ func TestWrapper_Watch(t *testing.T) {
 	t.Run("emits watch.Error event when filter returns an error and then closes", func(t *testing.T) {
 		setup := newTestSetup(t)
 
-		obj := &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}
+		obj := &fakeObject{Name: "item"}
 
 		fakeWatcher := watch.NewFake()
 		watcherStore := &fakeWatcherStorage{K8sStorage: setup.mockStore, watcher: fakeWatcher}
@@ -886,7 +885,7 @@ func TestWrapper_Watch(t *testing.T) {
 		// The filteredWatcher's run goroutine will start to forward events, then
 		// block on a send to its result channel once that buffer also fills up.
 		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
-			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{Name: "item"}})
 		}
 
 		// Stop must return promptly even though the goroutine is blocked on a
@@ -921,7 +920,7 @@ func TestWrapper_Watch(t *testing.T) {
 		// Fill the inner channel buffer without ever reading from w.ResultChan().
 		// Wrapper watcher result channel will be blocked at DefaultChanSize.
 		for i := int32(0); i < watch.DefaultChanSize*2; i++ {
-			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: "item"}}})
+			inner.push(watch.Event{Type: watch.Added, Object: &fakeObject{Name: "item"}})
 		}
 
 		// Wait for the send timeout to trigger. Use a generous overall timeout
@@ -956,7 +955,7 @@ func TestWrapper_Watch(t *testing.T) {
 		add := func(name string) {
 			go func() {
 				defer func() { _ = recover() }()
-				fakeWatcher.Add(&fakeObject{ObjectMeta: metaV1.ObjectMeta{Name: name}})
+				fakeWatcher.Add(&fakeObject{Name: name})
 			}()
 		}
 

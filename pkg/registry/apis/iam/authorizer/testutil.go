@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -14,16 +13,16 @@ var (
 	// Shared test user identity
 	user = authn.NewIDTokenAuthInfo(
 		authn.Claims[authn.AccessTokenClaims]{
-			Claims: jwt.Claims{Issuer: "grafana",
-				Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"), Audience: []string{"iam.grafana.app"}},
+			Issuer:  "grafana",
+			Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"), Audience: []string{"iam.grafana.app"},
 			Rest: authn.AccessTokenClaims{
 				Namespace:            "*",
 				Permissions:          identity.ServiceIdentityClaims.Rest.Permissions,
 				DelegatedPermissions: identity.ServiceIdentityClaims.Rest.DelegatedPermissions,
 			},
 		}, &authn.Claims[authn.IDTokenClaims]{
-			Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeUser, "u001")},
-			Rest:   authn.IDTokenClaims{Namespace: "org-2", Identifier: "u001", Type: types.TypeUser},
+			Subject: types.NewTypeID(types.TypeUser, "u001"),
+			Rest:    authn.IDTokenClaims{Namespace: "org-2", Identifier: "u001", Type: types.TypeUser},
 		},
 	)
 )

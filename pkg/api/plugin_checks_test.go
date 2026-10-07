@@ -52,10 +52,10 @@ func TestHTTPServer_CheckEnabled(t *testing.T) {
 			hs := &HTTPServer{}
 			hs.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
-					{JSONData: plugins.JSONData{ID: "mysql"}},
-					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app"}},
-					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app_disabled"}},
-					{JSONData: plugins.JSONData{Type: plugins.TypeApp, ID: "grafana-test-app_autoEnabled", AutoEnabled: true}},
+					{ID: "mysql"},
+					{Type: plugins.TypeApp, ID: "grafana-test-app"},
+					{Type: plugins.TypeApp, ID: "grafana-test-app_disabled"},
+					{Type: plugins.TypeApp, ID: "grafana-test-app_autoEnabled", AutoEnabled: true},
 				},
 			}
 			hs.PluginSettings = &pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{

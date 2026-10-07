@@ -326,10 +326,8 @@ func TestShouldUpdateGrafanaDB(t *testing.T) {
 
 func newTestRepoConfig(name string) *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: "default",
-		},
+		Name:      name,
+		Namespace: "default",
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.LocalRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -340,7 +338,7 @@ func newTestRepoConfig(name string) *provisioning.Repository {
 
 func newSyncEnabledConfig(name string) *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+		Name: name, Namespace: "default",
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.LocalRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -450,7 +448,7 @@ func TestCreateFolder(t *testing.T) {
 			name: "error: write not allowed",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{}, // no WriteWorkflow
@@ -546,7 +544,7 @@ func TestCreateFolder(t *testing.T) {
 			name: "flag enabled: ref not found falls back to configured branch, file not found → creates on new branch",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -584,7 +582,7 @@ func TestCreateFolder(t *testing.T) {
 			name: "flag enabled: ref not found falls back to configured branch, file exists → reuses UID for ancestor",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -624,7 +622,7 @@ func TestCreateFolder(t *testing.T) {
 			name: "flag enabled: ref not found falls back to configured branch, leaf exists → AlreadyExists",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -863,7 +861,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 			name: "flag disabled: moves directory, no _folder.json written",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -889,7 +887,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 			name: "flag enabled: moves directory, no _folder.json written",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -915,7 +913,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 			name: "repo without URL support: URLs field is nil",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -944,7 +942,7 @@ func TestMoveDirectory_FolderMetadata(t *testing.T) {
 			name: "repo with URL support: URLs field is populated",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -1135,7 +1133,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			name: "successful title update with ref",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -1175,7 +1173,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			name: "error: authorization fails",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.LocalRepositoryType,
 						Workflows: []provisioning.Workflow{}, // no write workflow
@@ -1328,7 +1326,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			name: "successful title update on new branch (ref not found fallback)",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -1479,7 +1477,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			name: "repo with URL support: URLs field is populated",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},
@@ -1532,7 +1530,7 @@ func TestUpdateFolderMetadata(t *testing.T) {
 			name: "repo without URL support: URLs field is nil",
 			setup: func(t *testing.T) (*DualReadWriter, DualWriteOptions) {
 				config := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+					Name: "test-repo", Namespace: "default",
 					Spec: provisioning.RepositorySpec{
 						Type:      provisioning.GitRepositoryType,
 						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, provisioning.BranchWorkflow},

@@ -19,10 +19,8 @@ func TestRepositoryUsageStatusFromRepository(t *testing.T) {
 	}
 	created := metav1.NewTime(time.UnixMilli(1_500_000_000_000).UTC())
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			CreationTimestamp: created,
-			Annotations:       map[string]string{utils.AnnoKeyUpdatedTimestamp: "2021-01-01T00:00:00Z"},
-		},
+		CreationTimestamp: created,
+		Annotations:       map[string]string{utils.AnnoKeyUpdatedTimestamp: "2021-01-01T00:00:00Z"},
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},

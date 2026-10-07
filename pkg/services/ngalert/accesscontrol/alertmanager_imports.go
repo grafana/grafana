@@ -15,7 +15,7 @@ type AlertmanagerImportsAccess struct {
 }
 
 func NewAlertmanagerImportsAccess(a ac.AccessControl) *AlertmanagerImportsAccess {
-	return &AlertmanagerImportsAccess{genericService: genericService{ac: a}}
+	return &AlertmanagerImportsAccess{ac: a}
 }
 
 // AuthorizeCreate checks the org-level create permission. No legacy fallback — callers

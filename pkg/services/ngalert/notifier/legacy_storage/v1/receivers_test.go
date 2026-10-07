@@ -13,12 +13,10 @@ import (
 func TestReceiverFingerprint(t *testing.T) {
 	baseReceiver := func() PostableApiReceiver {
 		return PostableApiReceiver{
-			ResourceMetadata: ResourceMetadata{
-				UID:        ReceiverUID("test-receiver"),
-				Version:    "some-version",
-				Provenance: models.ProvenanceAPI,
-			},
-			Name: "test-receiver",
+			UID:        ReceiverUID("test-receiver"),
+			Version:    "some-version",
+			Provenance: models.ProvenanceAPI,
+			Name:       "test-receiver",
 			GrafanaManagedReceivers: []*PostableGrafanaReceiver{
 				{
 					UID:                   "integration-uid",

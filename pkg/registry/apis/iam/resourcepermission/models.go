@@ -110,13 +110,11 @@ func newV0ResourcePermission(grn *groupResourceName, specs []v0alpha1.ResourcePe
 	})
 
 	r := v0alpha1.ResourcePermission{
-		TypeMeta: v0alpha1.ResourcePermissionInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              grn.string(),
-			Namespace:         namespace,
-			ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(created.UTC()),
-		},
+		TypeMeta:          v0alpha1.ResourcePermissionInfo.TypeMeta(),
+		Name:              grn.string(),
+		Namespace:         namespace,
+		ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(created.UTC()),
 		Spec: v0alpha1.ResourcePermissionSpec{
 			Resource:    grn.v0alpha1(),
 			Permissions: specs,

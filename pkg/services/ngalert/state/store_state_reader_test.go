@@ -42,21 +42,17 @@ func TestStoreStateReader_GetAll(t *testing.T) {
 			name: "returns states for all instances",
 			instances: []*models.AlertInstance{
 				{
-					AlertInstanceKey: models.AlertInstanceKey{
-						RuleOrgID:  orgID,
-						RuleUID:    "rule-1",
-						LabelsHash: "hash1",
-					},
+					RuleOrgID:    orgID,
+					RuleUID:      "rule-1",
+					LabelsHash:   "hash1",
 					Labels:       models.InstanceLabels{"alertname": "test1"},
 					CurrentState: models.InstanceStateFiring,
 					LastEvalTime: now,
 				},
 				{
-					AlertInstanceKey: models.AlertInstanceKey{
-						RuleOrgID:  orgID,
-						RuleUID:    "rule-2",
-						LabelsHash: "hash2",
-					},
+					RuleOrgID:    orgID,
+					RuleUID:      "rule-2",
+					LabelsHash:   "hash2",
 					Labels:       models.InstanceLabels{"alertname": "test2"},
 					CurrentState: models.InstanceStateNormal,
 					LastEvalTime: now.Add(-time.Minute),
@@ -119,21 +115,17 @@ func TestStoreStateReader_GetStatesForRuleUID(t *testing.T) {
 			name: "returns states for rule instances",
 			instances: []*models.AlertInstance{
 				{
-					AlertInstanceKey: models.AlertInstanceKey{
-						RuleOrgID:  orgID,
-						RuleUID:    ruleUID,
-						LabelsHash: "hash1",
-					},
+					RuleOrgID:    orgID,
+					RuleUID:      ruleUID,
+					LabelsHash:   "hash1",
 					Labels:       models.InstanceLabels{"alertname": "test", "instance": "a"},
 					CurrentState: models.InstanceStateFiring,
 					LastEvalTime: now,
 				},
 				{
-					AlertInstanceKey: models.AlertInstanceKey{
-						RuleOrgID:  orgID,
-						RuleUID:    ruleUID,
-						LabelsHash: "hash2",
-					},
+					RuleOrgID:    orgID,
+					RuleUID:      ruleUID,
+					LabelsHash:   "hash2",
 					Labels:       models.InstanceLabels{"alertname": "test", "instance": "b"},
 					CurrentState: models.InstanceStatePending,
 					LastEvalTime: now,
@@ -198,11 +190,9 @@ func TestStoreStateReader_Status(t *testing.T) {
 			name: "returns true and status when instances exist",
 			instances: []*models.AlertInstance{
 				{
-					AlertInstanceKey: models.AlertInstanceKey{
-						RuleOrgID:  orgID,
-						RuleUID:    ruleUID,
-						LabelsHash: "hash1",
-					},
+					RuleOrgID:    orgID,
+					RuleUID:      ruleUID,
+					LabelsHash:   "hash1",
 					Labels:       models.InstanceLabels{"alertname": "test"},
 					CurrentState: models.InstanceStateFiring,
 					LastEvalTime: now,

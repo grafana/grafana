@@ -190,10 +190,8 @@ func NewTenantRESTConfig(cfg TenantWatcherConfig) (*rest.Config, error) {
 	restCfg := &rest.Config{
 		Host:          cfg.TenantAPIServerURL,
 		WrapTransport: newBearerTokenExchangeWrapper(tc, "cloud.grafana.com", "*"),
-		TLSClientConfig: rest.TLSClientConfig{
-			CAFile:   cfg.CAFile,
-			Insecure: cfg.AllowInsecure && cfg.CAFile == "",
-		},
+		CAFile:        cfg.CAFile,
+		Insecure:      cfg.AllowInsecure && cfg.CAFile == "",
 	}
 
 	return restCfg, nil

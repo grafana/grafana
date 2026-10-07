@@ -37,70 +37,64 @@ func TestAddAppLinks(t *testing.T) {
 	}
 
 	testApp1 := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "test-app1",
-			Name: "Test app1 name",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Catalog",
-					Path:       "/a/test-app1/catalog",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
-				{
-					Name:     "Page2",
-					Path:     "/a/test-app1/page2",
-					Type:     "page",
-					AddToNav: true,
-				},
+		ID:   "test-app1",
+		Name: "Test app1 name",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Catalog",
+				Path:       "/a/test-app1/catalog",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+			},
+			{
+				Name:     "Page2",
+				Path:     "/a/test-app1/page2",
+				Type:     "page",
+				AddToNav: true,
 			},
 		},
 	}
 
 	testApp2 := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "test-app2",
-			Name: "Test app2 name",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Hello",
-					Path:       "/a/quick-app/catalog",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
+		ID:   "test-app2",
+		Name: "Test app2 name",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Hello",
+				Path:       "/a/quick-app/catalog",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
 			},
 		},
 	}
 
 	testApp3 := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "test-app3",
-			Name: "Test app3 name",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Default page",
-					Path:       "/a/test-app3/default",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
-				{
-					Name:     "Random page",
-					Path:     "/a/test-app3/random-page",
-					Type:     "page",
-					AddToNav: true,
-				},
-				{
-					Name:     "Add new connection",
-					Path:     "/connections/add-new-connection",
-					Type:     "page",
-					AddToNav: false,
-				},
+		ID:   "test-app3",
+		Name: "Test app3 name",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Default page",
+				Path:       "/a/test-app3/default",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+			},
+			{
+				Name:     "Random page",
+				Path:     "/a/test-app3/random-page",
+				Type:     "page",
+				AddToNav: true,
+			},
+			{
+				Name:     "Add new connection",
+				Path:     "/connections/add-new-connection",
+				Type:     "page",
+				AddToNav: false,
 			},
 		},
 	}
@@ -382,20 +376,16 @@ func TestAssistantStubNav(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	onboardingPlugin := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:          assistantOnboardingAppID,
-			Name:        "Grafana Assistant Onboarding",
-			Type:        plugins.TypeApp,
-			AutoEnabled: true,
-		},
+		ID:          assistantOnboardingAppID,
+		Name:        "Grafana Assistant Onboarding",
+		Type:        plugins.TypeApp,
+		AutoEnabled: true,
 	}
 	assistantPlugin := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:          assistantAppID,
-			Name:        "Grafana Assistant",
-			Type:        plugins.TypeApp,
-			AutoEnabled: true,
-		},
+		ID:          assistantAppID,
+		Name:        "Grafana Assistant",
+		Type:        plugins.TypeApp,
+		AutoEnabled: true,
 	}
 	appAccess := ac.Permission{Action: pluginaccesscontrol.ActionAppAccess, Scope: "*"}
 	installAccess := ac.Permission{Action: pluginaccesscontrol.ActionInstall, Scope: "*"}
@@ -468,76 +458,70 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	}
 
 	assertsApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "grafana-asserts-app",
-			Name: "Knowledge graph",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Knowledge graph",
-					Path:       "/a/grafana-asserts-app/",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
-				{
-					Name:     "Entity graph",
-					Path:     "/a/grafana-asserts-app/entities",
-					Type:     "page",
-					AddToNav: true,
-				},
-				{
-					Name:     "Application",
-					Path:     "/a/grafana-asserts-app/services",
-					Type:     "page",
-					AddToNav: true,
-				},
+		ID:   "grafana-asserts-app",
+		Name: "Knowledge graph",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Knowledge graph",
+				Path:       "/a/grafana-asserts-app/",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+			},
+			{
+				Name:     "Entity graph",
+				Path:     "/a/grafana-asserts-app/entities",
+				Type:     "page",
+				AddToNav: true,
+			},
+			{
+				Name:     "Application",
+				Path:     "/a/grafana-asserts-app/services",
+				Type:     "page",
+				AddToNav: true,
 			},
 		},
 	}
 
 	frontendApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "grafana-kowalski-app",
-			Name: "Frontend",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Frontend",
-					Path:       "/a/grafana-kowalski-app/",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
-				{
-					Name:     "Overview",
-					Path:     "/a/grafana-kowalski-app/overview",
-					Type:     "page",
-					AddToNav: true,
-				},
+		ID:   "grafana-kowalski-app",
+		Name: "Frontend",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Frontend",
+				Path:       "/a/grafana-kowalski-app/",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+			},
+			{
+				Name:     "Overview",
+				Path:     "/a/grafana-kowalski-app/overview",
+				Type:     "page",
+				AddToNav: true,
 			},
 		},
 	}
 
 	applicationApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "grafana-app-observability-app",
-			Name: "Application",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Application",
-					Path:       "/a/grafana-app-observability-app/",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
-				{
-					Name:     "Services",
-					Path:     "/a/grafana-app-observability-app/services",
-					Type:     "page",
-					AddToNav: true,
-				},
+		ID:   "grafana-app-observability-app",
+		Name: "Application",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Application",
+				Path:       "/a/grafana-app-observability-app/",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+			},
+			{
+				Name:     "Services",
+				Path:     "/a/grafana-app-observability-app/services",
+				Type:     "page",
+				AddToNav: true,
 			},
 		},
 	}
@@ -547,17 +531,15 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 	// enabledAccessibleAppPluginMap yet never adds an "Application" entry, so the
 	// asserts page must stay visible (exercises the tree lookup over the map).
 	applicationAppNoNav := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "grafana-app-observability-app",
-			Name: "Application",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:     "Application",
-					Path:     "/a/grafana-app-observability-app/",
-					Type:     "page",
-					AddToNav: false,
-				},
+		ID:   "grafana-app-observability-app",
+		Name: "Application",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:     "Application",
+				Path:     "/a/grafana-app-observability-app/",
+				Type:     "page",
+				AddToNav: false,
 			},
 		},
 	}
@@ -654,18 +636,16 @@ func TestAddAppLinksDrilldownPruning(t *testing.T) {
 	}
 
 	metricsDrilldownApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "grafana-metricsdrilldown-app",
-			Name: "Metrics drilldown",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Metrics",
-					Path:       "/a/grafana-metricsdrilldown-app/",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-				},
+		ID:   "grafana-metricsdrilldown-app",
+		Name: "Metrics drilldown",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Metrics",
+				Path:       "/a/grafana-metricsdrilldown-app/",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
 			},
 		},
 	}
@@ -757,17 +737,15 @@ func TestBuildDataConnectionsNavLink(t *testing.T) {
 
 	t.Run("plugin pages under the connections section are visible to users without ConfigurationPageAccess", func(t *testing.T) {
 		pluginApp := pluginstore.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "grafana-collector-app",
-				Name: "Collector",
-				Type: plugins.TypeApp,
-				Includes: []*plugins.Includes{
-					{
-						Name:     "Collector",
-						Path:     "/a/grafana-collector-app",
-						Type:     "page",
-						AddToNav: false,
-					},
+			ID:   "grafana-collector-app",
+			Name: "Collector",
+			Type: plugins.TypeApp,
+			Includes: []*plugins.Includes{
+				{
+					Name:     "Collector",
+					Path:     "/a/grafana-collector-app",
+					Type:     "page",
+					AddToNav: false,
 				},
 			},
 		}
@@ -868,33 +846,31 @@ func TestAddAppLinksAccessControl(t *testing.T) {
 	catalogReadAction := "test-app1.catalog:read"
 
 	testApp1 := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{
-					Name:       "Home",
-					Path:       "/a/test-app1/home",
-					Type:       "page",
-					AddToNav:   true,
-					DefaultNav: true,
-					Role:       identity.RoleViewer,
-				},
-				{
-					Name:     "Catalog",
-					Path:     "/a/test-app1/catalog",
-					Type:     "page",
-					AddToNav: true,
-					Role:     identity.RoleEditor,
-					Action:   catalogReadAction,
-				},
-				{
-					Name:     "Announcements",
-					Path:     "/a/test-app1/announcements",
-					Type:     "page",
-					AddToNav: true,
-					Role:     identity.RoleViewer,
-					Action:   pluginaccesscontrol.ActionAppAccess,
-				},
+		ID: "test-app1", Name: "Test app1 name", Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{
+				Name:       "Home",
+				Path:       "/a/test-app1/home",
+				Type:       "page",
+				AddToNav:   true,
+				DefaultNav: true,
+				Role:       identity.RoleViewer,
+			},
+			{
+				Name:     "Catalog",
+				Path:     "/a/test-app1/catalog",
+				Type:     "page",
+				AddToNav: true,
+				Role:     identity.RoleEditor,
+				Action:   catalogReadAction,
+			},
+			{
+				Name:     "Announcements",
+				Path:     "/a/test-app1/announcements",
+				Type:     "page",
+				AddToNav: true,
+				Role:     identity.RoleViewer,
+				Action:   pluginaccesscontrol.ActionAppAccess,
 			},
 		},
 	}
@@ -996,20 +972,18 @@ func TestProcessAssistantAppPlugin(t *testing.T) {
 		Context:      &web.Context{Req: httpReq},
 	}
 	assistantApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   assistantAppID,
-			Name: "Assistant",
-			Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
-				{Name: "Investigations", Path: "/a/grafana-assistant-app/investigations", Type: "page", AddToNav: true},
-				{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
-				{Name: "Automations", Path: "/a/grafana-assistant-app/automations", Type: "page", AddToNav: true},
-				{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
-				{Name: "Search", Path: "/a/grafana-assistant-app/assistant-search", Type: "page", AddToNav: true},
-				{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
-				{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
-			},
+		ID:   assistantAppID,
+		Name: "Assistant",
+		Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{Name: "Home", Path: "/a/grafana-assistant-app", Type: "page", AddToNav: true, DefaultNav: true},
+			{Name: "Investigations", Path: "/a/grafana-assistant-app/investigations", Type: "page", AddToNav: true},
+			{Name: "Workspace", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
+			{Name: "Automations", Path: "/a/grafana-assistant-app/automations", Type: "page", AddToNav: true},
+			{Name: "Watchers", Path: "/a/grafana-assistant-app/watchers", Type: "page", AddToNav: true},
+			{Name: "Search", Path: "/a/grafana-assistant-app/assistant-search", Type: "page", AddToNav: true},
+			{Name: "Settings", Path: "/a/grafana-assistant-app/settings", Type: "page", AddToNav: true},
+			{Name: "Irrelevant", Path: "/a/grafana-assistant-app/irrelevant", Type: "page", AddToNav: true},
 		},
 	}
 
@@ -1125,20 +1099,16 @@ func TestNestMaintenanceWindowsUnderSLO(t *testing.T) {
 	}
 
 	sloApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "grafana-slo-app", Name: "SLO", Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{Name: "Home", Path: "/a/grafana-slo-app/home", Type: "page", AddToNav: true, DefaultNav: true},
-				{Name: "Manage SLOs", Path: "/a/grafana-slo-app/manage-slos", Type: "page", AddToNav: true},
-			},
+		ID: "grafana-slo-app", Name: "SLO", Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{Name: "Home", Path: "/a/grafana-slo-app/home", Type: "page", AddToNav: true, DefaultNav: true},
+			{Name: "Manage SLOs", Path: "/a/grafana-slo-app/manage-slos", Type: "page", AddToNav: true},
 		},
 	}
 	mwApp := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
-			Includes: []*plugins.Includes{
-				{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
-			},
+		ID: "grafana-maintenancewindows-app", Name: "Maintenance Windows", Type: plugins.TypeApp,
+		Includes: []*plugins.Includes{
+			{Name: "Maintenance windows", Path: "/a/grafana-maintenancewindows-app/maintenance-windows", Type: "page", AddToNav: true, DefaultNav: true},
 		},
 	}
 
@@ -1219,7 +1189,7 @@ func TestNestPluginIncludesByPath(t *testing.T) {
 
 	newService := func(includes ...*plugins.Includes) ServiceImpl {
 		app := pluginstore.Plugin{
-			JSONData: plugins.JSONData{ID: "nesting-app", Name: "Nesting App", Type: plugins.TypeApp, Includes: includes},
+			ID: "nesting-app", Name: "Nesting App", Type: plugins.TypeApp, Includes: includes,
 		}
 		return ServiceImpl{
 			log:            log.New("navtree"),

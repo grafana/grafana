@@ -119,7 +119,7 @@ func (s *UserTeamREST) Connect(ctx context.Context, name string, _ runtime.Objec
 			return
 		}
 		response := &iamv0alpha1.GetUserTeamsResponse{
-			GetUserTeamsBody: iamv0alpha1.GetUserTeamsBody{Items: page.Items},
+			Items: page.Items,
 		}
 		if len(page.Next) > 0 {
 			token, err := resource.NewSearchContinueToken(page.Next, page.ResourceVersion)

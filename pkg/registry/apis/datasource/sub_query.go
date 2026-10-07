@@ -162,13 +162,13 @@ func (r *subQueryREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			_ = tracing.Error(reqSpan, err)
 			m.SetError()
 			responder.Object(int(backend.StatusBadRequest),
-				&dsV0.QueryDataResponse{QueryDataResponse: backend.QueryDataResponse{Responses: map[string]backend.DataResponse{
+				&dsV0.QueryDataResponse{Responses: map[string]backend.DataResponse{
 					"A": {
 						Error:       errors.New(e.LogMessage),
 						ErrorSource: backend.ErrorSourceDownstream,
 						Status:      backend.StatusBadRequest,
 					},
-				}}},
+				}},
 			)
 			return
 		}

@@ -181,55 +181,45 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 				Path: prefix + "/create",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: map[string]any{
-								"x-grafana-action": "create",
-								"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
-									Group:   dashv0.GROUP,
-									Version: dashv0.VERSION,
-									Kind:    "DashboardCreateResponse",
+						Extensions: map[string]any{
+							"x-grafana-action": "create",
+							"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
+								Group:   dashv0.GROUP,
+								Version: dashv0.VERSION,
+								Kind:    "DashboardCreateResponse",
+							},
+						},
+						Tags:        tags,
+						OperationId: "createSnapshot",
+						Description: "Creates a new Snapshot",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
+							},
+						},
+						RequestBody: &spec3.RequestBody{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema:  &createCmd,
+										Example: createExample, // raw JSON body
+									},
 								},
 							},
 						},
-						OperationProps: spec3.OperationProps{
-							Tags:        tags,
-							OperationId: "createSnapshot",
-							Description: "Creates a new Snapshot",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-							},
-							RequestBody: &spec3.RequestBody{
-								RequestBodyProps: spec3.RequestBodyProps{
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema:  &createCmd,
-												Example: createExample, // raw JSON body
-											},
-										},
-									},
-								},
-							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &createRsp,
-														},
-													},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &createRsp,
 												},
 											},
 										},
@@ -428,19 +418,15 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 				Spec: &spec3.PathProps{
 					Description: "Delete snapshot by delete key",
 					Delete: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        tags,
-							OperationId: "deleteWithKey",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "deleteKey",
-										In:          "path",
-										Required:    true,
-										Description: "unique key returned in create",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						Tags:        tags,
+						OperationId: "deleteWithKey",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "deleteKey",
+								In:          "path",
+								Required:    true,
+								Description: "unique key returned in create",
+								Schema:      spec.StringProperty(),
 							},
 						},
 					},
@@ -520,44 +506,36 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 				Path: prefix + "/settings",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: map[string]any{
-								"x-grafana-action": "get",
-								"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
-									Group:   dashv0.GROUP,
-									Version: dashv0.VERSION,
-									Kind:    "SnapshotSharingOptions",
-								},
+						Extensions: map[string]any{
+							"x-grafana-action": "get",
+							"x-kubernetes-group-version-kind": metav1.GroupVersionKind{
+								Group:   dashv0.GROUP,
+								Version: dashv0.VERSION,
+								Kind:    "SnapshotSharingOptions",
 							},
 						},
-						OperationProps: spec3.OperationProps{
-							Tags:        tags,
-							OperationId: "getSnapshotSettings",
-							Description: "Get Snapshot sharing settings",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						Tags:        tags,
+						OperationId: "getSnapshotSettings",
+						Description: "Get Snapshot sharing settings",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema:  &getSettingsRsp,
-															Example: getSettingsRspExample,
-														},
-													},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema:  &getSettingsRsp,
+													Example: getSettingsRspExample,
 												},
 											},
 										},

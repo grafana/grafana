@@ -63,9 +63,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	client, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	newResource := &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title:        "Test-Receiver",
 			Integrations: []v1beta1.ReceiverIntegration{},
@@ -295,9 +293,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 			require.NoError(t, err)
 
 			var created = &v1beta1.Receiver{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
+				Namespace: "default",
 				Spec: v1beta1.ReceiverSpec{
 					Title:        "receiver-1",
 					Integrations: []v1beta1.ReceiverIntegration{},
@@ -585,9 +581,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			require.NoError(t, err)
 
 			var expected = &v1beta1.Receiver{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
+				Namespace: "default",
 				Spec: v1beta1.ReceiverSpec{
 					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
 					Integrations: []v1beta1.ReceiverIntegration{},
@@ -935,9 +929,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	newReceiver := func(title string) *v1beta1.Receiver {
 		return &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title: title,
 				Integrations: []v1beta1.ReceiverIntegration{
@@ -1081,9 +1073,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	oldClient := test_common.NewReceiverClient(t, helper.Org1.Admin) // TODO replace with regular client once Delete works
 
 	receiver := v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title:        "receiver-1",
 			Integrations: []v1beta1.ReceiverIntegration{},
@@ -1164,9 +1154,7 @@ func TestIntegrationPatch(t *testing.T) {
 	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	receiver := v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title: "receiver",
 			Integrations: []v1beta1.ReceiverIntegration{
@@ -1415,9 +1403,7 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	t.Run("should fail to create receiver with the existing name", func(t *testing.T) {
 		newReceiver := &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        defaultReceiver.Spec.Title,
 				Integrations: []v1beta1.ReceiverIntegration{},
@@ -1443,9 +1429,7 @@ func TestIntegrationCRUD(t *testing.T) {
 		}
 		var err error
 		receiver, err = adminClient.Create(ctx, &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        "all-receivers",
 				Integrations: integrations,
@@ -1521,9 +1505,7 @@ func TestIntegrationCRUD(t *testing.T) {
 				}
 
 				receiver, err := adminClient.Create(ctx, &v1beta1.Receiver{
-					ObjectMeta: v1.ObjectMeta{
-						Namespace: "default",
-					},
+					Namespace: "default",
 					Spec: v1beta1.ReceiverSpec{
 						Title:        fmt.Sprintf("invalid-%s", key),
 						Integrations: []v1beta1.ReceiverIntegration{integration},
@@ -1545,9 +1527,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	adminClient, err := v1beta1.NewReceiverClientFromGenerator(helper.Org1.Admin.GetClientRegistry())
 	require.NoError(t, err)
 	recv1 := &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title: "test-receiver-1",
 			Integrations: []v1beta1.ReceiverIntegration{
@@ -1559,9 +1539,7 @@ func TestIntegrationReceiverListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	recv2 := &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title: "test-receiver-2",
 			Integrations: []v1beta1.ReceiverIntegration{
@@ -1644,9 +1622,7 @@ func persistInitialConfig(t *testing.T, amConfig definitions.PostableUserConfig,
 		}
 
 		toCreate := v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        receiver.Name,
 				Integrations: []v1beta1.ReceiverIntegration{},
@@ -1686,7 +1662,7 @@ func TestIntegrationAllowedIntegrations(t *testing.T) {
 
 	newReceiver := func(title string, integrationType schema.IntegrationType) *v1beta1.Receiver {
 		return &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        title,
 				Integrations: []v1beta1.ReceiverIntegration{createIntegration(t, integrationType)},
@@ -1709,7 +1685,7 @@ func TestIntegrationAllowedIntegrations(t *testing.T) {
 
 	t.Run("create with mixed integrations is rejected and names the disallowed one", func(t *testing.T) {
 		mixed := &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title: "mixed-slack-and-email",
 				Integrations: []v1beta1.ReceiverIntegration{
@@ -1741,7 +1717,7 @@ func TestIntegrationEmailValidation(t *testing.T) {
 
 	newReceiver := func(title string) *v1beta1.Receiver {
 		return &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        title,
 				Integrations: []v1beta1.ReceiverIntegration{emailIntegration},
@@ -1783,7 +1759,7 @@ func TestIntegrationEmailValidation(t *testing.T) {
 
 		otherOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+otherOrgEmail+`"}`)
 		receiver := &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        "email-in-other-org",
 				Integrations: []v1beta1.ReceiverIntegration{otherOrgIntegration},
@@ -1801,7 +1777,7 @@ func TestIntegrationEmailValidation(t *testing.T) {
 
 		multiOrgIntegration := createIntegrationWithSettings(t, schema.EmailType, schema.V1, `{"addresses":"`+multiOrgEmail+`"}`)
 		receiver := &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: "default"},
+			Namespace: "default",
 			Spec: v1beta1.ReceiverSpec{
 				Title:        "email-in-both-orgs",
 				Integrations: []v1beta1.ReceiverIntegration{multiOrgIntegration},

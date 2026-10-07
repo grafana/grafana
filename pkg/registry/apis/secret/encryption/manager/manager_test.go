@@ -738,13 +738,11 @@ func TestConsolidateNamespace_FatalWhenCacheGetByIdReportsUnexpectedNamespace(t 
 
 	values := []*contracts.EncryptedValue{
 		{
-			EncryptedPayload: contracts.EncryptedPayload{
-				DataKeyID:     encrypted.DataKeyID,
-				EncryptedData: encrypted.EncryptedData,
-			},
-			Namespace: namespace.String(),
-			Name:      "secret-name",
-			Version:   1,
+			DataKeyID:     encrypted.DataKeyID,
+			EncryptedData: encrypted.EncryptedData,
+			Namespace:     namespace.String(),
+			Name:          "secret-name",
+			Version:       1,
 		},
 	}
 

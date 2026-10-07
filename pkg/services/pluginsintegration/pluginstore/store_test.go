@@ -93,9 +93,9 @@ func TestStore_ProvideService(t *testing.T) {
 
 func TestStore_Plugin(t *testing.T) {
 	t.Run("Plugin returns all non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}
+		p1 := &plugins.Plugin{ID: "test-datasource"}
 		p1.RegisterClient(&DecommissionedPlugin{})
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel"}}
+		p2 := &plugins.Plugin{ID: "test-panel"}
 
 		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
@@ -117,11 +117,11 @@ func TestStore_Plugin(t *testing.T) {
 
 func TestStore_Plugins(t *testing.T) {
 	t.Run("Plugin returns all non-decommissioned plugins by type", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-datasource", Type: plugins.TypeDataSource}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-panel", Type: plugins.TypePanel}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-app", Type: plugins.TypeApp}}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-panel", Type: plugins.TypePanel}}
+		p1 := &plugins.Plugin{ID: "a-test-datasource", Type: plugins.TypeDataSource}
+		p2 := &plugins.Plugin{ID: "b-test-panel", Type: plugins.TypePanel}
+		p3 := &plugins.Plugin{ID: "c-test-panel", Type: plugins.TypePanel}
+		p4 := &plugins.Plugin{ID: "d-test-app", Type: plugins.TypeApp}
+		p5 := &plugins.Plugin{ID: "e-test-panel", Type: plugins.TypePanel}
 		p5.RegisterClient(&DecommissionedPlugin{})
 
 		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
@@ -161,11 +161,11 @@ func TestStore_Plugins(t *testing.T) {
 
 func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.TypeRenderer}, FS: pluginfakes.NewFakePluginFS("/some/dir")}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}, FS: pluginfakes.NewFakePluginFS("/grafana/")}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.TypeDataSource}, FS: pluginfakes.NewFakePluginFS("../test")}
-		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.TypeApp}, FS: pluginfakes.NewFakePluginFS("any/path")}
-		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
+		p1 := &plugins.Plugin{ID: "a-test-renderer", Type: plugins.TypeRenderer, FS: pluginfakes.NewFakePluginFS("/some/dir")}
+		p2 := &plugins.Plugin{ID: "b-test-panel", Type: plugins.TypePanel, FS: pluginfakes.NewFakePluginFS("/grafana/")}
+		p4 := &plugins.Plugin{ID: "d-test-datasource", Type: plugins.TypeDataSource, FS: pluginfakes.NewFakePluginFS("../test")}
+		p5 := &plugins.Plugin{ID: "e-test-app", Type: plugins.TypeApp, FS: pluginfakes.NewFakePluginFS("any/path")}
+		p6 := &plugins.Plugin{ID: "f-test-app", Type: plugins.TypeApp}
 		p6.RegisterClient(&DecommissionedPlugin{})
 
 		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
@@ -190,7 +190,7 @@ func TestStore_Routes(t *testing.T) {
 
 func TestProcessManager_shutdown(t *testing.T) {
 	t.Run("When context is cancelled the plugin is stopped", func(t *testing.T) {
-		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}} // Backend: true
+		p := &plugins.Plugin{ID: "test-datasource", Type: plugins.TypeDataSource} // Backend: true
 		backend := &pluginfakes.FakeBackendPlugin{}
 		p.RegisterClient(backend)
 		p.SetLogger(log.NewTestLogger())
@@ -225,7 +225,7 @@ func TestProcessManager_shutdown(t *testing.T) {
 	})
 
 	t.Run("When shutdown fails, stopping method returns error", func(t *testing.T) {
-		p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
+		p := &plugins.Plugin{ID: "test-datasource", Type: plugins.TypeDataSource}
 		backend := &pluginfakes.FakeBackendPlugin{}
 		p.RegisterClient(backend)
 		p.SetLogger(log.NewTestLogger())
@@ -250,9 +250,9 @@ func TestProcessManager_shutdown(t *testing.T) {
 
 func TestStore_availablePlugins(t *testing.T) {
 	t.Run("Decommissioned plugins are excluded from availablePlugins", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource"}}
+		p1 := &plugins.Plugin{ID: "test-datasource"}
 		p1.RegisterClient(&DecommissionedPlugin{})
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-app"}}
+		p2 := &plugins.Plugin{ID: "test-app"}
 
 		ps, err := NewPluginStoreForTest(&pluginfakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{

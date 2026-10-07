@@ -25,36 +25,28 @@ const currentUserPath = "users/" + CurrentUserName
 func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 	return &spec3.PathProps{
 		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				OperationId: "getCurrentUserDisplay",
-				Tags:        []string{"Display"},
-				Description: "Show display information for the currently authenticated identity",
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "namespace",
-							In:          "path",
-							Required:    true,
-							Example:     "default",
-							Description: "workspace",
-							Schema:      spec.StringProperty(),
-						},
-					},
+			OperationId: "getCurrentUserDisplay",
+			Tags:        []string{"Display"},
+			Description: "Show display information for the currently authenticated identity",
+			Parameters: []*spec3.Parameter{
+				{
+					Name:        "namespace",
+					In:          "path",
+					Required:    true,
+					Example:     "default",
+					Description: "workspace",
+					Schema:      spec.StringProperty(),
 				},
-				Responses: &spec3.Responses{
-					ResponsesProps: spec3.ResponsesProps{
-						StatusCodeResponses: map[int]*spec3.Response{
-							200: {
-								ResponseProps: spec3.ResponseProps{
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: &spec.Schema{
-													SchemaProps: spec.SchemaProps{
-														Ref: spec.MustCreateRef("#/components/schemas/" + iam.Display{}.OpenAPIModelName()),
-													},
-												},
-											},
+			},
+			Responses: &spec3.Responses{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{
+											Ref: spec.MustCreateRef("#/components/schemas/" + iam.Display{}.OpenAPIModelName()),
 										},
 									},
 								},

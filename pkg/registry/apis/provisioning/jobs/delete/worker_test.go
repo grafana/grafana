@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -1334,10 +1333,8 @@ func TestDeduplicatePaths(t *testing.T) {
 func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 	config := &v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.GitHubRepositoryType,
 		},
@@ -1371,7 +1368,7 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.DeleteJobOptions{
@@ -1393,10 +1390,8 @@ func TestDeleteWorker_RefURLsSetWithRef(t *testing.T) {
 func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 	config := &v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.GitHubRepositoryType,
 		},
@@ -1428,7 +1423,7 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.DeleteJobOptions{
@@ -1449,10 +1444,8 @@ func TestDeleteWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepo := repository.NewMockRepository(t)
 	config := &v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: v0alpha1.RepositorySpec{
 			Type: v0alpha1.GitRepositoryType, // Regular git repo, not GitHub
 		},
@@ -1479,7 +1472,7 @@ func TestDeleteWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := v0alpha1.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: v0alpha1.JobSpec{
 			Action: v0alpha1.JobActionDelete,
 			Delete: &v0alpha1.DeleteJobOptions{

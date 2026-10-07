@@ -1581,10 +1581,8 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 				Annotations: amv2.LabelSet{
 					"annotations_label": "annotations_value",
 				},
-				Alert: amv2.Alert{
-					Labels: amv2.LabelSet{
-						"labels_label:": "labels_value",
-					},
+				Labels: amv2.LabelSet{
+					"labels_label:": "labels_value",
 				},
 			},
 		},
@@ -1654,13 +1652,11 @@ func genAlert(active bool, labels map[string]string) amv2.PostableAlert {
 	}
 
 	return amv2.PostableAlert{
-		Annotations: map[string]string{"test_annotation": "test_annotation_value"},
-		StartsAt:    strfmt.DateTime(time.Now()),
-		EndsAt:      strfmt.DateTime(endsAt),
-		Alert: amv2.Alert{
-			GeneratorURL: "http://localhost:8080",
-			Labels:       labels,
-		},
+		Annotations:  map[string]string{"test_annotation": "test_annotation_value"},
+		StartsAt:     strfmt.DateTime(time.Now()),
+		EndsAt:       strfmt.DateTime(endsAt),
+		GeneratorURL: "http://localhost:8080",
+		Labels:       labels,
 	}
 }
 

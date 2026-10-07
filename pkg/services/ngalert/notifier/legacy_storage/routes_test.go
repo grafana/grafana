@@ -20,8 +20,8 @@ import (
 
 func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 	mr := &v1.ManagedRoute{
-		ResourceMetadata: v1.ResourceMetadata{UID: "managed"},
-		Receiver:         "receiver",
+		UID:      "managed",
+		Receiver: "receiver",
 	}
 
 	route := GeneratedSubRoute(mr)
@@ -37,8 +37,8 @@ func TestManagedRoute_GeneratedSubRoute_DefaultsAndMatcher(t *testing.T) {
 
 func TestManagedRoute_GeneratedSubRoute_UserDefinedHasNoMatcher(t *testing.T) {
 	mr := &v1.ManagedRoute{
-		ResourceMetadata: v1.ResourceMetadata{UID: models.DefaultRoutingTreeName},
-		Receiver:         "receiver",
+		UID:      models.DefaultRoutingTreeName,
+		Receiver: "receiver",
 	}
 
 	route := GeneratedSubRoute(mr)
@@ -55,10 +55,8 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	}
 
 	mr := &v1.ManagedRoute{
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        "managed",
-			Provenance: models.Provenance("test"),
-		},
+		UID:            "managed",
+		Provenance:     models.Provenance("test"),
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname", "cluster"},
 		GroupWait:      &gw,

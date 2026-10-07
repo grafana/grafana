@@ -31,7 +31,7 @@ var (
 
 func replaceRepoConfig() *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "default"},
+		Name: testRepoName, Namespace: "default",
 	}
 }
 
@@ -163,8 +163,8 @@ func TestWriteResourceFromParsed_FolderAnnotation(t *testing.T) {
 		mockParser := NewMockParser(t)
 
 		config := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "default"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+			Name: testRepoName, Namespace: "default",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
 		}
 		repo.On("Config").Return(config)
 
@@ -520,7 +520,7 @@ func TestDeleteOldResource(t *testing.T) {
 		mockClient := &MockDynamicResourceInterface{}
 
 		cfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: testRepoName, Namespace: "custom-ns"},
+			Name: testRepoName, Namespace: "custom-ns",
 		}
 		repo.On("Config").Return(cfg)
 		mockClients.On("ForResource", mock.Anything, replaceTestGVR).Return(mockClient, replaceTestGVK, nil)

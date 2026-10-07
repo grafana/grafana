@@ -797,15 +797,13 @@ func (m *model) create(namespace, name string, version int64, encryptedData []by
 		dataKeyId:     dataKeyId,
 	})
 	return &contracts.EncryptedValue{
-		Namespace: namespace,
-		Name:      name,
-		Version:   version,
-		EncryptedPayload: contracts.EncryptedPayload{
-			DataKeyID:     dataKeyId,
-			EncryptedData: encryptedData,
-		},
-		Created: 1,
-		Updated: 1,
+		Namespace:     namespace,
+		Name:          name,
+		Version:       version,
+		DataKeyID:     dataKeyId,
+		EncryptedData: encryptedData,
+		Created:       1,
+		Updated:       1,
 	}, nil
 }
 func (m *model) update(namespace, name string, version int64, encryptedData []byte, dataKeyId string) error {
@@ -824,15 +822,13 @@ func (m *model) get(namespace, name string, version int64) (*contracts.Encrypted
 	for _, v := range m.entries {
 		if v.namespace == namespace && v.name == name && v.version == version {
 			return &contracts.EncryptedValue{
-				Namespace: namespace,
-				Name:      name,
-				Version:   version,
-				EncryptedPayload: contracts.EncryptedPayload{
-					DataKeyID:     v.dataKeyId,
-					EncryptedData: v.encryptedData,
-				},
-				Created: 1,
-				Updated: 1,
+				Namespace:     namespace,
+				Name:          name,
+				Version:       version,
+				DataKeyID:     v.dataKeyId,
+				EncryptedData: v.encryptedData,
+				Created:       1,
+				Updated:       1,
 			}, nil
 		}
 	}

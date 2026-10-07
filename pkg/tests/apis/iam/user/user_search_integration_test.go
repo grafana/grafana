@@ -404,9 +404,7 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 
 	users := []iamv0.User{
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "testuser-editor",
-			},
+			Name: "testuser-editor",
 			Spec: iamv0.UserSpec{
 				Title: "TestUser Editor",
 				Login: "testuser-editor",
@@ -415,9 +413,7 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "testuser-viewer",
-			},
+			Name: "testuser-viewer",
 			Spec: iamv0.UserSpec{
 				Title: "TestUser Viewer",
 				Login: "testuser-viewer",
@@ -426,9 +422,7 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "alice",
-			},
+			Name: "alice",
 			Spec: iamv0.UserSpec{
 				Title: "TestUser Alice",
 				Login: "alice",
@@ -437,9 +431,7 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "bob",
-			},
+			Name: "bob",
 			Spec: iamv0.UserSpec{
 				Title: "TestUser Bob",
 				Login: "bob",
@@ -448,9 +440,7 @@ func setupUsers(t *testing.T, helper *apis.K8sTestHelper) {
 			},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "charlie",
-			},
+			Name: "charlie",
 			Spec: iamv0.UserSpec{
 				Title: "TestUser Charlie",
 				Login: "charlie",

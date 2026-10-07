@@ -87,8 +87,8 @@ func TestStoreWrapper_SettingService_AfterGet(t *testing.T) {
 			sw := NewStoreWrapper(nil, &fakeSettingService{settings: tt.settings})
 			ctx := withAuthInfo(context.Background(), tt.requester)
 			user := &iamv0.User{
-				ObjectMeta: metav1.ObjectMeta{Name: tt.login},
-				Spec:       iamv0.UserSpec{Login: tt.login},
+				Name: tt.login,
+				Spec: iamv0.UserSpec{Login: tt.login},
 			}
 
 			err := sw.AfterGet(ctx, user)
@@ -142,8 +142,8 @@ func TestStoreWrapper_SettingService_BeforeCreate(t *testing.T) {
 
 	t.Run("blocked for hidden login", func(t *testing.T) {
 		err := sw.BeforeCreate(ctx, &iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{Name: "admin"},
-			Spec:       iamv0.UserSpec{Login: "admin"},
+			Name: "admin",
+			Spec: iamv0.UserSpec{Login: "admin"},
 		})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
@@ -151,8 +151,8 @@ func TestStoreWrapper_SettingService_BeforeCreate(t *testing.T) {
 
 	t.Run("allowed for non-hidden login", func(t *testing.T) {
 		err := sw.BeforeCreate(ctx, &iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{Name: "viewer"},
-			Spec:       iamv0.UserSpec{Login: "viewer"},
+			Name: "viewer",
+			Spec: iamv0.UserSpec{Login: "viewer"},
 		})
 		require.NoError(t, err)
 	})
@@ -167,24 +167,24 @@ func TestStoreWrapper_SettingService_BeforeUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("blocked when old user is hidden", func(t *testing.T) {
-		oldObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "admin"}, Spec: iamv0.UserSpec{Login: "admin"}}
-		newObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "admin"}, Spec: iamv0.UserSpec{Login: "newlogin"}}
+		oldObj := &iamv0.User{Name: "admin", Spec: iamv0.UserSpec{Login: "admin"}}
+		newObj := &iamv0.User{Name: "admin", Spec: iamv0.UserSpec{Login: "newlogin"}}
 		err := sw.BeforeUpdate(ctx, oldObj, newObj)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 
 	t.Run("blocked when new login is hidden", func(t *testing.T) {
-		oldObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "viewer"}, Spec: iamv0.UserSpec{Login: "viewer"}}
-		newObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "viewer"}, Spec: iamv0.UserSpec{Login: "admin"}}
+		oldObj := &iamv0.User{Name: "viewer", Spec: iamv0.UserSpec{Login: "viewer"}}
+		newObj := &iamv0.User{Name: "viewer", Spec: iamv0.UserSpec{Login: "admin"}}
 		err := sw.BeforeUpdate(ctx, oldObj, newObj)
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
 	})
 
 	t.Run("allowed when neither is hidden", func(t *testing.T) {
-		oldObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "viewer"}, Spec: iamv0.UserSpec{Login: "viewer"}}
-		newObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "viewer"}, Spec: iamv0.UserSpec{Login: "editor"}}
+		oldObj := &iamv0.User{Name: "viewer", Spec: iamv0.UserSpec{Login: "viewer"}}
+		newObj := &iamv0.User{Name: "viewer", Spec: iamv0.UserSpec{Login: "editor"}}
 		err := sw.BeforeUpdate(ctx, oldObj, newObj)
 		require.NoError(t, err)
 	})
@@ -200,8 +200,8 @@ func TestStoreWrapper_SettingService_BeforeDelete(t *testing.T) {
 
 	t.Run("blocked for hidden user", func(t *testing.T) {
 		err := sw.BeforeDelete(ctx, &iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{Name: "admin"},
-			Spec:       iamv0.UserSpec{Login: "admin"},
+			Name: "admin",
+			Spec: iamv0.UserSpec{Login: "admin"},
 		})
 		require.Error(t, err)
 		assert.True(t, apierrors.IsForbidden(err))
@@ -209,8 +209,8 @@ func TestStoreWrapper_SettingService_BeforeDelete(t *testing.T) {
 
 	t.Run("allowed for non-hidden user", func(t *testing.T) {
 		err := sw.BeforeDelete(ctx, &iamv0.User{
-			ObjectMeta: metav1.ObjectMeta{Name: "viewer"},
-			Spec:       iamv0.UserSpec{Login: "viewer"},
+			Name: "viewer",
+			Spec: iamv0.UserSpec{Login: "viewer"},
 		})
 		require.NoError(t, err)
 	})
@@ -221,8 +221,8 @@ func TestStoreWrapper_NilProviders(t *testing.T) {
 	ctx := withAuthInfo(context.Background(), "admin")
 
 	user := &iamv0.User{
-		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
-		Spec:       iamv0.UserSpec{Login: "admin"},
+		Name: "admin",
+		Spec: iamv0.UserSpec{Login: "admin"},
 	}
 
 	errMsg := "neither cfgProvider nor settingService is configured"
@@ -257,8 +257,8 @@ func TestStoreWrapper_SettingService_Error(t *testing.T) {
 	})
 	ctx := context.Background()
 	user := &iamv0.User{
-		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
-		Spec:       iamv0.UserSpec{Login: "admin"},
+		Name: "admin",
+		Spec: iamv0.UserSpec{Login: "admin"},
 	}
 
 	t.Run("AfterGet propagates error", func(t *testing.T) {
@@ -293,8 +293,8 @@ func TestStoreWrapper_ServiceIdentityBypass(t *testing.T) {
 	// Create a service identity context — should bypass all hidden user filtering.
 	svcCtx, _ := identity.WithServiceIdentity(context.Background(), 1)
 	hiddenUser := &iamv0.User{
-		ObjectMeta: metav1.ObjectMeta{Name: "admin"},
-		Spec:       iamv0.UserSpec{Login: "admin"},
+		Name: "admin",
+		Spec: iamv0.UserSpec{Login: "admin"},
 	}
 
 	t.Run("AfterGet allows hidden user", func(t *testing.T) {
@@ -318,7 +318,7 @@ func TestStoreWrapper_ServiceIdentityBypass(t *testing.T) {
 	})
 
 	t.Run("BeforeUpdate allows hidden user", func(t *testing.T) {
-		newObj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "admin"}, Spec: iamv0.UserSpec{Login: "newlogin"}}
+		newObj := &iamv0.User{Name: "admin", Spec: iamv0.UserSpec{Login: "newlogin"}}
 		require.NoError(t, sw.BeforeUpdate(svcCtx, hiddenUser, newObj))
 	})
 

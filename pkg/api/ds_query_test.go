@@ -68,9 +68,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			&pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID: "grafana",
-						},
+						ID: "grafana",
 					},
 				},
 			},
@@ -239,9 +237,7 @@ func TestDataSourceQueryError(t *testing.T) {
 	for _, tc := range tcs {
 		t.Run(fmt.Sprintf("Plugin client error %q should propagate to API", tc.clientErr), func(t *testing.T) {
 			p := &plugins.Plugin{
-				JSONData: plugins.JSONData{
-					ID: "grafana",
-				},
+				ID: "grafana",
 			}
 			p.RegisterClient(&fakePluginBackend{
 				qdr: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

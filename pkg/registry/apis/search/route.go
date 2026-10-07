@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -132,8 +131,8 @@ func searchRouteSpec(kindName, version string) *spec3.PathProps {
 		responseKind: searchv0.KindSearchResults,
 		responseGo:   searchResultsGoName,
 		example: &searchv0.SearchQuery{
-			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-			Limit:    10,
+			APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
+			Limit: 10,
 		},
 	})
 }
@@ -147,8 +146,8 @@ func globalSearchRouteSpec() *spec3.PathProps {
 		responseKind: searchv0.KindSearchResults,
 		responseGo:   searchResultsGoName,
 		example: &searchv0.SearchQuery{
-			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-			Limit:    10,
+			APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
+			Limit: 10,
 		},
 	})
 }
@@ -162,8 +161,8 @@ func trashRouteSpec(kindName, version string) *spec3.PathProps {
 		responseKind: searchv0.KindTrashResults,
 		responseGo:   trashResultsGoName,
 		example: &searchv0.TrashQuery{
-			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
-			Limit:    10,
+			APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery,
+			Limit: 10,
 		},
 	})
 }
@@ -177,9 +176,9 @@ func hybridSearchRouteSpec(kindName, version string) *spec3.PathProps {
 		responseKind: searchv0.KindHybridSearchResults,
 		responseGo:   hybridSearchResultsGoName,
 		example: &searchv0.HybridSearchQuery{
-			TypeMeta: v1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery},
-			Query:    "production",
-			Limit:    10,
+			APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery,
+			Query: "production",
+			Limit: 10,
 		},
 	})
 	s.Post.RequestBody.Description = "A " + searchv0.KindHybridSearchQuery + " describing what to match and return."
@@ -204,38 +203,30 @@ type routeSpecArgs struct {
 func routeSpec(a routeSpecArgs) *spec3.PathProps {
 	return &spec3.PathProps{
 		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Tags:        []string{"Search"},
-				OperationId: a.operationID,
-				Description: a.description,
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "namespace",
-							In:          "path",
-							Required:    true,
-							Example:     "default",
-							Description: "workspace",
-							Schema:      spec.StringProperty(),
-						},
-					},
+			Tags:        []string{"Search"},
+			OperationId: a.operationID,
+			Description: a.description,
+			Parameters: []*spec3.Parameter{
+				{
+					Name:        "namespace",
+					In:          "path",
+					Required:    true,
+					Example:     "default",
+					Description: "workspace",
+					Schema:      spec.StringProperty(),
 				},
-				RequestBody: &spec3.RequestBody{
-					RequestBodyProps: spec3.RequestBodyProps{
-						Required:    true,
-						Description: "A " + a.requestKind + " describing what to match, sort and return.",
-						Content:     jsonContent(a.requestGo, a.example),
-					},
-				},
-				Responses: &spec3.Responses{
-					ResponsesProps: spec3.ResponsesProps{
-						StatusCodeResponses: map[int]*spec3.Response{
-							200: {
-								ResponseProps: spec3.ResponseProps{
-									Description: "A " + a.responseKind + " envelope.",
-									Content:     jsonContent(a.responseGo, nil),
-								},
-							},
+			},
+			RequestBody: &spec3.RequestBody{
+				Required:    true,
+				Description: "A " + a.requestKind + " describing what to match, sort and return.",
+				Content:     jsonContent(a.requestGo, a.example),
+			},
+			Responses: &spec3.Responses{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Description: "A " + a.responseKind + " envelope.",
+							Content:     jsonContent(a.responseGo, nil),
 						},
 					},
 				},

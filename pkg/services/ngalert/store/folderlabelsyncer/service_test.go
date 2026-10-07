@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
@@ -173,7 +172,7 @@ func newTestService(store interface {
 }
 
 func folderWithLabels(name string, labels map[string]string) *folderv1.Folder {
-	return &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: name, Labels: labels}}
+	return &folderv1.Folder{Name: name, Labels: labels}
 }
 
 func TestMarkDirty(t *testing.T) {

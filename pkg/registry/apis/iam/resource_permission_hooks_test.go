@@ -5,8 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/stretchr/testify/require"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -52,9 +50,7 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 	t.Run("should create zanzana entries for folder resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		folderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
+			Namespace: "org-2",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
@@ -115,9 +111,7 @@ func TestAfterResourcePermissionCreate(t *testing.T) {
 	t.Run("should create zanzana entries for dashboard resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		dashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
@@ -188,9 +182,7 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 	t.Run("should update zanzana entries for folder resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		oldFolderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
+			Namespace: "org-2",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
@@ -202,9 +194,7 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		}
 
 		newFolderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
+			Namespace: "org-2",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
@@ -290,9 +280,7 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 	t.Run("should update zanzana entries for dashboard resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		oldDashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
@@ -304,9 +292,7 @@ func TestBeginResourcePermissionUpdate(t *testing.T) {
 		}
 
 		newDashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",
@@ -384,9 +370,7 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 	t.Run("should delete zanzana entries for folder resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		folderPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "org-2",
-			},
+			Namespace: "org-2",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app", Resource: "folders", Name: "fold1",
@@ -449,9 +433,7 @@ func TestAfterResourcePermissionDelete(t *testing.T) {
 	t.Run("should delete zanzana entries for dashboard resource permissions", func(t *testing.T) {
 		wg.Add(1)
 		dashPerm := iamv0.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: iamv0.ResourcePermissionSpec{
 				Resource: iamv0.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app", Resource: "dashboards", Name: "dash1",

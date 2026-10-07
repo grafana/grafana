@@ -47,8 +47,8 @@ func TestGetPluginDashboards(t *testing.T) {
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: existingPluginID}},
-				{JSONData: plugins.JSONData{ID: "boom"}},
+				{ID: existingPluginID},
+				{ID: "boom"},
 			},
 		}
 	})

@@ -63,36 +63,28 @@ func (s *merger) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder
 				Path: "preferences/merged",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "mergedPreferences",
-							Tags:        []string{"Preferences"},
-							Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						OperationId: "mergedPreferences",
+						Tags:        []string{"Preferences"},
+						Description: "Get preferences for requester.  This combines the user preferences with the team and global defaults",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{
-																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + preferences.Preferences{}.OpenAPIModelName()),
-																},
-															},
-														},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														Ref: spec.MustCreateRef("#/components/schemas/" + preferences.Preferences{}.OpenAPIModelName()),
 													},
 												},
 											},

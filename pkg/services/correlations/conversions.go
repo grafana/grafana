@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strconv"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
@@ -22,10 +21,8 @@ func ToResource(orig Correlation) (*correlationsV0.Correlation, error) {
 		return nil, err
 	}
 	obj := &correlationsV0.Correlation{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      orig.UID,
-			Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
-		},
+		Name:      orig.UID,
+		Namespace: authlib.OrgNamespaceFormatter(orig.OrgID),
 		Spec: correlationsV0.CorrelationSpec{
 			Label: orig.Label,
 			Type:  correlationsV0.CorrelationCorrelationType(orig.Type),

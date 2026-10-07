@@ -336,18 +336,14 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 		found := b.schemas[ds.GroupVersion().Version]
 		if found != nil && found.QueryTypes != nil {
 			b.queryTypes = &datasourceV0.QueryTypeDefinitionList{
-				ListMeta: metav1.ListMeta{
-					ResourceVersion: found.QueryTypes.ResourceVersion,
-				},
-				Items: make([]datasourceV0.QueryTypeDefinition, 0, len(found.QueryTypes.Items)),
+				ResourceVersion: found.QueryTypes.ResourceVersion,
+				Items:           make([]datasourceV0.QueryTypeDefinition, 0, len(found.QueryTypes.Items)),
 			}
 			for _, qt := range found.QueryTypes.Items {
 				b.queryTypes.Items = append(b.queryTypes.Items, datasourceV0.QueryTypeDefinition{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:            qt.Name,
-						ResourceVersion: qt.ResourceVersion,
-					},
-					Spec: qt.Spec,
+					Name:            qt.Name,
+					ResourceVersion: qt.ResourceVersion,
+					Spec:            qt.Spec,
 				})
 			}
 			if err := queryschema.RegisterQueryTypes(b.queryTypes, storage); err != nil {

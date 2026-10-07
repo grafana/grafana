@@ -85,11 +85,9 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 		}
 		f := &fetch{name: name}
 		fetches = append(fetches, f)
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			f.result = r.groupDiscovery(req, name, entry)
-		}()
+		})
 	}
 	wg.Wait()
 	for _, f := range fetches {
@@ -125,7 +123,7 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 		}
 	}
 
-	group := apidiscoveryv2.APIGroupDiscovery{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	group := apidiscoveryv2.APIGroupDiscovery{Name: name}
 	// Only a real answer from /apis can be complete: a decoded document, or a
 	// 404 from an older backend. Otherwise a group with no versions would be
 	// cached empty after a failed or refused fetch.

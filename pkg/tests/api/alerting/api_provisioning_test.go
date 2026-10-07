@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
@@ -729,10 +728,8 @@ func TestMuteTimings(t *testing.T) {
 	})
 
 	emptyMuteTiming := definitions.MuteTimeInterval{
-		MuteTimeInterval: config.MuteTimeInterval{
-			Name:          "Empty Mute Timing",
-			TimeIntervals: []timeinterval.TimeInterval{},
-		},
+		Name:          "Empty Mute Timing",
+		TimeIntervals: []timeinterval.TimeInterval{},
 	}
 
 	t.Run("should create a new mute timing without any intervals", func(t *testing.T) {
@@ -743,29 +740,23 @@ func TestMuteTimings(t *testing.T) {
 	})
 
 	anotherMuteTiming := definitions.MuteTimeInterval{
-		MuteTimeInterval: config.MuteTimeInterval{
-			Name: "Not Empty Mute Timing",
-			TimeIntervals: []timeinterval.TimeInterval{
-				{
-					Times: []timeinterval.TimeRange{
-						{
-							StartMinute: 10,
-							EndMinute:   45,
-						},
+		Name: "Not Empty Mute Timing",
+		TimeIntervals: []timeinterval.TimeInterval{
+			{
+				Times: []timeinterval.TimeRange{
+					{
+						StartMinute: 10,
+						EndMinute:   45,
 					},
-					Weekdays: []timeinterval.WeekdayRange{
-						{
-							InclusiveRange: timeinterval.InclusiveRange{
-								Begin: 0,
-								End:   2,
-							},
-						},
-						{
-							InclusiveRange: timeinterval.InclusiveRange{
-								Begin: 4,
-								End:   5,
-							},
-						},
+				},
+				Weekdays: []timeinterval.WeekdayRange{
+					{
+						Begin: 0,
+						End:   2,
+					},
+					{
+						Begin: 4,
+						End:   5,
 					},
 				},
 			},
@@ -829,15 +820,13 @@ func TestMuteTimings(t *testing.T) {
 
 	t.Run("should get BadRequest if creates an invalid mute timing", func(t *testing.T) {
 		m := definitions.MuteTimeInterval{
-			MuteTimeInterval: config.MuteTimeInterval{
-				Name: "Invalid",
-				TimeIntervals: []timeinterval.TimeInterval{
-					{
-						Times: []timeinterval.TimeRange{
-							{
-								StartMinute: 20000,
-								EndMinute:   90000,
-							},
+			Name: "Invalid",
+			TimeIntervals: []timeinterval.TimeInterval{
+				{
+					Times: []timeinterval.TimeRange{
+						{
+							StartMinute: 20000,
+							EndMinute:   90000,
 						},
 					},
 				},
@@ -924,9 +913,7 @@ func TestMuteTimings(t *testing.T) {
 
 	t.Run("should get NotFound if updates mute timing that does not exist", func(t *testing.T) {
 		mt := definitions.MuteTimeInterval{
-			MuteTimeInterval: config.MuteTimeInterval{
-				Name: "Missing Mute Timing",
-			},
+			Name: "Missing Mute Timing",
 		}
 		_, status, body := apiClient.UpdateMuteTimingWithStatus(t, mt)
 		requireStatusCode(t, http.StatusNotFound, status, body)
@@ -1037,9 +1024,9 @@ func TestIntegrationExportFileProvision(t *testing.T) {
 		t.Run("exported alert rules should escape $ characters", func(t *testing.T) {
 			// call export endpoint
 			status, exportRaw := apiClient.ExportRulesWithStatus(t, &definitions.AlertRulesExportParameters{
-				ExportQueryParams: definitions.ExportQueryParams{Format: "yaml"},
-				FolderUID:         []string{folderUID},
-				GroupName:         "my_rule_group",
+				Format:    "yaml",
+				FolderUID: []string{folderUID},
+				GroupName: "my_rule_group",
 			})
 			require.Equal(t, http.StatusOK, status)
 			var export definitions.AlertingFileExport

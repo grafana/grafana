@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -90,10 +89,8 @@ func (m *mockNonRWRepo) Test(_ context.Context) (*provisioning.TestResults, erro
 
 func makeTestJob(ref string) provisioning.Job {
 	return provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "default",
-		},
+		Name:      "test-job",
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionFixFolderMetadata,
 			Repository: "test-repo",
@@ -110,7 +107,7 @@ func treeEntry(path string, blob bool) repository.FileTreeEntry {
 
 func repoConfig(name string) *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: name},
+		Name: name,
 	}
 }
 
@@ -303,7 +300,7 @@ func TestWorker_Process(t *testing.T) {
 		mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 		job := provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-job", Namespace: "default"},
+			Name: "test-job", Namespace: "default",
 			Spec: provisioning.JobSpec{
 				Action:            provisioning.JobActionFixFolderMetadata,
 				Repository:        "test-repo",
@@ -373,8 +370,8 @@ func TestWorker_Process(t *testing.T) {
 		w := NewWorker(newFolderClientFactory(t))
 
 		mockRepo := &mockStageableRepoWithURLs{
-			mockStageableRepo:      mockStageableRepo{MockStageableRepository: repository.NewMockStageableRepository(t)},
-			MockRepositoryWithURLs: repository.NewMockRepositoryWithURLs(t),
+			MockStageableRepository: repository.NewMockStageableRepository(t),
+			MockRepositoryWithURLs:  repository.NewMockRepositoryWithURLs(t),
 		}
 		mockStaged := repository.NewMockStagedRepository(t)
 		mockProgress := jobs.NewMockJobProgressRecorder(t)

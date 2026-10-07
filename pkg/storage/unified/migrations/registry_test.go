@@ -28,8 +28,8 @@ func testGroupResource(group, resource string) schema.GroupResource {
 // Test helper to create a ResourceInfo
 func testResourceInfo(group, resource string, lockTables ...string) ResourceInfo {
 	return ResourceInfo{
-		GroupResource: schema.GroupResource{Group: group, Resource: resource},
-		LockTables:    lockTables,
+		Group: group, Resource: resource,
+		LockTables: lockTables,
 	}
 }
 
@@ -320,7 +320,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("formats single resource correctly", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTables: []string{"dashboard"}},
+				{Group: "dashboard.grafana.app", Resource: "dashboards", LockTables: []string{"dashboard"}},
 			},
 		}
 
@@ -333,9 +333,9 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("formats multiple resources correctly", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, LockTables: []string{"folder"}},
-				{GroupResource: schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, LockTables: []string{"dashboard"}},
-				{GroupResource: schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}, LockTables: []string{"playlist"}},
+				{Group: "folder.grafana.app", Resource: "folders", LockTables: []string{"folder"}},
+				{Group: "dashboard.grafana.app", Resource: "dashboards", LockTables: []string{"dashboard"}},
+				{Group: "playlist.grafana.app", Resource: "playlists", LockTables: []string{"playlist"}},
 			},
 		}
 
@@ -361,7 +361,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("handles empty group", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "", Resource: "configmaps"}, LockTables: []string{"configmaps"}},
+				{Group: "", Resource: "configmaps", LockTables: []string{"configmaps"}},
 			},
 		}
 
@@ -374,7 +374,7 @@ func TestMigrationDefinition_ConfigResources(t *testing.T) {
 	t.Run("handles empty resource", func(t *testing.T) {
 		def := MigrationDefinition{
 			Resources: []ResourceInfo{
-				{GroupResource: schema.GroupResource{Group: "some.group", Resource: ""}, LockTables: nil},
+				{Group: "some.group", Resource: "", LockTables: nil},
 			},
 		}
 

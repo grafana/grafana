@@ -48,10 +48,8 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-ds",
-							Info: plugins.Info{Version: "0.9.0"},
-						},
+						ID:   "test-ds",
+						Info: plugins.Info{Version: "0.9.0"},
 					},
 				},
 			},
@@ -82,22 +80,16 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-ds",
-							Info: plugins.Info{Version: "0.9.0"},
-						},
+						ID:   "test-ds",
+						Info: plugins.Info{Version: "0.9.0"},
 					},
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-panel",
-							Info: plugins.Info{Version: "0.9.0"},
-						},
+						ID:   "test-panel",
+						Info: plugins.Info{Version: "0.9.0"},
 					},
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-app",
-							Info: plugins.Info{Version: "0.9.0"},
-						},
+						ID:   "test-app",
+						Info: plugins.Info{Version: "0.9.0"},
 					},
 				},
 			},
@@ -131,10 +123,8 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-ds",
-							Info: plugins.Info{Version: "1.0.0"},
-						},
+						ID:   "test-ds",
+						Info: plugins.Info{Version: "1.0.0"},
 					},
 				},
 			},
@@ -180,35 +170,27 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-ds",
-							Info: plugins.Info{Version: "0.9.0"},
-							Type: plugins.TypeDataSource,
-						},
+						ID:    "test-ds",
+						Info:  plugins.Info{Version: "0.9.0"},
+						Type:  plugins.TypeDataSource,
 						Class: plugins.ClassExternal,
 					},
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-app",
-							Info: plugins.Info{Version: "0.5.0"},
-							Type: plugins.TypeApp,
-						},
+						ID:    "test-app",
+						Info:  plugins.Info{Version: "0.5.0"},
+						Type:  plugins.TypeApp,
 						Class: plugins.ClassExternal,
 					},
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-panel",
-							Info: plugins.Info{Version: "2.5.7"},
-							Type: plugins.TypePanel,
-						},
+						ID:    "test-panel",
+						Info:  plugins.Info{Version: "2.5.7"},
+						Type:  plugins.TypePanel,
 						Class: plugins.ClassExternal,
 					},
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-core-panel",
-							Info: plugins.Info{Version: "0.0.1"},
-							Type: plugins.TypePanel,
-						},
+						ID:    "test-core-panel",
+						Info:  plugins.Info{Version: "0.0.1"},
+						Type:  plugins.TypePanel,
 						Class: plugins.ClassCore,
 					},
 				},

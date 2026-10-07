@@ -51,13 +51,11 @@ func (s *recordingLibraryPanelService) PatchLibraryElement(_ context.Context, _ 
 
 func TestLibraryPanelStorePreservesPatchSourceFolder(t *testing.T) {
 	panel := &dashboardV0.LibraryPanel{
-		TypeMeta: metav1.TypeMeta{APIVersion: dashboardV0.APIVERSION, Kind: "LibraryPanel"},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "panel-a",
-			Generation: 1,
-			Annotations: map[string]string{
-				utils.AnnoKeyFolder: "source",
-			},
+		APIVersion: dashboardV0.APIVERSION, Kind: "LibraryPanel",
+		Name:       "panel-a",
+		Generation: 1,
+		Annotations: map[string]string{
+			utils.AnnoKeyFolder: "source",
 		},
 		Spec: dashboardV0.LibraryPanelSpec{
 			Type:       "text",

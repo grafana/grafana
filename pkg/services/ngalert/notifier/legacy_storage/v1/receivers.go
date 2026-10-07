@@ -19,10 +19,8 @@ func ReceiverUID(name string) ResourceUID {
 // UID and Version derived from its content (see ReceiverUID, ReceiverFingerprint).
 func NewReceiver(name string, integrations []*PostableGrafanaReceiver, provenance models.Provenance) PostableApiReceiver {
 	r := PostableApiReceiver{
-		ResourceMetadata: ResourceMetadata{
-			UID:        ReceiverUID(name),
-			Provenance: provenance,
-		},
+		UID:                     ReceiverUID(name),
+		Provenance:              provenance,
 		Name:                    name,
 		GrafanaManagedReceivers: integrations,
 	}

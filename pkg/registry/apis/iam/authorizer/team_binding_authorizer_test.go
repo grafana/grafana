@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -14,7 +13,7 @@ import (
 
 func newTeamBinding(teamName, name, subjectName string) *iamv0.TeamBinding {
 	return &iamv0.TeamBinding{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "org-2", Name: name},
+		Namespace: "org-2", Name: name,
 		Spec: iamv0.TeamBindingSpec{
 			TeamRef: iamv0.TeamBindingTeamRef{
 				Name: teamName,

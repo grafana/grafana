@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -1715,11 +1714,9 @@ func TestService_listPermissionWithFolderAuthz(t *testing.T) {
 
 func TestService_Check(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	type testCase struct {
@@ -2466,11 +2463,9 @@ func TestService_Check(t *testing.T) {
 // depend on request order.
 func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	// A delegate grant on folders:view only — none on dashboards:read itself.
@@ -2611,11 +2606,9 @@ func TestService_Check_DelegationOverrideCacheIsolation(t *testing.T) {
 
 func TestService_K8sNativeFallback(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	setup := func(permissions []accesscontrol.Permission) *Service {
@@ -2767,11 +2760,9 @@ func TestService_K8sNativeFallback(t *testing.T) {
 
 func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 	ctx := types.WithAuthInfo(context.Background(), callingService)
 
@@ -2946,11 +2937,9 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 
 func TestService_CacheCheck(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	ctx := types.WithAuthInfo(context.Background(), callingService)
@@ -3052,11 +3041,9 @@ func TestService_CacheCheck(t *testing.T) {
 
 func TestService_List(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	type testCase struct {
@@ -3466,11 +3453,9 @@ func TestService_getAnonymousPermissions(t *testing.T) {
 
 func TestService_CacheList(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	t.Run("List based on cached permissions", func(t *testing.T) {
@@ -3508,11 +3493,9 @@ func actionSetsForVerb(t *testing.T, group, resource, subresource, verb string) 
 
 func TestService_BatchCheck(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	type testCase struct {
@@ -4503,11 +4486,9 @@ func TestGetScopeMap_Settings(t *testing.T) {
 
 	t.Run("Check allows auth.saml section and denies smtp section", func(t *testing.T) {
 		callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-			Claims: jwt.Claims{
-				Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-				Audience: []string{"authzservice"},
-			},
-			Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+			Audience: []string{"authzservice"},
+			Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 		})
 		ctx := types.WithAuthInfo(context.Background(), callingService)
 
@@ -4585,11 +4566,9 @@ func (t *trackingPermissionStore) GetUserPermissions(ctx context.Context, ns typ
 // from. Rebuilding per item lists every folder in the namespace once per item.
 func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
 	callingService := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-12"},
+		Subject:  types.NewTypeID(types.TypeAccessPolicy, "some-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-12"},
 	})
 
 	s := setupService()

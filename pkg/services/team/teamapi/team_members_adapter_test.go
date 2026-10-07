@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -498,12 +497,10 @@ func (s *testSetup) mockTeamUpdate(inspect func(t *iamv0alpha1.Team)) {
 
 func makeTeam(uid string, members ...iamv0alpha1.TeamTeamMember) *iamv0alpha1.Team {
 	return &iamv0alpha1.Team{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-			Kind:       iamv0alpha1.TeamKind().Kind(),
-		},
-		ObjectMeta: metav1.ObjectMeta{Name: uid, Namespace: "org-1", ResourceVersion: "42"},
-		Spec:       iamv0alpha1.TeamSpec{Members: members},
+		APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+		Kind:       iamv0alpha1.TeamKind().Kind(),
+		Name:       uid, Namespace: "org-1", ResourceVersion: "42",
+		Spec: iamv0alpha1.TeamSpec{Members: members},
 	}
 }
 

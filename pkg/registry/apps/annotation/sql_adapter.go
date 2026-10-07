@@ -7,7 +7,6 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
@@ -230,11 +229,9 @@ func (a *sqlAdapter) ListTags(ctx context.Context, namespace string, opts TagLis
 func (a *sqlAdapter) toK8sResource(item *annotations.ItemDTO, namespace string) *annotationV0.Annotation {
 	name := fmt.Sprintf("a-%d", item.ID)
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			UID:       types.UID(name),
-		},
+		Name:      name,
+		Namespace: namespace,
+		UID:       types.UID(name),
 		Spec: annotationV0.AnnotationSpec{
 			Text: item.Text,
 			Time: item.Time,

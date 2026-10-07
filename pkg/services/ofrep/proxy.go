@@ -127,11 +127,9 @@ func (b *APIBuilder) proxyFlagReq(ctx context.Context, flagKey string, isAuthedU
 		// flags exist.
 		logger.Debug("Unauthed request for non-public flag, responding as not-found", "namespace", namespace, "key", flagKey)
 		notFoundBody, err := json.Marshal(goffmodel.OFREPEvaluateErrorResponse{
-			OFREPCommonErrorResponse: goffmodel.OFREPCommonErrorResponse{
-				ErrorCode:    "FLAG_NOT_FOUND",
-				ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
-			},
-			Key: flagKey,
+			ErrorCode:    "FLAG_NOT_FOUND",
+			ErrorDetails: fmt.Sprintf("Flag %q was not found", flagKey),
+			Key:          flagKey,
 		})
 		if err != nil {
 			return err

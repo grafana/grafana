@@ -3,7 +3,6 @@ package pluginexternal
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -27,9 +26,7 @@ func TestService_validateExternal(t *testing.T) {
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID: "grafana-testdata-datasource",
-						},
+						ID: "grafana-testdata-datasource",
 					},
 				},
 			},

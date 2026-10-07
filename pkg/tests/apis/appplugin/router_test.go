@@ -69,15 +69,13 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		(&jose.SignerOptions{}).WithType(jose.ContentType(authnlib.TokenTypeAccess)).WithHeader("kid", "router-test-key"))
 	require.NoError(t, err)
 	claims := authnlib.Claims[authnlib.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "access-policy:router-test", Audience: jwt.Audience{audience},
-			IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
-		},
+		Subject: "access-policy:router-test", Audience: jwt.Audience{audience},
+		IssuedAt: jwt.NewNumericDate(time.Now()), Expiry: jwt.NewNumericDate(time.Now().Add(time.Hour)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: namespace,
 			Actor: &authnlib.ActorClaims{
-				Subject:       "user:42",
-				IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser, Identifier: "router-test-user", Username: "router-test-user"},
+				Subject: "user:42",
+				Type:    types.TypeUser, Identifier: "router-test-user", Username: "router-test-user",
 			},
 		},
 	}
@@ -148,11 +146,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	secretStore, err := metadata.ProvideSecureValueMetadataStorage(clock.ProvideClock(), database.ProvideDatabase(helper.GetEnv().SQLStore, tracer), tracer, nil)
 	require.NoError(t, err)
 	secureValue, err := secretStore.Create(t.Context(), "system", &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "router-api-key", Namespace: namespace,
-			OwnerReferences: []metav1.OwnerReference{{APIVersion: group + "/v1", Kind: "Thing", Name: "route-with-secure"}},
-		},
-		Spec: secretv1beta1.SecureValueSpec{Description: "Router integration test"},
+		Name: "router-api-key", Namespace: namespace,
+		OwnerReferences: []metav1.OwnerReference{{APIVersion: group + "/v1", Kind: "Thing", Name: "route-with-secure"}},
+		Spec:            secretv1beta1.SecureValueSpec{Description: "Router integration test"},
 	}, "router-test-user")
 	require.NoError(t, err)
 	require.NoError(t, secretStore.SetVersionToActive(t.Context(), xkube.Namespace(namespace), secureValue.Name, secureValue.Status.Version))
@@ -190,9 +186,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	cfg.ExtJWTAuth.Audiences = []string{audience}
 	cfg.SectionWithEnvOverrides("cloud_router").Key("plugins_url").SetValue(manifests.URL + "/plugins")
 	loader, err := router.ProvideRoutesLoader(cfg, router.PluginLoaderDependencies{
-		PluginDependencies: router.PluginDependencies{Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
-			RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
-			SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter},
+		Cfg: cfg, Unified: helper.GetEnv().ResourceClient,
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(routerHandler),
+		SecureValues:       secret.NewMockInlineSecureValueSupport(t), Decrypter: decrypter,
 	})
 	require.NoError(t, err)
 	lifecycle, ok := loader.(services.Service)

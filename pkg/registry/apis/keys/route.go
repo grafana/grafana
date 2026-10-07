@@ -90,44 +90,36 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 		requires = "Requires permission to list the kind in that namespace."
 		params = []*spec3.Parameter{
 			{
-				ParameterProps: spec3.ParameterProps{
-					Name:        "namespace",
-					In:          "path",
-					Required:    true,
-					Example:     "default",
-					Description: "workspace",
-					Schema:      spec.StringProperty(),
-				},
+				Name:        "namespace",
+				In:          "path",
+				Required:    true,
+				Example:     "default",
+				Description: "workspace",
+				Schema:      spec.StringProperty(),
 			},
 		}
 	}
 	return &spec3.PathProps{
 		Post: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				Tags:        []string{"Keys"},
-				OperationId: listKeysOperationID(kindName, version, namespaced),
-				Description: "List " + kindName + " keys " + scope + ": namespace, name, " +
-					"folder and resourceVersion only, with no object bodies. " + requires,
-				Parameters: params,
-				RequestBody: &spec3.RequestBody{
-					RequestBodyProps: spec3.RequestBodyProps{
-						Required: false,
-						Description: "A ListOptions carrying limit, continue and resourceVersion. " +
-							"Selectors, watch and timeouts are rejected: they cannot be evaluated " +
-							"without reading objects.",
-						Content: jsonContent(listOptionsModel),
-					},
-				},
-				Responses: &spec3.Responses{
-					ResponsesProps: spec3.ResponsesProps{
-						StatusCodeResponses: map[int]*spec3.Response{
-							200: {
-								ResponseProps: spec3.ResponseProps{
-									Description: "A PartialObjectMetadataList in which only namespace, name, " +
-										"resourceVersion and the grafana.app/folder annotation are populated.",
-									Content: jsonContent(partialListModel),
-								},
-							},
+			Tags:        []string{"Keys"},
+			OperationId: listKeysOperationID(kindName, version, namespaced),
+			Description: "List " + kindName + " keys " + scope + ": namespace, name, " +
+				"folder and resourceVersion only, with no object bodies. " + requires,
+			Parameters: params,
+			RequestBody: &spec3.RequestBody{
+				Required: false,
+				Description: "A ListOptions carrying limit, continue and resourceVersion. " +
+					"Selectors, watch and timeouts are rejected: they cannot be evaluated " +
+					"without reading objects.",
+				Content: jsonContent(listOptionsModel),
+			},
+			Responses: &spec3.Responses{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Description: "A PartialObjectMetadataList in which only namespace, name, " +
+								"resourceVersion and the grafana.app/folder annotation are populated.",
+							Content: jsonContent(partialListModel),
 						},
 					},
 				},
@@ -180,7 +172,7 @@ func jsonContent(goName string) map[string]*spec3.MediaType {
 		"application/json": {
 			MediaTypeProps: spec3.MediaTypeProps{
 				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
+					Ref: schemaRef(goName),
 				},
 			},
 		},

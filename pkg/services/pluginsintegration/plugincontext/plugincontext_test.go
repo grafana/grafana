@@ -32,10 +32,8 @@ func TestGet(t *testing.T) {
 
 	preg := registry.NewInMemory()
 	require.NoError(t, preg.Add(context.Background(), &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:       pluginID,
-			AliasIDs: []string{alias},
-		},
+		ID:       pluginID,
+		AliasIDs: []string{alias},
 	}))
 
 	cfg := setting.NewCfg()

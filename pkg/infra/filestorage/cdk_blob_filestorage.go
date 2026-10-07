@@ -70,16 +70,14 @@ func (c cdkBlobStorage) Get(ctx context.Context, path string, options *GetFileOp
 	}
 
 	return &File{
-		Contents: contents,
-		FileMetadata: FileMetadata{
-			Name:       getName(originalPath),
-			FullPath:   originalPath,
-			Created:    attributes.CreateTime,
-			Properties: props,
-			Modified:   attributes.ModTime,
-			Size:       attributes.Size,
-			MimeType:   detectContentType(originalPath, attributes.ContentType),
-		},
+		Contents:   contents,
+		Name:       getName(originalPath),
+		FullPath:   originalPath,
+		Created:    attributes.CreateTime,
+		Properties: props,
+		Modified:   attributes.ModTime,
+		Size:       attributes.Size,
+		MimeType:   detectContentType(originalPath, attributes.ContentType),
 	}, true, nil
 }
 
@@ -353,13 +351,11 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 				}
 
 				files = append(files, &File{
-					Contents: nil,
-					FileMetadata: FileMetadata{
-						MimeType:   DirectoryMimeType,
-						Name:       getName(p),
-						Properties: map[string]string{},
-						FullPath:   p,
-					},
+					Contents:   nil,
+					MimeType:   DirectoryMimeType,
+					Name:       getName(p),
+					Properties: map[string]string{},
+					FullPath:   p,
 				})
 			}
 			continue
@@ -420,16 +416,14 @@ func (c cdkBlobStorage) list(ctx context.Context, folderPath string, paging *Pag
 			}
 
 			files = append(files, &File{
-				Contents: contents,
-				FileMetadata: FileMetadata{
-					Name:       getName(originalPath),
-					FullPath:   originalPath,
-					Created:    attributes.CreateTime,
-					Properties: props,
-					Modified:   attributes.ModTime,
-					Size:       attributes.Size,
-					MimeType:   detectContentType(originalPath, attributes.ContentType),
-				},
+				Contents:   contents,
+				Name:       getName(originalPath),
+				FullPath:   originalPath,
+				Created:    attributes.CreateTime,
+				Properties: props,
+				Modified:   attributes.ModTime,
+				Size:       attributes.Size,
+				MimeType:   detectContentType(originalPath, attributes.ContentType),
 			})
 		}
 	}

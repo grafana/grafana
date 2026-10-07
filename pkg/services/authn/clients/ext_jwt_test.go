@@ -32,11 +32,9 @@ type (
 
 var (
 	validAccessTokenClaims = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Scopes:               []string{"profile", "groups"},
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
@@ -45,86 +43,70 @@ var (
 		},
 	}
 	validIDTokenClaims = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "user:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "user:2",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
 	validIDTokenClaimsWithServiceAccount = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "service-account:3",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "service-account:3",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default", // org ID of 1 is special and translates to default
 		},
 	}
 	validIDTokenClaimsWithRenderService = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "render:0",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "render:0",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
 		},
 	}
 	validIDTokenClaimsWithAnonymous = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "anonymous:0",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "anonymous:0",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
 		},
 	}
 	validIDTokenClaimsWithStackSet = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "user:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "user:2",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stacks-1234",
 		},
 	}
 	validIDTokenClaimsWithDeprecatedStackClaimSet = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "user:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "user:2",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "stack-1234",
 		},
 	}
 	validAccessTokenClaimsWithActor = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace:            "default",
 			DelegatedPermissions: []string{"dashboards:create", "folders:read", "datasources:explore", "datasources.insights:read"},
 			Actor: &authnlib.ActorClaims{
-				Subject: "user:2",
-				IDTokenClaims: authnlib.IDTokenClaims{
-					Identifier: "abc123uid",
-					Type:       claims.TypeUser,
-				},
+				Subject:    "user:2",
+				Identifier: "abc123uid",
+				Type:       claims.TypeUser,
 			},
 		},
 	}
@@ -132,76 +114,60 @@ var (
 	// MT Query → MT Datasource (intermediate service) → HG Instance (this instance).
 	// The user is the innermost actor; the intermediate service is the first-level actor.
 	validAccessTokenClaimsWithActorChain = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace:            "default",
 			DelegatedPermissions: []string{"dashboards:create", "folders:read"},
 			Actor: &authnlib.ActorClaims{
 				Subject: "access-policy:intermediate-service",
-				IDTokenClaims: authnlib.IDTokenClaims{
-					Type: claims.TypeAccessPolicy,
-				},
+				Type:    claims.TypeAccessPolicy,
 				Actor: &authnlib.ActorClaims{
-					Subject: "user:2",
-					IDTokenClaims: authnlib.IDTokenClaims{
-						Identifier: "abc123uid",
-						Type:       claims.TypeUser,
-					},
+					Subject:    "user:2",
+					Identifier: "abc123uid",
+					Type:       claims.TypeUser,
 				},
 			},
 		},
 	}
 	validAccessTokenClaimsWildcard = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: "*",
 		},
 	}
 	validAccessTokenClaimsWithStackSet = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: "stacks-1234",
 		},
 	}
 	validAccessTokenClaimsWithDeprecatedStackClaimSet = accessTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "access-policy:this-uid",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "access-policy:this-uid",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: "stack-1234",
 		},
 	}
 	invalidNamespaceIDTokenClaims = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "user:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "user:2",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "org-2",
 		},
 	}
 	invalidSubjectIDTokenClaims = idTokenClaims{
-		Claims: jwt.Claims{
-			Subject:  "api-key:2",
-			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-		},
+		Subject:  "api-key:2",
+		Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+		IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 		Rest: authnlib.IDTokenClaims{
 			AuthenticatedBy: login.ExtendedJWTModule,
 			Namespace:       "default",
@@ -642,14 +608,12 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when the subject is not an access-policy",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "user:2",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "user:2",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Permissions: []string{"fixed:folders:reader"},
 					Namespace:   "default",
@@ -661,18 +625,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when OBO access token has disallowed namespace",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "access-policy:this-uid",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "access-policy:this-uid",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "org-99",
 					Actor: &authnlib.ActorClaims{
 						Subject: "user:2",
-						IDTokenClaims: authnlib.IDTokenClaims{
-							Type: claims.TypeUser,
-						},
+						Type:    claims.TypeUser,
 					},
 				},
 			},
@@ -682,18 +642,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when OBO access token subject is unparseable",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "garbage",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "garbage",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "default",
 					Actor: &authnlib.ActorClaims{
 						Subject: "user:2",
-						IDTokenClaims: authnlib.IDTokenClaims{
-							Type: claims.TypeUser,
-						},
+						Type:    claims.TypeUser,
 					},
 				},
 			},
@@ -703,18 +659,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when OBO access token subject is not access-policy",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "user:99",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "user:99",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "default",
 					Actor: &authnlib.ActorClaims{
 						Subject: "user:2",
-						IDTokenClaims: authnlib.IDTokenClaims{
-							Type: claims.TypeUser,
-						},
+						Type:    claims.TypeUser,
 					},
 				},
 			},
@@ -724,18 +676,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when OBO actor has empty subject",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "access-policy:this-uid",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "access-policy:this-uid",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "default",
 					Actor: &authnlib.ActorClaims{
 						Subject: "",
-						IDTokenClaims: authnlib.IDTokenClaims{
-							Type: claims.TypeUser,
-						},
+						Type:    claims.TypeUser,
 					},
 				},
 			},
@@ -745,18 +693,14 @@ func TestExtendedJWT_Authenticate(t *testing.T) {
 		{
 			name: "should return error when OBO actor subject is unparseable",
 			accessToken: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "access-policy:this-uid",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "access-policy:this-uid",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Namespace: "default",
 					Actor: &authnlib.ActorClaims{
 						Subject: "not-a-valid-type-id",
-						IDTokenClaims: authnlib.IDTokenClaims{
-							Type: claims.TypeUser,
-						},
+						Type:    claims.TypeUser,
 					},
 				},
 			},
@@ -809,18 +753,14 @@ func TestExtendedJWT_authenticateAsUserViaOBO_defensive(t *testing.T) {
 
 	t.Run("should return error when OBO actor identity type is disallowed", func(t *testing.T) {
 		token := accessTokenClaims{
-			Claims: jwt.Claims{
-				Subject:  "access-policy:this-uid",
-				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-			},
+			Subject:  "access-policy:this-uid",
+			Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+			IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 			Rest: authnlib.AccessTokenClaims{
 				Namespace: "default",
 				Actor: &authnlib.ActorClaims{
 					Subject: "api-key:42",
-					IDTokenClaims: authnlib.IDTokenClaims{
-						Type: claims.TypeAPIKey,
-					},
+					Type:    claims.TypeAPIKey,
 				},
 			},
 		}
@@ -845,13 +785,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iss",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -860,13 +798,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing expiry",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -875,14 +811,12 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "expired token",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -891,13 +825,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing aud",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -906,14 +838,12 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "wrong aud",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://some-other-host:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://some-other-host:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -927,13 +857,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing sub",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -942,13 +870,11 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "missing iat",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -957,14 +883,12 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "iat later than current time",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 2, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 2, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},
@@ -973,14 +897,12 @@ func TestVerifyRFC9068TokenFailureScenarios(t *testing.T) {
 		{
 			name: "unsupported alg",
 			payload: &accessTokenClaims{
-				Claims: jwt.Claims{
-					Issuer:   "http://localhost:3000",
-					Subject:  "access-policy:this-uid",
-					Audience: jwt.Audience{"http://localhost:3000"},
-					ID:       "1234567890",
-					Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
-					IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
-				},
+				Issuer:   "http://localhost:3000",
+				Subject:  "access-policy:this-uid",
+				Audience: jwt.Audience{"http://localhost:3000"},
+				ID:       "1234567890",
+				Expiry:   jwt.NewNumericDate(time.Date(2023, 5, 3, 0, 0, 0, 0, time.UTC)),
+				IssuedAt: jwt.NewNumericDate(time.Date(2023, 5, 2, 0, 0, 0, 0, time.UTC)),
 				Rest: authnlib.AccessTokenClaims{
 					Scopes: []string{"profile", "groups"},
 				},

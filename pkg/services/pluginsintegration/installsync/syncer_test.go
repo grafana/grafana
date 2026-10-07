@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
@@ -221,7 +220,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "plugin install API sync feature toggle disabled",
 			pluginInstallAPISyncEnabled: false,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -230,7 +229,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "plugin store service feature toggle disabled",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   false,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -239,7 +238,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, no orgs",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{},
 			expectedError:               nil,
 			expectSyncCalls:             0,
@@ -257,7 +256,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, single org",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			expectedError:               nil,
 			expectSyncCalls:             1,
@@ -266,7 +265,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "both feature toggles enabled, multiple orgs",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs: []*org.OrgDTO{
 				{ID: 1, Name: "Org 1"},
 				{ID: 2, Name: "Org 2"},
@@ -279,7 +278,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "org service error",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        nil,
 			orgServiceError:             errors.New("org service error"),
 			expectedError:               errors.New("org service error"),
@@ -289,7 +288,7 @@ func TestSyncer_Sync(t *testing.T) {
 			name:                        "server lock error",
 			pluginInstallAPISyncEnabled: true,
 			pluginStoreServiceEnabled:   true,
-			installedPlugins:            []pluginstore.Plugin{{JSONData: plugins.JSONData{ID: "test-plugin"}, Class: plugins.ClassCore}},
+			installedPlugins:            []pluginstore.Plugin{{ID: "test-plugin", Class: plugins.ClassCore}},
 			orgs:                        []*org.OrgDTO{{ID: 1, Name: "Org 1"}},
 			serverLockError:             errors.New("lock error"),
 			expectedError:               errors.New("lock error"),
@@ -386,8 +385,8 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		{
 			name: "installed plugins only",
 			installedPlugins: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
-				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
+				{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}, Class: plugins.ClassCore},
+				{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}, Class: plugins.ClassExternal},
 			},
 			apiPlugins:         []pluginsv0alpha1.Plugin{},
 			expectedError:      nil,
@@ -399,22 +398,20 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			name: "child plugins are ignored",
 			installedPlugins: []pluginstore.Plugin{
 				{
-					JSONData: plugins.JSONData{ID: "parent-plugin", Info: plugins.Info{Version: "1.0.0"}},
-					Class:    plugins.ClassExternal,
+					ID: "parent-plugin", Info: plugins.Info{Version: "1.0.0"},
+					Class: plugins.ClassExternal,
 				},
 				{
-					JSONData:        plugins.JSONData{ID: "child-plugin", Info: plugins.Info{Version: "1.0.0"}},
+					ID: "child-plugin", Info: plugins.Info{Version: "1.0.0"},
 					Class:           plugins.ClassExternal,
 					IncludedInAppID: "parent-plugin",
 				},
 			},
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "child-plugin",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "child-plugin",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "child-plugin"},
 				},
@@ -429,28 +426,24 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			name: "directly installed dependency plugin is registered",
 			installedPlugins: []pluginstore.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "parent-datasource",
-						Type: plugins.TypeDataSource,
-						Info: plugins.Info{Version: "1.0.0"},
-						Dependencies: plugins.Dependencies{
-							Plugins: []plugins.Dependency{{ID: "dependency-panel"}},
-						},
+					ID:   "parent-datasource",
+					Type: plugins.TypeDataSource,
+					Info: plugins.Info{Version: "1.0.0"},
+					Dependencies: plugins.Dependencies{
+						Plugins: []plugins.Dependency{{ID: "dependency-panel"}},
 					},
 					Class: plugins.ClassExternal,
 				},
 				{
-					JSONData: plugins.JSONData{ID: "dependency-panel", Info: plugins.Info{Version: "2.0.0"}},
-					Class:    plugins.ClassExternal,
+					ID: "dependency-panel", Info: plugins.Info{Version: "2.0.0"},
+					Class: plugins.ClassExternal,
 				},
 			},
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "parent-datasource",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "parent-datasource",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "parent-datasource", Version: "1.0.0"},
 				},
@@ -468,20 +461,16 @@ func TestSyncer_syncNamespace(t *testing.T) {
 			installedPlugins: []pluginstore.Plugin{},
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "plugin-1",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "plugin-1",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "plugin-2",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "plugin-2",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-2"},
 				},
@@ -494,26 +483,22 @@ func TestSyncer_syncNamespace(t *testing.T) {
 		{
 			name: "mixed - some match",
 			installedPlugins: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
-				{JSONData: plugins.JSONData{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}}, Class: plugins.ClassExternal},
-				{JSONData: plugins.JSONData{ID: "plugin-3", Info: plugins.Info{Version: "3.0.0"}}, Class: plugins.ClassExternal},
+				{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}, Class: plugins.ClassCore},
+				{ID: "plugin-2", Info: plugins.Info{Version: "2.0.0"}, Class: plugins.ClassExternal},
+				{ID: "plugin-3", Info: plugins.Info{Version: "3.0.0"}, Class: plugins.ClassExternal},
 			},
 			apiPlugins: []pluginsv0alpha1.Plugin{
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "plugin-2",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "plugin-2",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-2", Version: "2.0.0"},
 				},
 				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "plugin-4",
-						Annotations: map[string]string{
-							install.PluginInstallSourceAnnotation: install.SourcePluginStore,
-						},
+					Name: "plugin-4",
+					Annotations: map[string]string{
+						install.PluginInstallSourceAnnotation: install.SourcePluginStore,
 					},
 					Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-4"},
 				},
@@ -649,12 +634,10 @@ func TestSyncer_syncAllNamespaces_ContinuesAfterNamespaceError(t *testing.T) {
 				return nil, errors.New("list failed")
 			}
 			return &pluginsv0alpha1.PluginList{Items: []pluginsv0alpha1.Plugin{{
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   namespace,
-					Name:        "plugin-1",
-					Annotations: map[string]string{install.PluginInstallSourceAnnotation: install.SourcePluginStore},
-				},
-				Spec: pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
+				Namespace:   namespace,
+				Name:        "plugin-1",
+				Annotations: map[string]string{install.PluginInstallSourceAnnotation: install.SourcePluginStore},
+				Spec:        pluginsv0alpha1.PluginSpec{Id: "plugin-1", Version: "1.0.0"},
 			}}}, nil
 		},
 	}
@@ -673,7 +656,7 @@ func TestSyncer_syncAllNamespaces_ContinuesAfterNamespaceError(t *testing.T) {
 	)
 
 	err := s.syncAllNamespaces(ctx, install.SourcePluginStore, []pluginstore.Plugin{
-		{JSONData: plugins.JSONData{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}}, Class: plugins.ClassCore},
+		{ID: "plugin-1", Info: plugins.Info{Version: "1.0.0"}, Class: plugins.ClassCore},
 	})
 	require.ErrorContains(t, err, `sync namespace "org-1"`)
 	require.Equal(t, []string{"org-1", "org-2"}, listedNamespaces)

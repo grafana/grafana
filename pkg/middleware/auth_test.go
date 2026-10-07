@@ -256,14 +256,12 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		for i, tc := range tcs {
 			t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
 				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID: "test-app",
-						Includes: []*plugins.Includes{
-							{
-								Type: "page",
-								Role: tc.roleRequired,
-								Path: path,
-							},
+					ID: "test-app",
+					Includes: []*plugins.Includes{
+						{
+							Type: "page",
+							Role: tc.roleRequired,
+							Path: path,
 						},
 					},
 				})
@@ -316,14 +314,12 @@ func TestRoleAppPluginAuth(t *testing.T) {
 		logger := &logtest.Fake{}
 		ac := &actest.FakeAccessControl{}
 		sc.m.Get("/a/:id/*", RoleAppPluginAuth(ac, pluginstore.NewFakePluginStore(pluginstore.Plugin{
-			JSONData: plugins.JSONData{
-				ID: "test-app",
-				Includes: []*plugins.Includes{
-					{
-						Type: "page",
-						Role: org.RoleViewer,
-						Path: "/a/test-app/test",
-					},
+			ID: "test-app",
+			Includes: []*plugins.Includes{
+				{
+					Type: "page",
+					Role: org.RoleViewer,
+					Path: "/a/test-app/test",
 				},
 			},
 		}), logger), func(c *contextmodel.ReqContext) {
@@ -380,15 +376,13 @@ func TestRoleAppPluginAuth(t *testing.T) {
 				}
 				path := "/a/test-app/test"
 				ps := pluginstore.NewFakePluginStore(pluginstore.Plugin{
-					JSONData: plugins.JSONData{
-						ID: "test-app",
-						Includes: []*plugins.Includes{
-							{
-								Type:   "page",
-								Role:   org.RoleViewer,
-								Path:   path,
-								Action: "test-app.test:read",
-							},
+					ID: "test-app",
+					Includes: []*plugins.Includes{
+						{
+							Type:   "page",
+							Role:   org.RoleViewer,
+							Path:   path,
+							Action: "test-app.test:read",
 						},
 					},
 				})

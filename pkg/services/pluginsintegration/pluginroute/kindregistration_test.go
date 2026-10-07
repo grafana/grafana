@@ -137,7 +137,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 			})
 			return b
 		}
-		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
+		ping := spec3.PathProps{Get: &spec3.Operation{OperationId: "getPing"}}
 
 		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}})
 		info, opts := testAPIGroupOptions(t, b)

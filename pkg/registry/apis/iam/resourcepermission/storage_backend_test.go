@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -148,10 +147,8 @@ func TestWriteEvent_Add(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -184,10 +181,8 @@ func TestWriteEvent_Add(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "unknown.grafana.app-unknown-ukn1",
-				Namespace: "default",
-			},
+			Name:      "unknown.grafana.app-unknown-ukn1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "unknown.grafana.app",
@@ -221,10 +216,8 @@ func TestWriteEvent_Add(t *testing.T) {
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -308,10 +301,8 @@ func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "iam.grafana.app-serviceaccounts-robot",
-				Namespace: "default",
-			},
+			Name:      "iam.grafana.app-serviceaccounts-robot",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "iam.grafana.app",
@@ -351,10 +342,8 @@ func TestWriteEvent_Add_ServiceAccount(t *testing.T) {
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -803,10 +792,8 @@ func TestWriteEvent_Modify(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -839,10 +826,8 @@ func TestWriteEvent_Modify(t *testing.T) {
 		backend := ProvideStorageBackend(dbProvider, NewMappersRegistry())
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "unknown.grafana.app-unknown-ukn1",
-				Namespace: "default",
-			},
+			Name:      "unknown.grafana.app-unknown-ukn1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "unknown.grafana.app",
@@ -876,10 +861,8 @@ func TestWriteEvent_Modify(t *testing.T) {
 		backend.identityStore = NewFakeIdentityStore(t)
 
 		resourcePerm, err := utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -910,10 +893,8 @@ func TestWriteEvent_Modify(t *testing.T) {
 
 		// Modify resource
 		resourcePerm, err = utils.MetaAccessor(&v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",

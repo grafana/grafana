@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -105,7 +104,7 @@ func TestUserValidationModeChanges(t *testing.T) {
 	}
 	selector := dualwrite.NewSelector(dualwrite.ProvideServiceForTests(cfg), gr, backend("legacy"), backend("unified"))
 	ctx := identity.WithRequester(t.Context(), &legacyuser.SignedInUser{Namespace: "stacks-1", IsGrafanaAdmin: true})
-	obj := &iamv0.User{ObjectMeta: metav1.ObjectMeta{Name: "user-1", Namespace: "stacks-1"}, Spec: iamv0.UserSpec{Login: "user", Email: "user@example.com", Role: "Viewer"}}
+	obj := &iamv0.User{Name: "user-1", Namespace: "stacks-1", Spec: iamv0.UserSpec{Login: "user", Email: "user@example.com", Role: "Viewer"}}
 
 	require.NoError(t, ValidateOnCreate(ctx, selector, obj))
 	cfg.UnifiedStorage[gr.String()] = setting.UnifiedStorageConfig{DualWriterMode: rest.Mode5}

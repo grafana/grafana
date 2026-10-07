@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -26,10 +25,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should fail when export job fails",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -48,10 +45,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should fail when sync job fails",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -75,10 +70,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should fail when resource cleanup fails",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -106,10 +99,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should succeed with complete workflow",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -139,10 +130,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should run export and sync for folder-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeFolder,
@@ -169,10 +158,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should skip namespace cleanup for folderless-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeFolderless,
@@ -198,10 +185,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should fail when sync job fails for folder-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeFolder,
@@ -227,10 +212,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should run complete workflow for instance-type repositories",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -259,10 +242,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should handle empty target type as instance",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: "", // Empty target should default to instance behavior
@@ -289,10 +270,8 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 			name: "should pass migrate options to export job",
 			setupMocks: func(nc *MockNamespaceCleaner, ew *jobs.MockWorker, sw *jobs.MockWorker, pr *jobs.MockJobProgressRecorder, rw *repository.MockRepository) {
 				rw.On("Config").Return(&provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Sync: provisioning.SyncOptions{
 							Target: provisioning.SyncTargetTypeInstance,
@@ -360,7 +339,7 @@ func TestUnifiedStorageMigrator_Migrate(t *testing.T) {
 func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 	gitInstanceRepo := func(branch string) *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Name: "test-repo", Namespace: "test-ns",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.GitRepositoryType,
 				Git:  &provisioning.GitRepositoryConfig{Branch: branch},
@@ -410,7 +389,7 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		// Selective migration is only valid on folder/folderless targets (instance
 		// requires migrating everything).
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Name: "test-repo", Namespace: "test-ns",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.GitRepositoryType,
 				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -472,7 +451,7 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Name: "test-repo", Namespace: "test-ns",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.GitRepositoryType,
 				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -520,7 +499,7 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+			Name: "test-repo", Namespace: "test-ns",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.GitRepositoryType,
 				Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -590,7 +569,7 @@ func TestUnifiedStorageMigrator_BranchMigration(t *testing.T) {
 
 func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 	instanceRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+		Name: "test-repo", Namespace: "test-ns",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitRepositoryType,
 			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -598,7 +577,7 @@ func TestUnifiedStorageMigrator_SkipResourceDeletion(t *testing.T) {
 		},
 	}
 	folderRepo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
+		Name: "test-repo", Namespace: "test-ns",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitRepositoryType,
 			Git:  &provisioning.GitRepositoryConfig{Branch: "main"},
@@ -693,8 +672,8 @@ func TestUnifiedStorageMigrator_CommitMessagePrecedence(t *testing.T) {
 			nc := NewMockNamespaceCleaner(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+				Name: "test-repo", Namespace: "test-ns",
+				Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 			})
 			pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 			pr.On("StrictMaxErrors", 1).Return()
@@ -732,8 +711,8 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Name: "test-repo", Namespace: "test-ns",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -779,8 +758,8 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Name: "test-repo", Namespace: "test-ns",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -812,8 +791,8 @@ func TestUnifiedStorageMigrator_TakeoverAllowlist(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Name: "test-repo", Namespace: "test-ns",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -868,8 +847,8 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
+			Name: "test-repo", Namespace: "test-ns",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder}},
 		})
 		pr.On("SetMessage", mock.Anything, mock.Anything).Return()
 		pr.On("StrictMaxErrors", 1).Return()
@@ -907,8 +886,8 @@ func TestUnifiedStorageMigrator_SelectiveResources(t *testing.T) {
 		nc := NewMockNamespaceCleaner(t)
 
 		repo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "test-ns"},
-			Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
+			Name: "test-repo", Namespace: "test-ns",
+			Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance}},
 		})
 
 		// The migration is rejected up front, so nothing runs: no export, pull, or

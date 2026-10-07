@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -38,11 +37,9 @@ func TestIntegrationInhibitionRules(t *testing.T) {
 	require.NoError(t, err)
 
 	newRule := &v1beta1.InhibitionRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace:       "default",
-			Name:            "test-rule",
-			ResourceVersion: "0f982c4240a504ef",
-		},
+		Namespace:       "default",
+		Name:            "test-rule",
+		ResourceVersion: "0f982c4240a504ef",
 		Spec: v1beta1.InhibitionRuleSpec{
 			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
@@ -216,10 +213,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 	require.NoError(t, err)
 
 	testRule := &v1beta1.InhibitionRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: apis.DefaultNamespace,
-			Name:      "test-permission-rule",
-		},
+		Namespace: apis.DefaultNamespace,
+		Name:      "test-permission-rule",
 		Spec: v1beta1.InhibitionRuleSpec{
 			SourceMatchers: []v1beta1.InhibitionRuleMatcher{
 				{
@@ -335,10 +330,8 @@ func TestIntegrationInhibitionRuleProvisioning(t *testing.T) {
 
 	newRule := func(name string) *v1beta1.InhibitionRule {
 		return &v1beta1.InhibitionRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: apis.DefaultNamespace,
-				Name:      name,
-			},
+			Namespace: apis.DefaultNamespace,
+			Name:      name,
 			Spec: v1beta1.InhibitionRuleSpec{
 				SourceMatchers: []v1beta1.InhibitionRuleMatcher{
 					{

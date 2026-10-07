@@ -384,12 +384,10 @@ func RegisterRBACAuthZService(
 					"folder.grafana.app",
 					clientauth.WildcardNamespace,
 				),
-				TLSClientConfig: rest.TLSClientConfig{
-					Insecure: cfg.Folder.Insecure,
-					CAFile:   cfg.Folder.CAFile,
-				},
-				QPS:   50,
-				Burst: 100,
+				Insecure: cfg.Folder.Insecure,
+				CAFile:   cfg.Folder.CAFile,
+				QPS:      50,
+				Burst:    100,
 			}, nil
 		})
 	}

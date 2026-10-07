@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/selection"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -100,13 +99,12 @@ func TestUnifiedTeamSearchResponseFormats(t *testing.T) {
 			result, err := backend.Search(t.Context(), SearchQuery{Offset: 15})
 			require.NoError(t, err)
 			id := int64(42)
-			require.Equal(t, &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
+			require.Equal(t, &iamv0.GetSearchTeamsResponse{
 				Offset: 15, TotalHits: 5, QueryCost: 2, MaxScore: 3,
-				Hits: []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}},
-			}}, result)
+				Hits: []iamv0.GetSearchTeamsTeamHit{{Name: "team-1", Title: "Engineering", Email: "team@example.com", Provisioned: true, ExternalUID: "external-1", InternalId: &id}}}, result)
 
 			ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1"})
-			obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "new-team"}, Spec: iamv0.TeamSpec{Title: "Engineering"}}
+			obj := &iamv0.Team{Name: "new-team", Spec: iamv0.TeamSpec{Title: "Engineering"}}
 			err = ValidateOnCreate(ctx, selectorForBackend(backend), obj, legacy.NoopExternalGroupReconciler{})
 			require.True(t, apierrors.IsConflict(err), "expected conflict, got %v", err)
 		})

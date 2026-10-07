@@ -168,10 +168,8 @@ func TestIntegrationCallResource(t *testing.T) {
 
 	pluginRegistry := pluginfakes.NewFakePluginRegistry()
 	require.NoError(t, pluginRegistry.Add(context.Background(), &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:      "grafana-testdata-datasource",
-			Backend: true,
-		},
+		ID:      "grafana-testdata-datasource",
+		Backend: true,
 	}))
 	middlewares := pluginsintegration.CreateMiddlewares(cfg, &oauthtokentest.Service{}, tracing.InitializeTracerForTest(), caching.ProvideCachingServiceClient(&caching.OSSCachingService{}, nil), featuremgmt.WithFeatures(), prometheus.DefaultRegisterer, pluginRegistry)
 	pc, err := backend.HandlerFromMiddlewares(&pluginfakes.FakePluginClient{

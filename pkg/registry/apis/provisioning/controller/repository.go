@@ -554,12 +554,10 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 		Message: err.Error(),
 		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
 	}
-	var fe *finalizerError
-	if errors.As(err, &fe) {
+	if fe, ok := errors.AsType[*finalizerError](err); ok {
 		deletion.Finalizer = fe.finalizer
 	}
-	var folderErr *nonEmptyFolderError
-	if errors.As(err, &folderErr) {
+	if folderErr, ok := errors.AsType[*nonEmptyFolderError](err); ok {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
 		deletion.Cause = provisioning.DeletionCauseUser

@@ -56,7 +56,8 @@ func getTestHelper(t *testing.T) *apis.K8sTestHelper {
 	return apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{})
 }
 
-func ptr[T any](v T) *T { return &v }
+//go:fix inline
+func ptr[T any](v T) *T { return new(v) }
 
 func newConfigClient(t *testing.T, user apis.User) *alertingrulesv0alpha1.ConfigClient {
 	t.Helper()
@@ -93,15 +94,11 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingr
 // is never rejected by the admission validator).
 func newConfig(name string) *alertingrulesv0alpha1.Config {
 	return &alertingrulesv0alpha1.Config{
-		TypeMeta: v1.TypeMeta{
-			Kind:       alertingrulesv0alpha1.ConfigKind().Kind(),
-			APIVersion: alertingrulesv0alpha1.GroupVersion.Identifier(),
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: apis.DefaultNamespace,
-			Name:      name,
-		},
-		Spec: alertingrulesv0alpha1.ConfigSpec{},
+		Kind:       alertingrulesv0alpha1.ConfigKind().Kind(),
+		APIVersion: alertingrulesv0alpha1.GroupVersion.Identifier(),
+		Namespace:  apis.DefaultNamespace,
+		Name:       name,
+		Spec:       alertingrulesv0alpha1.ConfigSpec{},
 	}
 }
 
@@ -237,7 +234,7 @@ func TestIntegrationConfigAccessControl(t *testing.T) {
 
 			t.Run("is forbidden to write status", func(t *testing.T) {
 				_, err := client.UpdateStatus(ctx, singletonID, alertingrulesv0alpha1.ConfigStatus{
-					ObservedGeneration: ptr(int64(1)),
+					ObservedGeneration: new(int64(1)),
 				}, resource.UpdateOptions{})
 				requireForbidden(t, err, "")
 			})
@@ -290,7 +287,7 @@ func TestIntegrationConfigValidator(t *testing.T) {
 	t.Run("setting a non-existent datasource UID is rejected", func(t *testing.T) {
 		cfg := newConfig(alertingrulesv0alpha1.ConfigSingletonName)
 		cfg.Spec.ExternalRulerSync = &alertingrulesv0alpha1.ConfigV0alpha1SpecExternalRulerSync{
-			DatasourceUid: ptr("does-not-exist-uid"),
+			DatasourceUid: new("does-not-exist-uid"),
 		}
 		_, err := adminClient.Update(ctx, cfg, resource.UpdateOptions{})
 		requireForbidden(t, err, "datasource not found")

@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/types"
@@ -16,7 +15,7 @@ import (
 
 func newResourcePermission(apiGroup, resource, name string) *iamv0.ResourcePermission {
 	return &iamv0.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "org-2"},
+		Namespace: "org-2",
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
 				ApiGroup: apiGroup,

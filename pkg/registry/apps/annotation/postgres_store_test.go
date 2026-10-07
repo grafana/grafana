@@ -43,8 +43,8 @@ func TestIntegrationPostgresStore(t *testing.T) {
 	create := func(t *testing.T, name string, mutate ...func(*annotationV0.Annotation)) *annotationV0.Annotation {
 		t.Helper()
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "text", Time: 1000, Tags: []string{"tag1"}},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "text", Time: 1000, Tags: []string{"tag1"}},
 		}
 		for _, m := range mutate {
 			m(anno)
@@ -78,8 +78,8 @@ func TestIntegrationPostgresStore(t *testing.T) {
 		create(t, "crud-update")
 
 		_, err := store.Update(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "crud-update", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "changed", Time: 1000, Tags: []string{"changed"}},
+			Name: "crud-update", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "changed", Time: 1000, Tags: []string{"changed"}},
 		})
 		require.NoError(t, err)
 
@@ -91,8 +91,8 @@ func TestIntegrationPostgresStore(t *testing.T) {
 
 	t.Run("Update of a missing annotation returns ErrNotFound", func(t *testing.T) {
 		_, err := store.Update(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "missing", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "x", Time: 1000},
+			Name: "missing", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "x", Time: 1000},
 		})
 		require.ErrorIs(t, err, ErrNotFound)
 	})
@@ -254,8 +254,8 @@ func TestIntegrationPostgresStore(t *testing.T) {
 			require.NoError(t, store.Delete(ctx, ns, "sd-update"))
 
 			_, err := store.Update(ctx, &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: "sd-update", Namespace: ns},
-				Spec:       annotationV0.AnnotationSpec{Text: "changed", Time: 1000},
+				Name: "sd-update", Namespace: ns,
+				Spec: annotationV0.AnnotationSpec{Text: "changed", Time: 1000},
 			})
 			require.ErrorIs(t, err, ErrNotFound)
 		})
@@ -310,8 +310,8 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 	seed := func(t *testing.T, store *PostgreSQLStore, ctx context.Context, name string, ts time.Time) {
 		t.Helper()
 		_, err := store.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: name, Time: ts.UnixMilli()},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: name, Time: ts.UnixMilli()},
 		})
 		require.NoError(t, err, "create %s", name)
 	}
@@ -328,8 +328,8 @@ func TestIntegrationPostgresCleanup(t *testing.T) {
 
 		// past the cutoff but ending within the retention window
 		_, err := store.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "spanning", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "spanning", Time: old.UnixMilli(), TimeEnd: new(recent.UnixMilli())},
+			Name: "spanning", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "spanning", Time: old.UnixMilli(), TimeEnd: new(recent.UnixMilli())},
 		})
 		require.NoError(t, err)
 
@@ -374,8 +374,8 @@ func TestIntegrationPostgresListPartitionPruning(t *testing.T) {
 	seed := func(name string, start, end time.Time) {
 		t.Helper()
 		_, err := store.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: name, Time: start.UnixMilli(), TimeEnd: new(end.UnixMilli())},
+			Name: name, Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: name, Time: start.UnixMilli(), TimeEnd: new(end.UnixMilli())},
 		})
 		require.NoError(t, err)
 	}

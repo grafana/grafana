@@ -201,9 +201,7 @@ func (d *pluginRegistry) updatePlugins() error {
 	groupToPlugin := map[string]string{}
 	apis := map[string]schema.GroupVersion{}
 	result := &dsV0.DataSourceApiServerList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
-		},
+		ResourceVersion: fmt.Sprintf("%d", time.Now().UnixMilli()),
 	}
 
 	// TODO? only backend plugins
@@ -225,14 +223,12 @@ func (d *pluginRegistry) updatePlugins() error {
 		groupToPlugin[group] = dsp.ID
 
 		ds := dsV0.DataSourceApiServer{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              dsp.ID,
-				CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),
-			},
-			Title:        dsp.Name,
-			AliasIDs:     dsp.AliasIDs,
-			GroupVersion: gv.String(),
-			Description:  dsp.Info.Description,
+			Name:              dsp.ID,
+			CreationTimestamp: metav1.NewTime(time.UnixMilli(ts)),
+			Title:             dsp.Name,
+			AliasIDs:          dsp.AliasIDs,
+			GroupVersion:      gv.String(),
+			Description:       dsp.Info.Description,
 		}
 		result.Items = append(result.Items, ds)
 	}

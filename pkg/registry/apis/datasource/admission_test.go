@@ -37,8 +37,8 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := &datasourceV0.DataSource{
-				ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"},
-				Spec:       datasourceV0.UnstructuredSpec{Object: tt.spec},
+				Name: "example", Namespace: "default",
+				Spec: datasourceV0.UnstructuredSpec{Object: tt.spec},
 			}
 			attrs := admission.NewAttributesRecord(
 				ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
@@ -60,7 +60,7 @@ func TestDataSourceCreateAdmission(t *testing.T) {
 	}
 
 	ds := &datasourceV0.DataSource{
-		ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"},
+		Name: "example", Namespace: "default",
 		Spec: datasourceV0.UnstructuredSpec{Object: map[string]any{
 			"jsonData": map[string]any{"teamHttpHeaders": map[string]any{}},
 		}},
@@ -93,7 +93,7 @@ func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
 	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
 	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
 	ds := &datasourceV0.DataSource{
-		ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"},
+		Name: "example", Namespace: "default",
 		Spec: datasourceV0.UnstructuredSpec{Object: map[string]any{
 			"jsonData": map[string]any{"teamHttpHeaders": map[string]any{}},
 		}},

@@ -44,7 +44,7 @@ func TestSubChildren_ErrorStatus(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			search := &capturingSearchClient{resp: tc.response, err: tc.err}
-			getter := &stubGetter{obj: &folderv1.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
+			getter := &stubGetter{obj: &folderv1.Folder{Name: "parent"}}
 			rest := &subChildrenREST{getter: getter, searcher: search}
 			responder := &recordingResponder{}
 
@@ -56,12 +56,12 @@ func TestSubChildren_ErrorStatus(t *testing.T) {
 			require.IsType(t, &apierrors.StatusError{}, responder.err)
 			got := responsewriters.ErrorToAPIStatus(responder.err)
 			require.Equal(t, &metav1.Status{
-				TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
-				Status:   metav1.StatusFailure,
-				Code:     http.StatusTooManyRequests,
-				Reason:   metav1.StatusReasonTooManyRequests,
-				Message:  "search is busy",
-				Details:  &metav1.StatusDetails{RetryAfterSeconds: 12},
+				Kind: "Status", APIVersion: "v1",
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusTooManyRequests,
+				Reason:  metav1.StatusReasonTooManyRequests,
+				Message: "search is busy",
+				Details: &metav1.StatusDetails{RetryAfterSeconds: 12},
 			}, got)
 		})
 	}

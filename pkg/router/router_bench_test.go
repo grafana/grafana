@@ -204,7 +204,7 @@ func (l *benchmarkRoutesLoader) Load(ctx context.Context) ([]Backend, error) {
 	if err != nil {
 		return nil, err
 	}
-	backends[0] = &benchmarkBackend{dummyBackend: dummyBackend{group: l.groups[0]}, key: l.key}
+	backends[0] = &benchmarkBackend{group: l.groups[0], key: l.key}
 	return backends, nil
 }
 

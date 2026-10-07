@@ -325,9 +325,7 @@ func TestService_GetUserPermissions_CachesZanzanaPermissions(t *testing.T) {
 		},
 	}
 	zClient := &countingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
 	}
 	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
 	siu := testSignedInUser()
@@ -345,9 +343,7 @@ func TestService_GetUserPermissions_CachesZanzanaPermissions(t *testing.T) {
 func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T) {
 	store := &actest.FakeStore{}
 	zClient := &countingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
 	}
 	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
 	siu := testSignedInUser()
@@ -364,9 +360,7 @@ func TestService_GetUserPermissions_ReloadCacheBypassesZanzanaCache(t *testing.T
 func TestService_GetUserPermissions_SkipZanzanaCacheDoesNotReadOrWriteCache(t *testing.T) {
 	store := &actest.FakeStore{}
 	zClient := &countingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"cached-dash"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"cached-dash"}},
 	}
 	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
 	siu := testSignedInUser()
@@ -391,9 +385,7 @@ func TestService_GetUserPermissions_SkipZanzanaCacheDoesNotReadOrWriteCache(t *t
 func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache(t *testing.T) {
 	store := &actest.FakeStore{}
 	zClient := &countingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
 	}
 	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, true)
 	siu := testSignedInUser()
@@ -412,9 +404,7 @@ func TestService_GetUserPermissions_ClearUserPermissionCacheBypassesZanzanaCache
 func TestService_GetUserPermissions_DoesNotCacheZanzanaWhenPermissionCacheDisabled(t *testing.T) {
 	store := &actest.FakeStore{}
 	zClient := &countingZanzanaClient{
-		fakeZanzanaClient: fakeZanzanaClient{
-			listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
-		},
+		listResp: &authzv1.ListResponse{Items: []string{"zanzana-dash"}},
 	}
 	svc := setupServiceWithPermissionCache(t, store, zClient, &usertest.FakeUserService{}, false)
 	siu := testSignedInUser()

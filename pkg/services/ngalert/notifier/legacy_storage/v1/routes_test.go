@@ -10,9 +10,9 @@ import (
 
 func TestManagedRoutes_Sort(t *testing.T) {
 	routes := ManagedRoutes{
-		{ResourceMetadata: ResourceMetadata{UID: "x"}},
-		{ResourceMetadata: ResourceMetadata{UID: models.DefaultRoutingTreeName}},
-		{ResourceMetadata: ResourceMetadata{UID: "z"}},
+		{UID: "x"},
+		{UID: models.DefaultRoutingTreeName},
+		{UID: "z"},
 	}
 
 	routes.Sort()
@@ -24,9 +24,9 @@ func TestManagedRoutes_Sort(t *testing.T) {
 
 func TestManagedRoutes_Contains(t *testing.T) {
 	routes := ManagedRoutes{
-		{ResourceMetadata: ResourceMetadata{UID: "x"}},
-		{ResourceMetadata: ResourceMetadata{UID: models.DefaultRoutingTreeName}},
-		{ResourceMetadata: ResourceMetadata{UID: "z"}},
+		{UID: "x"},
+		{UID: models.DefaultRoutingTreeName},
+		{UID: "z"},
 	}
 	assert.True(t, routes.Contains("x"))
 	assert.True(t, routes.Contains("z"))

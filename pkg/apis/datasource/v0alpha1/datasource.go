@@ -70,11 +70,9 @@ func (ds DataSource) ToUnstructured() (*unstructured.Unstructured, error) {
 
 func FromUnstructured(obj *unstructured.Unstructured) (*DataSource, error) {
 	ds := &DataSource{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: obj.GetAPIVersion(),
-			Kind:       obj.GetKind(),
-		},
-		Spec: UnstructuredSpec{},
+		APIVersion: obj.GetAPIVersion(),
+		Kind:       obj.GetKind(),
+		Spec:       UnstructuredSpec{},
 	}
 	metadata, _, err := unstructured.NestedMap(obj.Object, "metadata")
 	if err != nil {

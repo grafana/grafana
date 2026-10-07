@@ -39,13 +39,11 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 	t.Run("should preserve non-overridden fields", func(t *testing.T) {
 		config := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				AnonymousEnabled: true,
-				DisableLoginForm: true,
-				LoginHint:        "test@example.com",
-				BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
-					Version: "10.3.0",
-				},
+			AnonymousEnabled: true,
+			DisableLoginForm: true,
+			LoginHint:        "test@example.com",
+			BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
+				Version: "10.3.0",
 			},
 			AppURL:     "https://base.example.com",
 			CSPEnabled: false,
@@ -70,10 +68,8 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 	t.Run("should override FSFrontendSettings fields from settings service", func(t *testing.T) {
 		config := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey:     "base-write-key",
-				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
-			},
+			RudderstackWriteKey:     "base-write-key",
+			RudderstackDataPlaneUrl: "https://base-dataplane.example.com",
 		}
 
 		iniFile := ini.Empty()
@@ -177,9 +173,7 @@ func TestFSRequestConfig_ApplyOverrides(t *testing.T) {
 
 	t.Run("with full frontend settings enabled, applies rudderstack overrides to FullFrontendSettings", func(t *testing.T) {
 		config := FSRequestConfig{
-			FSFrontendSettings: FSFrontendSettings{
-				RudderstackWriteKey: "legacy-write-key",
-			},
+			RudderstackWriteKey: "legacy-write-key",
 			FullFrontendSettings: &dtos.FrontendSettingsDTO{
 				RudderstackWriteKey:     "base-write-key",
 				RudderstackDataPlaneUrl: "https://base-dataplane.example.com",

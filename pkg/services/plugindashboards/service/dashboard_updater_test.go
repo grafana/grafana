@@ -87,10 +87,8 @@ func TestDashboardUpdater(t *testing.T) {
 				},
 				installedPlugins: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							Info: plugins.Info{
-								Version: "1.0.0",
-							},
+						Info: plugins.Info{
+							Version: "1.0.0",
 						},
 					},
 				},
@@ -119,10 +117,8 @@ func TestDashboardUpdater(t *testing.T) {
 				},
 				installedPlugins: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							Info: plugins.Info{
-								Version: "1.0.1",
-							},
+						Info: plugins.Info{
+							Version: "1.0.1",
 						},
 					},
 				},
@@ -155,11 +151,9 @@ func TestDashboardUpdater(t *testing.T) {
 				},
 				installedPlugins: []pluginstore.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID: "test",
-							Info: plugins.Info{
-								Version: "1.0.1",
-							},
+						ID: "test",
+						Info: plugins.Info{
+							Version: "1.0.1",
 						},
 					},
 				},
@@ -233,9 +227,7 @@ func TestDashboardUpdater(t *testing.T) {
 			},
 			installedPlugins: []pluginstore.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID: "test",
-					},
+					ID: "test",
 				},
 			},
 			pluginDashboards: []*plugindashboards.PluginDashboard{
@@ -281,11 +273,9 @@ func TestDashboardUpdater(t *testing.T) {
 			},
 			installedPlugins: []pluginstore.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID: "test",
-						Info: plugins.Info{
-							Version: "1.0.0",
-						},
+					ID: "test",
+					Info: plugins.Info{
+						Version: "1.0.0",
 					},
 				},
 			},

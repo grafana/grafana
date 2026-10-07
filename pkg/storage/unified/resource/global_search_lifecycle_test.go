@@ -421,10 +421,9 @@ func repairServer(t *testing.T, storage StorageBackend, refs map[schema.GroupRes
 }
 
 func TestReconcileIndexesWhatIsMissing(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	// The index holds one of the two, at the current version.
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
@@ -443,10 +442,9 @@ func TestReconcileIndexesWhatIsMissing(t *testing.T) {
 }
 
 func TestReconcileIndexesWhatIsOutOfDate(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30}}
 	// Present, but indexed at an older version than storage holds.
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
@@ -460,10 +458,9 @@ func TestReconcileIndexesWhatIsOutOfDate(t *testing.T) {
 
 // No readable version means out of date, not current.
 func TestReconcileIndexesWhatHasNoVersion(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a"}},
 	})
@@ -474,10 +471,9 @@ func TestReconcileIndexesWhatHasNoVersion(t *testing.T) {
 }
 
 func TestReconcileRemovesWhatStorageNoLongerHas(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	// A delete the index never heard about.
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "gone", RV: 19}},
@@ -497,10 +493,9 @@ func TestReconcileRemovesWhatStorageNoLongerHas(t *testing.T) {
 
 // An agreeing index costs no reads or writes.
 func TestReconcileDoesNothingWhenTheIndexAgrees(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "dash-b", RV: 20}},
 	})
@@ -515,10 +510,9 @@ func TestReconcileDoesNothingWhenTheIndexAgrees(t *testing.T) {
 
 // The listing is older than the index, so a newer indexed version is kept.
 func TestReconcileLeavesNewerDocumentsAlone(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 25}},
 	})
@@ -532,10 +526,8 @@ func TestReconcileLeavesNewerDocumentsAlone(t *testing.T) {
 // A backend without batch reads still gets its objects read, one at a time.
 func TestReconcileReadsOneAtATimeWhenBatchesAreUnsupported(t *testing.T) {
 	storage := &reconcileStorage{
-		multiTypeStorage: multiTypeStorage{
-			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-		},
+		live:         map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs:      map[NamespacedResource]int64{dashboardType("ns"): 20},
 		noBatchReads: true,
 	}
 	server, idx := repairServer(t, storage, nil)
@@ -548,10 +540,9 @@ func TestReconcileReadsOneAtATimeWhenBatchesAreUnsupported(t *testing.T) {
 
 // One unreadable object does not stop the rest of the repair.
 func TestReconcileSkipsWhatItCannotRead(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, nil)
 
 	// The listing reports it, but by the time it is read it is gone.
@@ -567,10 +558,8 @@ func TestReconcileSkipsWhatItCannotRead(t *testing.T) {
 // retries.
 func TestReconcileReturnsStorageFailures(t *testing.T) {
 	storage := &reconcileStorage{
-		multiTypeStorage: multiTypeStorage{
-			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-		},
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 		readErr: errors.New("storage is unavailable"),
 	}
 	server, idx := repairServer(t, storage, nil)
@@ -584,10 +573,8 @@ func TestReconcileReturnsStorageFailures(t *testing.T) {
 // the repair for changes the update path moves past.
 func TestReconcileRetriesWhatFailedToBuild(t *testing.T) {
 	storage := &reconcileStorage{
-		multiTypeStorage: multiTypeStorage{
-			live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-			listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-		},
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}
 	storage.broken = map[string]bool{"dash-b": true}
 	server, idx := repairServer(t, storage, nil)
@@ -615,10 +602,9 @@ func TestReconcileRetriesWhatFailedToBuild(t *testing.T) {
 
 // Standard fields only, as on every other path into this index.
 func TestReconcileKeepsStandardFieldsOnly(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, nil)
 
 	_, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
@@ -638,10 +624,9 @@ var (
 
 // A document created and indexed after the listing is live and must be kept.
 func TestReconcileDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
 	})
@@ -664,10 +649,9 @@ func TestReconcileWritesInFullBatches(t *testing.T) {
 	for i := range 3 * readChunkSize {
 		names = append(names, fmt.Sprintf("dash-%03d", i))
 	}
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): names},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20}}
 	server, idx := repairServer(t, storage, nil)
 
 	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
@@ -695,10 +679,9 @@ func TestReconcileRemovesInBatches(t *testing.T) {
 // An import can restore older versions, so a rebuild rewrites everything and
 // removes what the import dropped.
 func TestRebuildTypeRewritesTheWholeType(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		// Newer than the restored version, and one the import dropped.
 		dashboardsGroupResource: {{Name: "dash-a", RV: 100}, {Name: "gone", RV: 90}},
@@ -723,10 +706,9 @@ func TestRebuildTypeRewritesTheWholeType(t *testing.T) {
 
 // The old document may describe what the import replaced, so it is removed.
 func TestRebuildTypeRemovesWhatFailsToBuild(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.broken = map[string]bool{"dash-b": true}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 40}, {Name: "dash-b", RV: 40}},
@@ -739,10 +721,9 @@ func TestRebuildTypeRemovesWhatFailsToBuild(t *testing.T) {
 
 // Same ordering guarantee as a reconcile.
 func TestRebuildTypeDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
 	})
@@ -824,10 +805,9 @@ func TestGlobalIndexBuildRecordsCompletedTypeBuilds(t *testing.T) {
 
 // An import into one type rebuilds that type, not the whole index, and records it.
 func TestImportRebuildsOnlyTheImportedType(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50}}
 	storage.lastImportTimes = importedAt(importTuesday, importMonday)
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importMonday, importMonday)
@@ -843,9 +823,8 @@ func TestImportRebuildsOnlyTheImportedType(t *testing.T) {
 // Nothing is done when storage reports the import the index already caught up
 // with, or no import at all.
 func TestImportCheckLeavesCaughtUpTypesAlone(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}}}
 	storage.lastImportTimes = importedAt(importMonday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importMonday, time.Time{})
@@ -858,10 +837,9 @@ func TestImportCheckLeavesCaughtUpTypesAlone(t *testing.T) {
 // An object that cannot be built would fail again, so it does not keep the type
 // unrecorded, which would rebuild it at every check.
 func TestImportCheckRecordsDespiteObjectsThatCannotBeBuilt(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.broken = map[string]bool{"dash-b": true}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
@@ -874,10 +852,9 @@ func TestImportCheckRecordsDespiteObjectsThatCannotBeBuilt(t *testing.T) {
 // A failure to read storage or the index is transient, so the import stays
 // unrecorded and the next check tries again.
 func TestImportCheckRetriesAfterAReadFailure(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
 	idx.completedTypeBuilds = heldAt(importMonday, time.Time{})
@@ -945,10 +922,9 @@ func TestRebuildRequestsCombineImportedTypes(t *testing.T) {
 
 // A worker given imported types rebuilds just those when no full rebuild is due.
 func TestRebuildWorkerRebuildsOnlyImportedTypes(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
 	// Current, so nothing but the import calls for a rebuild.
@@ -968,9 +944,8 @@ func TestRebuildWorkerRebuildsOnlyImportedTypes(t *testing.T) {
 // When a full rebuild is due anyway it wins: it rewrites every type, imported or
 // not.
 func TestRebuildWorkerPrefersAFullRebuildWhenDue(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	search := &mockSearchBackend{}
 	server := globalTestServer(t, storage, search)
@@ -991,10 +966,9 @@ func TestRebuildWorkerPrefersAFullRebuildWhenDue(t *testing.T) {
 // An explicit rebuild of a global index catches up with imports of its covered
 // types, and waits for it, as it did before only those types were rebuilt.
 func TestRebuildIndexesCatchesUpAGlobalIndexWithImports(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
 	// Current in every other way, so only the import calls for work.
@@ -1043,10 +1017,9 @@ func TestImportCheckIgnoresAnOlderImportTime(t *testing.T) {
 
 // A type rebuild replays no events first: a global index has none to replay.
 func TestImportedTypeRebuildDoesNotUpdateTheIndex(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.lastImportTimes = importedAt(importTuesday, time.Time{})
 	server, idx := repairServer(t, storage, nil)
 
@@ -1111,10 +1084,9 @@ func writtenKey(key NamespacedResource, name string) *resourcepb.ResourceKey {
 // A written key names an object; its current state is read from storage and
 // written, and nothing is replayed.
 func TestWatchWritesTheCurrentStateOfNotifiedObjects(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	server, idx := repairServer(t, storage, nil)
 
 	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
@@ -1147,9 +1119,8 @@ func TestWatchLateCreateOfADeletedObjectRemovesIt(t *testing.T) {
 
 // Several notifications for one object in a batch are one read and one write.
 func TestWatchReadsEachObjectOnce(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
 	server, idx := repairServer(t, storage, nil)
 
 	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
@@ -1163,9 +1134,8 @@ func TestWatchReadsEachObjectOnce(t *testing.T) {
 
 // An object that cannot be built is removed, so a reconcile sees it missing.
 func TestWatchRemovesWhatFailsToBuild(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
 	storage.broken = map[string]bool{"dash-a": true}
 	server, idx := repairServer(t, storage, nil)
 
@@ -1330,9 +1300,8 @@ func TestSearchDoesNotWaitForGlobalIndex(t *testing.T) {
 // Fetching an index counts as using it, so notifications leave alone a global
 // index another instance now owns, and it can be closed here.
 func TestWatchSkipsAGlobalIndexOwnedElsewhere(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
 	server, idx := repairServer(t, storage, nil)
 	server.ownsIndexFn = func(NamespacedResource) (bool, error) { return false, nil }
 
@@ -1397,9 +1366,8 @@ func TestGlobalIndexIsBuiltWithoutAnUpdater(t *testing.T) {
 // The reader can add an error of its own after the last response; that must not
 // be taken for an object.
 func TestWatchToleratesAnExtraReadResponse(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}}
 	storage.extraBatchResponse = true
 	server, idx := repairServer(t, storage, nil)
 
@@ -1434,10 +1402,9 @@ var playlistsGroupResource = schema.GroupResource{Group: "playlist.grafana.app",
 // A type added to what the index covers is indexed on its own and recorded,
 // without rebuilding the types the index already holds.
 func TestSyncIndexesANewlyCoveredType(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50}}
 	server, idx := repairServer(t, storage, nil)
 	// Built when only dashboards were covered.
 	idx.completedTypeBuilds = map[schema.GroupResource]TypeBuild{dashboardsGroupResource: {}}
@@ -1497,10 +1464,9 @@ func TestSyncRetriesARemovalThatFailedPartWay(t *testing.T) {
 // An index reused at startup is synced at once, not at the first tick of the
 // rebuild scan.
 func TestStartupSyncsTheTypesOfAReusedGlobalIndex(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{folderType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{folderType("ns"): 50}}
 	server, idx := repairServer(t, storage, nil)
 	server.search.(*mockSearchBackend).openIndexes = []NamespacedResource{GlobalSearchKey("ns")}
 	// Written when only dashboards were covered.
@@ -1576,10 +1542,9 @@ func TestRebuildRequestsCombineReconcile(t *testing.T) {
 // A reconcile runs through rebuildIndex, so it never overlaps a rebuild of
 // the same index, and repairs every covered type.
 func TestRebuildWorkerReconcilesTheGlobalIndex(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}, folderType("ns"): {"folder-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50, folderType("ns"): 50}}
 	// Missing folder-a, and still holding a dashboard deleted since.
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 50}, {Name: "dash-gone", RV: 40}},
@@ -1667,10 +1632,9 @@ func TestFailedReconcileIsNotRecorded(t *testing.T) {
 
 // Every reconcile is timed under its result, and reports what it repaired.
 func TestReconcileIsTimedByResult(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-new", "dash-broken"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	storage.broken = map[string]bool{"dash-broken": true}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-gone", RV: 40}},
@@ -1696,9 +1660,8 @@ func TestReconcileIsTimedByResult(t *testing.T) {
 // The index is looked up for each batch, so once a rebuild or a reopen has
 // replaced it, notifications go to the replacement, not the old one.
 func TestWatchWritesToAReplacedIndex(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}},
-	}}
+	storage := &reconcileStorage{
+		live: map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "dash-b"}}}
 	server, old := repairServer(t, storage, nil)
 
 	server.applyWrittenKeys(t.Context(), []*resourcepb.ResourceKey{
@@ -1717,10 +1680,9 @@ func TestWatchWritesToAReplacedIndex(t *testing.T) {
 // An import can restore an object at an older version than the index holds. A
 // written key still makes the index hold what storage holds.
 func TestWatchWritesWhatAnImportRestored(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 30}}
 	storage.titles = map[string]string{"dash-a": "From the backup"}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
 		dashboardsGroupResource: {{Name: "dash-a", RV: 50}},
@@ -1763,10 +1725,9 @@ func TestReconcilesDoNotQueueAheadOfRebuilds(t *testing.T) {
 
 // The reconcile workers run queued reconciles, and stop with the server.
 func TestReconcileWorkerRunsQueuedReconciles(t *testing.T) {
-	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+	storage := &reconcileStorage{
 		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
-		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
-	}}
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50}}
 	server, idx := repairServer(t, storage, nil)
 	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
 	ctx, cancel := context.WithCancel(t.Context())

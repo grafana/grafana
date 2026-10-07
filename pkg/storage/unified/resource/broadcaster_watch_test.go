@@ -103,7 +103,7 @@ func TestWatchCacheFloors(t *testing.T) {
 
 func TestRingBufferEvictionWraparound(t *testing.T) {
 	ring := newRingBuffer[int](defaultCacheSize)
-	for i := 0; i < 4*defaultCacheSize; i++ {
+	for i := range 4 * defaultCacheSize {
 		evicted, ok := ring.add(i)
 		require.Equal(t, i >= defaultCacheSize, ok)
 		if ok {

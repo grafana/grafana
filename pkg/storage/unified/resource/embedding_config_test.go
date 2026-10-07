@@ -248,13 +248,11 @@ func TestEmbeddingConfigRegistry_SnapshotConsistentDuringReload(t *testing.T) {
 	}
 	registry := NewEmbeddingConfigRegistry([]*app.ManifestData{manifest(1)})
 	var writer sync.WaitGroup
-	writer.Add(1)
-	go func() {
-		defer writer.Done()
+	writer.Go(func() {
 		for revision := 2; revision < 100; revision++ {
 			registry.Reload([]*app.ManifestData{manifest(revision)})
 		}
-	}()
+	})
 	defer writer.Wait()
 	for range 100 {
 		snapshot := registry.Snapshot()

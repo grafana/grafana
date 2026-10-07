@@ -97,9 +97,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should block deletion of provisioned dashboard (classic file provisioning)",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
 			managerAnnotations: map[string]string{
@@ -112,9 +112,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should return an error if Get fails",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
 			getError:        fmt.Errorf("generic error"),
@@ -124,9 +124,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should allow deletion if dashboard is not found",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
 			getError:        apierrors.NewNotFound(schema.GroupResource{Group: "dashboard.grafana.app", Resource: "dashboards"}, "test"),
@@ -136,9 +136,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should allow deletion of non-provisioned dashboard",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
 			checkRan:        true,
@@ -147,9 +147,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should allow deletion of dashboard managed by a non-classic-FP manager",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: nil},
 			managerAnnotations: map[string]string{
@@ -162,9 +162,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should still run the check for delete if grace period is not 0",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &oneInt64},
 			checkRan:        true,
@@ -173,9 +173,9 @@ func TestDashboardAPIBuilder_Validate(t *testing.T) {
 		{
 			name: "should not run the check for delete if grace period is set to 0",
 			inputObj: &dashv1.Dashboard{
-				Spec:       common.Unstructured{},
-				TypeMeta:   metav1.TypeMeta{Kind: "Dashboard"},
-				ObjectMeta: metav1.ObjectMeta{Name: "test"},
+				Spec: common.Unstructured{},
+				Kind: "Dashboard",
+				Name: "test",
 			},
 			deletionOptions: metav1.DeleteOptions{GracePeriodSeconds: &zeroInt64},
 			checkRan:        false,
@@ -289,14 +289,10 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
 
 			panel := &dashv0.LibraryPanel{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: dashv0.LibraryPanelResourceInfo.GroupVersion().String(),
-					Kind:       dashv0.LibraryPanelResourceInfo.GroupVersionKind().Kind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "panel-a",
-					Namespace: "stacks-1",
-				},
+				APIVersion: dashv0.LibraryPanelResourceInfo.GroupVersion().String(),
+				Kind:       dashv0.LibraryPanelResourceInfo.GroupVersionKind().Kind,
+				Name:       "panel-a",
+				Namespace:  "stacks-1",
 			}
 			if tt.folderUID != "" {
 				panel.SetAnnotations(map[string]string{utils.AnnoKeyFolder: tt.folderUID})
@@ -474,11 +470,10 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	)
 	admissionPlugin := apiserverbuilder.NewAdmissionFromBuilders([]apiserverbuilder.APIGroupBuilder{dashboardBuilder})
 
-	oldPanel := &dashv0.LibraryPanel{ObjectMeta: metav1.ObjectMeta{
+	oldPanel := &dashv0.LibraryPanel{
 		Name:        "panel-a",
 		Namespace:   "stacks-1",
-		Annotations: map[string]string{utils.AnnoKeyFolder: "source-folder"},
-	}}
+		Annotations: map[string]string{utils.AnnoKeyFolder: "source-folder"}}
 	updatedPanel := oldPanel.DeepCopy()
 	updatedPanel.SetAnnotations(map[string]string{utils.AnnoKeyFolder: "destination-folder"})
 	ctx := identity.WithRequester(context.Background(), requester)

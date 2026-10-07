@@ -43,10 +43,8 @@ func TestValidateRepoForCleanup(t *testing.T) {
 		now := metav1.Now()
 		mockRepo := &repository.MockRepository{}
 		mockRepo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              "dying-repo",
-				DeletionTimestamp: &now,
-			},
+			Name:              "dying-repo",
+			DeletionTimestamp: &now,
 		})
 		require.NoError(t, ValidateRepoForCleanup(mockRepo))
 	})
@@ -54,7 +52,7 @@ func TestValidateRepoForCleanup(t *testing.T) {
 	t.Run("healthy repo — rejected", func(t *testing.T) {
 		mockRepo := &repository.MockRepository{}
 		mockRepo.On("Config").Return(&provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "healthy-repo"},
+			Name: "healthy-repo",
 		})
 		err := ValidateRepoForCleanup(mockRepo)
 		require.Error(t, err)

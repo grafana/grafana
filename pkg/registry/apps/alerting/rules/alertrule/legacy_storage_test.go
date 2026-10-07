@@ -106,12 +106,10 @@ func TestCreate_QualityPolicyRejection(t *testing.T) {
 	ctx = identity.WithRequester(ctx, &user.SignedInUser{OrgID: 1, UserUID: "test-user"})
 
 	rule := &model.AlertRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "no-summary-rule",
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder-uid",
-			},
+		Name:      "no-summary-rule",
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder-uid",
 		},
 		Spec: model.AlertRuleSpec{
 			Title:        "no-summary-rule",

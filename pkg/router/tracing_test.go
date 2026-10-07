@@ -240,12 +240,12 @@ func TestDiscoveryBackendTracing(t *testing.T) {
 						return
 					}
 					require.Equal(t, "/apis/"+group+"/v1", req.URL.Path)
-					require.NoError(t, json.NewEncoder(w).Encode(metav1.APIResourceList{TypeMeta: metav1.TypeMeta{Kind: "APIResourceList"}}))
+					require.NoError(t, json.NewEncoder(w).Encode(metav1.APIResourceList{Kind: "APIResourceList"}))
 				default:
 					require.Equal(t, "/apis", req.URL.Path)
 					require.NoError(t, json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
-						TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
-						Items:    []apidiscoveryv2.APIGroupDiscovery{{ObjectMeta: metav1.ObjectMeta{Name: group}}},
+						Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2",
+						Items: []apidiscoveryv2.APIGroupDiscovery{{Name: group}},
 					}))
 				}
 			}))

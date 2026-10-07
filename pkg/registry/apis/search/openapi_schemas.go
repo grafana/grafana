@@ -77,7 +77,7 @@ func jsonContent(goName string, example any) map[string]*spec3.MediaType {
 		"application/json": {
 			MediaTypeProps: spec3.MediaTypeProps{
 				Schema: &spec.Schema{
-					SchemaProps: spec.SchemaProps{Ref: schemaRef(goName)},
+					Ref: schemaRef(goName),
 				},
 				Example: example,
 			},

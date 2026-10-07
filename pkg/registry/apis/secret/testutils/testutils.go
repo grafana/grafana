@@ -9,7 +9,6 @@ import (
 	"github.com/madflojo/testcerts"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -231,10 +230,8 @@ func CreateSvWithSv(sv *secretv1beta1.SecureValue) func(*CreateSvConfig) {
 func (s *Sut) CreateSv(ctx context.Context, opts ...func(*CreateSvConfig)) (*secretv1beta1.SecureValue, error) {
 	cfg := CreateSvConfig{
 		Sv: &secretv1beta1.SecureValue{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sv1",
-				Namespace: "ns1",
-			},
+			Name:      "sv1",
+			Namespace: "ns1",
 			Spec: secretv1beta1.SecureValueSpec{
 				Description: "desc1",
 				Value:       new(secretv1beta1.NewExposedSecureValue("v1")),
@@ -296,10 +293,8 @@ func (s *Sut) CreateAWSKeeper(ctx context.Context) (*secretv1beta1.Keeper, error
 func (s *Sut) CreateKeeper(ctx context.Context, opts ...func(*CreateKeeperConfig)) (*secretv1beta1.Keeper, error) {
 	cfg := CreateKeeperConfig{
 		Keeper: &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sv1",
-				Namespace: "ns1",
-			},
+			Name:      "sv1",
+			Namespace: "ns1",
 			Spec: secretv1beta1.KeeperSpec{
 				Aws: &secretv1beta1.KeeperAWSConfig{},
 			},

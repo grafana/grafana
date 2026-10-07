@@ -170,11 +170,9 @@ func newServer(cfg *setting.Cfg, openfga OpenFGAServer, store storage.OpenFGADat
 				namespaceProvider := clientauth.NewStaticNamespaceProvider(clientauth.WildcardNamespace)
 
 				standaloneRestConfig := &clientrest.Config{
-					Host:    url,
-					APIPath: "/apis",
-					TLSClientConfig: clientrest.TLSClientConfig{
-						Insecure: cfg.ZanzanaReconciler.TLSInsecure,
-					},
+					Host:     url,
+					APIPath:  "/apis",
+					Insecure: cfg.ZanzanaReconciler.TLSInsecure,
 					WrapTransport: clientauth.NewTokenExchangeTransportWrapper(
 						tokenExchangeClient,
 						audienceProvider,

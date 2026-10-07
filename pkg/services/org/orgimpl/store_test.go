@@ -245,15 +245,13 @@ func TestIntegrationOrgDataAccess(t *testing.T) {
 		_, err := orgStore.Insert(context.Background(), ac2)
 		require.NoError(t, err)
 		err = orgStore.UpdateAddress(context.Background(), &org.UpdateOrgAddressCommand{
-			OrgID: ac2.ID,
-			Address: org.Address{
-				Address1: "address1",
-				Address2: "address2",
-				City:     "city",
-				ZipCode:  "zip",
-				State:    "state",
-				Country:  "country",
-			},
+			OrgID:    ac2.ID,
+			Address1: "address1",
+			Address2: "address2",
+			City:     "city",
+			ZipCode:  "zip",
+			State:    "state",
+			Country:  "country",
 		})
 		require.NoError(t, err)
 		orga, err := orgStore.Get(context.Background(), ac2.ID)

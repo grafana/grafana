@@ -100,7 +100,7 @@ func TestWorker_Process(t *testing.T) {
 	w := NewWorker(lister, clientFactory, 1)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,
 			Repository: "my-repo",
@@ -137,7 +137,7 @@ func TestWorker_Process_EmptyResourceList(t *testing.T) {
 	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,
 			Repository: "my-repo",
@@ -160,7 +160,7 @@ func TestWorker_Process_ListError(t *testing.T) {
 	w := NewWorker(lister, nil, 1)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,
 			Repository: "gone-repo",
@@ -181,11 +181,11 @@ func TestWorker_Process_HealthyRepoRejected(t *testing.T) {
 
 	mockRepo := &repository.MockRepository{}
 	mockRepo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "healthy-repo"},
+		Name: "healthy-repo",
 	})
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,
 			Repository: "healthy-repo",
@@ -211,7 +211,7 @@ func TestWorker_Process_NotFoundResourceSkipped(t *testing.T) {
 	w := NewWorker(lister, clientFactory, 1)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+		Namespace: "default",
 		Spec: provisioning.JobSpec{
 			Action:     provisioning.JobActionReleaseResources,
 			Repository: "my-repo",

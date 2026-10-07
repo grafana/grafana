@@ -25,9 +25,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check health when generation differs from observed",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 2,
-				},
+				Generation: 2,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 				},
@@ -37,9 +35,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check health when never checked before",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -52,9 +48,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check health when healthy check is stale (>5 min)",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -68,9 +62,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check health when unhealthy check is stale (>1 min)",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -84,9 +76,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should not check health when healthy check is recent (<5 min)",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -100,9 +90,7 @@ func TestConnectionHealthChecker_ShouldCheckHealth(t *testing.T) {
 		{
 			name: "should not check health when unhealthy check is recent (<1 min)",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -441,10 +429,8 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		{
 			name: "successful health check with status change",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: false,
@@ -463,10 +449,8 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		{
 			name: "failed health check - authentication failed",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: true,
@@ -488,10 +472,8 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		{
 			name: "failed health check - service unavailable",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: true,
@@ -513,11 +495,9 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		{
 			name: "no status change - no patches",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					Health: provisioning.HealthStatus{
 						Healthy: true,
@@ -545,10 +525,8 @@ func TestConnectionHealthChecker_RefreshHealthWithPatchOps(t *testing.T) {
 		{
 			name: "test connection error",
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 			},
 			testError:   errors.New("test failed"),
 			expectError: true,

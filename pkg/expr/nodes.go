@@ -141,10 +141,8 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 	}
 
 	node := &CMDNode{
-		baseNode: baseNode{
-			id:    rn.idx,
-			refID: rn.RefID,
-		},
+		id:      rn.idx,
+		refID:   rn.RefID,
 		CMDType: commandType,
 	}
 
@@ -219,10 +217,8 @@ func (s *Service) buildDSNode(_ *simple.DirectedGraph, rn *rawNode, req *Request
 	}
 
 	dsNode := &DSNode{
-		baseNode: baseNode{
-			id:    rn.idx,
-			refID: rn.RefID,
-		},
+		id:         rn.idx,
+		refID:      rn.RefID,
 		orgID:      req.OrgId,
 		query:      json.RawMessage(encodedQuery),
 		queryType:  rn.QueryType,

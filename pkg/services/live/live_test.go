@@ -476,9 +476,7 @@ func createToken(t *testing.T, exp *time.Time) string {
 	claims := struct {
 		jwt.Claims
 	}{
-		Claims: jwt.Claims{
-			Subject: "test-user",
-		},
+		Subject: "test-user",
 	}
 
 	if exp != nil {

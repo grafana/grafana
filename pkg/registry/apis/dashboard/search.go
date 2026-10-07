@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
@@ -74,206 +73,170 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 				Path: "search",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Search"},
-							OperationId: "searchDashboardsAndFolders",
-							Description: "Dashboard search",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "query",
-										In:          "query",
-										Description: "user query string",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "type",
-										In:          "query",
-										Description: "search dashboards or folders.  When empty, this will search both",
-										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("folder", "dashboard"),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "folder",
-										In:          "query",
-										Description: "search/list within a folder (not recursive)",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "facet",
-										In:          "query",
-										Description: "count distinct terms for selected fields",
-										Required:    false,
-										Schema:      spec.ArrayProperty(spec.StringProperty()),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "facetLimit",
-										In:          "query",
-										Description: "maximum number of terms to return per facet (default 50, max 1000)",
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "tags",
-										In:          "query",
-										Description: "tag query filter",
-										Required:    false,
-										Schema:      spec.ArrayProperty(spec.StringProperty()),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "libraryPanel",
-										In:          "query",
-										Description: "find dashboards that reference a given libraryPanel",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "panelType",
-										In:          "query",
-										Description: "find dashboards using panels of a given plugin type",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "dataSourceType",
-										In:          "query",
-										Description: "find dashboards using datasources of a given plugin type",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "permission",
-										In:          "query",
-										Description: "permission needed for the resource (view, edit, admin)",
-										Required:    false,
-										Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "sort",
-										In:          "query",
-										Description: "sortable field",
-										Example:     "", // not sorted
-										Examples: map[string]*spec3.Example{
-											"": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "default sorting",
-													Value:   "",
-												},
-											},
-											"title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title ascending",
-													Value:   "title",
-												},
-											},
-											"-title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title descending",
-													Value:   "-title",
-												},
-											},
+						Tags:        []string{"Search"},
+						OperationId: "searchDashboardsAndFolders",
+						Description: "Dashboard search",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "query",
+								In:          "query",
+								Description: "user query string",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "type",
+								In:          "query",
+								Description: "search dashboards or folders.  When empty, this will search both",
+								Required:    false,
+								Schema:      spec.StringProperty().WithEnum("folder", "dashboard"),
+							},
+							{
+								Name:        "folder",
+								In:          "query",
+								Description: "search/list within a folder (not recursive)",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "facet",
+								In:          "query",
+								Description: "count distinct terms for selected fields",
+								Required:    false,
+								Schema:      spec.ArrayProperty(spec.StringProperty()),
+							},
+							{
+								Name:        "facetLimit",
+								In:          "query",
+								Description: "maximum number of terms to return per facet (default 50, max 1000)",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "tags",
+								In:          "query",
+								Description: "tag query filter",
+								Required:    false,
+								Schema:      spec.ArrayProperty(spec.StringProperty()),
+							},
+							{
+								Name:        "libraryPanel",
+								In:          "query",
+								Description: "find dashboards that reference a given libraryPanel",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "panelType",
+								In:          "query",
+								Description: "find dashboards using panels of a given plugin type",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "dataSourceType",
+								In:          "query",
+								Description: "find dashboards using datasources of a given plugin type",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "permission",
+								In:          "query",
+								Description: "permission needed for the resource (view, edit, admin)",
+								Required:    false,
+								Schema:      spec.StringProperty().WithEnum("view", "edit", "admin"),
+							},
+							{
+								Name:        "sort",
+								In:          "query",
+								Description: "sortable field",
+								Example:     "", // not sorted
+								Examples: map[string]*spec3.Example{
+									"": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "default sorting",
+											Value:   "",
 										},
-										Required: false,
-										Schema:   spec.StringProperty(),
 									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "limit",
-										In:          "query",
-										Description: "number of results to return",
-										Required:    false,
-										Schema:      spec.Int64Property(),
+									"title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title ascending",
+											Value:   "title",
+										},
 									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "ownerReference", // singular
-										In:          "query",
-										Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
-										Required:    false,
-										Schema:      spec.ArrayProperty(spec.StringProperty()),
-										Examples: map[string]*spec3.Example{
-											"": {
-												ExampleProps: spec3.ExampleProps{},
-											},
-											"team": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "Owner references of team xyz or abc",
-													Value:   []string{"iam.grafana.app/Team/xyz", "iam.grafana.app/Team/abc"},
-												},
-											},
-											"user": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "User owner reference",
-													Value:   []string{"iam.grafana.app/User/abc"},
-												},
-											},
+									"-title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title descending",
+											Value:   "-title",
 										},
 									},
 								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "createdBy",
-										In:          "query",
-										Description: "filter by the user who created the resource (format: user:<uid>)",
-										Required:    false,
-										Schema:      spec.StringProperty(),
+								Required: false,
+								Schema:   spec.StringProperty(),
+							},
+							{
+								Name:        "limit",
+								In:          "query",
+								Description: "number of results to return",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "ownerReference", // singular
+								In:          "query",
+								Description: "filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them.",
+								Required:    false,
+								Schema:      spec.ArrayProperty(spec.StringProperty()),
+								Examples: map[string]*spec3.Example{
+									"": {
+										ExampleProps: spec3.ExampleProps{},
 									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "panelTitleSearch",
-										In:          "query",
-										Description: "[experimental] optionally include matches from panel titles",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
+									"team": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "Owner references of team xyz or abc",
+											Value:   []string{"iam.grafana.app/Team/xyz", "iam.grafana.app/Team/abc"},
+										},
+									},
+									"user": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "User owner reference",
+											Value:   []string{"iam.grafana.app/User/abc"},
+										},
 									},
 								},
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &searchResults,
-														},
-													},
+							{
+								Name:        "createdBy",
+								In:          "query",
+								Description: "filter by the user who created the resource (format: user:<uid>)",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "panelTitleSearch",
+								In:          "query",
+								Description: "[experimental] optionally include matches from panel titles",
+								Required:    false,
+								Schema:      spec.BoolProperty(),
+							},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &searchResults,
 												},
 											},
 										},
@@ -289,33 +252,27 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 				Path: "search/sortable",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Search"},
-							OperationId: "getSortableFields",
-							Description: "Get sortable fields",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						Tags:        []string{"Search"},
+						OperationId: "getSortableFields",
+						Description: "Get sortable fields",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &sortableFields,
-														},
-													},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &sortableFields,
 												},
 											},
 										},
@@ -338,60 +295,48 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			Path: "search/vector",
 			Spec: &spec3.PathProps{
 				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "vectorSearchDashboards",
-						Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "natural language query string",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
-							},
+					Tags:        []string{"Search"},
+					OperationId: "vectorSearchDashboards",
+					Description: "Semantic (vector) search for dashboards, ranked by meaning rather than keyword match",
+					Parameters: []*spec3.Parameter{
+						{
+							Name:        "namespace",
+							In:          "path",
+							Required:    true,
+							Example:     "default",
+							Description: "workspace",
+							Schema:      spec.StringProperty(),
 						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
+						{
+							Name:        "query",
+							In:          "query",
+							Description: "natural language query string",
+							Required:    true,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "folder",
+							In:          "query",
+							Description: "restrict results to a folder (not recursive)",
+							Required:    false,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "limit",
+							In:          "query",
+							Description: "maximum number of results to return (default 50, max 200)",
+							Required:    false,
+							Schema:      spec.Int64Property(),
+						},
+					},
+					Responses: &spec3.Responses{
+						StatusCodeResponses: map[int]*spec3.Response{
+							200: {
+								ResponseProps: spec3.ResponseProps{
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema: &searchResults,
 											},
 										},
 									},
@@ -408,87 +353,69 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 			Path: "search/hybrid",
 			Spec: &spec3.PathProps{
 				Get: &spec3.Operation{
-					OperationProps: spec3.OperationProps{
-						Tags:        []string{"Search"},
-						OperationId: "hybridSearchDashboards",
-						Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
-						Parameters: []*spec3.Parameter{
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "namespace",
-									In:          "path",
-									Required:    true,
-									Example:     "default",
-									Description: "workspace",
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "query",
-									In:          "query",
-									Description: "query string, used for both search legs",
-									Required:    true,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "semanticQuery",
-									In:          "query",
-									Description: "optional richer phrasing embedded for the semantic leg instead of query",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "folder",
-									In:          "query",
-									Description: "restrict results to a folder (not recursive)",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "limit",
-									In:          "query",
-									Description: "maximum number of results to return (default 50, max 200)",
-									Required:    false,
-									Schema:      spec.Int64Property(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "minRelevance",
-									In:          "query",
-									Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
-									Required:    false,
-									Schema:      spec.StringProperty(),
-								},
-							},
-							{
-								ParameterProps: spec3.ParameterProps{
-									Name:        "skipRerank",
-									In:          "query",
-									Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
-									Required:    false,
-									Schema:      spec.BooleanProperty(),
-								},
-							},
+					Tags:        []string{"Search"},
+					OperationId: "hybridSearchDashboards",
+					Description: "Hybrid search for dashboards: lexical and semantic legs fused server-side. Top-k contract; scores are opaque (higher = better) and results are one row per dashboard",
+					Parameters: []*spec3.Parameter{
+						{
+							Name:        "namespace",
+							In:          "path",
+							Required:    true,
+							Example:     "default",
+							Description: "workspace",
+							Schema:      spec.StringProperty(),
 						},
-						Responses: &spec3.Responses{
-							ResponsesProps: spec3.ResponsesProps{
-								StatusCodeResponses: map[int]*spec3.Response{
-									200: {
-										ResponseProps: spec3.ResponseProps{
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
+						{
+							Name:        "query",
+							In:          "query",
+							Description: "query string, used for both search legs",
+							Required:    true,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "semanticQuery",
+							In:          "query",
+							Description: "optional richer phrasing embedded for the semantic leg instead of query",
+							Required:    false,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "folder",
+							In:          "query",
+							Description: "restrict results to a folder (not recursive)",
+							Required:    false,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "limit",
+							In:          "query",
+							Description: "maximum number of results to return (default 50, max 200)",
+							Required:    false,
+							Schema:      spec.Int64Property(),
+						},
+						{
+							Name:        "minRelevance",
+							In:          "query",
+							Description: "minimum reranker relevance a result must reach: lowest, low, medium, high, or highest. Empty keeps every result. Best-effort: ignored when the backend has no reranker configured. Cannot be combined with skipRerank",
+							Required:    false,
+							Schema:      spec.StringProperty(),
+						},
+						{
+							Name:        "skipRerank",
+							In:          "query",
+							Description: "skip the reranking stage and return RRF-fused ordering directly, trading result quality for latency",
+							Required:    false,
+							Schema:      spec.BooleanProperty(),
+						},
+					},
+					Responses: &spec3.Responses{
+						StatusCodeResponses: map[int]*spec3.Response{
+							200: {
+								ResponseProps: spec3.ResponseProps{
+									Content: map[string]*spec3.MediaType{
+										"application/json": {
+											MediaTypeProps: spec3.MediaTypeProps{
+												Schema: &searchResults,
 											},
 										},
 									},
@@ -507,10 +434,8 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 
 func (s *SearchHandler) DoSortable(w http.ResponseWriter, r *http.Request) {
 	sortable := &dashboardv0alpha1.SortableFields{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: dashboardv0alpha1.APIVERSION,
-			Kind:       "SortableFields",
-		},
+		APIVersion: dashboardv0alpha1.APIVERSION,
+		Kind:       "SortableFields",
 		Fields: []dashboardv0alpha1.SortableField{
 			{Field: "title", Display: "Title (A-Z)", Type: "string"},
 			{Field: "-title", Display: "Title (Z-A)", Type: "string"},

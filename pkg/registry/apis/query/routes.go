@@ -17,35 +17,27 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 			{Path: "query",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Query"},
-							OperationId: "queryDatasources",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						Tags:        []string{"Query"},
+						OperationId: "queryDatasources",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{
-																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"),
-																},
-															},
-														},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														Ref: spec.MustCreateRef("#/components/schemas/com.github.grafana.grafana.pkg.apis.datasource.v0alpha1.QueryDataResponse"),
 													},
 												},
 											},
@@ -62,33 +54,27 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 				Path: "query/sqlschemas",
 				Spec: &spec3.PathProps{
 					Post: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Query"},
-							OperationId: "querySQLSchemas",
-							Description: "Send the same request you would send to /query, and get a schema that will represent the response",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
+						Tags:        []string{"Query"},
+						OperationId: "querySQLSchemas",
+						Description: "Send the same request you would send to /query, and get a schema that will represent the response",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &sqlSchemas,
-														},
-													},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &sqlSchemas,
 												},
 											},
 										},
@@ -108,58 +94,46 @@ func (b *QueryAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 		Path: "connections",
 		Spec: &spec3.PathProps{
 			Get: &spec3.Operation{
-				OperationProps: spec3.OperationProps{
-					Tags:        []string{"Connections"},
-					OperationId: "listDataSourceConnections",
-					Description: "List data source connections across all types",
-					Parameters: []*spec3.Parameter{
-						{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "namespace",
-								In:          "path",
-								Required:    true,
-								Example:     "default",
-								Description: "workspace",
-								Schema:      spec.StringProperty(),
-							},
-						},
-						{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "name",
-								In:          "query",
-								Description: "datasource name (UID in legacy grafana APIs)",
-								Required:    false,
-								Schema:      spec.StringProperty(),
-							},
-						},
-						{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "limit",
-								In:          "query",
-								Description: "Maximum number of connections to return; zero means no limit (server side maximum applies)",
-								Schema:      spec.Int64Property(),
-							},
-						},
-						{
-							ParameterProps: spec3.ParameterProps{
-								Name:        "continue",
-								In:          "query",
-								Description: "Continuation token from the previous page",
-								Schema:      spec.StringProperty(),
-							},
-						},
+				Tags:        []string{"Connections"},
+				OperationId: "listDataSourceConnections",
+				Description: "List data source connections across all types",
+				Parameters: []*spec3.Parameter{
+					{
+						Name:        "namespace",
+						In:          "path",
+						Required:    true,
+						Example:     "default",
+						Description: "workspace",
+						Schema:      spec.StringProperty(),
 					},
-					Responses: &spec3.Responses{
-						ResponsesProps: spec3.ResponsesProps{
-							StatusCodeResponses: map[int]*spec3.Response{
-								200: {
-									ResponseProps: spec3.ResponseProps{
-										Content: map[string]*spec3.MediaType{
-											"application/json": {
-												MediaTypeProps: spec3.MediaTypeProps{
-													Schema: &searchResults,
-												},
-											},
+					{
+						Name:        "name",
+						In:          "query",
+						Description: "datasource name (UID in legacy grafana APIs)",
+						Required:    false,
+						Schema:      spec.StringProperty(),
+					},
+					{
+						Name:        "limit",
+						In:          "query",
+						Description: "Maximum number of connections to return; zero means no limit (server side maximum applies)",
+						Schema:      spec.Int64Property(),
+					},
+					{
+						Name:        "continue",
+						In:          "query",
+						Description: "Continuation token from the previous page",
+						Schema:      spec.StringProperty(),
+					},
+				},
+				Responses: &spec3.Responses{
+					StatusCodeResponses: map[int]*spec3.Response{
+						200: {
+							ResponseProps: spec3.ResponseProps{
+								Content: map[string]*spec3.MediaType{
+									"application/json": {
+										MediaTypeProps: spec3.MediaTypeProps{
+											Schema: &searchResults,
 										},
 									},
 								},

@@ -66,14 +66,12 @@ func (e DatasourcePermissionsService) SetPermissions(ctx context.Context, orgID 
 		actions := DatasourceQueryActions
 
 		dbCommands = append(dbCommands, resourcepermissions.SetResourcePermissionsCommand{
-			BuiltinRole: cmd.BuiltinRole,
-			SetResourcePermissionCommand: resourcepermissions.SetResourcePermissionCommand{
-				Actions:           actions,
-				Resource:          datasources.ScopeRoot,
-				ResourceID:        resourceID,
-				ResourceAttribute: "uid",
-				Permission:        cmd.Permission,
-			},
+			BuiltinRole:       cmd.BuiltinRole,
+			Actions:           actions,
+			Resource:          datasources.ScopeRoot,
+			ResourceID:        resourceID,
+			ResourceAttribute: "uid",
+			Permission:        cmd.Permission,
 		})
 	}
 

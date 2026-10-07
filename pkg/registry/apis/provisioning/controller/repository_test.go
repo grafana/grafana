@@ -197,9 +197,7 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			client:        nil,
 			statusPatcher: nil,
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{},
-				},
+				Finalizers: []string{},
 			},
 		},
 		{
@@ -230,10 +228,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			}(),
 			statusPatcher: nil,
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{
-						repository.CleanFinalizer,
-					},
+				Finalizers: []string{
+					repository.CleanFinalizer,
 				},
 			},
 		},
@@ -261,10 +257,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 			}(),
 			client: nil,
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{
-						repository.CleanFinalizer,
-					},
+				Finalizers: []string{
+					repository.CleanFinalizer,
 				},
 			},
 			expectedErr: "process finalizers: " + assert.AnError.Error(),
@@ -306,10 +300,8 @@ func TestRepositoryController_handleDelete(t *testing.T) {
 				return s
 			}(),
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Finalizers: []string{
-						repository.CleanFinalizer,
-					},
+				Finalizers: []string{
+					repository.CleanFinalizer,
 				},
 			},
 			expectedErr: "remove finalizers: " + assert.AnError.Error(),
@@ -372,9 +364,7 @@ func TestRepositoryController_handleDelete_RetriesOnConflict(t *testing.T) {
 	}
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.CleanFinalizer},
-		},
+		Finalizers: []string{repository.CleanFinalizer},
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.NoError(t, err)
@@ -426,9 +416,7 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	}
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Finalizers: []string{repository.CleanFinalizer},
-		},
+		Finalizers: []string{repository.CleanFinalizer},
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.Error(t, err)
@@ -466,10 +454,8 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 
 	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			DeletionTimestamp: &deletion,
-			Finalizers:        []string{repository.CleanFinalizer},
-		},
+		DeletionTimestamp: &deletion,
+		Finalizers:        []string{repository.CleanFinalizer},
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.NoError(t, err)
@@ -541,11 +527,9 @@ func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(
 			}
 			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					DeletionTimestamp: &deletion,
-					Finalizers:        []string{repository.CleanFinalizer},
-				},
-				Status: tc.status,
+				DeletionTimestamp: &deletion,
+				Finalizers:        []string{repository.CleanFinalizer},
+				Status:            tc.status,
 			}
 			require.NoError(t, c.handleDelete(context.Background(), repo))
 			family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
@@ -594,10 +578,8 @@ func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testi
 			}
 			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					DeletionTimestamp: &deletion,
-					Finalizers:        []string{repository.CleanFinalizer},
-				},
+				DeletionTimestamp: &deletion,
+				Finalizers:        []string{repository.CleanFinalizer},
 			}
 
 			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
@@ -632,9 +614,7 @@ func TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount(t *testin
 
 	deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			DeletionTimestamp: &deletion,
-		},
+		DeletionTimestamp: &deletion,
 	}
 	err := c.handleDelete(context.Background(), repo)
 	require.NoError(t, err)
@@ -913,11 +893,9 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 		{
 			name: "unhealthy repository should set unhealthy message in sync status",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-repo",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-repo",
+				Namespace:  "default",
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -950,11 +928,9 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 		{
 			name: "unhealthy repository should not duplicate unhealthy message",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-repo",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-repo",
+				Namespace:  "default",
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -987,11 +963,9 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 		{
 			name: "healthy repository should clear unhealthy message",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-repo",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-repo",
+				Namespace:  "default",
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1067,10 +1041,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "stale sync status with Pending state - job not found",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1093,10 +1065,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "stale sync status with Working state - job not found",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1119,10 +1089,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "non-stale sync status - job exists",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1145,10 +1113,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "non-stale sync status - no JobID",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1171,10 +1137,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "non-stale sync status - already finished",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1196,10 +1160,8 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 		{
 			name: "stale sync status - job lookup error (non-NotFound)",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Sync: provisioning.SyncOptions{
 						Enabled:         true,
@@ -1285,8 +1247,8 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			quotaMetrics: registerRepositoryQuotaMetrics(reg),
 		}
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
-			Status:     provisioning.RepositoryStatus{ObservedGeneration: 0},
+			Namespace: "default", Name: "repo",
+			Status: provisioning.RepositoryStatus{ObservedGeneration: 0},
 		}
 
 		status, err := rc.resolveQuotaStatus(context.Background(), repo)
@@ -1308,7 +1270,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		}
 		updatedAt := time.Now().Add(-time.Minute).UnixMilli()
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Namespace: "default", Name: "repo",
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.QuotaStatus{
@@ -1339,7 +1301,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 		}
 		updatedAt := time.Now().Add(-5 * time.Minute).UnixMilli()
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Namespace: "default", Name: "repo",
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.QuotaStatus{
@@ -1381,7 +1343,7 @@ func TestRepositoryController_resolveQuotaStatus(t *testing.T) {
 			quotaMetrics: registerRepositoryQuotaMetrics(reg),
 		}
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "repo"},
+			Namespace: "default", Name: "repo",
 			Status: provisioning.RepositoryStatus{
 				ObservedGeneration: 1,
 				Quota: provisioning.QuotaStatus{
@@ -1477,11 +1439,9 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 
 	newRepo := func(url string) *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:       repoName,
-				Namespace:  namespace,
-				Generation: 1,
-			},
+			Name:       repoName,
+			Namespace:  namespace,
+			Generation: 1,
 			Spec: provisioning.RepositorySpec{
 				Type:   provisioning.GitLabRepositoryType,
 				GitLab: &provisioning.GitLabRepositoryConfig{URL: url},
@@ -1632,11 +1592,9 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 			quotaMetrics := registerRepositoryQuotaMetrics(reg)
 
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       repoName,
-					Namespace:  namespace,
-					Generation: 1,
-				},
+				Name:       repoName,
+				Namespace:  namespace,
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.LocalRepositoryType,
 					Sync: provisioning.SyncOptions{
@@ -1754,13 +1712,11 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 	now := metav1.Now()
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-repo",
-			Namespace:         "default",
-			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.CleanFinalizer},
-		},
-		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Name:              "test-repo",
+		Namespace:         "default",
+		DeletionTimestamp: &now,
+		Finalizers:        []string{repository.CleanFinalizer},
+		Spec:              provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
 
 	mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -1821,13 +1777,11 @@ func TestRepositoryController_process_UserCausedDeleteFailure(t *testing.T) {
 func TestRepositoryController_process_NonUserCausedDeleteFailureSurfacedOnStatus(t *testing.T) {
 	now := metav1.Now()
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-repo",
-			Namespace:         "default",
-			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.CleanFinalizer},
-		},
-		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Name:              "test-repo",
+		Namespace:         "default",
+		DeletionTimestamp: &now,
+		Finalizers:        []string{repository.CleanFinalizer},
+		Spec:              provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
 
 	mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -1914,13 +1868,11 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			now := metav1.Now()
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "test-repo",
-					Namespace:         "default",
-					DeletionTimestamp: &now,
-					Finalizers:        []string{repository.CleanFinalizer},
-				},
-				Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+				Name:              "test-repo",
+				Namespace:         "default",
+				DeletionTimestamp: &now,
+				Finalizers:        []string{repository.CleanFinalizer},
+				Spec:              provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 			}
 
 			mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -1964,13 +1916,11 @@ func TestRepositoryController_process_DeleteStatusPatchFailure(t *testing.T) {
 func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing.T) {
 	now := metav1.Now()
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "test-repo",
-			Namespace:         "default",
-			DeletionTimestamp: &now,
-			Finalizers:        []string{repository.CleanFinalizer},
-		},
-		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Name:              "test-repo",
+		Namespace:         "default",
+		DeletionTimestamp: &now,
+		Finalizers:        []string{repository.CleanFinalizer},
+		Spec:              provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
 
 	mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -2009,11 +1959,9 @@ func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing
 // re-logs it at ERROR on every pass, which spams the SLIs.
 func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-repo",
-			Namespace:  "default",
-			Generation: 2,
-		},
+		Name:       "test-repo",
+		Namespace:  "default",
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.LocalRepositoryType,
 		},
@@ -2077,8 +2025,8 @@ func TestRepositoryController_process_UserCausedBuildFailure(t *testing.T) {
 // is a complete reconciliation-error signal, not just the three swallowed paths.
 func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Name: "test-repo", Namespace: "default",
+		Spec: provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
 	}
 
 	mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -2118,9 +2066,9 @@ func TestRepositoryController_process_RecordsReconcileErrorPhase(t *testing.T) {
 // user classification, or an SLO excluding cause="user" would miss it.
 func TestRepositoryController_process_SwallowedUserErrorThenStatusFlushFailure(t *testing.T) {
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
-		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
-		Status:     provisioning.RepositoryStatus{ObservedGeneration: 1},
+		Name: "test-repo", Namespace: "default", Generation: 2,
+		Spec:   provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		Status: provisioning.RepositoryStatus{ObservedGeneration: 1},
 	}
 
 	mockNamespaceLister := &MockRepositoryNamespaceLister{}
@@ -2274,11 +2222,9 @@ func TestRepositoryController_isUserCaused(t *testing.T) {
 func TestRepositoryController_process_UnchangedHealthNotRewritten(t *testing.T) {
 	buildErr := fmt.Errorf("create gitlab client: %w", repository.ErrPermissionDenied)
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-repo",
-			Namespace:  "default",
-			Generation: 2,
-		},
+		Name:       "test-repo",
+		Namespace:  "default",
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.LocalRepositoryType,
 		},
@@ -2347,11 +2293,9 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "repo",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "repo",
+				Namespace:  "default",
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Type: provisioning.LocalRepositoryType,
 					Sync: provisioning.SyncOptions{Enabled: false},
@@ -2406,11 +2350,9 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 // produces a final /status/conditions patch containing both the quota and ready condition.
 func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       "test-repo",
-			Namespace:  "default",
-			Generation: 2,
-		},
+		Name:       "test-repo",
+		Namespace:  "default",
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.LocalRepositoryType,
 			Sync: provisioning.SyncOptions{
@@ -2542,11 +2484,9 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	lastUpdated := time.Now().Add(-1 * time.Hour)
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:       provisioning.LocalRepositoryType,
 			Sync:       provisioning.SyncOptions{Enabled: false},
@@ -2608,7 +2548,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 
 	// Client mock: Connections(namespace).Get returns the Connection object
 	connObj := &provisioning.Connection{
-		ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace},
+		Name: connName, Namespace: namespace,
 	}
 	provClient := &mockProvisioningV0alpha1Interface{
 		connectionsFunc: func(_ string) client.ConnectionInterface {
@@ -2672,7 +2612,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 
 	// A missing token makes shouldGenerateTokenFromConnection return true, so the token phase runs.
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: repoName, Namespace: namespace, Generation: 1},
+		Name: repoName, Namespace: namespace, Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:       provisioning.LocalRepositoryType,
 			Sync:       provisioning.SyncOptions{Enabled: false},
@@ -2699,7 +2639,7 @@ func TestRepositoryController_process_TokenGenerationAuthFailureIsUserCaused(t *
 	mockConnFactory := connection.NewMockFactory(t)
 	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
 
-	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	connObj := &provisioning.Connection{Name: connName, Namespace: namespace}
 	provClient := &mockProvisioningV0alpha1Interface{
 		connectionsFunc: func(_ string) client.ConnectionInterface {
 			return mockConnectionInterface{
@@ -2770,11 +2710,9 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	connName := "my-connection"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 2,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type:       provisioning.LocalRepositoryType,
 			Sync:       provisioning.SyncOptions{Enabled: false},
@@ -2816,7 +2754,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	mockConnFactory := connection.NewMockFactory(t)
 	mockConnFactory.EXPECT().Build(mock.Anything, mock.Anything).Return(mockConn, nil).Once()
 
-	connObj := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Name: connName, Namespace: namespace}}
+	connObj := &provisioning.Connection{Name: connName, Namespace: namespace}
 	provClient := &mockProvisioningV0alpha1Interface{
 		connectionsFunc: func(_ string) client.ConnectionInterface {
 			return mockConnectionInterface{
@@ -3001,7 +2939,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			reg := prometheus.NewPedanticRegistry()
 			obj := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 1},
+				Name: "test-repo", Namespace: "default", Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Type:      provisioning.GitHubRepositoryType,
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3050,7 +2988,7 @@ func TestProcessHooks_RotationOverdueCause(t *testing.T) {
 func TestProcessHooks_SkipsRedundantRotationAfterHookUpdate(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	obj := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Name: "test-repo", Namespace: "default", Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3086,7 +3024,7 @@ func TestProcessHooks_SkipsRedundantRotationAfterHookUpdate(t *testing.T) {
 func TestProcessHooks_RecordsOverdueOnHookFailure(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	obj := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default", Generation: 2},
+		Name: "test-repo", Namespace: "default", Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3218,11 +3156,9 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3303,11 +3239,9 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3388,11 +3322,9 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3474,11 +3406,9 @@ func TestRepositoryController_process_HookFailureUnauthorizedDoesNotReturnError(
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3521,11 +3451,9 @@ func TestRepositoryController_process_HookFailureNonAuthErrorStillReturnsError(t
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3609,11 +3537,9 @@ func TestRepositoryController_process_UnhealthyRepositorySkipsHooks(t *testing.T
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3667,11 +3593,9 @@ func TestRepositoryController_process_BranchProtectionFailureStillRunsHooks(t *t
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3717,11 +3641,9 @@ func TestRepositoryController_process_WritePermissionDeniedStillRunsHooks(t *tes
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3771,11 +3693,9 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -3835,7 +3755,7 @@ func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled
 	}
 
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Generation: 1},
+		Name: name, Namespace: namespace, Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			Sync: provisioning.SyncOptions{Enabled: syncEnabled, IntervalSeconds: 60},
@@ -4011,11 +3931,9 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -4092,11 +4010,9 @@ func TestRepositoryController_process_UnhealthyCleanupSkipDoesNotAdvanceObserved
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 2,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			// Workflows removed -> webhook cleanup is now due.
@@ -4147,11 +4063,9 @@ func TestRepositoryController_process_HookFailureRecoveryAfterWorkflowsRemoved(t
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 2,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			// User just removed write workflows — no webhook is required anymore.
@@ -4252,11 +4166,9 @@ func TestRepositoryController_process_UnreachableRepoDoesNotRewriteUnchangedStat
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 2,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 2,
 		Spec: provisioning.RepositorySpec{
 			Type:      provisioning.GitHubRepositoryType,
 			Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
@@ -4310,11 +4222,9 @@ func TestRepositoryController_process_HookFailureRecoveryAfterCooldownExpires(t 
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			// Webhook is still required by the spec — the recovery here is purely
@@ -4375,11 +4285,9 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 	repoName := "test-repo"
 
 	repo := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       repoName,
-			Namespace:  namespace,
-			Generation: 1,
-		},
+		Name:       repoName,
+		Namespace:  namespace,
+		Generation: 1,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			Sync: provisioning.SyncOptions{Enabled: false},
@@ -4843,7 +4751,7 @@ func TestRepositoryController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 // to what enqueued the key.
 func TestRepositoryController_RecordsProcessingByTrigger(t *testing.T) {
 	repo := func(rv string) *provisioning.Repository {
-		return &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: rv}}
+		return &provisioning.Repository{Namespace: "ns", Name: "repo", ResourceVersion: rv}
 	}
 	tests := []struct {
 		name        string
@@ -4942,15 +4850,15 @@ func TestRepositoryController_DirtyRedeliveryKeepsLiveTrigger(t *testing.T) {
 		// is in flight — the classic self-induced status update — marking it dirty.
 		if enqueuedDuringFlight.CompareAndSwap(false, true) {
 			rc.EventHandler().UpdateFunc(
-				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}},
-				&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "6"}},
+				&provisioning.Repository{Namespace: "ns", Name: "repo", ResourceVersion: "5"},
+				&provisioning.Repository{Namespace: "ns", Name: "repo", ResourceVersion: "6"},
 			)
 		}
 		return "", nil
 	}
 
 	// Initial live add (apiserver watch, full RV, non-initial).
-	rc.EventHandler().AddFunc(&provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo", ResourceVersion: "5"}}, false)
+	rc.EventHandler().AddFunc(&provisioning.Repository{Namespace: "ns", Name: "repo", ResourceVersion: "5"}, false)
 
 	ctx := context.Background()
 	require.True(t, rc.processNextWorkItem(ctx)) // first pickup: live; enqueues the dirty live update

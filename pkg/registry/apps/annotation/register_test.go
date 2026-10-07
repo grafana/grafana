@@ -32,10 +32,8 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 	t.Run("should generate name from generateName", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				GenerateName: "test-anno-",
-				Namespace:    "default",
-			},
+			GenerateName: "test-anno-",
+			Namespace:    "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation",
 				Time: 12345,
@@ -58,10 +56,8 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 	t.Run("should accept explicit name", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "my-annotation-name",
-				Namespace: "default",
-			},
+			Name:      "my-annotation-name",
+			Namespace: "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation with explicit name",
 				Time: 12345,
@@ -80,9 +76,7 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 	t.Run("should reject when both name and generateName are empty", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation",
 				Time: 12345,
@@ -97,10 +91,8 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 	t.Run("should return error when identity is not in context", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "anno-no-identity",
-				Namespace: "default",
-			},
+			Name:      "anno-no-identity",
+			Namespace: "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation",
 				Time: 12345,
@@ -113,11 +105,9 @@ func TestK8sRESTAdapter_Create(t *testing.T) {
 
 	t.Run("name takes precedence over generateName", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:         "my-special-name",
-				GenerateName: "generated-",
-				Namespace:    "default",
-			},
+			Name:         "my-special-name",
+			GenerateName: "generated-",
+			Namespace:    "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation",
 				Time: 12345,
@@ -151,10 +141,8 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	t.Run("annotations are isolated by namespace", func(t *testing.T) {
 		// Create annotation in namespace1
 		anno1 := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "anno-1",
-				Namespace: namespace1,
-			},
+			Name:      "anno-1",
+			Namespace: namespace1,
 			Spec: annotationV0.AnnotationSpec{
 				Text: "annotation in org 1",
 				Time: 12345,
@@ -165,10 +153,8 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 
 		// Create annotation in namespace2
 		anno2 := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "anno-2",
-				Namespace: namespace2,
-			},
+			Name:      "anno-2",
+			Namespace: namespace2,
 			Spec: annotationV0.AnnotationSpec{
 				Text: "annotation in org 2",
 				Time: 12346,
@@ -197,10 +183,8 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	t.Run("get fails when accessing annotation from different namespace", func(t *testing.T) {
 		// Create annotation in namespace1
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "cross-ns-test",
-				Namespace: namespace1,
-			},
+			Name:      "cross-ns-test",
+			Namespace: namespace1,
 			Spec: annotationV0.AnnotationSpec{
 				Text: "test annotation",
 				Time: 12347,
@@ -223,10 +207,8 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	t.Run("update enforces namespace consistency", func(t *testing.T) {
 		// Create annotation in namespace1
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "update-test",
-				Namespace: namespace1,
-			},
+			Name:      "update-test",
+			Namespace: namespace1,
 			Spec: annotationV0.AnnotationSpec{
 				Text: "original text",
 				Time: 12348,
@@ -256,10 +238,8 @@ func TestK8sRESTAdapter_TenantIsolation(t *testing.T) {
 	t.Run("delete is isolated by namespace", func(t *testing.T) {
 		// Create annotation in namespace1
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "delete-test",
-				Namespace: namespace1,
-			},
+			Name:      "delete-test",
+			Namespace: namespace1,
 			Spec: annotationV0.AnnotationSpec{
 				Text: "to be deleted",
 				Time: 12349,
@@ -299,10 +279,8 @@ func TestK8sRESTAdapter_UIDIsSet(t *testing.T) {
 
 	// Create an annotation
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "uid-test",
-			Namespace: "default",
-		},
+		Name:      "uid-test",
+		Namespace: "default",
 		Spec: annotationV0.AnnotationSpec{
 			Text: "test annotation",
 			Time: 12345,
@@ -343,10 +321,8 @@ func TestK8sRESTAdapter_NotFound(t *testing.T) {
 
 	t.Run("update returns k8s NotFound for nonexistent annotation", func(t *testing.T) {
 		updated := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "does-not-exist",
-				Namespace: "default",
-			},
+			Name:      "does-not-exist",
+			Namespace: "default",
 			Spec: annotationV0.AnnotationSpec{
 				Text: "updated text",
 				Time: 12345,

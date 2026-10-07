@@ -106,12 +106,11 @@ func TestExpandSchemaRefsCycle(t *testing.T) {
 			},
 		}}},
 	}
-	root := spec.Schema{SchemaProps: spec.SchemaProps{
+	root := spec.Schema{
 		Type: []string{"object"},
 		Properties: map[string]spec.Schema{
 			"node": {SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("loop.Node")}},
-		},
-	}}
+		}}
 
 	var expanded spec.Schema
 	require.NotPanics(t, func() {
@@ -130,12 +129,12 @@ func TestExpandSchemaRefsCycle(t *testing.T) {
 // every composite position has to be walked.
 func TestExpandSchemaRefsEverywhere(t *testing.T) {
 	ref := func() spec.Schema {
-		return spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("pkg.Leaf")}}
+		return spec.Schema{Ref: spec.MustCreateRef("pkg.Leaf")}
 	}
-	leaf := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"string"}}}
+	leaf := spec.Schema{Type: []string{"string"}}
 	defs := map[string]common.OpenAPIDefinition{"pkg.Leaf": {Schema: leaf}}
 
-	root := spec.Schema{SchemaProps: spec.SchemaProps{
+	root := spec.Schema{
 		Type:                 []string{"object"},
 		Properties:           map[string]spec.Schema{"prop": ref()},
 		AdditionalProperties: &spec.SchemaOrBool{Schema: new(ref())},
@@ -150,8 +149,7 @@ func TestExpandSchemaRefsEverywhere(t *testing.T) {
 		Not:   new(ref()),
 		// Definitions are never consulted by the validator, so they are dropped
 		// rather than expanded.
-		Definitions: spec.Definitions{"unused": ref()},
-	}}
+		Definitions: spec.Definitions{"unused": ref()}}
 
 	out := expandSchemaRefs(root, defs, map[string]bool{})
 
@@ -181,7 +179,7 @@ func TestExpandSchemaRefsEverywhere(t *testing.T) {
 // manifest's own descriptions of them are usually incomplete, so they are
 // dropped from the kind's schema -- without mutating the shared manifest schema.
 func TestSchemaValidatorDropsCommonFields(t *testing.T) {
-	kindSchema := spec.Schema{SchemaProps: spec.SchemaProps{
+	kindSchema := spec.Schema{
 		Type: []string{"object"},
 		Properties: map[string]spec.Schema{
 			"apiVersion": *spec.StringProperty(),
@@ -189,8 +187,7 @@ func TestSchemaValidatorDropsCommonFields(t *testing.T) {
 			"metadata":   {SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("io.k8s.ObjectMeta")}},
 			"spec":       *spec.MapProperty(nil),
 		},
-		Required: []string{"apiVersion", "kind", "metadata", "spec"},
-	}}
+		Required: []string{"apiVersion", "kind", "metadata", "spec"}}
 
 	validator := newSchemaValidator(kindSchema, nil)
 

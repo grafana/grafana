@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -567,7 +566,7 @@ func TestPerKindSearch_continueToken(t *testing.T) {
 
 	// Round-tripping the token puts the offset on the next request.
 	q := searchv0.SearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
 		Continue: token,
 	}
 	body, err := json.Marshal(q)
@@ -579,8 +578,8 @@ func TestPerKindSearch_continueToken(t *testing.T) {
 
 func projection(names ...string) string {
 	q := searchv0.SearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-		Fields:   names,
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
+		Fields: names,
 	}
 	b, err := json.Marshal(q)
 	if err != nil {

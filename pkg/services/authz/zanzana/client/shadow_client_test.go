@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
@@ -46,11 +45,9 @@ func (m *mockAccessClient) BatchCheck(ctx context.Context, id authlib.AuthInfo, 
 
 func newTestAuthInfo() authlib.AuthInfo {
 	return authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject:  authlib.NewTypeID(authlib.TypeAccessPolicy, "test-service"),
-			Audience: []string{"authzservice"},
-		},
-		Rest: authn.AccessTokenClaims{Namespace: "org-1"},
+		Subject:  authlib.NewTypeID(authlib.TypeAccessPolicy, "test-service"),
+		Audience: []string{"authzservice"},
+		Rest:     authn.AccessTokenClaims{Namespace: "org-1"},
 	})
 }
 

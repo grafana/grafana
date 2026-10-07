@@ -40,10 +40,8 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 	require.NotNil(t, nsClient)
 
 	sv := &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-sv",
-			Namespace: ns,
-		},
+		Name:      "test-sv",
+		Namespace: ns,
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "test-description",
 			Value:       new(secretv1beta1.NewExposedSecureValue("test-value")),
@@ -75,10 +73,8 @@ func TestIntegration_SecureValueClient_CRUD(t *testing.T) {
 
 	// Update
 	updatedSv := &secretv1beta1.SecureValue{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      createdSv.Name,
-			Namespace: createdSv.Namespace,
-		},
+		Name:      createdSv.Name,
+		Namespace: createdSv.Namespace,
 		Spec: secretv1beta1.SecureValueSpec{
 			Description: "test-description-updated",
 			Value:       new(secretv1beta1.NewExposedSecureValue("test-value-updated")),
@@ -149,10 +145,8 @@ func Test_SecureValueClient_CRUD_NoPermissions(t *testing.T) {
 			require.NotNil(t, nsClient)
 
 			sv := &secretv1beta1.SecureValue{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-sv",
-					Namespace: ns,
-				},
+				Name:      "test-sv",
+				Namespace: ns,
 			}
 
 			unstructured, err := toUnstructured(sv)

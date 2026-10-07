@@ -81,8 +81,8 @@ func testProvider() resource.SearchFieldsProvider {
 
 func searchQuery(where *searchv0.WhereNode) *searchv0.SearchQuery {
 	return &searchv0.SearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
-		Where:    where,
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
+		Where: where,
 	}
 }
 
@@ -503,8 +503,8 @@ func TestTranslateSearchQuery_ValidationErrors(t *testing.T) {
 
 func trashQuery(where *searchv0.WhereNode) *searchv0.TrashQuery {
 	return &searchv0.TrashQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery},
-		Where:    where,
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindTrashQuery,
+		Where: where,
 	}
 }
 

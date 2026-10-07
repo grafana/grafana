@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -330,7 +329,7 @@ func Test_KeeperMetadataStorage_SetAsActive(t *testing.T) {
 	keeperMetadataStorage := initStorage(t)
 
 	k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-		ObjectMeta: v1.ObjectMeta{Namespace: "ns1", Name: "k1"},
+		Namespace: "ns1", Name: "k1",
 		Spec: secretv1beta1.KeeperSpec{
 			Description: "description",
 			Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -339,7 +338,7 @@ func Test_KeeperMetadataStorage_SetAsActive(t *testing.T) {
 	require.NoError(t, err)
 
 	k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-		ObjectMeta: v1.ObjectMeta{Namespace: "ns1", Name: "k2"},
+		Namespace: "ns1", Name: "k2",
 		Spec: secretv1beta1.KeeperSpec{
 			Description: "description",
 			Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -364,7 +363,7 @@ func TestList(t *testing.T) {
 		namespace := "ns1"
 
 		k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k1"},
+			Namespace: namespace, Name: "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -373,7 +372,7 @@ func TestList(t *testing.T) {
 		require.NoError(t, err)
 
 		k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k2"},
+			Namespace: namespace, Name: "k2",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -404,7 +403,7 @@ func TestRead(t *testing.T) {
 		namespace := "ns1"
 
 		k1, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k1"},
+			Namespace: namespace, Name: "k1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},
@@ -413,7 +412,7 @@ func TestRead(t *testing.T) {
 		require.NoError(t, err)
 
 		k2, err := keeperMetadataStorage.Create(t.Context(), &secretv1beta1.Keeper{
-			ObjectMeta: v1.ObjectMeta{Namespace: namespace, Name: "k2"},
+			Namespace: namespace, Name: "k2",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws:         &secretv1beta1.KeeperAWSConfig{},

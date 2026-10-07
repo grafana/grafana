@@ -140,10 +140,8 @@ func TestRepositoryQuotaConditions(t *testing.T) {
 			repos := make([]*provisioning.Repository, tt.repoCount)
 			for i := range tt.repoCount {
 				repos[i] = &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("repo-%d", i),
-						Namespace: tt.namespace,
-					},
+					Name:      fmt.Sprintf("repo-%d", i),
+					Namespace: tt.namespace,
 				}
 			}
 
@@ -241,10 +239,8 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			repos := make([]*provisioning.Repository, 0, tt.activeRepos+tt.deletingRepos)
 			for i := range tt.activeRepos {
 				repos = append(repos, &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      fmt.Sprintf("active-repo-%d", i),
-						Namespace: namespace,
-					},
+					Name:      fmt.Sprintf("active-repo-%d", i),
+					Namespace: namespace,
 				})
 			}
 
@@ -252,11 +248,9 @@ func TestRepositoryQuotaConditions_ExcludesDeletingRepos(t *testing.T) {
 			deletionTime := metav1.Now()
 			for i := range tt.deletingRepos {
 				repos = append(repos, &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              fmt.Sprintf("deleting-repo-%d", i),
-						Namespace:         namespace,
-						DeletionTimestamp: &deletionTime,
-					},
+					Name:              fmt.Sprintf("deleting-repo-%d", i),
+					Namespace:         namespace,
+					DeletionTimestamp: &deletionTime,
 				})
 			}
 

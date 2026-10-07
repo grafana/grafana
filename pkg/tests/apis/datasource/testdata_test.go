@@ -443,10 +443,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.Equal(t, http.StatusOK, raw.Response.StatusCode)
 
 		expectedDatasourceAccessInfo := datasourceV0alpha1.DatasourceAccessInfo{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "DatasourceAccessInfo",
-				APIVersion: "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
-			},
+			Kind:       "DatasourceAccessInfo",
+			APIVersion: "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 			Permissions: accesscontrol.Metadata{
 				"alert.instances.external:read":      true,
 				"alert.instances.external:write":     true,

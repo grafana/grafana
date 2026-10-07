@@ -393,13 +393,11 @@ func TestUpsertTemplate(t *testing.T) {
 		}).Return(nil)
 
 		tmpl := v1.TemplateGroup{
-			Title:   "new-template",
-			Content: "{{ define \"test\"}} test {{ end }}",
-			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: models.ProvenanceAPI,
-				Version:    "",
-			},
-			Kind: v1.TemplateKindGrafana,
+			Title:      "new-template",
+			Content:    "{{ define \"test\"}} test {{ end }}",
+			Provenance: models.ProvenanceAPI,
+			Version:    "",
+			Kind:       v1.TemplateKindGrafana,
 		}
 
 		result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -437,13 +435,11 @@ func TestUpsertTemplate(t *testing.T) {
 			}).Return(nil)
 
 			tmpl := v1.TemplateGroup{
-				Title:   templateName,
-				Content: "{{ define \"test\"}} test {{ end }}",
-				ResourceMetadata: v1.ResourceMetadata{
-					Provenance: models.ProvenanceAPI,
-					Version:    currentTemplate.Version,
-				},
-				Kind: v1.TemplateKindGrafana,
+				Title:      templateName,
+				Content:    "{{ define \"test\"}} test {{ end }}",
+				Provenance: models.ProvenanceAPI,
+				Version:    currentTemplate.Version,
+				Kind:       v1.TemplateKindGrafana,
 			}
 
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -476,12 +472,10 @@ func TestUpsertTemplate(t *testing.T) {
 			}).Return(nil)
 
 			tmpl := v1.TemplateGroup{
-				Title:   templateName,
-				Content: "{{ define \"test\"}} test {{ end }}",
-				ResourceMetadata: v1.ResourceMetadata{
-					Provenance: models.ProvenanceAPI,
-					Version:    "",
-				},
+				Title:      templateName,
+				Content:    "{{ define \"test\"}} test {{ end }}",
+				Provenance: models.ProvenanceAPI,
+				Version:    "",
 			}
 
 			result, err := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -512,13 +506,11 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().SaveSucceeds()
 
 		tmpl := v1.TemplateGroup{
-			Title:   templateName,
-			Content: "content",
-			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: models.ProvenanceNone,
-				Version:    currentTemplate.Version,
-			},
-			Kind: v1.TemplateKindGrafana,
+			Title:      templateName,
+			Content:    "content",
+			Provenance: models.ProvenanceNone,
+			Version:    currentTemplate.Version,
+			Kind:       v1.TemplateKindGrafana,
 		}
 
 		result, _ := sut.UpsertTemplate(context.Background(), orgID, tmpl)
@@ -593,8 +585,8 @@ func TestUpsertTemplate(t *testing.T) {
 		template := v1.TemplateGroup{
 			Title:   "template1",
 			Content: "asdf-new",
-		}
-		template.Provenance = models.ProvenanceNone
+
+			Provenance: models.ProvenanceNone}
 
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 
@@ -609,12 +601,10 @@ func TestUpsertTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 		template := v1.TemplateGroup{
-			Title:   "template1",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				Version:    "bad-version",
-				Provenance: models.ProvenanceNone,
-			},
+			Title:      "template1",
+			Content:    "asdf-new",
+			Version:    "bad-version",
+			Provenance: models.ProvenanceNone,
 		}
 
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
@@ -629,12 +619,10 @@ func TestUpsertTemplate(t *testing.T) {
 			return revision(), nil
 		}
 		template := v1.TemplateGroup{
-			Title:   "template2",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				Version:    "version",
-				Provenance: models.ProvenanceNone,
-			},
+			Title:      "template2",
+			Content:    "asdf-new",
+			Version:    "version",
+			Provenance: models.ProvenanceNone,
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -646,12 +634,10 @@ func TestUpsertTemplate(t *testing.T) {
 			return revision(), nil
 		}
 		template := v1.TemplateGroup{
-			Title:   "template2",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				UID:        "new-template",
-				Provenance: models.ProvenanceNone,
-			},
+			Title:      "template2",
+			Content:    "asdf-new",
+			UID:        "new-template",
+			Provenance: models.ProvenanceNone,
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateNotFound)
@@ -663,12 +649,10 @@ func TestUpsertTemplate(t *testing.T) {
 			return revision(), nil
 		}
 		template := v1.TemplateGroup{
-			Title:   "template2",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: models.ProvenanceNone,
-			},
-			Kind: v1.TemplateKindMimir,
+			Title:      "template2",
+			Content:    "asdf-new",
+			Provenance: models.ProvenanceNone,
+			Kind:       v1.TemplateKindMimir,
 		}
 		_, err := sut.UpsertTemplate(context.Background(), orgID, template)
 		require.ErrorIs(t, err, ErrTemplateInvalid)
@@ -676,11 +660,9 @@ func TestUpsertTemplate(t *testing.T) {
 
 	t.Run("propagates errors", func(t *testing.T) {
 		tmpl := v1.TemplateGroup{
-			Title:   templateName,
-			Content: "content",
-			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: models.ProvenanceNone,
-			},
+			Title:      templateName,
+			Content:    "content",
+			Provenance: models.ProvenanceNone,
 		}
 		t.Run("when unable to read config", func(t *testing.T) {
 			sut, store, _ := createTemplateServiceSut()
@@ -746,12 +728,10 @@ func TestCreateTemplate(t *testing.T) {
 	amConfigToken := util.GenerateShortUID()
 
 	tmpl := v1.TemplateGroup{
-		Title:   "new-template",
-		Content: "{{ define \"test\"}} test {{ end }}",
-		ResourceMetadata: v1.ResourceMetadata{
-			Provenance: models.ProvenanceAPI,
-		},
-		Kind: v1.TemplateKindGrafana,
+		Title:      "new-template",
+		Content:    "{{ define \"test\"}} test {{ end }}",
+		Provenance: models.ProvenanceAPI,
+		Kind:       v1.TemplateKindGrafana,
 	}
 
 	revision := func() *legacy_storage.ConfigRevision {
@@ -914,13 +894,11 @@ func TestUpdateTemplate(t *testing.T) {
 	currentTemplateContent := "test1"
 
 	tmpl := v1.TemplateGroup{
-		Title:   "template1",
-		Content: "{{ define \"test\"}} test {{ end }}",
-		ResourceMetadata: v1.ResourceMetadata{
-			Provenance: models.ProvenanceAPI,
-			Version:    "",
-		},
-		Kind: v1.TemplateKindGrafana,
+		Title:      "template1",
+		Content:    "{{ define \"test\"}} test {{ end }}",
+		Provenance: models.ProvenanceAPI,
+		Version:    "",
+		Kind:       v1.TemplateKindGrafana,
 	}
 
 	amConfigToken := util.GenerateShortUID()
@@ -1170,8 +1148,8 @@ func TestUpdateTemplate(t *testing.T) {
 		template := v1.TemplateGroup{
 			Title:   "template1",
 			Content: "asdf-new",
-		}
-		template.Provenance = models.ProvenanceNone
+
+			Provenance: models.ProvenanceNone}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
 
@@ -1186,12 +1164,10 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 		template := v1.TemplateGroup{
-			Title:   "template1",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				Version:    "bad-version",
-				Provenance: models.ProvenanceNone,
-			},
+			Title:      "template1",
+			Content:    "asdf-new",
+			Version:    "bad-version",
+			Provenance: models.ProvenanceNone,
 		}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)
@@ -1208,14 +1184,12 @@ func TestUpdateTemplate(t *testing.T) {
 		prov.EXPECT().GetProvenance(mock.Anything, mock.Anything, mock.Anything).Return(models.ProvenanceNone, nil)
 
 		template := v1.TemplateGroup{
-			Title:   "template1",
-			Content: "asdf-new",
-			ResourceMetadata: v1.ResourceMetadata{
-				UID:        v1.TemplateUID(v1.TemplateKindGrafana, "template1"),
-				Version:    "bad-version",
-				Provenance: models.ProvenanceNone,
-			},
-			Kind: v1.TemplateKindMimir,
+			Title:      "template1",
+			Content:    "asdf-new",
+			UID:        v1.TemplateUID(v1.TemplateKindGrafana, "template1"),
+			Version:    "bad-version",
+			Provenance: models.ProvenanceNone,
+			Kind:       v1.TemplateKindMimir,
 		}
 
 		_, err := sut.UpdateTemplate(context.Background(), orgID, template)

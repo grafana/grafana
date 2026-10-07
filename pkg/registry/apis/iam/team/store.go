@@ -101,10 +101,8 @@ func (s *LegacyStore) Delete(ctx context.Context, name string, deleteValidation 
 	}
 
 	return &iamv0alpha1.Team{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns.Value,
-		},
+		Name:      name,
+		Namespace: ns.Value,
 	}, true, nil
 }
 
@@ -396,12 +394,10 @@ func toTeamObject(t team.Team, ns claims.NamespaceInfo, members []legacy.TeamMem
 		specMembers = append(specMembers, mapped)
 	}
 	obj := iamv0alpha1.Team{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              t.UID,
-			Namespace:         ns.Value,
-			CreationTimestamp: metav1.NewTime(t.Created),
-			ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
-		},
+		Name:              t.UID,
+		Namespace:         ns.Value,
+		CreationTimestamp: metav1.NewTime(t.Created),
+		ResourceVersion:   strconv.FormatInt(t.Updated.UnixMilli(), 10),
 		Spec: iamv0alpha1.TeamSpec{
 			Title:          t.Name,
 			Email:          t.Email,

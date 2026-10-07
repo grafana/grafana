@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -100,9 +99,7 @@ func TestIntegrationImportedTimeIntervals(t *testing.T) {
 	t.Run("should allow duplicate names across Grafana and imported intervals", func(t *testing.T) {
 		// Create a Grafana time interval with the same name as an imported one
 		interval := v1beta1.TimeInterval{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.TimeIntervalSpec{
 				Name: "business-hours",
 				TimeIntervals: []v1beta1.TimeIntervalInterval{

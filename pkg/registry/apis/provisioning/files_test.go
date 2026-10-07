@@ -565,7 +565,7 @@ func TestHandleGetRawFile(t *testing.T) {
 			mockAccess.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			repo := &provisioningapi.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Name: "test-repo",
 				Spec: provisioningapi.RepositorySpec{
 					Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
 				},
@@ -612,7 +612,7 @@ func TestHandleGetRawFile_FolderScopedAuth(t *testing.T) {
 		mockAccess := auth.NewMockAccessChecker(t)
 
 		repo := &provisioningapi.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Name: "test-repo",
 			Spec: provisioningapi.RepositorySpec{
 				Sync: provisioningapi.SyncOptions{Target: provisioningapi.SyncTargetTypeFolder},
 			},

@@ -150,11 +150,9 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 			validateExecuted := false
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				}},
 			}
 			dsService.pluginClient = &pluginfakes.FakePluginClient{
@@ -186,11 +184,9 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 			dsService := initDSService(t)
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				}},
 			}
 			dsService.pluginClient = &pluginfakes.FakePluginClient{}
@@ -208,11 +204,9 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 			dsService := initDSService(t)
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				}},
 			}
 			dsService.pluginClient = &pluginfakes.FakePluginClient{
@@ -254,11 +248,9 @@ func TestIntegrationService_AddDataSource(t *testing.T) {
 			dsService := initDSService(t)
 			dsService.pluginStore = &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{{
-					JSONData: plugins.JSONData{
-						ID:   "test",
-						Type: plugins.TypeDataSource,
-						Name: "test",
-					},
+					ID:   "test",
+					Type: plugins.TypeDataSource,
+					Name: "test",
 				}},
 			}
 			dsService.pluginClient = &pluginfakes.FakePluginClient{
@@ -564,11 +556,9 @@ func TestIntegrationService_UpdateDataSource(t *testing.T) {
 		dsService := initDSService(t)
 		dsService.pluginStore = &pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{{
-				JSONData: plugins.JSONData{
-					ID:   "test",
-					Type: plugins.TypeDataSource,
-					Name: "test",
-				},
+				ID:   "test",
+				Type: plugins.TypeDataSource,
+				Name: "test",
 			}},
 		}
 		validateExecuted := false
@@ -1545,10 +1535,9 @@ func TestIntegrationService_GetDataSourcesByType(t *testing.T) {
 	quotaService := quotatest.New(false, nil)
 	plgs := &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{
+			{
 				ID:       "test",
-				AliasIDs: []string{"grafana-testdata-datasource"},
-			}},
+				AliasIDs: []string{"grafana-testdata-datasource"}},
 		},
 	}
 	features := featuremgmt.WithFeatures()
@@ -1663,16 +1652,13 @@ func TestIntegrationService_getConnections(t *testing.T) {
 	quotaService := quotatest.New(false, nil)
 	plugins := &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{
-			{JSONData: plugins.JSONData{
+			{
 				ID:       "test",
-				AliasIDs: []string{"grafana-testdata-datasource"},
-			}},
-			{JSONData: plugins.JSONData{
-				ID: "graphite",
-			}},
-			{JSONData: plugins.JSONData{
-				ID: "another-datasource",
-			}},
+				AliasIDs: []string{"grafana-testdata-datasource"}},
+			{
+				ID: "graphite"},
+			{
+				ID: "another-datasource"},
 		},
 	}
 	features := featuremgmt.WithFeatures()
@@ -2092,11 +2078,9 @@ func initDSService(t *testing.T) *Service {
 	dsRetriever := ProvideDataSourceRetriever(sqlStore, features)
 	dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, features, actest.FakeAccessControl{}, mockPermission, quotaService, &pluginstore.FakePluginStore{
 		PluginList: []pluginstore.Plugin{{
-			JSONData: plugins.JSONData{
-				ID:   "test",
-				Type: plugins.TypeDataSource,
-				Name: "test",
-			},
+			ID:   "test",
+			Type: plugins.TypeDataSource,
+			Name: "test",
 		}},
 	}, &pluginfakes.FakePluginClient{
 		ValidateAdmissionFunc: func(ctx context.Context, req *backend.AdmissionRequest) (*backend.ValidationResponse, error) {

@@ -36,8 +36,8 @@ func (f *fakeHybridIndexClient) HybridSearch(_ context.Context, in *resourcepb.H
 
 func hybridQuery() *searchv0.HybridSearchQuery {
 	return &searchv0.HybridSearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery},
-		Query:    "cpu",
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindHybridSearchQuery,
+		Query: "cpu",
 	}
 }
 

@@ -202,10 +202,8 @@ func TestDeleteExpiredSnapshots_KubernetesMode(t *testing.T) {
 // Helper function to create unstructured snapshots for testing
 func createUnstructuredSnapshot(name, namespace string, expiresMillis int64) *unstructured.Unstructured {
 	snapshot := &v0alpha1.Snapshot{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-		},
+		Name:      name,
+		Namespace: namespace,
 		Spec: v0alpha1.SnapshotSpec{
 			Expires: &expiresMillis,
 		},

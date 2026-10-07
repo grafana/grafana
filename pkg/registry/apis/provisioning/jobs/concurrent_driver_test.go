@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -95,23 +94,21 @@ func TestConcurrentJobDriver_EventHandler_Enqueue(t *testing.T) {
 
 	// A claimed full object (apiserver informer initial list) is skipped.
 	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "ns1",
-			Name:      "claimed-job",
-			Labels:    map[string]string{LabelJobClaim: "1000000000000"},
-		},
+		Namespace: "ns1",
+		Name:      "claimed-job",
+		Labels:    map[string]string{LabelJobClaim: "1000000000000"},
 	}, false)
 	assert.Equal(t, 0, driver.queue.Len(), "claimed jobs must not enqueue")
 
 	// A minimal object (NATS live event: namespace+name only) enqueues.
 	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "new-job"},
+		Namespace: "ns1", Name: "new-job",
 	}, false)
 	assert.Equal(t, 1, driver.queue.Len())
 
 	// Duplicate adds of the same key coalesce while queued.
 	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "new-job"},
+		Namespace: "ns1", Name: "new-job",
 	}, false)
 	assert.Equal(t, 1, driver.queue.Len(), "the queue must deduplicate keys")
 }
@@ -127,19 +124,17 @@ func TestConcurrentJobDriver_EventHandler_UpdateEnqueue(t *testing.T) {
 	// A minimal object (NATS live MODIFIED: namespace+name only) is churn from
 	// a running job and must not enqueue.
 	minimal := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "running-job"},
+		Namespace: "ns1", Name: "running-job",
 	}
 	handler.UpdateFunc(minimal, minimal)
 	assert.Equal(t, 0, driver.queue.Len(), "minimal live updates must not enqueue")
 
 	// A full object that carries a claim is a running job.
 	claimed := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:       "ns1",
-			Name:            "claimed-job",
-			ResourceVersion: "42",
-			Labels:          map[string]string{LabelJobClaim: "1000000000000"},
-		},
+		Namespace:       "ns1",
+		Name:            "claimed-job",
+		ResourceVersion: "42",
+		Labels:          map[string]string{LabelJobClaim: "1000000000000"},
 	}
 	handler.UpdateFunc(claimed, claimed)
 	assert.Equal(t, 0, driver.queue.Len(), "claimed jobs must not enqueue")
@@ -158,7 +153,7 @@ func TestConcurrentJobDriver_EventHandler_UpdateEnqueue(t *testing.T) {
 	// an unclaimed one enqueues: this recovers rolled-back claims and
 	// previously dropped keys at the resync cadence.
 	unclaimed := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "43"},
+		Namespace: "ns1", Name: "pending-job", ResourceVersion: "43",
 	}
 	handler.UpdateFunc(unclaimed, unclaimed)
 	assert.Equal(t, 1, driver.queue.Len(), "full unclaimed resync updates must enqueue")
@@ -188,7 +183,7 @@ func TestConcurrentJobDriver_ClaimedElsewhereIsDropped(t *testing.T) {
 	go func() { runDone <- driver.Run(ctx) }()
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+		Namespace: "ns1", Name: "job1",
 	}, false)
 
 	require.Eventually(t, func() bool { return claims.Load() == 1 }, 2*time.Second, 10*time.Millisecond)
@@ -223,7 +218,7 @@ func TestConcurrentJobDriver_TransientErrorsRetryUntilDropped(t *testing.T) {
 	go func() { runDone <- driver.Run(ctx) }()
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+		Namespace: "ns1", Name: "job1",
 	}, false)
 
 	require.Eventually(t, func() bool { return claims.Load() == maxClaimAttempts }, 2*time.Second, 10*time.Millisecond)
@@ -259,7 +254,7 @@ func TestConcurrentJobDriver_ResyncUpdateRecoversDroppedJob(t *testing.T) {
 
 	// A resync delivers the still-unclaimed job as a full-object update.
 	pending := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "pending-job", ResourceVersion: "7"},
+		Namespace: "ns1", Name: "pending-job", ResourceVersion: "7",
 	}
 	driver.EventHandler().UpdateFunc(pending, pending)
 
@@ -320,7 +315,7 @@ func TestConcurrentJobDriver_ProcessesJobEndToEnd(t *testing.T) {
 
 	// A NATS-style minimal add event carries only the key.
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 
 	select {
@@ -396,7 +391,7 @@ func TestConcurrentJobDriver_PostClaimFailureDoesNotRerunJob(t *testing.T) {
 	go func() { runDone <- driver.Run(ctx) }()
 
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 
 	select {
@@ -477,7 +472,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	go func() { runDone <- driver.Run(ctx) }()
 
 	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 
 	// While the run is in flight (blocked in Complete), a resync that snapshotted
@@ -485,7 +480,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	// the in-flight key dirty.
 	<-completeStarted
 	stale := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "7"},
+		Namespace: "test-ns", Name: "test-job", ResourceVersion: "7",
 	}
 	handler.UpdateFunc(stale, stale)
 
@@ -498,7 +493,7 @@ func TestConcurrentJobDriver_CooldownBlocksDirtyRedeliveryAfterPostClaimFailure(
 	// A create event announces a new incarnation on the same deterministic name:
 	// it clears the cooldown and is processed without waiting it out.
 	handler.AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 	require.Eventually(t, func() bool { return claims.Load() == 2 }, 2*time.Second, 10*time.Millisecond,
 		"a new incarnation must not inherit its predecessor's cooldown")
@@ -532,7 +527,7 @@ func TestConcurrentJobDriver_DuplicateEventsCauseNoDuplicateProcessing(t *testin
 	runDone := make(chan error, 1)
 	go func() { runDone <- driver.Run(ctx) }()
 
-	event := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"}}
+	event := &provisioning.Job{Namespace: "ns1", Name: "job1"}
 	driver.EventHandler().AddFunc(event, false)
 
 	// While the first claim is in flight, duplicate events for the same key arrive.

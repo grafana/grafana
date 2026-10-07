@@ -194,14 +194,10 @@ func (s *preferenceStorage) Update(ctx context.Context, name string, objInfo res
 		// Allows upsert with PATCH
 		if k8serrors.IsNotFound(err) {
 			p := &preferences.Preferences{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "Preferences",
-					APIVersion: preferences.GroupVersion.String(),
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: requestK8s.NamespaceValue(ctx),
-				},
+				Kind:       "Preferences",
+				APIVersion: preferences.GroupVersion.String(),
+				Name:       name,
+				Namespace:  requestK8s.NamespaceValue(ctx),
 			}
 			p.UID = gapiutil.CalculateClusterWideUID(p)
 			old = p
@@ -276,12 +272,10 @@ func asPreferencesResource(ns string, p *preferenceModel) preferences.Preference
 		owner.Identifier = ""
 	}
 	obj := preferences.Preferences{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              owner.AsName(),
-			Namespace:         ns,
-			ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
-			CreationTimestamp: metav1.NewTime(p.Created.UTC()),
-		},
+		Name:              owner.AsName(),
+		Namespace:         ns,
+		ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+		CreationTimestamp: metav1.NewTime(p.Created.UTC()),
 		Spec: preferences.PreferencesSpec{
 			Theme:            asPointer(p.Theme.String),
 			HomeDashboardUID: asPointer(p.HomeDashboardUID.String),

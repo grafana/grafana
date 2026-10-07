@@ -1687,12 +1687,10 @@ func (b *DashboardsAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.Op
 
 		p := oas.Paths.Paths["/apis/dashboard.grafana.app/v0alpha1/namespaces/{namespace}/search"]
 		p.Get.Responses.StatusCodeResponses[200] = &spec3.Response{
-			ResponseProps: spec3.ResponseProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/" + dashboardSearchResultsSchema),
-						},
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: spec.RefSchema("#/components/schemas/" + dashboardSearchResultsSchema),
 					},
 				},
 			},

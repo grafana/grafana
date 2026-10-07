@@ -138,7 +138,7 @@ func (s *TeamMembersREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		}
 
 		responder.Object(http.StatusOK, &iamv0alpha1.GetTeamMembersResponse{
-			GetTeamMembersBody: iamv0alpha1.GetTeamMembersBody{Items: items},
+			Items: items,
 		})
 	}), nil
 }

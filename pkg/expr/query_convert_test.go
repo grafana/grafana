@@ -24,15 +24,13 @@ func TestConvertBackendRequestToDataRequest(t *testing.T) {
 	}
 
 	result1 := data.DataQuery{
-		CommonQueryProperties: data.CommonQueryProperties{
-			RefID:         "A",
-			QueryType:     "large",
-			MaxDataPoints: 42,
-			IntervalMS:    10.0,
-			TimeRange: &data.TimeRange{
-				From: "1753959290000",
-				To:   "1753959390000",
-			},
+		RefID:         "A",
+		QueryType:     "large",
+		MaxDataPoints: 42,
+		IntervalMS:    10.0,
+		TimeRange: &data.TimeRange{
+			From: "1753959290000",
+			To:   "1753959390000",
 		},
 	}
 	result1.Set("field1", "value1")

@@ -240,15 +240,11 @@ func TestSetResourcePermissionsToK8sLegacyIncrementalSemantics(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			existing := &iamv0.ResourcePermission{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "dashboard.grafana.app-dashboards-1",
-					Namespace:       "org-1",
-					ResourceVersion: "1",
-				},
+				APIVersion:      iamv0.ResourcePermissionInfo.GroupVersion().String(),
+				Kind:            iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				Name:            "dashboard.grafana.app-dashboards-1",
+				Namespace:       "org-1",
+				ResourceVersion: "1",
 				Spec: iamv0.ResourcePermissionSpec{
 					Resource: iamv0.ResourcePermissionspecResource{
 						ApiGroup: dashboardv1.APIGroup,
@@ -366,15 +362,11 @@ func TestSetResourcePermissionsToK8sRetriesConflicts(t *testing.T) {
 	viewer := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Viewer", Verb: "view"}
 	admin := iamv0.ResourcePermissionspecPermission{Kind: iamv0.ResourcePermissionSpecPermissionKindBasicRole, Name: "Admin", Verb: "admin"}
 	existing := &iamv0.ResourcePermission{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "dashboard.grafana.app-dashboards-1",
-			Namespace:       "org-1",
-			ResourceVersion: "1",
-		},
+		APIVersion:      iamv0.ResourcePermissionInfo.GroupVersion().String(),
+		Kind:            iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		Name:            "dashboard.grafana.app-dashboards-1",
+		Namespace:       "org-1",
+		ResourceVersion: "1",
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource:    iamv0.ResourcePermissionspecResource{ApiGroup: dashboardv1.APIGroup, Resource: "dashboards", Name: "1"},
 			Permissions: []iamv0.ResourcePermissionspecPermission{viewer},
@@ -1168,11 +1160,9 @@ func setupFakeDynamicClient(t *testing.T, folderUID string, folderInfoList []fol
 		if len(subresources) > 0 && subresources[0] == "parents" {
 			// Return the folder hierarchy
 			folderList := &folderv1.FolderInfoList{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: folderv1.APIGroup + "/" + folderv1.APIVersion,
-					Kind:       "FolderInfoList",
-				},
-				Items: folderInfoList,
+				APIVersion: folderv1.APIGroup + "/" + folderv1.APIVersion,
+				Kind:       "FolderInfoList",
+				Items:      folderInfoList,
 			}
 
 			unstructuredObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(folderList)
@@ -1724,12 +1714,10 @@ func TestListTeamMemberPermissions(t *testing.T) {
 
 	makeTeam := func(members ...iamv0.TeamTeamMember) iamv0.Team {
 		return iamv0.Team{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
-				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
-			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123"},
-			Spec:       iamv0.TeamSpec{Members: members},
+			APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+			Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			Name:       "team-uid-1", Namespace: "stacks-123",
+			Spec: iamv0.TeamSpec{Members: members},
 		}
 	}
 
@@ -1969,12 +1957,10 @@ func TestSetTeamMember(t *testing.T) {
 	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
 		t.Helper()
 		teamObj := iamv0.Team{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
-				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
-			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
-			Spec:       iamv0.TeamSpec{Members: members},
+			APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+			Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			Name:       "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42",
+			Spec: iamv0.TeamSpec{Members: members},
 		}
 		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
 		require.NoError(t, err)
@@ -2433,12 +2419,10 @@ func TestSetTeamMembers(t *testing.T) {
 	makeTeamObj := func(t *testing.T, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
 		t.Helper()
 		teamObj := iamv0.Team{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
-				Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
-			},
-			ObjectMeta: metav1.ObjectMeta{Name: "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42"},
-			Spec:       iamv0.TeamSpec{Members: members},
+			APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+			Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+			Name:       "team-uid-1", Namespace: "stacks-123", ResourceVersion: "42",
+			Spec: iamv0.TeamSpec{Members: members},
 		}
 		obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
 		require.NoError(t, err)

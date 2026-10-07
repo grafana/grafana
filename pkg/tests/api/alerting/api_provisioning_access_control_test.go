@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/require"
 
@@ -479,10 +478,8 @@ func TestIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
 
 	newMuteTiming := func(name string) definitions.MuteTimeInterval {
 		return definitions.MuteTimeInterval{
-			MuteTimeInterval: config.MuteTimeInterval{
-				Name:          name,
-				TimeIntervals: []timeinterval.TimeInterval{},
-			},
+			Name:          name,
+			TimeIntervals: []timeinterval.TimeInterval{},
 		}
 	}
 

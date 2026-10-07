@@ -146,34 +146,32 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, rulestore 
 	require.NoError(t, err)
 
 	_, err = rulestore.InsertAlertRules(ctx, models.NewUserUID(user), []models.InsertRule{{
-		AlertRule: models.AlertRule{
 
-			ID:        0,
-			OrgID:     orgID,
-			Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
-			Condition: "A",
-			Data: []models.AlertQuery{
-				{
-					Model: json.RawMessage(`{
+		ID:        0,
+		OrgID:     orgID,
+		Title:     fmt.Sprintf("an alert definition %s", util.GenerateShortUID()),
+		Condition: "A",
+		Data: []models.AlertQuery{
+			{
+				Model: json.RawMessage(`{
 										"datasourceUid": "__expr__",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
-					RelativeTimeRange: models.RelativeTimeRange{
-						From: models.Duration(5 * time.Hour),
-						To:   models.Duration(3 * time.Hour),
-					},
-					RefID: "A",
+				RelativeTimeRange: models.RelativeTimeRange{
+					From: models.Duration(5 * time.Hour),
+					To:   models.Duration(3 * time.Hour),
 				},
+				RefID: "A",
 			},
-			Labels:          labels,
-			Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
-			IntervalSeconds: intervalSeconds,
-			NamespaceUID:    folderUID,
-			RuleGroup:       ruleGroup,
-			NoDataState:     models.NoData,
-			ExecErrState:    models.AlertingErrState,
-		}},
+		},
+		Labels:          labels,
+		Annotations:     map[string]string{"testAnnoKey": "testAnnoValue"},
+		IntervalSeconds: intervalSeconds,
+		NamespaceUID:    folderUID,
+		RuleGroup:       ruleGroup,
+		NoDataState:     models.NoData,
+		ExecErrState:    models.AlertingErrState},
 	})
 	require.NoError(t, err)
 

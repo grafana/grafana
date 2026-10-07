@@ -154,7 +154,7 @@ func names(objs []*metav1.PartialObjectMetadata) []string {
 var _ cache.ResourceEventHandler = (*recordingHandler)(nil)
 
 func obj(name string) *metav1.PartialObjectMetadata {
-	return &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: testNamespace}}
+	return &metav1.PartialObjectMetadata{Name: name, Namespace: testNamespace}
 }
 
 func newObjectFunc(namespace, name string) runtime.Object {

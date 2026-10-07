@@ -40,48 +40,38 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 				Path: "display",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							OperationId: "getDisplayMapping", // This is used by RTK client generator
-							Tags:        []string{"Display"},
-							Description: "Show user display information",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "key",
-										In:          "query",
-										Description: "Display keys",
-										Required:    true,
-										Example:     "user:u000000001",
-										Schema:      spec.ArrayProperty(spec.StringProperty()),
-										//	Style:       "form",
-										Explode: true,
-									},
-								},
+						OperationId: "getDisplayMapping", // This is used by RTK client generator
+						Tags:        []string{"Display"},
+						Description: "Show user display information",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{
-																SchemaProps: spec.SchemaProps{
-																	Ref: spec.MustCreateRef("#/components/schemas/" + iam.DisplayList{}.OpenAPIModelName()),
-																},
-															},
-														},
+							{
+								Name:        "key",
+								In:          "query",
+								Description: "Display keys",
+								Required:    true,
+								Example:     "user:u000000001",
+								Schema:      spec.ArrayProperty(spec.StringProperty()),
+								//	Style:       "form",
+								Explode: true,
+							},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &spec.Schema{
+														Ref: spec.MustCreateRef("#/components/schemas/" + iam.DisplayList{}.OpenAPIModelName()),
 													},
 												},
 											},

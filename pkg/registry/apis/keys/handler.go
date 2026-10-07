@@ -277,15 +277,11 @@ func decodeListOptions(r *http.Request) (*metav1.ListOptions, error) {
 func keysResults(res *resourcepb.ListResponse) *metav1.PartialObjectMetadataList {
 	apiVersion := metav1.SchemeGroupVersion.String()
 	out := &metav1.PartialObjectMetadataList{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: apiVersion,
-			Kind:       "PartialObjectMetadataList",
-		},
-		ListMeta: metav1.ListMeta{
-			Continue:        res.GetNextPageToken(),
-			ResourceVersion: strconv.FormatInt(res.GetResourceVersion(), 10),
-		},
-		Items: make([]metav1.PartialObjectMetadata, 0, len(res.GetItems())),
+		APIVersion:      apiVersion,
+		Kind:            "PartialObjectMetadataList",
+		Continue:        res.GetNextPageToken(),
+		ResourceVersion: strconv.FormatInt(res.GetResourceVersion(), 10),
+		Items:           make([]metav1.PartialObjectMetadata, 0, len(res.GetItems())),
 	}
 
 	// Identical for every item.
@@ -294,12 +290,10 @@ func keysResults(res *resourcepb.ListResponse) *metav1.PartialObjectMetadataList
 	for _, item := range res.GetItems() {
 		partial := metav1.PartialObjectMetadata{
 			TypeMeta: itemType,
-			ObjectMeta: metav1.ObjectMeta{
-				// Per item: the list spans namespaces, so the caller cannot infer it.
-				Namespace:       item.GetNamespace(),
-				Name:            item.GetName(),
-				ResourceVersion: strconv.FormatInt(item.GetResourceVersion(), 10),
-			},
+			// Per item: the list spans namespaces, so the caller cannot infer it.
+			Namespace:       item.GetNamespace(),
+			Name:            item.GetName(),
+			ResourceVersion: strconv.FormatInt(item.GetResourceVersion(), 10),
 		}
 		// Absent rather than empty, so "no folder" stays distinguishable.
 		if folder := item.GetFolder(); folder != "" {

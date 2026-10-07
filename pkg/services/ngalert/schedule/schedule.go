@@ -375,11 +375,10 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 
 		if isReadyToRun {
 			logger.Debug("Rule is ready to run on the current tick", "tick", tick, "frequency", itemFrequency, "offset", offset)
-			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine, Evaluation: Evaluation{
+			readyToRun = append(readyToRun, readyToRunItem{ruleRoutine: ruleRoutine,
 				scheduledAt: tick,
 				rule:        item,
-				folderTitle: folderTitle,
-			}})
+				folderTitle: folderTitle})
 		}
 		if _, isUpdated := updated[key]; isUpdated && !isReadyToRun {
 			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that

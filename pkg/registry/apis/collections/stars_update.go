@@ -93,10 +93,8 @@ func (r *starsREST) Connect(ctx context.Context, name string, _ runtime.Object, 
 					return
 				}
 				current = &collections.Stars{
-					ObjectMeta: v1.ObjectMeta{
-						Name:      name,
-						Namespace: namespace,
-					},
+					Name:      name,
+					Namespace: namespace,
 				}
 			}
 		}

@@ -351,7 +351,7 @@ func subjectRequestParts(subjectType, subjectUID string) []string {
 }
 
 func teamWithMembers(name string, members ...string) *iamv0.Team {
-	team := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: name}}
+	team := &iamv0.Team{Name: name}
 	for _, member := range members {
 		team.Spec.Members = append(team.Spec.Members, iamv0.TeamTeamMember{Name: member})
 	}

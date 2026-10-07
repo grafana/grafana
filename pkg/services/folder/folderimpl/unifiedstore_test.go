@@ -61,8 +61,7 @@ func folderStorageFailures(t *testing.T) []folderStorageFailure {
 func requireFolderStorageError(t *testing.T, want, got error) {
 	t.Helper()
 	require.Equal(t, want, got)
-	var statusErr *apierrors.StatusError
-	if errors.As(want, &statusErr) {
+	if _, ok := errors.AsType[*apierrors.StatusError](want); ok {
 		require.IsType(t, &apierrors.StatusError{}, got)
 	} else {
 		require.Same(t, want, got)
@@ -1734,12 +1733,10 @@ func TestGetFoldersMetadata(t *testing.T) {
 		expectSearchAll(mockCli)
 
 		got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{
-			GetFoldersQuery: folder.GetFoldersQuery{
-				OrgID:            orgID,
-				MetadataOnly:     true,
-				WithFullpath:     true,
-				WithFullpathUIDs: true,
-			},
+			OrgID:            orgID,
+			MetadataOnly:     true,
+			WithFullpath:     true,
+			WithFullpathUIDs: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, got, 3)
@@ -1765,12 +1762,10 @@ func TestGetFoldersMetadata(t *testing.T) {
 		expectSearchAll(mockCli)
 
 		got, err := store.GetFolders(ctx, folder.GetFoldersFromStoreQuery{
-			GetFoldersQuery: folder.GetFoldersQuery{
-				OrgID:        orgID,
-				UIDs:         []string{"c"},
-				MetadataOnly: true,
-				WithFullpath: true,
-			},
+			OrgID:        orgID,
+			UIDs:         []string{"c"},
+			MetadataOnly: true,
+			WithFullpath: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, got, 1)

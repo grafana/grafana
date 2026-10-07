@@ -70,10 +70,8 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Snapshot",
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -119,11 +117,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot",
+			External:  true,
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -177,11 +173,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot with Token",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot with Token",
+			External:  true,
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -218,11 +212,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot",
+			External:  true,
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -257,11 +249,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot",
+			External:  true,
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -296,11 +286,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot",
+			External:  true,
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -329,11 +317,9 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test External Snapshot",
-				External:  true,
-			},
+			Dashboard: dashboard,
+			Name:      "Test External Snapshot",
+			External:  true,
 		}
 
 		req, _ := http.NewRequest("POST", "/api/snapshots", nil)
@@ -359,10 +345,8 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Local Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Local Snapshot",
 			Key:       "local-key",
 			DeleteKey: "local-delete-key",
 		}
@@ -402,10 +386,8 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Local Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Local Snapshot",
 			Key:       "local-key",
 			DeleteKey: "local-delete-key",
 		}
@@ -444,10 +426,8 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Local Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Local Snapshot",
 			Key:       "local-key",
 			DeleteKey: "local-delete-key",
 		}
@@ -487,10 +467,8 @@ func TestCreateDashboardSnapshot(t *testing.T) {
 
 		// No Key / DeleteKey supplied — the handler must generate them.
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Local Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Local Snapshot",
 		}
 
 		mockService.On("ValidateDashboardExists", mock.Anything, int64(1), "test-dashboard-uid").
@@ -536,10 +514,8 @@ func TestCreateDashboardSnapshotPublic(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Snapshot",
 			Key:       "test-key",
 			DeleteKey: "test-delete-key",
 		}
@@ -582,10 +558,8 @@ func TestCreateDashboardSnapshotPublic(t *testing.T) {
 		dashboard := createTestDashboard(t)
 
 		cmd := CreateDashboardSnapshotCommand{
-			DashboardCreateCommand: snapshot.DashboardCreateCommand{
-				Dashboard: dashboard,
-				Name:      "Test Snapshot",
-			},
+			Dashboard: dashboard,
+			Name:      "Test Snapshot",
 		}
 
 		req, _ := http.NewRequest("POST", "/api/snapshots", nil)

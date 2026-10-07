@@ -71,7 +71,7 @@ func (m *queryCacheConfigMigrator) MigrateQueryCacheConfigs(ctx context.Context,
 
 			name := fmt.Sprintf("%s.%s", row.pluginID, row.dataSourceUID)
 			body, err := json.Marshal(queryCacheConfigObject{
-				TypeMeta:   metav1.TypeMeta{APIVersion: APIGroup + "/" + APIVersion, Kind: "QueryCacheConfig"},
+				APIVersion: APIGroup + "/" + APIVersion, Kind: "QueryCacheConfig",
 				ObjectMeta: objectMeta{Name: name, Namespace: opts.Namespace, CreationTimestamp: metav1.NewTime(time.Unix(row.createdEpoch, 0))},
 				Spec: queryCacheConfigSpec{
 					DatasourceUID:  row.dataSourceUID,

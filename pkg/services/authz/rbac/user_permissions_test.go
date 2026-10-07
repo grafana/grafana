@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 
@@ -32,7 +31,7 @@ func TestService_GetUserPermissionsStreamsRBACSnapshot(t *testing.T) {
 	service.permissionStore = permissionStore
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -78,7 +77,7 @@ func TestService_GetUserPermissionsUsesLocalEvaluator(t *testing.T) {
 	service.userPermissionsEvaluator = evaluator
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -124,7 +123,7 @@ func TestService_GetUserPermissionsMergesZanzanaPermissions(t *testing.T) {
 	service.userPermissionsResolver = resolver
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -158,7 +157,7 @@ func TestService_GetUserPermissionsMergesZanzanaPermissionsForAnonymous(t *testi
 	}}
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -192,7 +191,7 @@ func TestService_GetUserPermissionsUsesRBACPermissionsWhenZanzanaFails(t *testin
 	service.userPermissionsResolver = &recordingUserPermissionsResolver{err: fmt.Errorf("zanzana unavailable")}
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -226,7 +225,7 @@ func TestService_GetUserPermissionsDeduplicatesPermissions(t *testing.T) {
 	}}
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -261,7 +260,7 @@ func TestService_GetUserPermissionsExpandsActionSets(t *testing.T) {
 	service.actionResolver = expandingActionResolver{}
 
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -294,7 +293,7 @@ func TestService_GetUserPermissionsSkipCacheBypassesIdentityCaches(t *testing.T)
 	service.basicRoleCache.Set(ctx, userBasicRoleCacheKey("org-12", "test-uid"), store.BasicRole{Role: "Viewer"})
 	service.userTeamCache.Set(ctx, userTeamCacheKey("org-12", "test-uid"), []int64{1})
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -331,7 +330,7 @@ func TestService_GetUserPermissionsUsesServerIdentityCachesIndependently(t *test
 	service.basicRoleCache.Set(ctx, userBasicRoleCacheKey("org-12", "test-uid"), store.BasicRole{Role: "Viewer"})
 	service.userTeamCache.Set(ctx, userTeamCacheKey("org-12", "test-uid"), []int64{1})
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},
@@ -364,7 +363,7 @@ func TestService_GetUserPermissionsStreamsLargeSnapshotsInChunks(t *testing.T) {
 	}
 	service.permissionStore = &snapshotPermissionStore{permissions: permissions}
 	caller := authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana")},
+		Subject: types.NewTypeID(types.TypeAccessPolicy, "grafana"),
 		Rest: authn.AccessTokenClaims{
 			Namespace:   "org-12",
 			Permissions: []string{"authz.grafana.app/userpermissions:get"},

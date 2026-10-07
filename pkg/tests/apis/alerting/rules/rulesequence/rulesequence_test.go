@@ -44,11 +44,9 @@ func TestIntegrationRuleSequenceUnifiedStorageOnly(t *testing.T) {
 	).Generate()
 
 	recRule, err := recClient.Create(ctx, &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,
@@ -77,12 +75,10 @@ func TestIntegrationRuleSequenceUnifiedStorageOnly(t *testing.T) {
 
 	t.Run("create, get, list, and delete", func(t *testing.T) {
 		seq := &v0alpha1.RuleSequence{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace:    "default",
-				GenerateName: "test-seq-",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace:    "default",
+			GenerateName: "test-seq-",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.RuleSequenceSpec{
 				Trigger: v0alpha1.RuleSequenceIntervalTrigger{

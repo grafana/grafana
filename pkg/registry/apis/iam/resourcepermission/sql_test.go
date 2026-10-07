@@ -30,15 +30,11 @@ var (
 	updated = time.Date(2025, 9, 3, 0, 0, 0, 0, time.UTC) // The "dashboards:admin" permission was updated later
 
 	fold1ResourcePermission = v0alpha1.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "folder.grafana.app-folders-fold1",
-			CreationTimestamp: metav1.Time{Time: created},
-			ResourceVersion:   fmt.Sprint(created.UnixMilli()),
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ResourcePermission",
-			APIVersion: "iam.grafana.app/v0alpha1",
-		},
+		Name:              "folder.grafana.app-folders-fold1",
+		CreationTimestamp: metav1.Time{Time: created},
+		ResourceVersion:   fmt.Sprint(created.UnixMilli()),
+		Kind:              "ResourcePermission",
+		APIVersion:        "iam.grafana.app/v0alpha1",
 		Spec: v0alpha1.ResourcePermissionSpec{
 			Resource: v0alpha1.ResourcePermissionspecResource{
 				ApiGroup: "folder.grafana.app",
@@ -55,15 +51,11 @@ var (
 		},
 	}
 	dash1ResourcePermission = v0alpha1.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              "dashboard.grafana.app-dashboards-dash1",
-			CreationTimestamp: metav1.Time{Time: created},
-			ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
-		},
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ResourcePermission",
-			APIVersion: "iam.grafana.app/v0alpha1",
-		},
+		Name:              "dashboard.grafana.app-dashboards-dash1",
+		CreationTimestamp: metav1.Time{Time: created},
+		ResourceVersion:   fmt.Sprint(updated.UnixMilli()),
+		Kind:              "ResourcePermission",
+		APIVersion:        "iam.grafana.app/v0alpha1",
 		Spec: v0alpha1.ResourcePermissionSpec{
 			Resource: v0alpha1.ResourcePermissionspecResource{
 				ApiGroup: "dashboard.grafana.app",
@@ -411,10 +403,8 @@ func TestIntegration_ResourcePermSqlBackend_CreateResourcePermission(t *testing.
 
 	t.Run("should create resource permission", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -528,10 +518,8 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 
 	t.Run("should fail to update resource permission for a resource that doesn't have any permissions yet", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-newfold",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-newfold",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -560,10 +548,8 @@ func TestIntegration_ResourcePermSqlBackend_UpdateResourcePermission(t *testing.
 
 	t.Run("should update resource permission", func(t *testing.T) {
 		resourcePerm := &v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "folder.grafana.app-folders-fold1",
-				Namespace: "default",
-			},
+			Name:      "folder.grafana.app-folders-fold1",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "folder.grafana.app",
@@ -847,10 +833,8 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 	t.Run("should allow changing verb for same entity", func(t *testing.T) {
 		//Create initial permission with BasicRole Editor having "edit" verb
 		initialResourcePerm := &v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dashboard.grafana.app-dashboards-test-dash",
-				Namespace: "default",
-			},
+			Name:      "dashboard.grafana.app-dashboards-test-dash",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app",
@@ -873,10 +857,8 @@ func TestIntegration_UpdateResourcePermission_VerbChange(t *testing.T) {
 
 		//Update the same entity (BasicRole Editor) to have "view" verb instead
 		updatedResourcePerm := &v0alpha1.ResourcePermission{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "dashboard.grafana.app-dashboards-test-dash",
-				Namespace: "default",
-			},
+			Name:      "dashboard.grafana.app-dashboards-test-dash",
+			Namespace: "default",
 			Spec: v0alpha1.ResourcePermissionSpec{
 				Resource: v0alpha1.ResourcePermissionspecResource{
 					ApiGroup: "dashboard.grafana.app",
@@ -934,10 +916,8 @@ func TestIntegration_Datasource_WriteAndReadBackConcreteGroup(t *testing.T) {
 
 	// Write: Create a resource permission for loki.datasource.grafana.app
 	resourcePerm := &v0alpha1.ResourcePermission{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "loki.datasource.grafana.app-datasources-loki-ds",
-			Namespace: "default",
-		},
+		Name:      "loki.datasource.grafana.app-datasources-loki-ds",
+		Namespace: "default",
 		Spec: v0alpha1.ResourcePermissionSpec{
 			Resource: v0alpha1.ResourcePermissionspecResource{
 				ApiGroup: "loki.datasource.grafana.app",

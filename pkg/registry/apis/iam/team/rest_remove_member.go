@@ -133,10 +133,8 @@ func (s *TeamRemoveMemberREST) Connect(ctx context.Context, name string, _ runti
 
 		// 200 OK whether or not a row existed; the request is idempotent.
 		responder.Object(http.StatusOK, &iamv0alpha1.DeleteTeamMemberResponse{
-			DeleteTeamMemberBody: iamv0alpha1.DeleteTeamMemberBody{
-				Team: name,
-				User: body.Name,
-			},
+			Team: name,
+			User: body.Name,
 		})
 	}), nil
 }

@@ -334,9 +334,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 			receivers = append(receivers, &gr)
 		}
 		gettableApiReceiver := definitions.GettableApiReceiver{
-			GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
-				GrafanaManagedReceivers: receivers,
-			},
+			GrafanaManagedReceivers: receivers,
 		}
 		gettableApiReceiver.Name = recv.Name
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)

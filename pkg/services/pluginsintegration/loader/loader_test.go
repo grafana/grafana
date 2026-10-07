@@ -71,57 +71,55 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "cloudwatch",
-						Type: plugins.TypeDataSource,
-						Name: "CloudWatch",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Description: "Data source for Amazon AWS monitoring service",
-							Keywords:    []string{"aws", "amazon"},
-							Logos: plugins.Logos{
-								Small: "public/plugins/cloudwatch/img/amazon-web-services.png",
-								Large: "public/plugins/cloudwatch/img/amazon-web-services.png",
-							},
-							Links: []plugins.InfoLink{
-								{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
-								{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
-							},
+					ID:   "cloudwatch",
+					Type: plugins.TypeDataSource,
+					Name: "CloudWatch",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Grafana Labs",
+							URL:  "https://grafana.com",
 						},
-						Includes: []*plugins.Includes{
-							{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
-							{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
+						Description: "Data source for Amazon AWS monitoring service",
+						Keywords:    []string{"aws", "amazon"},
+						Logos: plugins.Logos{
+							Small: "public/plugins/cloudwatch/img/amazon-web-services.png",
+							Large: "public/plugins/cloudwatch/img/amazon-web-services.png",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaDependency: ">=12.3.0",
-							GrafanaVersion:    "*",
-							Plugins:           []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Links: []plugins.InfoLink{
+							{Name: "Raise issue", URL: "https://github.com/grafana/grafana/issues/new"},
+							{Name: "Documentation", URL: "https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/"},
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:        []plugins.AddedLink{},
-							AddedComponents:   []plugins.AddedComponent{},
-							AddedFunctions:    []plugins.AddedFunction{},
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Category:     "cloud",
-						Annotations:  true,
-						Executable:   "gpx_cloudwatch",
-						Metrics:      true,
-						Alerting:     true,
-						Logs:         true,
-						Backend:      true,
-						QueryOptions: map[string]bool{"minInterval": true},
 					},
+					Includes: []*plugins.Includes{
+						{Name: "EC2", Path: "dashboards/ec2.json", Type: "dashboard", Role: "Viewer"},
+						{Name: "EBS", Path: "dashboards/EBS.json", Type: "dashboard", Role: "Viewer"},
+						{Name: "Lambda", Path: "dashboards/Lambda.json", Type: "dashboard", Role: "Viewer"},
+						{Name: "Logs", Path: "dashboards/Logs.json", Type: "dashboard", Role: "Viewer"},
+						{Name: "RDS", Path: "dashboards/RDS.json", Type: "dashboard", Role: "Viewer"},
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=12.3.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:        []plugins.AddedLink{},
+						AddedComponents:   []plugins.AddedComponent{},
+						AddedFunctions:    []plugins.AddedFunction{},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Category:        "cloud",
+					Annotations:     true,
+					Executable:      "gpx_cloudwatch",
+					Metrics:         true,
+					Alerting:        true,
+					Logs:            true,
+					Backend:         true,
+					QueryOptions:    map[string]bool{"minInterval": true},
 					Class:           plugins.ClassCore,
 					BaseURL:         "public/plugins/cloudwatch",
 					FS:              mustNewStaticFSForTests(t, filepath.Join(corePluginDir(t), "app/plugins/datasource/cloudwatch")),
@@ -140,82 +138,80 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(testDataDir(t), "symbolic-plugin-dirs")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "test-app",
-						Type: "app",
-						Name: "Test App",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Test Inc.",
-								URL:  "http://test.com",
-							},
-							Logos: plugins.Logos{
-								Small: "public/plugins/test-app/img/logo_small.png",
-								Large: "public/plugins/test-app/img/logo_large.png",
-							},
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "http://project.com"},
-								{Name: "License & Terms", URL: "http://license.com"},
-							},
-							Description: "Official Grafana Test App & Dashboard bundle",
-							Screenshots: []plugins.Screenshots{
-								{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-								{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
-							},
-							Version:  "1.0.0",
-							Updated:  "2015-02-10",
-							Keywords: []string{"test"},
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "3.x.x",
-							Plugins: []plugins.Dependency{
-								{Type: "datasource", ID: "graphite", Name: "Graphite"},
-								{Type: "panel", ID: "graph", Name: "Graph"},
-							},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Logos: plugins.Logos{
+							Small: "public/plugins/test-app/img/logo_small.png",
+							Large: "public/plugins/test-app/img/logo_large.png",
 						},
-						Includes: []*plugins.Includes{
-							{
-								Name:   "Nginx Connections",
-								Path:   "dashboards/connections.json",
-								Type:   "dashboard",
-								Role:   org.RoleViewer,
-								Action: plugins.ActionAppAccess,
-								Slug:   "nginx-connections",
-							},
-							{
-								Name:   "Nginx Memory",
-								Path:   "dashboards/memory.json",
-								Type:   "dashboard",
-								Role:   org.RoleViewer,
-								Action: plugins.ActionAppAccess,
-								Slug:   "nginx-memory",
-							},
-							{
-								Name:   "Nginx Panel",
-								Type:   string(plugins.TypePanel),
-								Role:   org.RoleViewer,
-								Action: plugins.ActionAppAccess,
-								Slug:   "nginx-panel",
-							},
-							{
-								Name:   "Nginx Datasource",
-								Type:   string(plugins.TypeDataSource),
-								Role:   org.RoleViewer,
-								Action: plugins.ActionAppAccess,
-								Slug:   "nginx-datasource",
-							},
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:      []plugins.AddedLink{},
-							AddedComponents: []plugins.AddedComponent{},
-							AddedFunctions:  []plugins.AddedFunction{},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Screenshots: []plugins.Screenshots{
+							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
+						},
+						Version:  "1.0.0",
+						Updated:  "2015-02-10",
+						Keywords: []string{"test"},
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "3.x.x",
+						Plugins: []plugins.Dependency{
+							{Type: "datasource", ID: "graphite", Name: "Graphite"},
+							{Type: "panel", ID: "graph", Name: "Graph"},
+						},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Includes: []*plugins.Includes{
+						{
+							Name:   "Nginx Connections",
+							Path:   "dashboards/connections.json",
+							Type:   "dashboard",
+							Role:   org.RoleViewer,
+							Action: plugins.ActionAppAccess,
+							Slug:   "nginx-connections",
+						},
+						{
+							Name:   "Nginx Memory",
+							Path:   "dashboards/memory.json",
+							Type:   "dashboard",
+							Role:   org.RoleViewer,
+							Action: plugins.ActionAppAccess,
+							Slug:   "nginx-memory",
+						},
+						{
+							Name:   "Nginx Panel",
+							Type:   string(plugins.TypePanel),
+							Role:   org.RoleViewer,
+							Action: plugins.ActionAppAccess,
+							Slug:   "nginx-panel",
+						},
+						{
+							Name:   "Nginx Datasource",
+							Type:   string(plugins.TypeDataSource),
+							Role:   org.RoleViewer,
+							Action: plugins.ActionAppAccess,
+							Slug:   "nginx-datasource",
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
 
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
 					},
 					Class:           plugins.ClassExternal,
 					Module:          "public/plugins/test-app/module.js",
@@ -239,39 +235,37 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
+					ID:   "test-datasource",
+					Type: plugins.TypeDataSource,
+					Name: "Test",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Grafana Labs",
+							URL:  "https://grafana.com",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-datasource.svg",
+							Large: "public/img/icn-datasource.svg",
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:      []plugins.AddedLink{},
-							AddedComponents: []plugins.AddedComponent{},
-							AddedFunctions:  []plugins.AddedFunction{},
-
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Backend: true,
-						State:   plugins.ReleaseStateAlpha,
+						Description: "Test",
 					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "*",
+						Plugins:        []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Backend:         true,
+					State:           plugins.ReleaseStateAlpha,
 					Class:           plugins.ClassExternal,
 					Module:          "public/plugins/test-datasource/module.js",
 					BaseURL:         "public/plugins/test-datasource",
@@ -305,39 +299,37 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(testDataDir(t), "unsigned-datasource")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "test-datasource",
-						Type: plugins.TypeDataSource,
-						Name: "Test",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Grafana Labs",
-								URL:  "https://grafana.com",
-							},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-datasource.svg",
-								Large: "public/img/icn-datasource.svg",
-							},
-							Description: "Test",
+					ID:   "test-datasource",
+					Type: plugins.TypeDataSource,
+					Name: "Test",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Grafana Labs",
+							URL:  "https://grafana.com",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion: "*",
-							Plugins:        []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-datasource.svg",
+							Large: "public/img/icn-datasource.svg",
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:      []plugins.AddedLink{},
-							AddedComponents: []plugins.AddedComponent{},
-							AddedFunctions:  []plugins.AddedFunction{},
-
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Backend: true,
-						State:   plugins.ReleaseStateAlpha,
+						Description: "Test",
 					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion: "*",
+						Plugins:        []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Backend:         true,
+					State:           plugins.ReleaseStateAlpha,
 					Class:           plugins.ClassExternal,
 					Module:          "public/plugins/test-datasource/module.js",
 					BaseURL:         "public/plugins/test-datasource",
@@ -416,50 +408,48 @@ func TestLoader_Load(t *testing.T) {
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-includes")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "test-app",
-						Type: plugins.TypeApp,
-						Name: "Test App",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Test Inc.",
-								URL:  "http://test.com",
-							},
-							Description: "Official Grafana Test App & Dashboard bundle",
-							Version:     "1.0.0",
-							Links: []plugins.InfoLink{
-								{Name: "Project site", URL: "http://project.com"},
-								{Name: "License & Terms", URL: "http://license.com"},
-							},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-app.svg",
-								Large: "public/img/icn-app.svg",
-							},
-							Updated:  "2015-02-10",
-							Keywords: []string{"test"},
+					ID:   "test-app",
+					Type: plugins.TypeApp,
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaDependency: ">=8.0.0",
-							GrafanaVersion:    "*",
-							Plugins:           []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:      []plugins.AddedLink{},
-							AddedComponents: []plugins.AddedComponent{},
-							AddedFunctions:  []plugins.AddedFunction{},
-
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
 						},
-						Includes: []*plugins.Includes{
-							{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-							{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-						},
-						Backend: false,
+						Updated:  "2015-02-10",
+						Keywords: []string{"test"},
 					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=8.0.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+						{Name: "Root Page (react)", Type: "page", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+					},
+					Backend:         false,
 					DefaultNavURL:   "/plugins/test-app/page/root-page-react",
 					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-includes")),
 					Class:           plugins.ClassExternal,
@@ -507,46 +497,44 @@ func TestLoader_Load_ExternalRegistration(t *testing.T) {
 		pluginPaths := []string{filepath.Join(testDataDir(t), "external-registration")}
 		expected := []*plugins.Plugin{
 			{
-				JSONData: plugins.JSONData{
-					ID:         "grafana-test-datasource",
-					Type:       plugins.TypeDataSource,
-					Name:       "Test",
-					Backend:    true,
-					Executable: "gpx_test_datasource",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Grafana Labs",
-							URL:  "https://grafana.com",
-						},
-						Version: "1.0.0",
-						Logos: plugins.Logos{
-							Small: "public/plugins/grafana-test-datasource/img/ds.svg",
-							Large: "public/plugins/grafana-test-datasource/img/ds.svg",
-						},
-						Updated:     "2023-08-03",
-						Screenshots: []plugins.Screenshots{},
+				ID:         "grafana-test-datasource",
+				Type:       plugins.TypeDataSource,
+				Name:       "Test",
+				Backend:    true,
+				Executable: "gpx_test_datasource",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Grafana Labs",
+						URL:  "https://grafana.com",
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaVersion: "*",
-						Plugins:        []plugins.Dependency{},
-						Extensions: plugins.ExtensionsDependencies{
-							ExposedComponents: []string{},
-						},
+					Version: "1.0.0",
+					Logos: plugins.Logos{
+						Small: "public/plugins/grafana-test-datasource/img/ds.svg",
+						Large: "public/plugins/grafana-test-datasource/img/ds.svg",
 					},
-					Extensions: plugins.Extensions{
-						AddedLinks:      []plugins.AddedLink{},
-						AddedComponents: []plugins.AddedComponent{},
-						AddedFunctions:  []plugins.AddedFunction{},
+					Updated:     "2023-08-03",
+					Screenshots: []plugins.Screenshots{},
+				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "*",
+					Plugins:        []plugins.Dependency{},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+				Extensions: plugins.Extensions{
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
 
-						ExposedComponents: []plugins.ExposedComponent{},
-						ExtensionPoints:   []plugins.ExtensionPoint{},
-					},
-					IAM: &auth.IAM{
-						Permissions: []auth.Permission{
-							{
-								Action: "read",
-								Scope:  "datasource",
-							},
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
+				},
+				IAM: &auth.IAM{
+					Permissions: []auth.Permission{
+						{
+							Action: "read",
+							Scope:  "datasource",
 						},
 					},
 				},
@@ -621,41 +609,39 @@ func TestLoader_Load_MultiplePlugins(t *testing.T) {
 				},
 				want: []*plugins.Plugin{
 					{
-						JSONData: plugins.JSONData{
-							ID:   "test-datasource",
-							Type: plugins.TypeDataSource,
-							Name: "Test",
-							Info: plugins.Info{
-								Author: plugins.InfoLink{
-									Name: "Will Browne",
-									URL:  "https://willbrowne.com",
-								},
-								Logos: plugins.Logos{
-									Small: "public/img/icn-datasource.svg",
-									Large: "public/img/icn-datasource.svg",
-								},
-								Description: "Test",
-								Version:     "1.0.0",
+						ID:   "test-datasource",
+						Type: plugins.TypeDataSource,
+						Name: "Test",
+						Info: plugins.Info{
+							Author: plugins.InfoLink{
+								Name: "Will Browne",
+								URL:  "https://willbrowne.com",
 							},
-							Dependencies: plugins.Dependencies{
-								GrafanaVersion: "*",
-								Plugins:        []plugins.Dependency{},
-								Extensions: plugins.ExtensionsDependencies{
-									ExposedComponents: []string{},
-								},
+							Logos: plugins.Logos{
+								Small: "public/img/icn-datasource.svg",
+								Large: "public/img/icn-datasource.svg",
 							},
-							Extensions: plugins.Extensions{
-								AddedLinks:      []plugins.AddedLink{},
-								AddedComponents: []plugins.AddedComponent{},
-								AddedFunctions:  []plugins.AddedFunction{},
-
-								ExposedComponents: []plugins.ExposedComponent{},
-								ExtensionPoints:   []plugins.ExtensionPoint{},
-							},
-							Backend:    true,
-							Executable: "test",
-							State:      plugins.ReleaseStateAlpha,
+							Description: "Test",
+							Version:     "1.0.0",
 						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "*",
+							Plugins:        []plugins.Dependency{},
+							Extensions: plugins.ExtensionsDependencies{
+								ExposedComponents: []string{},
+							},
+						},
+						Extensions: plugins.Extensions{
+							AddedLinks:      []plugins.AddedLink{},
+							AddedComponents: []plugins.AddedComponent{},
+							AddedFunctions:  []plugins.AddedFunction{},
+
+							ExposedComponents: []plugins.ExposedComponent{},
+							ExtensionPoints:   []plugins.ExtensionPoint{},
+						},
+						Backend:         true,
+						Executable:      "test",
+						State:           plugins.ReleaseStateAlpha,
 						Class:           plugins.ClassExternal,
 						Module:          "public/plugins/test-datasource/module.js",
 						BaseURL:         "public/plugins/test-datasource",
@@ -725,58 +711,56 @@ func TestLoader_Load_RBACReady(t *testing.T) {
 			pluginPaths: []string{filepath.Join(testDataDir(t), "test-app-with-roles")},
 			want: []*plugins.Plugin{
 				{
-					JSONData: plugins.JSONData{
-						ID:   "test-app",
-						Type: plugins.TypeApp,
-						Name: "Test App",
-						Info: plugins.Info{
-							Author: plugins.InfoLink{
-								Name: "Test Inc.",
-								URL:  "http://test.com",
-							},
-							Description: "Test App",
-							Version:     "1.0.0",
-							Links:       []plugins.InfoLink{},
-							Logos: plugins.Logos{
-								Small: "public/img/icn-app.svg",
-								Large: "public/img/icn-app.svg",
-							},
-							Updated:  "2015-02-10",
-							Keywords: []string{"test"},
+					ID:   "test-app",
+					Type: plugins.TypeApp,
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
 						},
-						Dependencies: plugins.Dependencies{
-							GrafanaVersion:    "*",
-							GrafanaDependency: ">=8.0.0",
-							Plugins:           []plugins.Dependency{},
-							Extensions: plugins.ExtensionsDependencies{
-								ExposedComponents: []string{},
-							},
+						Description: "Test App",
+						Version:     "1.0.0",
+						Links:       []plugins.InfoLink{},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
 						},
-						Extensions: plugins.Extensions{
-							AddedLinks:      []plugins.AddedLink{},
-							AddedComponents: []plugins.AddedComponent{},
-							AddedFunctions:  []plugins.AddedFunction{},
-
-							ExposedComponents: []plugins.ExposedComponent{},
-							ExtensionPoints:   []plugins.ExtensionPoint{},
-						},
-						Includes: []*plugins.Includes{},
-						Roles: []plugins.RoleRegistration{
-							{
-								Role: plugins.Role{
-									Name:        "Reader",
-									Description: "View everything in the test-app plugin",
-									Permissions: []plugins.Permission{
-										{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
-										{Action: "test-app.resource:read", Scope: "resources:*"},
-										{Action: "test-app.otherresource:toggle"},
-									},
-								},
-								Grants: []string{"Admin"},
-							},
-						},
-						Backend: false,
+						Updated:  "2015-02-10",
+						Keywords: []string{"test"},
 					},
+					Dependencies: plugins.Dependencies{
+						GrafanaVersion:    "*",
+						GrafanaDependency: ">=8.0.0",
+						Plugins:           []plugins.Dependency{},
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{},
+						},
+					},
+					Extensions: plugins.Extensions{
+						AddedLinks:      []plugins.AddedLink{},
+						AddedComponents: []plugins.AddedComponent{},
+						AddedFunctions:  []plugins.AddedFunction{},
+
+						ExposedComponents: []plugins.ExposedComponent{},
+						ExtensionPoints:   []plugins.ExtensionPoint{},
+					},
+					Includes: []*plugins.Includes{},
+					Roles: []plugins.RoleRegistration{
+						{
+							Role: plugins.Role{
+								Name:        "Reader",
+								Description: "View everything in the test-app plugin",
+								Permissions: []plugins.Permission{
+									{Action: "plugins.app:access", Scope: "plugins.app:id:test-app"},
+									{Action: "test-app.resource:read", Scope: "resources:*"},
+									{Action: "test-app.otherresource:toggle"},
+								},
+							},
+							Grants: []string{"Admin"},
+						},
+					},
+					Backend:         false,
 					FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app-with-roles")),
 					Class:           plugins.ClassExternal,
 					Signature:       plugins.SignatureStatusValid,
@@ -820,34 +804,32 @@ func TestLoader_Load_Signature_RootURL(t *testing.T) {
 
 		expected := []*plugins.Plugin{
 			{
-				JSONData: plugins.JSONData{
-					ID:   "test-datasource",
-					Type: plugins.TypeDataSource,
-					Name: "Test",
-					Info: plugins.Info{
-						Author:      plugins.InfoLink{Name: "Will Browne", URL: "https://willbrowne.com"},
-						Description: "Test",
-						Logos: plugins.Logos{
-							Small: "public/img/icn-datasource.svg",
-							Large: "public/img/icn-datasource.svg",
-						},
-						Version: "1.0.0",
+				ID:   "test-datasource",
+				Type: plugins.TypeDataSource,
+				Name: "Test",
+				Info: plugins.Info{
+					Author:      plugins.InfoLink{Name: "Will Browne", URL: "https://willbrowne.com"},
+					Description: "Test",
+					Logos: plugins.Logos{
+						Small: "public/img/icn-datasource.svg",
+						Large: "public/img/icn-datasource.svg",
 					},
-					State: plugins.ReleaseStateAlpha,
-					Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}, Extensions: plugins.ExtensionsDependencies{
-						ExposedComponents: []string{},
-					}},
-					Extensions: plugins.Extensions{
-						AddedLinks:      []plugins.AddedLink{},
-						AddedComponents: []plugins.AddedComponent{},
-						AddedFunctions:  []plugins.AddedFunction{},
-
-						ExposedComponents: []plugins.ExposedComponent{},
-						ExtensionPoints:   []plugins.ExtensionPoint{},
-					},
-					Backend:    true,
-					Executable: "test",
+					Version: "1.0.0",
 				},
+				State: plugins.ReleaseStateAlpha,
+				Dependencies: plugins.Dependencies{GrafanaVersion: "*", Plugins: []plugins.Dependency{}, Extensions: plugins.ExtensionsDependencies{
+					ExposedComponents: []string{},
+				}},
+				Extensions: plugins.Extensions{
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
+				},
+				Backend:         true,
+				Executable:      "test",
 				FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "valid-v2-pvt-signature-root-url-uri/plugin")),
 				Class:           plugins.ClassExternal,
 				Signature:       plugins.SignatureStatusValid,
@@ -885,58 +867,56 @@ func TestLoader_Load_DuplicatePlugins(t *testing.T) {
 	t.Run("Load duplicate plugin folders", func(t *testing.T) {
 		expected := []*plugins.Plugin{
 			{
-				JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: plugins.TypeApp,
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
-						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
-						},
-						Logos: plugins.Logos{
-							Small: "public/plugins/test-app/img/logo_small.png",
-							Large: "public/plugins/test-app/img/logo_large.png",
-						},
-						Screenshots: []plugins.Screenshots{
-							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
-						},
-						Updated:  "2015-02-10",
-						Keywords: []string{"test"},
+				ID:   "test-app",
+				Type: plugins.TypeApp,
+				Name: "Test App",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Test Inc.",
+						URL:  "http://test.com",
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaVersion: "3.x.x",
-						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite"},
-							{Type: "panel", ID: "graph", Name: "Graph"},
-						},
-						Extensions: plugins.ExtensionsDependencies{
-							ExposedComponents: []string{},
-						},
+					Description: "Official Grafana Test App & Dashboard bundle",
+					Version:     "1.0.0",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "http://project.com"},
+						{Name: "License & Terms", URL: "http://license.com"},
 					},
-					Extensions: plugins.Extensions{
-						AddedLinks:      []plugins.AddedLink{},
-						AddedComponents: []plugins.AddedComponent{},
-						AddedFunctions:  []plugins.AddedFunction{},
-
-						ExposedComponents: []plugins.ExposedComponent{},
-						ExtensionPoints:   []plugins.ExtensionPoint{},
+					Logos: plugins.Logos{
+						Small: "public/plugins/test-app/img/logo_small.png",
+						Large: "public/plugins/test-app/img/logo_large.png",
 					},
-					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
+					Screenshots: []plugins.Screenshots{
+						{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+						{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 					},
-					Backend: false,
+					Updated:  "2015-02-10",
+					Keywords: []string{"test"},
 				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins: []plugins.Dependency{
+						{Type: "datasource", ID: "graphite", Name: "Graphite"},
+						{Type: "panel", ID: "graph", Name: "Graph"},
+					},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+				Extensions: plugins.Extensions{
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
+				},
+				Includes: []*plugins.Includes{
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
+				},
+				Backend:         false,
 				FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "test-app")),
 				Class:           plugins.ClassExternal,
 				Signature:       plugins.SignatureStatusValid,
@@ -978,58 +958,56 @@ func TestLoader_Load_SkipUninitializedPlugins(t *testing.T) {
 
 		expected := []*plugins.Plugin{
 			{
-				JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: plugins.TypeApp,
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
-						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
-						},
-						Logos: plugins.Logos{
-							Small: "public/plugins/test-app/img/logo_small.png",
-							Large: "public/plugins/test-app/img/logo_large.png",
-						},
-						Screenshots: []plugins.Screenshots{
-							{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
-							{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
-						},
-						Updated:  "2015-02-10",
-						Keywords: []string{"test"},
+				ID:   "test-app",
+				Type: plugins.TypeApp,
+				Name: "Test App",
+				Info: plugins.Info{
+					Author: plugins.InfoLink{
+						Name: "Test Inc.",
+						URL:  "http://test.com",
 					},
-					Dependencies: plugins.Dependencies{
-						GrafanaVersion: "3.x.x",
-						Plugins: []plugins.Dependency{
-							{Type: "datasource", ID: "graphite", Name: "Graphite"},
-							{Type: "panel", ID: "graph", Name: "Graph"},
-						},
-						Extensions: plugins.ExtensionsDependencies{
-							ExposedComponents: []string{},
-						},
+					Description: "Official Grafana Test App & Dashboard bundle",
+					Version:     "1.0.0",
+					Links: []plugins.InfoLink{
+						{Name: "Project site", URL: "http://project.com"},
+						{Name: "License & Terms", URL: "http://license.com"},
 					},
-					Includes: []*plugins.Includes{
-						{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
-						{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
-						{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
-						{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
+					Logos: plugins.Logos{
+						Small: "public/plugins/test-app/img/logo_small.png",
+						Large: "public/plugins/test-app/img/logo_large.png",
 					},
-					Extensions: plugins.Extensions{
-						AddedLinks:      []plugins.AddedLink{},
-						AddedComponents: []plugins.AddedComponent{},
-						AddedFunctions:  []plugins.AddedFunction{},
-
-						ExposedComponents: []plugins.ExposedComponent{},
-						ExtensionPoints:   []plugins.ExtensionPoint{},
+					Screenshots: []plugins.Screenshots{
+						{Path: "public/plugins/test-app/img/screenshot1.png", Name: "img1"},
+						{Path: "public/plugins/test-app/img/screenshot2.png", Name: "img2"},
 					},
-					Backend: false,
+					Updated:  "2015-02-10",
+					Keywords: []string{"test"},
 				},
+				Dependencies: plugins.Dependencies{
+					GrafanaVersion: "3.x.x",
+					Plugins: []plugins.Dependency{
+						{Type: "datasource", ID: "graphite", Name: "Graphite"},
+						{Type: "panel", ID: "graph", Name: "Graph"},
+					},
+					Extensions: plugins.ExtensionsDependencies{
+						ExposedComponents: []string{},
+					},
+				},
+				Includes: []*plugins.Includes{
+					{Name: "Nginx Connections", Path: "dashboards/connections.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-connections"},
+					{Name: "Nginx Memory", Path: "dashboards/memory.json", Type: "dashboard", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-memory"},
+					{Name: "Nginx Panel", Type: "panel", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-panel"},
+					{Name: "Nginx Datasource", Type: "datasource", Role: org.RoleViewer, Action: plugins.ActionAppAccess, Slug: "nginx-datasource"},
+				},
+				Extensions: plugins.Extensions{
+					AddedLinks:      []plugins.AddedLink{},
+					AddedComponents: []plugins.AddedComponent{},
+					AddedFunctions:  []plugins.AddedFunction{},
+
+					ExposedComponents: []plugins.ExposedComponent{},
+					ExtensionPoints:   []plugins.ExtensionPoint{},
+				},
+				Backend:         false,
 				FS:              mustNewStaticFSForTests(t, pluginDir1),
 				Class:           plugins.ClassExternal,
 				Signature:       plugins.SignatureStatusValid,
@@ -1160,40 +1138,38 @@ func TestLoader_Load_Angular(t *testing.T) {
 
 func TestLoader_Load_NestedPlugins(t *testing.T) {
 	parent := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "test-datasource",
-			Type: plugins.TypeDataSource,
-			Name: "Parent",
-			Info: plugins.Info{
-				Author: plugins.InfoLink{
-					Name: "Grafana Labs",
-					URL:  "http://grafana.com",
-				},
-				Logos: plugins.Logos{
-					Small: "public/img/icn-datasource.svg",
-					Large: "public/img/icn-datasource.svg",
-				},
-				Description: "Parent plugin",
-				Version:     "1.0.0",
-				Updated:     "2020-10-20",
+		ID:   "test-datasource",
+		Type: plugins.TypeDataSource,
+		Name: "Parent",
+		Info: plugins.Info{
+			Author: plugins.InfoLink{
+				Name: "Grafana Labs",
+				URL:  "http://grafana.com",
 			},
-			Dependencies: plugins.Dependencies{
-				GrafanaVersion: "*",
-				Plugins:        []plugins.Dependency{},
-				Extensions: plugins.ExtensionsDependencies{
-					ExposedComponents: []string{},
-				},
+			Logos: plugins.Logos{
+				Small: "public/img/icn-datasource.svg",
+				Large: "public/img/icn-datasource.svg",
 			},
-			Extensions: plugins.Extensions{
-				AddedLinks:      []plugins.AddedLink{},
-				AddedComponents: []plugins.AddedComponent{},
-				AddedFunctions:  []plugins.AddedFunction{},
-
-				ExposedComponents: []plugins.ExposedComponent{},
-				ExtensionPoints:   []plugins.ExtensionPoint{},
-			},
-			Backend: true,
+			Description: "Parent plugin",
+			Version:     "1.0.0",
+			Updated:     "2020-10-20",
 		},
+		Dependencies: plugins.Dependencies{
+			GrafanaVersion: "*",
+			Plugins:        []plugins.Dependency{},
+			Extensions: plugins.ExtensionsDependencies{
+				ExposedComponents: []string{},
+			},
+		},
+		Extensions: plugins.Extensions{
+			AddedLinks:      []plugins.AddedLink{},
+			AddedComponents: []plugins.AddedComponent{},
+			AddedFunctions:  []plugins.AddedFunction{},
+
+			ExposedComponents: []plugins.ExposedComponent{},
+			ExtensionPoints:   []plugins.ExtensionPoint{},
+		},
+		Backend:         true,
 		Module:          "public/plugins/test-datasource/module.js",
 		BaseURL:         "public/plugins/test-datasource",
 		FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "nested-plugins/parent")),
@@ -1207,38 +1183,36 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 	}
 
 	child := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID:   "test-panel",
-			Type: plugins.TypePanel,
-			Name: "Child",
-			Info: plugins.Info{
-				Author: plugins.InfoLink{
-					Name: "Grafana Labs",
-					URL:  "http://grafana.com",
-				},
-				Logos: plugins.Logos{
-					Small: "public/img/icn-panel.svg",
-					Large: "public/img/icn-panel.svg",
-				},
-				Description: "Child plugin",
-				Version:     "1.0.1",
-				Updated:     "2020-10-30",
+		ID:   "test-panel",
+		Type: plugins.TypePanel,
+		Name: "Child",
+		Info: plugins.Info{
+			Author: plugins.InfoLink{
+				Name: "Grafana Labs",
+				URL:  "http://grafana.com",
 			},
-			Dependencies: plugins.Dependencies{
-				GrafanaVersion: "*",
-				Plugins:        []plugins.Dependency{},
-				Extensions: plugins.ExtensionsDependencies{
-					ExposedComponents: []string{},
-				},
+			Logos: plugins.Logos{
+				Small: "public/img/icn-panel.svg",
+				Large: "public/img/icn-panel.svg",
 			},
-			Extensions: plugins.Extensions{
-				AddedLinks:      []plugins.AddedLink{},
-				AddedComponents: []plugins.AddedComponent{},
-				AddedFunctions:  []plugins.AddedFunction{},
+			Description: "Child plugin",
+			Version:     "1.0.1",
+			Updated:     "2020-10-30",
+		},
+		Dependencies: plugins.Dependencies{
+			GrafanaVersion: "*",
+			Plugins:        []plugins.Dependency{},
+			Extensions: plugins.ExtensionsDependencies{
+				ExposedComponents: []string{},
+			},
+		},
+		Extensions: plugins.Extensions{
+			AddedLinks:      []plugins.AddedLink{},
+			AddedComponents: []plugins.AddedComponent{},
+			AddedFunctions:  []plugins.AddedFunction{},
 
-				ExposedComponents: []plugins.ExposedComponent{},
-				ExtensionPoints:   []plugins.ExtensionPoint{},
-			},
+			ExposedComponents: []plugins.ExposedComponent{},
+			ExtensionPoints:   []plugins.ExtensionPoint{},
 		},
 		Module:          "public/plugins/test-panel/module.js",
 		BaseURL:         "public/plugins/test-panel",
@@ -1306,91 +1280,89 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 
 	t.Run("Plugin child field `IncludedInAppID` is set to parent app's plugin ID", func(t *testing.T) {
 		parent := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "myorgid-simple-app",
-				Type: plugins.TypeApp,
-				Name: "Simple App",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Your Name",
-					},
-					Links: []plugins.InfoLink{
-						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-app"},
-						{Name: "License", URL: "https://github.com/grafana/grafana-starter-app/blob/master/LICENSE"},
-					},
-					Logos: plugins.Logos{
-						Small: "public/plugins/myorgid-simple-app/img/logo.svg",
-						Large: "public/plugins/myorgid-simple-app/img/logo.svg",
-					},
-					Screenshots: []plugins.Screenshots{},
-					Description: "Grafana App Plugin Template",
-					Version:     "",
-					Updated:     "",
-					Keywords:    []string{"panel", "template"},
+			ID:   "myorgid-simple-app",
+			Type: plugins.TypeApp,
+			Name: "Simple App",
+			Info: plugins.Info{
+				Author: plugins.InfoLink{
+					Name: "Your Name",
 				},
-				Dependencies: plugins.Dependencies{
-					GrafanaVersion:    "7.0.0",
-					GrafanaDependency: ">=7.0.0",
-					Plugins:           []plugins.Dependency{},
-					Extensions: plugins.ExtensionsDependencies{
-						ExposedComponents: []string{},
-					},
+				Links: []plugins.InfoLink{
+					{Name: "Website", URL: "https://github.com/grafana/grafana-starter-app"},
+					{Name: "License", URL: "https://github.com/grafana/grafana-starter-app/blob/master/LICENSE"},
 				},
-				Includes: []*plugins.Includes{
-					{
-						Name:       "Root Page (react)",
-						Path:       "/a/myorgid-simple-app",
-						Type:       "page",
-						Role:       org.RoleViewer,
-						Action:     plugins.ActionAppAccess,
-						AddToNav:   true,
-						DefaultNav: true,
-						Slug:       "root-page-react",
-					},
-					{
-						Name:     "Root Page (Tab B)",
-						Path:     "/a/myorgid-simple-app/?tab=b",
-						Type:     "page",
-						Role:     org.RoleViewer,
-						Action:   plugins.ActionAppAccess,
-						AddToNav: true,
-						Slug:     "root-page-tab-b",
-					},
-					{
-						Name:     "React Config",
-						Path:     "/plugins/myorgid-simple-app/?page=page2",
-						Type:     "page",
-						Role:     org.RoleAdmin,
-						AddToNav: true,
-						Slug:     "react-config",
-					},
-					{
-						Name:   "Streaming Example",
-						Path:   "dashboards/streaming.json",
-						Type:   "dashboard",
-						Role:   org.RoleViewer,
-						Action: plugins.ActionAppAccess,
-						Slug:   "streaming-example",
-					},
-					{
-						Name:   "Lots of Stats",
-						Path:   "dashboards/stats.json",
-						Type:   "dashboard",
-						Role:   org.RoleViewer,
-						Action: plugins.ActionAppAccess,
-						Slug:   "lots-of-stats",
-					},
+				Logos: plugins.Logos{
+					Small: "public/plugins/myorgid-simple-app/img/logo.svg",
+					Large: "public/plugins/myorgid-simple-app/img/logo.svg",
 				},
-				Extensions: plugins.Extensions{
-					AddedLinks:      []plugins.AddedLink{},
-					AddedComponents: []plugins.AddedComponent{},
-					AddedFunctions:  []plugins.AddedFunction{},
-
-					ExposedComponents: []plugins.ExposedComponent{},
-					ExtensionPoints:   []plugins.ExtensionPoint{},
-				},
-				Backend: false,
+				Screenshots: []plugins.Screenshots{},
+				Description: "Grafana App Plugin Template",
+				Version:     "",
+				Updated:     "",
+				Keywords:    []string{"panel", "template"},
 			},
+			Dependencies: plugins.Dependencies{
+				GrafanaVersion:    "7.0.0",
+				GrafanaDependency: ">=7.0.0",
+				Plugins:           []plugins.Dependency{},
+				Extensions: plugins.ExtensionsDependencies{
+					ExposedComponents: []string{},
+				},
+			},
+			Includes: []*plugins.Includes{
+				{
+					Name:       "Root Page (react)",
+					Path:       "/a/myorgid-simple-app",
+					Type:       "page",
+					Role:       org.RoleViewer,
+					Action:     plugins.ActionAppAccess,
+					AddToNav:   true,
+					DefaultNav: true,
+					Slug:       "root-page-react",
+				},
+				{
+					Name:     "Root Page (Tab B)",
+					Path:     "/a/myorgid-simple-app/?tab=b",
+					Type:     "page",
+					Role:     org.RoleViewer,
+					Action:   plugins.ActionAppAccess,
+					AddToNav: true,
+					Slug:     "root-page-tab-b",
+				},
+				{
+					Name:     "React Config",
+					Path:     "/plugins/myorgid-simple-app/?page=page2",
+					Type:     "page",
+					Role:     org.RoleAdmin,
+					AddToNav: true,
+					Slug:     "react-config",
+				},
+				{
+					Name:   "Streaming Example",
+					Path:   "dashboards/streaming.json",
+					Type:   "dashboard",
+					Role:   org.RoleViewer,
+					Action: plugins.ActionAppAccess,
+					Slug:   "streaming-example",
+				},
+				{
+					Name:   "Lots of Stats",
+					Path:   "dashboards/stats.json",
+					Type:   "dashboard",
+					Role:   org.RoleViewer,
+					Action: plugins.ActionAppAccess,
+					Slug:   "lots-of-stats",
+				},
+			},
+			Extensions: plugins.Extensions{
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
+
+				ExposedComponents: []plugins.ExposedComponent{},
+				ExtensionPoints:   []plugins.ExtensionPoint{},
+			},
+			Backend:         false,
 			Module:          "public/plugins/myorgid-simple-app/module.js",
 			BaseURL:         "public/plugins/myorgid-simple-app",
 			FS:              mustNewStaticFSForTests(t, filepath.Join(testDataDir(t), "app-with-child/dist")),
@@ -1405,44 +1377,42 @@ func TestLoader_Load_NestedPlugins(t *testing.T) {
 		}
 
 		child := &plugins.Plugin{
-			JSONData: plugins.JSONData{
-				ID:   "myorgid-simple-panel",
-				Type: plugins.TypePanel,
-				Name: "Grafana Panel Plugin Template",
-				Info: plugins.Info{
-					Author: plugins.InfoLink{
-						Name: "Your Name",
-					},
-					Links: []plugins.InfoLink{
-						{Name: "Website", URL: "https://github.com/grafana/grafana-starter-panel"},
-						{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
-					},
-					Logos: plugins.Logos{
-						Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
-						Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
-					},
-					Screenshots: []plugins.Screenshots{},
-					Description: "Grafana Panel Plugin Template",
-					Version:     "",
-					Updated:     "",
-					Keywords:    []string{"panel", "template"},
+			ID:   "myorgid-simple-panel",
+			Type: plugins.TypePanel,
+			Name: "Grafana Panel Plugin Template",
+			Info: plugins.Info{
+				Author: plugins.InfoLink{
+					Name: "Your Name",
 				},
-				Dependencies: plugins.Dependencies{
-					GrafanaDependency: ">=7.0.0",
-					GrafanaVersion:    "*",
-					Plugins:           []plugins.Dependency{},
-					Extensions: plugins.ExtensionsDependencies{
-						ExposedComponents: []string{},
-					},
+				Links: []plugins.InfoLink{
+					{Name: "Website", URL: "https://github.com/grafana/grafana-starter-panel"},
+					{Name: "License", URL: "https://github.com/grafana/grafana-starter-panel/blob/master/LICENSE"},
 				},
-				Extensions: plugins.Extensions{
-					AddedLinks:      []plugins.AddedLink{},
-					AddedComponents: []plugins.AddedComponent{},
-					AddedFunctions:  []plugins.AddedFunction{},
+				Logos: plugins.Logos{
+					Small: "public/plugins/myorgid-simple-panel/img/logo.svg",
+					Large: "public/plugins/myorgid-simple-panel/img/logo.svg",
+				},
+				Screenshots: []plugins.Screenshots{},
+				Description: "Grafana Panel Plugin Template",
+				Version:     "",
+				Updated:     "",
+				Keywords:    []string{"panel", "template"},
+			},
+			Dependencies: plugins.Dependencies{
+				GrafanaDependency: ">=7.0.0",
+				GrafanaVersion:    "*",
+				Plugins:           []plugins.Dependency{},
+				Extensions: plugins.ExtensionsDependencies{
+					ExposedComponents: []string{},
+				},
+			},
+			Extensions: plugins.Extensions{
+				AddedLinks:      []plugins.AddedLink{},
+				AddedComponents: []plugins.AddedComponent{},
+				AddedFunctions:  []plugins.AddedFunction{},
 
-					ExposedComponents: []plugins.ExposedComponent{},
-					ExtensionPoints:   []plugins.ExtensionPoint{},
-				},
+				ExposedComponents: []plugins.ExposedComponent{},
+				ExtensionPoints:   []plugins.ExtensionPoint{},
 			},
 			Module:          "public/plugins/myorgid-simple-panel/module.js",
 			BaseURL:         "public/plugins/myorgid-simple-panel",

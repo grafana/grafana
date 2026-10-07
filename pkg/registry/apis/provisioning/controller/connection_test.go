@@ -52,21 +52,17 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:              "test-conn",
-							Namespace:         "default",
-							DeletionTimestamp: &metav1.Time{Time: time.Now()},
-						},
+						Name:              "test-conn",
+						Namespace:         "default",
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
 					},
 				}
 				return mockLister, nil, nil, nil
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              "test-conn",
-					Namespace:         "default",
-					DeletionTimestamp: &metav1.Time{Time: time.Now()},
-				},
+				Name:              "test-conn",
+				Namespace:         "default",
+				DeletionTimestamp: &metav1.Time{Time: time.Now()},
 			},
 			expectError: false,
 		},
@@ -75,11 +71,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -98,11 +92,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, nil, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -118,11 +110,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 2,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 2,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -170,11 +160,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 2,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 2,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -197,11 +185,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -266,11 +252,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -299,11 +283,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -372,11 +354,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -403,11 +383,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -475,11 +453,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -503,11 +479,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -576,11 +550,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -604,11 +576,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -682,11 +652,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -710,11 +678,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -739,11 +705,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, nil, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -763,11 +727,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 2,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 2,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 						},
@@ -807,11 +769,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 2,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 2,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 				},
@@ -830,10 +790,8 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, nil, nil, nil
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 			},
 			expectError: true,
 		},
@@ -842,11 +800,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 2,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 2,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 						},
@@ -865,11 +821,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, nil, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 2,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 2,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 				},
@@ -885,11 +839,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -934,11 +886,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -960,11 +910,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -1033,11 +981,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -1061,11 +1007,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -1123,11 +1067,9 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -1151,11 +1093,9 @@ func TestConnectionController_process(t *testing.T) {
 			setupMocks: func() (*mockConnectionLister, *MockConnectionHealthChecker, *MockConnectionStatusPatcher, *connection.MockFactory) {
 				mockLister := &mockConnectionLister{
 					conn: &provisioning.Connection{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:       "test-conn",
-							Namespace:  "default",
-							Generation: 1,
-						},
+						Name:       "test-conn",
+						Namespace:  "default",
+						Generation: 1,
 						Status: provisioning.ConnectionStatus{
 							ObservedGeneration: 1,
 							Health: provisioning.HealthStatus{
@@ -1212,10 +1152,8 @@ func TestConnectionController_process(t *testing.T) {
 				return mockLister, mockHealthChecker, mockStatusPatcher, mockFactory
 			},
 			conn: &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-conn",
-					Namespace: "default",
-				},
+				Name:      "test-conn",
+				Namespace: "default",
 			},
 			expectError: false,
 		},
@@ -1327,11 +1265,9 @@ func TestConnectionController_process_FieldErrors(t *testing.T) {
 
 			// Create connection
 			conn := &provisioning.Connection{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-conn",
-					Namespace:  "default",
-					Generation: 1,
-				},
+				Name:       "test-conn",
+				Namespace:  "default",
+				Generation: 1,
 				Status: provisioning.ConnectionStatus{
 					ObservedGeneration: 0, // Will trigger reconciliation
 				},
@@ -1556,9 +1492,9 @@ func TestConnectionController_DeduplicatesEnqueueBeforeProcessing(t *testing.T) 
 	}
 
 	conns := []*provisioning.Connection{
-		{ObjectMeta: metav1.ObjectMeta{Namespace: "ns-a", Name: "conn-a"}},
-		{ObjectMeta: metav1.ObjectMeta{Namespace: "ns-a", Name: "conn-b"}},
-		{ObjectMeta: metav1.ObjectMeta{Namespace: "ns-b", Name: "conn-a"}},
+		{Namespace: "ns-a", Name: "conn-a"},
+		{Namespace: "ns-a", Name: "conn-b"},
+		{Namespace: "ns-b", Name: "conn-a"},
 	}
 	handler := cc.EventHandler()
 	for _, conn := range conns {
@@ -1601,7 +1537,7 @@ func TestConnectionController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 			return nil
 		}
 
-		conn := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: "ns-a", Name: "conn"}}
+		conn := &provisioning.Connection{Namespace: "ns-a", Name: "conn"}
 		handler := cc.EventHandler()
 		handler.AddFunc(conn, true)
 		runDone := make(chan struct{})
@@ -1615,7 +1551,7 @@ func TestConnectionController_DeduplicatesEnqueueWhileProcessing(t *testing.T) {
 		for range 5 {
 			handler.UpdateFunc(conn, conn.DeepCopy())
 		}
-		handler.AddFunc(&provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: "ns-b", Name: "conn"}}, false)
+		handler.AddFunc(&provisioning.Connection{Namespace: "ns-b", Name: "conn"}, false)
 		synctest.Wait()
 		assert.Equal(t, int32(1), processCount.Load(), "the in-flight key must not be processed by another worker")
 		assert.Equal(t, int32(1), otherProcessCount.Load(), "another connection can be processed concurrently")
@@ -1649,7 +1585,7 @@ func TestConnectionController_RetriesAndClearsState(t *testing.T) {
 			cc, reg := newConnectionControllerForQueueTest(t)
 			clock := useFakeConnectionQueueClock(t, cc)
 			const key = "ns/conn"
-			conn := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "5"}}
+			conn := &provisioning.Connection{Namespace: "ns", Name: "conn", ResourceVersion: "5"}
 			processCount := 0
 			cc.processFn = func(_ context.Context, gotKey string) error {
 				require.Equal(t, key, gotKey)
@@ -1712,7 +1648,7 @@ func TestConnectionController_DirtyRedeliveryKeepsTrigger(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cc, reg := newConnectionControllerForQueueTest(t)
 			clock := useFakeConnectionQueueClock(t, cc)
-			conn := &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "5"}}
+			conn := &provisioning.Connection{Namespace: "ns", Name: "conn", ResourceVersion: "5"}
 			updated := conn.DeepCopy()
 			updated.ResourceVersion = "6"
 			processCount := 0
@@ -1755,9 +1691,9 @@ func TestConnectionController_RecentlyWrittenTokenReschedulesKey(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		cc, reg := newConnectionControllerForQueueTest(t)
 		conn := &provisioning.Connection{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: "5"},
-			Secure:     provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "recent-token"}},
-			Status:     provisioning.ConnectionStatus{Token: provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}},
+			Namespace: "ns", Name: "conn", ResourceVersion: "5",
+			Secure: provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "recent-token"}},
+			Status: provisioning.ConnectionStatus{Token: provisioning.TokenStatus{LastUpdated: time.Now().UnixMilli()}},
 		}
 		original := conn.DeepCopy()
 		cc.conns = informer.NewCachedConnectionGetter(&mockConnectionLister{conn: conn})
@@ -1950,7 +1886,7 @@ func TestConnectionController_Run_OnShutdownCalledBeforeDrain(t *testing.T) {
 // controller counts the start of each reconcile under resource="connections".
 func TestConnectionController_RecordsProcessingByTrigger(t *testing.T) {
 	conn := func(rv string) *provisioning.Connection {
-		return &provisioning.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "conn", ResourceVersion: rv}}
+		return &provisioning.Connection{Namespace: "ns", Name: "conn", ResourceVersion: rv}
 	}
 	tests := []struct {
 		name        string

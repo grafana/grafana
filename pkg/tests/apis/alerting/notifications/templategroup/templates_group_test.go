@@ -46,9 +46,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	require.NoError(t, err)
 
 	newTemplate := &v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,
@@ -222,9 +220,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 			require.NoError(t, err)
 
 			var expected = &v1beta1.TemplateGroup{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
+				Namespace: "default",
 				Spec: v1beta1.TemplateGroupSpec{
 					Title:   fmt.Sprintf("template-group-1-%s", tc.user.Identity.GetLogin()),
 					Content: `{{ define "test" }} test {{ end }}`,
@@ -402,9 +398,7 @@ func TestIntegrationProvisioning(t *testing.T) {
 
 	newTemplate := func(title string) *v1beta1.TemplateGroup {
 		return &v1beta1.TemplateGroup{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.TemplateGroupSpec{
 				Title:   title,
 				Content: `{{ define "` + title + `" }} test {{ end }}`,
@@ -546,9 +540,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 	require.NoError(t, err)
 	oldClient := common.NewTemplateGroupClient(t, helper.Org1.Admin)
 	template := v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "template-group-1",
 			Content: `{{ define "test" }} test {{ end }}`,
@@ -631,9 +623,7 @@ func TestIntegrationPatch(t *testing.T) {
 	require.NoError(t, err)
 
 	template := v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "template-group",
 			Content: `{{ define "test" }} test {{ end }}`,
@@ -690,9 +680,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	template1 := &v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "test1",
 			Content: `{{ define "test1" }} test {{ end }}`,
@@ -703,9 +691,7 @@ func TestIntegrationListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	template2 := &v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "test2",
 			Content: `{{ define "test2" }} test {{ end }}`,
@@ -793,9 +779,7 @@ func TestIntegrationKinds(t *testing.T) {
 	require.NoError(t, err)
 
 	newTemplate := &v1beta1.TemplateGroup{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TemplateGroupSpec{
 			Title:   "templateGroup",
 			Content: `{{ define "test" }} test {{ end }}`,

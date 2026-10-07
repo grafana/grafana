@@ -6,8 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 )
@@ -44,10 +42,8 @@ func SeedSecureValues(ctx context.Context, svc contracts.SecureValueService, num
 			name := "sv-" + randString(nsChars, 8, rng)
 			description := randString(nsChars, descLen, rng)
 			sv := &secretv1beta1.SecureValue{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: namespace,
-				},
+				Name:      name,
+				Namespace: namespace,
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: description,
 					Value: new(secretv1beta1.NewExposedSecureValue(

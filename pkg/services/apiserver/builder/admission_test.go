@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/apis/example"
@@ -142,7 +141,7 @@ func TestBuilderAdmission_Admit(t *testing.T) {
 		Kind:    "Foo",
 	}
 	gvr := gvk.GroupVersion().WithResource("foos")
-	exampleObj := &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo"}, Spec: example.PodSpec{}}
+	exampleObj := &example.Pod{Name: "foo", Spec: example.PodSpec{}}
 	tests := []struct {
 		name       string
 		mutators   map[schema.GroupVersion]builder.APIGroupMutation

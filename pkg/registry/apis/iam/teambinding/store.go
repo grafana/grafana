@@ -149,10 +149,8 @@ func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteVali
 	}
 
 	return &iamv0alpha1.TeamBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: ns.Value,
-		},
+		Name:      name,
+		Namespace: ns.Value,
 	}, true, nil
 }
 
@@ -329,12 +327,10 @@ func mapToBindingObject(ns claims.NamespaceInfo, tm legacy.TeamMember) iamv0alph
 	}
 
 	result := iamv0alpha1.TeamBinding{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              tm.UID,
-			Namespace:         ns.Value,
-			ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
-			CreationTimestamp: metav1.NewTime(ct),
-		},
+		Name:              tm.UID,
+		Namespace:         ns.Value,
+		ResourceVersion:   strconv.FormatInt(rv.UnixMilli(), 10),
+		CreationTimestamp: metav1.NewTime(ct),
 		Spec: iamv0alpha1.TeamBindingSpec{
 			TeamRef: iamv0alpha1.TeamBindingTeamRef{
 				Name: tm.TeamUID,

@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -31,13 +30,13 @@ func TestTeamSearchModeChanges(t *testing.T) {
 		return &fakeSearchBackend{searchFunc: func(_ context.Context, query SearchQuery) (*iamv0.GetSearchTeamsResponse, error) {
 			calls = append(calls, name)
 			require.Equal(t, "stacks-1", query.Namespace)
-			return &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{Hits: []iamv0.GetSearchTeamsTeamHit{{Name: name}}}}, nil
+			return &iamv0.GetSearchTeamsResponse{Hits: []iamv0.GetSearchTeamsTeamHit{{Name: name}}}, nil
 		}}
 	}
 	selector := dualwrite.NewSelector(dualwrite.ProvideServiceForTests(cfg), gr, backend("legacy"), backend("unified"))
 	handler := NewSearchHandler(tracing.NewNoopTracerService(), selector, nil)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "stacks-1"})
-	obj := &iamv0.Team{ObjectMeta: metav1.ObjectMeta{Name: "legacy"}, Spec: iamv0.TeamSpec{Title: "Team"}}
+	obj := &iamv0.Team{Name: "legacy", Spec: iamv0.TeamSpec{Title: "Team"}}
 	for _, tt := range []struct {
 		mode rest.DualWriterMode
 		want string

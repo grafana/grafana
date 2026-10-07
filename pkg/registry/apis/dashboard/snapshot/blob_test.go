@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	authlib "github.com/grafana/authlib/types"
@@ -45,7 +44,7 @@ func (f *fakeBlobStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequ
 
 func newBlobTestSnapshot() *dashv0.Snapshot {
 	return &dashv0.Snapshot{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "snap-1"},
+		Namespace: "default", Name: "snap-1",
 		Spec: dashv0.SnapshotSpec{
 			Dashboard: map[string]any{"title": "CPU", "panels": []any{}},
 		},

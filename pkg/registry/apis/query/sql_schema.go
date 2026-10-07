@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	query "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -43,10 +42,8 @@ func (b *QueryAPIBuilder) GetSQLSchemas(w http.ResponseWriter, r *http.Request) 
 	encoder := json.NewEncoder(w)
 	encoder.SetIndent("", "  ") // pretty print
 	err = encoder.Encode(&query.QueryResponseSQLSchemas{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: query.SchemeGroupVersion.String(),
-			Kind:       "QueryResponseSQLSchemas",
-		},
+		APIVersion: query.SchemeGroupVersion.String(),
+		Kind:       "QueryResponseSQLSchemas",
 		SQLSchemas: qdr,
 	})
 	if err != nil {

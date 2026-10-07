@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
@@ -76,10 +75,8 @@ func TestConsolidation(t *testing.T) {
 		// Create secure values and store their original decrypted values and encrypted data
 		for _, tc := range testCases {
 			sv := &secretv1beta1.SecureValue{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      tc.name,
-					Namespace: tc.namespace,
-				},
+				Name:      tc.name,
+				Namespace: tc.namespace,
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: "test description",
 					Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),
@@ -179,10 +176,8 @@ func TestConsolidation(t *testing.T) {
 
 		for _, tc := range initialSecrets {
 			sv := &secretv1beta1.SecureValue{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      tc.name,
-					Namespace: tc.namespace,
-				},
+				Name:      tc.name,
+				Namespace: tc.namespace,
 				Spec: secretv1beta1.SecureValueSpec{
 					Description: "test description",
 					Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),
@@ -228,10 +223,8 @@ func TestConsolidation(t *testing.T) {
 
 				for _, tc := range newSecrets {
 					sv := &secretv1beta1.SecureValue{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      tc.name,
-							Namespace: tc.namespace,
-						},
+						Name:      tc.name,
+						Namespace: tc.namespace,
 						Spec: secretv1beta1.SecureValueSpec{
 							Description: tc.desc,
 							Value:       new(secretv1beta1.NewExposedSecureValue(tc.value)),

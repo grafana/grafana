@@ -63,7 +63,7 @@ func TestNewHistoricJobDeltaSource_SelectsSourceByNATS(t *testing.T) {
 // historic jobs through the provisioning client.
 func TestNewHistoricJobPeriodicInformer_ListsFromClient(t *testing.T) {
 	client := fake.NewClientset(
-		&provisioningapis.HistoricJob{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "old"}},
+		&provisioningapis.HistoricJob{Namespace: "ns", Name: "old"},
 	)
 
 	src := NewHistoricJobPeriodicInformer(client, "", time.Hour)

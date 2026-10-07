@@ -273,14 +273,12 @@ func (ns *NotificationService) ValidateResetPasswordCode(ctx context.Context, qu
 
 func (ns *NotificationService) SendVerificationEmail(ctx context.Context, cmd *SendVerifyEmailCommand) error {
 	return ns.SendEmailCommandHandlerSync(ctx, &SendEmailCommandSync{
-		SendEmailCommand: SendEmailCommand{
-			To:       []string{cmd.Email},
-			Template: tmplVerifyEmail,
-			Data: map[string]any{
-				"Code":                           url.QueryEscape(cmd.Code),
-				"Name":                           cmd.User.Name,
-				"VerificationEmailLifetimeHours": int(ns.Cfg.VerificationEmailMaxLifetime.Hours()),
-			},
+		To:       []string{cmd.Email},
+		Template: tmplVerifyEmail,
+		Data: map[string]any{
+			"Code":                           url.QueryEscape(cmd.Code),
+			"Name":                           cmd.User.Name,
+			"VerificationEmailLifetimeHours": int(ns.Cfg.VerificationEmailMaxLifetime.Hours()),
 		},
 	})
 }

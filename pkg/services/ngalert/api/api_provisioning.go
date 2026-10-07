@@ -244,13 +244,11 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *contextmodel.ReqContext, nameOrU
 
 func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
 	tmpl := v1.TemplateGroup{
-		Title:   name,
-		Content: body.Template,
-		Kind:    v1.TemplateKindGrafana,
-		ResourceMetadata: v1.ResourceMetadata{
-			Provenance: determineProvenance(c),
-			Version:    body.ResourceVersion,
-		},
+		Title:      name,
+		Content:    body.Template,
+		Kind:       v1.TemplateKindGrafana,
+		Provenance: determineProvenance(c),
+		Version:    body.ResourceVersion,
 	}
 	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.GetOrgID(), tmpl)
 	if err != nil {

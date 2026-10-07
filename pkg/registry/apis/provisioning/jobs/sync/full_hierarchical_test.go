@@ -8,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
@@ -405,8 +404,8 @@ func TestFullSync_HierarchicalErrorHandling(t *testing.T) { // nolint:gocyclo
 			compareFn := NewMockCompareFn(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-				Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+				Name: "test-repo",
+				Spec: provisioning.RepositorySpec{Title: "Test Repo"},
 			})
 
 			tt.setupMocks(repo, repoResources, clients, progress, dynamicClient)

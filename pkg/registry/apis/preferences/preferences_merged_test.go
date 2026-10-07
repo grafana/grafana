@@ -244,16 +244,16 @@ func TestMergedResourceVersion(t *testing.T) {
 	t.Run("uses the most recent CreationTimestamp across items", func(t *testing.T) {
 		items := []preferences.Preferences{
 			{
-				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.NewTime(t1)},
-				Spec:       preferences.PreferencesSpec{Theme: new("a")},
+				CreationTimestamp: v1.NewTime(t1),
+				Spec:              preferences.PreferencesSpec{Theme: new("a")},
 			},
 			{
-				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.NewTime(t3)},
-				Spec:       preferences.PreferencesSpec{Theme: new("b")},
+				CreationTimestamp: v1.NewTime(t3),
+				Spec:              preferences.PreferencesSpec{Theme: new("b")},
 			},
 			{
-				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.NewTime(t2)},
-				Spec:       preferences.PreferencesSpec{Theme: new("c")},
+				CreationTimestamp: v1.NewTime(t2),
+				Spec:              preferences.PreferencesSpec{Theme: new("c")},
 			},
 		}
 		got, err := merge(defaults, items)
@@ -265,17 +265,15 @@ func TestMergedResourceVersion(t *testing.T) {
 	t.Run("AnnoKeyUpdatedTimestamp wins over older CreationTimestamp", func(t *testing.T) {
 		items := []preferences.Preferences{
 			{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: v1.NewTime(t1),
-					Annotations: map[string]string{
-						utils.AnnoKeyUpdatedTimestamp: t3.Format(time.RFC3339),
-					},
+				CreationTimestamp: v1.NewTime(t1),
+				Annotations: map[string]string{
+					utils.AnnoKeyUpdatedTimestamp: t3.Format(time.RFC3339),
 				},
 				Spec: preferences.PreferencesSpec{Theme: new("a")},
 			},
 			{
-				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.NewTime(t2)},
-				Spec:       preferences.PreferencesSpec{Theme: new("b")},
+				CreationTimestamp: v1.NewTime(t2),
+				Spec:              preferences.PreferencesSpec{Theme: new("b")},
 			},
 		}
 		got, err := merge(defaults, items)
@@ -286,17 +284,15 @@ func TestMergedResourceVersion(t *testing.T) {
 	t.Run("CreationTimestamp wins over older AnnoKeyUpdatedTimestamp", func(t *testing.T) {
 		items := []preferences.Preferences{
 			{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: v1.NewTime(t1),
-					Annotations: map[string]string{
-						utils.AnnoKeyUpdatedTimestamp: t1.Format(time.RFC3339),
-					},
+				CreationTimestamp: v1.NewTime(t1),
+				Annotations: map[string]string{
+					utils.AnnoKeyUpdatedTimestamp: t1.Format(time.RFC3339),
 				},
 				Spec: preferences.PreferencesSpec{Theme: new("a")},
 			},
 			{
-				ObjectMeta: v1.ObjectMeta{CreationTimestamp: v1.NewTime(t3)},
-				Spec:       preferences.PreferencesSpec{Theme: new("b")},
+				CreationTimestamp: v1.NewTime(t3),
+				Spec:              preferences.PreferencesSpec{Theme: new("b")},
 			},
 		}
 		got, err := merge(defaults, items)
@@ -307,11 +303,9 @@ func TestMergedResourceVersion(t *testing.T) {
 	t.Run("invalid AnnoKeyUpdatedTimestamp falls back to CreationTimestamp", func(t *testing.T) {
 		items := []preferences.Preferences{
 			{
-				ObjectMeta: v1.ObjectMeta{
-					CreationTimestamp: v1.NewTime(t2),
-					Annotations: map[string]string{
-						utils.AnnoKeyUpdatedTimestamp: "not-a-real-timestamp",
-					},
+				CreationTimestamp: v1.NewTime(t2),
+				Annotations: map[string]string{
+					utils.AnnoKeyUpdatedTimestamp: "not-a-real-timestamp",
 				},
 				Spec: preferences.PreferencesSpec{Theme: new("a")},
 			},

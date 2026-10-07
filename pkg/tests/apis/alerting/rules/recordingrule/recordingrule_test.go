@@ -44,11 +44,9 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	).Generate()
 
 	newResource := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,
@@ -143,11 +141,9 @@ func TestIntegrationAccessControl(t *testing.T) {
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,
@@ -228,12 +224,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder":     "test-folder",
-					"grafana.com/provenance": "",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder":     "test-folder",
+				"grafana.com/provenance": "",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -281,12 +275,10 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder":     "test-folder",
-					"grafana.com/provenance": "invalid",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder":     "test-folder",
+				"grafana.com/provenance": "invalid",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -316,11 +308,9 @@ func TestIntegrationCRUD(t *testing.T) {
 
 	t.Run("should fail to create recording rule with invalid config", func(t *testing.T) {
 		invalidRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:       "invalid-recording-rule",
@@ -341,11 +331,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -394,11 +382,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		rule := baseGen.Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -431,11 +417,9 @@ func TestIntegrationCRUD(t *testing.T) {
 		).Generate()
 
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": "test-folder",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": "test-folder",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -486,11 +470,9 @@ func TestIntegrationPatch(t *testing.T) {
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,
@@ -588,11 +570,9 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 	t.Run("should keep folder label in sync with folder annotation on create and update", func(t *testing.T) {
 		rule := baseGen.Generate()
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					v0alpha1.FolderAnnotationKey: "test-folder-a",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				v0alpha1.FolderAnnotationKey: "test-folder-a",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -636,10 +616,8 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 	t.Run("should fail to create recording rule without folder annotation", func(t *testing.T) {
 		rule := baseGen.Generate()
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace:   "default",
-				Annotations: map[string]string{},
-			},
+			Namespace:   "default",
+			Annotations: map[string]string{},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
 				Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),
@@ -668,15 +646,13 @@ func TestIntegrationFolderLabelSyncAndValidation(t *testing.T) {
 	t.Run("should fail to create rule with group labels preset", func(t *testing.T) {
 		rule := baseGen.Generate()
 		recordingRule := &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					v0alpha1.FolderAnnotationKey: "test-folder-a",
-				},
-				Labels: map[string]string{
-					v0alpha1.GroupLabelKey:      "some-group",
-					v0alpha1.GroupIndexLabelKey: "0",
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				v0alpha1.FolderAnnotationKey: "test-folder-a",
+			},
+			Labels: map[string]string{
+				v0alpha1.GroupLabelKey:      "some-group",
+				v0alpha1.GroupIndexLabelKey: "0",
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -723,11 +699,9 @@ func TestIntegrationListWithLabelSelectors(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": folder,
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": folder,
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -808,11 +782,9 @@ func TestIntegrationListWithFieldSelectors(t *testing.T) {
 			ngmodels.RuleMuts.WithIntervalMatching(time.Duration(10)*time.Second),
 		).Generate()
 		return &v0alpha1.RecordingRule{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-				Annotations: map[string]string{
-					"grafana.app/folder": folder,
-				},
+			Namespace: "default",
+			Annotations: map[string]string{
+				"grafana.app/folder": folder,
 			},
 			Spec: v0alpha1.RecordingRuleSpec{
 				Title:               rule.Title,
@@ -1030,10 +1002,8 @@ func TestIntegrationRecordingRuleStatusSubresource(t *testing.T) {
 	).Generate()
 
 	ruleResource := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace:   "default",
-			Annotations: map[string]string{"grafana.app/folder": "test-folder"},
-		},
+		Namespace:   "default",
+		Annotations: map[string]string{"grafana.app/folder": "test-folder"},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,
 			Metric:              v0alpha1.RecordingRuleMetricName(rule.Record.Metric),

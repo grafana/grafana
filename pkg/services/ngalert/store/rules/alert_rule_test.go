@@ -716,10 +716,8 @@ func TestIntegration_DeleteAlertRulesByUID(t *testing.T) {
 		// Save state for the alert rule
 		instances := []models.AlertInstance{
 			{
-				AlertInstanceKey: models.AlertInstanceKey{
-					RuleUID:   rule.UID,
-					RuleOrgID: rule.OrgID,
-				},
+				RuleUID:   rule.UID,
+				RuleOrgID: rule.OrgID,
 			},
 		}
 		err := protoInstanceStore.SaveAlertInstancesForRule(context.Background(), rule.GetKeyWithGroup(), instances)
@@ -2009,7 +2007,7 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 	t.Run("should order groups case-sensitively", func(t *testing.T) {
 		result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
+			OrgID: 1,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 6, "should return all 6 rules")
@@ -2042,8 +2040,8 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 	t.Run("should respect group limit with case-sensitive ordering", func(t *testing.T) {
 		// Test with limit of 2 groups - should get first 2 groups in case-sensitive order
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
-			Limit:               2,
+			OrgID: 1,
+			Limit: 2,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 4, "should return 4 rules (2 rules from first 2 groups)")
@@ -2068,8 +2066,8 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 		// Continue from token to get remaining groups
 		remainingResult, nextToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
-			ContinueToken:       continueToken,
+			OrgID:         1,
+			ContinueToken: continueToken,
 		})
 		require.NoError(t, err)
 		require.Len(t, remainingResult, 2, "should return 2 rules from remaining group")
@@ -2088,8 +2086,8 @@ func TestIntegrationListAlertRulesByGroupCaseSensitiveOrdering(t *testing.T) {
 
 	t.Run("should handle group limit of 1 correctly", func(t *testing.T) {
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: 1},
-			Limit:               1,
+			OrgID: 1,
+			Limit: 1,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 2, "should return 2 rules from first group")
@@ -2405,7 +2403,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 	t.Run("should return all rules when no limit passed", func(t *testing.T) {
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			OrgID: orgID,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 50, "should return all rules when no limit is set")
@@ -2416,8 +2414,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		// random number from 1 to totalGroups - 1 (to ensure we always receive less than totalGroups)
 		groupLimit := rand.Int64N(int64(totalGroups)-1) + 1
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               groupLimit,
+			OrgID: orgID,
+			Limit: groupLimit,
 		})
 		require.NoError(t, err)
 		expectedRuleCount := groupLimit * int64(rulesPerGroup)
@@ -2428,8 +2426,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	t.Run("should return all groups when group limit exceeds total groups", func(t *testing.T) {
 		groupLimit := int64(totalGroups + rand.IntN(10) + 1) // totalGroups + random number to ensure it exceeds totalGroups
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               groupLimit,
+			OrgID: orgID,
+			Limit: groupLimit,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, numRules, "should return all rules when group limit exceeds total groups")
@@ -2439,8 +2437,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 	t.Run("pagination should all for continuation", func(t *testing.T) {
 		groupLimit := int64(2) // fixed group limit for this test
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               groupLimit,
+			OrgID: orgID,
+			Limit: groupLimit,
 		})
 		require.NoError(t, err)
 		require.Len(t, result, int(groupLimit*int64(rulesPerGroup)), "should return rules for the first two groups")
@@ -2457,8 +2455,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// Continue from previous, fetching the rest of the rules
 		result, continueToken, err = store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			ContinueToken:       continueToken,
+			OrgID:         orgID,
+			ContinueToken: continueToken,
 		})
 		require.NoError(t, err)
 		resultRules = append(resultRules, result...)
@@ -2521,11 +2519,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// First page: get 1 group with SearchTitle filter
 		result, continueToken, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:       orgID,
-				SearchTitle: searchTitle,
-			},
-			Limit: 1,
+			OrgID:       orgID,
+			SearchTitle: searchTitle,
+			Limit:       1,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, continueToken, "should have more pages")
@@ -2539,10 +2535,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// Second page
 		result2, continueToken2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:       orgID,
-				SearchTitle: searchTitle,
-			},
+			OrgID:         orgID,
+			SearchTitle:   searchTitle,
 			Limit:         1,
 			ContinueToken: continueToken,
 		})
@@ -2580,10 +2574,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		t.Run("only no-group filter returns matching rule by UID", func(t *testing.T) {
 			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID:      orgID,
-					RuleGroups: []string{noGroup.String()},
-				},
+				OrgID:      orgID,
+				RuleGroups: []string{noGroup.String()},
 			})
 			require.NoError(t, err)
 			require.Len(t, result, 1)
@@ -2592,10 +2584,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		t.Run("mixed real and no-group filter returns both", func(t *testing.T) {
 			result, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID:      orgID,
-					RuleGroups: []string{groupedRule.RuleGroup, noGroup.String()},
-				},
+				OrgID:      orgID,
+				RuleGroups: []string{groupedRule.RuleGroup, noGroup.String()},
 			})
 			require.NoError(t, err)
 			require.Len(t, result, 2)
@@ -2639,21 +2629,17 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 
 		// Page 1: limit to 1 group
 		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
-			},
-			Limit: 1,
+			OrgID:      orgID,
+			RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
+			Limit:      1,
 		})
 		require.NoError(t, err)
 		require.NotEmpty(t, token1, "should have a continuation token")
 
 		// Page 2: continue
 		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:      orgID,
-				RuleGroups: []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
-			},
+			OrgID:         orgID,
+			RuleGroups:    []string{groupedRule1.RuleGroup, noGroup1.String(), noGroup2.String()},
 			Limit:         2,
 			ContinueToken: token1,
 		})
@@ -2691,7 +2677,7 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		))
 
 		resultByNamespace, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
+			OrgID: orgID,
 		})
 		require.NoError(t, err)
 		require.Len(t, resultByNamespace, 2)
@@ -2699,8 +2685,8 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		require.Equal(t, ruleFullpathFirst.UID, resultByNamespace[1].UID)
 
 		resultByFullpath, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			SortByFullpath:      true,
+			OrgID:          orgID,
+			SortByFullpath: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, resultByFullpath, 2)
@@ -2737,9 +2723,9 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		))
 
 		page1, token1, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               1,
-			SortByFullpath:      true,
+			OrgID:          orgID,
+			Limit:          1,
+			SortByFullpath: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, page1, 1)
@@ -2753,10 +2739,10 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		require.Equal(t, "group-1", cursor1.RuleGroup)
 
 		page2, token2, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               1,
-			ContinueToken:       token1,
-			SortByFullpath:      true,
+			OrgID:          orgID,
+			Limit:          1,
+			ContinueToken:  token1,
+			SortByFullpath: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, page2, 1)
@@ -2770,10 +2756,10 @@ func TestIntegration_ListAlertRulesByGroup(t *testing.T) {
 		require.Equal(t, "group-2", cursor2.RuleGroup)
 
 		page3, token3, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-			Limit:               1,
-			ContinueToken:       token2,
-			SortByFullpath:      true,
+			OrgID:          orgID,
+			Limit:          1,
+			ContinueToken:  token2,
+			SortByFullpath: true,
 		})
 		require.NoError(t, err)
 		require.Len(t, page3, 1)
@@ -2832,8 +2818,8 @@ func Benchmark_ListAlertRules(b *testing.B) {
 		b.Run(fmt.Sprintf("list %d groups paginated", groupLimit), func(b *testing.B) {
 			for b.Loop() {
 				_, _, err := store.ListAlertRulesByGroup(context.Background(), &models.ListAlertRulesExtendedQuery{
-					ListAlertRulesQuery: models.ListAlertRulesQuery{OrgID: orgID},
-					Limit:               int64(groupLimit),
+					OrgID: orgID,
+					Limit: int64(groupLimit),
 				})
 				if err != nil {
 					b.Fatal(err)
@@ -3323,9 +3309,7 @@ func TestIntegration_ListAlertRules(t *testing.T) {
 		for _, tt := range tc {
 			t.Run(tt.name, func(t *testing.T) {
 				query := &models.ListAlertRulesExtendedQuery{
-					ListAlertRulesQuery: models.ListAlertRulesQuery{
-						OrgID: testOrgID,
-					},
+					OrgID:              testOrgID,
 					PluginOriginFilter: tt.filter,
 				}
 				result, _, err := store.ListAlertRulesByGroup(context.Background(), query)
@@ -3368,9 +3352,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 
 		t.Run("should return only alerting rules", func(t *testing.T) {
 			query := &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID: orgID,
-				},
+				OrgID:    orgID,
 				RuleType: models.RuleTypeFilterAlerting,
 			}
 			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3384,9 +3366,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 
 		t.Run("should return only recording rules", func(t *testing.T) {
 			query := &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID: orgID,
-				},
+				OrgID:    orgID,
 				RuleType: models.RuleTypeFilterRecording,
 			}
 			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3400,9 +3380,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 
 		t.Run("should return both alerting and recording rules when RuleType is not set", func(t *testing.T) {
 			query := &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID: orgID,
-				},
+				OrgID: orgID,
 			}
 			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
 			require.NoError(t, err)
@@ -3422,9 +3400,7 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 		})
 		t.Run("should return both alerting and recording rules when RuleType is all", func(t *testing.T) {
 			query := &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID: orgID,
-				},
+				OrgID:    orgID,
 				RuleType: models.RuleTypeFilterAll,
 			}
 			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
@@ -3452,11 +3428,9 @@ func TestIntegration_ListAlertRulesPaginated(t *testing.T) {
 		}
 		t.Run("should return paginated results", func(t *testing.T) {
 			query := &models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{
-					OrgID:         orgID,
-					NamespaceUIDs: []string{"paginate-test"},
-				},
-				Limit: 5, // set page size to 5
+				OrgID:         orgID,
+				NamespaceUIDs: []string{"paginate-test"},
+				Limit:         5, // set page size to 5
 			}
 			result, continueToken, err := store.ListAlertRulesPaginated(context.Background(), query)
 			require.NoError(t, err)
@@ -3503,10 +3477,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		nsBRule2 := createRule(t, store, nsBGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                orgID,
-				ExcludeNamespaceUIDs: []string{"ns-a"},
-			},
+			OrgID:                orgID,
+			ExcludeNamespaceUIDs: []string{"ns-a"},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3532,10 +3504,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		g2Rule2 := createRule(t, store, group2Gen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:             orgID,
-				ExcludeRuleGroups: []string{"group-1"},
-			},
+			OrgID:             orgID,
+			ExcludeRuleGroups: []string{"group-1"},
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3560,10 +3530,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		trueVal := true
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:           orgID,
-				RuleGroupExists: &trueVal,
-			},
+			OrgID:           orgID,
+			RuleGroupExists: &trueVal,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3584,10 +3552,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		falseVal := false
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:           orgID,
-				RuleGroupExists: &falseVal,
-			},
+			OrgID:           orgID,
+			RuleGroupExists: &falseVal,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3610,10 +3576,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:      orgID,
-				TitleExact: matchTitle,
-			},
+			OrgID:      orgID,
+			TitleExact: matchTitle,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3640,10 +3604,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		trueVal := true
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:    orgID,
-				IsPaused: &trueVal,
-			},
+			OrgID:    orgID,
+			IsPaused: &trueVal,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3670,10 +3632,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 
 		falseVal := false
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:    orgID,
-				IsPaused: &falseVal,
-			},
+			OrgID:    orgID,
+			IsPaused: &falseVal,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3701,10 +3661,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:        orgID,
-				DashboardUID: dashUID,
-			},
+			OrgID:        orgID,
+			DashboardUID: dashUID,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3733,10 +3691,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:   orgID,
-				PanelID: panelID,
-			},
+			OrgID:   orgID,
+			PanelID: panelID,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3763,10 +3719,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		other2 := createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:        orgID,
-				ExcludeTitle: excludedTitle,
-			},
+			OrgID:        orgID,
+			ExcludeTitle: excludedTitle,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3793,10 +3747,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		other2 := createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:               orgID,
-				ExcludeDashboardUID: excludedDash,
-			},
+			OrgID:               orgID,
+			ExcludeDashboardUID: excludedDash,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3824,10 +3776,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		other2 := createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:          orgID,
-				ExcludePanelID: excludedPanelID,
-			},
+			OrgID:          orgID,
+			ExcludePanelID: excludedPanelID,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3854,10 +3804,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, noNotifGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                    orgID,
-				NotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
-			},
+			OrgID:                    orgID,
+			NotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3884,10 +3832,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, noNotifGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                    orgID,
-				NotificationSettingsType: models.NotificationSettingsTypeNamedRoutingTree,
-			},
+			OrgID:                    orgID,
+			NotificationSettingsType: models.NotificationSettingsTypeNamedRoutingTree,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3913,10 +3859,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		n1 := createRule(t, store, noNotifGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                           orgID,
-				ExcludeNotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
-			},
+			OrgID:                           orgID,
+			ExcludeNotificationSettingsType: models.NotificationSettingsTypeSimplifiedRouting,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3942,10 +3886,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:              orgID,
-				RoutingPolicyExact: matchPolicy,
-			},
+			OrgID:              orgID,
+			RoutingPolicyExact: matchPolicy,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -3972,10 +3914,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		noPolicy := createRule(t, store, noPolicyGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                orgID,
-				ExcludeRoutingPolicy: excludedPolicy,
-			},
+			OrgID:                orgID,
+			ExcludeRoutingPolicy: excludedPolicy,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -4032,9 +3972,9 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		})
 		t.Run("combined with other filters", func(t *testing.T) {
 			got := list(t, models.ListAlertRulesExtendedQuery{
-				ListAlertRulesQuery: models.ListAlertRulesQuery{RuleUIDs: []string{firingOK.UID, normalOK.UID, pendingErr.UID}},
-				States:              []string{"firing", "normal"},
-				ExcludeHealths:      []string{"error"},
+				RuleUIDs:       []string{firingOK.UID, normalOK.UID, pendingErr.UID},
+				States:         []string{"firing", "normal"},
+				ExcludeHealths: []string{"error"},
 			})
 			require.ElementsMatch(t, []string{firingOK.UID, normalOK.UID}, got)
 		})
@@ -4054,10 +3994,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:             orgID,
-				RecordMetricExact: matchMetric,
-			},
+			OrgID:             orgID,
+			RecordMetricExact: matchMetric,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -4083,10 +4021,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		other2 := createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:               orgID,
-				ExcludeRecordMetric: excludedMetric,
-			},
+			OrgID:               orgID,
+			ExcludeRecordMetric: excludedMetric,
 			// scope to recording rules so we don't pick up alerting noise.
 			RuleType: models.RuleTypeFilterRecording,
 		}
@@ -4122,10 +4058,8 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                          orgID,
-				RecordTargetDatasourceUIDExact: matchUID,
-			},
+			OrgID:                          orgID,
+			RecordTargetDatasourceUIDExact: matchUID,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)
@@ -4159,11 +4093,9 @@ func TestIntegration_ListAlertRulesPaginatedFilters(t *testing.T) {
 		other2 := createRule(t, store, otherGen)
 
 		query := &models.ListAlertRulesExtendedQuery{
-			ListAlertRulesQuery: models.ListAlertRulesQuery{
-				OrgID:                            orgID,
-				ExcludeRecordTargetDatasourceUID: excludedUID,
-			},
-			RuleType: models.RuleTypeFilterRecording,
+			OrgID:                            orgID,
+			ExcludeRecordTargetDatasourceUID: excludedUID,
+			RuleType:                         models.RuleTypeFilterRecording,
 		}
 		result, _, err := store.ListAlertRulesPaginated(context.Background(), query)
 		require.NoError(t, err)

@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
@@ -45,8 +44,8 @@ func TestPluginProvisioner(t *testing.T) {
 			pluginSettings: store,
 			orgService:     orgMock,
 			pluginStore: pluginstore.NewFakePluginStore(
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin"}},
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin-2"}},
+				pluginstore.Plugin{ID: "test-plugin"},
+				pluginstore.Plugin{ID: "test-plugin-2"},
 			),
 		}
 
@@ -95,7 +94,7 @@ func TestPluginProvisioner(t *testing.T) {
 			cfgProvider:    reader,
 			pluginSettings: store,
 			pluginStore: pluginstore.NewFakePluginStore(
-				pluginstore.Plugin{JSONData: plugins.JSONData{ID: "test-plugin", AutoEnabled: true}},
+				pluginstore.Plugin{ID: "test-plugin", AutoEnabled: true},
 			),
 		}
 

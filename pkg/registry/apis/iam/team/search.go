@@ -84,155 +84,129 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 				Path: "searchTeams",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Tags:        []string{"Search"},
-							Description: "Team search",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "query",
-										In:          "query",
-										Description: "team name query string (fuzzy/partial match). Mutually exclusive with title.",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "title",
-										In:          "query",
-										Description: "exact match on team name. Mutually exclusive with query.",
-										Required:    false,
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "uid",
-										In:          "query",
-										Description: "filter by team UIDs. Mutually exclusive with teamId.",
-										Required:    false,
-										Schema:      spec.ArrayProperty(spec.StringProperty()),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "teamId",
-										In:          "query",
-										Description: "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
-										Required:    false,
-										Deprecated:  true,
-										Schema:      spec.ArrayProperty(spec.Int64Property()),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "limit",
-										In:          "query",
-										Description: "limit the number of results",
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "offset",
-										In:          "query",
-										Description: "start the query at the given offset",
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "page",
-										In:          "query",
-										Description: "page number to start from",
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "membercount",
-										In:          "query",
-										Description: "when true, includes member count for each team in the response",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "accesscontrol",
-										In:          "query",
-										Description: "when true, includes access control metadata in the response",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "sort",
-										In:          "query",
-										Description: "sortable field",
-										Examples: map[string]*spec3.Example{
-											"": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "default sorting",
-													Value:   "",
-												},
-											},
-											"title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title ascending",
-													Value:   "title",
-												},
-											},
-											"-title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title descending",
-													Value:   "-title",
-												},
-											},
-											"email": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "email ascending",
-													Value:   "email",
-												},
-											},
-											"-email": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "email descending",
-													Value:   "-email",
-												},
-											},
-										},
-										Required: false,
-										Schema:   spec.StringProperty(),
-									},
-								},
+						Tags:        []string{"Search"},
+						Description: "Team search",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &searchResults,
-														},
-													},
+							{
+								Name:        "query",
+								In:          "query",
+								Description: "team name query string (fuzzy/partial match). Mutually exclusive with title.",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "title",
+								In:          "query",
+								Description: "exact match on team name. Mutually exclusive with query.",
+								Required:    false,
+								Schema:      spec.StringProperty(),
+							},
+							{
+								Name:        "uid",
+								In:          "query",
+								Description: "filter by team UIDs. Mutually exclusive with teamId.",
+								Required:    false,
+								Schema:      spec.ArrayProperty(spec.StringProperty()),
+							},
+							{
+								Name:        "teamId",
+								In:          "query",
+								Description: "filter by legacy team IDs. Deprecated: use uid instead. Mutually exclusive with uid.",
+								Required:    false,
+								Deprecated:  true,
+								Schema:      spec.ArrayProperty(spec.Int64Property()),
+							},
+							{
+								Name:        "limit",
+								In:          "query",
+								Description: "limit the number of results",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "offset",
+								In:          "query",
+								Description: "start the query at the given offset",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "page",
+								In:          "query",
+								Description: "page number to start from",
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "membercount",
+								In:          "query",
+								Description: "when true, includes member count for each team in the response",
+								Required:    false,
+								Schema:      spec.BoolProperty(),
+							},
+							{
+								Name:        "accesscontrol",
+								In:          "query",
+								Description: "when true, includes access control metadata in the response",
+								Required:    false,
+								Schema:      spec.BoolProperty(),
+							},
+							{
+								Name:        "sort",
+								In:          "query",
+								Description: "sortable field",
+								Examples: map[string]*spec3.Example{
+									"": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "default sorting",
+											Value:   "",
+										},
+									},
+									"title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title ascending",
+											Value:   "title",
+										},
+									},
+									"-title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title descending",
+											Value:   "-title",
+										},
+									},
+									"email": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "email ascending",
+											Value:   "email",
+										},
+									},
+									"-email": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "email descending",
+											Value:   "-email",
+										},
+									},
+								},
+								Required: false,
+								Schema:   spec.StringProperty(),
+							},
+						},
+						Responses: &spec3.Responses{
+							StatusCodeResponses: map[int]*spec3.Response{
+								200: {
+									ResponseProps: spec3.ResponseProps{
+										Content: map[string]*spec3.MediaType{
+											"application/json": {
+												MediaTypeProps: spec3.MediaTypeProps{
+													Schema: &searchResults,
 												},
 											},
 										},

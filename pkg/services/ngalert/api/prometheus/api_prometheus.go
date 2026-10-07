@@ -75,11 +75,9 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/ngalert/api/pr
 // badRequestError returns a Prometheus-compatible error response for bad request data.
 func badRequestError(err error) apimodels.RuleResponse {
 	return apimodels.RuleResponse{
-		DiscoveryBase: apimodels.DiscoveryBase{
-			Status:    "error",
-			Error:     err.Error(),
-			ErrorType: apiv1.ErrBadData,
-		},
+		Status:    "error",
+		Error:     err.Error(),
+		ErrorType: apiv1.ErrBadData,
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []apimodels.RuleGroup{},
 		},
@@ -139,9 +137,7 @@ type AlertStatusesOptions struct {
 
 func PrepareAlertStatuses(ctx context.Context, manager state.AlertInstanceManager, opts AlertStatusesOptions) apimodels.AlertResponse {
 	alertResponse := apimodels.AlertResponse{
-		DiscoveryBase: apimodels.DiscoveryBase{
-			Status: "success",
-		},
+		Status: "success",
 		Data: apimodels.AlertDiscovery{
 			Alerts: []*apimodels.Alert{},
 		},
@@ -294,9 +290,7 @@ func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) respon
 	span.SetAttributes(attribute.Int64("org_id", orgID))
 
 	ruleResponse := apimodels.RuleResponse{
-		DiscoveryBase: apimodels.DiscoveryBase{
-			Status: "success",
-		},
+		Status: "success",
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []apimodels.RuleGroup{},
 		},
@@ -540,19 +534,17 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore
 	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
 
 	byGroupQuery := ngmodels.ListAlertRulesExtendedQuery{
-		ListAlertRulesQuery: ngmodels.ListAlertRulesQuery{
-			OrgID:           ctx.opts.OrgID,
-			NamespaceUIDs:   ctx.namespaceUIDs,
-			RuleUIDs:        ctx.ruleUIDs,
-			DashboardUID:    ctx.dashboardUID,
-			PanelID:         ctx.panelID,
-			RuleGroups:      ctx.ruleGroups,
-			ReceiverName:    ctx.receiverName,
-			DataSourceUIDs:  ctx.dataSourceUIDs,
-			SearchTitle:     ctx.title,
-			SearchRuleGroup: ctx.searchRuleGroup,
-			LabelMatchers:   storeMatchers,
-		},
+		OrgID:              ctx.opts.OrgID,
+		NamespaceUIDs:      ctx.namespaceUIDs,
+		RuleUIDs:           ctx.ruleUIDs,
+		DashboardUID:       ctx.dashboardUID,
+		PanelID:            ctx.panelID,
+		RuleGroups:         ctx.ruleGroups,
+		ReceiverName:       ctx.receiverName,
+		DataSourceUIDs:     ctx.dataSourceUIDs,
+		SearchTitle:        ctx.title,
+		SearchRuleGroup:    ctx.searchRuleGroup,
+		LabelMatchers:      storeMatchers,
 		RuleType:           ctx.ruleType,
 		PluginOriginFilter: ctx.pluginOriginFilter,
 		Limit:              remainingGroups,
@@ -731,9 +723,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 	opts.Ctx = ctx
 
 	ruleResponse := apimodels.RuleResponse{
-		DiscoveryBase: apimodels.DiscoveryBase{
-			Status: "success",
-		},
+		Status: "success",
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []apimodels.RuleGroup{},
 		},
@@ -976,9 +966,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader,
 // nolint:gocyclo
 func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
-		DiscoveryBase: apimodels.DiscoveryBase{
-			Status: "success",
-		},
+		Status: "success",
 		Data: apimodels.RuleDiscovery{
 			RuleGroups: []apimodels.RuleGroup{},
 		},

@@ -137,7 +137,7 @@ func conditionalUpdateOnDeletedReturnsConflict(ctx context.Context, t *testing.T
 	t.Helper()
 	key := storagetesting.KeyFunc("test-ns", "gone")
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "gone", Namespace: "test-ns", ResourceVersion: "12345"}}, nil, nil
+		return &example.Pod{Name: "gone", Namespace: "test-ns", ResourceVersion: "12345"}, nil, nil
 	}
 
 	err := store.GuaranteedUpdate(ctx, key, &example.Pod{}, true /* ignoreNotFound */, nil, tryUpdate, nil)
@@ -152,7 +152,7 @@ func unconditionalUpsertOnMissingCreates(ctx context.Context, t *testing.T, stor
 	t.Helper()
 	key := storagetesting.KeyFunc("test-ns", "fresh")
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
-		return &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "fresh", Namespace: "test-ns"}}, nil, nil
+		return &example.Pod{Name: "fresh", Namespace: "test-ns"}, nil, nil
 	}
 
 	out := &example.Pod{}
@@ -213,7 +213,7 @@ func TestGuaranteedUpdateFailsFastOnNonRetryableError(t *testing.T) {
 	require.NoError(t, err)
 
 	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+	require.NoError(t, store.Create(ctx, key, &example.Pod{Name: "foo", Namespace: "test-ns"}, &example.Pod{}, 0))
 
 	attempts := 0
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
@@ -233,7 +233,7 @@ func TestGuaranteedUpdateFailsFastOnTryUpdateConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+	require.NoError(t, store.Create(ctx, key, &example.Pod{Name: "foo", Namespace: "test-ns"}, &example.Pod{}, 0))
 
 	attempts := 0
 	tryUpdate := func(_ runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
@@ -253,7 +253,7 @@ func TestGuaranteedUpdateRetriesOnStorageConflict(t *testing.T) {
 	require.NoError(t, err)
 
 	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+	require.NoError(t, store.Create(ctx, key, &example.Pod{Name: "foo", Namespace: "test-ns"}, &example.Pod{}, 0))
 
 	attempts := 0
 	tryUpdate := func(input runtime.Object, _ storage.ResponseMeta) (runtime.Object, *uint64, error) {
@@ -285,7 +285,7 @@ func TestGuaranteedUpdateStopsOnCanceledContext(t *testing.T) {
 	require.NoError(t, err)
 
 	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+	require.NoError(t, store.Create(ctx, key, &example.Pod{Name: "foo", Namespace: "test-ns"}, &example.Pod{}, 0))
 
 	canceled, cancel := context.WithCancel(ctx)
 	cancel()
@@ -307,7 +307,7 @@ func TestGuaranteedUpdatePreconditionFailureStaysInvalidObj(t *testing.T) {
 	require.NoError(t, err)
 
 	key := storagetesting.KeyFunc("test-ns", "foo")
-	require.NoError(t, store.Create(ctx, key, &example.Pod{ObjectMeta: metav1.ObjectMeta{Name: "foo", Namespace: "test-ns"}}, &example.Pod{}, 0))
+	require.NoError(t, store.Create(ctx, key, &example.Pod{Name: "foo", Namespace: "test-ns"}, &example.Pod{}, 0))
 
 	wrongUID := types.UID("not-the-stored-uid")
 	attempts := 0

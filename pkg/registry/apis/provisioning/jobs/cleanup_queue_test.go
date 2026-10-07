@@ -58,8 +58,8 @@ func createJob(ctx context.Context, t *testing.T, client *fakeclientset.Clientse
 func createJobWith(ctx context.Context, t *testing.T, client *fakeclientset.Clientset, ns, name string, jobLabels map[string]string, spec provisioning.JobSpec) {
 	t.Helper()
 	_, err := client.ProvisioningV0alpha1().Jobs(ns).Create(ctx, &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: ns, Labels: jobLabels},
-		Spec:       spec,
+		Name: name, Namespace: ns, Labels: jobLabels,
+		Spec: spec,
 	}, metav1.CreateOptions{})
 	require.NoError(t, err)
 }

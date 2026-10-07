@@ -74,14 +74,12 @@ func newMetricsMiddleware(promRegisterer prometheus.Registerer, pluginRegistry r
 		pluginRequestConnectionUnavailableCounter,
 	)
 	return &MetricsMiddleware{
-		pluginMetrics: pluginMetrics{
-			pluginRequestCounter:                      pluginRequestCounter,
-			pluginRequestDuration:                     pluginRequestDuration,
-			pluginRequestSize:                         pluginRequestSize,
-			pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
-			pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
-		},
-		pluginRegistry: pluginRegistry,
+		pluginRequestCounter:                      pluginRequestCounter,
+		pluginRequestDuration:                     pluginRequestDuration,
+		pluginRequestSize:                         pluginRequestSize,
+		pluginRequestDurationSeconds:              pluginRequestDurationSeconds,
+		pluginRequestConnectionUnavailableCounter: pluginRequestConnectionUnavailableCounter,
+		pluginRegistry:                            pluginRegistry,
 	}
 }
 

@@ -20,11 +20,9 @@ func TestOpenAPI_GetPathOperations(t *testing.T) {
 		{
 			name: "some operations",
 			input: &spec3.Path{
-				PathProps: spec3.PathProps{
-					Get:    &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "get"}},
-					Post:   &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "post"}},
-					Delete: &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "delete"}},
-				},
+				Get:    &spec3.Operation{Summary: "get"},
+				Post:   &spec3.Operation{Summary: "post"},
+				Delete: &spec3.Operation{Summary: "delete"},
 			},
 			expect:  []string{"GET", "POST", "DELETE"},
 			exclude: []string{"PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"},
@@ -32,16 +30,14 @@ func TestOpenAPI_GetPathOperations(t *testing.T) {
 		{
 			name: "all operations",
 			input: &spec3.Path{
-				PathProps: spec3.PathProps{
-					Get:     &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "get"}},
-					Post:    &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "post"}},
-					Delete:  &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "delete"}},
-					Put:     &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "put"}},
-					Patch:   &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "patch"}},
-					Options: &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "options"}},
-					Head:    &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "head"}},
-					Trace:   &spec3.Operation{OperationProps: spec3.OperationProps{Summary: "trace"}},
-				},
+				Get:     &spec3.Operation{Summary: "get"},
+				Post:    &spec3.Operation{Summary: "post"},
+				Delete:  &spec3.Operation{Summary: "delete"},
+				Put:     &spec3.Operation{Summary: "put"},
+				Patch:   &spec3.Operation{Summary: "patch"},
+				Options: &spec3.Operation{Summary: "options"},
+				Head:    &spec3.Operation{Summary: "head"},
+				Trace:   &spec3.Operation{Summary: "trace"},
 			},
 			expect:  []string{"GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"},
 			exclude: []string{},

@@ -202,12 +202,10 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 						Name: "testField", Path: "spec.testField", Type: "string",
 					}},
 					Routes: map[string]spec3.PathProps{
-						"/reload": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
+						"/reload": {Post: &spec3.Operation{
 							OperationId: "reloadTestKind",
-							Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-								Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-							}},
-						}}},
+							Responses: &spec3.Responses{
+								Default: &spec3.Response{Description: "OK"}}}},
 					},
 				}},
 			}},

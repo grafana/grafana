@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,9 +17,9 @@ func TestJSONSerializer(t *testing.T) {
 	ctx := context.Background()
 	serializer := JSONSerializer()
 	original := &capWidget{
-		TypeMeta:   metav1.TypeMeta{APIVersion: "unregistered.example/v2", Kind: "Widget"},
-		ObjectMeta: metav1.ObjectMeta{Name: "test", Generation: 9007199254740993},
-		Value:      "hello",
+		APIVersion: "unregistered.example/v2", Kind: "Widget",
+		Name: "test", Generation: 9007199254740993,
+		Value: "hello",
 	}
 	raw, err := serializer.Encode(ctx, original)
 	require.NoError(t, err)

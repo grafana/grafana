@@ -60,8 +60,8 @@ func TestDiscoverGroups_AggregatedFormat(t *testing.T) {
 		list := apidiscoveryv2.APIGroupDiscoveryList{
 			Items: []apidiscoveryv2.APIGroupDiscovery{
 				{
-					ObjectMeta: metav1.ObjectMeta{Name: "kgatlas.ext.grafana.app"},
-					Versions:   []apidiscoveryv2.APIVersionDiscovery{{Version: "v1alpha1"}},
+					Name:     "kgatlas.ext.grafana.app",
+					Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v1alpha1"}},
 				},
 			},
 		}

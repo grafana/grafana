@@ -55,11 +55,9 @@ func RouteUID(name string) ResourceUID {
 
 func NewManagedRoute(name string, r *Route) *ManagedRoute {
 	return &ManagedRoute{
-		ResourceMetadata: ResourceMetadata{
-			UID:        RouteUID(name),
-			Version:    CalculateRouteFingerprint(*r),
-			Provenance: models.Provenance(r.Provenance),
-		},
+		UID:        RouteUID(name),
+		Version:    CalculateRouteFingerprint(*r),
+		Provenance: models.Provenance(r.Provenance),
 
 		Receiver:       r.Receiver,
 		GroupBy:        r.GroupByStr,

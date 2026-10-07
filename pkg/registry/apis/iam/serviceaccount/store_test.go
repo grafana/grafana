@@ -48,7 +48,7 @@ func (f *serviceAccountStoreFake) UpdateServiceAccount(_ context.Context, _ clai
 func TestLegacyStoreUpdate(t *testing.T) {
 	newObject := func() *iamv0alpha1.ServiceAccount {
 		return &iamv0alpha1.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{Name: "sa-uid", Namespace: "default", ResourceVersion: "1000"},
+			Name: "sa-uid", Namespace: "default", ResourceVersion: "1000",
 			Spec: iamv0alpha1.ServiceAccountSpec{
 				Title:    "Updated service account",
 				Role:     iamv0alpha1.ServiceAccountOrgRoleEditor,

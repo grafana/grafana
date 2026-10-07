@@ -61,9 +61,7 @@ func TestFullSync_ContextCancelled(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 		},
@@ -84,9 +82,7 @@ func TestFullSync_Error(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 	})
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil, nil, fmt.Errorf("some error"))
@@ -103,9 +99,7 @@ func TestFullSync_NoChanges(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 	})
 
 	compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]ResourceFileChange{}, nil, nil, nil)
@@ -123,9 +117,7 @@ func TestFullSync_SuccessfulFolderCreation(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Sync: provisioning.SyncOptions{
@@ -154,9 +146,7 @@ func TestFullSync_FolderCreationFailed(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Sync: provisioning.SyncOptions{
@@ -189,9 +179,7 @@ func TestFullSync_FolderCreationFailed_UnmanagedConflictBecomesWarning(t *testin
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Sync: provisioning.SyncOptions{
@@ -233,9 +221,7 @@ func TestFullSync_FolderCreationFailedWithInstanceTarget(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "Test Repo",
 			Sync: provisioning.SyncOptions{
@@ -971,9 +957,7 @@ func TestFullSync_ApplyChanges(t *testing.T) { //nolint:gocyclo
 			tt.setupMocks(repo, repoResources, clients, progress, compareFn)
 			compareFn.On("Execute", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.changes, nil, nil, nil)
 			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-repo",
-				},
+				Name: "test-repo",
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repo",
 				},
@@ -1300,8 +1284,8 @@ func TestFullSync_QuotaTrackerSkipsCreationsAtLimit(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+		Name: "test-repo",
+		Spec: provisioning.RepositorySpec{Title: "Test Repo"},
 	})
 
 	changes := []ResourceFileChange{
@@ -1348,8 +1332,8 @@ func TestFullSync_QuotaTrackerAllowsUpdatesRegardlessOfQuota(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
-		Spec:       provisioning.RepositorySpec{Title: "Test Repo"},
+		Name: "test-repo",
+		Spec: provisioning.RepositorySpec{Title: "Test Repo"},
 	})
 
 	changes := []ResourceFileChange{
@@ -1384,7 +1368,7 @@ func TestFullSync_MissingFolderMetadata_FlagEnabled(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Name: "test-repo",
 	})
 
 	// A real change so FullSync doesn't exit early, with a folder that has a matching change
@@ -1431,7 +1415,7 @@ func TestFullSync_MissingFolderMetadata_FlagDisabled(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Name: "test-repo",
 	})
 
 	changes := []ResourceFileChange{
@@ -1464,7 +1448,7 @@ func TestFullSync_InvalidFolderMetadataWarning(t *testing.T) {
 	compareFn := NewMockCompareFn(t)
 
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Name: "test-repo",
 	})
 
 	invalidWarning := resources.NewInvalidFolderMetadata("myfolder/", errors.New("missing metadata.name"))
@@ -1510,7 +1494,7 @@ func TestFullSync_InvalidFolderMetadataWarning_ActionAware(t *testing.T) {
 			compareFn := NewMockCompareFn(t)
 
 			repo.On("Config").Return(&provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Name: "test-repo",
 			})
 
 			invalidWarning := resources.NewInvalidFolderMetadata("myfolder/", errors.New("missing metadata.name")).WithAction(tt.action)

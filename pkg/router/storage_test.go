@@ -205,7 +205,7 @@ func userActorToken(t *testing.T) string {
 	token, err := jwt.Signed(signer).Claims(authnlib.Claims[authnlib.AccessTokenClaims]{
 		Rest: authnlib.AccessTokenClaims{
 			Namespace: "stacks-11",
-			Actor:     &authnlib.ActorClaims{Subject: "user:1", IDTokenClaims: authnlib.IDTokenClaims{Type: types.TypeUser}},
+			Actor:     &authnlib.ActorClaims{Subject: "user:1", Type: types.TypeUser},
 		},
 	}).Serialize()
 	require.NoError(t, err)

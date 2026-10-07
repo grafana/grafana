@@ -102,10 +102,8 @@ func TestParents(t *testing.T) {
 			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", context.TODO(), "test", &metav1.GetOptions{}).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Annotations: map[string]string{
-								utils.AnnoKeyFolder: "test", // invalid! this will cycle
-							},
+						Annotations: map[string]string{
+							utils.AnnoKeyFolder: "test", // invalid! this will cycle
 						},
 					}, nil).Maybe()
 			},
@@ -121,11 +119,9 @@ func TestParents(t *testing.T) {
 				for _, item := range tt.expected.Items {
 					m.On("Get", context.TODO(), item.Name, &metav1.GetOptions{}).Return(
 						&folders.Folder{
-							ObjectMeta: metav1.ObjectMeta{
-								Name: item.Name,
-								Annotations: map[string]string{
-									utils.AnnoKeyFolder: item.Parent,
-								},
+							Name: item.Name,
+							Annotations: map[string]string{
+								utils.AnnoKeyFolder: item.Parent,
 							},
 							Spec: folders.FolderSpec{
 								Title:       item.Title,
@@ -150,11 +146,10 @@ func TestParents(t *testing.T) {
 
 			getter := newParentsGetter(m, maxDepth)
 			parents, err := getter(context.TODO(), &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: tt.request.name,
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: tt.request.folder,
-					}},
+				Name: tt.request.name,
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: tt.request.folder,
+				},
 			})
 			if tt.expectedErr == "" {
 				require.NoError(t, err)

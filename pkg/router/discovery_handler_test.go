@@ -38,10 +38,10 @@ func TestDiscoveryIncludesFallbackGroups(t *testing.T) {
 		require.Equal(t, "Bearer caller", req.Header.Get("Authorization"))
 		require.Empty(t, req.Header.Get("If-None-Match"))
 		require.NoError(t, json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
-			TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
+			Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2",
 			Items: []apidiscoveryv2.APIGroupDiscovery{{
-				ObjectMeta: metav1.ObjectMeta{Name: group},
-				Versions:   []apidiscoveryv2.APIVersionDiscovery{{Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent}},
+				Name:     group,
+				Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent}},
 			}},
 		}))
 	})
@@ -51,16 +51,16 @@ func TestDiscoveryIncludesFallbackGroups(t *testing.T) {
 		require.Empty(t, req.Header.Get("If-None-Match"))
 		if req.Header.Get("Accept") == aggregatedDiscoveryJSON {
 			require.NoError(t, json.NewEncoder(w).Encode(apidiscoveryv2.APIGroupDiscoveryList{
-				TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"},
+				Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2",
 				Items: []apidiscoveryv2.APIGroupDiscovery{
-					{ObjectMeta: metav1.ObjectMeta{Name: "core.grafana.app"}, Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v1"}}},
-					{ObjectMeta: metav1.ObjectMeta{Name: group}, Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v2"}}},
+					{Name: "core.grafana.app", Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v1"}}},
+					{Name: group, Versions: []apidiscoveryv2.APIVersionDiscovery{{Version: "v2"}}},
 				},
 			}))
 			return
 		}
 		require.NoError(t, json.NewEncoder(w).Encode(metav1.APIGroupList{
-			TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"},
+			Kind: "APIGroupList", APIVersion: "v1",
 			Groups: []metav1.APIGroup{
 				{Name: "core.grafana.app", Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "core.grafana.app/v1", Version: "v1"}}},
 				{Name: group, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: group + "/v2", Version: "v2"}}},
@@ -111,7 +111,7 @@ func TestAggregatedDiscoverySupportsLegacyBackends(t *testing.T) {
 		}
 		require.Equal(t, "/apis/"+group+"/v1", req.URL.Path)
 		require.NoError(t, json.NewEncoder(w).Encode(metav1.APIResourceList{
-			TypeMeta: metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"}, GroupVersion: group + "/v1",
+			Kind: "APIResourceList", APIVersion: "v1", GroupVersion: group + "/v1",
 			APIResources: []metav1.APIResource{
 				{Name: "things", Kind: "Thing", Namespaced: true, Verbs: []string{"get", "list"}},
 				{Name: "things/status", Kind: "Thing", Namespaced: true, Verbs: []string{"get", "update"}},

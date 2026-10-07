@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -166,7 +165,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cfg := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+				Name: "test-repo",
 				Spec: provisioning.RepositorySpec{
 					Type:   provisioning.GitHubRepositoryType,
 					GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
@@ -205,7 +204,7 @@ func TestWebhookConnector_webhook(t *testing.T) {
 
 func TestWebhookConnector_webhook_replay(t *testing.T) {
 	cfg := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Type:   provisioning.GitHubRepositoryType,
 			GitHub: &provisioning.GitHubRepositoryConfig{Branch: "main"},
@@ -251,8 +250,8 @@ func TestUpdateLastEvent(t *testing.T) {
 	t.Run("nil Webhook returns early without panicking or patching", func(t *testing.T) {
 		patcher := &fakeStatusPatcher{}
 		cfg := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default"},
-			Status:     provisioning.RepositoryStatus{Webhook: nil},
+			Name: "repo", Namespace: "default",
+			Status: provisioning.RepositoryStatus{Webhook: nil},
 		}
 
 		require.NotPanics(t, func() {

@@ -52,8 +52,8 @@ func TestRegisterListConversions_ItemTypeMetaIsUpdated(t *testing.T) {
 	t.Run("v1beta1 RoutingTreeList to v0alpha1 sets item TypeMeta", func(t *testing.T) {
 		inList := &v1beta1.RoutingTreeList{
 			Items: []v1beta1.RoutingTree{
-				{TypeMeta: metav1.TypeMeta{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"}},
-				{TypeMeta: metav1.TypeMeta{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"}},
+				{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"},
+				{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"},
 			},
 		}
 
@@ -72,7 +72,7 @@ func TestRegisterListConversions_ItemTypeMetaIsUpdated(t *testing.T) {
 	t.Run("v0alpha1 RoutingTreeList to v1beta1 sets item TypeMeta", func(t *testing.T) {
 		inList := &v0alpha1.RoutingTreeList{
 			Items: []v0alpha1.RoutingTree{
-				{TypeMeta: metav1.TypeMeta{APIVersion: v0alpha1GV.String(), Kind: "RoutingTree"}},
+				{APIVersion: v0alpha1GV.String(), Kind: "RoutingTree"},
 			},
 		}
 
@@ -89,7 +89,7 @@ func TestRegisterListConversions_ItemTypeMetaIsUpdated(t *testing.T) {
 	t.Run("converted items do not alias input slice", func(t *testing.T) {
 		inList := &v1beta1.RoutingTreeList{
 			Items: []v1beta1.RoutingTree{
-				{TypeMeta: metav1.TypeMeta{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"}},
+				{APIVersion: v1beta1GV.String(), Kind: "RoutingTree"},
 			},
 		}
 
@@ -114,8 +114,8 @@ func TestRegisterListConversions_ConfigListCarriesSpecAndStatus(t *testing.T) {
 	dsUID := "ds-uid"
 	inList := &v1beta1.ConfigList{
 		Items: []v1beta1.Config{{
-			TypeMeta:   metav1.TypeMeta{APIVersion: v1beta1GV.String(), Kind: "Config"},
-			ObjectMeta: metav1.ObjectMeta{Name: v1beta1.ConfigSingletonName},
+			APIVersion: v1beta1GV.String(), Kind: "Config",
+			Name: v1beta1.ConfigSingletonName,
 			Spec: v1beta1.ConfigSpec{
 				ExternalAlertmanagerSync: &v1beta1.ConfigV1beta1SpecExternalAlertmanagerSync{
 					DatasourceUid: &dsUID,
@@ -156,10 +156,8 @@ func TestRegisterListConversions_ListMetaIsPreserved(t *testing.T) {
 	v0alpha1GV := v0alpha1.RoutingTreeKind().GroupVersionKind().GroupVersion()
 
 	inList := &v1beta1.RoutingTreeList{
-		ListMeta: metav1.ListMeta{
-			ResourceVersion: "42",
-			Continue:        "tok",
-		},
+		ResourceVersion: "42",
+		Continue:        "tok",
 	}
 
 	out, err := scheme.ConvertToVersion(inList, v0alpha1GV)

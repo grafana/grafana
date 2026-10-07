@@ -1070,12 +1070,10 @@ func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
 func teamObjFor(t *testing.T, teamUID string, members ...iamv0.TeamTeamMember) *unstructured.Unstructured {
 	t.Helper()
 	teamObj := iamv0.Team{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
-			Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
-		},
-		ObjectMeta: metav1.ObjectMeta{Name: teamUID, Namespace: "default", ResourceVersion: "42"},
-		Spec:       iamv0.TeamSpec{Members: members},
+		APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(),
+		Kind:       iamv0.TeamResourceInfo.TypeMeta().Kind,
+		Name:       teamUID, Namespace: "default", ResourceVersion: "42",
+		Spec: iamv0.TeamSpec{Members: members},
 	}
 	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)
 	require.NoError(t, err)

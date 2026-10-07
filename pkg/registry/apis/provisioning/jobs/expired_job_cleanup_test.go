@@ -12,7 +12,6 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -92,12 +91,10 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-job",
-				Namespace: "test-ns",
-				Labels: map[string]string{
-					LabelJobClaim: "123456789",
-				},
+			Name:      "test-job",
+			Namespace: "test-ns",
+			Labels: map[string]string{
+				LabelJobClaim: "123456789",
 			},
 			Spec: provisioning.JobSpec{
 				Repository: "test-repo",
@@ -132,22 +129,18 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job1 := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "job-1",
-				Namespace: "test-ns",
-				Labels:    map[string]string{LabelJobClaim: "123"},
-			},
+			Name:      "job-1",
+			Namespace: "test-ns",
+			Labels:    map[string]string{LabelJobClaim: "123"},
 			Spec: provisioning.JobSpec{
 				Repository: "repo-1",
 				Action:     provisioning.JobActionPull,
 			},
 		}
 		job2 := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "job-2",
-				Namespace: "test-ns",
-				Labels:    map[string]string{LabelJobClaim: "456"},
-			},
+			Name:      "job-2",
+			Namespace: "test-ns",
+			Labels:    map[string]string{LabelJobClaim: "456"},
 			Spec: provisioning.JobSpec{
 				Repository: "repo-2",
 				Action:     provisioning.JobActionPull,
@@ -186,11 +179,9 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-job",
-				Namespace: "test-ns",
-				Labels:    map[string]string{LabelJobClaim: "123"},
-			},
+			Name:      "test-job",
+			Namespace: "test-ns",
+			Labels:    map[string]string{LabelJobClaim: "123"},
 			Spec: provisioning.JobSpec{
 				Repository: "test-repo",
 				Action:     provisioning.JobActionPull,
@@ -219,11 +210,9 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-job",
-				Namespace: "test-ns",
-				Labels:    map[string]string{LabelJobClaim: "123"},
-			},
+			Name:      "test-job",
+			Namespace: "test-ns",
+			Labels:    map[string]string{LabelJobClaim: "123"},
 			Spec: provisioning.JobSpec{
 				Repository: "test-repo",
 				Action:     provisioning.JobActionPull,
@@ -253,11 +242,9 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-job",
-				Namespace: "test-ns",
-				Labels:    map[string]string{LabelJobClaim: "123"},
-			},
+			Name:      "test-job",
+			Namespace: "test-ns",
+			Labels:    map[string]string{LabelJobClaim: "123"},
 			Spec: provisioning.JobSpec{
 				Repository: "test-repo",
 				Action:     provisioning.JobActionPull,
@@ -288,13 +275,11 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 		ctx := context.Background()
 
 		job := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-job",
-				Namespace: "test-ns",
-				Labels: map[string]string{
-					LabelJobClaim: "123456789",
-					"other-label": "value",
-				},
+			Name:      "test-job",
+			Namespace: "test-ns",
+			Labels: map[string]string{
+				LabelJobClaim: "123456789",
+				"other-label": "value",
 			},
 			Spec: provisioning.JobSpec{
 				Repository: "test-repo",
@@ -328,28 +313,22 @@ func TestJobCleanupController_Cleanup(t *testing.T) {
 
 		jobs := []*provisioning.Job{
 			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "job-1",
-					Namespace: "ns-1",
-					Labels:    map[string]string{LabelJobClaim: "111"},
-				},
-				Spec: provisioning.JobSpec{Repository: "repo-1", Action: provisioning.JobActionPull},
+				Name:      "job-1",
+				Namespace: "ns-1",
+				Labels:    map[string]string{LabelJobClaim: "111"},
+				Spec:      provisioning.JobSpec{Repository: "repo-1", Action: provisioning.JobActionPull},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "job-2",
-					Namespace: "ns-2",
-					Labels:    map[string]string{LabelJobClaim: "222"},
-				},
-				Spec: provisioning.JobSpec{Repository: "repo-2", Action: provisioning.JobActionPush},
+				Name:      "job-2",
+				Namespace: "ns-2",
+				Labels:    map[string]string{LabelJobClaim: "222"},
+				Spec:      provisioning.JobSpec{Repository: "repo-2", Action: provisioning.JobActionPush},
 			},
 			{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "job-3",
-					Namespace: "ns-3",
-					Labels:    map[string]string{LabelJobClaim: "333"},
-				},
-				Spec: provisioning.JobSpec{Repository: "repo-3", Action: provisioning.JobActionMigrate},
+				Name:      "job-3",
+				Namespace: "ns-3",
+				Labels:    map[string]string{LabelJobClaim: "333"},
+				Spec:      provisioning.JobSpec{Repository: "repo-3", Action: provisioning.JobActionMigrate},
 			},
 		}
 

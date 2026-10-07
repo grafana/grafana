@@ -53,14 +53,10 @@ func newGraphiteHandler(
 		}
 
 		anno := &annotationV0.Annotation{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: annotationV0.AnnotationKind().GroupVersionKind().GroupVersion().String(),
-				Kind:       annotationV0.AnnotationKind().Kind(),
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace:    namespace,
-				GenerateName: "a-",
-			},
+			APIVersion:   annotationV0.AnnotationKind().GroupVersionKind().GroupVersion().String(),
+			Kind:         annotationV0.AnnotationKind().Kind(),
+			Namespace:    namespace,
+			GenerateName: "a-",
 			Spec: annotationV0.AnnotationSpec{
 				Text: FormatGraphiteText(cmd.What, cmd.Data),
 				Time: timeMs,

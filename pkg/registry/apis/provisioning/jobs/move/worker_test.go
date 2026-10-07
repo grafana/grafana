@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -128,7 +127,7 @@ func TestMoveWorker_ProcessInvalidTargetPath(t *testing.T) {
 
 func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action:  provisioning.JobActionMove,
 			Message: "custom move message",
@@ -156,9 +155,7 @@ func TestMoveWorker_CommitMessageFromJobSpec(t *testing.T) {
 
 func TestMoveWorker_ProcessNotReaderWriter(t *testing.T) {
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-job",
-		},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -950,10 +947,8 @@ func TestMoveWorker_deduplicatePaths(t *testing.T) {
 func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 	config := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 		},
@@ -987,7 +982,7 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -1010,10 +1005,8 @@ func TestMoveWorker_RefURLsSetWithRef(t *testing.T) {
 func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockRepoWithURLs := repository.NewMockRepositoryWithURLs(t)
 	config := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 		},
@@ -1045,7 +1038,7 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{
@@ -1067,10 +1060,8 @@ func TestMoveWorker_RefURLsNotSetWithoutRef(t *testing.T) {
 func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockRepo := repository.NewMockRepository(t)
 	config := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
+		Name:      "test-repo",
+		Namespace: "test-namespace",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitRepositoryType, // Regular git repo, not GitHub
 		},
@@ -1097,7 +1088,7 @@ func TestMoveWorker_RefURLsNotSetForNonURLRepository(t *testing.T) {
 	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 
 	job := provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+		Name: "test-job",
 		Spec: provisioning.JobSpec{
 			Action: provisioning.JobActionMove,
 			Move: &provisioning.MoveJobOptions{

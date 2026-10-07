@@ -36,7 +36,7 @@ func (b *manifestBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 
 // unstructuredOpenAPIDefinition adds the GVK metadata required by server-side apply.
 func (b *manifestBuilder) unstructuredOpenAPIDefinition(kindSuffix string) common.OpenAPIDefinition {
-	s := spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+	s := spec.Schema{Type: []string{"object"}}
 	gvks := []any{}
 	for _, version := range b.manifest.Versions {
 		if !version.Served {
@@ -190,26 +190,24 @@ func (b *manifestBuilder) dropUnstructuredModels(oas *spec3.OpenAPI, version str
 // kindListSchema builds a list without kube-openapi's unavailable ref-wrapping pass.
 func kindListSchema(kind string, itemRef spec.Ref) *spec.Schema {
 	return &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Description: kind + "List is a list of " + kind,
-			Type:        []string{"object"},
-			Properties: map[string]spec.Schema{
-				"kind": *spec.StringProperty().WithDescription(
-					"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"),
-				"apiVersion": *spec.StringProperty().WithDescription(
-					"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"),
-				"metadata": {SchemaProps: spec.SchemaProps{
-					Ref: spec.MustCreateRef("#/components/schemas/" + v1.ListMeta{}.OpenAPIModelName()),
-				}},
-				"items": {SchemaProps: spec.SchemaProps{
-					Type: []string{"array"},
-					Items: &spec.SchemaOrArray{
-						Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: itemRef}},
-					},
-				}},
-			},
-			Required: []string{"metadata", "items"},
+		Description: kind + "List is a list of " + kind,
+		Type:        []string{"object"},
+		Properties: map[string]spec.Schema{
+			"kind": *spec.StringProperty().WithDescription(
+				"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds"),
+			"apiVersion": *spec.StringProperty().WithDescription(
+				"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources"),
+			"metadata": {SchemaProps: spec.SchemaProps{
+				Ref: spec.MustCreateRef("#/components/schemas/" + v1.ListMeta{}.OpenAPIModelName()),
+			}},
+			"items": {SchemaProps: spec.SchemaProps{
+				Type: []string{"array"},
+				Items: &spec.SchemaOrArray{
+					Schema: &spec.Schema{Ref: itemRef},
+				},
+			}},
 		},
+		Required: []string{"metadata", "items"},
 	}
 }
 
@@ -223,7 +221,7 @@ func setResponseSchemaRef(op *spec3.Operation, code int, ref spec.Ref) {
 		return
 	}
 	for _, mt := range resp.Content {
-		mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+		mt.Schema = &spec.Schema{Ref: ref}
 	}
 }
 
@@ -234,7 +232,7 @@ func setOperationRequestResponseBodies(op *spec3.Operation, ref spec.Ref, info *
 	}
 	if op.RequestBody != nil {
 		for _, mt := range op.RequestBody.Content {
-			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+			mt.Schema = &spec.Schema{Ref: ref}
 
 			if info.isPOST {
 				example := &unstructured.Unstructured{}
@@ -271,7 +269,7 @@ func setOperationResponseBodies(op *spec3.Operation, ref spec.Ref) {
 			continue
 		}
 		for _, mt := range res.Content {
-			mt.Schema = &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}}
+			mt.Schema = &spec.Schema{Ref: ref}
 		}
 	}
 }
@@ -302,8 +300,8 @@ func (info *operationInfo) specProperty() *spec.Schema {
 // written as "#/components/schemas/{group}.{version}.{Kind}{Field}".
 func refName(ref spec.Ref) string {
 	s := ref.String()
-	if i := strings.LastIndex(s, "/"); i >= 0 {
-		return s[i+1:]
+	if _, after, ok := strings.CutLast(s, "/"); ok {
+		return after
 	}
 	return s
 }

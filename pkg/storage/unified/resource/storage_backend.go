@@ -1063,8 +1063,7 @@ func (k *kvStorageBackend) generateResourceVersion() (int64, error) {
 		k.metrics.ResourceVersionClockRegression.Set(0)
 		return rv, nil
 	}
-	var failure *resourceVersionGenerationError
-	if errors.As(err, &failure) {
+	if failure, ok := errors.AsType[*resourceVersionGenerationError](err); ok {
 		k.metrics.ResourceVersionGenerationFailures.WithLabelValues(failure.reason).Inc()
 		if failure.reason == resourceVersionClockRegression {
 			skewSeconds := float64(failure.lastMillis-failure.currentMillis) / 1000
@@ -1213,8 +1212,7 @@ func (k *kvStorageBackend) WriteEvent(ctx context.Context, event WriteEvent) (rv
 	}
 	rv, err = k.generateResourceVersionWithRetry(ctx, minimumRV)
 	if err != nil {
-		var ordering *resourceVersionOrderingError
-		if errors.As(err, &ordering) {
+		if ordering, ok := errors.AsType[*resourceVersionOrderingError](err); ok {
 			k.metrics.recordResourceVersionOrderingRejection(event, ordering.rv)
 		}
 		if ctx.Err() != nil {

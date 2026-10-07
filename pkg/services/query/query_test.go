@@ -726,34 +726,30 @@ func TestIntegrationQueryDataWithQSDSClient(t *testing.T) {
 		assert.Equal(t, data.QueryDataRequest{
 			Queries: []data.DataQuery{
 				{
-					CommonQueryProperties: data.CommonQueryProperties{
-						RefID: "A",
-						Datasource: &data.DataSourceRef{
-							Type: "postgres",
-							UID:  "gIEkMvIVz",
-						},
-						TimeRange: &data.TimeRange{
-							From: "1754309340000",
-							To:   "1754309370000",
-						},
-						MaxDataPoints: 100,
-						IntervalMS:    1000,
+					RefID: "A",
+					Datasource: &data.DataSourceRef{
+						Type: "postgres",
+						UID:  "gIEkMvIVz",
 					},
+					TimeRange: &data.TimeRange{
+						From: "1754309340000",
+						To:   "1754309370000",
+					},
+					MaxDataPoints: 100,
+					IntervalMS:    1000,
 				},
 				{
-					CommonQueryProperties: data.CommonQueryProperties{
-						RefID: "B",
-						Datasource: &data.DataSourceRef{
-							Type: "postgres",
-							UID:  "gIEkMvIVz",
-						},
-						TimeRange: &data.TimeRange{
-							From: "1754309340000",
-							To:   "1754309370000",
-						},
-						MaxDataPoints: 100,
-						IntervalMS:    1000,
+					RefID: "B",
+					Datasource: &data.DataSourceRef{
+						Type: "postgres",
+						UID:  "gIEkMvIVz",
 					},
+					TimeRange: &data.TimeRange{
+						From: "1754309340000",
+						To:   "1754309370000",
+					},
+					MaxDataPoints: 100,
+					IntervalMS:    1000,
 				},
 			},
 			Debug: false,
@@ -851,9 +847,9 @@ func setup(t *testing.T, isMultiTenant bool, mockClient clientapi.QueryDataClien
 		localcache.ProvideService(),
 		&pluginstore.FakePluginStore{
 			PluginList: []pluginstore.Plugin{
-				{JSONData: plugins.JSONData{ID: "postgres"}},
-				{JSONData: plugins.JSONData{ID: "testdata"}},
-				{JSONData: plugins.JSONData{ID: "mysql"}},
+				{ID: "postgres"},
+				{ID: "testdata"},
+				{ID: "mysql"},
 			},
 		},
 		&fakeDatasources.FakeCacheService{},

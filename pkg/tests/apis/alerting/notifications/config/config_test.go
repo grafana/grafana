@@ -102,15 +102,11 @@ func rawUpdate(t *testing.T, ctx context.Context, user apis.User, cfg *alertingn
 // the admission validator).
 func newConfig(name string) *alertingnotifv1beta1.Config {
 	return &alertingnotifv1beta1.Config{
-		TypeMeta: v1.TypeMeta{
-			Kind:       alertingnotifv1beta1.ConfigKind().Kind(),
-			APIVersion: alertingnotifv1beta1.GroupVersion.Identifier(),
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: apis.DefaultNamespace,
-			Name:      name,
-		},
-		Spec: alertingnotifv1beta1.ConfigSpec{},
+		Kind:       alertingnotifv1beta1.ConfigKind().Kind(),
+		APIVersion: alertingnotifv1beta1.GroupVersion.Identifier(),
+		Namespace:  apis.DefaultNamespace,
+		Name:       name,
+		Spec:       alertingnotifv1beta1.ConfigSpec{},
 	}
 }
 

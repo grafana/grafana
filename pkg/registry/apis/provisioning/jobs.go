@@ -288,7 +288,7 @@ func (c *jobsConnector) handleOrphanCleanupJob(ctx context.Context, r *http.Requ
 	}
 
 	if err := c.authorizeAdminJob(ctx, &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Namespace: ns},
+		Namespace: ns,
 	}); err != nil {
 		responder.Error(err)
 		return

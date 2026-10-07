@@ -51,7 +51,7 @@ func TestEventHandler_Classifies(t *testing.T) {
 	for _, natsBacked := range []bool{true, false} {
 		driver := newClassifierDriver(t, natsBacked)
 		driver.EventHandler().AddFunc(&provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"},
+			Namespace: "ns1", Name: "job1",
 		}, false)
 		got, ok := triggerFor(driver, key)
 		require.True(t, ok)
@@ -62,7 +62,7 @@ func TestEventHandler_Classifies(t *testing.T) {
 	for _, natsBacked := range []bool{true, false} {
 		driver := newClassifierDriver(t, natsBacked)
 		driver.EventHandler().AddFunc(&provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1", ResourceVersion: "5"},
+			Namespace: "ns1", Name: "job1", ResourceVersion: "5",
 		}, true)
 		got, ok := triggerFor(driver, key)
 		require.True(t, ok)
@@ -74,7 +74,7 @@ func TestEventHandler_Classifies(t *testing.T) {
 	t.Run("full-RV non-initial add depends on backend", func(t *testing.T) {
 		natsDriver := newClassifierDriver(t, true)
 		natsDriver.EventHandler().AddFunc(&provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1", ResourceVersion: "5"},
+			Namespace: "ns1", Name: "job1", ResourceVersion: "5",
 		}, false)
 		got, ok := triggerFor(natsDriver, key)
 		require.True(t, ok)
@@ -82,7 +82,7 @@ func TestEventHandler_Classifies(t *testing.T) {
 
 		apiDriver := newClassifierDriver(t, false)
 		apiDriver.EventHandler().AddFunc(&provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1", ResourceVersion: "5"},
+			Namespace: "ns1", Name: "job1", ResourceVersion: "5",
 		}, false)
 		got, ok = triggerFor(apiDriver, key)
 		require.True(t, ok)
@@ -94,7 +94,7 @@ func TestEventHandler_Classifies(t *testing.T) {
 	t.Run("resync update is relist", func(t *testing.T) {
 		driver := newClassifierDriver(t, false)
 		unclaimed := &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1", ResourceVersion: "5"},
+			Namespace: "ns1", Name: "job1", ResourceVersion: "5",
 		}
 		driver.EventHandler().UpdateFunc(unclaimed, unclaimed)
 		got, ok := triggerFor(driver, key)
@@ -111,8 +111,8 @@ func TestEventHandler_Classifies(t *testing.T) {
 func TestEventHandler_TriggerPrecedence(t *testing.T) {
 	const key = "ns1/job1"
 
-	live := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1"}}
-	relist := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Namespace: "ns1", Name: "job1", ResourceVersion: "5"}}
+	live := &provisioning.Job{Namespace: "ns1", Name: "job1"}
+	relist := &provisioning.Job{Namespace: "ns1", Name: "job1", ResourceVersion: "5"}
 
 	t.Run("live then relist stays live", func(t *testing.T) {
 		driver := newClassifierDriver(t, true)
@@ -146,7 +146,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 			name: "live minimal add",
 			feed: func(h cache.ResourceEventHandlerDetailedFuncs) {
 				h.AddFunc(&provisioning.Job{
-					ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+					Namespace: "test-ns", Name: "test-job",
 				}, false)
 			},
 			want: triggerLive,
@@ -155,7 +155,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 			name: "initial-list add",
 			feed: func(h cache.ResourceEventHandlerDetailedFuncs) {
 				h.AddFunc(&provisioning.Job{
-					ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "5"},
+					Namespace: "test-ns", Name: "test-job", ResourceVersion: "5",
 				}, true)
 			},
 			want: triggerInitial,
@@ -165,7 +165,7 @@ func TestConcurrentJobDriver_ProcessingAttributed(t *testing.T) {
 			natsBacked: true,
 			feed: func(h cache.ResourceEventHandlerDetailedFuncs) {
 				job := &provisioning.Job{
-					ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job", ResourceVersion: "5"},
+					Namespace: "test-ns", Name: "test-job", ResourceVersion: "5",
 				}
 				h.UpdateFunc(job, job)
 			},
@@ -233,7 +233,7 @@ func TestConcurrentJobDriver_AlreadyClaimedNotAttributed(t *testing.T) {
 
 	before := processedCounts(t, reg)
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 
 	<-claimed
@@ -290,7 +290,7 @@ func TestConcurrentJobDriver_RecordsDeliveryLatency(t *testing.T) {
 
 	beforeCount, beforeSum := deliveryLatency(t, reg)
 	driver.EventHandler().AddFunc(&provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "test-ns", Name: "test-job"},
+		Namespace: "test-ns", Name: "test-job",
 	}, false)
 
 	select {

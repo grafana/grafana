@@ -59,11 +59,9 @@ func ReceiverToPostableApiReceiver(r *models.Receiver) (v1.PostableApiReceiver, 
 	}
 
 	return v1.PostableApiReceiver{
-		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(r.UID),
-			Version:    r.Version,
-			Provenance: r.Provenance,
-		},
+		UID:                     v1.ResourceUID(r.UID),
+		Version:                 r.Version,
+		Provenance:              r.Provenance,
 		Name:                    r.Name,
 		GrafanaManagedReceivers: integrations,
 	}, nil

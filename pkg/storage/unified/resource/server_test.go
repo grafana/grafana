@@ -2295,7 +2295,7 @@ func TestJitteredWatchMaxAge(t *testing.T) {
 	base := 5 * time.Minute
 	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
 	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
-	for i := 0; i < 1000; i++ {
+	for range 1000 {
 		got := jitteredWatchMaxAge(t.Context(), base)
 		require.GreaterOrEqual(t, got, lower)
 		require.LessOrEqual(t, got, upper)

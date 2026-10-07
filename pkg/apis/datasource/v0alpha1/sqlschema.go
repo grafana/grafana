@@ -91,9 +91,8 @@ func (u SampleRows) OpenAPIDefinition() openapi.OpenAPIDefinition {
 	return openapi.OpenAPIDefinition{
 		Schema: *spec.ArrayProperty(spec.ArrayProperty( // Array of Array
 			&spec.Schema{
-				SchemaProps: spec.SchemaProps{ // no specific type for inner any
-					AdditionalProperties: &spec.SchemaOrBool{Allows: true},
-				},
+				// no specific type for inner any
+				AdditionalProperties: &spec.SchemaOrBool{Allows: true},
 			},
 		)).WithDescription("[][]any"), // frontend says number | string | boolean | object
 	}

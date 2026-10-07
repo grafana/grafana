@@ -68,11 +68,9 @@ func TestSumTotalDryRun(t *testing.T) {
 
 func makeTestJob(rv string) *provisioning.Job {
 	return &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "test-job",
-			Namespace:       "test-ns",
-			ResourceVersion: rv,
-		},
+		Name:            "test-job",
+		Namespace:       "test-ns",
+		ResourceVersion: rv,
 		Spec: provisioning.JobSpec{
 			Repository: "test-repo",
 			Action:     provisioning.JobActionPull,
@@ -269,10 +267,8 @@ func TestOnProgress_MutexNotLeakedOnConflict(t *testing.T) {
 // may not exist. Unlike makeTestJob it accepts an arbitrary action.
 func makeOrphanJob(action provisioning.JobAction) *provisioning.Job {
 	return &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-job",
-			Namespace: "test-ns",
-		},
+		Name:      "test-job",
+		Namespace: "test-ns",
 		Spec: provisioning.JobSpec{
 			Repository: "deleted-repo",
 			Action:     action,
@@ -284,12 +280,10 @@ func makeOrphanJob(action provisioning.JobAction) *provisioning.Job {
 // with mock repository objects.
 func makeRepoConfig(name string, deletionTimestamp *metav1.Time, labels map[string]string) *provisioning.Repository {
 	return &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
-			Namespace:         "test-ns",
-			DeletionTimestamp: deletionTimestamp,
-			Labels:            labels,
-		},
+		Name:              name,
+		Namespace:         "test-ns",
+		DeletionTimestamp: deletionTimestamp,
+		Labels:            labels,
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 		},
@@ -843,7 +837,7 @@ func TestWithJobAuthorSignature(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			job := &provisioning.Job{ObjectMeta: metav1.ObjectMeta{Annotations: tt.annotations}}
+			job := &provisioning.Job{Annotations: tt.annotations}
 			ctx := withJobAuthorSignature(context.Background(), job)
 			assert.Equal(t, tt.expected, repository.GetAuthorSignature(ctx))
 		})

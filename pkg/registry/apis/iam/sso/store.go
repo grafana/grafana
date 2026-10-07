@@ -239,13 +239,11 @@ func mapToObject(ns string, s *ssomodels.SSOSettings) iamv0.SSOSetting {
 	}
 
 	object := iamv0.SSOSetting{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              s.Provider,
-			Namespace:         ns,
-			UID:               types.UID(s.Provider),
-			ResourceVersion:   version,
-			CreationTimestamp: metav1.NewTime(s.Updated),
-		},
+		Name:              s.Provider,
+		Namespace:         ns,
+		UID:               types.UID(s.Provider),
+		ResourceVersion:   version,
+		CreationTimestamp: metav1.NewTime(s.Updated),
 		Spec: iamv0.SSOSettingSpec{
 			Source:   source,
 			Settings: commonv1.Unstructured{Object: s.Settings},

@@ -305,10 +305,8 @@ func TestValidateMuteTimeInterval(t *testing.T) {
 							{
 								Weekdays: []timeinterval.WeekdayRange{
 									{
-										InclusiveRange: timeinterval.InclusiveRange{
-											Begin: 1,
-											End:   2,
-										},
+										Begin: 1,
+										End:   2,
 									},
 								},
 							},
@@ -343,10 +341,8 @@ func TestValidateMuteTimeInterval(t *testing.T) {
 							{
 								Weekdays: []timeinterval.WeekdayRange{
 									{
-										InclusiveRange: timeinterval.InclusiveRange{
-											Begin: -1,
-											End:   7,
-										},
+										Begin: -1,
+										End:   7,
 									},
 								},
 							},

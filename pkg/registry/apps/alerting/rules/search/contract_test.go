@@ -114,7 +114,6 @@ func compareStructs(want, got reflect.Type, path string, seen map[typePair]bool)
 func jsonFields(t reflect.Type) map[string]reflect.Type {
 	out := map[string]reflect.Type{}
 	for f := range t.Fields() {
-		f := f
 		if !f.IsExported() {
 			continue
 		}

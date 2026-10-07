@@ -355,14 +355,10 @@ func (s *TeamK8sService) CreateTeam(ctx context.Context, cmd *team.CreateTeamCom
 
 	uid := util.GenerateShortUID()
 	k8sTeam := iamv0alpha1.Team{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0alpha1.GroupVersion.Identifier(),
-			Kind:       "Team",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      uid,
-			Namespace: namespace,
-		},
+		APIVersion: iamv0alpha1.GroupVersion.Identifier(),
+		Kind:       "Team",
+		Name:       uid,
+		Namespace:  namespace,
 		Spec: iamv0alpha1.TeamSpec{
 			Title:       cmd.Name,
 			Email:       cmd.Email,

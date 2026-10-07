@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
@@ -49,9 +48,7 @@ func TestIntegrationReceiverAuthorizationTest(t *testing.T) {
 	require.NoError(t, err)
 
 	existingReceiver, err := adminClient.Create(ctx, &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title: "test-receiver-1",
 			Integrations: []v1beta1.ReceiverIntegration{
@@ -431,9 +428,7 @@ func TestIntegrationTesting(t *testing.T) {
 	})
 
 	receiver, err := client.Create(ctx, &v1beta1.Receiver{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.ReceiverSpec{
 			Title: "test-receiver-1",
 			Integrations: []v1beta1.ReceiverIntegration{
@@ -558,9 +553,7 @@ func TestIntegrationTesting(t *testing.T) {
 			receiver1Integration := v1beta1.CreateReceiverIntegrationTestRequestIntegration(receiver.Spec.Integrations[0])
 
 			receiver2, err := client.Create(ctx, &v1beta1.Receiver{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
+				Namespace: "default",
 				Spec: v1beta1.ReceiverSpec{
 					Title:        "test-receiver-2",
 					Integrations: []v1beta1.ReceiverIntegration{},

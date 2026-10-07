@@ -26,8 +26,8 @@ func nsCtx() context.Context {
 
 func ssoObj(name string, settings map[string]any) *iamv0.SSOSetting {
 	return &iamv0.SSOSetting{
-		ObjectMeta: metav1.ObjectMeta{Name: name},
-		Spec:       iamv0.SSOSettingSpec{Settings: common.Unstructured{Object: settings}},
+		Name: name,
+		Spec: iamv0.SSOSettingSpec{Settings: common.Unstructured{Object: settings}},
 	}
 }
 

@@ -198,11 +198,9 @@ receivers:
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
 		require.Equal(t, &v1.ManagedRoute{
-			ResourceMetadata: v1.ResourceMetadata{
-				UID:        v1.RouteUID(extra.Identifier),
-				Provenance: models.ProvenanceConvertedPrometheus,
-			},
-			Receiver: "r1",
+			UID:        v1.RouteUID(extra.Identifier),
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Receiver:   "r1",
 			Routes: []*v1.Route{
 				{Receiver: "r2", Routes: []*v1.Route{{Receiver: "r1", Routes: make([]*v1.Route, 0)}}},
 				{Receiver: "", Routes: []*v1.Route{{Receiver: "r2", Routes: make([]*v1.Route, 0)}}},
@@ -242,11 +240,9 @@ mute_time_intervals:
 		assert.NotEmpty(t, route.Version) // Test separately so we don't couple this test to version consistency.
 		route.Version = ""
 		require.Equal(t, &v1.ManagedRoute{
-			ResourceMetadata: v1.ResourceMetadata{
-				UID:        v1.RouteUID(extra.Identifier),
-				Provenance: models.ProvenanceConvertedPrometheus,
-			},
-			Receiver: "receiver1" + expectedDedupSuffix,
+			UID:        v1.RouteUID(extra.Identifier),
+			Provenance: models.ProvenanceConvertedPrometheus,
+			Receiver:   "receiver1" + expectedDedupSuffix,
 			Routes: []*v1.Route{
 				{Receiver: "dupe-receiver" + expectedDedupSuffix, MuteTimeIntervals: []string{"mute-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},
 				{Receiver: "r1", ActiveTimeIntervals: []string{"time-interval-1" + expectedDedupSuffix}, Routes: make([]*v1.Route, 0)},

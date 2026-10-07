@@ -27,8 +27,7 @@ func (c *fakeSearchBackend) Search(ctx context.Context, query SearchQuery) (*iam
 	if c.searchFunc != nil {
 		return c.searchFunc(ctx, query)
 	}
-	return &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
+	return &iamv0.GetSearchTeamsResponse{
 		Hits:      c.hits,
-		TotalHits: int64(len(c.hits)),
-	}}, c.err
+		TotalHits: int64(len(c.hits))}, c.err
 }

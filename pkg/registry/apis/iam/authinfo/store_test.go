@@ -232,7 +232,7 @@ func TestLegacyStore_Update(t *testing.T) {
 
 		externalUID := "ext-1"
 		newObj := &iamv0alpha1.AuthInfo{
-			ObjectMeta: metav1.ObjectMeta{Name: "user-uid.oauth-github", Namespace: "default"},
+			Name: "user-uid.oauth-github", Namespace: "default",
 			Spec: iamv0alpha1.AuthInfoSpec{
 				UserRef:     iamv0alpha1.AuthInfoUserRef{Name: "user-uid"},
 				AuthModule:  "oauth_github",
@@ -264,7 +264,7 @@ func TestLegacyStore_Update(t *testing.T) {
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
 		newObj := &iamv0alpha1.AuthInfo{
-			ObjectMeta: metav1.ObjectMeta{Name: "user-uid.oauth-github", Namespace: "default"},
+			Name: "user-uid.oauth-github", Namespace: "default",
 			Spec: iamv0alpha1.AuthInfoSpec{
 				UserRef:    iamv0alpha1.AuthInfoUserRef{Name: "other-user"},
 				AuthModule: "oauth_github",

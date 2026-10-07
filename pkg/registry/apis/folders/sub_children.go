@@ -114,9 +114,9 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			children.ResourceVersion = strconv.FormatInt(resp.ResourceVersion, 10)
 		}
 		for _, row := range rows {
-			f := folders.Folder{}
-			f.Name = row.key.Name
-			f.Namespace = row.key.Namespace
+			f := folders.Folder{
+				Name:      row.key.Name,
+				Namespace: row.key.Namespace}
 			if row.resourceVersion > 0 {
 				f.ResourceVersion = strconv.FormatInt(row.resourceVersion, 10)
 			}

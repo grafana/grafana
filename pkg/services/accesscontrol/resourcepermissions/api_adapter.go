@@ -683,11 +683,9 @@ func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace 
 		resourcePerm := existingResourcePerm.DeepCopy()
 		if existingResourceVersion == "" {
 			resourcePerm = &iamv0.ResourcePermission{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-				},
-				ObjectMeta: metav1.ObjectMeta{Name: resourcePermName, Namespace: namespace},
+				APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+				Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				Name:       resourcePermName, Namespace: namespace,
 				Spec: iamv0.ResourcePermissionSpec{
 					Resource: iamv0.ResourcePermissionspecResource{
 						ApiGroup: apiGroup,
@@ -781,15 +779,11 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 	}
 
 	resourcePerm := &iamv0.ResourcePermission{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            resourcePermName,
-			Namespace:       namespace,
-			ResourceVersion: existingResourceVersion,
-		},
+		APIVersion:      iamv0.ResourcePermissionInfo.GroupVersion().String(),
+		Kind:            iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+		Name:            resourcePermName,
+		Namespace:       namespace,
+		ResourceVersion: existingResourceVersion,
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
 				ApiGroup: apiGroup,

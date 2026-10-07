@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/resource"
 
@@ -69,15 +68,11 @@ func TestIntegrationReadImported_Snapshot(t *testing.T) {
 	}
 	require.NotNil(t, importedRoute)
 	expected := &v1beta1.RoutingTree{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: v1beta1.RoutingTreeKind().GroupVersionKind().GroupVersion().String(),
-			Kind:       v1beta1.RoutingTreeKind().Kind(),
-		},
-		ObjectMeta: v1.ObjectMeta{
-			Name:            identifier,
-			Namespace:       apis.DefaultNamespace,
-			ResourceVersion: "624f4696d803bc64",
-		},
+		APIVersion:      v1beta1.RoutingTreeKind().GroupVersionKind().GroupVersion().String(),
+		Kind:            v1beta1.RoutingTreeKind().Kind(),
+		Name:            identifier,
+		Namespace:       apis.DefaultNamespace,
+		ResourceVersion: "624f4696d803bc64",
 		Spec: v1beta1.RoutingTreeSpec{
 			Defaults: v1beta1.RoutingTreeRouteDefaults{
 				GroupBy:       []string{"alertname", "cluster"},

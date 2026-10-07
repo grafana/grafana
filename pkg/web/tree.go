@@ -348,10 +348,10 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 		}
 		switch leaf.typ {
 		case _PATTERN_PATH_EXT:
-			j := strings.LastIndex(unescapedURL, ".")
-			if j > -1 {
-				params[":path"] = unescapedURL[:j]
-				params[":ext"] = unescapedURL[j+1:]
+			before, after, ok := strings.CutLast(unescapedURL, ".")
+			if ok {
+				params[":path"] = before
+				params[":ext"] = after
 			} else {
 				params[":path"] = unescapedURL
 			}

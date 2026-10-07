@@ -191,31 +191,27 @@ func setupPluginDashboardsForTest(t *testing.T) *FileStoreManager {
 	t.Helper()
 
 	p1 := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "pluginWithoutDashboards",
-			Includes: []*plugins.Includes{
-				{
-					Type: "page",
-				},
+		ID: "pluginWithoutDashboards",
+		Includes: []*plugins.Includes{
+			{
+				Type: "page",
 			},
 		},
 	}
 
 	p2 := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "pluginWithDashboards",
-			Includes: []*plugins.Includes{
-				{
-					Type: "page",
-				},
-				{
-					Type: "dashboard",
-					Path: "dashboards/dash1.json",
-				},
-				{
-					Type: "dashboard",
-					Path: "dashboards/dash2.json",
-				},
+		ID: "pluginWithDashboards",
+		Includes: []*plugins.Includes{
+			{
+				Type: "page",
+			},
+			{
+				Type: "dashboard",
+				Path: "dashboards/dash1.json",
+			},
+			{
+				Type: "dashboard",
+				Path: "dashboards/dash2.json",
 			},
 		},
 	}

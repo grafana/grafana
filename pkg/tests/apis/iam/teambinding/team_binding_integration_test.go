@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
@@ -31,21 +30,19 @@ func TestIntegrationTeamBindings(t *testing.T) {
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("Team binding CRUD operations with dual writer mode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelperWithOpts(t, apis.K8sTestHelperOpts{
-				GrafanaOpts: testinfra.GrafanaOpts{
-					AppModeProduction:      false,
-					DisableAnonymous:       true,
-					RBACSingleOrganization: true,
-					APIServerStorageType:   "unified",
-					UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-						"teambindings.iam.grafana.app": {
-							DualWriterMode: mode,
-						},
+				AppModeProduction:      false,
+				DisableAnonymous:       true,
+				RBACSingleOrganization: true,
+				APIServerStorageType:   "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teambindings.iam.grafana.app": {
+						DualWriterMode: mode,
 					},
-					EnableFeatureToggles: []string{
-						featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
-						featuremgmt.FlagKubernetesTeamsApi,
-						featuremgmt.FlagKubernetesUsersApi,
-					},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesTeamsApi,
+					featuremgmt.FlagKubernetesUsersApi,
 				},
 			})
 

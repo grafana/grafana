@@ -349,12 +349,10 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 			snapshot, err := s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 				SnapshotUID: snapshotUID,
 				SessionUID:  sessionUID,
-				SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
-					ResultLimit: 10,
-					ResultPage:  1,
-					SortColumn:  cloudmigration.SortColumnID,
-					SortOrder:   cloudmigration.SortOrderAsc,
-				},
+				ResultLimit: 10,
+				ResultPage:  1,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
 			})
 			assert.NoError(t, err)
 			assert.NotNil(t, snapshot)
@@ -814,65 +812,51 @@ func TestGetPlugins(t *testing.T) {
 
 	s.pluginStore = pluginstore.NewFakePluginStore([]pluginstore.Plugin{
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-core",
-				Type: plugins.TypeDataSource,
-			},
+			ID:            "plugin-core",
+			Type:          plugins.TypeDataSource,
 			Class:         plugins.ClassCore,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeGrafana,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:          "plugin-external-valid-grafana",
-				Type:        plugins.TypeDataSource,
-				AutoEnabled: false,
-			},
+			ID:            "plugin-external-valid-grafana",
+			Type:          plugins.TypeDataSource,
+			AutoEnabled:   false,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeGrafana,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-external-valid-commercial",
-				Type: plugins.TypePanel,
-			},
+			ID:            "plugin-external-valid-commercial",
+			Type:          plugins.TypePanel,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommercial,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-external-valid-community",
-				Type: plugins.TypePanel,
-			},
+			ID:            "plugin-external-valid-community",
+			Type:          plugins.TypePanel,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusValid,
 			SignatureType: plugins.SignatureTypeCommunity,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-external-invalid",
-				Type: plugins.TypePanel,
-			},
+			ID:            "plugin-external-invalid",
+			Type:          plugins.TypePanel,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusInvalid,
 			SignatureType: plugins.SignatureTypeGrafana,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-external-unsigned",
-				Type: plugins.TypePanel,
-			},
+			ID:            "plugin-external-unsigned",
+			Type:          plugins.TypePanel,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusUnsigned,
 			SignatureType: plugins.SignatureTypeGrafana,
 		},
 		{
-			JSONData: plugins.JSONData{
-				ID:   "plugin-external-valid-private",
-				Type: plugins.TypeApp,
-			},
+			ID:            "plugin-external-valid-private",
+			Type:          plugins.TypeApp,
 			Class:         plugins.ClassExternal,
 			Signature:     plugins.SignatureStatusUnsigned,
 			SignatureType: plugins.SignatureTypePrivate,

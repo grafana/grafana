@@ -115,12 +115,10 @@ func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) 
 		return resource.ResourceStats{}, false
 	}
 	return resource.ResourceStats{
-		NamespacedResource: resource.NamespacedResource{
-			Namespace: entry.Namespace,
-			Group:     entry.Group,
-			Resource:  entry.Resource,
-		},
-		Count: entry.DocCount,
+		Namespace: entry.Namespace,
+		Group:     entry.Group,
+		Resource:  entry.Resource,
+		Count:     entry.DocCount,
 	}, true
 }
 

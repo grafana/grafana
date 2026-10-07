@@ -318,12 +318,10 @@ func getDeprecatedInternalIDFromLabelSelectors(options *internalversion.ListOpti
 
 func toUserItem(u *common.UserWithRole, ns string) iamv0alpha1.User {
 	item := &iamv0alpha1.User{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              u.UID,
-			Namespace:         ns,
-			ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(u.Created),
-		},
+		Name:              u.UID,
+		Namespace:         ns,
+		ResourceVersion:   fmt.Sprintf("%d", u.Updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(u.Created),
 		Spec: iamv0alpha1.UserSpec{
 			Title:         u.Name,
 			Login:         u.Login,

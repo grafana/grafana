@@ -38,7 +38,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when generation differs",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 2},
+				Generation: 2,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -52,7 +52,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should not check when hook error is recent and webhook still required",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 				},
@@ -70,7 +70,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when hook error cooldown expired even if webhook still required",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					Workflows: []provisioning.Workflow{provisioning.WriteWorkflow},
 				},
@@ -91,7 +91,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when hook error is recent but webhook is no longer required",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Spec: provisioning.RepositorySpec{
 					// Workflows removed by the user — no webhook is needed anymore,
 					// so the cooldown must not block recovery. The general timing
@@ -113,7 +113,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should not check when health check is recent and healthy",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -127,7 +127,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when health check is old and healthy",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -141,7 +141,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should not check when health error is recent",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -156,7 +156,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when health error is old",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -171,7 +171,7 @@ func TestShouldCheckHealth(t *testing.T) {
 		{
 			name: "should check when never checked",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					ObservedGeneration: 1,
 					Health: provisioning.HealthStatus{
@@ -543,9 +543,7 @@ func TestRefreshHealth(t *testing.T) {
 			mockPatcher := mocks.NewStatusPatcher(t)
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Finalizers: []string{repository.CleanFinalizer},
-					},
+					Finalizers: []string{repository.CleanFinalizer},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,
@@ -693,10 +691,8 @@ func TestRefreshHealthWithPatchOps(t *testing.T) {
 			// Create mock repository with existing status and conditions
 			mockRepo := &mockRepository{
 				config: &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Generation: 1,
-						Finalizers: []string{repository.CleanFinalizer},
-					},
+					Generation: 1,
+					Finalizers: []string{repository.CleanFinalizer},
 					Spec: provisioning.RepositorySpec{
 						Title: "Test Repository",
 						Type:  provisioning.LocalRepositoryType,

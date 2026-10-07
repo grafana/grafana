@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/team"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 )
 
@@ -253,8 +252,8 @@ func TestService_fetchPagination(t *testing.T) {
 	t.Run("users", func(t *testing.T) {
 		s := setupService()
 		store := &fakeIdentityStore{disableNsCheck: true, pageSize: 2, users: []common.UserWithRole{
-			{User: user.User{ID: 1, UID: "u1"}}, {User: user.User{ID: 2, UID: "u2"}}, {User: user.User{ID: 3, UID: "u3"}},
-			{User: user.User{ID: 4, UID: "u4"}}, {User: user.User{ID: 5, UID: "u5"}},
+			{ID: 1, UID: "u1"}, {ID: 2, UID: "u2"}, {ID: 3, UID: "u3"},
+			{ID: 4, UID: "u4"}, {ID: 5, UID: "u5"},
 		}}
 		s.identityStore = store
 

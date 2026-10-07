@@ -108,9 +108,7 @@ func TestGetImage(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
 			alert := alertingNotify.Alert{
-				Alert: model.Alert{
-					Annotations: model.LabelSet{alertingModels.ImageTokenAnnotation: model.LabelValue(test.token)},
-				},
+				Annotations: model.LabelSet{alertingModels.ImageTokenAnnotation: model.LabelValue(test.token)},
 			}
 			image, err := store.GetImage(context.Background(), alert)
 			require.NoError(tt, err)

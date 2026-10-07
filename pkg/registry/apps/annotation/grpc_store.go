@@ -300,11 +300,9 @@ func fromProtoAnnotation(protoAnno *storev1.Annotation) *annotationV0.Annotation
 	}
 
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      protoAnno.Name,
-			Namespace: protoAnno.Namespace,
-			UID:       types.UID(protoAnno.Name),
-		},
+		Name:      protoAnno.Name,
+		Namespace: protoAnno.Namespace,
+		UID:       types.UID(protoAnno.Name),
 	}
 
 	if protoAnno.CreatedBy != "" {

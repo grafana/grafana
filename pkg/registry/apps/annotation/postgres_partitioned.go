@@ -467,11 +467,9 @@ func rowToAnnotation(namespace, name string, timeMs int64, timeEnd *int64,
 	dashboardUID *string, panelID *int64, text string, tags, scopes []string,
 	createdBy *string, createdAt time.Time, legacyID *int64, legacyData *string, deletedAt *time.Time) *annotationV0.Annotation {
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
-			UID:       types.UID(name),
-		},
+		Name:      name,
+		Namespace: namespace,
+		UID:       types.UID(name),
 		Spec: annotationV0.AnnotationSpec{
 			Time:         timeMs,
 			TimeEnd:      timeEnd,

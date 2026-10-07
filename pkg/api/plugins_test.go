@@ -109,9 +109,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 			hs.pluginInstaller = NewFakePluginInstaller()
 			hs.pluginFileStore = &pluginfakes.FakePluginFileStore{}
 			hs.pluginStore = pluginstore.NewFakePluginStore(pluginstore.Plugin{
-				JSONData: plugins.JSONData{
-					ID: pluginID,
-				},
+				ID: pluginID,
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
 			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
@@ -156,10 +154,10 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 	const nonCDNPluginID = "non-cdn-plugin"
 	t.Run("Plugin CDN asset redirect", func(t *testing.T) {
 		cdnPlugin := &plugins.Plugin{
-			JSONData: plugins.JSONData{ID: cdnPluginID, Info: plugins.Info{Version: "1.0.0"}},
+			ID: cdnPluginID, Info: plugins.Info{Version: "1.0.0"},
 		}
 		nonCdnPlugin := &plugins.Plugin{
-			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
+			ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"},
 		}
 		registry := &pluginfakes.FakePluginRegistry{
 			Store: map[string]*plugins.Plugin{
@@ -810,11 +808,9 @@ func createPlugin(jd plugins.JSONData, class plugins.Class, files plugins.FS) *p
 
 func TestHTTPServer_hasPluginRequestedPermissions(t *testing.T) {
 	pluginReg := pluginstore.Plugin{
-		JSONData: plugins.JSONData{
-			ID: "grafana-test-app",
-			IAM: &auth.IAM{
-				Permissions: []auth.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}, {Action: ac.ActionUsersCreate}},
-			},
+		ID: "grafana-test-app",
+		IAM: &auth.IAM{
+			Permissions: []auth.Permission{{Action: ac.ActionUsersRead, Scope: ac.ScopeUsersAll}, {Action: ac.ActionUsersCreate}},
 		},
 	}
 

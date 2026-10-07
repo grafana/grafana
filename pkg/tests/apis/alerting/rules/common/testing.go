@@ -98,10 +98,8 @@ func CreateTestFolder(t *testing.T, helper *apis.K8sTestHelper, folderUID string
 	folderClient := NewFolderClient(t, helper.Org1.Admin)
 
 	folder := &folders.Folder{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      folderUID,
-			Namespace: "default",
-		},
+		Name:      folderUID,
+		Namespace: "default",
 		Spec: folders.FolderSpec{
 			Title: "Test Folder",
 		},

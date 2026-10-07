@@ -132,12 +132,10 @@ func parseFieldValueResults(result *resourcepb.ResourceSearchResponse, offset in
 
 func newSearchResponse(result *resourcepb.ResourceSearchResponse, offset int64, hitCount int) v0alpha1.GetSearchTeamsResponse {
 	return v0alpha1.GetSearchTeamsResponse{
-		GetSearchTeamsBody: v0alpha1.GetSearchTeamsBody{
-			Offset:    offset,
-			TotalHits: result.TotalHits,
-			QueryCost: result.QueryCost,
-			MaxScore:  result.MaxScore,
-			Hits:      make([]v0alpha1.GetSearchTeamsTeamHit, hitCount),
-		},
+		Offset:    offset,
+		TotalHits: result.TotalHits,
+		QueryCost: result.QueryCost,
+		MaxScore:  result.MaxScore,
+		Hits:      make([]v0alpha1.GetSearchTeamsTeamHit, hitCount),
 	}
 }

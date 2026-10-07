@@ -146,11 +146,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels := models.InstanceLabels{"test1": "testValue1"}
 	_, hash, _ := labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStateNormal,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -165,11 +163,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels = models.InstanceLabels{"test2": "testValue2"}
 	_, hash, _ = labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStateFiring,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -185,11 +181,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels = models.InstanceLabels{"test3": "testValue3"}
 	_, hash, _ = labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStateNoData,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -205,11 +199,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels = models.InstanceLabels{"test4": "testValue4"}
 	_, hash, _ = labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStateError,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -226,11 +218,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels = models.InstanceLabels{"test5": "testValue5"}
 	_, hash, _ = labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStatePending,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -246,11 +236,9 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 	labels = models.InstanceLabels{"test6": "testValue6"}
 	_, hash, _ = labels.StringAndHash()
 	instances = append(instances, models.AlertInstance{
-		AlertInstanceKey: models.AlertInstanceKey{
-			RuleOrgID:  rule.OrgID,
-			RuleUID:    rule.UID,
-			LabelsHash: hash,
-		},
+		RuleOrgID:          rule.OrgID,
+		RuleUID:            rule.UID,
+		LabelsHash:         hash,
 		CurrentState:       models.InstanceStateRecovering,
 		LastEvalTime:       evaluationTime,
 		CurrentStateSince:  evaluationTime.Add(-1 * time.Minute),
@@ -1990,11 +1978,9 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 	_, hash2, _ := labels2.StringAndHash()
 	instances := []models.AlertInstance{
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash1,
-			},
+			RuleOrgID:         rule.OrgID,
+			RuleUID:           rule.UID,
+			LabelsHash:        hash1,
 			CurrentState:      models.InstanceStateNormal,
 			Labels:            labels1,
 			Annotations:       rule.Annotations,
@@ -2006,11 +1992,9 @@ func TestIntegrationStaleResultsHandler(t *testing.T) {
 			ResultFingerprint: data.Labels{"test1": "testValue1"}.Fingerprint().String(),
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash2,
-			},
+			RuleOrgID:         rule.OrgID,
+			RuleUID:           rule.UID,
+			LabelsHash:        hash2,
 			CurrentState:      models.InstanceStateFiring,
 			Labels:            labels2,
 			Annotations:       rule.Annotations,
@@ -2263,20 +2247,16 @@ func TestIntegrationDeleteStateByRuleUID(t *testing.T) {
 	_, hash2, _ := labels2.StringAndHash()
 	instances := []models.AlertInstance{
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash1,
-			},
+			RuleOrgID:    rule.OrgID,
+			RuleUID:      rule.UID,
+			LabelsHash:   hash1,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels1,
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash2,
-			},
+			RuleOrgID:    rule.OrgID,
+			RuleUID:      rule.UID,
+			LabelsHash:   hash2,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels2,
 		},
@@ -2410,20 +2390,16 @@ func TestIntegrationResetStateByRuleUID(t *testing.T) {
 	_, hash2, _ := labels2.StringAndHash()
 	instances := []models.AlertInstance{
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash1,
-			},
+			RuleOrgID:    rule.OrgID,
+			RuleUID:      rule.UID,
+			LabelsHash:   hash1,
 			CurrentState: models.InstanceStateNormal,
 			Labels:       labels1,
 		},
 		{
-			AlertInstanceKey: models.AlertInstanceKey{
-				RuleOrgID:  rule.OrgID,
-				RuleUID:    rule.UID,
-				LabelsHash: hash2,
-			},
+			RuleOrgID:    rule.OrgID,
+			RuleUID:      rule.UID,
+			LabelsHash:   hash2,
 			CurrentState: models.InstanceStateFiring,
 			Labels:       labels2,
 		},

@@ -1373,7 +1373,7 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			results <- struct {
 				op string
 				writeRaceResult
-			}{op: "update", writeRaceResult: writeRaceResult{rv: rv, err: err, payload: title}}
+			}{op: "update", rv: rv, err: err, payload: title}
 		})
 
 		wg.Go(func() {
@@ -1389,7 +1389,7 @@ func runOptimisticLockingDatabaseIntegrityForBackend(t *testing.T, backend resou
 			results <- struct {
 				op string
 				writeRaceResult
-			}{op: "delete", writeRaceResult: writeRaceResult{rv: rv, err: err}}
+			}{op: "delete", rv: rv, err: err}
 		})
 
 		close(start)

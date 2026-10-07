@@ -50,13 +50,11 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 	}
 
 	obj := &datasourceV0.DataSource{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:       ds.UID,
-			Namespace:  r.mapper(ds.OrgID),
-			Generation: int64(ds.Version),
-		},
-		Spec:   datasourceV0.UnstructuredSpec{},
-		Secure: ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
+		Name:       ds.UID,
+		Namespace:  r.mapper(ds.OrgID),
+		Generation: int64(ds.Version),
+		Spec:       datasourceV0.UnstructuredSpec{},
+		Secure:     ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
 	if ds.Version > 0 {
 		obj.ResourceVersion = strconv.FormatInt(int64(ds.Version), 10)

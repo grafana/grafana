@@ -811,9 +811,9 @@ func (d *dataStore) processGroupResourceStats(ctx context.Context, gr GroupResou
 		flushName()
 		if open && liveCount > int64(minCount) {
 			stats = append(stats, ResourceStats{
-				NamespacedResource: NamespacedResource{Namespace: curNS, Group: gr.Group, Resource: gr.Resource},
-				Count:              liveCount,
-				ResourceVersion:    maxRV,
+				Namespace: curNS, Group: gr.Group, Resource: gr.Resource,
+				Count:           liveCount,
+				ResourceVersion: maxRV,
 			})
 		}
 		open, curNS, liveCount, maxRV = false, "", 0, 0

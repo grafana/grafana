@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http/httptest"
 	"testing"
 
@@ -79,9 +80,7 @@ func TestPerKindSearch_totalsProjection(t *testing.T) {
 			out := decodeResults(t, rec)
 			require.Len(t, out.Items, 1)
 			want := map[string]any{fieldTitle: rule.Title}
-			for key, value := range tc.want {
-				want[key] = value
-			}
+			maps.Copy(want, tc.want)
 			wantJSON, err := json.Marshal(want)
 			require.NoError(t, err)
 			gotJSON, err := json.Marshal(out.Items[0].Fields.Object)
@@ -161,9 +160,7 @@ func TestLegacyStatusValues_totalsPreserveInt64PrecisionAndPresence(t *testing.T
 			values := map[string]any{fieldTitle: rule.Title}
 			(&legacyClient{logger: logger}).addStatusValues(rule, values)
 			want := map[string]any{fieldTitle: rule.Title}
-			for key, value := range tc.want {
-				want[key] = value
-			}
+			maps.Copy(want, tc.want)
 			assert.Equal(t, want, values)
 			if tc.warn {
 				assert.Equal(t, 1, logger.WarnLogs.Calls)
@@ -270,9 +267,7 @@ func TestPerKindSearch_legacyStatusProjection(t *testing.T) {
 					require.Len(t, out.Items, 1)
 					require.NotNil(t, out.Items[0].Fields)
 					want := map[string]any{"title": rule.Title}
-					for key, value := range tc.want {
-						want[key] = value
-					}
+					maps.Copy(want, tc.want)
 					if !recording && tc.name == "complete with unknown and controller fields" {
 						want["state"], want["stateReason"] = "Firing", "Evaluated"
 					}

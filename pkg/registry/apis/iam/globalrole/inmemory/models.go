@@ -15,14 +15,12 @@ import (
 
 func roleDTOToV0GlobalRole(dto *accesscontrol.RoleDTO) *iamv0.GlobalRole {
 	r := &iamv0.GlobalRole{
-		TypeMeta: iamv0.GlobalRoleInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              dto.UID,
-			ResourceVersion:   fmt.Sprintf("%d", dto.Version),
-			CreationTimestamp: metav1.NewTime(dto.Created),
-			Annotations: map[string]string{
-				accesscontrol.RoleNameAnnotation: dto.Name,
-			},
+		TypeMeta:          iamv0.GlobalRoleInfo.TypeMeta(),
+		Name:              dto.UID,
+		ResourceVersion:   fmt.Sprintf("%d", dto.Version),
+		CreationTimestamp: metav1.NewTime(dto.Created),
+		Annotations: map[string]string{
+			accesscontrol.RoleNameAnnotation: dto.Name,
 		},
 		Spec: iamv0.GlobalRoleSpec{
 			Title:       dto.DisplayName,

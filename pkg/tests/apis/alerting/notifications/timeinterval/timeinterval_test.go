@@ -57,9 +57,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 	require.NoError(t, err)
 
 	newInterval := &v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-newInterval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -194,9 +192,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 			client, err := v1beta1.NewTimeIntervalClientFromGenerator(tc.user.GetClientRegistry())
 			require.NoError(t, err)
 			expected := &v1beta1.TimeInterval{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
+				Namespace: "default",
 				Spec: v1beta1.TimeIntervalSpec{
 					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -372,9 +368,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 
 	newInterval := func(name string) *v1beta1.TimeInterval {
 		return &v1beta1.TimeInterval{
-			ObjectMeta: v1.ObjectMeta{
-				Namespace: "default",
-			},
+			Namespace: "default",
 			Spec: v1beta1.TimeIntervalSpec{
 				Name:          name,
 				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -517,9 +511,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 	oldClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
 
 	interval := v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -602,9 +594,7 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 	oldClient := common.NewTimeIntervalClient(t, helper.Org1.Admin)
 
 	interval := v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -663,9 +653,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	interval1 := &v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "test1",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -675,9 +663,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 	require.NoError(t, err)
 
 	interval2 := &v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          "test2",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
@@ -929,10 +915,8 @@ func TestIntegrationTimeIntervalValidation(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			i := &v1beta1.TimeInterval{
-				ObjectMeta: v1.ObjectMeta{
-					Namespace: "default",
-				},
-				Spec: tc.interval,
+				Namespace: "default",
+				Spec:      tc.interval,
 			}
 			_, err := adminClient.Create(ctx, i, resource.CreateOptions{})
 			require.Error(t, err)

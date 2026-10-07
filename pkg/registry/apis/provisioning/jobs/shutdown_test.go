@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // --- JobCleanupController shutdown tests ---
@@ -158,8 +157,8 @@ func TestConcurrentJobDriver_Run_AllDriversExitBeforeRunReturns(t *testing.T) {
 	pending := make([]*provisioning.Job, numDrivers)
 	for i := range pending {
 		pending[i] = &provisioning.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "stacks-123", Name: fmt.Sprintf("job-%d", i)},
-			Spec:       provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
+			Namespace: "stacks-123", Name: fmt.Sprintf("job-%d", i),
+			Spec: provisioning.JobSpec{Repository: "repo", Action: provisioning.JobActionPull},
 		}
 	}
 

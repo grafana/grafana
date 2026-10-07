@@ -24,24 +24,24 @@ func TestSearchHandler(t *testing.T) {
 
 	seedAnnotations := []*annotationV0.Annotation{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-1", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}, Scopes: []string{"scope1"}},
+			Name: "a-1", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1"}, Scopes: []string{"scope1"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-2", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag2"}, Scopes: []string{"scope2"}},
+			Name: "a-2", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag2"}, Scopes: []string{"scope2"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-3", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}, Scopes: []string{"scope3"}},
+			Name: "a-3", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag3"}, Scopes: []string{"scope3"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-4", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1", "tag2"}, Scopes: []string{"scope1", "scope2"}},
+			Name: "a-4", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{"tag1", "tag2"}, Scopes: []string{"scope1", "scope2"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "a-5", Namespace: metav1.NamespaceDefault},
-			Spec:       annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{}, Scopes: []string{}},
+			Name: "a-5", Namespace: metav1.NamespaceDefault,
+			Spec: annotationV0.AnnotationSpec{Text: "test", Time: 1000, Tags: []string{}, Scopes: []string{}},
 		},
 	}
 

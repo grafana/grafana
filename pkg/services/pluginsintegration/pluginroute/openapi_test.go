@@ -59,16 +59,23 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	base := root + "namespaces/{namespace}/testkinds"
 	body := func() *spec3.RequestBody {
 		return &spec3.RequestBody{
-			RequestBodyProps: spec3.RequestBodyProps{
-				Content: map[string]*spec3.MediaType{
-					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
-					"application/yaml": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
-				},
+			Content: map[string]*spec3.MediaType{
+				"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
+				"application/yaml": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
 			},
 		}
 	}
 	listResponse := &spec3.Responses{
-		ResponsesProps: spec3.ResponsesProps{
+		StatusCodeResponses: map[int]*spec3.Response{
+			200: {ResponseProps: spec3.ResponseProps{
+				Content: map[string]*spec3.MediaType{
+					"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
+				},
+			}},
+		},
+	}
+	singleResponse := func() *spec3.Responses {
+		return &spec3.Responses{
 			StatusCodeResponses: map[int]*spec3.Response{
 				200: {ResponseProps: spec3.ResponseProps{
 					Content: map[string]*spec3.MediaType{
@@ -76,32 +83,19 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 					},
 				}},
 			},
-		},
-	}
-	singleResponse := func() *spec3.Responses {
-		return &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {ResponseProps: spec3.ResponseProps{
-						Content: map[string]*spec3.MediaType{
-							"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
-						},
-					}},
-				},
-			},
 		}
 	}
 	oas := &spec3.OpenAPI{
 		Paths: &spec3.Paths{
 			Paths: map[string]*spec3.Path{
 				base: {PathProps: spec3.PathProps{
-					Get:  &spec3.Operation{OperationProps: spec3.OperationProps{Responses: listResponse}},
-					Post: &spec3.Operation{OperationProps: spec3.OperationProps{RequestBody: body()}},
+					Get:  &spec3.Operation{Responses: listResponse},
+					Post: &spec3.Operation{RequestBody: body()},
 				}},
 				base + "/{name}": {PathProps: spec3.PathProps{
-					Get:   &spec3.Operation{OperationProps: spec3.OperationProps{Responses: singleResponse()}},
-					Put:   &spec3.Operation{OperationProps: spec3.OperationProps{RequestBody: body(), Responses: singleResponse()}},
-					Patch: &spec3.Operation{OperationProps: spec3.OperationProps{RequestBody: body(), Responses: singleResponse()}},
+					Get:   &spec3.Operation{Responses: singleResponse()},
+					Put:   &spec3.Operation{RequestBody: body(), Responses: singleResponse()},
+					Patch: &spec3.Operation{RequestBody: body(), Responses: singleResponse()},
 				}},
 			},
 		},
@@ -156,18 +150,18 @@ func TestSetOperationResponseBodiesPreservesErrors(t *testing.T) {
 	kindRef := spec.MustCreateRef("#/components/schemas/example.Kind")
 	statusRef := spec.MustCreateRef("#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status")
 	response := func(ref spec.Ref) *spec3.Response {
-		return &spec3.Response{ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
+		return &spec3.Response{Content: map[string]*spec3.MediaType{
 			"application/json": {MediaTypeProps: spec3.MediaTypeProps{
-				Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Ref: ref}},
+				Schema: &spec.Schema{Ref: ref},
 			}},
-		}}}
+		}}
 	}
-	op := &spec3.Operation{OperationProps: spec3.OperationProps{Responses: &spec3.Responses{
-		ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+	op := &spec3.Operation{Responses: &spec3.Responses{
+		StatusCodeResponses: map[int]*spec3.Response{
 			http.StatusOK:         response(statusRef),
 			http.StatusBadRequest: response(statusRef),
-		}},
-	}}}
+		},
+	}}
 
 	setOperationResponseBodies(op, kindRef)
 
@@ -185,13 +179,11 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 	oas := &spec3.OpenAPI{
 		Paths: &spec3.Paths{Paths: map[string]*spec3.Path{
 			base: {PathProps: spec3.PathProps{
-				Post: &spec3.Operation{OperationProps: spec3.OperationProps{
-					RequestBody: &spec3.RequestBody{RequestBodyProps: spec3.RequestBodyProps{
+				Post: &spec3.Operation{
+					RequestBody: &spec3.RequestBody{
 						Content: map[string]*spec3.MediaType{
 							"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
-						},
-					}},
-				}},
+						}}},
 			}},
 		}},
 		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
@@ -228,12 +220,12 @@ func TestSpecVersion(t *testing.T) {
 	b := &manifestBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
-	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}
+	oas := &spec3.OpenAPI{Info: &spec.Info{Title: "example.ext.grafana.app/v1alpha1"}}
 	require.Equal(t, "v1alpha1", b.specVersion(oas))
 
 	// Falls back to the settings version when the title is missing or foreign
 	require.Equal(t, apppluginV0.VERSION, b.specVersion(&spec3.OpenAPI{}))
-	other := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "other-group/v1"}}}
+	other := &spec3.OpenAPI{Info: &spec.Info{Title: "other-group/v1"}}
 	require.Equal(t, apppluginV0.VERSION, b.specVersion(other))
 }
 
@@ -302,20 +294,19 @@ func TestExampleValueTypes(t *testing.T) {
 
 	// Read-only properties are server owned, so a request example must not
 	// suggest sending them.
-	obj := &spec.Schema{SchemaProps: spec.SchemaProps{
+	obj := &spec.Schema{
 		Type: []string{"object"},
 		Properties: map[string]spec.Schema{
 			"title": *spec.StringProperty(),
 			"uid":   {SchemaProps: spec.SchemaProps{Type: []string{"string"}}, SwaggerSchemaProps: spec.SwaggerSchemaProps{ReadOnly: true}},
 			"leaf":  {SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/pkg.Leaf")}},
-		},
-	}}
+		}}
 	require.Equal(t, map[string]any{"title": "title", "leaf": "leaf"}, example(obj))
 
 	// A ref with no definition (ObjectMeta, say) stops the walk rather than
 	// producing a wrong shape.
 	require.Equal(t, map[string]any{},
-		example(&spec.Schema{SchemaProps: spec.SchemaProps{Ref: spec.MustCreateRef("#/components/schemas/pkg.Unknown")}}))
+		example(&spec.Schema{Ref: spec.MustCreateRef("#/components/schemas/pkg.Unknown")}))
 }
 
 // specProperty resolves the property the POST example is built from, and a kind
@@ -355,7 +346,7 @@ func TestDropUnstructuredModels(t *testing.T) {
 	newSpec := func() *spec3.OpenAPI {
 		schemas := map[string]*spec.Schema{}
 		for _, name := range unstructuredModels {
-			schemas[name] = &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}}
+			schemas[name] = &spec.Schema{Type: []string{"object"}}
 		}
 		return &spec3.OpenAPI{Components: &spec3.Components{Schemas: schemas}}
 	}

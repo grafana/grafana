@@ -12,8 +12,6 @@ import (
 	"sync"
 	"time"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -263,11 +261,9 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 	}
 
 	result := &queryV0.DataSourceConnectionList{
-		TypeMeta: v1.TypeMeta{
-			APIVersion: queryV0.SchemeGroupVersion.String(),
-			Kind:       "DataSourceConnectionList",
-		},
-		Items: []queryV0.DataSourceConnection{},
+		APIVersion: queryV0.SchemeGroupVersion.String(),
+		Kind:       "DataSourceConnectionList",
+		Items:      []queryV0.DataSourceConnection{},
 	}
 
 	var dss []*datasources.DataSource

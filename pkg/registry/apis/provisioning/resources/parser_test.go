@@ -38,10 +38,8 @@ func TestParser(t *testing.T) {
 		},
 		clients: clients,
 		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: "xxx",
-				Name:      "repo",
-			},
+			Namespace: "xxx",
+			Name:      "repo",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.LocalRepositoryType,
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
@@ -302,7 +300,7 @@ func TestParser_FolderAnnotationGuard(t *testing.T) {
 		},
 		clients: clients,
 		config: &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Namespace: "xxx", Name: "repo",
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.LocalRepositoryType,
 				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
@@ -366,7 +364,7 @@ spec:
 `
 
 	repoConfig := &provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+		Namespace: "xxx", Name: "repo",
 		Spec: provisioning.RepositorySpec{
 			Type: provisioning.GitHubRepositoryType,
 			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},

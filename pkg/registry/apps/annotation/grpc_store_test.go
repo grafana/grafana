@@ -16,7 +16,6 @@ import (
 	"google.golang.org/grpc/test/bufconn"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/utils/ptr"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -204,10 +203,8 @@ func TestGRPCStore_CreateAndGet(t *testing.T) {
 
 	// Create annotation
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-1",
-			Namespace: namespace,
-		},
+		Name:      "test-1",
+		Namespace: namespace,
 		Spec: annotationV0.AnnotationSpec{
 			Text: "Test annotation",
 			Time: 1000,
@@ -243,10 +240,8 @@ func TestGRPCStore_Update(t *testing.T) {
 
 	// Create annotation
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-1",
-			Namespace: namespace,
-		},
+		Name:      "test-1",
+		Namespace: namespace,
 		Spec: annotationV0.AnnotationSpec{
 			Text: "Original text",
 			Time: 1000,
@@ -281,10 +276,8 @@ func TestGRPCStore_Delete(t *testing.T) {
 
 	// Create annotation
 	anno := &annotationV0.Annotation{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-1",
-			Namespace: namespace,
-		},
+		Name:      "test-1",
+		Namespace: namespace,
 		Spec: annotationV0.AnnotationSpec{
 			Text: "Test annotation",
 			Time: 1000,
@@ -317,16 +310,16 @@ func TestGRPCStore_List(t *testing.T) {
 	panelID := int64(5)
 	annotations := []*annotationV0.Annotation{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-1", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:alice"}},
-			Spec:       annotationV0.AnnotationSpec{Text: "First", Time: 1000, DashboardUID: &dashUID, PanelID: &panelID, Tags: []string{"tag1", "tag2"}},
+			Name: "anno-1", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:alice"},
+			Spec: annotationV0.AnnotationSpec{Text: "First", Time: 1000, DashboardUID: &dashUID, PanelID: &panelID, Tags: []string{"tag1", "tag2"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-2", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:bob"}},
-			Spec:       annotationV0.AnnotationSpec{Text: "Second", Time: 2000, Tags: []string{"tag2", "tag3"}},
+			Name: "anno-2", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:bob"},
+			Spec: annotationV0.AnnotationSpec{Text: "Second", Time: 2000, Tags: []string{"tag2", "tag3"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-3", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:alice"}},
-			Spec:       annotationV0.AnnotationSpec{Text: "Third", Time: 3000, Tags: []string{"tag1"}},
+			Name: "anno-3", Namespace: namespace, Annotations: map[string]string{"grafana.com/createdBy": "user:alice"},
+			Spec: annotationV0.AnnotationSpec{Text: "Third", Time: 3000, Tags: []string{"tag1"}},
 		},
 	}
 
@@ -449,16 +442,16 @@ func TestGRPCStore_ListTags(t *testing.T) {
 	// Create annotations with various tags
 	annotations := []*annotationV0.Annotation{
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-1", Namespace: namespace},
-			Spec:       annotationV0.AnnotationSpec{Text: "First", Time: 1000, Tags: []string{"prod", "error"}},
+			Name: "anno-1", Namespace: namespace,
+			Spec: annotationV0.AnnotationSpec{Text: "First", Time: 1000, Tags: []string{"prod", "error"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-2", Namespace: namespace},
-			Spec:       annotationV0.AnnotationSpec{Text: "Second", Time: 2000, Tags: []string{"prod", "warning"}},
+			Name: "anno-2", Namespace: namespace,
+			Spec: annotationV0.AnnotationSpec{Text: "Second", Time: 2000, Tags: []string{"prod", "warning"}},
 		},
 		{
-			ObjectMeta: metav1.ObjectMeta{Name: "anno-3", Namespace: namespace},
-			Spec:       annotationV0.AnnotationSpec{Text: "Third", Time: 3000, Tags: []string{"dev", "error"}},
+			Name: "anno-3", Namespace: namespace,
+			Spec: annotationV0.AnnotationSpec{Text: "Third", Time: 3000, Tags: []string{"dev", "error"}},
 		},
 	}
 
@@ -499,8 +492,8 @@ func TestGRPCStore_ErrorCases(t *testing.T) {
 
 	t.Run("update non-existent annotation", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "does-not-exist", Namespace: namespace},
-			Spec:       annotationV0.AnnotationSpec{Text: "Test", Time: 1000},
+			Name: "does-not-exist", Namespace: namespace,
+			Spec: annotationV0.AnnotationSpec{Text: "Test", Time: 1000},
 		}
 		_, err := store.Update(ctx, anno)
 		require.Error(t, err)
@@ -509,8 +502,8 @@ func TestGRPCStore_ErrorCases(t *testing.T) {
 
 	t.Run("create duplicate annotation", func(t *testing.T) {
 		anno := &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "test-1", Namespace: namespace},
-			Spec:       annotationV0.AnnotationSpec{Text: "First", Time: 1000},
+			Name: "test-1", Namespace: namespace,
+			Spec: annotationV0.AnnotationSpec{Text: "First", Time: 1000},
 		}
 		_, err := store.Create(ctx, anno)
 		require.NoError(t, err)
@@ -561,8 +554,8 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		adapter, srv, ctx := setup(t)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+			Name: "point", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "point", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -576,8 +569,8 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		adapter, srv, ctx := setup(t)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "range", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "range", Time: 1000, TimeEnd: ptr.To(int64(2000))},
+			Name: "range", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "range", Time: 1000, TimeEnd: new(int64(2000))},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -591,8 +584,8 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		adapter, srv, ctx := setup(t)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+			Name: "point", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "point", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
@@ -614,14 +607,14 @@ func TestGRPCStore_APISendsTimeEnd(t *testing.T) {
 		adapter, srv, ctx := setup(t)
 
 		_, err := adapter.Create(ctx, &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "point", Time: 1000},
+			Name: "point", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "point", Time: 1000},
 		}, nil, &metav1.CreateOptions{})
 		require.NoError(t, err)
 
 		_, _, err = adapter.Update(ctx, "point", &updatedObjectInfo{obj: &annotationV0.Annotation{
-			ObjectMeta: metav1.ObjectMeta{Name: "point", Namespace: ns},
-			Spec:       annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
+			Name: "point", Namespace: ns,
+			Spec: annotationV0.AnnotationSpec{Text: "updated", Time: 1000},
 		}}, nil, nil, false, &metav1.UpdateOptions{})
 		require.NoError(t, err)
 

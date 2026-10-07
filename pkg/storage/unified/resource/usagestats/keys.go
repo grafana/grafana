@@ -57,14 +57,12 @@ func parseDailyKey(key string) (parsedDailyKey, error) {
 		return parsedDailyKey{}, fmt.Errorf("invalid daily key %q", key)
 	}
 	return parsedDailyKey{
-		objectRef: objectRef{
-			Group:     parts[0],
-			Resource:  parts[1],
-			Namespace: parts[2],
-			Name:      parts[3],
-		},
-		Day:    parts[4],
-		Metric: parts[5],
+		Group:     parts[0],
+		Resource:  parts[1],
+		Namespace: parts[2],
+		Name:      parts[3],
+		Day:       parts[4],
+		Metric:    parts[5],
 	}, nil
 }
 
@@ -80,13 +78,11 @@ func parseAggregateKey(key string) (parsedAggregateKey, error) {
 		return parsedAggregateKey{}, fmt.Errorf("invalid aggregate key %q", key)
 	}
 	return parsedAggregateKey{
-		objectRef: objectRef{
-			Group:     parts[0],
-			Resource:  parts[1],
-			Namespace: parts[2],
-			Name:      parts[3],
-		},
-		Field: parts[4],
+		Group:     parts[0],
+		Resource:  parts[1],
+		Namespace: parts[2],
+		Name:      parts[3],
+		Field:     parts[4],
 	}, nil
 }
 

@@ -112,16 +112,16 @@ func (n staticContactPointValidator) Validate(settings models.ContactPointRoutin
 	}
 	var errs []error
 	if _, ok := n.availableReceivers[settings.Receiver]; !ok {
-		errs = append(errs, ErrorReceiverDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.Receiver}})
+		errs = append(errs, ErrorReceiverDoesNotExist{Reference: settings.Receiver})
 	}
 	for _, interval := range settings.MuteTimeIntervals {
 		if _, ok := n.availableTimeIntervals[interval]; !ok {
-			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{Reference: interval})
 		}
 	}
 	for _, interval := range settings.ActiveTimeIntervals {
 		if _, ok := n.availableTimeIntervals[interval]; !ok {
-			errs = append(errs, ErrorTimeIntervalDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: interval}})
+			errs = append(errs, ErrorTimeIntervalDoesNotExist{Reference: interval})
 		}
 	}
 	return errors.Join(errs...)
@@ -138,7 +138,7 @@ func (n staticNotificationSettingsValidator) Validate(settings models.Notificati
 	}
 	if settings.PolicyRouting != nil {
 		if _, ok := n.availableRoutes[settings.PolicyRouting.Policy]; !ok {
-			return ErrorRouteDoesNotExist{ErrorReferenceInvalid: ErrorReferenceInvalid{Reference: settings.PolicyRouting.Policy}}
+			return ErrorRouteDoesNotExist{Reference: settings.PolicyRouting.Policy}
 		}
 	}
 	return nil

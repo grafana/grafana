@@ -17,11 +17,11 @@ import (
 // snapshot resource version (pinned across pages by the continue token).
 func pagedJobList(continueToken, resourceVersion string, names ...string) *provisioningapis.JobList {
 	l := &provisioningapis.JobList{
-		ListMeta: metav1.ListMeta{Continue: continueToken, ResourceVersion: resourceVersion},
+		Continue: continueToken, ResourceVersion: resourceVersion,
 	}
 	for _, name := range names {
 		l.Items = append(l.Items, provisioningapis.Job{
-			ObjectMeta: metav1.ObjectMeta{Namespace: testNamespace, Name: name},
+			Namespace: testNamespace, Name: name,
 		})
 	}
 	return l

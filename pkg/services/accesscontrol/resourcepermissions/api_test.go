@@ -531,16 +531,14 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 	}
 	tests := []setUserPermissionForTeamsTestCase{
 		{
-			setUserPermissionTestCase: setUserPermissionTestCase{
-				desc:           "should set Member permission for user 1",
-				userID:         1,
-				expectedStatus: 200,
-				permission:     "Member",
-				permissions: []accesscontrol.Permission{
-					{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-				},
+			desc:           "should set Member permission for user 1",
+			userID:         1,
+			expectedStatus: 200,
+			permission:     "Member",
+			permissions: []accesscontrol.Permission{
+				{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 			teamCmd: &team.CreateTeamCommand{
 				Name:  "test",
@@ -549,16 +547,14 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 			},
 		},
 		{
-			setUserPermissionTestCase: setUserPermissionTestCase{
-				desc:           "should set Admin permission for user 1",
-				userID:         1,
-				expectedStatus: 200,
-				permission:     "Admin",
-				permissions: []accesscontrol.Permission{
-					{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-				},
+			desc:           "should set Admin permission for user 1",
+			userID:         1,
+			expectedStatus: 200,
+			permission:     "Admin",
+			permissions: []accesscontrol.Permission{
+				{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 			teamCmd: &team.CreateTeamCommand{
 				Name:  "test",
@@ -567,16 +563,14 @@ func TestIntegrationApi_setUserPermissionForTeams(t *testing.T) {
 			},
 		},
 		{
-			setUserPermissionTestCase: setUserPermissionTestCase{
-				desc:           "should return status 400 for a provisioned team",
-				userID:         1,
-				expectedStatus: 400,
-				permission:     "Member",
-				permissions: []accesscontrol.Permission{
-					{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
-					{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
-				},
+			desc:           "should return status 400 for a provisioned team",
+			userID:         1,
+			expectedStatus: 400,
+			permission:     "Member",
+			permissions: []accesscontrol.Permission{
+				{Action: "teams.permissions:read", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: "teams.permissions:write", Scope: accesscontrol.ScopeTeamsAll},
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll},
 			},
 			teamCmd: &team.CreateTeamCommand{
 				Name:          "test",
@@ -947,9 +941,9 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 						members = []iamv0.TeamTeamMember{{Kind: subjectKindUser, Name: memberUID, Permission: iamv0.TeamTeamPermissionMember}}
 					}
 					teamObj := iamv0.Team{
-						TypeMeta:   metav1.TypeMeta{APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(), Kind: "Team"},
-						ObjectMeta: metav1.ObjectMeta{Name: "team", Namespace: "org-1", ResourceVersion: "1"},
-						Spec:       iamv0.TeamSpec{Members: members},
+						APIVersion: iamv0.TeamResourceInfo.GroupVersion().String(), Kind: "Team",
+						Name: "team", Namespace: "org-1", ResourceVersion: "1",
+						Spec: iamv0.TeamSpec{Members: members},
 					}
 					w.Header().Set("Content-Type", "application/json")
 					_ = json.NewEncoder(w).Encode(teamObj)

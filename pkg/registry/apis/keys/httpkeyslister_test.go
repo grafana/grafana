@@ -43,9 +43,9 @@ func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, 
 	gvr := schema.GroupVersionResource{Group: testGroup, Version: testVersion, Resource: testResource}
 	gv := gvr.GroupVersion()
 	client, err := rest.RESTClientFor(&rest.Config{
-		Host:          srv.URL,
-		APIPath:       "/apis",
-		ContentConfig: rest.ContentConfig{GroupVersion: &gv, NegotiatedSerializer: scheme.Codecs.WithoutConversion()},
+		Host:         srv.URL,
+		APIPath:      "/apis",
+		GroupVersion: &gv, NegotiatedSerializer: scheme.Codecs.WithoutConversion(),
 	})
 	require.NoError(t, err)
 
@@ -54,14 +54,14 @@ func serveKeys(t *testing.T, handler func(i int, opts metav1.ListOptions) (int, 
 
 func keysPage(rv, cont string, items ...metav1.PartialObjectMetadata) metav1.PartialObjectMetadataList {
 	return metav1.PartialObjectMetadataList{
-		TypeMeta: metav1.TypeMeta{APIVersion: "meta.k8s.io/v1", Kind: listKeysKind},
-		ListMeta: metav1.ListMeta{ResourceVersion: rv, Continue: cont},
-		Items:    items,
+		APIVersion: "meta.k8s.io/v1", Kind: listKeysKind,
+		ResourceVersion: rv, Continue: cont,
+		Items: items,
 	}
 }
 
 func partial(namespace, name, rv string) metav1.PartialObjectMetadata {
-	return metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name, ResourceVersion: rv}}
+	return metav1.PartialObjectMetadata{Namespace: namespace, Name: name, ResourceVersion: rv}
 }
 
 func drain(t *testing.T, lister Lister) ([]Key, error) {

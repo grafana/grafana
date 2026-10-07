@@ -205,7 +205,7 @@ func (s *k8sRESTAdapter) List(ctx context.Context, options *internalversion.List
 
 	return &annotationV0.AnnotationList{
 		Items:    filtered,
-		ListMeta: metav1.ListMeta{Continue: result.Continue},
+		Continue: result.Continue,
 	}, nil
 }
 

@@ -127,23 +127,18 @@ func TestProxyUserAgent(t *testing.T) {
 
 func TestProxyAllFlagReq_Filtering(t *testing.T) {
 	flagsByMetadata := []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-			Key: "publicBool", Value: true, Metadata: map[string]any{"public": true},
-		}},
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-			Key: "publicString", Value: true, Metadata: map[string]any{"public": "true"},
-		}},
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-			Key: "privateBool", Value: true, Metadata: map[string]any{"public": false},
-		}},
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-			Key: "noMetadata", Value: true,
-		}},
+		{
+			Key: "publicBool", Value: true, Metadata: map[string]any{"public": true}},
+		{
+			Key: "publicString", Value: true, Metadata: map[string]any{"public": "true"}},
+		{
+			Key: "privateBool", Value: true, Metadata: map[string]any{"public": false}},
+		{
+			Key: "noMetadata", Value: true},
 	}
 	onlyPrivateFlag := []goffmodel.OFREPFlagBulkEvaluateSuccessResponse{
-		{OFREPEvaluateSuccessResponse: goffmodel.OFREPEvaluateSuccessResponse{
-			Key: "privateBool", Metadata: map[string]any{"public": false},
-		}},
+		{
+			Key: "privateBool", Metadata: map[string]any{"public": false}},
 	}
 
 	tests := []struct {

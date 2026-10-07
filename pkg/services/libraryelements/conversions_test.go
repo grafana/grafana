@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	data "github.com/grafana/grafana-plugin-sdk-go/experimental/apis/datasource/v0alpha1"
@@ -27,14 +26,12 @@ func TestConversionsCommands(t *testing.T) {
 		{
 			name: "basic conversion",
 			input: &v0alpha1.LibraryPanel{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "uid",
-					// generation mirrors the legacy library element version and must flow
-					// into the patch command's Version for optimistic concurrency.
-					Generation: 3,
-					Annotations: map[string]string{
-						utils.AnnoKeyFolder: "aaa",
-					},
+				Name: "uid",
+				// generation mirrors the legacy library element version and must flow
+				// into the patch command's Version for optimistic concurrency.
+				Generation: 3,
+				Annotations: map[string]string{
+					utils.AnnoKeyFolder: "aaa",
 				},
 				Spec: v0alpha1.LibraryPanelSpec{
 					Type:          "timeseries",
@@ -108,9 +105,9 @@ func TestConversionsCommands(t *testing.T) {
 }
 
 func TestPatchCommandOmitsUnchangedFolder(t *testing.T) {
-	previous := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{
+	previous := &v0alpha1.LibraryPanel{Annotations: map[string]string{
 		utils.AnnoKeyFolder: "aaa",
-	}}}
+	}}
 	updated := previous.DeepCopy()
 	updated.Generation = 2
 
@@ -211,7 +208,7 @@ func TestLibraryPanelModelRoundTrip(t *testing.T) {
 }
 
 func TestLibraryPanelRootFolderConversion(t *testing.T) {
-	panel := &v0alpha1.LibraryPanel{ObjectMeta: metav1.ObjectMeta{Name: "panel", Annotations: map[string]string{utils.AnnoKeyFolder: "general"}}}
+	panel := &v0alpha1.LibraryPanel{Name: "panel", Annotations: map[string]string{utils.AnnoKeyFolder: "general"}}
 	create, err := ToCreateLibraryElementCommand(panel)
 	require.NoError(t, err)
 	require.Equal(t, new(""), create.FolderUID)

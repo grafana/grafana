@@ -329,10 +329,8 @@ func buildMimirAMConfigWithInhibitRules(t *testing.T, rules []v1.InhibitionRule)
 	t.Helper()
 
 	c := definition.PostableApiAlertingConfig{
-		Config: definition.Config{
-			Route: &definition.Route{
-				Receiver: "default",
-			},
+		Route: &definition.Route{
+			Receiver: "default",
 		},
 		Receivers: []*definition.PostableApiReceiver{
 			{

@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -203,10 +202,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 
 		// Create a GitHub connection
 		connObj := &provisioning.Connection{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-github-connection",
-				Namespace: "default",
-			},
+			Name:      "test-github-connection",
+			Namespace: "default",
 			Spec: provisioning.ConnectionSpec{
 				Type: provisioning.GithubConnectionType,
 				GitHub: &provisioning.GitHubConnectionConfig{
@@ -293,10 +290,8 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 
 		// Create a GitHub connection
 		connObj := &provisioning.Connection{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-github-connection",
-				Namespace: "default",
-			},
+			Name:      "test-github-connection",
+			Namespace: "default",
 			Spec: provisioning.ConnectionSpec{
 				Type: provisioning.GithubConnectionType,
 				GitHub: &provisioning.GitHubConnectionConfig{

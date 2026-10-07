@@ -77,9 +77,7 @@ func TestValidateKeeper(t *testing.T) {
 
 	t.Run("invalid name", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: objectMeta.Namespace,
-			},
+			Namespace: objectMeta.Namespace,
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
@@ -110,9 +108,7 @@ func TestValidateKeeper(t *testing.T) {
 
 	t.Run("invalid namespace", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: objectMeta.Name,
-			},
+			Name: objectMeta.Name,
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{
@@ -143,10 +139,8 @@ func TestValidateKeeper(t *testing.T) {
 
 	t.Run("keeper name `system` is reserved", func(t *testing.T) {
 		keeper := &secretv1beta1.Keeper{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "system",
-				Namespace: "ns1",
-			},
+			Name:      "system",
+			Namespace: "ns1",
 			Spec: secretv1beta1.KeeperSpec{
 				Description: "description",
 				Aws: &secretv1beta1.KeeperAWSConfig{

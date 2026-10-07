@@ -74,147 +74,127 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]k8scommon.OpenAPIDefinition
 				Path: "searchUsers",
 				Spec: &spec3.PathProps{
 					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Description: "User search",
-							Tags:        []string{"Search"},
-							OperationId: "getSearchUsers",
-							Parameters: []*spec3.Parameter{
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "namespace",
-										In:          "path",
-										Required:    true,
-										Example:     "default",
-										Description: "workspace",
-										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:     "query",
-										In:       "query",
-										Required: false,
-										Schema:   spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "limit",
-										In:          "query",
-										Description: "number of results to return",
-										Example:     30,
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "page",
-										In:          "query",
-										Description: "page number (starting from 1)",
-										Example:     1,
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "offset",
-										In:          "query",
-										Description: "number of results to skip",
-										Example:     0,
-										Required:    false,
-										Schema:      spec.Int64Property(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "accesscontrol",
-										In:          "query",
-										Description: "when true, includes access control metadata in the response",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "sort",
-										In:          "query",
-										Description: "sortable field",
-										Example:     "",
-										Examples: map[string]*spec3.Example{
-											"": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "default sorting",
-													Value:   "",
-												},
-											},
-											"title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title ascending",
-													Value:   "title",
-												},
-											},
-											"-title": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "title descending",
-													Value:   "-title",
-												},
-											},
-											"lastSeenAt": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "last seen at ascending",
-													Value:   "lastSeenAt",
-												},
-											},
-											"-lastSeenAt": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "last seen at descending",
-													Value:   "-lastSeenAt",
-												},
-											},
-											"email": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "email ascending",
-													Value:   "email",
-												},
-											},
-											"-email": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "email descending",
-													Value:   "-email",
-												},
-											},
-											"login": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "login ascending",
-													Value:   "login",
-												},
-											},
-											"-login": {
-												ExampleProps: spec3.ExampleProps{
-													Summary: "login descending",
-													Value:   "-login",
-												},
-											},
-										},
-										Required: false,
-										Schema:   spec.StringProperty(),
-									},
-								},
+						Description: "User search",
+						Tags:        []string{"Search"},
+						OperationId: "getSearchUsers",
+						Parameters: []*spec3.Parameter{
+							{
+								Name:        "namespace",
+								In:          "path",
+								Required:    true,
+								Example:     "default",
+								Description: "workspace",
+								Schema:      spec.StringProperty(),
 							},
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									Default: &spec3.Response{
-										ResponseProps: spec3.ResponseProps{
-											Description: "Default OK response",
-											Content: map[string]*spec3.MediaType{
-												"application/json": {
-													MediaTypeProps: spec3.MediaTypeProps{
-														Schema: &searchResults,
-													},
-												},
-											},
+							{
+								Name:     "query",
+								In:       "query",
+								Required: false,
+								Schema:   spec.StringProperty(),
+							},
+							{
+								Name:        "limit",
+								In:          "query",
+								Description: "number of results to return",
+								Example:     30,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "page",
+								In:          "query",
+								Description: "page number (starting from 1)",
+								Example:     1,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "offset",
+								In:          "query",
+								Description: "number of results to skip",
+								Example:     0,
+								Required:    false,
+								Schema:      spec.Int64Property(),
+							},
+							{
+								Name:        "accesscontrol",
+								In:          "query",
+								Description: "when true, includes access control metadata in the response",
+								Required:    false,
+								Schema:      spec.BoolProperty(),
+							},
+							{
+								Name:        "sort",
+								In:          "query",
+								Description: "sortable field",
+								Example:     "",
+								Examples: map[string]*spec3.Example{
+									"": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "default sorting",
+											Value:   "",
+										},
+									},
+									"title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title ascending",
+											Value:   "title",
+										},
+									},
+									"-title": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "title descending",
+											Value:   "-title",
+										},
+									},
+									"lastSeenAt": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "last seen at ascending",
+											Value:   "lastSeenAt",
+										},
+									},
+									"-lastSeenAt": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "last seen at descending",
+											Value:   "-lastSeenAt",
+										},
+									},
+									"email": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "email ascending",
+											Value:   "email",
+										},
+									},
+									"-email": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "email descending",
+											Value:   "-email",
+										},
+									},
+									"login": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "login ascending",
+											Value:   "login",
+										},
+									},
+									"-login": {
+										ExampleProps: spec3.ExampleProps{
+											Summary: "login descending",
+											Value:   "-login",
+										},
+									},
+								},
+								Required: false,
+								Schema:   spec.StringProperty(),
+							},
+						},
+						Responses: &spec3.Responses{
+							Default: &spec3.Response{
+								Description: "Default OK response",
+								Content: map[string]*spec3.MediaType{
+									"application/json": {
+										MediaTypeProps: spec3.MediaTypeProps{
+											Schema: &searchResults,
 										},
 									},
 								},

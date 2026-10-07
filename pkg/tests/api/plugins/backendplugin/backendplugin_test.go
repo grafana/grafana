@@ -819,9 +819,7 @@ func createQueryDataHTTPRequest(t *testing.T, tsCtx *testScenarioContext, mr dto
 
 func createTestPlugin(id string, tsCtx *testScenarioContext) (*plugins.Plugin, *testPlugin) {
 	p := &plugins.Plugin{
-		JSONData: plugins.JSONData{
-			ID: id,
-		},
+		ID:    id,
 		Class: plugins.ClassCore,
 	}
 

@@ -19,13 +19,11 @@ func convertSnapshotDTOToK8sResource(v *dashboardsnapshots.DashboardSnapshotDTO,
 		expires = 0 // ignore things expiring long into the future
 	}
 	snap := &dashV0.Snapshot{
-		TypeMeta: dashV0.SnapshotResourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.Key,
-			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(v.Created),
-			Namespace:         namespacer(v.OrgID),
-		},
+		TypeMeta:          dashV0.SnapshotResourceInfo.TypeMeta(),
+		Name:              v.Key,
+		ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(v.Created),
+		Namespace:         namespacer(v.OrgID),
 		Spec: dashV0.SnapshotSpec{
 			Title: &v.Name,
 		},
@@ -53,12 +51,10 @@ func convertSnapshotToK8sResource(v *dashboardsnapshots.DashboardSnapshot, names
 	}
 
 	snap := &dashV0.Snapshot{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.Key,
-			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
-			CreationTimestamp: metav1.NewTime(v.Created),
-			Namespace:         namespacer(v.OrgID),
-		},
+		Name:              v.Key,
+		ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
+		CreationTimestamp: metav1.NewTime(v.Created),
+		Namespace:         namespacer(v.OrgID),
 		Spec: dashV0.SnapshotSpec{
 			Title:     &v.Name,
 			Dashboard: v.Dashboard.MustMap(),
@@ -137,10 +133,8 @@ func convertK8sResourceToCreateCommand(snap *dashV0.Snapshot, orgID int64, userI
 // Used by routes.go to create a Snapshot object from the incoming create command
 func convertCreateCmdToK8sSnapshot(cmd *dashboardsnapshots.CreateDashboardSnapshotCommand, namespace string) *dashV0.Snapshot {
 	snap := &dashV0.Snapshot{
-		TypeMeta: dashV0.SnapshotResourceInfo.TypeMeta(),
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-		},
+		TypeMeta:  dashV0.SnapshotResourceInfo.TypeMeta(),
+		Namespace: namespace,
 		Spec: dashV0.SnapshotSpec{
 			Title: &cmd.Name,
 		},

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/setting"
@@ -14,10 +13,8 @@ import (
 func TestWebhookExtraBuilder_WebhookURL(t *testing.T) {
 	makeRepo := func(name, namespace string, webhook *provisioning.WebhookConfig) *provisioning.Repository {
 		return &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      name,
-				Namespace: namespace,
-			},
+			Name:      name,
+			Namespace: namespace,
 			Spec: provisioning.RepositorySpec{
 				Webhook: webhook,
 			},
@@ -151,8 +148,8 @@ func TestResolvePublicURL(t *testing.T) {
 				},
 			}
 			repo := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "default"},
-				Spec:       provisioning.RepositorySpec{Webhook: tt.repoWebhook},
+				Name: "my-repo", Namespace: "default",
+				Spec: provisioning.RepositorySpec{Webhook: tt.repoWebhook},
 			}
 			assert.Equal(t, tt.expected, builder.WebhookURL(context.Background(), repo))
 		})

@@ -74,15 +74,13 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	if sub != nil {
 		sub.Get.Description = "get a rendered preview image"
 		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"image/png": {},
-							},
-							Description: "OK",
+			StatusCodeResponses: map[int]*spec3.Response{
+				200: {
+					ResponseProps: spec3.ResponseProps{
+						Content: map[string]*spec3.MediaType{
+							"image/png": {},
 						},
+						Description: "OK",
 					},
 				},
 			},

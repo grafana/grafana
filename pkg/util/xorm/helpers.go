@@ -68,7 +68,6 @@ func isStructZero(v reflect.Value) bool {
 	}
 
 	for _, field := range v.Fields() {
-		field := field
 		switch field.Kind() {
 		case reflect.Pointer:
 			field = field.Elem()

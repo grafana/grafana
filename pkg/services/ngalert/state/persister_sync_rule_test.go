@@ -106,10 +106,8 @@ func TestSyncRuleStatePersister_Sync(t *testing.T) {
 		ctx := context.Background()
 		ctx, span := tracer.Start(ctx, "test-span")
 		ruleKey := models.AlertRuleKeyWithGroup{
-			AlertRuleKey: models.AlertRuleKey{
-				OrgID: orgID,
-				UID:   ruleUID,
-			},
+			OrgID:     orgID,
+			UID:       ruleUID,
 			RuleGroup: ruleGroup,
 		}
 		states := StateTransitions{

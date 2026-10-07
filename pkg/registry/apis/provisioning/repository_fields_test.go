@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
@@ -73,10 +72,8 @@ func TestRepositoryToSelectableFields(t *testing.T) {
 		{
 			name: "includes metadata.name and metadata.namespace",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "test-repo",
-					Namespace: "default",
-				},
+				Name:      "test-repo",
+				Namespace: "default",
 				Spec: provisioning.RepositorySpec{
 					Title: "Test Repository",
 				},
@@ -90,10 +87,8 @@ func TestRepositoryToSelectableFields(t *testing.T) {
 		{
 			name: "includes spec.connection.name when set",
 			repo: &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      "repo-with-connection",
-					Namespace: "org-1",
-				},
+				Name:      "repo-with-connection",
+				Namespace: "org-1",
 				Spec: provisioning.RepositorySpec{
 					Title: "Repo With Connection",
 					Connection: &provisioning.ConnectionInfo{
@@ -126,9 +121,7 @@ func TestRepositoryGetAttrs(t *testing.T) {
 	t.Run("returns error for non-Repository object", func(t *testing.T) {
 		// Pass a different runtime.Object type instead of a Repository
 		connection := &provisioning.Connection{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "not-a-repository",
-			},
+			Name: "not-a-repository",
 		}
 		_, _, err := RepositoryGetAttrs(connection)
 		require.Error(t, err)
@@ -137,13 +130,11 @@ func TestRepositoryGetAttrs(t *testing.T) {
 
 	t.Run("returns labels and fields for valid Repository", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-				Labels: map[string]string{
-					"app": "grafana",
-					"env": "test",
-				},
+			Name:      "test-repo",
+			Namespace: "default",
+			Labels: map[string]string{
+				"app": "grafana",
+				"env": "test",
 			},
 			Spec: provisioning.RepositorySpec{
 				Title: "Test Repository",
@@ -168,10 +159,8 @@ func TestRepositoryGetAttrs(t *testing.T) {
 
 	t.Run("returns empty connection name when not set", func(t *testing.T) {
 		repo := &provisioning.Repository{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "test-repo",
-				Namespace: "default",
-			},
+			Name:      "test-repo",
+			Namespace: "default",
 			Spec: provisioning.RepositorySpec{
 				Title: "Test Repository",
 			},

@@ -22,13 +22,11 @@ func ProvideAmazonPromMigrationService(
 	cfg *setting.Cfg,
 ) *AmazonPromMigrationService {
 	return &AmazonPromMigrationService{
-		promMigrationService: promMigrationService{
-			dataSourcesService: dataSourcesService,
-			pluginRegistry:     pluginRegistry,
-			pluginRepo:         pluginRepo,
-			pluginInstaller:    pluginInstaller,
-			cfg:                cfg,
-		},
+		dataSourcesService: dataSourcesService,
+		pluginRegistry:     pluginRegistry,
+		pluginRepo:         pluginRepo,
+		pluginInstaller:    pluginInstaller,
+		cfg:                cfg,
 	}
 }
 

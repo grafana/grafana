@@ -35,7 +35,7 @@ func recordingRuleKind(t *testing.T) perKind {
 // else, so a test can set the one field it exercises.
 func query() *searchv0.SearchQuery {
 	return &searchv0.SearchQuery{
-		TypeMeta: metav1.TypeMeta{APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery},
+		APIVersion: searchv0.APIVERSION, Kind: searchv0.KindSearchQuery,
 	}
 }
 

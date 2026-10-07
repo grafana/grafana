@@ -93,9 +93,7 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO... support conversions (not required in v0)
 		dash := &dashv0.Dashboard{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: ns.Value,
-			},
+			Namespace: ns.Value,
 			Spec: v0alpha1.Unstructured{
 				Object: content,
 			},

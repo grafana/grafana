@@ -412,13 +412,11 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 		SnapshotUID: snapshotUid,
 		SessionUID:  sessUid,
 		OrgID:       c.OrgID,
-		SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
-			ResultPage:  page,
-			ResultLimit: lim,
-			SortColumn:  col,
-			SortOrder:   order,
-			ErrorsOnly:  errorsOnly,
-		},
+		ResultPage:  page,
+		ResultLimit: lim,
+		SortColumn:  col,
+		SortOrder:   order,
+		ErrorsOnly:  errorsOnly,
 	}
 
 	snapshot, err := cma.cloudMigrationService.GetSnapshot(ctx, q)
@@ -458,13 +456,11 @@ func (cma *CloudMigrationAPI) GetSnapshot(c *contextmodel.ReqContext) response.R
 	}
 
 	respDto := GetSnapshotResponseDTO{
-		SnapshotDTO: SnapshotDTO{
-			SnapshotUID: snapshot.UID,
-			Status:      fromSnapshotStatus(snapshot.Status),
-			SessionUID:  sessUid,
-			Created:     snapshot.Created,
-			Finished:    snapshot.Finished,
-		},
+		SnapshotUID: snapshot.UID,
+		Status:      fromSnapshotStatus(snapshot.Status),
+		SessionUID:  sessUid,
+		Created:     snapshot.Created,
+		Finished:    snapshot.Finished,
 		Results:     dtoResults,
 		StatsRollup: dtoStats,
 	}

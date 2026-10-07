@@ -5,8 +5,6 @@ import (
 	"sync"
 	"testing"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -24,10 +22,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 	t.Run("should create zanzana entry for service account with Admin role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-admin",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test-admin",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -56,10 +52,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 	t.Run("should create zanzana entry for service account with Editor role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-editor",
-				Namespace: "org-2",
-			},
+			Name:      "sa-test-editor",
+			Namespace: "org-2",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleEditor,
 			},
@@ -88,10 +82,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 	t.Run("should create zanzana entry for service account with Viewer role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-viewer",
-				Namespace: "org-3",
-			},
+			Name:      "sa-test-viewer",
+			Namespace: "org-3",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleViewer,
 			},
@@ -119,10 +111,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 
 	t.Run("should skip when service account has no role", func(t *testing.T) {
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-norole",
-				Namespace: "org-4",
-			},
+			Name:      "sa-norole",
+			Namespace: "org-4",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: "",
 			},
@@ -134,10 +124,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 
 	t.Run("should skip when service account has None role", func(t *testing.T) {
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-none",
-				Namespace: "org-5",
-			},
+			Name:      "sa-none",
+			Namespace: "org-5",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleNone,
 			},
@@ -155,10 +143,8 @@ func TestAfterServiceAccountCreate(t *testing.T) {
 		}
 
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -179,20 +165,16 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 	t.Run("should update zanzana entry when role changes from Viewer to Admin", func(t *testing.T) {
 		wg.Add(1)
 		oldSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleViewer,
 			},
 		}
 
 		newSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -230,20 +212,16 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 	t.Run("should only delete old role when new role is None", func(t *testing.T) {
 		wg.Add(1)
 		oldSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test2",
-				Namespace: "org-2",
-			},
+			Name:      "sa-test2",
+			Namespace: "org-2",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleEditor,
 			},
 		}
 
 		newSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test2",
-				Namespace: "org-2",
-			},
+			Name:      "sa-test2",
+			Namespace: "org-2",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleNone,
 			},
@@ -275,20 +253,16 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 	t.Run("should skip update when role hasn't changed", func(t *testing.T) {
 		oldSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test3",
-				Namespace: "org-3",
-			},
+			Name:      "sa-test3",
+			Namespace: "org-3",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleEditor,
 			},
 		}
 
 		newSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test3",
-				Namespace: "org-3",
-			},
+			Name:      "sa-test3",
+			Namespace: "org-3",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleEditor,
 			},
@@ -301,20 +275,16 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 
 	t.Run("should not call zanzana when update fails", func(t *testing.T) {
 		oldSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test4",
-				Namespace: "org-4",
-			},
+			Name:      "sa-test4",
+			Namespace: "org-4",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleViewer,
 			},
 		}
 
 		newSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test4",
-				Namespace: "org-4",
-			},
+			Name:      "sa-test4",
+			Namespace: "org-4",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -344,20 +314,16 @@ func TestBeginServiceAccountUpdate(t *testing.T) {
 		}
 
 		oldSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleViewer,
 			},
 		}
 
 		newSA := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -380,10 +346,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for service account with Admin role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-admin",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test-admin",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},
@@ -413,10 +377,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for service account with Editor role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-editor",
-				Namespace: "org-2",
-			},
+			Name:      "sa-test-editor",
+			Namespace: "org-2",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleEditor,
 			},
@@ -446,10 +408,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 	t.Run("should delete zanzana entry for service account with Viewer role", func(t *testing.T) {
 		wg.Add(1)
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test-viewer",
-				Namespace: "org-3",
-			},
+			Name:      "sa-test-viewer",
+			Namespace: "org-3",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleViewer,
 			},
@@ -478,10 +438,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 
 	t.Run("should skip when service account has no role", func(t *testing.T) {
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-norole",
-				Namespace: "org-4",
-			},
+			Name:      "sa-norole",
+			Namespace: "org-4",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: "",
 			},
@@ -493,10 +451,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 
 	t.Run("should skip when service account has None role", func(t *testing.T) {
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-none",
-				Namespace: "org-5",
-			},
+			Name:      "sa-none",
+			Namespace: "org-5",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleNone,
 			},
@@ -514,10 +470,8 @@ func TestAfterServiceAccountDelete(t *testing.T) {
 		}
 
 		sa := iamv0.ServiceAccount{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "sa-test",
-				Namespace: "org-1",
-			},
+			Name:      "sa-test",
+			Namespace: "org-1",
 			Spec: iamv0.ServiceAccountSpec{
 				Role: iamv0.ServiceAccountOrgRoleAdmin,
 			},

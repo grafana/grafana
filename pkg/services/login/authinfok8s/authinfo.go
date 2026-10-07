@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"golang.org/x/oauth2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -213,7 +212,7 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 
 	now := time.Now().UnixMilli()
 	obj := &iamv0alpha1.AuthInfo{
-		ObjectMeta: metav1.ObjectMeta{Name: iamv0alpha1.EncodeName(userUID, cmd.AuthModule), Namespace: namespace},
+		Name: iamv0alpha1.EncodeName(userUID, cmd.AuthModule), Namespace: namespace,
 		Spec: iamv0alpha1.AuthInfoSpec{
 			UserRef:    iamv0alpha1.AuthInfoUserRef{Name: userUID},
 			AuthModule: cmd.AuthModule,

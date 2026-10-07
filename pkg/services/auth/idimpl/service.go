@@ -96,13 +96,11 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		now := time.Now()
 		idClaims := &auth.IDClaims{
-			Claims: jwt.Claims{
-				Issuer:   s.cfg.AppURL,
-				Audience: getAudience(id.GetOrgID()),
-				Subject:  id.GetID(),
-				Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
-				IssuedAt: jwt.NewNumericDate(now),
-			},
+			Issuer:   s.cfg.AppURL,
+			Audience: getAudience(id.GetOrgID()),
+			Subject:  id.GetID(),
+			Expiry:   jwt.NewNumericDate(now.Add(tokenTTL)),
+			IssuedAt: jwt.NewNumericDate(now),
 			Rest: authnlib.IDTokenClaims{
 				Namespace:  s.nsMapper(id.GetOrgID()),
 				Identifier: id.GetRawIdentifier(),

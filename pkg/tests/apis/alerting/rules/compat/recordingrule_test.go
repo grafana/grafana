@@ -52,13 +52,11 @@ func TestIntegrationRecordingRuleCompatCreateViaK8s(t *testing.T) {
 	).Generate()
 
 	recordingRule := &v0alpha1.RecordingRule{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-			Annotations: map[string]string{
-				"grafana.app/folder": "test-folder",
-				// use provenance api to allow use of the provisioning api
-				"grafana.com/provenance": string(ngmodels.ProvenanceAPI),
-			},
+		Namespace: "default",
+		Annotations: map[string]string{
+			"grafana.app/folder": "test-folder",
+			// use provenance api to allow use of the provisioning api
+			"grafana.com/provenance": string(ngmodels.ProvenanceAPI),
 		},
 		Spec: v0alpha1.RecordingRuleSpec{
 			Title:               rule.Title,

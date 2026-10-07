@@ -585,7 +585,7 @@ func (f *fakeStorage) Update(ctx context.Context, name string, objInfo rest.Upda
 
 func newPref(name string) *preferences.Preferences {
 	return &preferences.Preferences{
-		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: "default"},
+		Name: name, Namespace: "default",
 	}
 }
 

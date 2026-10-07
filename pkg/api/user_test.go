@@ -123,7 +123,7 @@ func TestIntegrationUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		idToken := "testidtoken"
 		token = token.WithExtra(map[string]any{"id_token": idToken})
 		userlogin := "loginuser"
-		query := &login.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: login.UserLookupParams{Login: &userlogin}}
+		query := &login.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", Login: &userlogin}
 		cmd := &login.UpdateAuthInfoCommand{
 			UserId:     usr.ID,
 			AuthId:     query.AuthId,

@@ -326,10 +326,8 @@ func TestIntegrationAccessControl(t *testing.T) {
 			}
 
 			newTree := &v1beta1.RoutingTree{
-				ObjectMeta: v1.ObjectMeta{
-					Name:      fmt.Sprintf("new-tree-%s", tc.user.Identity.GetLogin()),
-					Namespace: apis.DefaultNamespace,
-				},
+				Name:      fmt.Sprintf("new-tree-%s", tc.user.Identity.GetLogin()),
+				Namespace: apis.DefaultNamespace,
 				Spec: v1beta1.RoutingTreeSpec{
 					Defaults: v1beta1.RoutingTreeRouteDefaults{
 						Receiver: current.Spec.Defaults.Receiver,
@@ -545,9 +543,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	}
 
 	_, err = common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v1beta1.TimeInterval{
-		ObjectMeta: v1.ObjectMeta{
-			Namespace: "default",
-		},
+		Namespace: "default",
 		Spec: v1beta1.TimeIntervalSpec{
 			Name:          timeInterval,
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
@@ -1561,8 +1557,8 @@ func createReceiverStubs(t *testing.T, user apis.User, receivers []*v1model.Post
 	res := make(map[string]*v1beta1.Receiver, len(receivers))
 	for _, receiver := range receivers {
 		created, err := receiverClient.Create(context.Background(), &v1beta1.Receiver{
-			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.ReceiverSpec{Title: receiver.Name, Integrations: []v1beta1.ReceiverIntegration{}},
+			Namespace: apis.DefaultNamespace,
+			Spec:      v1beta1.ReceiverSpec{Title: receiver.Name, Integrations: []v1beta1.ReceiverIntegration{}},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
 		res[receiver.Name] = created
@@ -1577,8 +1573,8 @@ func createTimeIntervalStubs(t *testing.T, user apis.User, timeIntervals []v1mod
 	res := make(map[string]*v1beta1.TimeInterval, len(timeIntervals))
 	for _, ti := range timeIntervals {
 		created, err := timeIntervalClient.Create(context.Background(), &v1beta1.TimeInterval{
-			ObjectMeta: v1.ObjectMeta{Namespace: apis.DefaultNamespace},
-			Spec:       v1beta1.TimeIntervalSpec{Name: ti.Title},
+			Namespace: apis.DefaultNamespace,
+			Spec:      v1beta1.TimeIntervalSpec{Name: ti.Title},
 		}, resource.CreateOptions{})
 		require.NoError(t, err)
 		res[ti.Title] = created

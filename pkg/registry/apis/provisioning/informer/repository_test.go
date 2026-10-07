@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/cache"
 
@@ -21,7 +20,7 @@ import (
 )
 
 func repo(namespace, name string) *provisioningapis.Repository {
-	return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
+	return &provisioningapis.Repository{Namespace: namespace, Name: name}
 }
 
 // fakeStore is a minimal usinformer.Cache for asserting the client getter's

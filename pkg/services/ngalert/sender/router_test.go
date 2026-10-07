@@ -458,13 +458,11 @@ func generatePostableAlert(t *testing.T, clk clock.Clock) models2.PostableAlert 
 		RawPath: "/" + util.GenerateShortUID(),
 	}
 	return models2.PostableAlert{
-		Annotations: models2.LabelSet(models.GenerateAlertLabels(5, "ann-")),
-		EndsAt:      strfmt.DateTime(clk.Now().Add(1 * time.Minute)),
-		StartsAt:    strfmt.DateTime(clk.Now()),
-		Alert: models2.Alert{
-			GeneratorURL: strfmt.URI(u.String()),
-			Labels:       models2.LabelSet(models.GenerateAlertLabels(5, "lbl-")),
-		},
+		Annotations:  models2.LabelSet(models.GenerateAlertLabels(5, "ann-")),
+		EndsAt:       strfmt.DateTime(clk.Now().Add(1 * time.Minute)),
+		StartsAt:     strfmt.DateTime(clk.Now()),
+		GeneratorURL: strfmt.URI(u.String()),
+		Labels:       models2.LabelSet(models.GenerateAlertLabels(5, "lbl-")),
 	}
 }
 
@@ -906,11 +904,11 @@ func TestSendBroadcastAlerts(t *testing.T) {
 		PostableAlerts: []models2.PostableAlert{
 			{
 				Annotations: models2.LabelSet{"summary": "test alert 1"},
-				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert1"}},
+				Labels:      models2.LabelSet{"alertname": "TestAlert1"},
 			},
 			{
 				Annotations: models2.LabelSet{"summary": "test alert 2"},
-				Alert:       models2.Alert{Labels: models2.LabelSet{"alertname": "TestAlert2"}},
+				Labels:      models2.LabelSet{"alertname": "TestAlert2"},
 			},
 		},
 	}

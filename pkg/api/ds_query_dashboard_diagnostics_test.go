@@ -250,11 +250,9 @@ func TestBuildDashboardDiagnosticsArchive_recordsPerRefIDQueryError(t *testing.T
 
 	reqDTO := dashboardDiagnosticsRequest{
 		Panels: []panelDiagnosticsSpec{{
-			ID:    1,
-			Title: "Panel 1",
-			MetricRequest: dtos.MetricRequest{
-				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
-			},
+			ID:      1,
+			Title:   "Panel 1",
+			Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
 		}},
 	}
 
@@ -275,13 +273,11 @@ func TestBuildDashboardDiagnosticsArchive_recordsSubmittedQueryRequest(t *testin
 
 	reqDTO := dashboardDiagnosticsRequest{
 		Panels: []panelDiagnosticsSpec{{
-			ID:    1,
-			Title: "Panel 1",
-			MetricRequest: dtos.MetricRequest{
-				From:    "now-1h",
-				To:      "now",
-				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A", "expr": "up"})},
-			},
+			ID:      1,
+			Title:   "Panel 1",
+			From:    "now-1h",
+			To:      "now",
+			Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A", "expr": "up"})},
 		}},
 	}
 
@@ -305,10 +301,8 @@ func TestBuildDashboardDiagnosticsArchive_queryV2Dispatch(t *testing.T) {
 
 	reqDTO := dashboardDiagnosticsRequest{
 		Panels: []panelDiagnosticsSpec{{
-			ID: 1,
-			MetricRequest: dtos.MetricRequest{
-				Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
-			},
+			ID:      1,
+			Queries: []*simplejson.Json{simplejson.NewFromAny(map[string]any{"refId": "A"})},
 		}},
 	}
 

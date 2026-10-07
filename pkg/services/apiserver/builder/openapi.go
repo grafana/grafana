@@ -185,10 +185,8 @@ func getOpenAPIPostProcessor(version string, builders []APIGroupBuilder, gvs []s
 				copy := spec3.OpenAPI{
 					Version: s.Version,
 					Info: &spec.Info{
-						InfoProps: spec.InfoProps{
-							Title:   gv.String(),
-							Version: version,
-						},
+						Title:   gv.String(),
+						Version: version,
 					},
 					Components:   s.Components,
 					ExternalDocs: s.ExternalDocs,

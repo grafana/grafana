@@ -49,13 +49,11 @@ func convertToK8sResource(
 	}
 
 	k8sRule := &model.AlertRule{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            rule.UID,
-			UID:             types.UID(rule.GUID),
-			Namespace:       namespaceMapper(orgID),
-			ResourceVersion: fmt.Sprint(rule.Version),
-			Labels:          make(map[string]string),
-		},
+		Name:            rule.UID,
+		UID:             types.UID(rule.GUID),
+		Namespace:       namespaceMapper(orgID),
+		ResourceVersion: fmt.Sprint(rule.Version),
+		Labels:          make(map[string]string),
 		Spec: model.AlertRuleSpec{
 			Title:       rule.Title,
 			Expressions: make(model.AlertRuleExpressionMap),
@@ -264,10 +262,8 @@ func convertToK8sResources(
 	continueToken string,
 ) (*model.AlertRuleList, error) {
 	k8sRules := &model.AlertRuleList{
-		ListMeta: metav1.ListMeta{
-			Continue: continueToken,
-		},
-		Items: make([]model.AlertRule, 0, len(rules)),
+		Continue: continueToken,
+		Items:    make([]model.AlertRule, 0, len(rules)),
 	}
 	for _, rule := range rules {
 		managerProps := managerPropsMap[rule.UID]

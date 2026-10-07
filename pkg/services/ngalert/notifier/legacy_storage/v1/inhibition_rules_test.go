@@ -12,9 +12,7 @@ import (
 func Test_Validate(t *testing.T) {
 	testRule := func() InhibitionRule {
 		return InhibitionRule{
-			ResourceMetadata: ResourceMetadata{
-				UID: "inhibition-rule-1",
-			},
+			UID: "inhibition-rule-1",
 			SourceMatchers: []Matcher{
 				{
 					Type:  MatcherEqual,

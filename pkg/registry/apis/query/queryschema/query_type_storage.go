@@ -124,9 +124,7 @@ func (r *queryValidationREST) Connect(ctx context.Context, name string, opts run
 		// TODO -- validate/mutate the query
 		// should we return the DQR, or raw validation response?
 		qdr := &dsV0.QueryDataRequest{
-			QueryDataRequest: v0alpha1.QueryDataRequest{
-				Debug: true,
-			},
+			Debug: true,
 		}
 
 		if name == "*" || name == "{any}" {

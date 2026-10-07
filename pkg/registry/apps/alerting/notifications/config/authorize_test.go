@@ -114,7 +114,7 @@ func TestAuthorize(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			ac := &recordingAC{FakeAccessControl: actest.FakeAccessControl{ExpectedEvaluate: tc.rbac}}
+			ac := &recordingAC{ExpectedEvaluate: tc.rbac}
 			a := attrs(tc.verb, tc.subresource)
 			if tc.resource != "" {
 				a.Resource = tc.resource

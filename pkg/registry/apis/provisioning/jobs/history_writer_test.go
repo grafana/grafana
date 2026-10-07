@@ -16,14 +16,12 @@ func TestWriteJob_PreservesStatusAndLabels(t *testing.T) {
 	writer := NewAPIClientHistoryWriter(fakeClient)
 
 	job := &provisioning.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            "test-job",
-			Namespace:       "stacks-123",
-			UID:             "original-uid",
-			ResourceVersion: "42",
-		},
-		Spec:   provisioning.JobSpec{Repository: "my-repo"},
-		Status: provisioning.JobStatus{State: provisioning.JobStateSuccess, ProgressUpdates: 7},
+		Name:            "test-job",
+		Namespace:       "stacks-123",
+		UID:             "original-uid",
+		ResourceVersion: "42",
+		Spec:            provisioning.JobSpec{Repository: "my-repo"},
+		Status:          provisioning.JobStatus{State: provisioning.JobStateSuccess, ProgressUpdates: 7},
 	}
 
 	require.NoError(t, writer.WriteJob(context.Background(), job))

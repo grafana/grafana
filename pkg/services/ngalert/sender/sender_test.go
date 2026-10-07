@@ -210,10 +210,8 @@ func TestWithUTF8Labels(t *testing.T) {
 		Annotations: models.LabelSet{
 			"some-name": "test",
 		},
-		Alert: models.Alert{
-			Labels: models.LabelSet{
-				"🔥": "fire",
-			},
+		Labels: models.LabelSet{
+			"🔥": "fire",
 		},
 	}
 
@@ -250,11 +248,9 @@ func TestClampLabelSet(t *testing.T) {
 				"__value_string__": hugeVal,
 				hugeName:           "anything",
 			},
-			Alert: models.Alert{
-				Labels: models.LabelSet{
-					"alertname": "X",
-					"big":       hugeVal,
-				},
+			Labels: models.LabelSet{
+				"alertname": "X",
+				"big":       hugeVal,
 			},
 		}
 
@@ -281,7 +277,7 @@ func TestClampLabelSet(t *testing.T) {
 	t.Run("payload below cap is unchanged", func(t *testing.T) {
 		alert := models.PostableAlert{
 			Annotations: models.LabelSet{"summary": "ok"},
-			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+			Labels:      models.LabelSet{"alertname": "X"},
 		}
 		am, err := NewExternalAlertmanagerSender(logger, prometheus.NewRegistry(), WithUTF8Labels())
 		require.NoError(t, err)
@@ -294,7 +290,7 @@ func TestClampLabelSet(t *testing.T) {
 		const customCap = 16
 		alert := models.PostableAlert{
 			Annotations: models.LabelSet{"summary": strings.Repeat("a", 100)},
-			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+			Labels:      models.LabelSet{"alertname": "X"},
 		}
 		am, err := NewExternalAlertmanagerSender(
 			logger, prometheus.NewRegistry(),
@@ -310,7 +306,7 @@ func TestClampLabelSet(t *testing.T) {
 		val := strings.Repeat("a", 100)
 		alert := models.PostableAlert{
 			Annotations: models.LabelSet{"summary": val},
-			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+			Labels:      models.LabelSet{"alertname": "X"},
 		}
 		am, err := NewExternalAlertmanagerSender(
 			logger, prometheus.NewRegistry(),
@@ -328,7 +324,7 @@ func TestClampLabelSet(t *testing.T) {
 		val := strings.Repeat("🔥", 3)
 		alert := models.PostableAlert{
 			Annotations: models.LabelSet{"summary": val},
-			Alert:       models.Alert{Labels: models.LabelSet{"alertname": "X"}},
+			Labels:      models.LabelSet{"alertname": "X"},
 		}
 		am, err := NewExternalAlertmanagerSender(
 			logger, prometheus.NewRegistry(),

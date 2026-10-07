@@ -84,11 +84,11 @@ func TestIndexSources(t *testing.T) {
 
 func TestGlobalIndexStats(t *testing.T) {
 	stats := []ResourceStats{
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "dashboard.grafana.app", Resource: "dashboards"}, Count: 10},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "folder.grafana.app", Resource: "folders"}, Count: 5},
-		{NamespacedResource: NamespacedResource{Namespace: "a", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 100},
-		{NamespacedResource: NamespacedResource{Namespace: "b", Group: "folder.grafana.app", Resource: "folders"}, Count: 2},
-		{NamespacedResource: NamespacedResource{Namespace: "c", Group: "playlist.grafana.app", Resource: "playlists"}, Count: 7},
+		{Namespace: "a", Group: "dashboard.grafana.app", Resource: "dashboards", Count: 10},
+		{Namespace: "a", Group: "folder.grafana.app", Resource: "folders", Count: 5},
+		{Namespace: "a", Group: "playlist.grafana.app", Resource: "playlists", Count: 100},
+		{Namespace: "b", Group: "folder.grafana.app", Resource: "folders", Count: 2},
+		{Namespace: "c", Group: "playlist.grafana.app", Resource: "playlists", Count: 7},
 	}
 
 	t.Run("nothing is added while the index is switched off", func(t *testing.T) {

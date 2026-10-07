@@ -92,15 +92,13 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace xkube.Namesp
 	}
 
 	return &contracts.EncryptedValue{
-		Namespace: encryptedValue.Namespace,
-		Name:      encryptedValue.Name,
-		Version:   encryptedValue.Version,
-		EncryptedPayload: contracts.EncryptedPayload{
-			DataKeyID:     encryptedValue.DataKeyID,
-			EncryptedData: encryptedValue.EncryptedData,
-		},
-		Created: encryptedValue.Created,
-		Updated: encryptedValue.Updated,
+		Namespace:     encryptedValue.Namespace,
+		Name:          encryptedValue.Name,
+		Version:       encryptedValue.Version,
+		DataKeyID:     encryptedValue.DataKeyID,
+		EncryptedData: encryptedValue.EncryptedData,
+		Created:       encryptedValue.Created,
+		Updated:       encryptedValue.Updated,
 	}, nil
 }
 
@@ -236,15 +234,13 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace xkube.Namespace
 	}
 
 	return &contracts.EncryptedValue{
-		Namespace: encryptedValue.Namespace,
-		Name:      encryptedValue.Name,
-		Version:   encryptedValue.Version,
-		EncryptedPayload: contracts.EncryptedPayload{
-			DataKeyID:     encryptedValue.DataKeyID,
-			EncryptedData: encryptedValue.EncryptedData,
-		},
-		Created: encryptedValue.Created,
-		Updated: encryptedValue.Updated,
+		Namespace:     encryptedValue.Namespace,
+		Name:          encryptedValue.Name,
+		Version:       encryptedValue.Version,
+		DataKeyID:     encryptedValue.DataKeyID,
+		EncryptedData: encryptedValue.EncryptedData,
+		Created:       encryptedValue.Created,
+		Updated:       encryptedValue.Updated,
 	}, nil
 }
 
@@ -350,15 +346,13 @@ func (s *globalEncryptedValStorage) ListAll(ctx context.Context, opts contracts.
 		}
 
 		encryptedValues = append(encryptedValues, &contracts.EncryptedValue{
-			Namespace: row.Namespace,
-			Name:      row.Name,
-			Version:   row.Version,
-			EncryptedPayload: contracts.EncryptedPayload{
-				DataKeyID:     row.DataKeyID,
-				EncryptedData: row.EncryptedData,
-			},
-			Created: row.Created,
-			Updated: row.Updated,
+			Namespace:     row.Namespace,
+			Name:          row.Name,
+			Version:       row.Version,
+			DataKeyID:     row.DataKeyID,
+			EncryptedData: row.EncryptedData,
+			Created:       row.Created,
+			Updated:       row.Updated,
 		})
 	}
 	if err := rows.Err(); err != nil {

@@ -379,7 +379,7 @@ func newPlaylistRegistry() *MigrationRegistry {
 		ID:          "playlists",
 		MigrationID: "playlists migration",
 		Resources: []ResourceInfo{
-			{GroupResource: schema.GroupResource{Resource: "playlists", Group: "playlist.grafana.app"}},
+			{Resource: "playlists", Group: "playlist.grafana.app"},
 		},
 	})
 	return registry

@@ -188,9 +188,7 @@ func (s *TokensREST) handleGet(ctx context.Context, ns claims.NamespaceInfo, saN
 	}
 
 	resp := &iamv0alpha1.GetServiceAccountTokenResponse{
-		GetServiceAccountTokenBody: iamv0alpha1.GetServiceAccountTokenBody{
-			Body: mapGetToken(*token),
-		},
+		Body: mapGetToken(*token),
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -219,10 +217,8 @@ func (s *TokensREST) handleList(ctx context.Context, ns claims.NamespaceInfo, sa
 	}
 
 	resp := &iamv0alpha1.ListServiceAccountTokensResponse{
-		ListServiceAccountTokensBody: iamv0alpha1.ListServiceAccountTokensBody{
-			Items:    items,
-			Continue: common.OptionalFormatInt(res.Continue),
-		},
+		Items:    items,
+		Continue: common.OptionalFormatInt(res.Continue),
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -318,11 +314,9 @@ func (s *TokensREST) handleCreate(ctx context.Context, ns claims.NamespaceInfo, 
 	// TODO: Write to custom token store when configured (Mode5 / MT).
 
 	resp := &iamv0alpha1.CreateServiceAccountTokenResponse{
-		CreateServiceAccountTokenBody: iamv0alpha1.CreateServiceAccountTokenBody{
-			Token:                   keyResult.ClientSecret,
-			ServiceAccountTokenName: req.TokenName,
-			Expires:                 expires,
-		},
+		Token:                   keyResult.ClientSecret,
+		ServiceAccountTokenName: req.TokenName,
+		Expires:                 expires,
 	}
 	responder.Object(http.StatusCreated, resp)
 }
@@ -375,9 +369,7 @@ func (s *TokensREST) handleDelete(ctx context.Context, ns claims.NamespaceInfo, 
 	// TODO: Delete from custom token store when configured (Mode5 / MT).
 
 	resp := &iamv0alpha1.DeleteServiceAccountTokenResponse{
-		DeleteServiceAccountTokenBody: iamv0alpha1.DeleteServiceAccountTokenBody{
-			Message: fmt.Sprintf("token %q deleted", tokenName),
-		},
+		Message: fmt.Sprintf("token %q deleted", tokenName),
 	}
 	responder.Object(http.StatusOK, resp)
 }
@@ -423,13 +415,11 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 
 	jsonResponse := func(schemaName string, description string) *spec3.Response {
 		return &spec3.Response{
-			ResponseProps: spec3.ResponseProps{
-				Description: description,
-				Content: map[string]*spec3.MediaType{
-					"application/json": {
-						MediaTypeProps: spec3.MediaTypeProps{
-							Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + schemaName),
-						},
+			Description: description,
+			Content: map[string]*spec3.MediaType{
+				"application/json": {
+					MediaTypeProps: spec3.MediaTypeProps{
+						Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + schemaName),
 					},
 				},
 			},
@@ -442,32 +432,26 @@ func PostProcessOpenAPI(oas *spec3.OpenAPI) {
 			p.Get.Responses.StatusCodeResponses[200] = jsonResponse("ListServiceAccountTokensBody", "OK")
 			p.Get.Parameters = append(p.Get.Parameters,
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "limit",
-						In:          "query",
-						Description: "maximum number of tokens to return in a single page",
-						Schema:      spec.Int64Property(),
-					},
+					Name:        "limit",
+					In:          "query",
+					Description: "maximum number of tokens to return in a single page",
+					Schema:      spec.Int64Property(),
 				},
 				&spec3.Parameter{
-					ParameterProps: spec3.ParameterProps{
-						Name:        "continue",
-						In:          "query",
-						Description: "continue token returned by a previous list response to fetch the next page",
-						Schema:      spec.StringProperty(),
-					},
+					Name:        "continue",
+					In:          "query",
+					Description: "continue token returned by a previous list response to fetch the next page",
+					Schema:      spec.StringProperty(),
 				},
 			)
 		}
 
 		if p.Post != nil {
 			p.Post.RequestBody = &spec3.RequestBody{
-				RequestBodyProps: spec3.RequestBodyProps{
-					Content: map[string]*spec3.MediaType{
-						"application/json": {
-							MediaTypeProps: spec3.MediaTypeProps{
-								Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateServiceAccountTokenRequestBody"),
-							},
+				Content: map[string]*spec3.MediaType{
+					"application/json": {
+						MediaTypeProps: spec3.MediaTypeProps{
+							Schema: spec.RefSchema("#/components/schemas/" + appSchemaBase + "CreateServiceAccountTokenRequestBody"),
 						},
 					},
 				},
@@ -538,13 +522,11 @@ func ensureComponentSchemas(oas *spec3.OpenAPI) {
 		return
 	}
 	oas.Components.Schemas[key] = &spec.Schema{
-		SchemaProps: spec.SchemaProps{
-			Type: []string{"object"},
-			Properties: map[string]spec.Schema{
-				"tokenName":        *spec.StringProperty(),
-				"expiresInSeconds": *spec.Int64Property(),
-			},
-			Required: []string{"tokenName"},
+		Type: []string{"object"},
+		Properties: map[string]spec.Schema{
+			"tokenName":        *spec.StringProperty(),
+			"expiresInSeconds": *spec.Int64Property(),
 		},
+		Required: []string{"tokenName"},
 	}
 }

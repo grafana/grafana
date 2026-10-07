@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	annotationV0 "github.com/grafana/grafana/apps/annotation/pkg/apis/annotation/v0alpha1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -242,8 +241,8 @@ func TestMigrationProxy(t *testing.T) {
 
 		existingAnno := func(name string) *annotationV0.Annotation {
 			anno := &annotationV0.Annotation{
-				ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "7"},
-				Spec:       annotationV0.AnnotationSpec{Text: "before", Time: 1000},
+				Name: name, ResourceVersion: "7",
+				Spec: annotationV0.AnnotationSpec{Text: "before", Time: 1000},
 			}
 			annotationpkg.SetLegacyID(anno, legacyID)
 			return anno
@@ -456,7 +455,7 @@ func TestMigrationProxy(t *testing.T) {
 		live := func(names ...string) []annotationV0.Annotation {
 			annos := make([]annotationV0.Annotation, len(names))
 			for i, name := range names {
-				annos[i] = annotationV0.Annotation{ObjectMeta: metav1.ObjectMeta{Name: name}}
+				annos[i] = annotationV0.Annotation{Name: name}
 			}
 			return annos
 		}

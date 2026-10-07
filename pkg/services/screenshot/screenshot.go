@@ -108,24 +108,16 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	u.RawQuery = p.Encode()
 
 	renderOpts := rendering.Opts{
-		CommonOpts: rendering.CommonOpts{
-			AuthOpts: rendering.AuthOpts{
-				OrgID:   dashboard.OrgID,
-				OrgRole: org.RoleAdmin,
-			},
-			TimeoutOpts: rendering.TimeoutOpts{
-				Timeout: opts.Timeout,
-			},
-			ConcurrentLimit: s.cfg.RendererConcurrentRequestLimit,
-			Path:            u.String(),
-		},
-		ErrorOpts: rendering.ErrorOpts{
-			ErrorConcurrentLimitReached: true,
-			ErrorRenderUnavailable:      true,
-		},
-		Width:  opts.Width,
-		Height: opts.Height,
-		Theme:  opts.Theme,
+		OrgID:                       dashboard.OrgID,
+		OrgRole:                     org.RoleAdmin,
+		Timeout:                     opts.Timeout,
+		ConcurrentLimit:             s.cfg.RendererConcurrentRequestLimit,
+		Path:                        u.String(),
+		ErrorConcurrentLimitReached: true,
+		ErrorRenderUnavailable:      true,
+		Width:                       opts.Width,
+		Height:                      opts.Height,
+		Theme:                       opts.Theme,
 	}
 
 	result, err := s.rs.Render(ctx, rendering.RenderPNG, renderOpts)

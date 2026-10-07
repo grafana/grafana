@@ -102,15 +102,11 @@ func (m *shortURLMigrator) MigrateShortURLs(ctx context.Context, orgId int64, op
 		chunk := make([]*resourcepb.BulkRequest, 0, len(rawRows))
 		for _, row := range rawRows {
 			shortURL := &shorturlv1beta1.ShortURL{
-				TypeMeta: metav1.TypeMeta{
-					APIVersion: shorturlv1beta1.GroupVersion.String(),
-					Kind:       "ShortURL",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:              row.uid,
-					Namespace:         opts.Namespace,
-					CreationTimestamp: metav1.NewTime(time.Unix(row.createdAt, 0)),
-				},
+				APIVersion:        shorturlv1beta1.GroupVersion.String(),
+				Kind:              "ShortURL",
+				Name:              row.uid,
+				Namespace:         opts.Namespace,
+				CreationTimestamp: metav1.NewTime(time.Unix(row.createdAt, 0)),
 				Spec: shorturlv1beta1.ShortURLSpec{
 					Path: row.path,
 				},

@@ -174,12 +174,10 @@ func (s *TeamAddMemberREST) Connect(ctx context.Context, name string, _ runtime.
 			status = http.StatusOK
 		}
 		responder.Object(status, &iamv0alpha1.CreateTeamMemberResponse{
-			CreateTeamMemberBody: iamv0alpha1.CreateTeamMemberBody{
-				Team:       name,
-				User:       body.Name,
-				Permission: string(resultingPerm),
-				External:   resultingExternal,
-			},
+			Team:       name,
+			User:       body.Name,
+			Permission: string(resultingPerm),
+			External:   resultingExternal,
 		})
 	}), nil
 }

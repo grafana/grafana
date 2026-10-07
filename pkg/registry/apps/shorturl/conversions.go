@@ -29,14 +29,12 @@ func convertToK8sResource(v *shorturls.ShortUrl, namespacer request.NamespaceMap
 	}
 
 	p := &shorturl.ShortURL{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:              v.Uid,
-			ResourceVersion:   resourceVersion,
-			CreationTimestamp: metav1.NewTime(time.Unix(v.CreatedAt, 0)),
-			Namespace:         namespacer(v.OrgId),
-		},
-		Spec:   spec,
-		Status: status,
+		Name:              v.Uid,
+		ResourceVersion:   resourceVersion,
+		CreationTimestamp: metav1.NewTime(time.Unix(v.CreatedAt, 0)),
+		Namespace:         namespacer(v.OrgId),
+		Spec:              spec,
+		Status:            status,
 	}
 	return p
 }

@@ -57,9 +57,7 @@ func TestSyncWorker_IsSupported(t *testing.T) {
 func TestSyncWorker_ProcessNotReaderWriter(t *testing.T) {
 	repo := repository.NewMockReader(t)
 	repo.On("Config").Return(&provisioning.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "test-repo",
-		},
+		Name: "test-repo",
 		Spec: provisioning.RepositorySpec{
 			Title: "test-repo",
 		},
@@ -137,11 +135,9 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 
 			repoConfig := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-repo",
-					Namespace:  "test-namespace",
-					Generation: 1,
-				},
+				Name:       "test-repo",
+				Namespace:  "test-namespace",
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					Quota: provisioning.QuotaStatus{
 						MaxResourcesPerRepository: tt.maxResourcesPerRepository,
@@ -212,7 +208,7 @@ func TestSyncWorker_Process_QuotaCondition(t *testing.T) {
 
 			// Create test job
 			job := provisioning.Job{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Name: "test-job",
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
 					Pull:   &provisioning.SyncJobOptions{},
@@ -285,11 +281,9 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			progressRecorder := jobs.NewMockJobProgressRecorder(t)
 
 			repoConfig := &provisioning.Repository{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:       "test-repo",
-					Namespace:  "test-namespace",
-					Generation: 1,
-				},
+				Name:       "test-repo",
+				Namespace:  "test-namespace",
+				Generation: 1,
 				Status: provisioning.RepositoryStatus{
 					Sync: provisioning.SyncStatus{
 						LastRef: "existing-ref",
@@ -350,7 +344,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 			)
 
 			job := provisioning.Job{
-				ObjectMeta: metav1.ObjectMeta{Name: "test-job"},
+				Name: "test-job",
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
 					Pull:   &provisioning.SyncJobOptions{},
@@ -450,9 +444,7 @@ func TestSyncWorker_Process(t *testing.T) {
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				// Setup repository config with existing LastRef
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: provisioning.RepositorySpec{
 						Title: "test-repo",
 					},
@@ -479,9 +471,7 @@ func TestSyncWorker_Process(t *testing.T) {
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				// Setup repository config
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test-repo",
-					},
+					Name: "test-repo",
 					Spec: provisioning.RepositorySpec{
 						Title: "test-repo",
 					},
@@ -524,10 +514,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				// Setup repository config
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Spec: provisioning.RepositorySpec{
 						Title: "test-repo",
 					},
@@ -572,10 +560,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "successful sync",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.SyncStatus{
 							LastRef: "existing-ref",
@@ -618,10 +604,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "failed sync",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.SyncStatus{
 							LastRef: "existing-ref",
@@ -665,10 +649,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "stats call fails",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
@@ -694,10 +676,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "stats returns nil stats and nil error",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
@@ -729,10 +709,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "stats returns one managed stats",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 				// Initial patch with granular updates
@@ -777,10 +755,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "stats returns multiple managed stats",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
@@ -834,10 +810,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "quota exceeded error preserves lastRef",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 					Status: provisioning.RepositoryStatus{
 						Sync: provisioning.SyncStatus{
 							LastRef: "existing-ref",
@@ -879,10 +853,8 @@ func TestSyncWorker_Process(t *testing.T) {
 			name: "failed final status patch",
 			setupMocks: func(cf *resources.MockClientFactory, rrf *resources.MockRepositoryResourcesFactory, rpf *MockRepositoryPatchFn, s *MockSyncer, rw *mockReaderWriter, pr *jobs.MockJobProgressRecorder) {
 				repoConfig := &provisioning.Repository{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-repo",
-						Namespace: "test-namespace",
-					},
+					Name:      "test-repo",
+					Namespace: "test-namespace",
 				}
 				rw.MockRepository.On("Config").Return(repoConfig)
 
@@ -941,9 +913,7 @@ func TestSyncWorker_Process(t *testing.T) {
 
 			// Create test job
 			job := provisioning.Job{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "test-job",
-				},
+				Name: "test-job",
 				Spec: provisioning.JobSpec{
 					Action: provisioning.JobActionPull,
 					Pull:   &provisioning.SyncJobOptions{},

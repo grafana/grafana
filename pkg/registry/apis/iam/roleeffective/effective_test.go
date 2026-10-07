@@ -6,7 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 )
@@ -41,7 +40,7 @@ func TestResolveEffective(t *testing.T) {
 	})
 
 	t.Run("composes inherited, omitted, explicit, and duplicate permissions", func(t *testing.T) {
-		role := &iamv0.Role{ObjectMeta: metav1.ObjectMeta{Name: "role"}, Spec: iamv0.RoleSpec{
+		role := &iamv0.Role{Name: "role", Spec: iamv0.RoleSpec{
 			RoleRefs:           []iamv0.RolespecRoleRef{{Kind: "GlobalRole", Name: "base"}},
 			PermissionsOmitted: []iamv0.RolespecPermission{{Action: "read", Scope: "removed"}, {Action: "read", Scope: "readded"}},
 			Permissions:        []iamv0.RolespecPermission{{Action: "read", Scope: "own"}, {Action: "read", Scope: "readded"}},

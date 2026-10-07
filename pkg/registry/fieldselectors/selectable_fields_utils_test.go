@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -84,11 +83,9 @@ func TestSelectableFieldsBuildGetAttrsFn(t *testing.T) {
 	}
 
 	obj := &sdkres.TypedSpecObject[any]{
-		ObjectMeta: metav1.ObjectMeta{
-			Labels:    map[string]string{"label": "value"},
-			Namespace: "ns",
-			Name:      "name",
-		},
+		Labels:    map[string]string{"label": "value"},
+		Namespace: "ns",
+		Name:      "name",
 	}
 
 	getAttrs := BuildGetAttrsFn(kind)

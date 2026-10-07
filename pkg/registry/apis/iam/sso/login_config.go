@@ -147,33 +147,27 @@ func truthy(v any) bool {
 func (h *LoginConfigHandler) routeSpec() *spec3.PathProps {
 	return &spec3.PathProps{
 		Get: &spec3.Operation{
-			OperationProps: spec3.OperationProps{
-				OperationId: "getSSOLoginConfig",
-				Tags:        []string{"SSOSettings"},
-				Description: "Public, unauthenticated login configuration for a stack (no secrets).",
-				Parameters: []*spec3.Parameter{
-					{
-						ParameterProps: spec3.ParameterProps{
-							Name:        "namespace",
-							In:          "path",
-							Required:    true,
-							Example:     "default",
-							Description: "workspace",
-							Schema:      spec.StringProperty(),
-						},
-					},
+			OperationId: "getSSOLoginConfig",
+			Tags:        []string{"SSOSettings"},
+			Description: "Public, unauthenticated login configuration for a stack (no secrets).",
+			Parameters: []*spec3.Parameter{
+				{
+					Name:        "namespace",
+					In:          "path",
+					Required:    true,
+					Example:     "default",
+					Description: "workspace",
+					Schema:      spec.StringProperty(),
 				},
-				Responses: &spec3.Responses{
-					ResponsesProps: spec3.ResponsesProps{
-						StatusCodeResponses: map[int]*spec3.Response{
-							200: {
-								ResponseProps: spec3.ResponseProps{
-									Content: map[string]*spec3.MediaType{
-										"application/json": {
-											MediaTypeProps: spec3.MediaTypeProps{
-												Schema: &spec.Schema{SchemaProps: spec.SchemaProps{Type: []string{"object"}}},
-											},
-										},
+			},
+			Responses: &spec3.Responses{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"application/json": {
+									MediaTypeProps: spec3.MediaTypeProps{
+										Schema: &spec.Schema{Type: []string{"object"}},
 									},
 								},
 							},

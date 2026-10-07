@@ -53,7 +53,7 @@ type InhibitionRuleAccess struct {
 
 func NewInhibitionRuleAccess(ac ac.AccessControl) *InhibitionRuleAccess {
 	return &InhibitionRuleAccess{
-		genericService: genericService{ac: ac},
+		ac: ac,
 	}
 }
 

@@ -63,15 +63,13 @@ func TestPluginLoaderDiscoversManifestAlongsideLegacyApps(t *testing.T) {
 			}}
 			roles := &recordingManifestRoleService{}
 			loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
-				PluginSources: sources,
-				ACService:     roles,
-				PluginDependencies: PluginDependencies{
-					PluginClient:    struct{ plugins.Client }{},
-					ContextProvider: struct{ appplugin.PluginContextWrapper }{},
-					Unified:         &resource.MockResourceClient{},
-					AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
-					Features:        featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
-				},
+				PluginSources:   sources,
+				ACService:       roles,
+				PluginClient:    struct{ plugins.Client }{},
+				ContextProvider: struct{ appplugin.PluginContextWrapper }{},
+				Unified:         &resource.MockResourceClient{},
+				AccessControl:   &actest.FakeAccessControl{ExpectedEvaluate: true},
+				Features:        featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware),
 			})
 			require.NoError(t, err)
 			require.Equal(t, 1, roles.calls, "roles must be declared before startup registers fixed roles")
@@ -322,11 +320,9 @@ func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 		}}}
 	}}
 	loader, err := ProvideRoutesLoader(setting.NewCfg(), PluginLoaderDependencies{
-		PluginSources: sources,
-		PluginDependencies: PluginDependencies{
-			PluginClient:    struct{ plugins.Client }{},
-			ContextProvider: struct{ appplugin.PluginContextWrapper }{},
-		},
+		PluginSources:   sources,
+		PluginClient:    struct{ plugins.Client }{},
+		ContextProvider: struct{ appplugin.PluginContextWrapper }{},
 	})
 	require.NoError(t, err)
 	backends, err := loader.Load(t.Context())
@@ -419,8 +415,8 @@ func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.Target = tc.targets
 			loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{
-				PluginSources:      source,
-				PluginDependencies: PluginDependencies{Features: featuremgmt.WithFeatures(tc.features...)},
+				PluginSources: source,
+				Features:      featuremgmt.WithFeatures(tc.features...),
 			})
 			if tc.initializeRoles {
 				require.ErrorIs(t, err, failure)
@@ -477,7 +473,7 @@ func TestInitLocalPluginsResolvesSettingsStorageWildcard(t *testing.T) {
 		"app.*-app":        {DualWriterMode: 1},
 		"app.explicit-app": {DualWriterMode: 3},
 	}
-	err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, PluginDependencies: PluginDependencies{Cfg: cfg}})
+	err := initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, Cfg: cfg})
 	require.NoError(t, err)
 	require.EqualValues(t, 1, cfg.UnifiedStorage["app.wildcard-app"].DualWriterMode, "the shared dual-write service must see the wildcard default")
 	require.EqualValues(t, 3, cfg.UnifiedStorage["app.explicit-app"].DualWriterMode, "explicit config wins over the wildcard")

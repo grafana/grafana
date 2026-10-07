@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientrest "k8s.io/client-go/rest"
@@ -72,11 +71,9 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "provisioning can create",
 			auth: provisioner,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -85,11 +82,9 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: user,
 			err:  "this resource is managed by a repository",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -98,17 +93,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: user,
 			err:  "Can not remove resource manager from resource",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -116,17 +107,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "provisioner can remove manager flags",
 			auth: provisioner,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -134,17 +121,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "provisioner can add manager flags",
 			auth: provisioner,
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -153,21 +136,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: provisioner,
 			err:  "Cannot change resource manager",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "xyz",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "xyz",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -178,21 +157,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "classic file-provisioning: identity change is allowed",
 			auth: provisioner,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "reader-b",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "reader-b",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "reader-a",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "reader-a",
 				},
 			},
 		},
@@ -200,21 +175,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "classic converted-prometheus: identity change is allowed",
 			auth: user,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "b",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "b",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "a",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicConvertedPrometheus), //nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "a",
 				},
 			},
 		},
@@ -226,21 +197,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: provisioner,
 			err:  "Cannot change resource manager kind",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
-						utils.AnnoKeyManagerIdentity: "reader-a",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindClassicFP), //nolint:staticcheck
+					utils.AnnoKeyManagerIdentity: "reader-a",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "reader-a",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "reader-a",
 				},
 			},
 		},
@@ -250,21 +217,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: provisioner,
 			err:  "Cannot change resource manager identity",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
-						utils.AnnoKeyManagerIdentity: "b",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+					utils.AnnoKeyManagerIdentity: "b",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
-						utils.AnnoKeyManagerIdentity: "a",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+					utils.AnnoKeyManagerIdentity: "a",
 				},
 			},
 		},
@@ -273,21 +236,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: provisioner,
 			err:  "Cannot change resource manager",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindKubectl),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -296,21 +255,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: provisioner,
 			err:  "Cannot change resource manager",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "def",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "def",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "abc",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "abc",
 				},
 			},
 		},
@@ -318,21 +273,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "terraform: legacy (User-Agent) → new (simple ID) allowed (migration)",
 			auth: user,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
 				},
 			},
 		},
@@ -341,21 +292,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: user,
 			err:  "Cannot change Terraform manager ID; stable custom IDs are immutable",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-provider-v2",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "my-terraform-provider",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "my-terraform-provider",
 				},
 			},
 		},
@@ -363,21 +310,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "terraform: legacy (User-Agent) → legacy (different User-Agent) allowed",
 			auth: user,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "Terraform/1.6.0 (+https://www.terraform.io) terraform-provider-grafana/v4.0.0",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "Terraform/crossTF000 (+https://www.terraform.io) terraform-provider-grafana/crossplane",
 				},
 			},
 		},
@@ -386,21 +329,17 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: user,
 			err:  "Cannot change Terraform manager ID back to User-Agent format",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "Terraform/1.5.0 (+https://www.terraform.io) terraform-provider-grafana/v3.0.0",
 				},
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
-						utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
-					},
+				Generation: 1,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindTerraform),
+					utils.AnnoKeyManagerIdentity: "grafana-terraform-provider",
 				},
 			},
 		},
@@ -411,10 +350,8 @@ func TestManagedAuthorizer(t *testing.T) {
 				audience:        []string{provisioning.GROUP},
 			},
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo),
-					},
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind: string(utils.ManagerKindRepo),
 				},
 			},
 		},
@@ -422,17 +359,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "server admin can release repo-managed dashboard",
 			auth: serverAdmin,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "my-repo",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "my-repo",
 				},
 			},
 		},
@@ -462,17 +395,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			name: "org admin can release repo-managed dashboard",
 			auth: orgAdmin,
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "my-repo",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "my-repo",
 				},
 			},
 		},
@@ -481,17 +410,13 @@ func TestManagedAuthorizer(t *testing.T) {
 			auth: user,
 			err:  "Can not remove resource manager from resource",
 			obj: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 1,
-				},
+				Generation: 1,
 			},
 			old: &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Generation: 2,
-					Annotations: map[string]string{
-						utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
-						utils.AnnoKeyManagerIdentity: "my-repo",
-					},
+				Generation: 2,
+				Annotations: map[string]string{
+					utils.AnnoKeyManagerKind:     string(utils.ManagerKindRepo),
+					utils.AnnoKeyManagerIdentity: "my-repo",
 				},
 			},
 		},
@@ -588,10 +513,8 @@ func TestManagedResourceCommitMessage(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			obj := &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Name:        tt.objectName,
-					Annotations: tt.annotations,
-				},
+				Name:        tt.objectName,
+				Annotations: tt.annotations,
 			}
 			accessor, err := utils.MetaAccessor(obj)
 			require.NoError(t, err)
@@ -682,11 +605,9 @@ func TestHandleManagedResourceRouting_ForwardsCommitMessage(t *testing.T) {
 
 			s := &Storage{configProvider: &fakeRestConfigProvider{host: server.URL}}
 			obj := &dashboard.Dashboard{
-				ObjectMeta: v1.ObjectMeta{
-					Name:        "dash-uid",
-					Namespace:   "default",
-					Annotations: tt.annotations,
-				},
+				Name:        "dash-uid",
+				Namespace:   "default",
+				Annotations: tt.annotations,
 			}
 
 			cleanupSafe, err := s.handleManagedResourceRouting(
@@ -803,7 +724,7 @@ func TestEnsureSameRepoManager(t *testing.T) {
 
 	makeAccessor := func(t *testing.T, mgr *utils.ManagerProperties) utils.GrafanaMetaAccessor {
 		t.Helper()
-		obj := &dashboard.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "test", Namespace: "default"}}
+		obj := &dashboard.Dashboard{Name: "test", Namespace: "default"}
 		accessor, err := utils.MetaAccessor(obj)
 		require.NoError(t, err)
 		if mgr != nil {

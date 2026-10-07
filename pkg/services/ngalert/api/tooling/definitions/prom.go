@@ -272,10 +272,8 @@ func (by AlertsBy) TopK(alerts []Alert, k int) []Alert {
 	byAscending := func(a1, a2 *Alert) bool { return by(a2, a1) }
 
 	h := AlertsHeap{
-		AlertsSorter: AlertsSorter{
-			alerts: make([]Alert, 0, k),
-			by:     byAscending,
-		},
+		alerts: make([]Alert, 0, k),
+		by:     byAscending,
 	}
 
 	// Go version of this algorithm taken from Prometheus (promql/engine.go)

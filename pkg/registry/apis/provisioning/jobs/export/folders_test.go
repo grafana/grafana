@@ -47,21 +47,15 @@ func TestExportFolders(t *testing.T) {
 			name: "too many folders",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				list := &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.FolderResource.GroupVersion().String(),
-						Kind:       "FolderList",
-					},
-					Items: make([]metav1.PartialObjectMetadata, resources.MaxNumberOfFolders+1),
+					APIVersion: resources.FolderResource.GroupVersion().String(),
+					Kind:       "FolderList",
+					Items:      make([]metav1.PartialObjectMetadata, resources.MaxNumberOfFolders+1),
 				}
 				for i := 0; i <= resources.MaxNumberOfFolders; i++ {
 					list.Items[i] = metav1.PartialObjectMetadata{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: resources.FolderResource.GroupVersion().String(),
-							Kind:       "Folder",
-						},
-						ObjectMeta: metav1.ObjectMeta{
-							Name: fmt.Sprintf("folder-%d", i),
-						},
+						APIVersion: resources.FolderResource.GroupVersion().String(),
+						Kind:       "Folder",
+						Name:       fmt.Sprintf("folder-%d", i),
 					}
 				}
 				return true, list, nil
@@ -93,33 +87,23 @@ func TestExportFolders(t *testing.T) {
 			name: "successful folder migration",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				list := &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.FolderResource.GroupVersion().String(),
-						Kind:       "FolderList",
-					},
+					APIVersion: resources.FolderResource.GroupVersion().String(),
+					Kind:       "FolderList",
 					Items: []metav1.PartialObjectMetadata{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "folder-1",
-								Annotations: map[string]string{
-									"folder.grafana.app/uid": "folder-1-uid",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "folder-1",
+							Annotations: map[string]string{
+								"folder.grafana.app/uid": "folder-1-uid",
 							},
 						},
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "folder-2",
-								Annotations: map[string]string{
-									"folder.grafana.app/uid": "folder-2-uid",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "folder-2",
+							Annotations: map[string]string{
+								"folder.grafana.app/uid": "folder-2-uid",
 							},
 						},
 					},
@@ -156,33 +140,23 @@ func TestExportFolders(t *testing.T) {
 			name: "successful folder migration with resource export errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				list := &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.FolderResource.GroupVersion().String(),
-						Kind:       "FolderList",
-					},
+					APIVersion: resources.FolderResource.GroupVersion().String(),
+					Kind:       "FolderList",
 					Items: []metav1.PartialObjectMetadata{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "folder-1",
-								Annotations: map[string]string{
-									"folder.grafana.app/uid": "folder-1-uid",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "folder-1",
+							Annotations: map[string]string{
+								"folder.grafana.app/uid": "folder-1-uid",
 							},
 						},
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "folder-2",
-								Annotations: map[string]string{
-									"folder.grafana.app/uid": "folder-2-uid",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "folder-2",
+							Annotations: map[string]string{
+								"folder.grafana.app/uid": "folder-2-uid",
 							},
 						},
 					},
@@ -219,21 +193,15 @@ func TestExportFolders(t *testing.T) {
 			name: "too many errors",
 			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
 				list := &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.FolderResource.GroupVersion().String(),
-						Kind:       "FolderList",
-					},
+					APIVersion: resources.FolderResource.GroupVersion().String(),
+					Kind:       "FolderList",
 					Items: []metav1.PartialObjectMetadata{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "folder-1",
-								Annotations: map[string]string{
-									"folder.grafana.app/uid": "folder-1-uid",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "folder-1",
+							Annotations: map[string]string{
+								"folder.grafana.app/uid": "folder-1-uid",
 							},
 						},
 					},
@@ -264,38 +232,26 @@ func TestExportFolders(t *testing.T) {
 				if action.GetResource() == resources.DashboardResource {
 					// Return empty dashboard list
 					return true, &metav1.PartialObjectMetadataList{
-						TypeMeta: metav1.TypeMeta{
-							APIVersion: resources.DashboardResource.GroupVersion().String(),
-							Kind:       "FolderList",
-						},
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "FolderList",
 					}, nil
 				}
 
 				list := &metav1.PartialObjectMetadataList{
-					TypeMeta: metav1.TypeMeta{
-						APIVersion: resources.FolderResource.GroupVersion().String(),
-						Kind:       "FolderList",
-					},
+					APIVersion: resources.FolderResource.GroupVersion().String(),
+					Kind:       "FolderList",
 					Items: []metav1.PartialObjectMetadata{
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "parent-folder",
-							},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "parent-folder",
 						},
 						{
-							TypeMeta: metav1.TypeMeta{
-								APIVersion: resources.FolderResource.GroupVersion().String(),
-								Kind:       "Folder",
-							},
-							ObjectMeta: metav1.ObjectMeta{
-								Name: "child-folder",
-								Annotations: map[string]string{
-									"grafana.app/folder": "parent-folder",
-								},
+							APIVersion: resources.FolderResource.GroupVersion().String(),
+							Kind:       "Folder",
+							Name:       "child-folder",
+							Annotations: map[string]string{
+								"grafana.app/folder": "parent-folder",
 							},
 						},
 					},

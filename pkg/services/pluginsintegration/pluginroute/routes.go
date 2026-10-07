@@ -315,27 +315,23 @@ func reservedResourceNames(version app.ManifestVersion) map[string]bool {
 // routes mount under.
 func namespacePathParameter() *spec3.Parameter {
 	return &spec3.Parameter{
-		ParameterProps: spec3.ParameterProps{
-			Name:        namespaceParameter,
-			In:          "path",
-			Required:    true,
-			Example:     "default",
-			Description: "workspace",
-			Schema:      spec.StringProperty(),
-		},
+		Name:        namespaceParameter,
+		In:          "path",
+		Required:    true,
+		Example:     "default",
+		Description: "workspace",
+		Schema:      spec.StringProperty(),
 	}
 }
 
 // namePathParameter documents the {name} segment that kind routes mount under.
 func namePathParameter() *spec3.Parameter {
 	return &spec3.Parameter{
-		ParameterProps: spec3.ParameterProps{
-			Name:        nameParameter,
-			In:          "path",
-			Required:    true,
-			Description: "name of the parent resource",
-			Schema:      spec.StringProperty(),
-		},
+		Name:        nameParameter,
+		In:          "path",
+		Required:    true,
+		Description: "name of the parent resource",
+		Schema:      spec.StringProperty(),
 	}
 }
 

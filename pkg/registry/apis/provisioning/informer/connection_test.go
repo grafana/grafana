@@ -8,7 +8,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,7 +18,7 @@ import (
 )
 
 func conn(namespace, name string) *provisioningapis.Connection {
-	return &provisioningapis.Connection{ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: name}}
+	return &provisioningapis.Connection{Namespace: namespace, Name: name}
 }
 
 // stubKeysLister serves a canned key stream, optionally ending in an error, so

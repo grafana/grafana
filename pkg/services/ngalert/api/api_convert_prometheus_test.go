@@ -2260,13 +2260,11 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil).Maybe()
 
 		expectedResult := merge.MergeResult{
-			RenameResources: merge.RenameResources{
-				Receivers: map[string]string{
-					"default": "default-test-config",
-				},
-				TimeIntervals: map[string]string{
-					"weekdays": "weekdays-test-config",
-				},
+			Receivers: map[string]string{
+				"default": "default-test-config",
+			},
+			TimeIntervals: map[string]string{
+				"weekdays": "weekdays-test-config",
 			},
 			AddedRoute:           identifier,
 			AddedReceivers:       []string{"default-test-config"},
@@ -2356,7 +2354,7 @@ func TestRouteConvertPrometheusPostAlertmanagerConfig(t *testing.T) {
 		mockAM.On("IsExternalAMSyncConfiguredForOrg", mock.Anything, int64(1)).Return(false, nil)
 		mockAM.On("SaveAndApplyExtraConfiguration", mock.Anything, int64(1), mock.Anything, mock.Anything,
 			mock.MatchedBy(func(ec v1.ExtraConfiguration) bool { return ec.Identifier == identifier }),
-			false, false, true).Return(merge.MergeResult{RenameResources: merge.RenameResources{Receivers: map[string]string{"old": "new"}}}, nil).Once()
+			false, false, true).Return(merge.MergeResult{Receivers: map[string]string{"old": "new"}}, nil).Once()
 
 		ft := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 		srv, _, _ := createConvertPrometheusSrv(t, withAlertmanager(mockAM), withFeatureToggles(ft))
@@ -2721,10 +2719,8 @@ func TestRouteConvertPrometheusPromoteAlertmanagerConfig(t *testing.T) {
 
 	t.Run("should include rename resources in response", func(t *testing.T) {
 		result := merge.MergeResult{
-			RenameResources: merge.RenameResources{
-				Receivers:     map[string]string{"old-rcv": "old-rcv_test-config"},
-				TimeIntervals: map[string]string{"old-ti": "old-ti_test-config"},
-			},
+			Receivers:     map[string]string{"old-rcv": "old-rcv_test-config"},
+			TimeIntervals: map[string]string{"old-ti": "old-ti_test-config"},
 		}
 		mockAM.On("PromoteExtraConfiguration", mock.Anything, orgID, mock.Anything, mock.Anything, identifier).
 			Return(result, nil).Once()

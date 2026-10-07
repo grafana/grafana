@@ -90,47 +90,35 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 					Spec: folders.FolderSpec{
 						Title: "title",
 					},
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "p0",
-						Annotations: map[string]string{"grafana.app/folder": "p1"},
-					},
+					Name:        "p0",
+					Annotations: map[string]string{"grafana.app/folder": "p1"},
 				},
 				name: "p0",
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p1",
-							Annotations: map[string]string{"grafana.app/folder": "p2"},
-						},
+						Name:        "p1",
+						Annotations: map[string]string{"grafana.app/folder": "p2"},
 					}, nil)
 				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p2",
-							Annotations: map[string]string{"grafana.app/folder": "p3"},
-						},
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
 					}, nil)
 				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p3",
-							Annotations: map[string]string{"grafana.app/folder": "p4"},
-						},
+						Name:        "p3",
+						Annotations: map[string]string{"grafana.app/folder": "p4"},
 					}, nil)
 				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p4",
-							Annotations: map[string]string{"grafana.app/folder": "p5"},
-						},
+						Name:        "p4",
+						Annotations: map[string]string{"grafana.app/folder": "p5"},
 					}, nil)
 				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "p5",
-						},
+						Name: "p5",
 					}, nil)
 			},
 			err: fmt.Errorf("folder max depth exceeded, max depth is 4"),
@@ -295,10 +283,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "stacks-123",
-			Name:      "valid-name",
-		},
+		Namespace: "stacks-123",
+		Name:      "valid-name",
 	}
 
 	for _, tt := range tests {
@@ -357,21 +343,17 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
 			},
 			expected: &folders.Folder{
 				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
 			},
 		},
 		{
@@ -380,11 +362,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
 			},
 			wantErr: true,
 		},
@@ -394,11 +374,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "new-parent"},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": "new-parent"},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
@@ -413,11 +391,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": accesscontrol.K6FolderUID},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": accesscontrol.K6FolderUID},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
 				// nothing
@@ -430,50 +406,38 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
-				ObjectMeta: metav1.ObjectMeta{
-					Namespace:   "stacks-123",
-					Name:        "valid-name",
-					Annotations: map[string]string{"grafana.app/folder": "p5"},
-				},
+				Namespace:   "stacks-123",
+				Name:        "valid-name",
+				Annotations: map[string]string{"grafana.app/folder": "p5"},
 			},
 			setupFn: func(m *grafanarest.MockStorage) {
 				m.On("Get", mock.Anything, "p5", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p5",
-							Annotations: map[string]string{"grafana.app/folder": "p4"},
-						},
+						Name:        "p5",
+						Annotations: map[string]string{"grafana.app/folder": "p4"},
 					}, nil)
 				m.On("Get", mock.Anything, "p4", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p4",
-							Annotations: map[string]string{"grafana.app/folder": "p3"},
-						},
+						Name:        "p4",
+						Annotations: map[string]string{"grafana.app/folder": "p3"},
 					}, nil)
 				m.On("Get", mock.Anything, "p3", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p3",
-							Annotations: map[string]string{"grafana.app/folder": "p2"},
-						},
+						Name:        "p3",
+						Annotations: map[string]string{"grafana.app/folder": "p2"},
 					}, nil)
 				m.On("Get", mock.Anything, "p2", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:        "p2",
-							Annotations: map[string]string{"grafana.app/folder": "p1"},
-						},
+						Name:        "p2",
+						Annotations: map[string]string{"grafana.app/folder": "p1"},
 					}, nil)
 				m.On("Get", mock.Anything, "p1", mock.Anything).Return(
 					&folders.Folder{
-						ObjectMeta: metav1.ObjectMeta{
-							Name: "p1",
-							// p1 is at root: the canonical annotation is "general",
-							// and newParentsGetter must stop here without fetching
-							// "general" as a real folder (it is not a resource).
-							Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-						},
+						Name: "p1",
+						// p1 is at root: the canonical annotation is "general",
+						// and newParentsGetter must stop here without fetching
+						// "general" as a real folder (it is not a resource).
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
 					}, nil)
 			},
 			wantErr: true,
@@ -484,11 +448,9 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   "stacks-123",
-			Name:        "valid-name",
-			Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
-		},
+		Namespace:   "stacks-123",
+		Name:        "valid-name",
+		Annotations: map[string]string{"grafana.app/folder": "valid-parent"},
 	}
 
 	for _, tt := range tests {
@@ -498,10 +460,8 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 			// the source chain is resolved to reject moves out of the k6 tree
 			us.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
 				&folders.Folder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        "valid-parent",
-						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
-					},
+					Name:        "valid-parent",
+					Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
 				}, nil).Maybe()
 			if tt.setupFn != nil {
 				tt.setupFn(us)
@@ -550,47 +510,31 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			expected: &folders.Folder{
 				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 		},
 		{
 			name: "should return error if title doesnt exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			wantErr: true,
 		},
 		{
 			name: "should return error if spec doesnt exist",
 			input: &folders.Folder{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			wantErr: true,
 		},
@@ -637,12 +581,8 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		Spec: folders.FolderSpec{
 			Title: "some title",
 		},
-		TypeMeta: metav1.TypeMeta{
-			Kind: "Folder",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "valid-name",
-		},
+		Kind: "Folder",
+		Name: "valid-name",
 	}
 	tests := []struct {
 		name     string
@@ -656,47 +596,31 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			expected: &folders.Folder{
 				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 		},
 		{
 			name: "should return error if title doesnt exist",
 			input: &folders.Folder{
 				Spec: folders.FolderSpec{},
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			wantErr: true,
 		},
 		{
 			name: "should return error if spec doesnt exist",
 			input: &folders.Folder{
-				TypeMeta: metav1.TypeMeta{
-					Kind: "Folder",
-				},
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "valid-name",
-				},
+				Kind: "Folder",
+				Name: "valid-name",
 			},
 			wantErr: true,
 		},
