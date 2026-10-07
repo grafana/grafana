@@ -39,10 +39,12 @@ func TestSnapshotBlobRemoteTransport(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		limit    int
+		size     int
 		wantCode codes.Code
 	}{
-		{name: "default limits support snapshots larger than 4 MiB", wantCode: codes.OK},
-		{name: "explicit receive limit is respected", limit: 4 << 20, wantCode: codes.ResourceExhausted},
+		{name: "default limits support snapshots larger than 4 MiB", size: 5 << 20, wantCode: codes.OK},
+		{name: "explicit receive limit is respected", limit: 4 << 20, size: 5 << 20, wantCode: codes.ResourceExhausted},
+		{name: "higher receive limit supports snapshots larger than 32 MiB", limit: 64 << 20, size: 33 << 20, wantCode: codes.OK},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			service, err := grpcserver.ProvideService(&setting.Cfg{GRPCServer: setting.GRPCServerSettings{MaxRecvMsgSize: tc.limit}}, nil, noop.NewTracerProvider().Tracer("test"), prometheus.NewRegistry())
@@ -61,7 +63,7 @@ func TestSnapshotBlobRemoteTransport(t *testing.T) {
 			defer cancel()
 			client := resourcepb.NewBlobStoreClient(conn)
 			snap := newBlobTestSnapshot()
-			snap.Spec.Dashboard["data"] = strings.Repeat("x", 5<<20)
+			snap.Spec.Dashboard["data"] = strings.Repeat("x", tc.size)
 			original := snap.DeepCopy().Spec.Dashboard
 			err = moveDashboardToBlob(ctx, client, snap)
 			require.Equal(t, tc.wantCode, status.Code(err), "%v", err)
