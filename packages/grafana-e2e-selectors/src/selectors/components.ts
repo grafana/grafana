@@ -999,6 +999,9 @@ export const versionedComponents = {
         titleInput: {
           '12.2.0': 'data-testid tab title input',
         },
+        restyleWithAssistant: {
+          '13.3.0': 'data-testid tab restyle with assistant',
+        },
       },
       RowsLayout: {
         titleInput: {

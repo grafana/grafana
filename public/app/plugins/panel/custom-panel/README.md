@@ -466,6 +466,10 @@ transformations) per panel it can reuse, in layout order and up to eight: Custom
 that already read `-- Dashboard --` and repeat clones are left out. Its code starts from a template
 that groups the frames by source panel.
 
+The edit pane of a tab has a **Restyle with Assistant** action when the Assistant and this panel
+are available and the user can edit the dashboard. It opens the Assistant with the request
+"Restyle the <tab title> tab of this dashboard." and the dashboard as context.
+
 ## Migrating from the Dynamic text panel
 
 Changing a `marcusolsson-dynamictext-panel` panel to this panel converts simple templates: content

@@ -4,9 +4,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
-import { Alert, Field, Input, TextLink } from '@grafana/ui';
+import { Alert, Button, Field, Input, TextLink } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
@@ -26,11 +27,14 @@ import {
   SectionVariablesList,
 } from '../../sidebar/SectionVariablesList';
 import { SidebarCategoryType } from '../../sidebar/types';
+import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
+import { getDashboardSceneFor } from '../../utils/utils';
 import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type TabItem } from './TabItem';
+import { buildRestyleTabRequest, useCustomPanelAssistant } from './customPanelAssistant';
 
 export function useSidebarOptions(this: TabItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -39,13 +43,22 @@ export function useSidebarOptions(this: TabItem, isNewElement: boolean): Options
 
   const tabCategory = useMemo(
     () =>
-      new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' }).addItem(
-        new OptionsPaneItemDescriptor({
-          title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
-          id: 'tab-options-title',
-          render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
-        })
-      ),
+      new OptionsPaneCategoryDescriptor({ title: '', id: 'tab-item-options' })
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: t('dashboard.tabs-layout.tab-options.title-option', 'Title'),
+            id: 'tab-options-title',
+            render: (descriptor) => <TabTitleInput id={descriptor.props.id} tab={model} isNewElement={isNewElement} />,
+          })
+        )
+        .addItem(
+          new OptionsPaneItemDescriptor({
+            title: '',
+            id: 'tab-options-restyle',
+            skipField: true,
+            render: () => <RestyleTabButton tab={model} />,
+          })
+        ),
     [isNewElement, model]
   );
 
@@ -164,6 +177,38 @@ function TabTitleInput({ tab, isNewElement, id }: { tab: TabItem; isNewElement: 
         data-testid={selectors.components.PanelEditor.ElementEditPane.TabsLayout.titleInput}
       />
     </Field>
+  );
+}
+
+/** Opens the Assistant to restyle this tab, when it and the Custom panel are available. */
+export function RestyleTabButton({ tab }: { tab: TabItem }) {
+  const { title } = tab.useState();
+  const { customPanelAvailable, openAssistant } = useCustomPanelAssistant();
+  const readOnly = useOptionsPaneReadOnly();
+  const dashboard = getDashboardSceneFor(tab);
+
+  if (
+    !customPanelAvailable ||
+    !openAssistant ||
+    readOnly ||
+    !title ||
+    !dashboard.canEditDashboard() ||
+    isRepeatCloneOrChildOf(tab)
+  ) {
+    return null;
+  }
+
+  return (
+    <Button
+      icon="ai-sparkle"
+      variant="secondary"
+      size="sm"
+      fill="outline"
+      onClick={() => openAssistant(buildRestyleTabRequest(dashboard, title))}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.TabsLayout.restyleWithAssistant}
+    >
+      <Trans i18nKey="dashboard.tabs-layout.tab-options.restyle-with-assistant">Restyle with Assistant</Trans>
+    </Button>
   );
 }
 
