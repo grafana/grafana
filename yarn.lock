@@ -30881,10 +30881,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"shell-quote@npm:1.10.0":
-  version: 1.10.0
-  resolution: "shell-quote@npm:1.10.0"
-  checksum: 10/d4a22aeefe64919290af753ac6098239d7ffee52a5db62c20edef69794bd10b5f86e298f68be26af9606ac435e890dd391994a5405a90bb8aebef1ff1dde839b
+"shell-quote@npm:1.11.0":
+  version: 1.11.0
+  resolution: "shell-quote@npm:1.11.0"
+  checksum: 10/cd1dcc35459b986dc3477c2feebbf92649d15fa790c5cb6e380e4add0c973fa11ed310af3f44789fcc3db43c95aed749d321453239062b687ad3061ce52f5343
   languageName: node
   linkType: hard
 
