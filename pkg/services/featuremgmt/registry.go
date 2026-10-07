@@ -1709,7 +1709,7 @@ var (
 			Name:        "unifiedNavbars",
 			Description: "Enables unified navbars",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
+			Owner:       grafanaFrontendNavigation,
 			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false", // enabled by default
 		},
