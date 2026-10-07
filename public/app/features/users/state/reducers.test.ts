@@ -7,14 +7,14 @@ import { initialState, searchQueryChanged, usersLoaded, usersReducer } from './r
 
 describe('usersReducer', () => {
   describe('when usersLoaded is dispatched', () => {
-    it('then state should be correct', () => {
+    it('stores the users and clears the loading state', () => {
       reducerTester<UsersState>()
-        .givenReducer(usersReducer, { ...initialState })
+        .givenReducer(usersReducer, { ...initialState, isLoading: true })
         .whenActionIsDispatched(usersLoaded(getFetchUsersMock(1)))
         .thenStateShouldEqual({
           ...initialState,
           users: getMockUsers(1),
-          isLoading: true,
+          isLoading: false,
         });
     });
   });

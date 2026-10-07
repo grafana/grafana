@@ -17884,6 +17884,9 @@
         }
       },
       "placeholder-search-login-email": "Search user by login, email or name"
+    },
+    "users-list-page": {
+      "loading-users": "Loading users..."
     }
   },
   "users-access-list": {

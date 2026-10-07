@@ -282,6 +282,7 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
+      dispatch(usersFetchBegin());
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
       const result = await getUsersPage({ perPage, page, query, filters, sort });
       dispatch(usersFetched(result));
@@ -296,7 +297,6 @@ const fetchUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsers()), 50
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(queryChanged(query));
     fetchUsersWithDebounce(dispatch);
   };
@@ -304,7 +304,6 @@ export function changeQuery(query: string): ThunkResult<void> {
 
 export function changeFilter(filter: UserFilter): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(filterChanged(filter));
     fetchUsersWithDebounce(dispatch);
   };
@@ -312,7 +311,6 @@ export function changeFilter(filter: UserFilter): ThunkResult<void> {
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
   };
@@ -323,7 +321,6 @@ export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void
   return async (dispatch, getState) => {
     const currentSort = getState().userListAdmin.sort;
     if (currentSort !== sort) {
-      dispatch(usersFetchBegin());
       dispatch(sortChanged(sort));
       dispatch(fetchUsers());
     }

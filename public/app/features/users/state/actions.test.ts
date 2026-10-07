@@ -104,9 +104,18 @@ it('does not enter the role-loading state when roles cannot be shown', async () 
 it('loads an empty table without requesting roles', async () => {
   get.mockResolvedValueOnce({ orgUsers: [], totalCount: 0, perPage: 30, page: 1 });
   const store = configureStore();
+  expect(store.getState().users).toMatchObject({ users: undefined, isLoading: false });
 
-  await store.dispatch(loadUsers());
+  const request = store.dispatch(loadUsers());
+  expect(store.getState().users.isLoading).toBe(true);
+  await request;
 
-  expect(store.getState().users).toMatchObject({ users: [], page: 1, totalPages: 0, rolesLoading: false });
+  expect(store.getState().users).toMatchObject({
+    users: [],
+    isLoading: false,
+    page: 1,
+    totalPages: 0,
+    rolesLoading: false,
+  });
   expect(post).not.toHaveBeenCalled();
 });

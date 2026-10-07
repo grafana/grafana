@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,7 +23,47 @@ beforeEach(() => {
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
 });
 
-afterEach(() => jest.restoreAllMocks());
+afterEach(() => {
+  jest.useRealTimers();
+  jest.restoreAllMocks();
+});
+
+it('delays the loading bar by 250ms and keeps it visible for 750ms before showing the empty state', async () => {
+  jest.useFakeTimers();
+  let finish!: () => void;
+  get.mockReturnValue(
+    new Promise((resolve) => (finish = () => resolve({ users: [], totalCount: 0, page: 1, perPage: 50 })))
+  );
+  render(<UserListAdminPageContent />);
+
+  expect(screen.getByPlaceholderText('Search user by login, email, or name.')).toBeVisible();
+  expect(screen.queryByText('No users found')).not.toBeInTheDocument();
+  expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(249));
+  expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1));
+  expect(screen.getByRole('status', { name: 'Loading users...' })).toBeVisible();
+
+  await act(async () => finish());
+  act(() => jest.advanceTimersByTime(749));
+  expect(screen.getByRole('status', { name: 'Loading users...' })).toBeVisible();
+  expect(screen.queryByText('No users found')).not.toBeInTheDocument();
+  act(() => jest.advanceTimersByTime(1));
+  expect(screen.getByText('No users found')).toBeVisible();
+  expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
+});
+
+it('does not show the loading bar for a fast initial request', async () => {
+  jest.useFakeTimers();
+  get.mockResolvedValue({ users: [], totalCount: 0, page: 1, perPage: 50 });
+  render(<UserListAdminPageContent />);
+
+  expect(screen.getByPlaceholderText('Search user by login, email, or name.')).toBeVisible();
+  expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
+  expect(await screen.findByText('No users found')).toBeVisible();
+  act(() => jest.advanceTimersByTime(1000));
+  expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
+});
 
 it('exports all users from the toolbar between filters and New user using the current search', async () => {
   get.mockResolvedValue({ users: [], totalCount: 0, page: 1, perPage: 50 });
@@ -32,6 +72,8 @@ it('exports all users from the toolbar between filters and New user using the cu
     preloadedState: {
       userListAdmin: {
         ...initialState.userListAdmin,
+        users: [],
+        isLoading: false,
         query: 'alice',
         sort: 'email-desc',
         filters: [{ name: 'activeLast30Days', value: true }],

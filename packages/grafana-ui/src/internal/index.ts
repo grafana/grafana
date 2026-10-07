@@ -106,6 +106,7 @@ export { addHideFrom } from '../options/builder/hideSeries';
 export { ScaleDistributionEditor } from '../options/builder/axis';
 
 export { useComponentInstanceId } from '../utils/useComponetInstanceId';
+export { useDelayedSwitch } from '../utils/useDelayedSwitch';
 export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';

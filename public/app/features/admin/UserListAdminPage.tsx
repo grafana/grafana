@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 import { type ComponentType, useEffect } from 'react';
 import { connect, type ConnectedProps } from 'react-redux';
+import { useMeasure } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
+import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState, LoadingBar } from '@grafana/ui';
+import { useDelayedSwitch } from '@grafana/ui/internal';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -70,6 +72,8 @@ const UserListAdminPageUnConnected = ({
   isLoading,
 }: Props) => {
   const styles = useStyles2(getStyles);
+  const [loadingBarRef, { width }] = useMeasure<HTMLDivElement>();
+  const showLoading = useDelayedSwitch(isLoading, { delay: 250, duration: 750 });
 
   useEffect(() => {
     fetchUsers();
@@ -113,11 +117,20 @@ const UserListAdminPageUnConnected = ({
           )}
         </div>
       </div>
-      {!isLoading && users.length === 0 ? (
+      <div ref={loadingBarRef} style={{ height: 1 }}>
+        {showLoading && (
+          <LoadingBar
+            width={width}
+            delay={0}
+            ariaLabel={t('users.users-list-page.loading-users', 'Loading users...')}
+          />
+        )}
+      </div>
+      {!isLoading && !showLoading && users?.length === 0 ? (
         <EmptyState message={t('users.empty-state.message', 'No users found')} variant="not-found" />
       ) : (
         <UsersTable
-          users={users}
+          users={users || []}
           showPaging={showPaging}
           totalPages={totalPages}
           onChangePage={changePage}
