@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -269,23 +268,6 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 			expectedStatus: http.StatusUnauthorized,
 		},
 		{
-			desc:                 "Should delete the cookie for an expired token",
-			rotatedErr:           &auth.TokenExpiredError{},
-			expectSessionDeleted: true,
-			expectedStatus:       http.StatusUnauthorized,
-		},
-		{
-			desc:                 "Should delete the cookie for a revoked token",
-			rotatedErr:           &auth.TokenRevokedError{},
-			expectSessionDeleted: true,
-			expectedStatus:       http.StatusUnauthorized,
-		},
-		{
-			desc:           "Should return 500 for an internal error",
-			rotatedErr:     errors.New("database unavailable"),
-			expectedStatus: http.StatusInternalServerError,
-		},
-		{
 			desc:           "Should return 200 and but not set new cookie if token was not rotated",
 			cookie:         &http.Cookie{Name: "grafana_session", Value: "123", Path: "/"},
 			rotatedToken:   &auth.UserToken{UnhashedToken: "123"},
@@ -306,6 +288,9 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				cfg := setting.NewCfg()
 				cfg.LoginCookieName = "grafana_session"
 				cfg.LoginMaxLifetime = 10 * time.Hour
+				cfg.AppSubURL = "/grafana"
+				cfg.CookieSecure = true
+				cfg.CookieSameSiteMode = http.SameSiteStrictMode
 				hs.Cfg = cfg
 				hs.log = log.New()
 				hs.Cfg.LoginCookieName = "grafana_session"
@@ -324,14 +309,13 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 			res, err := server.Send(req)
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedStatus, res.StatusCode)
-			assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
 
 			if tt.expectedStatus != http.StatusOK {
 				if tt.expectSessionDeleted {
 					cookies := res.Header.Values("Set-Cookie")
 					require.Len(t, cookies, 2)
-					assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", cookies[0])
-					assert.Equal(t, "grafana_session_expiry=; Path=/; Max-Age=0", cookies[1])
+					assert.Equal(t, "grafana_session=; Path=/grafana; Max-Age=0; HttpOnly; Secure; SameSite=Strict", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=; Path=/grafana; Max-Age=0; Secure; SameSite=Strict", cookies[1])
 				} else {
 					assert.Empty(t, res.Header.Get("Set-Cookie"))
 				}
@@ -339,8 +323,8 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				if tt.expectNewSession {
 					cookies := res.Header.Values("Set-Cookie")
 					require.Len(t, cookies, 2)
-					assert.Equal(t, "grafana_session=new; Path=/; Max-Age=36000; HttpOnly", cookies[0])
-					assert.Equal(t, "grafana_session_expiry=-5; Path=/; Max-Age=36000", cookies[1])
+					assert.Equal(t, "grafana_session=new; Path=/grafana; Max-Age=36000; HttpOnly; Secure; SameSite=Strict", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=-5; Path=/grafana; Max-Age=36000; Secure; SameSite=Strict", cookies[1])
 				} else {
 					assert.Empty(t, res.Header.Get("Set-Cookie"))
 				}

@@ -3,21 +3,10 @@ package usertoken
 import (
 	"errors"
 	"fmt"
-	"net"
 	"time"
 )
 
-var (
-	ErrInvalidSessionToken = errors.New("invalid session token")
-	ErrUserTokenNotFound   = errors.New("user token not found")
-)
-
-type RotateCommand struct {
-	// token is the un-hashed token
-	UnHashedToken string
-	IP            net.IP
-	UserAgent     string
-}
+var ErrInvalidSessionToken = errors.New("invalid session token")
 
 type TokenRevokedError struct {
 	UserID                int64

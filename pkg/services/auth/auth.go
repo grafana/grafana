@@ -20,7 +20,7 @@ const (
 
 // Typed errors
 var (
-	ErrUserTokenNotFound            = usertoken.ErrUserTokenNotFound
+	ErrUserTokenNotFound            = errors.New("user token not found")
 	ErrInvalidSessionToken          = usertoken.ErrInvalidSessionToken
 	ErrExternalSessionNotFound      = errors.New("external session not found")
 	ErrExternalSessionTokenNotFound = errors.New("session token was nil")
@@ -29,7 +29,6 @@ var (
 type (
 	TokenRevokedError = usertoken.TokenRevokedError
 	UserToken         = usertoken.UserToken
-	RotateCommand     = usertoken.RotateCommand
 )
 
 // CreateTokenErr represents a token creation error; used in Enterprise
@@ -59,6 +58,13 @@ func (e *TokenExpiredError) Error() string {
 
 type RevokeAuthTokenCmd struct {
 	AuthTokenId int64 `json:"authTokenId"`
+}
+
+type RotateCommand struct {
+	// token is the un-hashed token
+	UnHashedToken string
+	IP            net.IP
+	UserAgent     string
 }
 
 type CreateTokenCommand struct {
