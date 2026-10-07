@@ -1,6 +1,5 @@
 import { render, screen } from '@testing-library/react';
 
-import { config } from '@grafana/runtime';
 import { AdHocFiltersVariable, CustomVariable, LocalValueVariable, SceneVariableSet } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';

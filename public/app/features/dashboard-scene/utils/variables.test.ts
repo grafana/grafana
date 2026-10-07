@@ -445,7 +445,7 @@ describe('when creating variables objects', () => {
       description: 'Adhoc Description',
       allowCustomValue: false,
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -467,6 +467,8 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
     });
   });
@@ -527,7 +529,7 @@ describe('when creating variables objects', () => {
       key: expect.any(String),
       description: 'Adhoc Description',
       applicabilityEnabled: false,
-      $behaviors: [expect.any(ReportInteractionBehavior)],
+      $behaviors: [expect.any(ReportInteractionBehavior), migrated.getRecommendations()],
       hide: 0,
       label: 'Adhoc Label',
       name: 'adhoc',
@@ -556,6 +558,8 @@ describe('when creating variables objects', () => {
       useQueriesAsFilterForOptions: true,
       supportsMultiValueOperators: false,
       enableGroupBy: false,
+      drilldownRecommendationsEnabled: true,
+      collapsible: true,
       layout: 'combobox',
     });
   });
@@ -611,6 +615,7 @@ describe('when creating variables objects', () => {
       expect(migrated).toBeInstanceOf(GroupByVariable);
       expect(groupbyVarState).toEqual({
         key: expect.any(String),
+        $behaviors: [migrated.getRecommendations()],
         description: 'GroupBy Description',
         applicabilityEnabled: false,
         hide: 0,
@@ -640,6 +645,7 @@ describe('when creating variables objects', () => {
         datasource: { uid: 'gdev-prometheus', type: 'prometheus' },
         applyMode: 'auto',
         allowCustomValue: true,
+        drilldownRecommendationsEnabled: true,
       });
     });
   });

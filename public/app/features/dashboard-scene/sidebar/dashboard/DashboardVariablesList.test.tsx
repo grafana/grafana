@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,

@@ -5,7 +5,6 @@ import {
   CoreApp,
   EventBusSrv,
   getDefaultTimeRange,
-  type GroupByVariableModel,
   LoadingState,
   type Scope,
   type VariableModel,
@@ -14,7 +13,6 @@ import { type BackendSrv, config, setBackendSrv } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
-  GroupByVariable,
   SceneDataNode,
   sceneGraph,
   SceneQueryRunner,
@@ -529,83 +527,58 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('getFiltersBasedOnGrouping', () => {
-    beforeAll(() => {
-      config.featureToggles.groupByVariable = true;
-    });
+    const filters: AdHocFilterItem[] = [
+      { key: 'container', value: 'container', operator: '=' },
+      { key: 'cluster', value: 'cluster', operator: '=' },
+      { key: 'cpu', value: 'cpu', operator: '=' },
+      { key: 'id', value: 'id', operator: '=' },
+    ];
 
-    afterAll(() => {
-      config.featureToggles.groupByVariable = false;
-    });
+    function setupGrouping(adhocState: Partial<AdHocFiltersVariable['state']>) {
+      const { scene, context } = buildTestScene({ existingFilterVariable: true });
+      const adhoc = sceneGraph.getVariables(scene).state.variables.find((v) => v instanceof AdHocFiltersVariable);
+      adhoc?.setState(adhocState);
+      return context;
+    }
 
     it('should return filters based on grouping', () => {
-      const { scene, context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+      const context = setupGrouping({
+        enableGroupBy: true,
+        filters: [
+          { key: 'container', operator: 'groupBy', value: '' },
+          { key: 'cluster', operator: 'groupBy', value: '' },
+        ],
+      });
 
-      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
-
-      groupBy?.changeValueTo(['container', 'cluster']);
-
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([
         { key: 'container', value: 'container', operator: '=' },
         { key: 'cluster', value: 'cluster', operator: '=' },
       ]);
     });
 
     it('should return empty filters if there is no groupBy selection', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: true });
+      const context = setupGrouping({ enableGroupBy: true, filters: [] });
 
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
     });
 
-    it('should return empty filters if there is no groupBy variable', () => {
-      const { context } = buildTestScene({ existingFilterVariable: true, existingGroupByVariable: false });
-
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
-    });
-
-    it('should return empty filters if panel and groupBy ds differs', () => {
-      const { scene, context } = buildTestScene({
-        existingFilterVariable: true,
-        existingGroupByVariable: true,
-        groupByDatasourceUid: 'different-ds',
+    it('should return empty filters if group by is not enabled on the filters variable', () => {
+      const context = setupGrouping({
+        enableGroupBy: false,
+        filters: [{ key: 'container', operator: 'groupBy', value: '' }],
       });
 
-      const groupBy = sceneGraph.getVariables(scene).state.variables.find((f) => f instanceof GroupByVariable);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
+    });
 
-      groupBy?.changeValueTo(['container', 'cluster']);
+    it('should return empty filters if panel and filters variable ds differs', () => {
+      const context = setupGrouping({
+        enableGroupBy: true,
+        datasource: { uid: 'different-ds', type: 'prometheus' },
+        filters: [{ key: 'container', operator: 'groupBy', value: '' }],
+      });
 
-      const filters: AdHocFilterItem[] = [
-        { key: 'container', value: 'container', operator: '=' },
-        { key: 'cluster', value: 'cluster', operator: '=' },
-        { key: 'cpu', value: 'cpu', operator: '=' },
-        { key: 'id', value: 'id', operator: '=' },
-      ];
-
-      const result = context.getFiltersBasedOnGrouping?.(filters);
-      expect(result).toEqual([]);
+      expect(context.getFiltersBasedOnGrouping?.(filters)).toEqual([]);
     });
   });
 
@@ -964,8 +937,6 @@ interface SceneOptions {
   canEdit?: boolean;
   canDelete?: boolean;
   existingFilterVariable?: boolean;
-  existingGroupByVariable?: boolean;
-  groupByDatasourceUid?: string;
   panelDatasourceUndefined?: boolean;
 }
 
@@ -978,14 +949,6 @@ function buildTestScene(options: SceneOptions) {
       name: 'Filters',
       datasource: { uid: 'my-ds-uid' },
     } as AdHocVariableModel);
-  }
-
-  if (options.existingGroupByVariable) {
-    varList.push({
-      type: 'groupby',
-      name: 'Group By',
-      datasource: { uid: options.groupByDatasourceUid ?? 'my-ds-uid', type: 'prometheus' },
-    } as GroupByVariableModel);
   }
 
   const scene = transformSaveModelToScene({

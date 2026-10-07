@@ -4,7 +4,7 @@ import {
   LoadingState,
   type TypedVariableModel,
 } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import type { AdhocVariableKind, GroupByVariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 
 import { migrateGroupByVariablesV1, migrateGroupByVariablesV2 } from './groupByMigration';
