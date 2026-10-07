@@ -57,13 +57,9 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
         {messages.map((item) => (
           <ErrorValue key={`message-${item.key}`} item={item} variant="message" />
         ))}
-        {other.length > 0 && (
-          <div className={styles.otherFields}>
-            {other.map((item) => (
-              <ErrorValue key={`other-${item.key}`} item={item} variant="other" />
-            ))}
-          </div>
-        )}
+        {other.map((item) => (
+          <ErrorValue key={`other-${item.key}`} item={item} variant="message" />
+        ))}
         {stacktraces.map((item) => (
           <StacktraceValue key={`stacktrace-${item.key}`} item={item} />
         ))}
@@ -151,8 +147,8 @@ type ErrorAttributeVariant = 'message' | 'stacktrace' | 'other';
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   container: css({
-    background: theme.colors.error.transparent,
-    border: `1px solid ${theme.colors.error.border}`,
+    background: theme.colors.background.primary,
+    borderLeft: `2px solid ${theme.colors.error.border}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
   }),
@@ -182,7 +178,7 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
 
 const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant: ErrorAttributeVariant) => {
   const actions = css({
-    background: variant === 'stacktrace' ? theme.colors.background.secondary : theme.colors.background.primary,
+    background: variant === 'stacktrace' ? theme.colors.background.canvas : theme.colors.background.primary,
     position: 'absolute',
     top: variant === 'stacktrace' ? theme.spacing(0.5) : 0,
     right: variant === 'stacktrace' ? theme.spacing(0.5) : 0,
@@ -237,7 +233,7 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
     valueContent: css({
       whiteSpace: 'pre-wrap',
       wordBreak: 'break-word',
-      maxHeight: variant === 'stacktrace' ? '40vh' : '50vh',
+      maxHeight: variant === 'stacktrace' ? theme.spacing(30) : '50vh',
       overflow: 'auto',
       ...(variant === 'message'
         ? {
@@ -249,11 +245,11 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
         ? {
             fontFamily: theme.typography.fontFamilyMonospace,
             fontSize: theme.typography.bodySmall.fontSize,
-            background: theme.colors.background.secondary,
+            background: theme.colors.background.canvas,
             border: `1px solid ${theme.colors.border.medium}`,
-            borderLeft: `3px solid ${theme.colors.error.border}`,
             borderRadius: theme.shape.radius.default,
             padding: theme.spacing(1),
+            margin: theme.spacing(1),
           }
         : {}),
     }),
