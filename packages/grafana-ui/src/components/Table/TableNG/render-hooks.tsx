@@ -23,6 +23,7 @@ import {
   formattedValueToString,
   type TimeRange,
 } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import {
   Cell,
   type CellRendererProps,
@@ -45,6 +46,7 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
+import { TableWarnings } from './components/TableWarnings';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
   getCellActionStyles,
@@ -69,6 +71,7 @@ import {
   type TableSummaryRow,
   type TypographyCtx,
   type TextWrapFallback,
+  type TableWarning,
 } from './types';
 import {
   type ApplyFilterResult,
@@ -352,6 +355,16 @@ function buildColumnsFromFields(
     const CellType = getCellRenderer(field, cellOptions);
 
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
+    const fieldWarnings: TableWarning[] = [];
+    if (wrappingDisabled) {
+      fieldWarnings.push({
+        id: 'wrapping-disabled',
+        message: t(
+          'grafana-ui.table.wrapping-disabled-warning',
+          'Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content.'
+        ),
+      });
+    }
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
     const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
@@ -462,11 +475,22 @@ function buildColumnsFromFields(
       const rowIdx = props.row.__index;
       const value = props.row[props.column.key];
       // Only rendered text cells need this check; fixed-height tables still avoid scanning values.
-      const inspect =
-        cellInspect ||
-        (isTextCell &&
-          (field.display ? formattedValueToString(field.display(value)) : String(value ?? '')).length >
-            TABLE.MAX_WRAP_TEXT_LENGTH);
+      const oversized =
+        isTextCell &&
+        (!cellInspect || (hoverOverflow && shouldOverflow)) &&
+        (field.display ? formattedValueToString(field.display(value)) : String(value ?? '')).length >
+          TABLE.MAX_WRAP_TEXT_LENGTH;
+      const inspect = cellInspect || oversized;
+      const cellWarnings: TableWarning[] = [];
+      if (hoverOverflow && shouldOverflow && oversized) {
+        cellWarnings.push({
+          id: 'hover-expansion-disabled',
+          message: t(
+            'grafana-ui.table.hover-expansion-disabled-warning',
+            'Content is too long to expand on hover. Use Inspect value to view the full content.'
+          ),
+        });
+      }
       // TODO: it would be nice to get rid of passing height down as a prop. but this value
       // is cached so the cost of calling for every cell is low.
       // NOTE: some cell types still require a height to be passed down, so that's why string-based
@@ -492,6 +516,14 @@ function buildColumnsFromFields(
             jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
+          {cellWarnings.length > 0 && (
+            <TableWarnings
+              warnings={cellWarnings}
+              scope="cell"
+              alignRight={textAlign === 'right'}
+              offset={Boolean(field.config.custom?.tooltip?.field)}
+            />
+          )}
           {(inspect || showFilters || showAssistant) && (
             <TableCellActions
               tableRefreshEnabled={tableRefreshEnabled}
@@ -613,6 +645,7 @@ function buildColumnsFromFields(
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell
+          warnings={fieldWarnings}
           column={column}
           rows={rawRows}
           field={field}

@@ -293,6 +293,11 @@ export interface PillCellProps {
   getTextColorForBackground: (color: string) => string;
 }
 
+export interface TableWarning {
+  id: string;
+  message: string;
+}
+
 export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;

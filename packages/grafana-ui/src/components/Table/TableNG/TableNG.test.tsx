@@ -2483,6 +2483,59 @@ describe('TableNG', () => {
 
   describe('Text wrapping', () => {
     const inspectButton = selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton;
+    it('explains oversized hover suppression only when hover expansion is enabled', async () => {
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['x'.repeat(10_000), 'x'.repeat(10_001)],
+              config: { custom: { wrapText: false, width: 300 } },
+            },
+          ],
+        })
+      );
+      const { rerender } = render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      expect(warning.closest('[role="gridcell"]')).not.toHaveClass(OVERFLOW_CELL_CLASS);
+      expect(screen.getByText('x'.repeat(10_000)).closest('[role="gridcell"]')).toHaveClass(OVERFLOW_CELL_CLASS);
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Content is too long to expand on hover. Use Inspect value to view the full content.'
+      );
+      rerender(<TableNG data={data} width={800} height={600} hoverOverflow={false} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+    });
+
+    it('explains column wrapping fallback in the header and clears it for new data', async () => {
+      const makeData = (value: string) =>
+        withFieldOverrides(
+          toDataFrame({
+            fields: [
+              {
+                name: 'message',
+                type: FieldType.string,
+                values: ['short', value],
+                config: { custom: { wrapText: true, width: 300 } },
+              },
+            ],
+          })
+        );
+      const { rerender } = render(<TableNG data={makeData('x'.repeat(10_001))} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Field warnings' });
+      expect(warning.closest('[role="columnheader"]')).toHaveTextContent('message');
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent(
+        'Text wrapping is disabled for this column because a value is too long. Use Inspect value to view the full content.'
+      );
+      expect(screen.queryByRole('button', { name: 'Cell warnings' })).not.toBeInTheDocument();
+      rerender(<TableNG data={makeData('replacement')} width={800} height={600} />);
+      expect(screen.getByText('replacement')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Field warnings' })).not.toBeInTheDocument();
+    });
+
     it.each([false, true])(
       'offers Inspect for oversized non-wrapping cells with hoverOverflow=%s',
       async (hoverOverflow) => {
@@ -2514,6 +2567,21 @@ describe('TableNG', () => {
       await user.click(screen.getByTestId(inspectButton));
       await user.click(screen.getByRole('tab', { name: 'Plain text' }));
       expect(screen.getByRole('dialog')).toHaveTextContent('x'.repeat(10_000));
+    });
+
+    it('keeps JSON cell warnings and configured tooltips independently accessible', async () => {
+      const data = createJsonDataFrame(false);
+      data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      data.fields[1].config.custom.tooltip = { field: data.fields[0].name };
+      render(<TableNG data={data} width={800} height={600} />);
+      const warning = screen.getByRole('button', { name: 'Cell warnings' });
+      const cell = within(warning.closest('[role="gridcell"]') as HTMLElement);
+      expect(cell.getByRole('button', { name: 'Toggle tooltip' })).toBeInTheDocument();
+      await user.hover(warning);
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Content is too long to expand on hover.');
+      await user.unhover(warning);
+      await user.click(cell.getByRole('button', { name: 'Toggle tooltip' }));
+      expect(cell.getByRole('button', { name: 'Toggle tooltip' })).toHaveAttribute('aria-pressed', 'true');
     });
 
     it('gives clipped text an ellipsis container without changing its value', () => {
@@ -2655,6 +2723,7 @@ describe('TableNG', () => {
 
       await user.click(screen.getByRole('button', { name: /next page/i }));
       expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Field warnings' })).toBeInTheDocument();
       expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(1, 34px)');
     });
 

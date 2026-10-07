@@ -33,6 +33,36 @@ const baseProps = {
 };
 
 describe('HeaderCell', () => {
+  it.each([false, true])(
+    'keeps warning interactions separate from sorting with tableRefreshEnabled=%s',
+    async (tableRefreshEnabled) => {
+      const user = userEvent.setup();
+      const onSort = jest.fn();
+      const selectFirstCell = jest.fn();
+      render(
+        <div role="row">
+          <div role="columnheader" onClick={onSort}>
+            <HeaderCell
+              {...baseProps}
+              field={makeField()}
+              tableRefreshEnabled={tableRefreshEnabled}
+              selectFirstCell={selectFirstCell}
+              warnings={[{ id: 'wrapping', message: 'Wrapping is disabled.' }]}
+            />
+          </div>
+        </div>
+      );
+      await user.click(screen.getByRole('button', { name: 'Field warnings' }));
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Wrapping is disabled.');
+      expect(onSort).not.toHaveBeenCalled();
+      await user.tab();
+      expect(screen.getByRole('button', { name: 'Field1' })).toHaveFocus();
+      expect(selectFirstCell).not.toHaveBeenCalled();
+      await user.tab();
+      expect(selectFirstCell).toHaveBeenCalledTimes(1);
+    }
+  );
+
   it('renders the display name', () => {
     render(<HeaderCell {...baseProps} field={makeField()} />);
     expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
