@@ -26,6 +26,10 @@ export function useTrackNotebookVisitForFeedback() {
 
       await userStorage.setItem(VISIT_COUNT_KEY, String(count));
 
+      if (cancelled) {
+        return;
+      }
+
       if (count % FEEDBACK_INTERVAL === 0) {
         appEvents.publish(new NotebooksFeedbackEvent());
       }

@@ -73,4 +73,27 @@ describe('useTrackNotebookVisitForFeedback', () => {
     await waitFor(() => expect(mockSetItem).toHaveBeenCalledWith('feedback-toast-visit-count', '1'));
     expect(mockPublish).not.toHaveBeenCalled();
   });
+
+  it('does not publish the feedback event if the component unmounts before setItem resolves', async () => {
+    mockGetItem.mockResolvedValue('4');
+    let resolveSetItem: () => void = () => {};
+    mockSetItem.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveSetItem = resolve;
+        })
+    );
+
+    const { unmount } = renderHook(() => useTrackNotebookVisitForFeedback());
+
+    await waitFor(() => expect(mockSetItem).toHaveBeenCalledWith('feedback-toast-visit-count', '5'));
+
+    unmount();
+    resolveSetItem();
+    // Flush the microtask queue so the async effect body resumes past the resolved setItem call.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(mockPublish).not.toHaveBeenCalled();
+  });
 });
