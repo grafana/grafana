@@ -449,8 +449,8 @@ Positions are panel pixels from the top left corner.
 
 A panel scrolled out of view does not draw and reports `paused: true`. A Custom panel that is not
 rendered at all (an inactive tab, a collapsed row, or not reached yet by lazy loading) has no
-report; the command returns it as `not-mounted` with a reason. `reveal` brings one panel into view
-and `waitMs` waits for its draw. Each repeat of a repeated panel reports on its own, with its scene
+report; the command returns it as `not-mounted` with a reason. `waitMs` waits for the drawings to
+settle. Each repeat of a repeated panel reports on its own, with its scene
 key as `instanceKey`.
 
 ## Landing tab

@@ -708,7 +708,7 @@ Each entry uses the same `{ element, layoutItem }` shape as write commands. The 
 
 Read the last draw result of panels that report one. Today that is the Custom panel, whose drawing
 runs in a sandboxed frame that the DOM, `LIST_PANELS` and browser-side screenshots cannot see into.
-It never changes the dashboard; `reveal` changes only what is in view.
+It never changes the dashboard or what is in view.
 
 **Request:**
 
@@ -729,12 +729,9 @@ It never changes the dashboard; `reveal` changes only what is in view.
   its box) and `overlaps` (text drawn over other text), each with an exact `count` and at most 5
   `samples`. A panel that cannot measure itself returns `layoutError` instead. Diagnostics only;
   see "Layout report" in the Custom panel README for the fields.
-- `reveal` (optional, default `false`): bring the one requested panel into view first, switching
-  to its tab, expanding its row and scrolling to it, so it mounts and draws. Requires exactly one
-  element.
 - `waitMs` (optional, default `0`, at most `15000`): wait up to this long for the requested Custom
   panels to settle (`drawn` with `final: true`, or `error`) before answering. A panel out of view
-  counts as settled unless it was just revealed.
+  counts as settled.
 
 **Response:**
 
@@ -764,11 +761,11 @@ It never changes the dashboard; `reveal` changes only what is in view.
   failed, or the panel could not draw at all: unsupported API version, code too large, data over
   the limits) or `not-mounted` (a Custom panel that is not rendered right now, so it has no draw;
   `reason` is `inactive-tab`, `collapsed-row`, `no-code` or `not-rendered`, the last for a panel
-  that lazy loading has not reached yet). Pass `reveal` to bring it into view.
+  that lazy loading has not reached yet). It draws once it is in view.
 - `final`: the drawn data will not change (`Done`, `Error` or `PartialResult`) and the draw is of
   the latest input. Wait for `final: true` or `state: "error"` before judging a drawing.
 - `paused`: `true` while the panel is scrolled out of view. It does not draw until it is in view
-  again, so a `pending` panel that is paused will stay pending; use `reveal`.
+  again, so a `pending` panel that is paused stays pending until it is scrolled into view.
 - `instanceKey`: the scene key of the mounted panel. A repeated panel returns one entry per
   repeat, all with the same `element` and each with its own `instanceKey`.
 - `digest`: for the Custom panel, FNV-1a 32-bit over the UTF-16 code units of `options.code`, as

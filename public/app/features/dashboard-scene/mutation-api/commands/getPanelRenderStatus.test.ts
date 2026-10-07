@@ -9,11 +9,6 @@ jest.mock('../../utils/utils-panels', () => ({
   getPanelIdForVizPanel: (panel: { state: { id: number } }) => panel.state.id,
 }));
 
-const mockFocusVizPanel = jest.fn();
-jest.mock('../../utils/focusPanel', () => ({
-  focusVizPanel: (...args: unknown[]) => mockFocusVizPanel(...args),
-}));
-
 function buildScene(panelIds: number[], pluginId = 'timeseries', code = ''): DashboardScene {
   const panels = panelIds.map((id) => ({ state: { id, pluginId, options: { code } } }));
   return {
@@ -146,7 +141,7 @@ describe('GET_PANEL_RENDER_STATUS', () => {
       expect.objectContaining({ element: 'panel-5', state: 'not-mounted', reason: 'not-rendered', final: false }),
     ]);
     expect(result.warnings).toEqual([
-      'These Custom panels are not rendered right now, so they have not drawn: panel-5. Pass reveal with one of them to bring it into view.',
+      'These Custom panels are not rendered right now, so they have not drawn: panel-5. They draw once they are in view: their tab selected, their row expanded.',
     ]);
   });
 
@@ -174,17 +169,14 @@ describe('GET_PANEL_RENDER_STATUS', () => {
     });
   });
 
-  it('reveals exactly one panel and waits for its draw to settle', async () => {
+  it('waits for the requested drawing to settle', async () => {
     const reporter = register(2);
     setTimeout(() => reporter.report({ state: 'drawn', final: true }), 50);
     const scene = buildScene([2], 'custom-panel', 'panel.onRender(() => {})');
 
-    const result = await run({ elements: ['panel-2'], reveal: true, waitMs: 2000 }, scene);
+    const result = await run({ elements: ['panel-2'], waitMs: 2000 }, scene);
 
-    expect(mockFocusVizPanel).toHaveBeenCalledTimes(1);
     expect((result.data as { panels: Array<Record<string, unknown>> }).panels[0].state).toBe('drawn');
-    const refused = await run({ reveal: true }, scene);
-    expect(refused.success).toBe(false);
   });
 
   it('stops adding images once the response reaches its image budget', async () => {

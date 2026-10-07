@@ -6,9 +6,8 @@
  * sandboxed frame that neither the DOM nor a browser-side screenshot can see into. With
  * includeImage, each reporting panel that can capture itself also returns a PNG data URL of its
  * drawing; with includeData, the shape of the data the drawing received; with includeLayout, a
- * report of content that spills out, is cut or is drawn over other text. reveal brings one panel
- * into view first (switching tabs, expanding rows, scrolling), which changes the view but not the
- * dashboard, and waitMs waits for its drawing to settle. No permissions required.
+ * report of content that spills out, is cut or is drawn over other text. waitMs waits for the
+ * drawings to settle. No permissions required.
  */
 
 import type * as z from 'zod';
@@ -26,7 +25,6 @@ import {
 
 import { RowItem } from '../../scene/layout-rows/RowItem';
 import { TabItem } from '../../scene/layout-tabs/TabItem';
-import { focusVizPanel } from '../../utils/focusPanel';
 import { getPanelIdForVizPanel } from '../../utils/utils-panels';
 
 import { MAX_RENDER_STATUS_IMAGE_CHARS, MAX_RENDER_STATUS_IMAGES, payloads } from './schemas';
@@ -67,13 +65,6 @@ export const getPanelRenderStatusCommand: MutationCommand<GetPanelRenderStatusPa
 
     try {
       const requested = payload.elements ? new Set(payload.elements) : undefined;
-      if (payload.reveal && requested?.size !== 1) {
-        return {
-          success: false,
-          error: 'reveal brings one panel into view: pass exactly one element.',
-          changes: [],
-        };
-      }
 
       const targets: Array<{ element: string; panelId: number; vizPanel: VizPanel }> = [];
       for (const vizPanel of scene.state.body.getVizPanels()) {
@@ -84,15 +75,11 @@ export const getPanelRenderStatusCommand: MutationCommand<GetPanelRenderStatusPa
         }
       }
 
-      if (payload.reveal && targets[0]) {
-        focusVizPanel(targets[0].vizPanel);
-      }
       if (payload.waitMs > 0) {
         const drawing = targets.filter(({ vizPanel }) => isCustomPanel(vizPanel) && hasCode(vizPanel));
         await waitUntilSettled(
           drawing.map((target) => target.panelId),
-          payload.waitMs,
-          payload.reveal === true
+          payload.waitMs
         );
       }
 
@@ -149,7 +136,7 @@ export const getPanelRenderStatusCommand: MutationCommand<GetPanelRenderStatusPa
       if (notMounted.length > 0) {
         warnings.push(
           `These Custom panels are not rendered right now, so they have not drawn: ${notMounted.join(', ')}. ` +
-            'Pass reveal with one of them to bring it into view.'
+            'They draw once they are in view: their tab selected, their row expanded.'
         );
       }
 
@@ -229,17 +216,15 @@ function isSettled(status: PanelRenderStatus): boolean {
 
 /**
  * Waits until every panel among panelIds has settled, or the time is up. A panel that does not
- * report yet (still mounting after a reveal) counts as unsettled until it does. A panel out of view
- * does not draw, so it counts as settled, unless it was just revealed and is coming into view.
+ * report yet (still mounting) counts as unsettled until it does. A panel out of view does not draw,
+ * so it counts as settled.
  */
-async function waitUntilSettled(panelIds: number[], waitMs: number, revealed: boolean): Promise<void> {
+async function waitUntilSettled(panelIds: number[], waitMs: number): Promise<void> {
   const deadline = Date.now() + waitMs;
   const settled = () =>
     panelIds.every((panelId) => {
       const statuses = getPanelRenderStatuses(panelId);
-      return (
-        statuses.length > 0 && statuses.every((status) => isSettled(status) || (!revealed && status.paused === true))
-      );
+      return statuses.length > 0 && statuses.every((status) => isSettled(status) || status.paused === true);
     });
   while (!settled() && Date.now() < deadline) {
     await new Promise((resolve) => setTimeout(resolve, WAIT_POLL_MS));
