@@ -49,25 +49,22 @@ function toRow(item: PickUpItem, navTree: NavModelItem[], foldersByUid: Record<s
         details: [item.state],
         badge: { text: t('home.pick-up-tab.kind-explore', 'Explore'), color: 'orange' },
       };
-    case 'investigation':
-      return {
-        title: item.title ?? t('home.pick-up-tab.investigation', 'Investigation {{id}}', { id: item.id.slice(0, 8) }),
-        details: [getNavTitle(navTree, `/a/${item.pluginId}`) ?? item.pluginId],
-        badge: { text: t('home.pick-up-tab.kind-investigation', 'Investigation'), color: 'purple' },
-      };
-    // Rows recorded before titles were captured fall back to the nav label, then the path.
     case 'alerting':
+    case 'app': {
+      // Pages in the nav tree use their nav label. Deep links use the title the page set, which
+      // often is just the section's ("Incidents" for every incident), so the path tells them apart.
+      const navTitle = getNavTitle(navTree, pathname);
+      const title = navTitle ?? item.title ?? pathname;
+      const path = navTitle || title === pathname ? undefined : pathname;
       return {
-        title: item.title ?? getNavTitle(navTree, pathname) ?? pathname,
-        details: [describeAppState(search)],
-        badge: { text: t('home.pick-up-tab.kind-alerting', 'Alerting'), color: 'red' },
+        title,
+        details: [path, describeAppState(search)],
+        badge:
+          item.kind === 'alerting'
+            ? { text: t('home.pick-up-tab.kind-alerting', 'Alerting'), color: 'red' }
+            : { text: t('home.pick-up-tab.kind-app', 'App'), color: 'darkgrey' },
       };
-    case 'app':
-      return {
-        title: item.title ?? getNavTitle(navTree, pathname) ?? pathname,
-        details: [describeAppState(search)],
-        badge: { text: t('home.pick-up-tab.kind-app', 'App'), color: 'darkgrey' },
-      };
+    }
   }
 }
 

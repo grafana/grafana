@@ -7,7 +7,7 @@ import { VARIABLE_PREFIX } from 'app/features/variables/constants';
 
 export const SEPARATOR = ' · ';
 /** Rendered through the time range (or not meaningful to show) rather than as `key=value`. */
-const HIDDEN_PARAMS = ['from', 'to', 'orgId', 'timezone', 'schemaVersion'];
+const HIDDEN_PARAMS = ['from', 'to', 'orgId', 'timezone', 'schemaVersion', 'returnTo'];
 /** Datasource-specific query text fields, most common first (Prometheus/Loki, Elastic/Tempo, SQL, Graphite, CloudWatch). */
 const QUERY_TEXT_FIELDS = ['expr', 'query', 'rawSql', 'target', 'expression'] as const;
 

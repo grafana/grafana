@@ -158,8 +158,8 @@ describe('PageHistorySrv', () => {
     const srv = startAt('/');
     await srv.getEntries();
 
-    locationService.push('/a/grafana-ml-app/investigations/123?x=1');
-    locationService.push('/a/grafana-ml-app/investigations');
+    locationService.push('/a/grafana-irm-app/incidents/5987?x=1');
+    locationService.push('/a/grafana-irm-app/incidents');
     locationService.push('/alerting/list?search=x');
     locationService.push('/dashboards');
 
@@ -167,15 +167,14 @@ describe('PageHistorySrv', () => {
       { kind: 'alerting', pathname: '/alerting/list', href: '/alerting/list?search=x', lastVisited: T0 },
       {
         kind: 'app',
-        pathname: '/a/grafana-ml-app/investigations',
-        href: '/a/grafana-ml-app/investigations',
+        pathname: '/a/grafana-irm-app/incidents',
+        href: '/a/grafana-irm-app/incidents',
         lastVisited: T0,
       },
       {
-        kind: 'investigation',
-        pluginId: 'grafana-ml-app',
-        id: '123',
-        href: '/a/grafana-ml-app/investigations/123?x=1',
+        kind: 'app',
+        pathname: '/a/grafana-irm-app/incidents/5987',
+        href: '/a/grafana-irm-app/incidents/5987?x=1',
         lastVisited: T0,
       },
     ]);

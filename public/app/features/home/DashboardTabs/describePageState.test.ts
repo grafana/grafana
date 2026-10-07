@@ -36,7 +36,9 @@ describe('describeDashboardState', () => {
 
 describe('describeAppState', () => {
   it('shows every filter except the hidden plumbing params', () => {
-    expect(describeAppState('?orgId=1&search=state:firing&view=list')).toBe('search=state:firing · view=list');
+    expect(describeAppState('?orgId=1&search=state:firing&view=list&returnTo=%2Falerting%2Flist')).toBe(
+      'search=state:firing · view=list'
+    );
   });
 
   it('puts the time range and variables before the other filters', () => {

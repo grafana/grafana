@@ -421,12 +421,13 @@ describe('DashboardTabs', () => {
       href: '/alerting/list?search=firing',
       lastVisited: Date.now() - 30_000,
     };
+    // A detail page whose chrome title is just the section's; the path has to tell it apart.
     const appEntry: PageHistoryEntry = {
       kind: 'app',
-      pathname: '/a/grafana-k8s-app/clusters',
-      href: '/a/grafana-k8s-app/clusters?cluster=prod',
+      pathname: '/a/grafana-irm-app/incidents/5987',
+      href: '/a/grafana-irm-app/incidents/5987?tab=timeline',
       lastVisited: Date.now() - 10_000,
-      title: 'Clusters',
+      title: 'Incidents',
     };
     const navBarTree = [
       { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },
@@ -466,7 +467,7 @@ describe('DashboardTabs', () => {
 
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
-        '/a/grafana-k8s-app/clusters?cluster=prod',
+        '/a/grafana-irm-app/incidents/5987?tab=timeline',
         exploreHref,
         '/d/recent-1/x?from=now-90d&to=now&var-Plugin=finnhub',
         '/alerting/list?search=firing',
@@ -475,9 +476,12 @@ describe('DashboardTabs', () => {
       const dashboardLink = screen.getByRole('link', { name: /Recent Dashboard 1/ });
       expect(dashboardLink).toHaveTextContent('Last 90 days · Plugin=finnhub');
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
-      // A captured page title wins; rows without one use the nav label for an exact url match.
+      // Nav-tree pages use the nav label alone; deep links show the page's own title with the path under it.
       expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
-      expect(screen.getByRole('link', { name: /^Clusters/ })).toHaveTextContent('cluster=prod');
+      expect(screen.getByRole('link', { name: /Alert rules/ })).not.toHaveTextContent('/alerting/list');
+      expect(screen.getByRole('link', { name: /^Incidents/ })).toHaveTextContent(
+        '/a/grafana-irm-app/incidents/5987 · tab=timeline'
+      );
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Alerting')).toBeInTheDocument();

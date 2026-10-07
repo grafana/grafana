@@ -11296,12 +11296,10 @@
     "pick-up-tab": {
       "empty": "Nothing to pick up yet. Pages you visit will show up here.",
       "error-title": "Could not load your recent activity",
-      "investigation": "Investigation {{id}}",
       "kind-alerting": "Alerting",
       "kind-app": "App",
       "kind-dashboard": "Dashboard",
       "kind-explore": "Explore",
-      "kind-investigation": "Investigation",
       "loading": "Loading your recent activity..."
     },
     "recent-dashboards-tab": {

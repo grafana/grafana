@@ -2,7 +2,6 @@
 export type PageIdentity =
   | { kind: 'dashboard'; uid: string }
   | { kind: 'explore' }
-  | { kind: 'investigation'; pluginId: string; id: string }
   | { kind: 'alerting'; pathname: string }
   | { kind: 'app'; pathname: string };
 

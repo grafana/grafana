@@ -15,7 +15,7 @@ type EntryOf<K extends PageHistoryKind> = Extract<PageHistoryEntry, { kind: K }>
 export type PickUpItem =
   | (EntryOf<'dashboard'> & { dashboard: DashboardQueryResult })
   | (EntryOf<'explore'> & { state: string })
-  | EntryOf<'investigation' | 'alerting' | 'app'>;
+  | EntryOf<'alerting' | 'app'>;
 
 /** Rows that made the cut; Explore rows still need their state described. */
 type VisibleEntry = Exclude<PickUpItem, { kind: 'explore' }> | EntryOf<'explore'>;
