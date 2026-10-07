@@ -1,8 +1,12 @@
 import { type DashboardScene } from '../../scene/DashboardScene';
-import { DashboardBatchEditActionEndEvent, DashboardBatchEditActionStartEvent } from '../../sidebar/events';
+import {
+  type DashboardActionMeta,
+  DashboardBatchEditActionEndEvent,
+  DashboardBatchEditActionStartEvent,
+} from '../../sidebar/events';
 
-export function startBatch(dashboard: DashboardScene, description: string) {
-  dashboard.publishEvent(new DashboardBatchEditActionStartEvent({ source: dashboard, description }), true);
+export function startBatch(dashboard: DashboardScene, description: string, meta: DashboardActionMeta) {
+  dashboard.publishEvent(new DashboardBatchEditActionStartEvent({ source: dashboard, description, meta }), true);
 }
 
 export function endBatch(dashboard: DashboardScene) {

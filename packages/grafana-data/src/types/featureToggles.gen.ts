@@ -806,11 +806,6 @@ export interface FeatureToggles {
   */
   alertingMigrationUI?: boolean;
   /**
-  * Enables a UI feature for importing rules from a Prometheus file to Grafana-managed rules
-  * @default true
-  */
-  alertingImportYAMLUI?: boolean;
-  /**
   * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
   * @default false
   */
@@ -1206,6 +1201,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersRedirectNoFallback?: boolean;
+  /**
+  * Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value
+  * @default false
+  */
+  kubernetesUsersDeterministicUID?: boolean;
   /**
   * Enables auth info APIs in the app platform
   * @default false

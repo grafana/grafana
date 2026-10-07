@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,18 +25,15 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -77,8 +75,8 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
-	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
-	require.Contains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+	require.NotContains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
 }
 
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
@@ -237,17 +235,17 @@ var errStubRoute = errors.New("the stub plugin client was called")
 
 type stubClientV3 struct{}
 
-var _ v3.ClientV3 = stubClientV3{}
+var _ appclientv3.Client = stubClientV3{}
 
-func (stubClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (stubClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	return nil, errStubRoute
 }
 
-func (stubClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (stubClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	return nil, errStubRoute
 }
 
-func (stubClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest, ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
+func (stubClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
 	return nil, errStubRoute
 }
 
@@ -467,7 +465,7 @@ type admissionClient struct {
 	review *pluginv3.AdmissionReviewRequest
 }
 
-func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest, _ ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	c.review = req
 	return &pluginv3.AdmissionReviewResponse{}, nil
 }
@@ -489,6 +487,14 @@ func TestHandlerLegacySettings(t *testing.T) {
 				}})
 			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
 			handler := withRequester(loadHandler(t, plugin, opts))
+			if withManifest {
+				for _, version := range group.Versions {
+					res := httptest.NewRecorder()
+					handler.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance", nil))
+					require.Equal(t, http.StatusNotFound, res.Code)
+				}
+				return
+			}
 			for _, version := range group.Versions {
 				var settings apppluginV0.Settings
 				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)

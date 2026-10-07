@@ -446,10 +446,12 @@ func (rc *RepositoryController) handleDelete(ctx context.Context, obj *provision
 	var pendingSeconds int64
 	if ts := obj.GetDeletionTimestamp(); ts != nil {
 		age := time.Since(ts.Time)
-		rc.deletionMetrics.observePending(age)
 		if age > 0 {
 			pendingSeconds = int64(age.Seconds())
 		}
+		// Observe before finalizers run so a hung finalizer cannot hide the
+		// pending age. The cause was persisted by the previous failed reconcile.
+		rc.deletionMetrics.observePending(age, deletionErrorCause(obj))
 	}
 	logger.Info("handle repository delete",
 		"pendingSeconds", pendingSeconds,
@@ -550,6 +552,7 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	deletion := &provisioning.DeletionStatus{
 		State:   provisioning.DeletionStateBlocked,
 		Message: err.Error(),
+		Cause:   provisioning.DeletionCause(classifyTokenErrorCause(err)),
 	}
 	var fe *finalizerError
 	if errors.As(err, &fe) {
@@ -559,8 +562,29 @@ func buildDeletionStatus(err error) *provisioning.DeletionStatus {
 	if errors.As(err, &folderErr) {
 		// nonEmptyFolderError is ready for users; omit internal operation prefixes.
 		deletion.Message = folderErr.Error()
+		deletion.Cause = provisioning.DeletionCauseUser
 	}
 	return deletion
+}
+
+// deletionErrorCause prefers the structured cause because the legacy DeleteError
+// is set for both user and system failures. Unclassified failures default to
+// "system" until a failed reconcile persists their cause.
+func deletionErrorCause(obj *provisioning.Repository) string {
+	if deletion := obj.Status.Deletion; deletion != nil {
+		switch deletion.Cause {
+		case provisioning.DeletionCauseUser, provisioning.DeletionCauseSystem:
+			return string(deletion.Cause)
+		default:
+			// Older statuses have no cause. Unknown values must also stay in
+			// the alert population without introducing unbounded metric labels.
+			return reconcileCauseSystem
+		}
+	}
+	if obj.Status.DeleteError != "" {
+		return reconcileCauseSystem
+	}
+	return ""
 }
 
 func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provisioning.Repository) bool {
@@ -1078,17 +1102,18 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	// Determine the main triggering condition
 	var reason string
 	switch {
-	// First, we check if the repository is blocked
-	case isCurrentlyBlocked && isOverQuota:
-		reason = "blocked_over_quota"
-		logger.Info("repository blocked and over quota, reconciling but skipping sync")
+	// Each case is a change to act on. Already blocked and still over quota is a steady
+	// state, so it is not one: it matched every requeue, and a reconcile's own status
+	// patch requeues it, so it fed itself. Recovery triggers on forceProcessForUnblock.
 	case !isCurrentlyBlocked && isOverQuota:
 		reason = "over_quota"
 		logger.Info("namespace over quota, blocking repository", "max_repositories", newQuota.MaxRepositories)
 	case hasSpecChanged:
 		reason = "spec_changed"
 		logger.Info("spec changed", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	case shouldResync:
+	// A blocked repository never finishes a sync, so Sync.Finished never advances and
+	// shouldResync stays true for good. determineSyncStrategy refuses to sync it anyway.
+	case shouldResync && !isOverQuota:
 		reason = "resync_interval"
 		logger.Info("sync interval triggered", "sync_interval", time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, "sync_status", obj.Status.Sync)
 	case shouldCheckHealth:

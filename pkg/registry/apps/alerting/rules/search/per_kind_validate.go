@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,6 +53,8 @@ var legacyFilterableFields = map[string]struct{}{
 	fieldRoutingTree:         {},
 	fieldMetric:              {},
 	fieldTargetDatasourceUID: {},
+	fieldState:               {},
+	fieldHealth:              {},
 }
 
 // legacyTextFields are the fields a text leaf may name. The legacy store's only
@@ -81,6 +84,12 @@ var scalarFilterFields = map[string]struct{}{
 	fieldMetric:              {},
 	fieldTargetDatasourceUID: {},
 	fieldLabels:              {},
+}
+
+var negatableFilterFields = map[string]struct{}{
+	fieldLabels: {},
+	fieldState:  {},
+	fieldHealth: {},
 }
 
 // kindSelectableLabelKeys are the resource metadata label keys a labelSelector may
@@ -310,11 +319,11 @@ func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) f
 		errs = append(errs, field.Invalid(p.Child("values"), f.Values, fmt.Sprintf("filter on %q accepts exactly one value", f.Field)))
 		return errs
 	}
-	// Only the labels field round-trips negation to the legacy backend
-	// (requirementToLabelMatcher reads the operator). Every other field's legacy
-	// matcher ignores the operator and would apply NotIn as an inclusive match,
-	// returning the opposite of what was asked for.
-	if f.Operator == perKindFilterOperatorNotIn && f.Field != fieldLabels {
+	// Only labels, state and health round-trip negation to the legacy backend
+	// (requirementToLabelMatcher and listFilter.add read the operator). Every
+	// other field's legacy matcher ignores the operator and would apply NotIn as
+	// an inclusive match, returning the opposite of what was asked for.
+	if _, negatable := negatableFilterFields[f.Field]; f.Operator == perKindFilterOperatorNotIn && !negatable {
 		errs = append(errs, field.Invalid(p.Child("operator"), f.Operator, fmt.Sprintf("the NotIn operator is not supported on %q", f.Field)))
 		return errs
 	}
@@ -409,9 +418,7 @@ func validateSort(sorts []searchv0.SortField, k perKind, p *field.Path) field.Er
 	return errs
 }
 
-// validateReturnFields checks the projection. A field must be retrievable on the
-// kind and carried by the result table both backends emit, else it would be
-// silently absent from every hit.
+// Reject fields either backend cannot return, rather than silently omitting them.
 func validateReturnFields(fields []string, k perKind, p *field.Path) field.ErrorList {
 	var errs field.ErrorList
 	for i, name := range fields {
@@ -420,7 +427,7 @@ func validateReturnFields(fields []string, k perKind, p *field.Path) field.Error
 			errs = append(errs, capErrs...)
 			continue
 		}
-		if _, ok := results.index[name]; !ok {
+		if !slices.Contains(resultColumns, name) {
 			errs = append(errs, field.Invalid(fp, name, "returning this field is not supported"))
 		}
 	}

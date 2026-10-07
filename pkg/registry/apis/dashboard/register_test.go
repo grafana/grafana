@@ -1,12 +1,20 @@
 package dashboard
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/gorilla/mux"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -14,10 +22,17 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/admission"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	kubecommon "k8s.io/kube-openapi/pkg/common"
 
+	dashinternal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv1beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
@@ -29,9 +44,18 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -254,7 +278,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 			dashboardBuilder := NewAPIService(
 				accessClient,
 				nil,
-				nil,
 				testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 				testutil.NewLibraryElementProvider(),
 				nil,
@@ -317,6 +340,106 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelAdmissionEnforcesAccess(t *te
 	}
 }
 
+func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary(t *testing.T) {
+	scheme := runtime.NewScheme()
+	require.NoError(t, dashv0.AddToScheme(scheme))
+	codecs := serializer.NewCodecFactory(scheme)
+	optsGetter, err := apistore.NewRESTOptionsGetterMemory(storagebackend.Config{
+		Codec: codecs.LegacyCodec(dashv0.LibraryPanelResourceInfo.GroupVersion()),
+	}, nil)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name          string
+		selectStorage func(legacy, unified grafanarest.Storage) grafanarest.Storage
+	}{
+		{
+			name: "legacy storage selected",
+			selectStorage: func(legacy, _ grafanarest.Storage) grafanarest.Storage {
+				return legacy
+			},
+		},
+		{
+			name: "unified storage selected",
+			selectStorage: func(_, unified grafanarest.Storage) grafanarest.Storage {
+				return unified
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var selectedStorage grafanarest.Storage
+			builder := &DashboardsAPIBuilder{
+				iamFeatures: iamapi.Features{ResourcePermissionsAPI: true},
+			}
+			groupInfo := &genericapiserver.APIGroupInfo{
+				VersionedResourcesStorageMap: map[string]map[string]rest.Storage{},
+			}
+			err := builder.storageForVersion(
+				groupInfo,
+				apiserverbuilder.APIGroupOptions{
+					Scheme:     scheme,
+					OptsGetter: optsGetter,
+					DualWriteBuilder: func(_ schema.GroupResource, legacy, unified grafanarest.Storage) (grafanarest.Storage, error) {
+						selectedStorage = tt.selectStorage(legacy, unified)
+						return selectedStorage, nil
+					},
+				},
+				dashv0.DashboardResourceInfo,
+				&dashv0.LibraryPanelResourceInfo,
+				nil,
+				func(runtime.Object, *dashinternal.DashboardAccess) (runtime.Object, error) {
+					return &dashv0.DashboardWithAccessInfo{}, nil
+				},
+			)
+			require.NoError(t, err)
+
+			versionStorage := groupInfo.VersionedResourcesStorageMap[dashv0.LibraryPanelResourceInfo.GroupVersion().Version]
+			installedStorage := versionStorage[dashv0.LibraryPanelResourceInfo.StoragePath()]
+			var wrapper *libraryPanelAccessStorage
+			switch typed := installedStorage.(type) {
+			case *libraryPanelAccessStorage:
+				wrapper = typed
+			case *libraryPanelAccessStorageWithWatch:
+				wrapper = typed.libraryPanelAccessStorage
+			}
+			ok := wrapper != nil
+			require.True(t, ok)
+			require.Same(t, selectedStorage, wrapper.store)
+
+			_, dashboardWrapped := versionStorage[dashv0.DashboardResourceInfo.StoragePath()].(*libraryPanelAccessStorage)
+			require.False(t, dashboardWrapped, "library panel authorization must not wrap dashboard storage")
+		})
+	}
+}
+
+func TestDashboardAPIBuilder_LibraryPanelFolderValidationForProvisioningIdentity(t *testing.T) {
+	ctx, _, err := identity.WithProvisioningIdentity(t.Context(), "stacks-1")
+	require.NoError(t, err)
+	ctx = k8srequest.WithNamespace(ctx, "stacks-1")
+	missingFolderBuilder := &DashboardsAPIBuilder{
+		folderClientProvider: &staticHandlerProvider{handler: &variableFolderAccessHandler{notFoundAccessSubresource: true}},
+	}
+
+	t.Run("allows a repository managed resource when the folder is not visible yet", func(t *testing.T) {
+		panel := testLibraryPanel("panel-a", "provisioned-folder")
+		accessor, err := utils.MetaAccessor(panel)
+		require.NoError(t, err)
+		accessor.SetManagerProperties(utils.ManagerProperties{
+			Kind:     utils.ManagerKindRepo,
+			Identity: "library-panels-repo",
+		})
+
+		require.NoError(t, missingFolderBuilder.validateLibraryPanelFolder(ctx, panel))
+	})
+
+	t.Run("still rejects an unmanaged resource with a missing folder", func(t *testing.T) {
+		err := missingFolderBuilder.validateLibraryPanelFolder(ctx, testLibraryPanel("panel-a", "missing-folder"))
+		require.True(t, apierrors.IsNotFound(err))
+	})
+}
+
 func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinationAccess(t *testing.T) {
 	requester := &identity.StaticRequester{
 		Type:      authlib.TypeServiceAccount,
@@ -341,7 +464,6 @@ func TestDashboardAPIBuilder_StandaloneLibraryPanelMoveRequiresSourceAndDestinat
 	}
 	dashboardBuilder := NewAPIService(
 		accessClient,
-		nil,
 		nil,
 		testutil.NewDataSourceProvider(testutil.StandardTestConfig),
 		testutil.NewLibraryElementProvider(),
@@ -615,6 +737,72 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		{Group: group, Version: "v2beta1", Kind: "Dashboard"},
 		{Group: group, Version: "v2", Kind: "Dashboard"},
 	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
+}
+
+func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSnapshotsKubernetesSnapshots: {
+			Key: featuremgmt.FlagSnapshotsKubernetesSnapshots, DefaultVariant: "enabled",
+			Variants: map[string]any{"enabled": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	service := dashboardsnapshots.NewMockService(t)
+	service.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			cmd := args.Get(1).(*dashboardsnapshots.CreateDashboardSnapshotCommand)
+			require.Equal(t, "CPU", cmd.Dashboard.Object["title"])
+		}).Return(&dashboardsnapshots.DashboardSnapshot{
+		Key: "snap-1", OrgID: 1, Dashboard: simplejson.New(),
+		Created: time.Now(), Updated: time.Now(), Expires: time.Now().Add(time.Hour),
+	}, nil)
+	legacy := &snapshot.SnapshotLegacyStore{
+		ResourceInfo: dashv0.SnapshotResourceInfo, Service: service,
+		Namespacer: authlib.OrgNamespaceFormatter,
+	}
+	mode := dualwrite.NewMockService(t)
+	mode.On("ReadFromUnified", mock.Anything, dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil).Maybe()
+	b := &DashboardsAPIBuilder{snapshotStorage: legacy, dualWriter: mode}
+	blobs := resource.NewMockResourceClient(t)
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID: "dash-1", OrgID: 1,
+	}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: 1}, nil)
+	routes := snapshot.GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]kubecommon.OpenAPIDefinition{},
+		func() rest.Storage { return b.snapshotStorage }, dashboardService, blobs, b.snapshotReadFromUnified,
+	)
+	body := []byte(`{"dashboard":{"uid":"dash-1","title":"CPU"},"name":"legacy snapshot"}`)
+	req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{UserID: 1, OrgID: 1}))
+	req = mux.SetURLVars(req, map[string]string{"namespace": "default"})
+	response := httptest.NewRecorder()
+	routes.Namespace[0].Handler(response, req)
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+	blobs.AssertNotCalled(t, "PutBlob", mock.Anything, mock.Anything)
+}
+
+func TestSnapshotBlobEligibilityWithLegacyOnlyStore(t *testing.T) {
+	mode := dualwrite.NewMockService(t)
+	b := &DashboardsAPIBuilder{
+		snapshotStorage: &snapshot.SnapshotLegacyStore{},
+		dualWriter:      mode,
+	}
+
+	// Even if another instance finishes migration, this instance retains its legacy-only store.
+	enabled, err := b.snapshotReadFromUnified(context.Background())
+	require.NoError(t, err)
+	require.False(t, enabled)
+
+	b.snapshotStorage = grafanarest.NewMockStorage(t)
+	mode.On("ReadFromUnified", context.Background(), dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil)
+	enabled, err = b.snapshotReadFromUnified(context.Background())
+	require.NoError(t, err)
+	require.True(t, enabled)
 }
 
 // Library panels are keyed by their own GroupResource and served only in
