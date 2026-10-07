@@ -54,18 +54,21 @@ type fakeStore struct {
 // empty -- the snapshot only knows the mutations that pass through it.
 func newSeededSnapshot(objs ...*provisioningapis.Repository) *RepositorySnapshot {
 	snapshot := NewRepositorySnapshot(newFakeStore())
-	runtimeObjs := make([]runtime.Object, 0, len(objs))
+	projected := make([]runtime.Object, 0, len(objs))
 	for _, obj := range objs {
-		runtimeObjs = append(runtimeObjs, obj)
+		projected = append(projected, projectRepository(obj))
 	}
-	snapshot.Replace(runtimeObjs, 1)
+	snapshot.Replace(projected, 1)
 	return snapshot
 }
 
+// newFakeStore seeds a snapshot. It projects what it is handed, because that is
+// what the snapshot holds: seeding whole repositories would leave the re-list
+// unable to recognise its own previous snapshot.
 func newFakeStore(objs ...*provisioningapis.Repository) *fakeStore {
 	s := &fakeStore{objs: map[string]runtime.Object{}}
 	for _, o := range objs {
-		s.objs[o.Namespace+"/"+o.Name] = o
+		s.objs[repositoryKey(o.Namespace, o.Name)] = projectRepository(o)
 	}
 	return s
 }
@@ -79,8 +82,11 @@ func (s *fakeStore) List(_ context.Context) []runtime.Object {
 }
 
 func (s *fakeStore) Update(_ context.Context, obj runtime.Object) {
-	r := obj.(*provisioningapis.Repository)
-	s.objs[r.Namespace+"/"+r.Name] = r
+	namespace, name, _, ok := repositoryState(obj)
+	if !ok {
+		return
+	}
+	s.objs[repositoryKey(namespace, name)] = obj
 }
 
 func (s *fakeStore) Replace(objs []runtime.Object, _ int64) (added, updated, removed []runtime.Object) {
@@ -120,7 +126,7 @@ func (s *fakeStore) Delete(_ context.Context, namespace, name string) {
 
 // A live repository notification is delivered as the concrete *Repository the
 // controller's handler expects, built from the notification's identity.
-func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
+func TestNewRepositoryInformer_DeliversTheProjection(t *testing.T) {
 	sub := newFakeSubscriber()
 	rec := &typeRecorder{}
 	gvr := provisioningapis.RepositoryResourceInfo.GroupVersionResource()
@@ -141,8 +147,8 @@ func TestNewRepositoryInformer_DeliversRepositoryType(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool { return rec.last() != nil }, 5*time.Second, 5*time.Millisecond)
-	got, ok := rec.last().(*provisioningapis.Repository)
-	require.True(t, ok, "expected *Repository, got %T", rec.last())
+	got, ok := rec.last().(*repositoryProjection)
+	require.True(t, ok, "expected a projection, got %T", rec.last())
 	assert.Equal(t, "repo-a", got.Name)
 	assert.Equal(t, testNamespace, got.Namespace)
 }
@@ -196,7 +202,7 @@ func TestClientRepositoryGetter_GetWritesThrough(t *testing.T) {
 
 // The write-through is trimmed like the re-list, so a warm snapshot costs the
 // same as a re-listed one and the store holds one shape either way.
-func TestClientRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
+func TestClientRepositoryGetter_GetWritesThroughProjected(t *testing.T) {
 	full := repoAt("ns", "fresh", "7")
 	full.Spec.Title = "a title nobody reading the snapshot needs"
 	full.Finalizers = []string{"provisioning.grafana.app/cleanup"}
@@ -208,11 +214,14 @@ func TestClientRepositoryGetter_GetWritesThroughTrimmed(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "a title nobody reading the snapshot needs", got.Spec.Title, "the reconcile still gets the whole object")
 
-	stored, ok := store.objs["ns/fresh"].(*provisioningapis.Repository)
-	require.True(t, ok)
-	assert.Empty(t, stored.Spec.Title, "the body must not be retained in the snapshot")
-	assert.Empty(t, stored.Finalizers)
+	// A projection has nowhere to put a body, which is the point: the snapshot
+	// cannot retain one even by accident.
+	stored, ok := store.objs["ns/fresh"].(*repositoryProjection)
+	require.True(t, ok, "expected a projection, got %T", store.objs["ns/fresh"])
+	assert.Empty(t, stored.Finalizers, "nothing beyond the identity is carried")
 	assert.Equal(t, "7", stored.ResourceVersion, "the Store diffs on this")
+	assert.Equal(t, "ns", stored.Namespace)
+	assert.Equal(t, "fresh", stored.Name)
 }
 
 // A reconcile Get for a vanished object returns NotFound and removes it from the
@@ -279,8 +288,8 @@ func TestRepositoryList_CarriesUnchangedForward(t *testing.T) {
 
 	assert.Equal(t, int64(100), listRV)
 	require.Len(t, objs, 1)
-	got, ok := objs[0].(*provisioningapis.Repository)
-	require.True(t, ok)
+	got, ok := objs[0].(*repositoryProjection)
+	require.True(t, ok, "expected a projection, got %T", objs[0])
 	assert.NotNil(t, got.DeletionTimestamp, "the stored deletionTimestamp must survive the re-list")
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "keys"))
 	assert.Zero(t, hydrationCount(t, reg, repoGVR), "an unchanged key must not be read back")
@@ -322,10 +331,10 @@ func TestRepositoryList_ReadsBackDrifted(t *testing.T) {
 	objs, _, err := repositoryList(client.ProvisioningV0alpha1(), "", keys, store, recorder)(t.Context())
 	require.NoError(t, err)
 
-	byName := map[string]*provisioningapis.Repository{}
+	byName := map[string]*repositoryProjection{}
 	for _, obj := range objs {
-		r, ok := obj.(*provisioningapis.Repository)
-		require.True(t, ok)
+		r, ok := obj.(*repositoryProjection)
+		require.True(t, ok, "expected a projection, got %T", obj)
 		byName[r.Name] = r
 	}
 	require.Len(t, byName, len(keyList))
@@ -491,10 +500,10 @@ func TestRepositoryList_NilListerListsFullObjectsTrimmed(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, objs, 1)
-	got, ok := objs[0].(*provisioningapis.Repository)
-	require.True(t, ok)
-	assert.Empty(t, got.Spec.Title, "the full list must be trimmed too")
+	got, ok := objs[0].(*repositoryProjection)
+	require.True(t, ok, "the full list must be projected too, got %T", objs[0])
 	assert.Equal(t, "10", got.ResourceVersion)
+	assert.Equal(t, "a", got.Name)
 	assert.Equal(t, float64(1), projectionCount(t, reg, repoGVR, "objects"))
 }
 
@@ -502,8 +511,8 @@ func repoNames(t *testing.T, objs []runtime.Object) []string {
 	t.Helper()
 	out := make([]string, 0, len(objs))
 	for _, o := range objs {
-		r, ok := o.(*provisioningapis.Repository)
-		require.True(t, ok, "expected *Repository, got %T", o)
+		r, ok := o.(*repositoryProjection)
+		require.True(t, ok, "expected a projection, got %T", o)
 		out = append(out, r.Name)
 	}
 	return out

@@ -4932,3 +4932,50 @@ func TestRepositoryController_recordReconcileError(t *testing.T) {
 	// A system failure must not be miscounted as user-caused (which an SLO would ignore).
 	assert.Equal(t, 0.0, reconcileErrorCount(t, reg, reconcilePhaseHook, reconcileCauseUser))
 }
+
+// The controller is fed by two informers that deliver different types: the
+// apiserver one hands it a whole Repository, the NATS one a metadata projection
+// of one. It reads only the key and the resource version, so both must work.
+// A type assertion here would make repoKeyFunc fail for the projection, and a
+// key that cannot be computed is a repository that never gets enqueued -- the
+// controller would go quiet rather than error.
+func TestRepoKeyFuncAcceptsBothFeeds(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		obj  any
+	}{
+		{
+			name: "whole repository, from the apiserver informer",
+			obj: &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+		{
+			name: "metadata projection, from the NATS informer",
+			obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{
+				Namespace: "ns", Name: "repo", ResourceVersion: "42",
+			}},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			key, err := repoKeyFunc(tc.obj)
+			require.NoError(t, err)
+			assert.Equal(t, "ns/repo", key)
+			assert.Equal(t, "42", objectResourceVersion(tc.obj))
+		})
+	}
+}
+
+// A delete tombstone carries no metadata to read, and the re-list dispatches one
+// for every repository that left the snapshot.
+func TestRepoKeyFuncHandlesTombstones(t *testing.T) {
+	tombstone := cache.DeletedFinalStateUnknown{
+		Key: "ns/repo",
+		Obj: &metav1.PartialObjectMetadata{ObjectMeta: metav1.ObjectMeta{Namespace: "ns", Name: "repo"}},
+	}
+
+	key, err := repoKeyFunc(tombstone)
+	require.NoError(t, err)
+	assert.Equal(t, "ns/repo", key)
+	assert.Empty(t, objectResourceVersion(tombstone), "nothing to read a version from")
+}

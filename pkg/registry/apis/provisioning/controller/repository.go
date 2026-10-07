@@ -15,6 +15,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -217,21 +218,22 @@ func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetaile
 	}
 }
 
+// repoKeyFunc keys a delivered object without asking what it is. The two feeds
+// deliver different types -- the apiserver informer a whole Repository, the NATS
+// informer a metadata projection of one -- and the controller only ever needs the
+// key and the resource version from either.
 func repoKeyFunc(obj any) (string, error) {
-	repo, ok := obj.(*provisioning.Repository)
-	if !ok {
-		return "", fmt.Errorf("expected a Repository but got %T", obj)
-	}
-	return cache.DeletionHandlingMetaNamespaceKeyFunc(repo)
+	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
 
-// objectResourceVersion returns the resource version of a delivered Repository,
-// or "" for a minimal NATS live event or a delete tombstone.
+// objectResourceVersion returns the resource version of a delivered object, or ""
+// for a delete tombstone, which carries no metadata to read.
 func objectResourceVersion(obj any) string {
-	if repo, ok := obj.(*provisioning.Repository); ok {
-		return repo.ResourceVersion
+	acc, err := meta.Accessor(obj)
+	if err != nil {
+		return ""
 	}
-	return ""
+	return acc.GetResourceVersion()
 }
 
 // Run starts the RepositoryController.

@@ -67,7 +67,7 @@ func NewRepositoryDeltaSource(subscriber nats.Subscriber, client versioned.Inter
 func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interface, namespace string, resync time.Duration, store usinformer.Store, keys keysapi.Lister, recorder RelistRecorder) *usinformer.Informer {
 	c := client.ProvisioningV0alpha1()
 	newObject := func(ns, name string) runtime.Object {
-		return &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{Namespace: ns, Name: name}}
+		return projectIdentity(ns, name, "")
 	}
 	return usinformer.NewInformer(subscriber, provisioningapis.RepositoryResourceInfo.GroupVersionResource(), namespace, resync, queueGroup, store, newObject, repositoryList(c, namespace, keys, store, recorder))
 }
@@ -78,7 +78,7 @@ func NewRepositoryInformer(subscriber nats.Subscriber, client versioned.Interfac
 // The read-back is needed because the projection cannot carry a
 // deletionTimestamp, which the quota count reads.
 // Without a keys lister, or against storage too old to honour the projection, it
-// lists full objects. Both paths store trimmed objects; see trimRepository.
+// lists full objects. Both paths store projections; see repositoryProjection.
 func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace string, keys keysapi.Lister, store usinformer.Cache, recorder RelistRecorder) func(context.Context) ([]runtime.Object, int64, error) {
 	full := func(ctx context.Context) ([]runtime.Object, int64, error) {
 		objs, listRV, err := listAllPages(ctx, func(ctx context.Context, opts metav1.ListOptions) (runtime.Object, error) {
@@ -88,7 +88,7 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 			return nil, 0, err
 		}
 		recorder.Projection(false)
-		return trimRepositories(objs), listRV, nil
+		return projectRepositories(objs), listRV, nil
 	}
 
 	return func(ctx context.Context) ([]runtime.Object, int64, error) {
@@ -99,7 +99,7 @@ func repositoryList(c typedclient.ProvisioningV0alpha1Interface, namespace strin
 		// An empty snapshot has nothing to carry forward, so every key would be
 		// an object read and one list is cheaper. This is the initial list, and
 		// the recovery if the snapshot is ever emptied.
-		prev := indexRepositories(store.List(ctx))
+		prev := indexProjections(store.List(ctx))
 		if len(prev) == 0 {
 			return full(ctx)
 		}
@@ -165,7 +165,7 @@ var errRelistFullObjects = errors.New("keys-only re-list needs the full objects"
 
 // listRepositoryKeys collects a keys-only re-list into the minimal objects the
 // informer's Store keys on, reading back only what prev cannot answer for.
-func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1Interface, keys keysapi.Lister, prev map[string]*provisioningapis.Repository, recorder RelistRecorder) ([]runtime.Object, int64, error) {
+func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1Interface, keys keysapi.Lister, prev map[string]*repositoryProjection, recorder RelistRecorder) ([]runtime.Object, int64, error) {
 	listRV, seq := keys.ListKeys(ctx)
 
 	// The Store diffs the whole set, so the stream is drained before any object
@@ -179,8 +179,8 @@ func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1I
 		if err != nil {
 			return nil, 0, err
 		}
-		if repo, ok := prev[repositoryKey(k.Namespace, k.Name)]; ok && repo.ResourceVersion == k.ResourceVersion {
-			objs = append(objs, repo)
+		if projected, ok := prev[repositoryKey(k.Namespace, k.Name)]; ok && projected.ResourceVersion == k.ResourceVersion {
+			objs = append(objs, projected)
 			continue
 		}
 		drifted = append(drifted, k)
@@ -204,7 +204,7 @@ func listRepositoryKeys(ctx context.Context, c typedclient.ProvisioningV0alpha1I
 			// so take the authoritative list rather than guess.
 			return nil, 0, fmt.Errorf("%w: reading back %s/%s: %w", errRelistFullObjects, k.Namespace, k.Name, err)
 		}
-		objs = append(objs, trimRepository(repo))
+		objs = append(objs, projectRepository(repo))
 	}
 	return objs, listRV, nil
 }
@@ -262,8 +262,8 @@ func (g clientRepositoryGetter) Get(ctx context.Context, namespace, name string)
 	if err != nil {
 		return nil, err
 	}
-	// Trimmed, so a warm snapshot costs the same as a re-listed one.
-	g.snapshot.Update(ctx, trimRepository(repo))
+	// Projected, so a warm snapshot costs the same as a re-listed one.
+	g.snapshot.Update(ctx, projectRepository(repo))
 	return repo, nil
 }
 
@@ -271,40 +271,54 @@ func (g clientRepositoryGetter) CountActiveRepositories(_ context.Context, names
 	return g.snapshot.CountActive(namespace), nil
 }
 
-// trimRepository keeps what the snapshot's readers need and drops the body: the
-// Store's diff keys off namespace/name and resourceVersion, and the active
-// repository count reads deletionTimestamp. Keeping bodies would undo the
-// keys-only re-list, since every repository read back would stay resident.
-func trimRepository(repo *provisioningapis.Repository) *provisioningapis.Repository {
-	trimmed := &provisioningapis.Repository{ObjectMeta: metav1.ObjectMeta{
-		Namespace:       repo.Namespace,
-		Name:            repo.Name,
-		ResourceVersion: repo.ResourceVersion,
+// The snapshot holds projections, never whole repositories. These four functions
+// are the only places one is built, so they are the whole answer to what the
+// snapshot carries: the identity the Store's diff keys off, and the
+// deletionTimestamp the active count reads. A Repository is 912 bytes against the
+// projection's 264 and more than half of that is a Spec and Status that are
+// inline, so storing one and zeroing the body still pays for it.
+
+// repositoryProjection is the shape the snapshot holds.
+type repositoryProjection = metav1.PartialObjectMetadata
+
+// projectIdentity builds a projection from an identity alone, for a keys-only
+// re-list and for a live event, neither of which carries a body.
+func projectIdentity(namespace, name, resourceVersion string) *repositoryProjection {
+	return &repositoryProjection{ObjectMeta: metav1.ObjectMeta{
+		Namespace:       namespace,
+		Name:            name,
+		ResourceVersion: resourceVersion,
 	}}
-	if ts := repo.DeletionTimestamp; ts != nil {
-		trimmed.DeletionTimestamp = ts.DeepCopy()
-	}
-	return trimmed
 }
 
-// trimRepositories trims a full list in place, so the snapshot holds the same
-// shape whichever re-list produced it.
-func trimRepositories(objs []runtime.Object) []runtime.Object {
+// projectRepository builds a projection from a whole repository, for a full list
+// and for the reconcile's write-back.
+func projectRepository(repo *provisioningapis.Repository) *repositoryProjection {
+	projected := projectIdentity(repo.Namespace, repo.Name, repo.ResourceVersion)
+	if ts := repo.DeletionTimestamp; ts != nil {
+		projected.DeletionTimestamp = ts.DeepCopy()
+	}
+	return projected
+}
+
+// projectRepositories projects a full list in place, so the snapshot holds the
+// same shape whichever re-list produced it.
+func projectRepositories(objs []runtime.Object) []runtime.Object {
 	for i, obj := range objs {
 		if repo, ok := obj.(*provisioningapis.Repository); ok {
-			objs[i] = trimRepository(repo)
+			objs[i] = projectRepository(repo)
 		}
 	}
 	return objs
 }
 
-// indexRepositories keys a snapshot for lookup by the identities a keys-only
+// indexProjections keys a snapshot for lookup by the identities a keys-only
 // re-list returns.
-func indexRepositories(objs []runtime.Object) map[string]*provisioningapis.Repository {
-	out := make(map[string]*provisioningapis.Repository, len(objs))
+func indexProjections(objs []runtime.Object) map[string]*repositoryProjection {
+	out := make(map[string]*repositoryProjection, len(objs))
 	for _, obj := range objs {
-		if repo, ok := obj.(*provisioningapis.Repository); ok {
-			out[repositoryKey(repo.Namespace, repo.Name)] = repo
+		if projected, ok := obj.(*repositoryProjection); ok {
+			out[repositoryKey(projected.Namespace, projected.Name)] = projected
 		}
 	}
 	return out

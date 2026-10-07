@@ -78,6 +78,11 @@ func (s *RepositorySnapshot) DeleteAt(ctx context.Context, namespace, name strin
 func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added, updated, removed []runtime.Object) {
 	added, updated, removed = s.Store.Replace(objs, listRV)
 
+	// Deliberately the embedded store's List and not the promoted one: these
+	// tallies describe what the store installed, so a List override added here
+	// later must not silently redirect this read (and QF1008 would have it call
+	// itself).
+	//nolint:staticcheck // QF1008: the qualifier is the point, see above.
 	stored := s.Store.List(context.Background())
 	active := make(map[string]bool, len(stored))
 	counts := make(map[string]int, len(s.counts))
