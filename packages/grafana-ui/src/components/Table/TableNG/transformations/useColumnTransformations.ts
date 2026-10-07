@@ -4,7 +4,7 @@ import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelCont
 import { type TableNGProps } from '../types';
 
 import { prepareColumnContext } from './columnContext';
-import { columnTransformations, tableTransformations } from './registry';
+import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
@@ -24,7 +24,7 @@ export function useColumnTransformations(
   const onHiddenColumnsChange = useCallback(
     (hidden: ReadonlySet<string>) => {
       if (context) {
-        update((current) => tableTransformations.columnVisibility.write(current, hidden, context));
+        update((current) => columnTransformations.columnVisibility.write(current, hidden, context));
       }
     },
     [context, update]
@@ -32,7 +32,7 @@ export function useColumnTransformations(
   const onColumnOrderChange = useCallback(
     (order: string[]) => {
       if (context) {
-        update((current) => tableTransformations.columnOrder.write(current, order, context));
+        update((current) => columnTransformations.columnOrder.write(current, order, context));
       }
     },
     [context, update]
@@ -43,7 +43,7 @@ export function useColumnTransformations(
       return undefined;
     }
 
-    const state = columnTransformations.reduce<Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>>(
+    const state = Object.values(columnTransformations).reduce<Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>>(
       (state, transformation) => ({ ...state, ...transformation.read(transformations, context) }),
       {}
     );

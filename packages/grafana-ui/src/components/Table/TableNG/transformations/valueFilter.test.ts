@@ -4,7 +4,7 @@ import { toDataFrame } from '@grafana/data';
 import { FilterByValueMatch, FilterByValueType } from '@grafana/data/internal';
 
 import { clearFrameFilters } from './filterByValue';
-import { tableTransformations } from './registry';
+import { columnTransformations, filterTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 it('composes local column and nested filter actions, and clears only the selected frame filters', () => {
@@ -12,17 +12,17 @@ it('composes local column and nested filter actions, and clears only the selecte
   const field = source.fields[0];
   const context = { source, field, frameKey: 'A', frameIndex: 0 };
   const columns = { catalog: ['value'] };
-  const predicate = tableTransformations.valueFilter.createPredicate(field, ['1']);
+  const predicate = filterTransformations.valueFilter.createPredicate(field, ['1']);
   const { result } = renderHook(() => useTableTransformations(undefined, 'table', true));
 
   act(() => {
-    result.current.update((current) => tableTransformations.columnOrder.write(current, ['value'], columns));
-    result.current.update((current) => tableTransformations.valueFilter.write(current, predicate, context));
+    result.current.update((current) => columnTransformations.columnOrder.write(current, ['value'], columns));
+    result.current.update((current) => filterTransformations.valueFilter.write(current, predicate, context));
     result.current.update((current) =>
-      tableTransformations.valueFilter.write(current, predicate, { ...context, parentIndex: 0 })
+      filterTransformations.valueFilter.write(current, predicate, { ...context, parentIndex: 0 })
     );
     result.current.update((current) =>
-      tableTransformations.valueFilter.write(current, predicate, { ...context, frameKey: 'B', frameIndex: 1 })
+      filterTransformations.valueFilter.write(current, predicate, { ...context, frameKey: 'B', frameIndex: 1 })
     );
   });
 
@@ -57,9 +57,9 @@ it('composes local column and nested filter actions, and clears only the selecte
 it('preserves the saved display configuration when editing selected values', () => {
   const field = toDataFrame({ fields: [{ name: 'value', values: [1], config: { unit: 'bytes', decimals: 2 } }] })
     .fields[0];
-  const initial = tableTransformations.valueFilter.createPredicate(field, ['1']);
+  const initial = filterTransformations.valueFilter.createPredicate(field, ['1']);
   expect(initial.options.displayConfig).toEqual({ unit: 'bytes', decimals: 2 });
-  const edited = tableTransformations.valueFilter.createPredicate(field, ['2'], {
+  const edited = filterTransformations.valueFilter.createPredicate(field, ['2'], {
     values: ['1'],
     mode: 'display',
     displayConfig: { unit: 'short', decimals: 0 },

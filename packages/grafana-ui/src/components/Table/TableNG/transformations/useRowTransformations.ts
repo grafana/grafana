@@ -39,7 +39,7 @@ export function useRowTransformations(props: TableNGProps) {
     (field: Field, predicate: MatcherConfig, parentIndex?: number) => {
       update((current) => {
         const context = { source, frameKey, frameIndex, field, parentIndex };
-        const definition = filterTransformations.find((entry) => entry.matcherId === predicate.id);
+        const definition = Object.values(filterTransformations).find((entry) => entry.matcherId === predicate.id);
         const selected = (definition?.read ?? readFieldFilters)(current, context);
         // Compound or unfamiliar predicates must survive edits from a simpler editor unchanged.
         if (selected.length > 1 || selected.some((config) => !editableTableFilter(config))) {

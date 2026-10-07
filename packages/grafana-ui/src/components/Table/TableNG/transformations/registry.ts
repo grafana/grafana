@@ -4,15 +4,15 @@ import { columnOrder } from './columnOrder';
 import { columnVisibility } from './columnVisibility';
 import { valueFilter } from './valueFilter';
 
-export const tableTransformations = {
-  valueFilter,
-  columnOrder,
+export const columnTransformations = {
   columnVisibility,
+  columnOrder,
 };
 
-export const columnTransformations = [tableTransformations.columnVisibility, tableTransformations.columnOrder];
-export const filterTransformations = [tableTransformations.valueFilter];
+export const filterTransformations = {
+  valueFilter,
+};
 
 export function editableTableFilter(config: FilterByValueConfig) {
-  return filterTransformations.some((definition) => definition.isEditable(config));
+  return Object.values(filterTransformations).some((definition) => definition.isEditable(config));
 }
