@@ -9,6 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
+func isManagedByRepository(manager utils.ManagerProperties, repositoryName string) bool {
+	return manager.Kind == utils.ManagerKindRepo && manager.Identity == repositoryName
+}
+
 // ResourceIdentifier uniquely identifies a resource for takeover allowlisting
 // during migration. It is keyed by name, group, and kind.
 type ResourceIdentifier struct {

@@ -36,6 +36,7 @@ use (
 	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/storage/unified/resource/kv
+	./pkg/storage/unified/resourceclient
 	./pkg/storage/unified/resourcepb
 	./pkg/util/sqlite
 )

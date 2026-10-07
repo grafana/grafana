@@ -76,6 +76,7 @@ export function PanelEditActionsWrapper({ panel, children }: { panel: VizPanel; 
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
 
   const onClickEdit = useCallback(() => {
+    DashboardInteractions.panelActionClicked('settings', getPanelIdForVizPanel(panel), 'edit_popover');
     const { selectionContext } = getDashboardSceneLike(panel).state.sidebar.state;
     selectionContext.onSelect({ id: panel.state.key! }, { force: true });
   }, [panel]);

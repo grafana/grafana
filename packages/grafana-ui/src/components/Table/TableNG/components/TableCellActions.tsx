@@ -20,11 +20,12 @@ export const TableCellActions = memo(
     cellInspect,
     showFilters,
     tableRefreshEnabled,
+    onAddToAssistant,
   }: TableCellActionsProps) => {
     const { formatGeometry } = useOpenLayersContext();
 
     if (tableRefreshEnabled) {
-      if (!cellInspect && !showFilters) {
+      if (!cellInspect && !showFilters && !onAddToAssistant) {
         return null;
       }
       const menuLabel = t('grafana-ui.table.cell-actions', 'Cell actions');
@@ -73,6 +74,16 @@ export const TableCellActions = memo(
                           value: String(value ?? ''),
                         })
                       }
+                    />
+                  </>
+                )}
+                {onAddToAssistant && (
+                  <>
+                    {(cellInspect || showFilters) && <Menu.Divider />}
+                    <Menu.Item
+                      label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+                      icon="ai-sparkle"
+                      onClick={onAddToAssistant}
                     />
                   </>
                 )}
