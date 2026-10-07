@@ -20,12 +20,13 @@ import {
   useHeaderHeight,
   useManagedSort,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
+import { shouldReserveScrollbarGutter } from './scrollbar';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -140,10 +141,6 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
-
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
     () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
@@ -177,6 +174,50 @@ export function TableFlat(props: TableNGProps) {
     sortColumns,
   });
 
+  const defaultRowHeight = useMemo(
+    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
+    [theme, visibleFields, cellHeight]
+  );
+  const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
+
+  const [fullWidths] = useColWidths(visibleFields, width, frozenColumns, widthConfigResetKey, contentAwareWidths);
+  const fullHeaderHeight = useHeaderHeight({
+    columnWidths: fullWidths,
+    fields: visibleFields,
+    enabled: hasHeader,
+    sortColumns,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx,
+  });
+  const fullRowHeight = useFlatRowHeight({
+    columnWidths: fullWidths,
+    fields: visibleFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+  });
+  const fullPagination = usePaginatedRows(sortedRows, {
+    enabled: enablePagination,
+    width,
+    height,
+    footerHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
+    pageSize,
+  });
+  const needsScrollbarSpace = shouldReserveScrollbarGutter(
+    fullPagination.rows,
+    fullRowHeight,
+    fullWidths,
+    width,
+    height -
+      (hasHeader ? fullHeaderHeight : 0) -
+      footerHeight -
+      (enablePagination && fullPagination.numRows > 0 ? 32 : 0)
+  );
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const availableWidth = width - (needsScrollbarSpace ? scrollbarWidth : 0);
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
     availableWidth,
@@ -193,12 +234,6 @@ export function TableFlat(props: TableNGProps) {
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
-  const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
-
-  const defaultRowHeight = useMemo(
-    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
-    [theme, visibleFields, cellHeight]
-  );
 
   const rowHeight = useFlatRowHeight({
     columnWidths: widths,
@@ -217,15 +252,7 @@ export function TableFlat(props: TableNGProps) {
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
-  } = usePaginatedRows(sortedRows, {
-    enabled: enablePagination,
-    width: availableWidth,
-    height,
-    footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
-    pageSize,
-  });
+  } = fullPagination;
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {

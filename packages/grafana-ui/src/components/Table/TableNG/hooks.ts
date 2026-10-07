@@ -692,15 +692,56 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-
-  const updateScrollbarDimensions = debounce(() => {
-    const el = ref.current?.element;
-    if (el) {
-      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
+export function useNativeScrollbarWidth(ref: RefObject<DataGridHandle | null>) {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const grid = ref.current?.element;
+    if (!grid || IS_SAFARI_26) {
+      return;
     }
-  }, 150);
+    // Measuring the grid after applying stable would detect the space we introduced ourselves.
+    // Match its scrollbar styling, but force overflow and an auto gutter on an isolated probe.
+    const probe = document.createElement('div');
+    probe.className = grid.className;
+    probe.setAttribute('role', 'grid');
+    probe.setAttribute('aria-hidden', 'true');
+    Object.assign(probe.style, {
+      position: 'absolute',
+      visibility: 'hidden',
+      pointerEvents: 'none',
+      inset: '0 auto auto 0',
+      width: '100px',
+      height: '100px',
+      inlineSize: '100px',
+      blockSize: '100px',
+      display: 'block',
+      border: '0',
+      padding: '0',
+      contain: 'strict',
+      contentVisibility: 'visible',
+      overflowX: 'hidden',
+      overflowY: 'scroll',
+      scrollbarGutter: 'auto',
+      scrollbarWidth: getComputedStyle(grid).scrollbarWidth,
+    });
+    const content = document.createElement('div');
+    content.style.height = '200px';
+    probe.appendChild(content);
+    grid.parentElement?.appendChild(probe);
+    const measure = () => setWidth(probe.offsetWidth - probe.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(probe);
+    return () => {
+      observer.disconnect();
+      probe.remove();
+    };
+  }, [ref]);
+  return width;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number, reserveGutter?: boolean) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = ref.current?.element;
@@ -708,14 +749,19 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       return;
     }
 
-    updateScrollbarDimensions();
+    const updateScrollbarDimensions = debounce(() => {
+      setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    }, 150);
+
+    setScrollbarWidth(el.offsetWidth - el.clientWidth);
 
     const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
     resizeObserver.observe(el);
     return () => {
       resizeObserver.disconnect();
+      updateScrollbarDimensions.cancel();
     };
-  }, [ref, height, updateScrollbarDimensions]);
+  }, [ref, height, reserveGutter]);
 
   return scrollbarWidth;
 }
