@@ -1,7 +1,8 @@
 import { type DataSourceApi, type DrilldownMigrationUsage } from '@grafana/data';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { QueryVariable, SceneDataTransformer, sceneGraph, type SceneDataQuery } from '@grafana/scenes';
+import { dataLayers, QueryVariable, SceneDataTransformer, sceneGraph, type SceneDataQuery } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
+import { containsVariable } from 'app/features/variables/utils';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
@@ -26,12 +27,16 @@ export interface MigrationSuggestionCandidate {
   // Filter candidates also used in titles, links, text, etc. - the Assistant has to rewrite those
   // references to `${filters["<key>"]}` when it migrates the variable.
   referencedOutsideQueries?: boolean;
+  // Set when the variable's datasource is itself a datasource variable (e.g. `${ds}`): the filters
+  // variable should keep that same reference so it follows the dashboard's datasource picker.
+  datasourceRef?: DataSourceRef;
 }
 
-// Where a variable is referenced outside panel queries. `display` references (titles, links,
-// text, ...) are interpolated on the frontend, where a filter's value is reachable through
-// `${filters["<key>"]}`; `blocking` ones (annotations, repeats, other variables) have no
-// equivalent once the variable is gone.
+// Where a variable is referenced outside panel and annotation queries. `display` references
+// (titles, links, text, ...) are interpolated on the frontend, where a filter's value is reachable
+// through `${filters["<key>"]}`. `blocking` ones have no equivalent once the variable is gone: a
+// repeat needs a variable to iterate, and other variables' queries don't get filters injected, while
+// `${filters["<key>"]}` renders `All` or nothing there instead of a usable matcher value.
 type OutsideQueryReferences = 'none' | 'display' | 'blocking';
 
 interface QueryUsage {
@@ -86,7 +91,25 @@ async function getQueryUsages(scene: DashboardScene): Promise<QueryUsage[]> {
     }
   }
 
+  // Annotation layers get filters and group-by injected the same way panel queries do, so their
+  // queries are classified like any other rather than treated as a blocking reference.
+  for (const layer of getAnnotationLayers(scene)) {
+    const annotation = layer.state.query;
+    const settings = await getDataSourceInstanceSettings(annotation.datasource);
+    // Most datasources keep the query under `target`; older ones keep it at the annotation's root.
+    const query = annotation.target ?? annotation;
+    usages.push({ query: { ...query, refId: query.refId ?? 'Anno' }, datasourceUid: settings?.uid });
+  }
+
   return usages;
+}
+
+function getAnnotationLayers(scene: DashboardScene): dataLayers.AnnotationsDataLayer[] {
+  const layerSet = scene.state.$data;
+  if (!(layerSet instanceof DashboardDataLayerSet)) {
+    return [];
+  }
+  return layerSet.state.annotationLayers.filter((layer) => layer instanceof dataLayers.AnnotationsDataLayer);
 }
 
 async function detectCandidateForVariable(
@@ -94,12 +117,9 @@ async function detectCandidateForVariable(
   variable: QueryVariable,
   queryUsages: QueryUsage[]
 ): Promise<MigrationSuggestionCandidate | undefined> {
-  // A missing ref means the default datasource, which the lookups below resolve.
+  // A missing ref means the default datasource, and a datasource-variable ref (e.g. `${ds}`) its
+  // current value - the lookups below resolve both.
   const variableDsRef = variable.state.datasource;
-  if (variableDsRef && isVariableTemplatedRef(variableDsRef)) {
-    // A datasource-variable-templated ref (e.g. `${ds}`) can't be resolved reliably here.
-    return undefined;
-  }
 
   const instanceSettings = await getDataSourceInstanceSettings(variableDsRef);
   if (!instanceSettings) {
@@ -120,32 +140,37 @@ async function detectCandidateForVariable(
     return undefined;
   }
 
-  const pattern = variableReferencePattern(variable.state.name);
+  const name = variable.state.name;
 
   const crossDatasourceUsage = queryUsages.some(
-    (usage) => usage.datasourceUid !== instanceSettings.uid && matchesVariableReference(usage.query, pattern)
+    (usage) => usage.datasourceUid !== instanceSettings.uid && containsVariable(usage.query, name)
   );
   if (crossDatasourceUsage) {
     return undefined;
   }
 
-  const outsideQueryReferences = getOutsideQueryReferences(scene, variable, pattern);
+  const outsideQueryReferences = getOutsideQueryReferences(scene, variable);
   if (outsideQueryReferences === 'blocking') {
     return undefined;
   }
 
   const sameDatasourceQueries = queryUsages.filter((usage) => usage.datasourceUid === instanceSettings.uid);
 
+  const datasourceRef = variableDsRef && isDatasourceVariableRef(variableDsRef) ? { datasourceRef: variableDsRef } : {};
+
   if (typeof ds.getDrilldownMigrationUsage === 'function') {
     const candidate = aggregateHighConfidenceCandidate(ds, variable, instanceSettings.uid, sameDatasourceQueries);
-    if (!candidate || outsideQueryReferences === 'none') {
-      return candidate;
+    if (!candidate) {
+      return undefined;
+    }
+    if (outsideQueryReferences === 'none') {
+      return { ...candidate, ...datasourceRef };
     }
     // Only a filter's value can be interpolated per key; a group-by has no such equivalent.
     if (!candidate.usages.every((usage) => usage.kind === 'filter')) {
       return undefined;
     }
-    return { ...candidate, referencedOutsideQueries: true };
+    return { ...candidate, ...datasourceRef, referencedOutsideQueries: true };
   }
 
   if (outsideQueryReferences === 'display') {
@@ -154,20 +179,13 @@ async function detectCandidateForVariable(
     return undefined;
   }
 
-  const isUsedInAQuery = sameDatasourceQueries.some((usage) => matchesVariableReference(usage.query, pattern));
-  if (!isUsedInAQuery) {
-    // Capability-only fallback still requires the variable to textually appear in a query -
-    // otherwise a variable used only for a panel title/repeat would trigger the broad heuristic
-    // on capability alone (see spec Spike S3).
+  // Without a classification, a variable that never appears in a query (only in a title, say) would
+  // qualify on the datasource's capabilities alone, so require at least one query usage.
+  if (!sameDatasourceQueries.some((usage) => containsVariable(usage.query, name))) {
     return undefined;
   }
 
-  return {
-    variableName: variable.state.name,
-    datasourceUid: instanceSettings.uid,
-    confidence: 'low',
-    usages: [],
-  };
+  return { variableName: name, datasourceUid: instanceSettings.uid, confidence: 'low', usages: [], ...datasourceRef };
 }
 
 function aggregateHighConfidenceCandidate(
@@ -221,51 +239,29 @@ function aggregateHighConfidenceCandidate(
   return { variableName: variable.state.name, datasourceUid, confidence: 'high', usages };
 }
 
-function isVariableTemplatedRef(ref: DataSourceRef): boolean {
+function isDatasourceVariableRef(ref: DataSourceRef): boolean {
   return typeof ref.uid === 'string' && ref.uid.includes('$');
 }
 
-function variableReferencePattern(name: string): RegExp {
-  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`\\$\\{?${escaped}\\b|\\[\\[${escaped}(?::[^\\]]+)?\\]\\]`);
-}
-
-function matchesVariableReference(value: unknown, pattern: RegExp): boolean {
-  if (typeof value === 'string') {
-    return pattern.test(value);
-  }
-  if (Array.isArray(value)) {
-    return value.some((item) => matchesVariableReference(item, pattern));
-  }
-  if (value && typeof value === 'object') {
-    return Object.values(value).some((item) => matchesVariableReference(item, pattern));
-  }
-  return false;
-}
-
 /**
- * The DS-agnostic part of the old (unmerged) detection's "referenced outside safe query
- * positions" rule. Implemented over the scene graph (not a save-model sweep) so it works
- * identically for v1- and v2-loaded dashboards without depending on either serializer.
+ * Where the variable is referenced besides panel and annotation queries (which the datasource
+ * classifies). Walks the scene graph rather than a save model, so v1- and v2-loaded dashboards
+ * behave the same.
  */
-function getOutsideQueryReferences(
-  scene: DashboardScene,
-  variable: QueryVariable,
-  pattern: RegExp
-): OutsideQueryReferences {
-  if (hasBlockingReferences(scene, variable, pattern)) {
+function getOutsideQueryReferences(scene: DashboardScene, variable: QueryVariable): OutsideQueryReferences {
+  if (hasBlockingReferences(scene, variable)) {
     return 'blocking';
   }
-  return hasDisplayReferences(scene, pattern) ? 'display' : 'none';
+  return hasDisplayReferences(scene, variable.state.name) ? 'display' : 'none';
 }
 
-function hasDisplayReferences(scene: DashboardScene, pattern: RegExp): boolean {
+function hasDisplayReferences(scene: DashboardScene, name: string): boolean {
   // Titles/descriptions of the dashboard, panels, and rows/tabs (in every layout).
   const titled = sceneGraph.findAllObjects(scene, (obj) => {
     const { state } = obj;
     return (
-      ('title' in state && matchesVariableReference(state.title, pattern)) ||
-      ('description' in state && matchesVariableReference(state.description, pattern))
+      ('title' in state && containsVariable(state.title, name)) ||
+      ('description' in state && containsVariable(state.description, name))
     );
   });
   if (titled.length > 0) {
@@ -275,32 +271,32 @@ function hasDisplayReferences(scene: DashboardScene, pattern: RegExp): boolean {
   for (const panel of dashboardSceneGraph.getVizPanels(scene)) {
     if (
       // Field config covers data links, display names, overrides; options covers e.g. text panel content.
-      matchesVariableReference(panel.state.fieldConfig, pattern) ||
-      matchesVariableReference(panel.state.options, pattern) ||
-      matchesVariableReference(dashboardSceneGraph.getPanelLinks(panel)?.state.rawLinks, pattern) ||
+      containsVariable(panel.state.fieldConfig, name) ||
+      containsVariable(panel.state.options, name) ||
+      containsVariable(dashboardSceneGraph.getPanelLinks(panel)?.state.rawLinks, name) ||
       (panel.state.$data instanceof SceneDataTransformer &&
-        matchesVariableReference(panel.state.$data.state.transformations, pattern))
+        containsVariable(panel.state.$data.state.transformations, name))
     ) {
       return true;
     }
   }
 
-  return matchesVariableReference(scene.state.links, pattern);
-}
-
-function hasBlockingReferences(scene: DashboardScene, variable: QueryVariable, pattern: RegExp): boolean {
-  const dataLayers = scene.state.$data;
-  if (dataLayers instanceof DashboardDataLayerSet) {
-    for (const layer of dataLayers.state.annotationLayers) {
-      if ('query' in layer.state && matchesVariableReference(layer.state.query, pattern)) {
-        return true;
-      }
+  // An annotation's own text (name, title/text formats) sits next to its query when the query is
+  // under `target`; without `target` the whole annotation was already classified as the query.
+  for (const layer of getAnnotationLayers(scene)) {
+    const { target, ...annotationText } = layer.state.query;
+    if (target && containsVariable(annotationText, name)) {
+      return true;
     }
   }
 
-  const repeatReferences = sceneGraph.findAllObjects(scene, (obj) =>
-    hasVariableNameField(obj.state, variable.state.name)
-  );
+  return containsVariable(scene.state.links, name);
+}
+
+function hasBlockingReferences(scene: DashboardScene, variable: QueryVariable): boolean {
+  const { name } = variable.state;
+
+  const repeatReferences = sceneGraph.findAllObjects(scene, (obj) => hasVariableNameField(obj.state, name));
   if (repeatReferences.length > 0) {
     return true;
   }
@@ -312,7 +308,7 @@ function hasBlockingReferences(scene: DashboardScene, variable: QueryVariable, p
     // Options and the current value are runtime data, potentially thousands of entries; only the
     // definition (query, regex, datasource, ...) can reference another variable.
     const definition = Object.entries(other.state).filter(([key]) => !VARIABLE_RUNTIME_STATE_KEYS.has(key));
-    if (matchesVariableReference(Object.fromEntries(definition), pattern)) {
+    if (containsVariable(Object.fromEntries(definition), name)) {
       return true;
     }
   }
@@ -322,8 +318,8 @@ function hasBlockingReferences(scene: DashboardScene, variable: QueryVariable, p
 
 const VARIABLE_RUNTIME_STATE_KEYS = new Set(['options', 'value', 'text', 'loading', 'error']);
 
-// Repeat behaviors (row/panel) key off the repeated variable's bare name (no `$` prefix),
-// stored on a `variableName` field - unlike everything else here, this isn't a `pattern` match.
+// Repeat behaviors (row/panel) key off the repeated variable's bare name (no `$` prefix), stored on
+// a `variableName` field, so this is a plain name comparison rather than a reference match.
 function hasVariableNameField(state: object, name: string): boolean {
   return Object.entries(state).some(([key, value]) => key === 'variableName' && value === name);
 }

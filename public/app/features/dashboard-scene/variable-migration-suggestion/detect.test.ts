@@ -1,4 +1,5 @@
 import {
+  type AnnotationQuery,
   type DataSourceApi,
   type DataSourceInstanceSettings,
   type DataSourcePluginMeta,
@@ -15,7 +16,7 @@ import {
   VizPanel,
   type SceneDataQuery,
 } from '@grafana/scenes';
-import { type DataSourceRef } from '@grafana/schema';
+import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -522,31 +523,83 @@ describe('detectDrilldownMigrationCandidates', () => {
       }
     );
 
-    it('disqualifies a variable referenced in an annotation query', async () => {
-      const buildTestScene = () => {
-        const scene = buildScene([buildVariable('instance', 'prom-a')], [buildSafePanel()]);
-        scene.setState({
-          $data: new DashboardDataLayerSet({
-            annotationLayers: [
-              new DashboardAnnotationsDataLayer({
-                name: 'Deploys',
-                isEnabled: true,
-                isHidden: false,
-                query: {
-                  name: 'Deploys',
-                  enable: true,
-                  iconColor: 'red',
-                  datasource: { uid: 'prom-a' },
-                  expr: 'deploys{instance="$instance"}',
-                },
-              }),
-            ],
-          }),
-        });
-        return scene;
-      };
+    const annotationTarget = (expr: string): DataQuery & { expr: string } => ({ refId: 'Anno', expr });
 
-      expect(await detectDrilldownMigrationCandidates(buildTestScene())).toEqual([]);
+    function sceneWithAnnotation(query: AnnotationQuery) {
+      const scene = buildScene([buildVariable('instance', 'prom-a')], [buildSafePanel()]);
+      scene.setState({
+        $data: new DashboardDataLayerSet({
+          annotationLayers: [
+            new DashboardAnnotationsDataLayer({ name: 'Deploys', isEnabled: true, isHidden: false, query }),
+          ],
+        }),
+      });
+      return scene;
+    }
+
+    it.each<[string, AnnotationQuery]>([
+      [
+        'at the annotation root',
+        {
+          name: 'Deploys',
+          enable: true,
+          iconColor: 'red',
+          datasource: { uid: 'prom-a' },
+          expr: 'deploys{instance="$instance"}',
+        },
+      ],
+      [
+        'under target',
+        {
+          name: 'Deploys',
+          enable: true,
+          iconColor: 'red',
+          datasource: { uid: 'prom-a' },
+          target: annotationTarget('deploys{instance="$instance"}'),
+        },
+      ],
+    ])('classifies a same-datasource annotation query %s like a panel query', async (_, query) => {
+      const candidates = await detectDrilldownMigrationCandidates(sceneWithAnnotation(query));
+
+      expect(candidates).toEqual([
+        expect.objectContaining({
+          variableName: 'instance',
+          usages: [
+            { kind: 'filter', key: 'instance', operator: '=~' },
+            { kind: 'filter', key: 'instance', operator: '=~' },
+          ],
+        }),
+      ]);
+      expect(candidates[0].referencedOutsideQueries).toBeUndefined();
+    });
+
+    it('disqualifies a variable used by an annotation on another datasource', async () => {
+      registerDatasource('loki-a', 'loki', {});
+
+      const scene = sceneWithAnnotation({
+        name: 'Deploys',
+        enable: true,
+        iconColor: 'red',
+        datasource: { uid: 'loki-a' },
+        target: annotationTarget('{instance="$instance"}'),
+      });
+
+      expect(await detectDrilldownMigrationCandidates(scene)).toEqual([]);
+    });
+
+    it('treats a reference in the annotation text as a display reference', async () => {
+      const scene = sceneWithAnnotation({
+        name: 'Deploys',
+        enable: true,
+        iconColor: 'red',
+        datasource: { uid: 'prom-a' },
+        target: annotationTarget('deploys'),
+        titleFormat: 'Deploy to $instance',
+      });
+
+      expect(await detectDrilldownMigrationCandidates(scene)).toEqual([
+        expect.objectContaining({ variableName: 'instance', referencedOutsideQueries: true }),
+      ]);
     });
   });
 
@@ -641,23 +694,29 @@ describe('detectDrilldownMigrationCandidates', () => {
     });
   });
 
-  it('skips a variable whose own datasource ref is itself variable-templated', async () => {
+  it('resolves a datasource-variable ref and passes it on for the filters variable', async () => {
     registerDatasource('prom-a', 'prometheus', {
       getTagKeys: jest.fn(),
       getTagValues: jest.fn(),
+      getDrilldownMigrationUsage: () => ({ kind: 'filter', key: 'instance', operator: '=~' }),
     });
+    // The real lookups resolve `${ds}` to the datasource variable's current value.
+    const resolve = (ref?: DataSourceRef | string | null) => (getRefUid(ref) === '${ds}' ? 'prom-a' : getRefUid(ref));
+    mockGetDataSourceInstanceSettings.mockImplementation(async (ref) => dsSettingsByUid[resolve(ref) ?? '']);
+    mockGetDataSourceInstance.mockImplementation(async (ref) => dsInstanceByUid[resolve(ref) ?? '']);
 
     const variable = new QueryVariable({
       name: 'instance',
       datasource: { uid: '${ds}' },
       query: 'label_values(instance)',
     });
-    const panel = buildPanel('panel-1', 'prom-a', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
+    const panel = buildPanel('panel-1', '${ds}', [{ refId: 'A', expr: 'up{instance=~"$instance"}' }]);
     const scene = buildScene([variable], [panel]);
 
     const candidates = await detectDrilldownMigrationCandidates(scene);
 
-    expect(candidates).toEqual([]);
-    expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith({ uid: '${ds}' });
+    expect(candidates).toEqual([
+      expect.objectContaining({ variableName: 'instance', datasourceUid: 'prom-a', datasourceRef: { uid: '${ds}' } }),
+    ]);
   });
 });

@@ -21,7 +21,8 @@ const MIGRATION_PROMPT =
   'variable with group by enabled. Filters and group by apply to queries automatically, so remove migrated ' +
   'variables from queries. Elsewhere (titles, descriptions, links, text), $job becomes ${filters["job"]}, ' +
   'keeping any format. Carry current selections over as default filters and default group by with dashboard origin. ' +
-  'A variable set to All becomes operator =| with value $__all, not =~ .* and not a list of values.';
+  'A variable set to All becomes operator =| with value $__all, not =~ .* and not a list of values. ' +
+  'If the variables use a datasource variable such as ${ds}, give the filters variable that same datasource.';
 
 const GLOBAL_DISMISS_KEY = 'grafana.dashboard.drilldownMigrationAssistantSuggestion.dismissedGlobally';
 
