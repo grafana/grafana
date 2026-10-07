@@ -93,8 +93,16 @@ service BlobStore {
   rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
 
   // Get blob contents.  When possible, this will return a signed URL
-  // For large payloads, signed URLs are required to avoid protobuf message size limits
+  // Large payloads should use GetBlobStream instead of a whole-message response.
   rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
+
+  // Additive remote transport. First upload message has metadata only;
+  // subsequent messages have only value (up to 64 KiB each).
+  rpc PutBlobStream(stream PutBlobRequest) returns (PutBlobResponse);
+
+  // First response has content_type (or error); subsequent responses have
+  // value only (up to 64 KiB each). Consume the stream to EOF to detect errors.
+  rpc GetBlobStream(GetBlobRequest) returns (stream GetBlobResponse);
 
   // NOTE: there is no direct access to delete blobs
   // >> cleanup will be managed via garbage collection or direct access to the underlying storage

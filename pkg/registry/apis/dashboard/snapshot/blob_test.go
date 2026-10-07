@@ -22,6 +22,7 @@ import (
 )
 
 type fakeBlobStore struct {
+	resourcepb.BlobStoreClient
 	put      *resourcepb.PutBlobRequest
 	get      *resourcepb.GetBlobRequest
 	putRsp   *resourcepb.PutBlobResponse

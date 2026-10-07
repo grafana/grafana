@@ -39,8 +39,20 @@ storage, whether embedded in Grafana or running as a separate storage server.
 Explicit message limits still apply. The snapshot reader uses a separate receive
 limit, and increasing the server limit alone does not change client limits.
 
-Streaming blob transport for SQL, KV, and CDK backends needs a separate design;
-these settings are not a substitute for bounded-memory uploads and downloads.
+The additive `BlobStore.PutBlobStream` and `GetBlobStream` RPCs support remote
+streaming against the existing `resource_blob` SQL table, including SQL-backed
+KV. Uploads start with metadata and continue with value-only chunks; downloads
+start with content type and continue with value-only chunks. Each chunk is at
+most 64 KiB, each transfer is limited to 64 MiB and two active transfers per
+tenant on each server, with a two-minute deadline. Incomplete uploads roll back.
+Existing unary clients can read streamed blobs. File-backed KV (Badger) and CDK
+blob storage do not support these RPCs yet. Snapshot clients still use unary
+calls; upgrading the storage server alone does not switch their transport.
+
+The SQL implementation appends to one BLOB row inside a transaction. This is a
+proof of concept: large transfers can hold database locks and repeated appends
+can become expensive. Validate its behavior under production database load
+before enabling streaming clients.
 
 ### Optional: Connection Management and Load Balancing
 
