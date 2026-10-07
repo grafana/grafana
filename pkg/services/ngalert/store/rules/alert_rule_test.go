@@ -1110,11 +1110,23 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	rule := createRule(t, store, nil)
 
 	requester := &user.SignedInUser{UserID: 42}
-	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		return store.DeleteInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, requester)
+	})
 	require.NoError(t, err)
 
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 
 	require.NotNil(t, gotCtx, "provider should have been called")
 	got, err := identity.GetRequester(gotCtx)
@@ -1152,12 +1164,27 @@ func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
 	rule := createRule(t, store, nil)
 
 	requester := &user.SignedInUser{UserID: 42}
-	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+	var count int64
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		var err error
+		count, err = store.CountInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, requester)
+		return err
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(1), count)
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "count should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 
 	require.NotNil(t, gotCtx, "provider should have been called")
 	got, err := identity.GetRequester(gotCtx)
@@ -1193,13 +1220,28 @@ func TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider(t *testing.T)
 
 	rule := createRule(t, store, nil)
 
-	got, err := store.GetAllFoldersWithRules(context.Background(), rule.OrgID)
+	var got map[string]struct{}
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		var err error
+		got, err = store.GetAllFoldersWithRules(ctx, rule.OrgID)
+		return err
+	})
 	require.NoError(t, err)
 
 	_, ok := got[rule.NamespaceUID]
 	assert.True(t, ok)
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "scan should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
