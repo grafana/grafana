@@ -15,9 +15,9 @@ import {
 } from '../otel/details';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
+import { LogLineDetailsError } from './LogLineDetailsError';
 import { filterFields, filterLabels, type LabelWithLinks } from './LogLineDetailsFields';
 import { LogLineDetailsSummary } from './LogLineDetailsSummary';
-import { LogLineOTelDetailsError } from './LogLineOTelDetailsError';
 import { LogLineOTelDetailsFields, LogLineOTelDetailsLabelFields } from './LogLineOTelDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
@@ -113,7 +113,9 @@ const LogLineDetailsOTelComponentBody = ({
         </Box>
       ) : (
         <div className={styles.container}>
-          <LogLineOTelDetailsError fields={fields} labels={labels} />
+          <div className={styles.errorContainer}>
+            <LogLineDetailsError fields={fields} labels={labels} />
+          </div>
           <div className={styles.categories}>
             {groupedFields.length > 0 &&
               groupedFields.map(({ category, items }) => (
@@ -244,6 +246,9 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
     }),
     container: css({
       textOverflow: 'ellipsis',
+    }),
+    errorContainer: css({
+      margin: theme.spacing(1),
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,
