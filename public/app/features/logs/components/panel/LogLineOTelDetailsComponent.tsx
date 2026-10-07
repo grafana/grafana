@@ -241,14 +241,14 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => {
 
   return {
     componentWrapper: css({
-      background: theme.colors.background.primary,
+      background: theme.colors.background.elevated,
       padding: theme.spacing(0, 0.5, 0, 0.5),
     }),
     container: css({
       textOverflow: 'ellipsis',
     }),
     errorContainer: css({
-      margin: theme.spacing(1),
+      margin: theme.spacing(1.5, 1, 1, 1),
     }),
     categories: css({
       padding: `0 ${categoryIndent}`,
