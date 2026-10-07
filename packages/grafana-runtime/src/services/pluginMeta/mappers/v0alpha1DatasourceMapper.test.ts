@@ -135,17 +135,25 @@ describe('v0alpha1DatasourceMapper', () => {
     });
 
     it('should map extensions property correctly', () => {
-      expect(result[pluginId].extensions.addedComponents).toEqual(spec.pluginJson.extensions?.addedComponents ?? []);
-      expect(result[pluginId].extensions.addedFunctions).toEqual(spec.pluginJson.extensions?.addedFunctions ?? []);
-      expect(result[pluginId].extensions.addedLinks).toEqual(spec.pluginJson.extensions?.addedLinks ?? []);
-      expect(result[pluginId].extensions.exposedComponents).toEqual(
+      const extensions = result[pluginId].extensions ?? {
+        addedComponents: [],
+        addedFunctions: [],
+        addedLinks: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      };
+
+      expect(extensions.addedComponents).toEqual(spec.pluginJson.extensions?.addedComponents ?? []);
+      expect(extensions.addedFunctions).toEqual(spec.pluginJson.extensions?.addedFunctions ?? []);
+      expect(extensions.addedLinks).toEqual(spec.pluginJson.extensions?.addedLinks ?? []);
+      expect(extensions.exposedComponents).toEqual(
         (spec.pluginJson.extensions?.exposedComponents ?? []).map((v) => ({
           ...v,
           description: v.description ?? '',
           title: v.title ?? '',
         }))
       );
-      expect(result[pluginId].extensions.extensionPoints).toEqual(
+      expect(extensions.extensionPoints).toEqual(
         (spec.pluginJson.extensions?.extensionPoints ?? []).map((v) => ({
           ...v,
           description: v.description ?? '',
