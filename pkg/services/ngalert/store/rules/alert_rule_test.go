@@ -1040,6 +1040,81 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	assert.True(t, spy.withTransactionalDbSessionCalled, "the whole delete should run on dbHelper.DB, not st.SQLStore directly")
 }
 
+// TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession is a regression test: the
+// write path shares conn/sess with the reads, so a routed delete must not reuse an ambient
+// session from a different db.DB either. A wrong-engine write would silently leave the real rows
+// untouched while reporting success, which is worse than the equivalent bug on a read.
+func TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    spy,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		return store.DeleteAlertRulesByUID(ctx, rule.OrgID, &models.AlertingUserUID, false, rule.UID)
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_DeleteAlertRulesByUID_DefaultPathJoinsAmbientSession is the mirror of the test
+// above: with no LegacyDatabaseProvider configured, the delete must stay on the caller's
+// transaction, or a caller rollback would not roll back the delete with it.
+func TestIntegration_DeleteAlertRulesByUID_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, models.RuleGen)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		return store.DeleteAlertRulesByUID(ctx, rule.OrgID, &models.AlertingUserUID, false, rule.UID)
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
+}
+
 // TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired asserts that once a
 // provider is configured, delete can no longer silently fall back to st.SQLStore when it fails to
 // resolve: the writes need to know which database to run on, so a resolution error must block the
