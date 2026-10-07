@@ -119,6 +119,60 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.True(t, spy.withDbSessionCalled, "select should run on dbHelper.DB, not l.SQLStore directly")
 			require.True(t, spy.withTransactionalDbSessionCalled, "delete should run on dbHelper.DB, not l.SQLStore directly")
 		})
+
+	scenarioWithPanel(t, "the routed delete does not reuse an ambient session from a different db.DB",
+		func(t *testing.T, sc scenarioContext) {
+			// sqlstore.startSessionOrUseExisting reuses whatever session is already on ctx
+			// regardless of which db.DB created it, so a routed delete must force a fresh session
+			// or it could silently run on the wrong connection.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    spy,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			var ambientSess *db.Session
+			err := sc.service.SQLStore.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := sc.service.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession)
+			require.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from a different db.DB")
+		})
+
+	scenarioWithPanel(t, "the default delete (no routed database) joins the caller's ambient transaction",
+		func(t *testing.T, sc scenarioContext) {
+			// Without a configured provider, the delete must keep participating in the caller's
+			// transaction: if the caller later rolls back, the delete must roll back with it too.
+			spy := &dbSpy{DB: sc.service.SQLStore}
+			sc.service.SQLStore = spy
+
+			var ambientSess *db.Session
+			err := spy.InTransaction(sc.reqContext.Req.Context(), func(ctx context.Context) error {
+				if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+					ambientSess = sess
+					return nil
+				}); err != nil {
+					return err
+				}
+				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
+			})
+			require.NoError(t, err)
+
+			require.NotNil(t, ambientSess)
+			require.NotNil(t, spy.lastSession)
+			require.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
+		})
 }
 
 // dbSpy wraps a db.DB and records whether WithDbSession/WithTransactionalDbSession were called on
@@ -127,16 +181,25 @@ type dbSpy struct {
 	db.DB
 	withDbSessionCalled              bool
 	withTransactionalDbSessionCalled bool
+	// lastSession is the session actually used, so a test can prove it isn't the same session
+	// object as an ambient one from a different db.DB (which withoutAmbientSession forces).
+	lastSession *db.Session
 }
 
 func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	s.withDbSessionCalled = true
-	return s.DB.WithDbSession(ctx, callback)
+	return s.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
 }
 
 func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
 	s.withTransactionalDbSessionCalled = true
-	return s.DB.WithTransactionalDbSession(ctx, callback)
+	return s.DB.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		s.lastSession = sess
+		return callback(sess)
+	})
 }
 
 func TestLibraryElementService_legacyDatabaseProvider(t *testing.T) {
