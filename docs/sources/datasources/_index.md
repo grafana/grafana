@@ -256,7 +256,6 @@ Grafana ships with the following core data sources, organized by their primary u
 
 ### Profiles
 
-- [Parca](parca/)
 - [Pyroscope](pyroscope/)
 
 ### SQL databases
