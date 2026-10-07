@@ -1,5 +1,7 @@
 import { render, screen, within } from 'test/test-utils';
 
+import { dateTime, type TimeRange } from '@grafana/data';
+
 import { useLazyNotebookFieldFacetQuery } from '../../list/notebookSearchApi';
 
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
@@ -45,8 +47,6 @@ function setup(props: Partial<React.ComponentProps<typeof NotebookDocumentHeader
     <NotebookDocumentHeader
       title="Q2 latency regression"
       tags={['latency']}
-      timeFrom="now-6h"
-      timeTo="now"
       onTagsChange={onTagsChange}
       onTitleChange={onTitleChange}
       {...props}
@@ -70,11 +70,24 @@ describe('NotebookDocumentHeader', () => {
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
   });
 
-  it('labels the time range too, so the two rows read as a pair', () => {
+  // On screen the time picker already shows it.
+  it('leaves the time range out unless one is passed', () => {
     setup({ isEditing: false });
 
+    expect(screen.queryByText('Time')).not.toBeInTheDocument();
+  });
+
+  it('shows a passed time range as absolute instants in the given time zone', () => {
+    const timeRange: TimeRange = {
+      from: dateTime('2026-10-07T10:00:00Z'),
+      to: dateTime('2026-10-07T16:00:00Z'),
+      raw: { from: 'now-6h', to: 'now' },
+    };
+
+    setup({ isEditing: false, timeRange, timeZone: 'utc' });
+
     expect(screen.getByText('Time')).toBeInTheDocument();
-    expect(screen.getByText('now-6h → now')).toBeInTheDocument();
+    expect(screen.getByText('2026-10-07 10:00:00 → 2026-10-07 16:00:00')).toBeInTheDocument();
   });
 
   it('offers the tag picker once the notebook is being edited', () => {
@@ -232,15 +245,7 @@ describe('NotebookDocumentHeader', () => {
       await user.clear(screen.getByRole('textbox', { name: 'Title' }));
       await user.type(screen.getByRole('textbox', { name: 'Title' }), 'Q3 latency regression');
 
-      rerender(
-        <NotebookDocumentHeader
-          title="Q3 latency regression"
-          tags={['latency']}
-          timeFrom="now-6h"
-          timeTo="now"
-          isEditing={false}
-        />
-      );
+      rerender(<NotebookDocumentHeader title="Q3 latency regression" tags={['latency']} isEditing={false} />);
 
       expect(screen.getByRole('heading', { name: 'Q3 latency regression' })).toBeInTheDocument();
     });

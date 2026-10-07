@@ -63,6 +63,11 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+  /**
+   * Set only by NotebookRenderPage. On screen the time picker already shows the range; a PDF has no
+   * picker, so the header carries it instead.
+   */
+  showTimeRange?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
@@ -848,9 +853,10 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, key } = model.useState();
+  const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
 
-  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
@@ -944,8 +950,8 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeFrom={timeRange.from}
-          timeTo={timeRange.to}
+          timeRange={showTimeRange ? timeRange : undefined}
+          timeZone={sceneTimeRange.getTimeZone()}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}
