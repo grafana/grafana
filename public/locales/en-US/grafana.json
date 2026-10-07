@@ -16743,7 +16743,7 @@
     },
     "truncation": {
       "label": "Content truncated",
-      "tooltip": "The rendered output passed {{max, number}} characters, so the rest was dropped. Shorten the template, or query fewer rows, to see all of it."
+      "tooltip": "The render hit a ceiling of {{maxChars, number}} characters or {{maxRows, number}} rows, so the rest was dropped. Shorten the template, or query fewer rows, to see all of it."
     }
   },
   "theme-playground": {

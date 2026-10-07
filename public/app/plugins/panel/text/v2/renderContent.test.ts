@@ -21,6 +21,7 @@ import { RenderMode, TextMode } from '../panelcfg.gen';
 
 import {
   catchTemplateError,
+  countRows,
   hasRenderableData,
   interpolateTemplate,
   MAX_RENDERED_CHARS,
@@ -439,6 +440,100 @@ describe('interpolateTemplate', () => {
       expect(interpolateTemplate({ ...template, series: [hosts] }, createReplaceVariables()).truncated).toBe(false);
     });
 
+    describe('the row ceiling', () => {
+      const tall = (rows: number) =>
+        toDataFrame({
+          fields: [{ name: 'n', type: FieldType.number, values: Array.from({ length: rows }, (_, i) => i) }],
+        });
+
+      function interpolateRows(series: DataFrame[], renderMode: RenderMode, rowWindow?: RowWindow) {
+        return interpolateTemplate(
+          { content: '{{data.length}}', mode: TextMode.Markdown, renderMode, series, rowWindow },
+          createReplaceVariables()
+        );
+      }
+
+      // The output is short enough to fit, so only the row count reveals the loss - and it
+      // reports the ceiling rather than the real total.
+      it('reports a Once render over the ceiling as truncated', () => {
+        const result = interpolateRows([tall(MAX_RENDERED_ROWS + 1)], RenderMode.Once);
+
+        expect(result.content).toBe(String(MAX_RENDERED_ROWS));
+        expect(result.truncated).toBe(true);
+      });
+
+      it('leaves a Once render at the ceiling untruncated', () => {
+        expect(interpolateRows([tall(MAX_RENDERED_ROWS)], RenderMode.Once).truncated).toBe(false);
+      });
+
+      it('counts rows across frames, where no single frame passes the ceiling', () => {
+        const half = MAX_RENDERED_ROWS / 2;
+
+        expect(interpolateRows([tall(half), tall(half + 1)], RenderMode.Once).truncated).toBe(true);
+      });
+
+      // The ceiling trims `data`, so a template that never reaches for a row has lost nothing.
+      // The default panel content is one of these, and reports on every sizeable query.
+      it.each([
+        { desc: 'the panel content ignores its data', content: '# Just a title' },
+        { desc: 'only frame names are read', content: '{{#each frames}}{{name}},{{/each}}' },
+        { desc: 'only the frame count is read', content: '{{frames.length}}' },
+      ])('stays quiet in Once when $desc', ({ content }) => {
+        const result = interpolateTemplate(
+          { content, mode: TextMode.Markdown, renderMode: RenderMode.Once, series: [tall(MAX_RENDERED_ROWS + 1)] },
+          createReplaceVariables()
+        );
+
+        expect(result.truncated).toBe(false);
+      });
+
+      it.each([
+        { desc: 'the row count', content: '{{data.length}}' },
+        { desc: 'a loop over the rows', content: '{{#each data}}{{n}}{{/each}}' },
+        { desc: 'rows reached through a frame', content: '{{#each frames}}{{#each data}}{{n}}{{/each}}{{/each}}' },
+      ])('reports in Once when the template reads $desc', ({ content }) => {
+        const result = interpolateTemplate(
+          { content, mode: TextMode.Markdown, renderMode: RenderMode.Once, series: [tall(MAX_RENDERED_ROWS + 1)] },
+          createReplaceVariables()
+        );
+
+        expect(result.truncated).toBe(true);
+      });
+
+      // Each row is its own block, so a row the ceiling drops is a block the reader never sees,
+      // whether or not the template reads anything out of it.
+      it('reports an unpaginated PerRow render that ignores its data', () => {
+        const result = interpolateTemplate(
+          {
+            content: 'hello',
+            mode: TextMode.Markdown,
+            renderMode: RenderMode.PerRow,
+            series: [tall(MAX_RENDERED_ROWS + 1)],
+          },
+          createReplaceVariables()
+        );
+
+        expect(result.truncated).toBe(true);
+      });
+
+      it('reports an unpaginated PerRow render over the ceiling as truncated', () => {
+        expect(interpolateRows([tall(MAX_RENDERED_ROWS + 1)], RenderMode.PerRow).truncated).toBe(true);
+      });
+
+      // Pagination renders the rest on another page, so the reader is not missing them.
+      it('leaves a paginated PerRow page untruncated', () => {
+        const result = interpolateRows([tall(MAX_RENDERED_ROWS * 3)], RenderMode.PerRow, { start: 0, count: 100 });
+
+        expect(result.truncated).toBe(false);
+      });
+
+      it('leaves the last page untruncated, where fewer rows remain than the page holds', () => {
+        const result = interpolateRows([tall(150)], RenderMode.PerRow, { start: 100, count: 100 });
+
+        expect(result.truncated).toBe(false);
+      });
+    });
+
     it('exposes every frame for Once', () => {
       expect(interpolate('{{#each frames}}{{name}}:{{data.length}} {{/each}}', [hosts, regions], undefined)).toBe(
         'frameA:2 frameB:1 '
@@ -579,10 +674,24 @@ describe('renderContent', () => {
         expected: '<p>hi</p>',
       },
       {
+        desc: 'a templated comment in HTML, which the sanitizer drops the same way',
+        mode: TextMode.HTML,
+        content: '<!-- {{#each data}}{{host}}{{/each}} --><p>hi</p>',
+        expected: '<p>hi</p>',
+      },
+      {
         desc: 'a plain comment inside markdown inline code',
         mode: TextMode.Markdown,
         content: 'Use `<!-- hide me -->` for that.',
         expected: '<p>Use <code>&lt;!-- hide me --&gt;</code> for that.</p>\n',
+      },
+      // Escaping rather than dropping is what keeps these two readable: the comment is the
+      // content here, and a panel documenting the syntax is a plausible panel.
+      {
+        desc: 'a templated comment inside markdown inline code',
+        mode: TextMode.Markdown,
+        content: 'Write `<!-- {{host}} -->` to hide it.',
+        expected: '<p>Write <code>&lt;!-- {{host}} --&gt;</code> to hide it.</p>\n',
       },
       {
         desc: 'a plain comment inside a markdown code fence',
@@ -590,8 +699,33 @@ describe('renderContent', () => {
         content: '```html\n<!-- set the title -->\n```\n',
         expected: '<pre><code class="language-html">&lt;!-- set the title --&gt;\n</code></pre>\n',
       },
+      {
+        desc: 'a templated comment inside a markdown code fence',
+        mode: TextMode.Markdown,
+        content: '```html\n<!-- {{#each data}}{{host}}{{/each}} -->\n```\n',
+        expected: '<pre><code class="language-html">&lt;!-- {{#each data}}{{host}}{{/each}} --&gt;\n</code></pre>\n',
+      },
+      {
+        desc: 'a mustache the author escaped inside a comment, which must not interpolate',
+        mode: TextMode.Markdown,
+        content: 'Write `<!-- \\{{host}} -->` to hide it.',
+        expected: '<p>Write <code>&lt;!-- {{host}} --&gt;</code> to hide it.</p>\n',
+      },
     ])('keeps $desc untouched', ({ mode, content, expected }) => {
       expect(renderOnce(content, mode).content).toBe(expected);
+    });
+
+    // Expressions are neutralised, not the comment, so with the sanitizer off a templated
+    // comment reaches the DOM exactly as a plain one always has.
+    it('leaves a templated comment in the output when sanitizing is disabled', () => {
+      const content = '<!-- {{#each data}}{{host}}{{/each}} --><b>below</b>';
+      const rendered = renderContent(
+        { content, series: [hosts], renderMode: RenderMode.Once, mode: TextMode.HTML },
+        createReplaceVariables(),
+        true
+      );
+
+      expect(rendered.content).toBe(content);
     });
 
     it('shows a commented-out loop verbatim in code mode, where nothing is rendered', () => {
@@ -599,6 +733,28 @@ describe('renderContent', () => {
 
       expect(renderOnce(content, TextMode.Code).content).toBe(content);
     });
+
+    // The sanitizer closes these on the `>` that overlaps the opener, so the template after
+    // one is content, not the inside of a comment that swallows it.
+    it.each(['<!-->', '<!--->', '<!---->'])('closes an empty comment written as %s', (comment) => {
+      expect(renderOnce(`${comment}<b>{{data.length}}</b>`, TextMode.HTML).content).toBe('<b>2</b>');
+    });
+
+    it('keeps what precedes an unterminated templated comment, which the sanitizer reads to the end', () => {
+      expect(renderOnce('<b>above</b><!-- {{#each data}}{{host}}{{/each}}', TextMode.HTML).content).toBe(
+        '<b>above</b>'
+      );
+    });
+  });
+});
+
+describe('countRows', () => {
+  it('sums the rows of every frame', () => {
+    expect(countRows([hosts, regions])).toBe(3);
+  });
+
+  it('ignores a frame without fields, which a template is given no rows for', () => {
+    expect(countRows([{ fields: [], length: 12 }, regions])).toBe(1);
   });
 });
 

@@ -74,6 +74,11 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
+/** Counted across all frames, skipping those a template is given no rows for. */
+export function countRows(series: DataFrame[]): number {
+  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
+}
+
 export function interpolateTemplate(
   template: TextTemplate,
   replaceVariables: InterpolateFunction
@@ -83,7 +88,7 @@ export function interpolateTemplate(
   // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
   const compiled =
     isTextNewFeaturesEnabled() && mode !== TextMode.Code
-      ? compileTemplate(stripTemplatedComments(content), replaceVariables)
+      ? compileTemplate(escapeCommentedTemplates(content), replaceVariables)
       : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
@@ -96,36 +101,45 @@ export function interpolateTemplate(
     return { content: replaceVariables(content, scopedVars, format), truncated: false };
   }
 
-  const rendered = replaceVariables(compiled(buildAllRowsContext(series, MAX_RENDERED_ROWS)), scopedVars, format);
+  let readRows = false;
+  const context = buildAllRowsContext(series, MAX_RENDERED_ROWS, () => {
+    readRows = true;
+  });
+  const rendered = replaceVariables(compiled(context), scopedVars, format);
 
   // A Once template emits one string, so the row ceiling cannot bound its size.
-  return cutToMaxChars(rendered);
+  const cut = cutToMaxChars(rendered);
+
+  // Rows past the ceiling never reach `data`, and Once has no pagination to cover them. Left
+  // unreported the panel reads as complete, and `{{data.length}}` states the ceiling as the count.
+  // Only counts against a template that read a row: the default content ignores its data, and a
+  // panel showing a title over a thousand-row query has lost nothing.
+  const rowsDropped = readRows && countRows(series) > MAX_RENDERED_ROWS;
+
+  return { ...cut, truncated: cut.truncated || rowsDropped };
 }
+
+// Matched the way the sanitizer reads a comment: `<!-->` and `<!--->` close abruptly, and an
+// unterminated one runs to the end of the document.
+const HTML_COMMENT = /<!--(?:-?>|[\s\S]*?(?:-->|$))/g;
+
+/** Already escaped by the author, so escaping again would interpolate what they opted out of. */
+const UNESCAPED_MUSTACHE = /(?<!\\)\{\{/g;
 
 // Expressions inside an HTML comment render output the sanitizer always discards, so running
 // them only spends the character budget - and a cut landing inside the comment takes the rest
-// of the template with it. A comment holding one is commented-out template, so drop it unrendered.
-function stripTemplatedComments(content: string): string {
-  let out = '';
-  let pos = 0;
-
-  while (pos < content.length) {
-    const open = content.indexOf('<!--', pos);
-
-    if (open === -1) {
-      return out + content.slice(pos);
-    }
-
-    // An unterminated comment runs to the end of the document, as the sanitizer reads it too.
-    const close = content.indexOf('-->', open);
-    const end = close === -1 ? content.length : close + 3;
-    const comment = content.slice(open, end);
-
-    out += content.slice(pos, open) + (comment.includes('{{') ? '' : comment);
-    pos = end;
-  }
-
-  return out;
+// of the template with it. A comment is commented-out template, so its expressions are escaped
+// to render as themselves rather than run.
+//
+// Escaped rather than dropped, so the comment survives as text: in markdown it may be the
+// content, inside a code span or fence, and with `disable_sanitize_html` it reaches the DOM the
+// way a comment holding no expression always has.
+//
+// A comment the template itself builds, as in `{{#if hide}}<!--{{/if}}`, is not rescued by this.
+// Its delimiters sit inside the comment span either way, so the `{{#if}}` outside pairs with a
+// different `{{/if}}` than the author wrote, whatever is done to the contents.
+function escapeCommentedTemplates(content: string): string {
+  return content.replace(HTML_COMMENT, (comment) => comment.replace(UNESCAPED_MUSTACHE, '\\{{'));
 }
 
 // Cut on a line break so the tail lands between elements rather than inside a tag, but
@@ -232,7 +246,14 @@ function interpolateEveryRow(
   }
 
   // The loop breaks after appending, so the last block and the separators can still push past the limit.
-  return cutToMaxChars(joinBlocks(blocks, mode));
+  const cut = cutToMaxChars(joinBlocks(blocks, mode));
+
+  // Every row this pass was meant to cover: the page when paginated, and otherwise all of them,
+  // since nothing else will render the rest. A shortfall is a row the reader never sees.
+  const totalRows = countRows(series);
+  const requestedRows = rowWindow ? Math.min(rowWindow.count, Math.max(0, totalRows - windowStart)) : totalRows;
+
+  return { ...cut, truncated: cut.truncated || blocks.length < requestedRows };
 }
 
 export function renderContent(
