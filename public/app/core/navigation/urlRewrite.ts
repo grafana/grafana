@@ -19,3 +19,8 @@ export function markAsUrlRewrite(location: H.Path | H.LocationDescriptorObject):
 export function isUrlRewrite(state: unknown): boolean {
   return typeof state === 'object' && state !== null && 'urlRewrite' in state && state.urlRewrite === true;
 }
+
+/** True for a history event that corrects the current URL in place; every other event is a navigation. */
+export function isUrlRewriteEvent(location: H.Location, action: H.Action): boolean {
+  return action === 'REPLACE' && isUrlRewrite(location.state);
+}

@@ -6,8 +6,9 @@ import * as z from 'zod';
 import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { type AppChromeService, type AppChromeState } from 'app/core/components/AppChrome/AppChromeService';
-import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
+import { isUrlRewriteEvent } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
+import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 
 import { classifyPage, pageKey } from './classifyPage';
 import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry, type PageHistoryKind } from './types';
@@ -16,7 +17,7 @@ const STORAGE_SERVICE = 'grafana-page-history';
 const PERSIST_MS = 1000;
 /** Serialized JSON length. Explore hrefs can be several KB each, so the count cap alone does not bound bytes. */
 export const PAGE_HISTORY_MAX_BYTES = 200_000;
-/** JS `Date` range; `formatDistanceToNowStrict` throws beyond it. */
+/** JS `Date` range; larger values are not instants. */
 const MAX_EPOCH_MS = 8.64e15;
 
 /** Persisted row. The page identity is derived from the href on load, so a rule change reclassifies old rows. */
@@ -35,7 +36,7 @@ function toStored({ href, lastVisited, title }: PageHistoryEntry): StoredEntry {
   return { href, lastVisited, title };
 }
 
-/** The page's own title, as the browser tab shows it; `undefined` until the page sets its nav after a route change. */
+/** The nav title the page set, so a rule page reads as its rule; `undefined` until the page sets its nav after a route change. */
 function pageTitle({ pageNav, sectionNav }: AppChromeState): string | undefined {
   if (pageNav?.text) {
     return pageNav.text;
@@ -80,21 +81,8 @@ function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
 
 /** Validates the stored copy row by row so one bad entry drops only itself. Rows that no longer classify are dropped. */
 function parseEntries(raw: string | null): PageHistoryEntry[] {
-  if (!raw) {
-    return [];
-  }
-  let rows: unknown;
-  try {
-    rows = JSON.parse(raw);
-  } catch {
-    return [];
-  }
-  if (!Array.isArray(rows)) {
-    return [];
-  }
-
   const entries: PageHistoryEntry[] = [];
-  for (const row of rows) {
+  for (const row of parseJsonWithSchema(raw, z.array(z.unknown()), [])) {
     const result = StoredEntrySchema.safeParse(row);
     if (!result.success) {
       continue;
@@ -104,7 +92,7 @@ function parseEntries(raw: string | null): PageHistoryEntry[] {
       entries.push({ ...page, ...result.data });
     }
   }
-  return capEntries(mergeByPage(entries));
+  return entries;
 }
 
 /**
@@ -144,9 +132,7 @@ export class PageHistorySrv {
     this.apply(location, true);
 
     this.unlisten = locationService.getHistory().listen((location, action) => {
-      // Same rules as faroPageMeta: a flagged REPLACE is an in-place URL correction, not a navigation.
-      const isRewrite = action === 'REPLACE' && isUrlRewrite(location.state);
-      const isNavigation = !isRewrite && location.pathname !== this.currentPathname;
+      const isNavigation = !isUrlRewriteEvent(location, action) && location.pathname !== this.currentPathname;
       this.currentPathname = location.pathname;
       this.apply(location, isNavigation);
     });

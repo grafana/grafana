@@ -2,10 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as z from 'zod';
 
 import { UserStorage } from '@grafana/runtime/internal';
+import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 
 import { logError } from '../../Analytics';
 import { isLoading as isLoadingState, isUninitialized, useAsync } from '../../hooks/useAsync';
-import { parseJsonWithSchema } from '../../utils/parseJsonWithSchema';
 
 const STORAGE_NAMESPACE = 'alerting';
 const KEY_NAME_OVERRIDES = 'triagePredefinedNameOverrides';

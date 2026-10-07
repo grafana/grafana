@@ -8,8 +8,8 @@ import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { useStoredString } from 'app/core/hooks/useStored';
+import { PAGE_HISTORY_KINDS } from 'app/core/services/pageHistory/types';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
-import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -20,9 +20,8 @@ import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentActivityFooter } from './RecentActivityFooter';
 import { RecentActivityTab } from './RecentActivityTab';
-import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { type RecentActivity, getRecentActivity, isActivityFilter } from './getRecentActivity';
+import { getRecentActivity } from './getRecentActivity';
 import {
   type HomepageTabExtensionProps,
   type HomepageTab,
@@ -31,17 +30,14 @@ import {
   DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT,
 } from './types';
 
-/** Recently viewed dashboards (impressions); the redesign replaces it with every recent page. */
 const RECENT_TAB_ID = 'recent';
-const RECENT_ACTIVITY_TAB_ID = 'recent-activity';
 const MOST_USED_TAB_ID = 'most-used';
 const STARRED_TAB_ID = 'starred';
-const MAX_RECENT = 20;
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
 /** Last chosen Recent activity kind filter; remembered per browser. */
 const ACTIVITY_FILTER_KEY = 'grafana.home.recentActivity.filter';
-const DEFAULT_TAB_IDS = [RECENT_TAB_ID, RECENT_ACTIVITY_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
+const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
 
 function DashboardExtensionTab({
   Component,
@@ -79,31 +75,19 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const styles = useStyles2(getStyles);
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
   const mostUsedAvailable = isMostUsedAvailable();
-  const [activeTab, setActiveTab] = useState(redesignEnabled ? RECENT_ACTIVITY_TAB_ID : RECENT_TAB_ID);
+  const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const {
-    value: recentDashboards,
-    loading: recentLoading,
-    error: recentError,
-    retry: recentRetry,
-  } = useAsyncRetry(
-    () => (redesignEnabled ? Promise.resolve([]) : getRecentlyViewedDashboards(MAX_RECENT)),
-    [redesignEnabled]
-  );
-
   const [storedActivityFilter, setStoredActivityFilter] = useStoredString(ACTIVITY_FILTER_KEY, '');
-  const activityFilter = isActivityFilter(storedActivityFilter) ? storedActivityFilter : undefined;
+  // localStorage is untrusted; anything but a known kind means "all".
+  const activityFilter = PAGE_HISTORY_KINDS.find((kind) => kind === storedActivityFilter);
   const {
     value: recentActivity,
     loading: recentActivityLoading,
     error: recentActivityError,
     retry: recentActivityRetry,
-  } = useAsyncRetry<RecentActivity | undefined>(
-    () => (redesignEnabled ? getRecentActivity(activityFilter) : Promise.resolve(undefined)),
-    [redesignEnabled, activityFilter]
-  );
+  } = useAsyncRetry(() => getRecentActivity(activityFilter), [activityFilter]);
 
   const {
     value: starredDashboards,
@@ -125,18 +109,13 @@ export function DashboardTabs({ extensionComponents }: Props) {
     [mostUsedAvailable]
   );
 
-  const hasRecent = !redesignEnabled && !!recentDashboards?.length;
-  const hasRecentActivity = redesignEnabled && !!recentActivity?.items.length;
+  const hasRecent = !!recentActivity?.items.length;
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
   const hasStarred = !!starredDashboards?.length;
-  const initialLoading =
-    (redesignEnabled ? recentActivityLoading : recentLoading) ||
-    starredLoading ||
-    (mostUsedAvailable && mostUsedLoading);
+  const initialLoading = recentActivityLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
 
   // Folder names are only needed when some row shows a dashboard.
-  const hasDashboards =
-    hasRecent || hasMostUsed || hasStarred || !!recentActivity?.items.some((item) => item.kind === 'dashboard');
+  const hasDashboards = hasMostUsed || hasStarred || !!recentActivity?.items.some((item) => item.kind === 'dashboard');
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {
@@ -151,12 +130,11 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const selectableTabs = useMemo(
     () => [
       ...(hasRecent ? [RECENT_TAB_ID] : []),
-      ...(hasRecentActivity ? [RECENT_ACTIVITY_TAB_ID] : []),
       ...(hasMostUsed ? [MOST_USED_TAB_ID] : []),
       ...(hasStarred ? [STARRED_TAB_ID] : []),
       ...extensionTabs.filter((tab) => !tab.href).map((tab) => tab.id),
     ],
-    [hasRecent, hasRecentActivity, hasMostUsed, hasStarred, extensionTabs]
+    [hasRecent, hasMostUsed, hasStarred, extensionTabs]
   );
 
   useEffect(() => {
@@ -190,19 +168,12 @@ export function DashboardTabs({ extensionComponents }: Props) {
   }
 
   const builtInTabs: HomepageTab[] = [
-    redesignEnabled
-      ? {
-          id: RECENT_ACTIVITY_TAB_ID,
-          label: t('home.dashboard-tabs.recent', 'Recent'),
-          activeLabel: t('home.dashboard-tabs.recent-activity-active', 'Recent activity'),
-          counter: recentActivity?.items.length,
-        }
-      : {
-          id: RECENT_TAB_ID,
-          label: t('home.dashboard-tabs.recent', 'Recent'),
-          activeLabel: t('home.dashboard-tabs.recent-active', 'Recent dashboards'),
-          counter: recentDashboards?.length,
-        },
+    {
+      id: RECENT_TAB_ID,
+      label: t('home.dashboard-tabs.recent', 'Recent'),
+      activeLabel: t('home.dashboard-tabs.recent-activity-active', 'Recent activity'),
+      counter: recentActivity?.items.length,
+    },
     ...(mostUsedAvailable
       ? [
           {
@@ -259,16 +230,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
             minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
           >
             {activeTab === RECENT_TAB_ID && (
-              <RecentDashboardsTab
-                dashboards={recentDashboards ?? []}
-                loading={recentLoading}
-                error={recentError}
-                retry={recentRetry}
-                foldersByUid={foldersByUid}
-                onStarChange={starredRetry}
-              />
-            )}
-            {activeTab === RECENT_ACTIVITY_TAB_ID && (
               <RecentActivityTab
                 items={recentActivity?.items ?? []}
                 filtered={!!activityFilter}
@@ -277,6 +238,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 error={recentActivityError}
                 retry={recentActivityRetry}
                 foldersByUid={foldersByUid}
+                density={listDensity}
               />
             )}
             {activeTab === MOST_USED_TAB_ID && (
@@ -301,7 +263,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             )}
           </ScrollContainer>
           {/* Pinned below the scroll area so it stays visible however long the list is. */}
-          {activeTab === RECENT_ACTIVITY_TAB_ID && recentActivity && !recentActivityError && (
+          {activeTab === RECENT_TAB_ID && recentActivity && !recentActivityError && (
             <Box padding={1} paddingTop={1.5}>
               <RecentActivityFooter
                 counts={recentActivity.counts}

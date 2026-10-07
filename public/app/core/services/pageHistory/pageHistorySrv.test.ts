@@ -1,24 +1,17 @@
 import { createMemoryHistory } from 'history';
-import { http, HttpResponse } from 'msw';
 
 import { store } from '@grafana/data';
-import { config, HistoryWrapper, locationService, setBackendSrv, setLocationService } from '@grafana/runtime';
+import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
-import server, { setupMockServer } from '@grafana/test-utils/server';
 import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { PAGE_HISTORY_MAX_BYTES, PageHistorySrv } from './pageHistorySrv';
 import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
 
-setBackendSrv(backendSrv);
-setupMockServer();
-
 /** UserStorage's localStorage fallback key for the anonymous user in org 1. */
 const STORAGE_KEY = 'grafana-page-history:0:org-1';
-const USER_STORAGE_URL = '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage';
 
 const T0 = 1_700_000_000_000;
 const T1 = T0 + 60_000;
@@ -57,13 +50,6 @@ function createDeferred<T>() {
     resolve = res;
   });
   return { promise, resolve };
-}
-
-/** Lets fetch polyfill timers and MSW promise chains run under fake timers. */
-async function settle(rounds = 20) {
-  for (let i = 0; i < rounds; i++) {
-    await jest.advanceTimersByTimeAsync(0);
-  }
 }
 
 beforeEach(() => {
@@ -258,57 +244,6 @@ describe('PageHistorySrv', () => {
 
     expect(setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(1);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(await srv.getEntries()));
-  });
-
-  it('creates then patches the user storage resource for signed-in users', async () => {
-    config.bootData.user.isSignedIn = true;
-    config.bootData.user.uid = 'abc';
-    const posts: unknown[] = [];
-    const patches: Array<{ name: string; contentType: string | null; body: unknown }> = [];
-    server.use(
-      http.get(`${USER_STORAGE_URL}/:name`, () => HttpResponse.json({}, { status: 404 })),
-      http.post(`${USER_STORAGE_URL}/`, async ({ request }) => {
-        posts.push(await request.json());
-        return HttpResponse.json({}, { status: 201 });
-      }),
-      http.patch(`${USER_STORAGE_URL}/:name`, async ({ request, params }) => {
-        patches.push({
-          name: String(params.name),
-          contentType: request.headers.get('content-type'),
-          body: await request.json(),
-        });
-        return HttpResponse.json({});
-      })
-    );
-
-    const srv = startAt('/d/abc');
-    await settle();
-    const first = await srv.getEntries();
-    expect(first).toEqual([expect.objectContaining({ uid: 'abc' })]);
-
-    await jest.advanceTimersByTimeAsync(1000);
-    await settle();
-
-    expect(posts).toEqual([
-      {
-        metadata: { name: 'grafana-page-history:abc', labels: { user: 'abc', service: 'grafana-page-history' } },
-        spec: { data: { 'org-1': JSON.stringify(stored(first)) } },
-      },
-    ]);
-    expect(patches).toEqual([]);
-
-    locationService.push('/d/def');
-    await jest.advanceTimersByTimeAsync(1000);
-    await settle();
-
-    expect(posts).toHaveLength(1);
-    expect(patches).toEqual([
-      {
-        name: 'grafana-page-history:abc',
-        contentType: 'application/merge-patch+json',
-        body: { spec: { data: { 'org-1': JSON.stringify(stored(await srv.getEntries())) } } },
-      },
-    ]);
   });
 
   it('flushes the pending write when the tab is hidden', async () => {

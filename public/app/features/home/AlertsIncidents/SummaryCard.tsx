@@ -129,16 +129,14 @@ export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   return <span className={styles.prefix}>{children}</span>;
 }
 
-/** Right-aligned fixed-width relative-time cell (`11m ago`) so times line up across rows; empty when unknown. */
-export function SummaryCardAge({ date }: { date?: Date | number }) {
+/** Right-aligned fixed-width relative-time cell (`11m ago`) so times line up across rows. */
+export function SummaryCardAge({ date }: { date: Date | number }) {
   const styles = useStyles2(getStyles);
   return (
     <span className={styles.age}>
-      {date != null && (
-        <Text color="secondary" variant="bodySmall">
-          {dateTimeFormatTimeAgoShort(date)}
-        </Text>
-      )}
+      <Text color="secondary" variant="bodySmall">
+        {dateTimeFormatTimeAgoShort(date)}
+      </Text>
     </span>
   );
 }

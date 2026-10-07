@@ -87,21 +87,21 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter<DateTimeOptionsWithTimeAgo
 
 /**
  * Compact form of {@link dateTimeFormatTimeAgo} for dense lists: `11m ago`, `2h ago`, `3d ago`, `in 5m`.
- * Uses the browser's narrow relative-time style in the current language.
+ * Uses the browser's narrow relative-time style in the current language. A difference between two
+ * instants is the same in every time zone, so none is taken.
  *
  * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, UNIX epoch in seconds etc.
- * @param options
+ * @param options.now - reference instant; defaults to the current time
  *
- * @public
+ * @internal
  */
-export const dateTimeFormatTimeAgoShort: DateTimeFormatter<DateTimeOptionsWithTimeAgo> = (dateInUtc, options?) => {
-  const timeZone = getTimeZone(options);
-  const date = toTz(dateInUtc, timeZone);
+export function dateTimeFormatTimeAgoShort(dateInUtc: DateTimeInput, options?: { now?: DateTimeInput }): string {
+  const date = moment.utc(toMomentInput(dateInUtc));
   if (!date.isValid()) {
     return 'Invalid date';
   }
 
-  const now = options?.now == null ? Date.now() : toTz(options.now, timeZone).valueOf();
+  const now = options?.now == null ? Date.now() : moment.utc(toMomentInput(options.now)).valueOf();
   const diff = date.valueOf() - now;
   for (const [unit, size] of TIME_AGO_UNITS) {
     // Round the magnitude: Math.round(-1.5) is -1, which would make 45 days "1mo ago".
@@ -112,7 +112,7 @@ export const dateTimeFormatTimeAgoShort: DateTimeFormatter<DateTimeOptionsWithTi
   }
   // Under half a second either way; -0 keeps the past-tense form ("0s ago", not "in 0s").
   return formatRelativeTime(-0, 'second', { style: 'narrow', numeric: 'always' });
-};
+}
 
 /**
  * Helper function to format date and time according to the Grafana default formatting, but it

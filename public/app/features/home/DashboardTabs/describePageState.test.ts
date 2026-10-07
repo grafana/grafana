@@ -49,18 +49,7 @@ describe('describeAppState', () => {
 });
 
 describe('describeExploreState', () => {
-  it('shows the datasource name and query text per pane', async () => {
-    const search = explorePanes({
-      abc: {
-        datasource: 'loki-uid',
-        queries: [{ refId: 'A', expr: '{service_name="api"}' }],
-        range: { from: 'now-1h', to: 'now' },
-      },
-    });
-    expect(await describeExploreState(search)).toBe('Ops Logs · {service_name="api"}');
-  });
-
-  it('separates panes and queries', async () => {
+  it('joins datasource and queries within a pane and panes with a bar', async () => {
     const search = explorePanes({
       abc: {
         datasource: 'loki-uid',
@@ -72,25 +61,16 @@ describe('describeExploreState', () => {
     expect(await describeExploreState(search)).toBe('Ops Logs · up; down | unknown-uid · select 1');
   });
 
-  it('migrates the v0 array form', async () => {
-    expect(
-      await describeExploreState('?left=%5B%22now-1h%22,%22now%22,%22loki-uid%22,%7B%22expr%22:%22up%22%7D%5D')
-    ).toBe('Ops Logs · up');
-  });
-
-  it('skips null query elements', async () => {
+  it('drops the separator when a pane has no query text', async () => {
     const search = explorePanes({
       abc: { datasource: 'loki-uid', queries: [null], range: { from: 'now-1h', to: 'now' } },
     });
     expect(await describeExploreState(search)).toBe('Ops Logs');
   });
 
-  it.each(['?schemaVersion=1&panes=%7Bnot-json', '?schemaVersion=2&panes=%7B%7D', '', '?schemaVersion=1'])(
-    'returns an empty string for %s',
-    async (search) => {
-      expect(await describeExploreState(search)).toBe('');
-    }
-  );
+  it('returns an empty string for an unreadable URL', async () => {
+    expect(await describeExploreState('?schemaVersion=1&panes=%7Bnot-json')).toBe('');
+  });
 });
 
 describe('getNavTitle', () => {

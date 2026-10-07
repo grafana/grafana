@@ -24,6 +24,7 @@ interface Props {
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
+  density?: 'default' | 'compact';
 }
 
 interface Row {
@@ -55,13 +56,13 @@ function toRow(item: RecentActivityItem, navTree: NavModelItem[], foldersByUid: 
     case 'app': {
       // Pages in the nav tree use their nav label. Deep links use the title the page set, which
       // often is just the section's ("Incidents" for every incident), so the path tells them apart.
-      // The badge already names the area, so the path drops its `/alerting` or `/a` prefix.
       const navTitle = getNavTitle(navTree, pathname);
       const title = navTitle ?? item.title ?? pathname;
-      const path = navTitle || title === pathname ? undefined : pathname.replace(AREA_PREFIX[item.kind], '');
+      const showPath = !navTitle && title !== pathname;
       return {
         title,
-        details: [path, describeAppState(search)],
+        // The badge already names the area, so the path drops its `/alerting` or `/a` prefix.
+        details: [showPath ? pathname.replace(AREA_PREFIX[item.kind], '') : undefined, describeAppState(search)],
         badge:
           item.kind === 'alerting'
             ? { text: t('home.recent-activity-tab.kind-alerting', 'Alerting'), color: 'red' }
@@ -71,9 +72,8 @@ function toRow(item: RecentActivityItem, navTree: NavModelItem[], foldersByUid: 
   }
 }
 
-/** Only rendered on the redesigned homepage, so rows are always compact. */
-export function RecentActivityTab({ items, filtered, loading, error, retry, foldersByUid }: Props) {
-  const styles = useStyles2(getStyles);
+export function RecentActivityTab({ items, filtered, loading, error, retry, foldersByUid, density }: Props) {
+  const styles = useStyles2(getStyles, density === 'compact');
   const navTree = useSelector((state) => state.navBarTree);
 
   if (loading) {
@@ -98,7 +98,7 @@ export function RecentActivityTab({ items, filtered, loading, error, retry, fold
             : t('home.recent-activity-tab.empty', 'No recent activity yet. Pages you visit will show up here.')
         }
         variant="completed"
-        density="compact"
+        density={density}
       />
     );
   }
@@ -110,7 +110,7 @@ export function RecentActivityTab({ items, filtered, loading, error, retry, fold
         return (
           <li key={item.href}>
             <ListRow
-              isCompact
+              isCompact={density === 'compact'}
               title={row.title}
               subtitle={row.details.filter(Boolean).join(SEPARATOR) || undefined}
               href={item.href}
@@ -138,10 +138,10 @@ export function RecentActivityTab({ items, filtered, loading, error, retry, fold
   );
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, compact: boolean) => ({
   list: css({
     listStyle: 'none',
-    padding: 0,
+    padding: theme.spacing(0, compact ? 0 : 0.5),
     margin: 0,
   }),
   // Fixed column sized for the widest badge ("Dashboard"), badges centered in it, so the column

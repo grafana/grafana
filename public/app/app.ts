@@ -362,11 +362,7 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
-
-      // Feeds the homepage "Recent activity" tab; same flag as the tab so the control arm pays no storage writes.
-      if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGrowthHomepage, false)) {
-        pageHistorySrv.start(chromeService);
-      }
+      pageHistorySrv.start(chromeService);
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);

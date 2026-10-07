@@ -1,22 +1,19 @@
 import { http, HttpResponse } from 'msw';
 import { useEffect, type ReactNode } from 'react';
-import { act, render, screen, within } from 'test/test-utils';
+import { render, screen, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { setMockStarredDashboards, setTestFlags } from '@grafana/test-utils/unstable';
-import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
+import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { contextSrv } from 'app/core/services/context_srv';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
-import { AccessControlAction } from 'app/types/accessControl';
 
-import { ctaClicked, tabChanged } from '../analytics/main';
+import { clearHistoryClicked, ctaClicked, tabChanged } from '../analytics/main';
 
 import { DashboardTabs } from './DashboardTabs';
 import { type HomepageTabExtensionProps } from './types';
@@ -32,13 +29,13 @@ jest.mock('../analytics/main', () => ({
   homepageViewed: jest.fn(),
 }));
 jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
-  pageHistorySrv: { getEntries: jest.fn() },
+  pageHistorySrv: { getEntries: jest.fn(), clear: jest.fn() },
 }));
 
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const impressionKey = `dashboard_impressions-${contextSrv.user.orgId}`;
+const FILTER_KEY = 'grafana.home.recentActivity.filter';
 
 function makeDashboardHit(overrides: Partial<DashboardHit> & { name: string; title: string }): DashboardHit {
   return {
@@ -66,24 +63,26 @@ const mostUsedHits: DashboardHit[] = [
   makeDashboardHit({ name: 'most-used-3', title: 'Most Used Dashboard 3', field: { views_last_30_days: null } }),
 ];
 
+function dashboardEntry(uid: string, search = ''): PageHistoryEntry {
+  return { kind: 'dashboard', uid, href: `/d/${uid}/x${search}`, lastVisited: Date.now() - 60_000 };
+}
+
+/** Visited dashboards in page history, newest first. */
 function seedRecent(uids: string[]) {
-  window.localStorage.setItem(impressionKey, JSON.stringify(uids));
+  jest.mocked(pageHistorySrv.getEntries).mockResolvedValue(uids.map((uid) => dashboardEntry(uid)));
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
-  window.localStorage.removeItem(impressionKey);
+  window.localStorage.removeItem(FILTER_KEY);
   setMockStarredDashboards([]);
   config.licenseInfo.enabledFeatures = {};
   // restoreAllMocks wipes the implementation, so the empty default must come back every test.
   jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([]);
+  jest.mocked(pageHistorySrv.clear).mockResolvedValue();
 });
 
-afterEach(async () => {
-  // Wrap in act() because setTestFlags fires OpenFeature events that trigger React state updates.
-  await act(async () => {
-    setTestFlags({});
-  });
+afterEach(() => {
   jest.restoreAllMocks();
 });
 
@@ -108,7 +107,7 @@ const createDashboardTabsExtensionComponent = (
   ) as ComponentTypeWithExtensionMeta<HomepageTabExtensionProps>;
 
 describe('DashboardTabs', () => {
-  it('renders Recent tab as active by default and shows recent dashboards', async () => {
+  it('renders Recent tab as active by default and shows recently visited dashboards', async () => {
     seedRecent(['recent-1', 'recent-2']);
     server.use(getCustomSearchHandler([...recentHits, ...starredHits]));
 
@@ -135,7 +134,7 @@ describe('DashboardTabs', () => {
   });
 
   it('lands directly on Starred when Recent is empty, without flashing the Recent tab', async () => {
-    // no recent seeded; starred has items (analytics off by default → no most-used tab)
+    // no recent activity; starred has items (analytics off by default → no most-used tab)
     setMockStarredDashboards(['starred-1', 'starred-2', 'starred-3']);
     server.use(getCustomSearchHandler([...starredHits]));
 
@@ -144,6 +143,7 @@ describe('DashboardTabs', () => {
     // the first tab bar shown is already on Starred — no Recent→Starred flip
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toHaveAttribute('aria-selected', 'false');
+    expect(jest.mocked(tabChanged)).not.toHaveBeenCalled();
   });
 
   it('switches to Starred tab and shows starred dashboards', async () => {
@@ -161,17 +161,7 @@ describe('DashboardTabs', () => {
     expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
   });
 
-  it('shows empty state when no recent dashboards', async () => {
-    render(<DashboardTabs extensionComponents={[]} />);
-
-    expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
-  });
-
-  it('renders the compact empty Recent activity tab on the redesigned homepage', async () => {
-    await act(async () => {
-      setTestFlags({ 'grafana.growthHomepage': true });
-    });
-
+  it('shows the empty state without a clear action when there is no recent activity', async () => {
     render(<DashboardTabs extensionComponents={[]} />);
 
     expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
@@ -264,7 +254,7 @@ describe('DashboardTabs', () => {
 
     it('auto-switches to Most used when recent is empty and most-used has items', async () => {
       config.licenseInfo.enabledFeatures = { analytics: true };
-      // No recent dashboards seeded
+      // No recent activity
       server.use(getCustomSearchHandler(allHits));
 
       render(<DashboardTabs extensionComponents={[]} />);
@@ -346,50 +336,7 @@ describe('DashboardTabs', () => {
     expect(screen.getByRole('tab', { name: 'Plugin Tab 2' })).toHaveAttribute('href', '/test');
   });
 
-  describe('empty Recent tab analytics', () => {
-    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom
-    // navigation (console.error -> jest-fail-on-console). Route anchor clicks through
-    // the SPA history the way the app does so the onClick fires without navigating.
-    beforeEach(() => {
-      document.addEventListener('click', interceptLinkClicks);
-    });
-
-    afterEach(() => {
-      document.removeEventListener('click', interceptLinkClicks);
-    });
-
-    it('tracks create_dashboard when the user can create dashboards', async () => {
-      jest
-        .spyOn(contextSrv, 'hasPermission')
-        .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
-
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
-
-      await user.click(await screen.findByRole('link', { name: /create your first dashboard/i }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recent_tab',
-        action: 'create_dashboard',
-        placement: 'empty_state',
-      });
-    });
-
-    it('tracks browse_dashboards when the user cannot create dashboards', async () => {
-      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
-
-      await user.click(await screen.findByRole('link', { name: /browse dashboards/i }));
-
-      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recent_tab',
-        action: 'browse_dashboards',
-        placement: 'empty_state',
-      });
-    });
-  });
-
-  describe('Recent activity tab', () => {
+  describe('Recent activity', () => {
     const exploreHref = `/explore?schemaVersion=1&panes=${encodeURIComponent(
       JSON.stringify({
         abc: {
@@ -404,12 +351,7 @@ describe('DashboardTabs', () => {
       href: exploreHref,
       lastVisited: Date.now() - 2 * 60 * 60 * 1000,
     };
-    const dashboardEntry: PageHistoryEntry = {
-      kind: 'dashboard',
-      uid: 'recent-1',
-      href: '/d/recent-1/x?from=now-90d&to=now&var-Plugin=finnhub',
-      lastVisited: Date.now() - 60_000,
-    };
+    const recentDashboardEntry = dashboardEntry('recent-1', '?from=now-90d&to=now&var-Plugin=finnhub');
     const alertingEntry: PageHistoryEntry = {
       kind: 'alerting',
       pathname: '/alerting/list',
@@ -428,32 +370,15 @@ describe('DashboardTabs', () => {
       { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },
     ];
 
-    async function enableRedesign() {
-      await act(async () => {
-        setTestFlags({ 'grafana.growthHomepage': true });
-      });
-    }
-
-    it('is absent and never reads history when the flag is off', async () => {
-      seedRecent(['recent-1', 'recent-2']);
-      server.use(getCustomSearchHandler(recentHits));
-
-      render(<DashboardTabs extensionComponents={[]} />);
-
-      expect(await screen.findByRole('tab', { name: /recent dashboards/i, selected: true })).toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /recent activity/i })).not.toBeInTheDocument();
-      expect(pageHistorySrv.getEntries).not.toHaveBeenCalled();
-    });
-
     it('lists visited pages with their restored state, newest first', async () => {
-      await enableRedesign();
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([appEntry, exploreEntry, dashboardEntry, alertingEntry]);
+      jest
+        .mocked(pageHistorySrv.getEntries)
+        .mockResolvedValue([appEntry, exploreEntry, recentDashboardEntry, alertingEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
       render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('tab', { name: /recent activity.*4/i, selected: true })).toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /recent dashboards/i })).not.toBeInTheDocument();
 
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
@@ -479,47 +404,38 @@ describe('DashboardTabs', () => {
       expect(list.getByText('App')).toBeInTheDocument();
       expect(list.getAllByText('Explore')).toHaveLength(2);
 
-      // Kind chips cover the whole history; "All" is active until one is picked.
-      const chips = within(screen.getByRole('group', { name: /show only/i }));
-      expect(chips.getAllByRole('button').map((chip) => chip.textContent)).toEqual([
-        'All',
-        'Dashboards',
-        'Explore',
-        'Alerting',
-        'Apps',
-      ]);
-      expect(chips.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+      // The kind filter covers the whole history; "All" is active until one is picked.
+      const filter = within(screen.getByRole('radiogroup', { name: /show only/i }));
+      const radios = filter.getAllByRole('radio');
+      expect(radios).toHaveLength(5);
+      ['All', 'Dashboards', 'Explore', 'Alerting', 'Apps'].forEach((name, i) =>
+        expect(radios[i]).toHaveAccessibleName(name)
+      );
+      expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
     });
 
-    it('backfills dashboards from the recently viewed list while page history has few', async () => {
-      await enableRedesign();
-      seedRecent(['recent-1', 'recent-2']);
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry]);
+    it('filters by kind, remembers the choice and disables kinds with no pages', async () => {
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(await screen.findByRole('tab', { name: /recent activity.*3/i, selected: true })).toBeInTheDocument();
-      const links = within(screen.getByRole('list')).getAllByRole('link');
-      // Real visits first, backfilled dashboards after them, without a visit time.
-      expect(links.map((link) => link.textContent)).toEqual([
-        expect.stringMatching(/^Explore/),
-        expect.stringMatching(/^Recent Dashboard 1/),
-        expect.stringMatching(/^Recent Dashboard 2/),
-      ]);
-      expect(within(screen.getByRole('list')).getAllByText('Dashboard')).toHaveLength(2);
-      expect(screen.getAllByText(/ago$/)).toHaveLength(1);
-      expect(screen.getByRole('button', { name: 'Dashboards' })).toBeEnabled();
+      const filter = within(await screen.findByRole('radiogroup', { name: /show only/i }));
+      expect(filter.getByRole('radio', { name: 'Alerting' })).toBeDisabled();
+      expect(filter.getByRole('radio', { name: 'Apps' })).toBeDisabled();
+
+      await user.click(filter.getByRole('radio', { name: 'Explore' }));
+
+      expect(await screen.findByRole('tab', { name: /recent activity.*1/i })).toBeInTheDocument();
+      expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(1);
+      expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
+      expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
+      // The disabled state follows the whole history, not the filtered rows.
+      expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeEnabled();
     });
 
-    it('drops dashboards the user can no longer see before applying the cap', async () => {
-      await enableRedesign();
-      const gone: PageHistoryEntry[] = Array.from({ length: 20 }, (_, i) => ({
-        kind: 'dashboard',
-        uid: `gone-${i}`,
-        href: `/d/gone-${i}`,
-        lastVisited: Date.now() - i,
-      }));
+    it('drops dashboards the user can no longer see', async () => {
+      const gone: PageHistoryEntry[] = Array.from({ length: 3 }, (_, i) => dashboardEntry(`gone-${i}`));
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([...gone, exploreEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
@@ -532,7 +448,6 @@ describe('DashboardTabs', () => {
     });
 
     it('tracks the tab switch and row clicks', async () => {
-      await enableRedesign();
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
@@ -540,7 +455,7 @@ describe('DashboardTabs', () => {
 
       await user.click(await screen.findByRole('tab', { name: /starred/i }));
       await user.click(screen.getByRole('tab', { name: /^recent/i }));
-      expect(jest.mocked(tabChanged)).toHaveBeenLastCalledWith({ tab: 'recent-activity' });
+      expect(jest.mocked(tabChanged)).toHaveBeenLastCalledWith({ tab: 'recent' });
 
       await user.click(screen.getByRole('link', { name: /^Explore/ }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
@@ -551,20 +466,24 @@ describe('DashboardTabs', () => {
       });
     });
 
-    it('auto-switches to a tab with content when there is no recent activity', async () => {
-      await enableRedesign();
-      setMockStarredDashboards(['starred-1']);
-      server.use(getCustomSearchHandler(starredHits));
+    it('clears the history, reports what was cleared and reloads the tab', async () => {
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry, alertingEntry]);
+      server.use(getCustomSearchHandler(recentHits));
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(await screen.findByRole('tab', { name: /starred dashboards/i, selected: true })).toBeInTheDocument();
-      expect(jest.mocked(tabChanged)).not.toHaveBeenCalled();
+      jest.mocked(pageHistorySrv.clear).mockImplementation(async () => {
+        jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([]);
+      });
+      await user.click(await screen.findByRole('button', { name: /clear recent activity/i }));
+
+      expect(jest.mocked(clearHistoryClicked)).toHaveBeenCalledWith({ dashboard_count: 1, page_count: 3 });
+      expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
     });
 
     it('shows a retryable error when the dashboard lookup fails', async () => {
-      await enableRedesign();
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([dashboardEntry]);
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry]);
       server.use(http.get(searchRoute, () => HttpResponse.json({}, { status: 500 })));
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);

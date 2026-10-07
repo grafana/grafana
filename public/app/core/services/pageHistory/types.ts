@@ -10,6 +10,9 @@ export type PageIdentity =
 
 export type PageHistoryKind = PageIdentity['kind'];
 
+/** Every kind, in display order. */
+export const PAGE_HISTORY_KINDS: readonly PageHistoryKind[] = ['dashboard', 'explore', 'alerting', 'app'];
+
 export type PageHistoryEntry = PageIdentity & {
   /** Newest `pathname + search` seen for this page, base-url-less (as `locationService.getLocation()` reports it). */
   href: string;

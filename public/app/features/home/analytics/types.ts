@@ -24,8 +24,8 @@ export interface RecommendationsShown extends EventProperty {
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
-  /** Number of pages in history before clearing; only on the redesigned homepage, where history covers every page. */
-  page_count?: number;
+  /** Number of pages of any kind in history before clearing. */
+  page_count: number;
 }
 
 export interface SolutionFilterChanged extends EventProperty {
@@ -97,11 +97,6 @@ export type CtaClicked = EventVariants<
           placement: 'footer';
         }
     ))
-  | {
-      surface: 'recent_tab';
-      action: 'create_dashboard' | 'browse_dashboards';
-      placement: 'empty_state';
-    }
   | {
       surface: 'recent_activity_tab';
       action: 'open_page';

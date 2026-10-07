@@ -1,7 +1,7 @@
 import { type Faro } from '@grafana/faro-core';
 import { PersistentSessionsManager, VolatileSessionsManager } from '@grafana/faro-web-sdk';
 import { locationService } from '@grafana/runtime';
-import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
+import { isUrlRewriteEvent } from 'app/core/navigation/urlRewrite';
 
 /**
  * Enriches the `meta` of every Faro signal (web-vitals, dashboard_render, errors, traces, ...)
@@ -84,8 +84,7 @@ export function setupFaroPageMeta(faro: Faro): () => void {
   // - same-pathname events, i.e. query-only churn (time range, variables).
   // Every event still re-emits so `page.url` tracks the full URL.
   locationService.getHistory().listen((location, action) => {
-    const isRewrite = action === 'REPLACE' && isUrlRewrite(location.state);
-    if (!isRewrite && location.pathname !== currentPath) {
+    if (!isUrlRewriteEvent(location, action) && location.pathname !== currentPath) {
       previousPath = currentPath;
     }
     currentPath = location.pathname;
