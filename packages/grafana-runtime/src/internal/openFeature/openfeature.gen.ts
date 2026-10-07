@@ -222,8 +222,6 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
-  /** Enables SRI checks for plugin assets */
-  PluginsSriChecks: "pluginsSriChecks",
   /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
   ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
@@ -254,8 +252,6 @@ export const FlagKeys = {
   ReportingFooterSettings: "reportingFooterSettings",
   /** Enables configuration of PDF report settings */
   ReportingHeaderSettings: "reportingHeaderSettings",
-  /** Enables sharing a list of APIs with a list of plugins */
-  RestrictedPluginApis: "restrictedPluginApis",
   /** Enables Saved queries (query library) RBAC permissions */
   SavedQueriesRBAC: "savedQueriesRBAC",
   /** Enable the secrets management app platform UI */
@@ -1443,17 +1439,6 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
- * Enables SRI checks for plugin assets
- *
- * **Details:**
- * - flag key: `pluginsSriChecks`
- * - default value: `false`
- */
-export const useFlagPluginsSriChecks = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("pluginsSriChecks", false, options).value;
-};
-
-/**
  * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
  *
  * **Details:**
@@ -1616,17 +1601,6 @@ export const useFlagReportingFooterSettings = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagReportingHeaderSettings = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("reportingHeaderSettings", false, options).value;
-};
-
-/**
- * Enables sharing a list of APIs with a list of plugins
- *
- * **Details:**
- * - flag key: `restrictedPluginApis`
- * - default value: `true`
- */
-export const useFlagRestrictedPluginApis = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("restrictedPluginApis", true, options).value;
 };
 
 /**

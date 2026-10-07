@@ -1309,7 +1309,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaCatalogSquad,
 			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "timeRangeProvider",
@@ -1996,7 +1996,7 @@ var (
 			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaCatalogSquad,
 			HideFromDocs: true,
-			Generate:     Generate{LegacyFrontend: true, React: true},
+			Generate:     Generate{LegacyFrontend: true},
 			Expression:   "true",
 		},
 		{
