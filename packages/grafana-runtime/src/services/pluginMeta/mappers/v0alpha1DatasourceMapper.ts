@@ -6,6 +6,7 @@ import type { Spec as v0alpha1Spec } from '../types/meta/types.spec.gen';
 
 import {
   angularMapper,
+  extensionsMapper,
   infoMapper,
   loadingStrategyMapper,
   signatureStatusMapper,
@@ -35,6 +36,7 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
     queryOptions,
     multiValueFilterOperators,
   } = spec.pluginJson;
+  const extensions = extensionsMapper(spec);
   const state = stateMapper(spec, logPluginMetaWarning);
   const info = infoMapper(spec);
   const loadingStrategy = loadingStrategyMapper(spec);
@@ -72,6 +74,7 @@ function specMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
     category,
     queryOptions,
     multiValueFilterOperators,
+    extensions,
   };
 }
 
