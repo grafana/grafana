@@ -6,7 +6,7 @@ require (
 	github.com/grafana/grafana-app-sdk v0.60.8
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6
 	github.com/stretchr/testify v1.12.1
-	google.golang.org/grpc v1.84.0
+	google.golang.org/grpc v1.85.0-dev.0.20260825072537-93e31b48545e
 	google.golang.org/protobuf v1.36.12
 	k8s.io/apimachinery v0.37.1
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
