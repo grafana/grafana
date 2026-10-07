@@ -5,9 +5,9 @@ import { type ComponentProps } from 'react';
 import { type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { MetricsList } from './MetricsList';
+import { MetricsList, STATUS_SETTLE_MS } from './MetricsList';
 import { useLabelValues } from './data/useLabelValues';
-import { SEARCH_DEBOUNCE_MS, useMetricCatalog } from './data/useMetricCatalog';
+import { useMetricCatalog } from './data/useMetricCatalog';
 import { useMetricDetail } from './data/useMetricDetail';
 import { type MetricInfo } from './types';
 
@@ -32,8 +32,8 @@ const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } 
 
 const row = (name: string): MetricInfo => ({ name, type: 'counter' });
 
-const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Error } = {}) => {
-  useMetricCatalogMock.mockReturnValue({ metrics, loading: false, ...rest });
+const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Error; truncated?: boolean } = {}) => {
+  useMetricCatalogMock.mockReturnValue({ metrics, truncated: false, loading: false, ...rest });
 };
 
 const onSelectMetric = jest.fn();
@@ -108,7 +108,7 @@ const scrollToEnd = () =>
     observers.filter((observer) => observer.connected).forEach((observer) => notify(observer, true));
   });
 
-const loadMoreSentinel = () => screen.queryByTestId('signal-explorer-load-more');
+const loadMoreButton = () => screen.queryByRole('button', { name: 'Load more metrics' });
 
 describe('<MetricsList />', () => {
   const originalIntersectionObserver = global.IntersectionObserver;
@@ -234,7 +234,7 @@ describe('<MetricsList />', () => {
       renderList();
 
       expect(rowCount()).toBe(100);
-      expect(loadMoreSentinel()).not.toBeInTheDocument();
+      expect(loadMoreButton()).not.toBeInTheDocument();
     });
 
     // The end of the list only exists once there are rows to page, so it is first watched when the
@@ -281,7 +281,42 @@ describe('<MetricsList />', () => {
       setCatalog([row('up')]);
       renderList();
 
-      expect(loadMoreSentinel()).not.toBeInTheDocument();
+      expect(loadMoreButton()).not.toBeInTheDocument();
+    });
+
+    // Screen reader browse mode and tabbing to the last row never scroll the end into view, so loading
+    // has to be reachable as a control too.
+    it('loads the next batch on request and moves focus to its first row', async () => {
+      setCatalog(manyMetrics);
+      renderList();
+
+      await userEvent.click(loadMoreButton()!);
+
+      expect(rowCount()).toBe(50);
+      expect(screen.getByRole('button', { name: 'Expand metric_25' })).toHaveFocus();
+    });
+
+    // Tabbing to the control scrolls it into view; loading then would move it out from under the user.
+    it('leaves loading to the user while the load-more control has focus', () => {
+      setCatalog(manyMetrics);
+      renderList();
+
+      act(() => loadMoreButton()!.focus());
+      scrollToEnd();
+
+      expect(rowCount()).toBe(25);
+    });
+
+    // The control goes away with the last batch, and focus must not go with it to the document body.
+    it('keeps focus on a row when the last batch loads on request', async () => {
+      setCatalog(manyMetrics.slice(0, 30));
+      renderList();
+
+      await userEvent.click(loadMoreButton()!);
+
+      expect(rowCount()).toBe(30);
+      expect(loadMoreButton()).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expand metric_25' })).toHaveFocus();
     });
   });
 
@@ -301,7 +336,7 @@ describe('<MetricsList />', () => {
 
     const settle = () =>
       act(() => {
-        jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS);
+        jest.advanceTimersByTime(STATUS_SETTLE_MS);
       });
 
     it('announces how much of the catalog is on screen once each batch settles', () => {
@@ -323,6 +358,7 @@ describe('<MetricsList />', () => {
     it('announces the settled result of a search rather than one count per keystroke', async () => {
       useMetricCatalogMock.mockImplementation((_dsRef, _range, opts) => ({
         metrics: manyMetrics.filter((metric) => metric.name.includes(opts?.searchText ?? '')),
+        truncated: false,
         loading: false,
       }));
       renderList();
@@ -340,6 +376,7 @@ describe('<MetricsList />', () => {
     it('announces a search that matches nothing', async () => {
       useMetricCatalogMock.mockImplementation((_dsRef, _range, opts) => ({
         metrics: opts?.searchText ? [] : manyMetrics,
+        truncated: false,
         loading: false,
       }));
       renderList();
@@ -350,6 +387,16 @@ describe('<MetricsList />', () => {
       settle();
 
       expect(status()).toHaveTextContent(/^Query A: no metrics found$/);
+    });
+
+    // A cut-short catalog's length is where the series limit stopped it, not how many metrics exist.
+    it('gives the count as a lower bound when the series limit cut the catalog short', () => {
+      setCatalog(manyMetrics, { truncated: true });
+      renderList();
+
+      settle();
+
+      expect(status()).toHaveTextContent(/^Query A: showing 25 of at least 100 metrics$/);
     });
 
     // The counts mid-fetch describe the list being replaced, not the one the user asked for.
@@ -511,6 +558,7 @@ describe('<MetricsList />', () => {
     it('hands up the entry from the catalog as it stands, not as it first rendered', async () => {
       useMetricCatalogMock.mockImplementation((_dsRef, _timeRange, opts) => ({
         metrics: [{ name: 'up', type: 'gauge', help: opts?.searchText ? 'Searched help.' : 'Initial help.' }],
+        truncated: false,
         loading: false,
       }));
       renderList();
@@ -640,9 +688,9 @@ describe('<MetricsList />', () => {
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(25);
     });
 
-    // The values block sits mid-way through the metrics list, so it pages on request: growing it as it
-    // scrolled past would push the metrics below it out of reach.
-    it('pages the values on request while the metrics list pages on scroll', async () => {
+    // A long catalog and a high-cardinality label put both load controls in the same scroll region, so
+    // the visible text alone cannot say which list either one extends.
+    it('names the values and metrics load controls distinctly when both are on screen', async () => {
       setCatalog(Array.from({ length: 100 }, (_, i) => row(`metric_${i}`)));
       setLabelKeys(['job']);
       setLabelValues(Array.from({ length: 100 }, (_, i) => `value-${i}`));
@@ -650,10 +698,8 @@ describe('<MetricsList />', () => {
       await expandMetric('metric_0');
       await expandLabel('job');
 
-      expect(screen.getAllByRole('button', { name: /^Show more/ })).toEqual([
-        screen.getByRole('button', { name: 'Show more values' }),
-      ]);
-      expect(loadMoreSentinel()).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Show more values' })).toBeInTheDocument();
+      expect(loadMoreButton()).toBeInTheDocument();
     });
 
     it('forgets the expanded label when its metric collapses', async () => {

@@ -25,7 +25,9 @@ export function useLoadMoreSentinel(onVisible: () => void, rearmKey: unknown): (
     }
 
     const observer = new IntersectionObserver((entries) => {
-      if (entries.some((entry) => entry.isIntersecting)) {
+      // A focused sentinel is a control the user is about to activate: tabbing to it scrolls it into
+      // view, and loading then would move it out from under them.
+      if (entries.some((entry) => entry.isIntersecting) && document.activeElement !== sentinel) {
         onVisibleRef.current();
       }
     });

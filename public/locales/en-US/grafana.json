@@ -8799,6 +8799,7 @@
       "filter-values": "Filter values",
       "hide-values": "Hide values for {{label}}",
       "labels-error": "Failed to load labels",
+      "load-more-metrics": "Load more metrics",
       "loading": "Loading metrics…",
       "loading-labels": "Loading labels…",
       "loading-values": "Loading values…",
@@ -8813,7 +8814,9 @@
       "sort-descending": "Sort descending",
       "values-error": "Failed to load values",
       "visible-count_one": "Query {{refId}}: showing {{visible}} of {{count}} metric",
-      "visible-count_other": "Query {{refId}}: showing {{visible}} of {{count}} metrics"
+      "visible-count_other": "Query {{refId}}: showing {{visible}} of {{count}} metrics",
+      "visible-count-truncated_one": "Query {{refId}}: showing {{visible}} of at least {{count}} metric",
+      "visible-count-truncated_other": "Query {{refId}}: showing {{visible}} of at least {{count}} metrics"
     },
     "next-prev-result": {
       "aria-label-next": "Next result button",

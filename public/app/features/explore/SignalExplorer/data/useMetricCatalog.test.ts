@@ -260,6 +260,19 @@ describe('useMetricCatalog', () => {
       expect(result.current.loading).toBe(true);
     });
 
+    // The list's count is only a total for a complete answer; a cut-short catalog's is the series limit.
+    it('reports the catalog as cut short until a datasource search answers from the whole datasource', async () => {
+      const { result, rerender } = renderSearch(truncated);
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.truncated).toBe(true);
+
+      rerender({ searchText: 'quick' });
+      act(() => jest.advanceTimersByTime(SEARCH_DEBOUNCE_MS));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+
+      expect(result.current.truncated).toBe(false);
+    });
+
     it('keeps the local matches on screen while the datasource search is in flight', async () => {
       const { result, rerender, search } = renderSearch(truncated);
       const pending = deferred<MetricInfo[]>();
