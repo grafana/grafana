@@ -5,7 +5,7 @@ go 1.27.1
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
-	github.com/grafana/grafana-app-sdk/logging v0.60.6
+	github.com/grafana/grafana-app-sdk/logging v0.60.8
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250514132646-acbc7b54ed9e
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/contrib/propagators/jaeger v1.46.0
@@ -53,7 +53,7 @@ require (
 	github.com/google/cel-go v0.31.0 // indirect
 	github.com/google/gnostic-models v0.7.1 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d // indirect
+	github.com/grafana/authlib v0.0.0-20260930185708-1712fc9b273a // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.4 // indirect

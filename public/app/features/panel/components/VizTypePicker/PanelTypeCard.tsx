@@ -117,7 +117,12 @@ const PanelTypeCardSkeleton: SkeletonComponent<React.PropsWithChildren<SkeletonP
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
     <div className={styles.item} {...rootProps}>
-      <Skeleton className={cx(styles.img, skeletonStyles.image)} width={IMAGE_SIZE} height={IMAGE_SIZE} />
+      <Skeleton
+        containerClassName={skeletonStyles.image}
+        className={styles.img}
+        width={IMAGE_SIZE}
+        height={IMAGE_SIZE}
+      />
 
       <div className={styles.itemContent}>
         <div className={styles.name}>
@@ -141,7 +146,7 @@ const getSkeletonStyles = () => {
       lineHeight: 1,
     }),
     image: css({
-      lineHeight: 1,
+      lineHeight: 0,
     }),
   };
 };

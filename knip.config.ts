@@ -9,6 +9,25 @@ const packageIgnoreDeps = [
 
 const defaultEntries = ['i18next.config.ts'];
 
+// production mode (`knip --production`) only includes entry/project patterns suffixed with `!`,
+// and `!pattern!` excludes test/story/tooling helpers that are only reachable from non-production entries
+const nonProductionFiles = [
+  '!**/{__fixtures__,__mocks__,__smoke__,__test-utils__,demo,fixtures,mocks,scripts,spec,storybook,test,test-fixtures,test-utils,testCases,testData,testdata,testfiles,testing,tests,testSetup,ThemeDemos}/**!',
+  '!**/*.{fixture,fixtures,scenario,smoke,story,test.resources}.{ts,tsx}!',
+  '!**/*{mock,Mock,StoryHelper,storyUtils,testData,testHelpers,TestUtils,testUtils,testsUtils,test-utils}*.{js,ts,tsx}!',
+  '!**/jest-setup.js!',
+  '!**/*.mdx!',
+  '!**/*Fixture.ts!',
+
+  // test-only helpers that don't follow the naming conventions above
+  '!public/app/features/alerting/unified/utils/search.ts!',
+  '!public/app/features/variables/state/helpers.ts!',
+  // synchronous registry used by tests to check parity with lazyRegistry
+  '!public/app/features/dashboard-scene/mutation-api/{index,commands/registry}.ts!',
+];
+
+const defaultProject = ['**/*.{js,mjs,cjs,jsx,ts,tsx,mts,cts,mdx}!', ...nonProductionFiles];
+
 const externalisedDatasources = ['azuremonitor', 'cloudwatch', 'grafana-testdata-datasource', 'graphite'];
 
 const config: KnipConfig = {
@@ -37,7 +56,8 @@ const config: KnipConfig = {
     'public/app/core/utils/CorsWorker.rspack.ts',
     'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
-  ignoreBinaries: ['jq', 'make', 'shellcheck'],
+  // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
+  ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
@@ -63,7 +83,9 @@ const config: KnipConfig = {
         '@types/react-router',
       ],
       project: [
-        'public/app/**',
+        'public/app/**!',
+        'public/swagger/**!',
+        ...nonProductionFiles,
         'scripts/**',
         '.github/**',
         'e2e-playwright/**',
@@ -79,12 +101,13 @@ const config: KnipConfig = {
       entry: [
         ...defaultEntries,
         'packages/rollup.config.parts.ts',
-        'public/app/app.ts',
-        'public/app/index.ts',
-        'public/app/api/clients/**/index.ts',
-        'public/app/extensions/index.ts',
-        'public/app/extensions/api/clients/**/index.ts',
-        'public/app/plugins/**/module.{ts,tsx,js}',
+        'public/app/app.ts!',
+        'public/app/index.ts!',
+        'public/swagger/index.tsx!',
+        'public/app/api/clients/**/index.ts!',
+        'public/app/extensions/index.ts!',
+        'public/app/extensions/api/clients/**/index.ts!',
+        'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
         '!scripts/grafana-server/tmp/**',
 
@@ -116,16 +139,19 @@ const config: KnipConfig = {
     },
     [`public/app/plugins/datasource/{${externalisedDatasources.join(',')}}`]: {
       jest: true,
-      entry: [...defaultEntries, 'module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}!'],
+      project: defaultProject,
       // these are provided by grafana-plugin-configs
       ignoreDependencies: ['@swc/jest'],
       ignoreUnresolved: ['identity-obj-proxy'],
     },
     'e2e-playwright/test-plugins/*': {
-      entry: [...defaultEntries, 'module.{ts,tsx,js}', 'plugins/*/module.{ts,tsx,js}'],
+      entry: [...defaultEntries, 'module.{ts,tsx,js}!', 'plugins/*/module.{ts,tsx,js}!'],
+      project: defaultProject,
     },
     'packages/**': {
       entry: defaultEntries,
+      project: defaultProject,
       ignoreDependencies: packageIgnoreDeps,
       jest: true,
     },
@@ -134,18 +160,31 @@ const config: KnipConfig = {
     // TODO `grafana-alerting` should probably have its own storybook (like `grafana-flamegraph`)
     'packages/grafana-alerting': {
       entry: defaultEntries,
+      // `@grafana/alerting/testing` publishes this package's mocks and scenarios, so they're production code here
+      project: defaultProject.map((pattern) => pattern.replace('mocks,', '').replace('scenario,', '')),
       ignoreDependencies: packageIgnoreDeps,
       storybook: true,
     },
     'packages/grafana-api-clients': {
       entry: [...defaultEntries, 'src/scripts/generate-rtk-apis.ts', 'src/generator/generate.ts'],
+      project: [...defaultProject, '!src/generator/**!'],
+    },
+    'packages/grafana-sql': {
+      // resolved via the `moment$` webpack alias in grafana-plugin-configs, which knip can't follow
+      entry: [...defaultEntries, 'src/utils/raqbMomentCompat.ts!'],
+      project: defaultProject,
+      ignoreDependencies: packageIgnoreDeps,
+      jest: true,
     },
     'packages/grafana-plugin-configs': {
       // this package contains shared code that isn't immediately used by the package
       webpack: false,
+      // dev tooling only, so nothing is part of production
+      project: ['**/*.{js,ts}'],
       ignoreDependencies: ['.*'],
     },
     'packages/grafana-plugin-compat': {
+      project: defaultProject,
       ignoreDependencies: packageIgnoreDeps,
     },
   },

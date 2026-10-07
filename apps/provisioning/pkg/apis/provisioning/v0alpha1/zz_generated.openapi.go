@@ -836,6 +836,14 @@ func schema_pkg_apis_provisioning_v0alpha1_DeletionStatus(ref common.ReferenceCa
 							Format:      "",
 						},
 					},
+					"cause": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Cause classifies the blocking error. It may be absent on older statuses.\n\nPossible enum values:\n - `\"system\"` indicates an infrastructure or unclassified failure.\n - `\"user\"` indicates a failure that requires user intervention.",
+							Type:        []string{"string"},
+							Format:      "",
+							Enum:        []interface{}{"system", "user"},
+						},
+					},
 				},
 			},
 		},

@@ -28,7 +28,7 @@ var (
 	rawSchemaDashboardv0alpha1     = []byte(`{"ConversionStatus":{"additionalProperties":false,"description":"ConversionStatus is the status of the conversion of the dashboard.","properties":{"error":{"description":"The error message from the conversion.\nEmpty if the conversion has not failed.","type":"string"},"failed":{"description":"Whether from another version has failed.\nIf true, means that the dashboard is not valid,\nand the caller should instead fetch the stored version.","type":"boolean"},"source":{"additionalProperties":{},"description":"The original value map[string]any","type":"object"},"storedVersion":{"description":"The version which was stored when the dashboard was created / updated.\nFetching this version should always succeed.","type":"string"}},"required":["failed"],"type":"object"},"Dashboard":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":true,"type":"object"},"status":{"additionalProperties":false,"properties":{"conversion":{"$ref":"#/components/schemas/ConversionStatus","description":"Optional conversion status."}},"type":"object"}}`)
 	versionSchemaDashboardv0alpha1 app.VersionSchema
 	_                              = json.Unmarshal(rawSchemaDashboardv0alpha1, &versionSchemaDashboardv0alpha1)
-	rawSchemaSnapshotv0alpha1      = []byte(`{"Snapshot":{"properties":{"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"spec":{"additionalProperties":false,"properties":{"dashboard":{"additionalProperties":true,"description":"The raw dashboard (unstructured for now)","type":"object"},"deleteKey":{"description":"Snapshot delete key","type":"string"},"expires":{"default":0,"description":"Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)","type":"integer"},"external":{"default":false,"description":"When set to true, the snapshot exists in a remote server","type":"boolean"},"externalUrl":{"description":"The external URL where the snapshot can be seen","type":"string"},"originalUrl":{"description":"The URL that created the dashboard originally","type":"string"},"timestamp":{"description":"Snapshot creation timestamp","type":"string"},"title":{"description":"Snapshot title","type":"string"}},"type":"object"}}`)
+	rawSchemaSnapshotv0alpha1      = []byte(`{"BlobReference":{"additionalProperties":false,"properties":{"contentType":{"type":"string"},"hash":{"type":"string"},"size":{"type":"integer"},"uid":{"type":"string"}},"required":["uid"],"type":"object"},"Snapshot":{"properties":{"blobs":{"$ref":"#/components/schemas/blobs"},"spec":{"$ref":"#/components/schemas/spec"}},"required":["spec"]},"blobs":{"additionalProperties":false,"properties":{"dashboard":{"$ref":"#/components/schemas/BlobReference"}},"type":"object"},"spec":{"additionalProperties":false,"properties":{"dashboard":{"additionalProperties":true,"description":"The raw dashboard (unstructured for now)","type":"object"},"deleteKey":{"description":"Snapshot delete key","type":"string"},"expires":{"default":0,"description":"Optionally auto-remove the snapshot at a future date (Unix timestamp in seconds)","type":"integer"},"external":{"default":false,"description":"When set to true, the snapshot exists in a remote server","type":"boolean"},"externalUrl":{"description":"The external URL where the snapshot can be seen","type":"string"},"originalUrl":{"description":"The URL that created the dashboard originally","type":"string"},"timestamp":{"description":"Snapshot creation timestamp","type":"string"},"title":{"description":"Snapshot title","type":"string"}},"type":"object"}}`)
 	versionSchemaSnapshotv0alpha1  app.VersionSchema
 	_                              = json.Unmarshal(rawSchemaSnapshotv0alpha1, &versionSchemaSnapshotv0alpha1)
 	rawSchemaDashboardv1           = []byte(`{"ConversionStatus":{"additionalProperties":false,"description":"ConversionStatus is the status of the conversion of the dashboard.","properties":{"error":{"description":"The error message from the conversion.\nEmpty if the conversion has not failed.","type":"string"},"failed":{"description":"Whether from another version has failed.\nIf true, means that the dashboard is not valid,\nand the caller should instead fetch the stored version.","type":"boolean"},"source":{"additionalProperties":{},"description":"The original value map[string]any","type":"object"},"storedVersion":{"description":"The version which was stored when the dashboard was created / updated.\nFetching this version should always succeed.","type":"string"}},"required":["failed"],"type":"object"},"Dashboard":{"properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},"spec":{"additionalProperties":true,"type":"object"},"status":{"additionalProperties":false,"properties":{"conversion":{"$ref":"#/components/schemas/ConversionStatus","description":"Optional conversion status."}},"type":"object"}}`)
@@ -69,7 +69,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv0alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv0alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -228,7 +231,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -379,7 +385,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv1beta1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv1beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -530,7 +539,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -681,7 +693,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2alpha1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2alpha1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",
@@ -832,7 +847,10 @@ var appManifestData = app.ManifestData{
 					Plural:     "Dashboards",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaDashboardv2beta1,
+					Search: &app.ManifestVersionKindSearch{
+						Hybrid: func(b bool) *bool { return &b }(true),
+					},
+					Schema: &versionSchemaDashboardv2beta1,
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
 							Name:         "schema_version",

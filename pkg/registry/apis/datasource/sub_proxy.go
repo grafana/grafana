@@ -61,7 +61,7 @@ type subProxyREST struct {
 	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subProxyREST{})
+var _ rest.Connecter = (*subProxyREST)(nil)
 
 func (r *subProxyREST) New() runtime.Object {
 	return &metav1.Status{}

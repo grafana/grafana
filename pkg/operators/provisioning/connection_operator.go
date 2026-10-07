@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"k8s.io/client-go/tools/cache"
 
+	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
+	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
@@ -68,13 +70,14 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	var connKeys informer.KeysLister
+	var connKeys keysapi.Lister
 	if controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
 		restClient, err := controllerCfg.ProvisioningRESTClient()
 		if err != nil {
 			return fmt.Errorf("failed to create provisioning REST client: %w", err)
 		}
-		connKeys = informer.NewHTTPConnectionKeysLister(restClient)
+		connKeys = keysapi.NewHTTPLister(restClient, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+		logger.Info("provisioning re-list will ask for keys only", "transport", "http")
 	}
 
 	// The connection delta source and the getter it backs.
