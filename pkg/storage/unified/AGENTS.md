@@ -6,7 +6,7 @@ Unified storage/search runs in-process (default), as a standalone storage server
 
 - **Client side** (runs in Grafana): `apistore/`, `federated/`, `client.go`/`client_retry.go`, and callers such as `pkg/registry/apis/`, `pkg/services/{apiserver,dashboards,folder,search,stats}/`, `pkg/services/team/search/`, `pkg/infra/leaderelection/kvlease/`, `pkg/storage/legacysql/`.
 - **Server side** (may deploy separately): `resource/`, `sql/`, `search/`, `migrations/`, `parquet/`.
-- **Contract** (used by both sides): `proto/`, `resourcepb/`.
+- **Contract** (used by both sides): `proto/`, `resourcepb/`, `resourceclient/`.
 
 ## Backend selection
 

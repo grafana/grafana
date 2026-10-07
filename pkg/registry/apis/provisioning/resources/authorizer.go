@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	authlib "github.com/grafana/authlib/types"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -65,6 +66,13 @@ type Authorizer interface {
 	//   - Authorization checks "team-a-folder" (actual location) → DENIED
 	//   - This prevents bypassing folder permissions via file metadata manipulation
 	AuthorizeResource(ctx context.Context, parsed *ParsedResource, verb string) error
+
+	// AuthorizeResourcePreview checks read access to resource previews whose
+	// containing folders may not yet have been synced into storage. It authorizes
+	// these reads against the nearest existing ancestor resolved from the configured
+	// repository branch, while preserving source-folder checks for existing resources.
+	// Reads that do not qualify for ancestor lookup use ordinary GET authorization.
+	AuthorizeResourcePreview(ctx context.Context, parsed *ParsedResource) error
 
 	// AuthorizeCreateFolder checks if the current user has permission to create
 	// a folder at the specified path. This checks create permission on the parent folder.
@@ -135,23 +143,34 @@ type Authorizer interface {
 	AuthorizeReadRawFile(ctx context.Context, path string) error
 }
 
+// FolderAncestorFinder reports missing ancestors with found=false, separately from
+// repository and storage lookup errors.
+//
+//go:generate mockery --name FolderAncestorFinder --structname MockFolderAncestorFinder --inpackage --filename folder_ancestor_finder_mock.go --with-expecter
+type FolderAncestorFinder interface {
+	FindExistingAncestor(ctx context.Context, dir, ref string) (folderID string, found bool, err error)
+}
+
 // ProvisioningAuthorizer implements Authorizer for provisioning operations.
 type ProvisioningAuthorizer struct {
 	repo                  *provisioning.Repository
 	reader                repository.Reader
 	access                auth.AccessChecker
 	clients               ResourceClients
+	folders               FolderAncestorFinder
 	folderMetadataEnabled bool
 }
 
 // NewAuthorizer creates a new ProvisioningAuthorizer. The clients provide the set of
-// supported resources to authorize against.
-func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folderMetadataEnabled bool) Authorizer {
+// supported resources to authorize against. The ancestor finder is required for
+// previews that resolve configured folders.
+func NewAuthorizer(repo *provisioning.Repository, reader repository.Reader, access auth.AccessChecker, clients ResourceClients, folders FolderAncestorFinder, folderMetadataEnabled bool) Authorizer {
 	return &ProvisioningAuthorizer{
 		repo:                  repo,
 		reader:                reader,
 		access:                access,
 		clients:               clients,
+		folders:               folders,
 		folderMetadataEnabled: folderMetadataEnabled,
 	}
 }
@@ -221,6 +240,67 @@ func (a *ProvisioningAuthorizer) AuthorizeResource(ctx context.Context, parsed *
 		Name:     name,
 		Verb:     verb,
 	}, metaFolder)
+}
+
+// requiresAncestorAuthorization limits ancestor lookup to preview reads of
+// folder-scoped resources with a folder annotation and a supported source file.
+// A file at the repository root is eligible when it belongs to the wrapper folder.
+func (a *ProvisioningAuthorizer) requiresAncestorAuthorization(parsed *ParsedResource) bool {
+	if !parsed.IsPreviewRead(a.repo.Branch()) || !parsed.FolderScoped || parsed.Info.Path == "" || parsed.Meta.GetFolder() == "" {
+		return false
+	}
+	return IsPathSupported(parsed.Info.Path) == nil && !safepath.IsDir(parsed.Info.Path)
+}
+
+// AuthorizeResourcePreview handles reads from a ref other than the configured branch.
+// New directories inherit read access from the nearest existing configured ancestor;
+// instance and folderless repositories can reach the root authorization context.
+// A missing required repository root denies preview access.
+// Existing resources still require access to their source when it differs from that
+// ancestor. A denial or lookup error stops authorization without trying another folder.
+func (a *ProvisioningAuthorizer) AuthorizeResourcePreview(ctx context.Context, parsed *ParsedResource) error {
+	if !a.requiresAncestorAuthorization(parsed) {
+		return a.AuthorizeResource(ctx, parsed, utils.VerbGet)
+	}
+
+	name := parsed.Obj.GetName()
+	if parsed.Existing != nil {
+		name = parsed.Existing.GetName()
+	}
+	req := authlib.CheckRequest{
+		Group:    parsed.GVR.Group,
+		Resource: parsed.GVR.Resource,
+		Name:     name,
+		Verb:     utils.VerbGet,
+	}
+	sourceFolder := parsed.ExistingFolder()
+	destinationFolder := parsed.Meta.GetFolder()
+	if parsed.Existing != nil && sourceFolder != destinationFolder {
+		if err := a.access.Check(ctx, req, sourceFolder); err != nil {
+			return err
+		}
+	}
+
+	// The destination may be unsynced and its UID may come from PR metadata.
+	// Resolve the source file's directory on the configured branch instead.
+	ancestor, found, err := a.folders.FindExistingAncestor(ctx, safepath.Dir(parsed.Info.Path), "")
+	if err != nil {
+		return fmt.Errorf("find preview ancestor: %w", err)
+	}
+	if !found && RootFolder(a.repo) != "" {
+		return apierrors.NewForbidden(FolderResource.GroupResource(), a.repo.Name, fmt.Errorf("no existing folder for preview authorization"))
+	}
+
+	// Matching parsed and stored parents deferred the source check. Resolving a
+	// different ancestor must not bypass access to the existing resource.
+	if parsed.Existing != nil && sourceFolder == destinationFolder {
+		if sourceFolder != ancestor {
+			if err := a.access.Check(ctx, req, sourceFolder); err != nil {
+				return err
+			}
+		}
+	}
+	return a.access.Check(ctx, req, ancestor)
 }
 
 // getFolderID resolves the folder ID for the given path, always reading

@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // aggregateTargetConfig is a named upstream apiserver whose API groups the
-// router discovers by polling. Name is one of aggregateTargetNames.
+// router discovers by polling.
 type aggregateTargetConfig struct {
 	Name               string
+	PollInterval       time.Duration
 	URL                string
 	Audience           string
 	GroupPatterns      []string
@@ -19,28 +21,66 @@ type aggregateTargetConfig struct {
 	InsecureSkipVerify bool
 }
 
-// aggregateTargetNames are the fixed upstream apiservers the router aggregates.
-// See specs/2026-09-11-router-aggregate-discovery-design.md for why this is
-// not a configurable list.
-var aggregateTargetNames = []string{"baas_apiserver", "cloud_app_platform_apiserver"}
+const aggregateSectionPrefix = "router.aggregate."
 
-// parseAggregateTargets reads the <name>.url, .audience, .group_regex,
-// .ca_file and .insecure keys for each fixed target. Targets without a url
-// are skipped; an empty group_regex matches every group.
-func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetConfig, error) {
+// Section order determines priority when targets discover the same group.
+func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
-	for _, name := range aggregateTargetNames {
-		url := section.Key(name + ".url").MustString("")
+	configured := make(map[string]bool)
+	for _, raw := range cfg.Raw.Sections() {
+		name, ok := strings.CutPrefix(raw.Name(), aggregateSectionPrefix)
+		if !ok {
+			continue
+		}
+		if name == "" {
+			return nil, fmt.Errorf("%s: target name is required", raw.Name())
+		}
+		configured[name] = true
+		section := cfg.SectionWithEnvOverrides(raw.Name())
+		url := section.Key("url").MustString("")
+		if url == "" {
+			continue
+		}
+		interval := defaultAggregatePollInterval
+		if value := section.Key("poll_interval").String(); value != "" {
+			var err error
+			interval, err = time.ParseDuration(value)
+			if err != nil || interval <= 0 {
+				return nil, fmt.Errorf("%s: poll_interval must be a positive duration, got %q", raw.Name(), value)
+			}
+		}
+		targets = append(targets, aggregateTargetConfig{
+			Name:               name,
+			URL:                url,
+			PollInterval:       interval,
+			Audience:           section.Key("audience").MustString(""),
+			GroupPatterns:      splitGroupPatterns(section.Key("group_regex").MustString("")),
+			CAFile:             section.Key("ca_file").MustString(""),
+			InsecureSkipVerify: section.Key("insecure").MustBool(false),
+		})
+	}
+
+	// REMOVE THIS SECTION AFTER IT HAS BEEN DEPLOYED AND CONFIGS UPDATED
+	// Keep legacy targets during rollout, but let an explicit section replace
+	// the entire target, including disabling it with an empty URL.
+	legacy := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	// The old loader gave cloud_app_platform_apiserver priority over baas_apiserver.
+	for _, name := range []string{"cloud_app_platform_apiserver", "baas_apiserver"} {
+		if configured[name] {
+			continue
+		}
+		url := legacy.Key(name + ".url").MustString("")
 		if url == "" {
 			continue
 		}
 		targets = append(targets, aggregateTargetConfig{
 			Name:               name,
 			URL:                url,
-			Audience:           section.Key(name + ".audience").MustString(""),
-			GroupPatterns:      splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
-			CAFile:             section.Key(name + ".ca_file").MustString(""),
-			InsecureSkipVerify: section.Key(name + ".insecure").MustBool(false),
+			PollInterval:       defaultAggregatePollInterval,
+			Audience:           legacy.Key(name + ".audience").MustString(""),
+			GroupPatterns:      splitGroupPatterns(legacy.Key(name + ".group_regex").MustString("")),
+			CAFile:             legacy.Key(name + ".ca_file").MustString(""),
+			InsecureSkipVerify: legacy.Key(name + ".insecure").MustBool(false),
 		})
 	}
 	return targets, nil

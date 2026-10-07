@@ -1302,6 +1302,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       perform();
     } else {
       edit({
+        meta: { actionId: 'layout.switch', scope: 'dashboard' },
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,
