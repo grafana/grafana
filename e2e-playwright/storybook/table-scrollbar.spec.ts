@@ -38,7 +38,7 @@ test.describe('Table scrollbar geometry', () => {
     { zoom: 1, refreshed: false, width: 320.5, wrapText: true, rowCount: 2 },
     { zoom: 1, refreshed: false, footer: false },
   ]) {
-    test(`keeps columns stable (zoom ${zoom}, refreshed ${refreshed}, wrapping ${wrapText}, footer ${footer})`, async ({
+    test(`reserves space only while overflowing (zoom ${zoom}, refreshed ${refreshed}, wrapping ${wrapText}, footer ${footer})`, async ({
       page,
     }) => {
       await page.goto(
@@ -61,21 +61,15 @@ test.describe('Table scrollbar geometry', () => {
           columns: getComputedStyle(element).gridTemplateColumns,
         }));
 
-      await expect.poll(async () => (await geometry()).gutter).toBeGreaterThan(0);
+      await expect.poll(async () => (await geometry()).gutter).toBe(0);
       await expect.poll(async () => (await geometry()).overflowing).toBe(false);
-      // Wait for the debounced scrollbar measurement to settle before recording the columns.
-      await expect
-        .poll(async () => {
-          const widths = await grid
-            .getByRole('columnheader')
-            .evaluateAll((headers) => headers.map((header) => header.getBoundingClientRect().width));
-          return widths.reduce((sum, width) => sum + width, 0);
-        })
-        .toBeLessThan((width - 1) * zoom);
       const initial = await geometry();
 
       await page.getByRole('button', { name: 'Show more rows', exact: true }).click();
       await expect.poll(async () => (await geometry()).overflowing).toBe(true);
+      await expect.poll(async () => (await geometry()).gutter).toBeGreaterThan(0);
+      await expect.poll(async () => (await geometry()).columns).not.toBe(initial.columns);
+      const overflowing = await geometry();
       // Observe several debounce intervals: a single settled frame does not exclude oscillation.
       const states = await grid.evaluate(
         (element) =>
@@ -93,7 +87,7 @@ test.describe('Table scrollbar geometry', () => {
             }, 50);
           })
       );
-      expect(states).toEqual(Array(20).fill({ gutter: initial.gutter, columns: initial.columns }));
+      expect(states).toEqual(Array(20).fill({ gutter: overflowing.gutter, columns: overflowing.columns }));
 
       await page.getByRole('button', { name: 'Show fewer rows', exact: true }).click();
       await expect.poll(geometry).toEqual(initial);
@@ -115,6 +109,28 @@ test.describe('Table scrollbar geometry', () => {
         }))
       )
       .toEqual({ overflowing: true, gutter: 0, columns: '400px 400px' });
+  });
+
+  test('recalculates the gutter when panel height changes in either direction', async ({ page }) => {
+    await page.goto('/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story');
+    await page.addStyleTag({
+      content: `
+        [role="grid"] { scrollbar-width: auto !important; scrollbar-color: auto !important; }
+        [role="grid"]::-webkit-scrollbar { display: block !important; width: 15px !important; height: 15px !important; }
+      `,
+    });
+    const grid = page.getByRole('grid');
+    await expect(grid.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+    const dimensions = () =>
+      grid.evaluate((element) => ({
+        gutter: element.offsetWidth - element.clientWidth,
+        height: element.clientHeight,
+      }));
+    await expect.poll(dimensions).toEqual({ gutter: 0, height: 400 });
+    await page.getByRole('button', { name: 'Shrink panel height', exact: true }).click();
+    await expect.poll(dimensions).toEqual({ gutter: 15, height: 200 });
+    await page.getByRole('button', { name: 'Restore panel height', exact: true }).click();
+    await expect.poll(dimensions).toEqual({ gutter: 0, height: 400 });
   });
 
   test('preserves horizontal scrolling when minimum column widths exceed the panel', async ({ page }) => {

@@ -5,6 +5,7 @@ import { createDataFrame, FieldType, ReducerID } from '@grafana/data';
 
 import { useTheme2 } from '../../../themes/ThemeContext';
 import { prepDataForStorybook } from '../../../utils/storybook/data';
+import { Button } from '../../Button/Button';
 
 import { TableNG } from './TableNG';
 
@@ -41,6 +42,8 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
   tableRefreshEnabled,
 }) => {
   const [moreRows, setMoreRows] = useState(false);
+  const [compact, setCompact] = useState(false);
+  const panelHeight = compact ? height / 2 : height;
   const count = moreRows ? rowCount * 10 : rowCount;
   const theme = useTheme2();
   const data = useMemo(
@@ -71,12 +74,13 @@ export const ScrollbarBoundary: StoryFn<Args> = ({
 
   return (
     <>
-      <button onClick={() => setMoreRows(!moreRows)}>{moreRows ? 'Show fewer rows' : 'Show more rows'}</button>
-      <div style={{ width, height }}>
+      <Button onClick={() => setMoreRows(!moreRows)}>{moreRows ? 'Show fewer rows' : 'Show more rows'}</Button>
+      <Button onClick={() => setCompact(!compact)}>{compact ? 'Restore panel height' : 'Shrink panel height'}</Button>
+      <div style={{ width, height: panelHeight }}>
         <TableNG
           data={data}
           width={width}
-          height={height}
+          height={panelHeight}
           structureRev={1}
           enablePagination={enablePagination}
           tableRefreshEnabled={tableRefreshEnabled}

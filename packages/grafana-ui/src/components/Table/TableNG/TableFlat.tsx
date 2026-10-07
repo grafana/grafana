@@ -11,7 +11,7 @@ import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -35,7 +35,8 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
-import { getGridStyles } from './styles';
+import { shouldReserveScrollbarGutter } from './scrollbar';
+import { getGridStyles, IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -169,13 +170,8 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // Reserve the stable scrollbar gutter, including when the rows do not overflow. An inset table's
-  // frame also lives inside `width`, so its two borders are not available to the columns.
-  const availableWidth = useMemo(
-    () => width - scrollbarWidth - (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, tableRefreshEnabled, noPanelPadding]
-  );
+  const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+  const fullWidth = width - frameSize;
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -212,17 +208,11 @@ export function TableFlat(props: TableNGProps) {
     preventHorizontalOverflow,
   });
 
-  const [widths, numFrozenColsFullyInView] = useColWidths(
-    preparedFields,
-    availableWidth,
-    frozenColumns,
-    widthConfigResetKey,
-    contentAwareWidths
-  );
+  const [fullWidths] = useColWidths(preparedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
-  const headerHeight = useHeaderHeight({
+  const fullHeaderHeight = useHeaderHeight({
     hasAssistantAction: onFieldAddToAssistant != null,
-    columnWidths: widths,
+    columnWidths: fullWidths,
     fields: visibleFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
@@ -238,9 +228,9 @@ export function TableFlat(props: TableNGProps) {
     [theme, visibleFields, cellHeight]
   );
 
-  const rowHeight = useFlatRowHeight({
+  const fullRowHeight = useFlatRowHeight({
     wrapFallback,
-    columnWidths: widths,
+    columnWidths: fullWidths,
     fields: preparedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
@@ -259,16 +249,72 @@ export function TableFlat(props: TableNGProps) {
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
-    width: availableWidth,
+    width: fullWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
   });
   const showPagination = enablePagination && numRows > 0;
+  const reserveGutter = useMemo(
+    () =>
+      shouldReserveScrollbarGutter(
+        paginatedRows,
+        fullRowHeight,
+        fullWidths,
+        fullWidth,
+        height -
+          frameSize -
+          (hasHeader ? fullHeaderHeight : 0) -
+          footerHeight -
+          (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0)
+      ),
+    [
+      paginatedRows,
+      fullRowHeight,
+      fullWidths,
+      fullWidth,
+      height,
+      frameSize,
+      hasHeader,
+      fullHeaderHeight,
+      footerHeight,
+      showPagination,
+      noPanelPadding,
+    ]
+  );
+  const scrollbarWidth = useScrollbarWidth(gridRef, height, reserveGutter);
+  const availableWidth = fullWidth - (reserveGutter ? scrollbarWidth : 0);
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    preparedFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
+  const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: widths,
+    fields: visibleFields,
+    enabled: hasHeader,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
+  });
+  const rowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: widths,
+    fields: preparedFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+    noPanelPadding,
+  });
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -374,6 +420,7 @@ export function TableFlat(props: TableNGProps) {
   return (
     <TableDataGrid
       role="grid"
+      style={IS_SAFARI_26 ? undefined : { scrollbarGutter: reserveGutter ? 'stable' : 'auto' }}
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
