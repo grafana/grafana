@@ -136,6 +136,7 @@ const UserListAdminPageUnConnected = ({
           onChangePage={changePage}
           currentPage={page}
           fetchData={changeSort}
+          sort={sort}
         />
       )}
       <EnterpriseAuthFeaturesCard page="users" />

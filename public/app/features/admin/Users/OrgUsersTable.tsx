@@ -31,7 +31,7 @@ import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
-import { getUserLastActive } from './utils';
+import { getUserLastActive, getUsersTableSortBy } from './utils';
 
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
@@ -51,6 +51,7 @@ export interface Props {
   onRoleChange: (role: OrgRole, user: OrgUser) => void;
   onRemoveUser: (user: OrgUser) => void;
   fetchData?: FetchDataFunc<OrgUser>;
+  sort?: string;
   changePage: (page: number) => void;
   page: number;
   totalPages: number;
@@ -65,6 +66,7 @@ export const OrgUsersTable = ({
   onUserRolesChange,
   onRemoveUser,
   fetchData,
+  sort,
   changePage,
   page,
   totalPages,
@@ -246,7 +248,13 @@ export const OrgUsersTable = ({
 
   return (
     <Stack direction={'column'} gap={2} data-testid={selectors.container}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => String(user.userId)} fetchData={fetchData} />
+      <InteractiveTable
+        columns={columns}
+        data={users}
+        getRowId={(user) => String(user.userId)}
+        fetchData={fetchData}
+        initialSortBy={getUsersTableSortBy(sort)}
+      />
       <Stack justifyContent="flex-end">
         <Pagination onNavigate={changePage} currentPage={page} numberOfPages={totalPages} hideWhenSinglePage={true} />
       </Stack>

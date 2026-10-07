@@ -20,7 +20,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
-import { getUserLastActive } from './utils';
+import { getUserLastActive, getUsersTableSortBy } from './utils';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
@@ -31,6 +31,7 @@ export interface UsersTableProps {
   onChangePage: (page: number) => void;
   currentPage: number;
   fetchData?: FetchDataFunc<UserDTO>;
+  sort?: string;
 }
 
 export const UsersTable = ({
@@ -40,6 +41,7 @@ export const UsersTable = ({
   onChangePage,
   currentPage,
   fetchData,
+  sort,
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
@@ -182,7 +184,13 @@ export const UsersTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.uid} fetchData={fetchData} />
+      <InteractiveTable
+        columns={columns}
+        data={users}
+        getRowId={(user) => user.uid}
+        fetchData={fetchData}
+        initialSortBy={getUsersTableSortBy(sort)}
+      />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

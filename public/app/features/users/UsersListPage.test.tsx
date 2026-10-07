@@ -3,6 +3,7 @@ import { act, render, screen, waitFor } from 'test/test-utils';
 import { OrgRole } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type OrgUser } from 'app/types/user';
 
@@ -43,6 +44,25 @@ beforeEach(() => {
 afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
+});
+
+it.each([
+  { sort: 'email-desc', column: 'Email', direction: 'descending' },
+  { sort: 'login-asc', column: 'Login', direction: 'ascending' },
+])('preserves the stored sort $sort when the table mounts', async ({ sort, column, direction }) => {
+  get.mockResolvedValue(usersPage);
+  const initialState = configureStore().getState();
+  render(<UsersListPageContent />, {
+    preloadedState: { users: { ...initialState.users, sort } },
+  });
+
+  expect(await screen.findByRole('cell', { name: 'Alice' })).toBeVisible();
+  expect(screen.getByRole('columnheader', { name: column })).toHaveAttribute('aria-sort', direction);
+  const requests = get.mock.calls.filter(([url]) => url === '/api/org/users/search');
+  expect(requests.length).toBeGreaterThan(0);
+  for (const [, params] of requests) {
+    expect(params.sort).toBe(sort);
+  }
 });
 
 it('delays loading by 250ms and keeps it visible for 750ms without remounting the search input', async () => {

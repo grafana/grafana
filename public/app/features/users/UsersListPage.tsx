@@ -33,6 +33,7 @@ function mapStateToProps(state: StoreState) {
     invitees: selectInvitesMatchingQuery(state.invites, searchQuery),
     isLoading: state.users.isLoading,
     rolesLoading: state.users.rolesLoading,
+    sort: state.users.sort,
   };
 }
 
@@ -62,6 +63,7 @@ export const UsersListPageUnconnected = ({
   updateUser,
   removeUser,
   changeSort,
+  sort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
   const [loadingBarRef, { width }] = useMeasure<HTMLDivElement>();
@@ -103,6 +105,7 @@ export const UsersListPageUnconnected = ({
           onRemoveUser={onRemoveUser}
           onUserRolesChange={onUserRolesChange}
           fetchData={changeSort}
+          sort={sort}
           changePage={changePage}
           page={page}
           totalPages={totalPages}

@@ -22,6 +22,14 @@ interface PageInfo {
   totalCount: number;
 }
 
+export function getUsersTableSortBy(sort?: string) {
+  if (!sort) {
+    return [];
+  }
+  const [id, direction] = sort.split('-');
+  return [{ id, desc: direction === 'desc' }];
+}
+
 export function getUsersPage(options: UserPageOptions): Promise<PageInfo & { users: UserDTO[] }> {
   return getBackendSrv().get(getUsersSearchUrl(options));
 }
