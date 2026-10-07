@@ -218,6 +218,12 @@ const SEARCH_CACHE_MAX_ENTRIES = 20;
 export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: string): Promise<MetricInfo[]> {
   // Lower-cased because the match is case-insensitive: `Quick` and `quick` are the same search.
   const key = `search:${dsKey(dsRef)}:${rangeKey(timeRange)}:${term.toLowerCase()}`;
+  // Re-inserted on a hit so eviction drops the least recently used term, not the oldest one typed.
+  const hit = searchCache.get(key);
+  if (hit) {
+    searchCache.delete(key);
+    searchCache.set(key, hit);
+  }
   const result = once(searchCache, key, async () => {
     const lp = await getLP(dsRef);
     const [names] = await Promise.all([
@@ -227,7 +233,7 @@ export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: 
     ]);
     return toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {});
   });
-  // A `Map` iterates in insertion order, so the first key is the oldest search.
+  // A `Map` iterates in insertion order, so the first key is the least recently used search.
   if (searchCache.size > SEARCH_CACHE_MAX_ENTRIES) {
     const oldest = searchCache.keys().next().value;
     if (oldest !== undefined) {
