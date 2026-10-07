@@ -217,7 +217,7 @@ describe('applyDashboardSpec with url sync', () => {
   }
 
   async function apply(scene: DashboardScene, spec: DashboardV2Spec) {
-    applyDashboardSpec({ scene, spec, description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec, description: 'Apply spec', scope: 'code-pane' });
     await activateVariables(scene);
   }
 
@@ -265,7 +265,7 @@ describe('applyDashboardSpec with url sync', () => {
     // Url sync writes every variable once its options load, so drop the key after that.
     locationService.partial({ 'var-service': null }, true);
 
-    applyDashboardSpec({ scene, spec: makeSpec({ service: 'y' }), description: 'Apply spec' });
+    applyDashboardSpec({ scene, spec: makeSpec({ service: 'y' }), description: 'Apply spec', scope: 'code-pane' });
 
     expect(url().has('var-service')).toBe(false);
     await activateVariables(scene);
