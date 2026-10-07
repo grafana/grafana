@@ -8,7 +8,7 @@ import type * as z from 'zod';
 
 import { SceneVariableSet } from '@grafana/scenes';
 
-import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToVariables';
+import { sceneVariablesSetToSchemaV2Variables } from '../../serialization/sceneVariablesSetToSchemaV2Variables';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';

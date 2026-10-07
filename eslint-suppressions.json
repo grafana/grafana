@@ -1829,9 +1829,19 @@
       "count": 1
     }
   },
+  "public/app/features/dashboard-scene/serialization/normalizeDataSourceRef.ts": {
+    "@grafana/no-get-data-source-srv": {
+      "count": 1
+    }
+  },
+  "public/app/features/dashboard-scene/serialization/sceneVariablesSetToSchemaV2Variables.ts": {
+    "@grafana/no-config-feature-toggles": {
+      "count": 2
+    }
+  },
   "public/app/features/dashboard-scene/serialization/sceneVariablesSetToVariables.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 2
     }
   },
   "public/app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene.ts": {
@@ -1862,9 +1872,6 @@
   },
   "public/app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2.ts": {
     "@grafana/no-config-datasources": {
-      "count": 1
-    },
-    "@grafana/no-get-data-source-srv": {
       "count": 1
     }
   },
