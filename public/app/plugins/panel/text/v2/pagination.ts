@@ -38,11 +38,14 @@ interface Measured {
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
 // the box once a page fits inside it.
 function measureContentHeight(element: HTMLElement): number {
-  const blocks = element.querySelector(`[${BLOCKS_ATTR}]`);
+  const blocks =
+    element.querySelector(`[${BLOCKS_ATTR}]`) ??
+    element.querySelector('iframe')?.contentDocument?.querySelector(`[${BLOCKS_ATTR}]`);
   const first = blocks?.firstElementChild;
   const last = blocks?.lastElementChild;
 
-  if (!(first instanceof HTMLElement) || !(last instanceof HTMLElement)) {
+  const frameWindow = first?.ownerDocument.defaultView;
+  if (!frameWindow || !(first instanceof frameWindow.HTMLElement) || !(last instanceof frameWindow.HTMLElement)) {
     return 0;
   }
 
@@ -127,15 +130,21 @@ export function usePagination({
       return;
     }
 
-    const available = element.clientHeight - CONTENT_PADDING;
-    const contentHeight = measureContentHeight(element);
-
-    if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
-      return;
-    }
-
-    measuredFor.current = { key: measureKey, element };
-    setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    const measure = () => {
+      if (measuredFor.current?.key === measureKey && measuredFor.current.element === element) {
+        return;
+      }
+      const available = element.clientHeight - CONTENT_PADDING;
+      const contentHeight = measureContentHeight(element);
+      if (available <= 0 || rowsOnPage <= 0 || contentHeight <= 0) {
+        return;
+      }
+      measuredFor.current = { key: measureKey, element };
+      setMeasured({ rowHeight: contentHeight / rowsOnPage, available, element });
+    };
+    measure();
+    element.addEventListener('text-content-resized', measure);
+    return () => element.removeEventListener('text-content-resized', measure);
   }, [fitToHeight, measureKey, rowsOnPage, element]);
 
   // Stable across renders: the editor memoises its preview on this.

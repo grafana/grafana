@@ -14,6 +14,8 @@ import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNG
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 import { type ViewMode } from './viewMode';
 
+jest.mock('../sandboxFrame');
+
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
 });

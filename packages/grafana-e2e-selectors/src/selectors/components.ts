@@ -665,6 +665,9 @@ export const versionedComponents = {
       },
       Text: {
         container: { [MIN_GRAFANA_VERSION]: () => '.markdown-html' },
+        allowResourcesButton: {
+          '13.3.0': 'data-testid Text sandbox allow-resources-button',
+        },
       },
       Table: {
         header: {

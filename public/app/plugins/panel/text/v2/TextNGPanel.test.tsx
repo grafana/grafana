@@ -15,6 +15,7 @@ import { PREVIEW_TEST_ID } from './editor/TextNGEditor';
 import { createData, createProps, renderPanel } from './test-utils';
 
 mockComboboxRect();
+jest.mock('./sandboxFrame');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
