@@ -6,6 +6,7 @@ import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
+import { BlockedImagesAlert } from 'app/features/text-image-guard/BlockedImagesAlert';
 import { useSelector } from 'app/types/store';
 
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
@@ -100,7 +101,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       );
     }
 
-    return <body.Component model={body} />;
+    return (
+      <>
+        <BlockedImagesAlert />
+        <body.Component model={body} />
+      </>
+    );
   }
 
   return (

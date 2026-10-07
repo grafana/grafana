@@ -16598,6 +16598,31 @@
     "name-show-line-numbers": "Show line numbers",
     "name-show-mini-map": "Show mini map"
   },
+  "text-image-guard": {
+    "alert": {
+      "body": "To see these images, please review and allow their sources",
+      "review": "Review",
+      "title": "{{resourceCount}} resources with {{imageCount}} images are being blocked"
+    },
+    "modal": {
+      "allow": "Allow",
+      "allow-tooltip": "Load images from the selected sources until you end this session.",
+      "always-allow": "Always allow",
+      "always-allow-tooltip": "Always load images from the selected sources, on any dashboard. Saved for this session only in this prototype.",
+      "image-count": "{{imageCount}} images",
+      "more": "+ {{hiddenCount}} more",
+      "select-all": "Select all",
+      "title": "Blocked resources",
+      "untitled-panel": "Untitled panel"
+    },
+    "reset": "Reset session data",
+    "toast": {
+      "allowed_one": "{{count}} source has now been allowed for this session",
+      "allowed_other": "{{count}} sources have now been allowed for this session",
+      "always-allowed_one": "{{count}} source has now been indefinitely allowed",
+      "always-allowed_other": "{{count}} sources have now been indefinitely allowed"
+    }
+  },
   "textng": {
     "category-data": "Data",
     "category-text": "Text",

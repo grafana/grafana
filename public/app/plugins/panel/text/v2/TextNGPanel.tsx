@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
@@ -16,6 +16,12 @@ import { t } from '@grafana/i18n';
 import { Alert, Combobox, Field, ScrollContainer, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDataLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
+import { guardImages } from 'app/features/text-image-guard/guardImages';
+import {
+  clearBlockedImages,
+  reportBlockedImages,
+  useAllowedHosts,
+} from 'app/features/text-image-guard/imageGuardStore';
 
 import {
   type CodeOptions,
@@ -38,8 +44,9 @@ export interface Props extends PanelProps<Options> {}
 
 export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
-  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent } = props;
+  const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, title } = props;
   const isEditing = app === CoreApp.PanelEditor;
+  const guardKey = useId();
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;
@@ -120,7 +127,14 @@ export function TextNGPanel(props: Props) {
       />
     </Suspense>
   ) : (
-    <TextNGView {...processed} code={options.code} fitContent={fitContentOn} />
+    <TextNGView
+      {...processed}
+      code={options.code}
+      fitContent={fitContentOn}
+      guardKey={guardKey}
+      guardPanelTitle={title}
+      guardTemplate={content}
+    />
   );
 
   if (frames.length <= 1) {
@@ -172,10 +186,46 @@ interface ProcessedContent extends RenderedContent {
 interface TextNGViewProps extends ProcessedContent {
   code: Options['code'];
   fitContent?: boolean;
+  /** When set, cross-origin images are held back until their host is approved from the dashboard alert. */
+  guardKey?: string;
+  /** Shown in the dashboard's review dialog next to the images this panel had blocked. */
+  guardPanelTitle?: string;
+  /** The unrendered panel content, used to tell which parts of an image URL came from data. */
+  guardTemplate?: string;
 }
 
-function TextNGView({ mode, content, error, code, fitContent }: TextNGViewProps) {
+function TextNGView({
+  mode,
+  content: rawContent,
+  error,
+  code,
+  fitContent,
+  guardKey,
+  guardPanelTitle = '',
+  guardTemplate = '',
+}: TextNGViewProps) {
   const styles = useStyles2(getStyles);
+  const allowedHosts = useAllowedHosts();
+  const guardEnabled = guardKey !== undefined && mode !== TextMode.Code && !error;
+  const guarded = useMemo(
+    () => (guardEnabled ? guardImages(rawContent, guardTemplate, allowedHosts) : { html: rawContent, blocked: [] }),
+    [guardEnabled, guardTemplate, rawContent, allowedHosts]
+  );
+  const content = guarded.html;
+
+  useEffect(() => {
+    if (guardKey) {
+      reportBlockedImages(guardKey, { panelTitle: guardPanelTitle, images: guarded.blocked });
+    }
+  }, [guardKey, guardPanelTitle, guarded.blocked]);
+
+  useEffect(() => {
+    return () => {
+      if (guardKey) {
+        clearBlockedImages(guardKey);
+      }
+    };
+  }, [guardKey]);
 
   if (error) {
     return <Alert severity="error" title={error} data-testid="TextNGPanel-error" />;
