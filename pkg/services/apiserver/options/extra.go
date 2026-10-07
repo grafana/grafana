@@ -22,13 +22,12 @@ type ExtraOptions struct {
 	APIURL          string
 	Verbosity       int
 	RequestTimeout  time.Duration
-	// EnableSearchAPI is the flag equivalent of [grafana-apiserver]
-	// enable_search_api, for servers configured by flags rather than an ini file.
+	// EnableSearchAPI is retained for standalone Enterprise servers until their callers are updated.
+	// The embedded server always enables eligible search routes.
 	EnableSearchAPI bool
 
-	// EnableTrashAPI is the flag equivalent of [grafana-apiserver]
-	// enable_trash_api. Separate from EnableSearchAPI so a deployment can turn one
-	// endpoint off without the other.
+	// EnableTrashAPI is retained for standalone Enterprise servers until their callers are updated.
+	// The embedded server always enables eligible trash routes.
 	EnableTrashAPI bool
 
 	// EnableHybridAPI is the flag equivalent of [grafana-apiserver]

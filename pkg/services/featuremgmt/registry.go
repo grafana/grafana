@@ -2455,6 +2455,15 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
+			Name:         "kubernetesUsersDeterministicUID",
+			Description:  "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
 			Name:         "kubernetesAuthInfoApi",
 			Description:  "Enables auth info APIs in the app platform",
 			Stage:        FeatureStageExperimental,
@@ -2972,6 +2981,14 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "alerting.hybridSearch",
+			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "grafana.vectorSearchCmdk",
