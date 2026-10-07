@@ -1,13 +1,19 @@
-package appplugin
+package pluginroute
 
 import (
 	"encoding/json"
+	"slices"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
@@ -94,4 +100,44 @@ func testManifest(t *testing.T) *app.ManifestData {
 			},
 		},
 	}
+}
+
+func TestGetGroupVersions(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "unused", Served: false})
+	b := &manifestBuilder{
+		group:      manifest.Group,
+		manifest:   manifest,
+		pluginJSON: plugins.JSONData{ID: "example-app"},
+	}
+
+	require.Equal(t, []schema.GroupVersion{
+		{Group: "example.ext.grafana.app", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v0alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v2alpha1"},
+	}, b.GetGroupVersions())
+}
+
+// Only versions explicitly served by the manifest belong to its group.
+func TestGetGroupVersionsWithoutSettings(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions = slices.DeleteFunc(manifest.Versions, func(v app.ManifestVersion) bool {
+		return v.Name == apppluginV0.VERSION
+	})
+	b := testBuilder(t, manifest)
+
+	require.Equal(t, []schema.GroupVersion{
+		{Group: "example.ext.grafana.app", Version: "v1alpha1"},
+		{Group: "example.ext.grafana.app", Version: "v2alpha1"},
+	}, b.GetGroupVersions(), "settings must not add versions to the manifest group")
+}
+
+func TestGetGroupVersionsWithoutServedVersions(t *testing.T) {
+	manifest := testManifest(t)
+	for i := range manifest.Versions {
+		manifest.Versions[i].Served = false
+	}
+	b := testBuilder(t, manifest)
+	require.Empty(t, b.GetGroupVersions())
+	require.ErrorContains(t, b.InstallSchema(runtime.NewScheme()), "no served versions")
 }

@@ -43,7 +43,7 @@ unless `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 `Build` in [spec.go](spec.go) assembles the same pipeline the server does, and nothing else:
 
-1. `appplugin.NewAppPluginAPIBuilder` over the loaded plugin definition, with the plugin
+1. `pluginroute.NewAPI` over the loaded plugin definition, with the plugin
    client, the plugin context, the decrypter and access control stubbed — none of them
    contribute to the spec.
 2. `builder.SetupConfig`, which installs the OpenAPI definitions and, more importantly, the
