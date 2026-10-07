@@ -3363,3 +3363,80 @@ func TestEnsureFolderPathExist_EarlyReturnCheckIDConflict(t *testing.T) {
 		require.Empty(t, client.createCalls)
 	})
 }
+
+func TestEnsureFolderExists_GrantPermissionsOnMoveToRoot(t *testing.T) {
+	ctx := context.Background()
+
+	config := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeInstance},
+		},
+	}
+
+	managedFolder := func(name, parent string) *unstructured.Unstructured {
+		annotations := map[string]interface{}{
+			"grafana.app/managerId":  config.Name,
+			"grafana.app/sourcePath": "my-folder",
+		}
+		if parent != "" {
+			annotations["grafana.app/folder"] = parent
+		}
+		return &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"apiVersion": "folder.grafana.app/v1beta1",
+				"kind":       "Folder",
+				"metadata": map[string]interface{}{
+					"name":        name,
+					"namespace":   "default",
+					"annotations": annotations,
+				},
+				"spec": map[string]interface{}{"title": "My folder"},
+			},
+		}
+	}
+
+	tests := []struct {
+		name          string
+		currentParent string
+		newParent     string
+		expectGrant   bool
+	}{
+		{"move from a folder to the top level asks for the defaults", "old-parent-uid", "", true},
+		{"move between folders does not", "old-parent-uid", "new-parent-uid", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rw := repository.NewMockReaderWriter(t)
+			rw.On("Config").Return(config)
+
+			var updatedObj *unstructured.Unstructured
+			client := &fakeDynamicResourceClient{
+				getFn: func(name string) (*unstructured.Unstructured, error) {
+					return managedFolder(name, tt.currentParent), nil
+				},
+				updateFn: func(obj *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+					updatedObj = obj
+					return obj, nil
+				},
+			}
+
+			fm := NewFolderManager(rw, client, NewEmptyFolderTree(), FolderKind)
+			require.NoError(t, fm.EnsureFolderExists(ctx, Folder{
+				ID:       "folder-uid",
+				Title:    "My folder",
+				Path:     "my-folder",
+				ParentID: tt.newParent,
+			}, tt.newParent))
+
+			require.NotNil(t, updatedObj, "the parent change must be written")
+			grant, _, _ := unstructured.NestedString(updatedObj.Object, "metadata", "annotations", utils.AnnoKeyGrantPermissions)
+			if tt.expectGrant {
+				require.Equal(t, utils.AnnoGrantPermissionsDefault, grant)
+			} else {
+				require.Empty(t, grant, "a folder that still has a parent inherits access from it")
+			}
+		})
+	}
+}

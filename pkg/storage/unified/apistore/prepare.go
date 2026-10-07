@@ -41,6 +41,10 @@ type objectForStorage struct {
 	// apply permissions after create (defined in the resource body)
 	grantPermissions string
 
+	// the resource may already have a permission record, so the setter must only add the
+	// default grants that are missing (see keepExistingPermissionsKey)
+	keepExistingPermissions bool
+
 	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
 	permissionCreator permissionCreatorFunc
 
@@ -77,6 +81,9 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 
 	// Create permissions
 	if v.permissionCreator != nil {
+		if v.keepExistingPermissions {
+			ctx = WithKeepExistingPermissions(ctx)
+		}
 		return v.permissionCreator(ctx)
 	}
 
@@ -318,8 +325,22 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
-	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
+	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+
+	// A resource that moves into the root loses the folder it inherited access from, so it needs
+	// a permission record of its own or only admins can still see it. The grant annotation is
+	// otherwise ignored on update, and is honoured here only for the provisioning service
+	// identity (Git Sync), which is the caller that can move a resource by moving a file. A user
+	// moving a resource to the root is unaffected. The annotation itself is never persisted.
+	grant := obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "")
+	if grant != "" && s.opts.EnableFolderSupport && identity.IsProvisioningServiceIdentity(info) &&
+		!folder.IsRootFolderUID(previous.GetFolder()) && folder.IsRootFolderUID(obj.GetFolder()) {
+		v.grantPermissions = grant
+		// The resource already exists, so it may already have permissions: the setter must only
+		// add the defaults that are missing.
+		v.keepExistingPermissions = true
+	}
 
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck

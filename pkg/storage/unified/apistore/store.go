@@ -934,6 +934,14 @@ func (s *Storage) GuaranteedUpdate(
 			return s.cleanupSecretsAfterFailedPreparation(ctx, v, cleanupSafe, err)
 		}
 
+		// prepareObjectForUpdate only asks for permissions when the update moved the resource
+		// into the root folder, so for every other update this leaves the creator nil.
+		v.permissionCreator, err = afterCreatePermissionCreator(ctx, req.Key, v.grantPermissions, updatedObj, s.opts.Permissions)
+		if err != nil {
+			// Nothing has been written yet, so clean up any inline secrets preparation created.
+			return v.finish(ctx, err, s.opts.SecureValues)
+		}
+
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check

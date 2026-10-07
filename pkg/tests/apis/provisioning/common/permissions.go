@@ -153,6 +153,88 @@ func RequireNoDefaultRootFolderPermissions(t *testing.T, helper *ProvisioningTes
 	RequirePermissionLacksRole(t, perms, "Viewer", FolderPermissionView)
 }
 
+// SetDashboardPermissions replaces the dashboard's ACL with the given role-based entries via the
+// legacy dashboard permissions API and asserts the request succeeds.
+func SetDashboardPermissions(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string, items ...RolePermission) {
+	t.Helper()
+	entries := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		entries = append(entries, map[string]interface{}{
+			"role":       item.Role,
+			"permission": item.Permission,
+		})
+	}
+	_, code, err := PostHelper(t, *helper.K8sTestHelper,
+		fmt.Sprintf("/api/dashboards/uid/%s/permissions", dashboardUID),
+		map[string]interface{}{"items": entries},
+		helper.Org1.Admin)
+	require.NoError(t, err, "setting permissions on dashboard %q should succeed", dashboardUID)
+	require.Equal(t, http.StatusOK, code)
+}
+
+// DashboardPermissions fetches the managed ACL entries for a dashboard via the legacy dashboard
+// permissions API using admin credentials. It fails the test if the request does not return 200.
+func DashboardPermissions(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) []interface{} {
+	t.Helper()
+	perms, code, err := fetchPermissions(dashboardPermissionsURL(helper, dashboardUID))
+	require.NoError(t, err, "GET dashboard permissions for %q", dashboardUID)
+	require.Equal(t, http.StatusOK, code, "unexpected status from permissions endpoint for %q", dashboardUID)
+	return perms
+}
+
+// RequireDefaultRootDashboardPermissions asserts that a dashboard at the root of the folder tree
+// carries the default role-based permissions: Editor -> Edit and Viewer -> View. It waits because
+// the permissions are applied after the dashboard is written.
+func RequireDefaultRootDashboardPermissions(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) {
+	t.Helper()
+	url := dashboardPermissionsURL(helper, dashboardUID)
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		perms, code, err := fetchPermissions(url)
+		if !assert.NoError(c, err, "GET dashboard permissions for %q", dashboardUID) {
+			return
+		}
+		if !assert.Equal(c, http.StatusOK, code, "unexpected status for %q", dashboardUID) {
+			return
+		}
+		assert.Truef(c, permissionsContainRole(perms, "Editor", FolderPermissionEdit),
+			"expected Editor->Edit in ACL for %q; got: %v", dashboardUID, perms)
+		assert.Truef(c, permissionsContainRole(perms, "Viewer", FolderPermissionView),
+			"expected Viewer->View in ACL for %q; got: %v", dashboardUID, perms)
+	}, 30*time.Second, 100*time.Millisecond,
+		"root dashboard %q should have default Editor/Viewer permissions", dashboardUID)
+}
+
+// RequireNoDefaultRootDashboardPermissions asserts that a dashboard was NOT granted the
+// root-level defaults. A dashboard inside a folder inherits access from it and carries no
+// explicit ACL of its own; the GET endpoint returns only a dashboard's own managed entries.
+func RequireNoDefaultRootDashboardPermissions(t *testing.T, helper *ProvisioningTestHelper, dashboardUID string) {
+	t.Helper()
+	perms := DashboardPermissions(t, helper, dashboardUID)
+	RequirePermissionLacksRole(t, perms, "Editor", FolderPermissionEdit)
+	RequirePermissionLacksRole(t, perms, "Viewer", FolderPermissionView)
+}
+
+// RequireDashboardAccessible asserts that GET /api/dashboards/uid/{uid} returns HTTP 200 with the
+// supplied Basic Auth credentials. This exercises real authorization, not just the stored ACL.
+func RequireDashboardAccessible(t *testing.T, helper *ProvisioningTestHelper, dashboardUID, login, password string) {
+	t.Helper()
+	u := fmt.Sprintf("http://%s:%s@%s/api/dashboards/uid/%s", login, password, folderAddr(helper), dashboardUID)
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		resp, err := http.Get(u) //nolint:gosec
+		if !assert.NoError(c, err, "GET dashboard %q as user %q", dashboardUID, login) {
+			return
+		}
+		defer resp.Body.Close() //nolint:errcheck
+		assert.Equal(c, http.StatusOK, resp.StatusCode,
+			"dashboard %q should be accessible to %q", dashboardUID, login)
+	}, 30*time.Second, 100*time.Millisecond,
+		"dashboard %q should become accessible to %q", dashboardUID, login)
+}
+
+func dashboardPermissionsURL(helper *ProvisioningTestHelper, dashboardUID string) string {
+	return fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s/permissions", folderAddr(helper), dashboardUID)
+}
+
 // folderAddr returns the host:port of the running test server.
 func folderAddr(helper *ProvisioningTestHelper) string {
 	return helper.GetEnv().Server.HTTPServer.Listener.Addr().String()
@@ -161,8 +243,13 @@ func folderAddr(helper *ProvisioningTestHelper) string {
 // fetchFolderPermissions performs the raw GET against the legacy folder
 // permissions API and decodes the ACL entries.
 func fetchFolderPermissions(addr, folderUID string) ([]interface{}, int, error) {
-	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", addr, folderUID)
-	resp, err := http.Get(u) //nolint:gosec
+	return fetchPermissions(fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", addr, folderUID))
+}
+
+// fetchPermissions performs a raw GET against a legacy permissions endpoint and decodes the ACL
+// entries. A non-200 response is reported through the status code, not as an error.
+func fetchPermissions(url string) ([]interface{}, int, error) {
+	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 		return nil, 0, err
 	}
@@ -172,7 +259,7 @@ func fetchFolderPermissions(addr, folderUID string) ([]interface{}, int, error) 
 	}
 	var perms []interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&perms); err != nil {
-		return nil, resp.StatusCode, fmt.Errorf("decode permissions response for %q: %w", folderUID, err)
+		return nil, resp.StatusCode, fmt.Errorf("decode permissions response from %q: %w", url, err)
 	}
 	return perms, resp.StatusCode, nil
 }

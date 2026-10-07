@@ -360,6 +360,13 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 				Checksum: folder.MetadataHash,
 			})
 			meta.SetFolder(folder.ParentID)
+			// A folder whose directory moved up to the repository root has no parent left to
+			// inherit access from, so ask for the same default permissions a folder created
+			// there gets. Unified storage applies them only when the folder really moved out of
+			// a folder, and only adds the defaults that are missing.
+			if foldermodel.IsRootFolderUID(folder.ParentID) {
+				meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+			}
 			if takeover {
 				meta.SetManagerProperties(utils.ManagerProperties{
 					Kind:     utils.ManagerKindRepo,

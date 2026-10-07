@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -44,5 +45,36 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, creator)
 		require.Contains(t, err.Error(), "missing auth info")
+	})
+}
+
+func TestKeepExistingPermissions(t *testing.T) {
+	var sawKeepExisting bool
+	setter := func(ctx context.Context, key *resourcepb.ResourceKey, auth authtypes.AuthInfo, val utils.GrafanaMetaAccessor) error {
+		sawKeepExisting = KeepExistingPermissions(ctx)
+		return nil
+	}
+	ctx := authtypes.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, Type: authtypes.TypeUser})
+
+	newVal := func(t *testing.T, keepExisting bool) objectForStorage {
+		t.Helper()
+		creator, err := afterCreatePermissionCreator(ctx, nil, utils.AnnoGrantPermissionsDefault, &v0alpha1.Dashboard{}, setter)
+		require.NoError(t, err)
+		return objectForStorage{permissionCreator: creator, keepExistingPermissions: keepExisting}
+	}
+
+	t.Run("a caller-requested grant replaces the permission list", func(t *testing.T) {
+		sawKeepExisting = true
+		v := newVal(t, false)
+		require.NoError(t, v.finish(ctx, nil, nil))
+		require.False(t, sawKeepExisting)
+	})
+
+	t.Run("a storage-decided grant only adds what is missing", func(t *testing.T) {
+		sawKeepExisting = false
+		v := newVal(t, true)
+		require.NoError(t, v.finish(ctx, nil, nil))
+		require.True(t, sawKeepExisting)
 	})
 }

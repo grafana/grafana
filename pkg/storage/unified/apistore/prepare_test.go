@@ -1246,3 +1246,86 @@ func TestCheckGVK(t *testing.T) {
 		require.Equal(t, "Widget", out.GetKind())
 	})
 }
+
+// audienceAuthInfo overrides the token audience, which StaticRequester derives from the org ID
+// and so cannot express. Multi-tenant provisioning is identified by audience, not by UID.
+type audienceAuthInfo struct {
+	*identity.StaticRequester
+	uid      string
+	audience []string
+}
+
+func (a audienceAuthInfo) GetUID() string        { return a.uid }
+func (a audienceAuthInfo) GetAudience() []string { return a.audience }
+
+// TestPrepareObjectForUpdateGrantPermissions covers the only update that honours the grant
+// annotation: the provisioning service moving a resource out of a folder into the root.
+func TestPrepareObjectForUpdateGrantPermissions(t *testing.T) {
+	node, err := snowflake.NewNode(rand.Int64N(1024))
+	require.NoError(t, err)
+	s := &Storage{
+		gr:         dashv1.DashboardResourceInfo.GroupResource(),
+		serializer: &jsonSerializer{},
+		snowflake:  node,
+		opts: StorageOptions{
+			GVK:                 dashv1.DashboardResourceInfo.GroupVersionKind(),
+			EnableFolderSupport: true,
+		},
+	}
+
+	provisioningCtx, _, err := identity.WithProvisioningIdentity(context.Background(), "default")
+	require.NoError(t, err)
+	userCtx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserID: 1, UserUID: "u1", Type: authlib.TypeUser},
+	)
+	serviceCtx := authlib.WithAuthInfo(context.Background(),
+		&identity.StaticRequester{UserUID: "some-other-service", Type: authlib.TypeAccessPolicy},
+	)
+	multiTenantCtx := authlib.WithAuthInfo(context.Background(), audienceAuthInfo{
+		StaticRequester: &identity.StaticRequester{},
+		uid:             "access-policy:some-tenant-policy",
+		audience:        []string{"org:1", "provisioning.grafana.app"},
+	})
+
+	tests := []struct {
+		name      string
+		ctx       context.Context
+		grant     string
+		oldFolder string
+		newFolder string
+		expected  string
+	}{
+		{"provisioning move to root grants", provisioningCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"multi-tenant provisioning move to root grants", multiTenantCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", utils.AnnoGrantPermissionsDefault},
+		{"user move to root does not grant", userCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", ""},
+		{"another service identity move to root does not grant", serviceCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "", ""},
+		{"move to root without the annotation does not grant", provisioningCtx, "", "folder-a", "", ""},
+		{"update already at root does not grant", provisioningCtx, utils.AnnoGrantPermissionsDefault, "", "", ""},
+		{"move between root aliases does not grant", provisioningCtx, utils.AnnoGrantPermissionsDefault, folder.GeneralFolderUID, "", ""},
+		{"move into a folder does not grant", provisioningCtx, utils.AnnoGrantPermissionsDefault, "", "folder-a", ""},
+		{"move between folders does not grant", provisioningCtx, utils.AnnoGrantPermissionsDefault, "folder-a", "folder-b", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			previous := &dashv1.Dashboard{ObjectMeta: v1.ObjectMeta{Name: "dash", Namespace: "default"}}
+			previousMeta, err := utils.MetaAccessor(previous)
+			require.NoError(t, err)
+			previousMeta.SetFolder(tt.oldFolder)
+
+			updated := previous.DeepCopy()
+			updatedMeta, err := utils.MetaAccessor(updated)
+			require.NoError(t, err)
+			updatedMeta.SetFolder(tt.newFolder)
+			updatedMeta.SetAnnotation(utils.AnnoKeyGrantPermissions, tt.grant)
+
+			v, err := s.prepareObjectForUpdate(tt.ctx, updated, previous)
+			require.NoError(t, err)
+			require.Equal(t, tt.expected, v.grantPermissions)
+			require.Equal(t, tt.expected != "", v.keepExistingPermissions,
+				"a move must only add the defaults that are missing")
+			require.Empty(t, updatedMeta.GetAnnotation(utils.AnnoKeyGrantPermissions),
+				"the annotation must never be persisted")
+		})
+	}
+}
