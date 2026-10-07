@@ -1,7 +1,5 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
-import { fullyLoadedViewItemCollection } from 'app/features/browse-dashboards/fixtures/state.fixtures';
-import { type DashboardViewItem } from 'app/features/search/types';
 
 import {
   getBulkActionInitialValues,
@@ -116,65 +114,28 @@ describe('isResourceAlreadyInTarget', () => {
 });
 
 describe('isSelectionAlreadyInFolder', () => {
-  // Tree: repo root folder `my-repo` > `parent` > `nested`, plus `dash-in-parent` under `parent`
-  // and `root-dash` directly under the whole-instance root.
-  const repoRoot: DashboardViewItem = { kind: 'folder', uid: 'my-repo', title: 'My repo' };
-  const rootDash: DashboardViewItem = { kind: 'dashboard', uid: 'root-dash', title: 'Root dashboard' };
-  const parent: DashboardViewItem = { kind: 'folder', uid: 'parent', title: 'Parent', parentUID: 'my-repo' };
-  const nested: DashboardViewItem = { kind: 'folder', uid: 'nested', title: 'Nested', parentUID: 'parent' };
-  const dashInParent: DashboardViewItem = {
-    kind: 'dashboard',
-    uid: 'dash-in-parent',
-    title: 'Dashboard in parent',
-    parentUID: 'parent',
-  };
-
-  const rootItems = [repoRoot, rootDash];
-  const childrenByParentUID = {
-    'my-repo': fullyLoadedViewItemCollection([parent]),
-    parent: fullyLoadedViewItemCollection([nested, dashInParent]),
-  };
-
   it('returns true when every selected item is directly under the target folder', () => {
-    const selection = { folder: { nested: true }, dashboard: { 'dash-in-parent': true } };
-
-    expect(isSelectionAlreadyInFolder(selection, 'parent', rootItems, childrenByParentUID)).toBe(true);
+    expect(isSelectionAlreadyInFolder(['parent', 'parent'], 'parent')).toBe(true);
   });
 
-  it('returns false for a nested folder when the target is the repository root', () => {
-    const selection = { folder: { nested: true }, dashboard: {} };
-
-    expect(isSelectionAlreadyInFolder(selection, 'my-repo', rootItems, childrenByParentUID)).toBe(false);
+  it('returns false for a nested item when the target is its grandparent', () => {
+    expect(isSelectionAlreadyInFolder(['parent'], 'my-repo')).toBe(false);
   });
 
   it('returns false when only some selected items are already under the target', () => {
-    const selection = { folder: { parent: true, nested: true }, dashboard: {} };
-
-    expect(isSelectionAlreadyInFolder(selection, 'my-repo', rootItems, childrenByParentUID)).toBe(false);
+    expect(isSelectionAlreadyInFolder(['my-repo', 'parent'], 'my-repo')).toBe(false);
   });
 
   it('returns false when a selected item is not in the loaded tree', () => {
-    const selection = { folder: { 'not-loaded': true }, dashboard: {} };
-
-    expect(isSelectionAlreadyInFolder(selection, 'parent', rootItems, childrenByParentUID)).toBe(false);
+    expect(isSelectionAlreadyInFolder([undefined], 'parent')).toBe(false);
   });
 
-  it('treats the empty target UID as the root for items without a parent', () => {
-    const selection = { folder: {}, dashboard: { 'root-dash': true } };
-
-    expect(isSelectionAlreadyInFolder(selection, '', rootItems, childrenByParentUID)).toBe(true);
-  });
-
-  it('ignores deselected entries left behind by ancestor propagation', () => {
-    const selection = { folder: { parent: false, nested: true }, dashboard: {} };
-
-    expect(isSelectionAlreadyInFolder(selection, 'parent', rootItems, childrenByParentUID)).toBe(true);
+  it('matches root items against the empty root UID', () => {
+    expect(isSelectionAlreadyInFolder([''], '')).toBe(true);
   });
 
   it('returns false for an empty selection', () => {
-    expect(isSelectionAlreadyInFolder({ folder: {}, dashboard: {} }, 'parent', rootItems, childrenByParentUID)).toBe(
-      false
-    );
+    expect(isSelectionAlreadyInFolder([], 'parent')).toBe(false);
   });
 });
 

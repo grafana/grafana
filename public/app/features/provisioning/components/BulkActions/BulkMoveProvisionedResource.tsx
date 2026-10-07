@@ -9,7 +9,6 @@ import { Button, Field, Stack } from '@grafana/ui';
 import { useGetFolderQuery } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView, type Job } from 'app/api/clients/provisioning/v0alpha1';
 import { AffectedFolderContents } from 'app/features/browse-dashboards/components/BrowseActions/AffectedFolderContents';
-import { rootItemsSelector, useChildrenByParentUIDState } from 'app/features/browse-dashboards/state/hooks';
 import { collectSelectedItems, getSelectedUIDs } from 'app/features/browse-dashboards/utils/dashboards';
 import { getCanPushToConfiguredBranch } from 'app/features/provisioning/components/defaults';
 import {
@@ -17,9 +16,9 @@ import {
   useGetResourceRepositoryView,
 } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 import { isRootFolderUID } from 'app/features/search/constants';
-import { useSelector } from 'app/types/store';
 
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useSelectedItemParentUIDs } from '../../hooks/useSelectedItemParentUIDs';
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import { type CommitTemplateVars } from '../../utils/commitMessage';
 import { getCurrentCommitUser } from '../../utils/currentUser';
@@ -55,8 +54,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
 
   // Hooks
   const { createBulkJob, isLoading: isCreatingJob } = useBulkActionJob();
-  const rootItems = useSelector(rootItemsSelector)?.items ?? [];
-  const childrenByParentUID = useChildrenByParentUIDState();
+  const selectedItemParentUIDs = useSelectedItemParentUIDs(selectedItems);
   const methods = useForm<BulkActionFormData>({ defaultValues: initialValues });
   const {
     handleSubmit,
@@ -105,7 +103,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
     // 1. Setup
     const { targetFolderPathInRepo, resources } = setupMoveOperation();
 
-    if (!targetFolderPathInRepo) {
+    if (targetFolderUID === undefined || !targetFolderPathInRepo) {
       setError('targetFolderUID', {
         type: 'manual',
         message: t(
@@ -117,7 +115,7 @@ function FormContent({ initialValues, selectedItems, repository, canPushToConfig
       return;
     }
 
-    if (isSelectionAlreadyInFolder(selectedItems, targetFolderUID ?? '', rootItems, childrenByParentUID)) {
+    if (isSelectionAlreadyInFolder(selectedItemParentUIDs, targetFolderUID)) {
       setError('targetFolderUID', {
         type: 'manual',
         message: t(
