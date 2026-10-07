@@ -51,7 +51,7 @@ func TestIntegrationLoaderDiscardsPartialSQLResults(t *testing.T) {
 			columns := []string{"action", "scope"}
 			rows := sqlmock.NewRows(columns).AddRow("users:read", "users:*").AddRow("users:create", "").RowError(1, boom)
 			if team {
-				requester.TeamIDs = []int64{3}
+				requester.TeamIDs = []int64{3} //nolint:staticcheck // Exercise failures in the numeric RBAC team contribution.
 				mock.ExpectQuery("SELECT").WillReturnRows(sqlmock.NewRows(columns)).RowsWillBeClosed()
 				rows = sqlmock.NewRows(append(columns, "team_id")).AddRow("users:read", "users:*", 3).AddRow("users:create", "", 3).RowError(1, boom)
 			}
