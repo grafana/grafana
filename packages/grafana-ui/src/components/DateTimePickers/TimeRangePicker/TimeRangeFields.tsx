@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type ComponentPropsWithRef, type ReactNode, useId, useState } from 'react';
+import { type ReactNode, type Ref, type RefObject, useId, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -10,32 +10,29 @@ import { Input } from '../../Input/Input';
 
 import TimePickerCalendar, { type TimePickerCalendarProps } from './TimePickerCalendar';
 
-type RangeInputProps = ComponentPropsWithRef<typeof Input> & { 'data-testid'?: string };
+interface RangeField {
+  value: string;
+  onChange: (value: string) => void;
+  onBlur?: () => void;
+  inputRef?: Ref<HTMLInputElement>;
+  label?: string;
+  error?: string;
+  placeholder?: string;
+  testId?: string;
+}
 
 interface Props {
-  fromInput: RangeInputProps;
-  toInput: RangeInputProps;
-  fromLabel?: string;
-  toLabel?: string;
-  fromError?: string;
-  toError?: string;
+  from: RangeField;
+  to: RangeField;
+  inputWidth?: number;
+  onSubmit?: () => void;
   fieldSuffix?: ReactNode;
   calendar: Omit<TimePickerCalendarProps, 'isOpen' | 'onClose' | 'anchorElement'>;
-  getCalendarAnchor?: () => HTMLElement | null;
+  calendarAnchor: RefObject<HTMLElement | null>;
 }
 
 /** Shared absolute-range inputs and calendar; callers own parsing, validation, and applying the range. */
-export function TimeRangeFields({
-  fromInput,
-  toInput,
-  fromLabel = t('time-picker.range-content.from-input', 'From'),
-  toLabel = t('time-picker.range-content.to-input', 'To'),
-  fromError,
-  toError,
-  fieldSuffix,
-  calendar,
-  getCalendarAnchor,
-}: Props) {
+export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, calendar, calendarAnchor }: Props) {
   const fromId = useId();
   const toId = useId();
   const [isOpen, setOpen] = useState(false);
@@ -54,19 +51,36 @@ export function TimeRangeFields({
   return (
     <>
       {[
-        { input: fromInput, label: fromLabel, error: fromError, id: fromId },
-        { input: toInput, label: toLabel, error: toError, id: toId },
-      ].map(({ input, label, error, id }) => (
+        { field: from, label: t('time-picker.range-content.from-input', 'From'), id: fromId },
+        { field: to, label: t('time-picker.range-content.to-input', 'To'), id: toId },
+      ].map(({ field, label, id }) => (
         <div key={id} className={rowStyle}>
-          <Field label={label} invalid={!!error} error={error}>
-            <Input id={id} autoComplete="off" {...input} addonAfter={icon} />
+          <Field label={field.label ?? label} invalid={!!field.error} error={field.error}>
+            <Input
+              id={id}
+              autoComplete="off"
+              value={field.value}
+              onChange={(event) => field.onChange(event.currentTarget.value)}
+              onBlur={field.onBlur}
+              ref={field.inputRef}
+              placeholder={field.placeholder}
+              data-testid={field.testId}
+              width={inputWidth}
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  onSubmit?.();
+                }
+              }}
+              addonAfter={icon}
+            />
           </Field>
           {fieldSuffix}
         </div>
       ))}
       <TimePickerCalendar
         {...calendar}
-        anchorElement={getCalendarAnchor?.()}
+        anchorElement={calendarAnchor.current}
         isOpen={isOpen}
         onClose={() => setOpen(false)}
       />
