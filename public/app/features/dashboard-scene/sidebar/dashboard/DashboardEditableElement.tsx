@@ -1,7 +1,6 @@
 import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -101,7 +100,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
       return body.getOutlineChildren();
     }
     return [
-      ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
+      this.getFiltersSet(),
       $variables,
       dashboardSceneGraph.getDataLayers(this.dashboard),
       this.getLinksSet(),
@@ -133,10 +132,6 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
   const filterListId = useId();
 
   return useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return [];
-    }
-
     const filterCount = $variables?.state.variables.filter(sceneUtils.isAdHocVariable).length ?? 0;
 
     const title = t('dashboard-scene.use-filters-category.category.title.filters', 'Filters');
@@ -171,9 +166,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
   return useMemo(() => {
     const variableCount =
       $variables instanceof SceneVariableSet
-        ? config.featureToggles.dashboardUnifiedDrilldownControls
-          ? $variables.state.variables.filter((v) => !sceneUtils.isAdHocVariable(v) && !v.UNSAFE_renderAsHidden).length
-          : $variables.state.variables.length
+        ? $variables.state.variables.filter((v) => !sceneUtils.isAdHocVariable(v) && !v.UNSAFE_renderAsHidden).length
         : 0;
 
     const title = t('dashboard-scene.use-variables-category.category.title.variables', 'Variables');

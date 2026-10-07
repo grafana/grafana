@@ -502,9 +502,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     hoverHeaderOffset: 0,
     $data: createPanelDataProvider(panel),
     titleItems,
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
+    headerActions: new VizPanelHeaderActions({}),
     subHeader: new VizPanelSubHeader({}),
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,

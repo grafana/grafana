@@ -173,36 +173,9 @@ describe('getVariableTypeSelectOptions', () => {
       config.featureToggles.groupByVariable = false;
     });
 
-    it('should contain all editable variable types', () => {
+    it('should contain all editable variable types except adhoc', () => {
       const options = getVariableTypeSelectOptions();
       const editableVariables = getEditableVariables();
-      expect(options).toHaveLength(Object.keys(editableVariables).length);
-
-      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
-        expect(editableVariables).toHaveProperty(type);
-      });
-    });
-
-    it('should return an array of selectable values for editable variable types', () => {
-      const editableVariables = getEditableVariables();
-      const options = getVariableTypeSelectOptions();
-      expect(options).toHaveLength(9);
-
-      options.forEach((option, index) => {
-        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
-        const variableTypeConfig = editableVariables[editableType];
-
-        expect(option.value).toBe(editableType);
-        expect(option.label).toBe(variableTypeConfig.name);
-        expect(option.description).toBe(variableTypeConfig.description);
-      });
-    });
-  });
-
-  describe('when groupByVariable is disabled', () => {
-    it('should contain all editable variable types except groupby', () => {
-      const editableVariables = getEditableVariables();
-      const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(Object.keys(editableVariables).length - 1);
 
       EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
@@ -215,8 +188,9 @@ describe('getVariableTypeSelectOptions', () => {
       const options = getVariableTypeSelectOptions();
       expect(options).toHaveLength(8);
 
+      const expectedOrder = EDITABLE_VARIABLES_SELECT_ORDER.filter((type) => type !== 'adhoc');
       options.forEach((option, index) => {
-        const editableType = EDITABLE_VARIABLES_SELECT_ORDER[index];
+        const editableType = expectedOrder[index];
         const variableTypeConfig = editableVariables[editableType];
 
         expect(option.value).toBe(editableType);
@@ -226,60 +200,58 @@ describe('getVariableTypeSelectOptions', () => {
     });
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeAll(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
+  describe('when groupByVariable is disabled', () => {
+    it('should contain all editable variable types except groupby and adhoc', () => {
+      const editableVariables = getEditableVariables();
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(Object.keys(editableVariables).length - 2);
+
+      EDITABLE_VARIABLES_SELECT_ORDER.forEach((type) => {
+        expect(editableVariables).toHaveProperty(type);
+      });
     });
 
-    afterAll(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
+    it('should return an array of selectable values for editable variable types', () => {
+      const editableVariables = getEditableVariables();
+      const options = getVariableTypeSelectOptions();
+      expect(options).toHaveLength(7);
 
-    it('should hide adhoc in the dashboard context', () => {
-      const values = getVariableTypeSelectOptions().map((o) => o.value);
-      expect(values).not.toContain('adhoc');
-    });
+      const expectedOrder = EDITABLE_VARIABLES_SELECT_ORDER.filter((type) => type !== 'adhoc' && type !== 'groupby');
+      options.forEach((option, index) => {
+        const editableType = expectedOrder[index];
+        const variableTypeConfig = editableVariables[editableType];
 
-    it('should show adhoc as "Filter and Group by" in the standalone context', () => {
-      const options = getVariableTypeSelectOptions({ standalone: true });
-      expect(options.map((o) => o.value)).toContain('adhoc');
-
-      const adhoc = options.find((o) => o.value === 'adhoc');
-      expect(adhoc?.label).toBe('Filter and Group by');
-      expect(adhoc?.description).toBe('Add key/value filters and group by keys on the fly');
+        expect(option.value).toBe(editableType);
+        expect(option.label).toBe(variableTypeConfig.name);
+        expect(option.description).toBe(variableTypeConfig.description);
+      });
     });
   });
 
-  describe('when dashboardUnifiedDrilldownControls is disabled', () => {
-    it('standalone context should match the dashboard context', () => {
-      const standaloneOptions = getVariableTypeSelectOptions({ standalone: true });
-      expect(standaloneOptions).toEqual(getVariableTypeSelectOptions());
+  it('should hide adhoc in the dashboard context', () => {
+    const values = getVariableTypeSelectOptions().map((o) => o.value);
+    expect(values).not.toContain('adhoc');
+  });
 
-      const adhoc = standaloneOptions.find((o) => o.value === 'adhoc');
-      expect(adhoc?.label).toBe('Filter');
-    });
+  it('should show adhoc as "Filter and Group by" in the standalone context', () => {
+    const options = getVariableTypeSelectOptions({ standalone: true });
+    expect(options.map((o) => o.value)).toContain('adhoc');
+
+    const adhoc = options.find((o) => o.value === 'adhoc');
+    expect(adhoc?.label).toBe('Filter and Group by');
+    expect(adhoc?.description).toBe('Add key/value filters and group by keys on the fly');
   });
 });
 
 describe('getVariableTypeLabel', () => {
-  afterEach(() => {
-    config.featureToggles.dashboardUnifiedDrilldownControls = false;
-  });
-
   it('returns the editable variable name by default', () => {
     expect(getVariableTypeLabel('adhoc')).toBe('Filter');
     expect(getVariableTypeLabel('custom')).toBe('Custom');
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
-
-    it('relabels adhoc in the standalone context only', () => {
-      expect(getVariableTypeLabel('adhoc', { standalone: true })).toBe('Filter and Group by');
-      expect(getVariableTypeLabel('adhoc')).toBe('Filter');
-    });
+  it('relabels adhoc in the standalone context only', () => {
+    expect(getVariableTypeLabel('adhoc', { standalone: true })).toBe('Filter and Group by');
+    expect(getVariableTypeLabel('adhoc')).toBe('Filter');
   });
 });
 
@@ -350,22 +322,10 @@ describe('getVariableScene', () => {
   });
 
   describe('adhoc enableGroupBy default', () => {
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
-
-    it('enables group by on new adhoc variables when dashboardUnifiedDrilldownControls is on', async () => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-
+    it('enables group by on new adhoc variables', async () => {
       const variable = await getVariableScene('adhoc', { name: 'filter0' });
 
       expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBe(true);
-    });
-
-    it('does not enable group by on new adhoc variables when dashboardUnifiedDrilldownControls is off', async () => {
-      const variable = await getVariableScene('adhoc', { name: 'filter0' });
-
-      expect((variable as AdHocFiltersVariable).state.enableGroupBy).toBeUndefined();
     });
   });
 });

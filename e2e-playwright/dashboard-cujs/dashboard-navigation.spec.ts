@@ -5,9 +5,11 @@ import { testScopes } from '../utils/scopes';
 
 import {
   clickFirstScopesDashboard,
+  expandAdHocFilters,
+  expectGroupByInUrl,
   getAdHocFilterPills,
   getGroupByInput,
-  getGroupByValues,
+  getGroupByPills,
   getMarkdownHTMLContent,
   getScopesDashboards,
   getScopesDashboardsSearchInput,
@@ -20,7 +22,6 @@ test.use({
     scopeFilters: true,
     groupByVariable: true,
     reloadDashboardsOnParamsChange: true,
-    dashboardUnifiedDrilldownControls: false,
   },
 });
 
@@ -40,7 +41,7 @@ test.describe(
       const scopesDashboards = getScopesDashboards(page);
       const scopesDashboardsSearchInput = getScopesDashboardsSearchInput(page);
       const adhocFilterPills = getAdHocFilterPills(page);
-      const groupByValues = getGroupByValues(page);
+      const groupByPills = getGroupByPills(page);
 
       // Set up routes before any navigation (only for mocked mode)
       if (!USE_LIVE_DATA) {
@@ -105,6 +106,7 @@ test.describe(
 
             await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
+            await expandAdHocFilters(page);
             const pills = await adhocFilterPills.allTextContents();
             const processedPills = pills
               .map((p) => {
@@ -115,8 +117,8 @@ test.describe(
 
             // assert the panel is visible and has the correct value
             const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
-            // no groupBy value
-            await expect(markdownContent).toContainText(`GroupByVar: \n\nAdHocVar: ${processedPills}`);
+            await expect(markdownContent).toContainText(`AdHocVar: ${processedPills}`);
+            await expect(groupByPills).toHaveCount(0);
 
             const groupByVariable = getGroupByInput(dashboardPage, selectors);
 
@@ -137,7 +139,9 @@ test.describe(
             expect(checkDashboardReloadBehavior(requests)).toBe(true);
 
             //all values are set after dashboard switch
-            await expect(markdownContent).toContainText(`GroupByVar: dev\n\nAdHocVar: ${processedPills}`);
+            await expect(markdownContent).toContainText(`AdHocVar: ${processedPills}`);
+            await expect(groupByPills.filter({ hasText: 'dev' })).toBeVisible();
+            await expectGroupByInUrl(page, 'dev');
           }
         );
       }
@@ -149,6 +153,7 @@ test.describe(
 
         await expect(scopeSelectorInput).toHaveAttribute('data-value', /.+/);
 
+        await expandAdHocFilters(page);
         const pillCount = await adhocFilterPills.count();
         const pillTexts = await adhocFilterPills.allTextContents();
         const processedPills = pillTexts
@@ -158,20 +163,18 @@ test.describe(
           })
           .join(',');
 
-        const groupByCount = await groupByValues.count();
-        const selectedValues = (await groupByValues.allTextContents()).join(', ');
+        const groupByCount = await groupByPills.count();
 
         // assert the panel is visible and has the correct value
         const markdownContent = await getMarkdownHTMLContent(dashboardPage, selectors);
-
-        const oldFilters = `GroupByVar: ${selectedValues}\n\nAdHocVar: ${processedPills}`;
-        await expect(markdownContent).toContainText(oldFilters);
+        await expect(markdownContent).toContainText(`AdHocVar: ${processedPills}`);
 
         await clickFirstScopesDashboard(page);
         await page.waitForURL('**/d/**');
 
+        await expandAdHocFilters(page);
         const newPillCount = await adhocFilterPills.count();
-        const newGroupByCount = await groupByValues.count();
+        const newGroupByCount = await groupByPills.count();
 
         expect(newPillCount).not.toEqual(pillCount);
         expect(newGroupByCount).not.toEqual(groupByCount);

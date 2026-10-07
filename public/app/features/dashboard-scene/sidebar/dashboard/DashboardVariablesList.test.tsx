@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
@@ -232,33 +231,23 @@ describe('<DashboardVariablesList />', () => {
     });
   });
 
-  describe('when dashboardUnifiedDrilldownControls is enabled', () => {
-    beforeEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = true;
-    });
+  test('excludes adhoc variables from the rendered list', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
 
-    afterEach(() => {
-      config.featureToggles.dashboardUnifiedDrilldownControls = false;
-    });
+    const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+    expect(aboveNames).toEqual(['visibleVar1']);
+    expect(queryByText('adhocFilter')).not.toBeInTheDocument();
+  });
 
-    test('excludes adhoc variables from the rendered list', () => {
-      const { visibleVar1 } = buildTestVariables();
-      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
-      const { queryByText, elements } = renderVariablesList([visibleVar1, adhocFilter]);
+  test('includes adhoc variables when includeAdHoc is true', () => {
+    const { visibleVar1 } = buildTestVariables();
+    const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
 
-      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
-      expect(aboveNames).toEqual(['visibleVar1']);
-      expect(queryByText('adhocFilter')).not.toBeInTheDocument();
-    });
-
-    test('includes adhoc variables when includeAdHoc is true', () => {
-      const { visibleVar1 } = buildTestVariables();
-      const adhocFilter = new AdHocFiltersVariable({ name: 'adhocFilter', type: 'adhoc', hide: VariableHide.dontHide });
-      const { elements } = renderVariablesList([visibleVar1, adhocFilter], { includeAdHoc: true });
-
-      const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
-      expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
-    });
+    const aboveNames = Array.from(elements.aboveListItems()).map((item) => item.textContent);
+    expect(aboveNames).toEqual(['visibleVar1', 'adhocFilter']);
   });
 });
 

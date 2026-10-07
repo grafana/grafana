@@ -6,6 +6,14 @@ export function getAdHocFilterPills(page: Page) {
   return page.getByLabel(/^Edit filter with key/);
 }
 
+// The unified filters control collapses pills that don't fit on one line
+export async function expandAdHocFilters(page: Page) {
+  const showMore = page.getByRole('button', { name: /^Show \d+ more filters$/ });
+  if (await showMore.isVisible()) {
+    await showMore.click();
+  }
+}
+
 export async function waitForAdHocOption(page: Page) {
   await page.waitForSelector('[role="option"]', { state: 'visible' });
 }
@@ -16,18 +24,17 @@ export async function getMarkdownHTMLContent(page: DashboardPage, selectors: E2E
   return panelContent.locator('.markdown-html');
 }
 
+function getAdHocControl(page: DashboardPage, selectors: E2ESelectorGroups) {
+  return page.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc')).locator('..');
+}
+
+// The filters inputs (pill being edited, then the new-filter input) render before the group by input
 export function getAdhocFiltersInput(page: DashboardPage, selectors: E2ESelectorGroups) {
-  return page
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('adHoc'))
-    .locator('..')
-    .locator('input');
+  return getAdHocControl(page, selectors).locator('input').first();
 }
 
 export function getGroupByInput(page: DashboardPage, selectors: E2ESelectorGroups) {
-  return page
-    .getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItemLabels('groupBy'))
-    .locator('..')
-    .locator('input');
+  return getAdHocControl(page, selectors).getByPlaceholder('+ key');
 }
 
 export function getAdHocFilterOptionValues(page: Page) {
@@ -81,13 +88,10 @@ export function getScopesDashboardsSearchInput(page: Page) {
   return page.getByTestId('scopes-dashboards-search');
 }
 
-export function getGroupByValues(page: Page) {
-  return page
-    .getByTestId(/^GroupBySelect-/)
-    .first()
-    .locator('div:has(+ button)');
+export function getGroupByPills(page: Page) {
+  return page.getByRole('button', { name: /^Group by / });
 }
 
-export function getGroupByOptions(page: Page) {
-  return page.getByTestId('data-testid Select option');
+export async function expectGroupByInUrl(page: Page, key: string) {
+  await expect.poll(() => new URL(page.url()).searchParams.getAll('var-adHoc')).toContain(`${key}|groupBy`);
 }

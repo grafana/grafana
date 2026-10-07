@@ -111,9 +111,14 @@ export const flows = {
       }
 
       await sidebar.toolbar.clickButton('Add');
-      await sidebar.addOptions.addVariable();
 
-      await sidebar.variableOptions.selectVariableType(variable.type);
+      // Ad hoc filters are not in the variable type picker; they have their own "Filter and Group by" entry
+      if (variable.type === 'adhoc') {
+        await sidebar.addOptions.addFilters();
+      } else {
+        await sidebar.addOptions.addVariable();
+        await sidebar.variableOptions.selectVariableType(variable.type);
+      }
 
       // New variable creation schedules a delayed autofocus to name input
       // Let that timer finish before we interact to prevent focus on the wrong input
