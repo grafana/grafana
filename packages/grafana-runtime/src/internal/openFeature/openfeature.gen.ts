@@ -56,6 +56,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto */
+  DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -491,6 +493,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto
+ *
+ * **Details:**
+ * - flag key: `dashboards.publicDashboardBadgeFromApi`
+ * - default value: `false`
+ */
+export const useFlagDashboardsPublicDashboardBadgeFromApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.publicDashboardBadgeFromApi", false, options).value;
 };
 
 /**

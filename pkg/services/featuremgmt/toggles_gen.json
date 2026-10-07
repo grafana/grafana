@@ -1607,6 +1607,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.publicDashboardBadgeFromApi",
+        "resourceVersion": "1791322319214",
+        "creationTimestamp": "2026-10-06T21:31:59Z"
+      },
+      "spec": {
+        "description": "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
