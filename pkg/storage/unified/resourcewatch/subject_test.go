@@ -79,11 +79,11 @@ func TestLegacySubject(t *testing.T) {
 	gvr := schema.GroupVersionResource{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "users"}
 
 	got := LegacySubject(gvr, "default")
-	assert.Equal(t, "legacy.watch.v1.iam.grafana.app.default.users", got)
+	assert.Equal(t, "legacysql.watch.v1.iam.grafana.app.default.users", got)
 	assert.True(t, subjectMatches(SubjectAllLegacyResources, got))
 	assert.False(t, subjectMatches(SubjectAllResources, got), "legacy writes must not reach the unified storage firehose")
 	assert.False(t, subjectMatches(SubjectAllLegacyResources, Subject(gvr, "default")))
-	assert.Equal(t, "legacy.watch.v1.iam.grafana.app.*.teams", LegacySubject(schema.GroupVersionResource{Group: "iam.grafana.app", Resource: "teams"}, ""))
+	assert.Equal(t, "legacysql.watch.v1.iam.grafana.app.*.teams", LegacySubject(schema.GroupVersionResource{Group: "iam.grafana.app", Resource: "teams"}, ""))
 }
 
 // TestGrantSubjects pins the layout against the us-nats auth callout, which

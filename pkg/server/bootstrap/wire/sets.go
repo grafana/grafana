@@ -310,6 +310,7 @@ var Basic = wire.NewSet(
 	infranats.ProvideSubscriber,
 	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
 	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,

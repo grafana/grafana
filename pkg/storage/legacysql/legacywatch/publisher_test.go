@@ -42,7 +42,7 @@ func TestPublisher(t *testing.T) {
 		NewPublisher(bus, claims.OrgNamespaceFormatter).Publish(context.Background(), Modified, users, 2, "u1", 1234)
 
 		require.Len(t, bus.messages, 1)
-		require.Equal(t, "legacy.watch.v1.iam.grafana.app.org-2.users", bus.messages[0].subject)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.org-2.users", bus.messages[0].subject)
 		var got resourcepb.WatchNotification
 		require.NoError(t, proto.Unmarshal(bus.messages[0].data, &got))
 		require.True(t, proto.Equal(&resourcepb.WatchNotification{
@@ -61,7 +61,7 @@ func TestPublisher(t *testing.T) {
 		cancel()
 		NewPublisher(bus, claims.OrgNamespaceFormatter).Publish(ctx, Deleted, users, 1, "u1", 0)
 		require.Len(t, bus.messages, 1)
-		require.Equal(t, "legacy.watch.v1.iam.grafana.app.default.users", bus.messages[0].subject)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.default.users", bus.messages[0].subject)
 	})
 
 	t.Run("drops when disabled", func(t *testing.T) {

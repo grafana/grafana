@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -24,6 +23,14 @@ const (
 	Deleted  = resourcepb.WatchNotification_DELETED
 )
 
+// Bus is the subset of infra/nats.Publisher used here. Declaring it locally keeps
+// the user and team services that depend on this package from linking the NATS
+// client and embedded server.
+type Bus interface {
+	Enabled() bool
+	Publish(ctx context.Context, subject string, data []byte) error
+}
+
 // Publisher is nil-safe: a nil *Publisher, or one whose bus is disabled, drops
 // every notification, so writers can call it unconditionally.
 //
@@ -31,23 +38,23 @@ const (
 // logged and never fails the write. Delivery is at-most-once, so consumers must
 // still re-list to recover anything missed.
 type Publisher struct {
-	bus       nats.Publisher
+	bus       Bus
 	namespace request.NamespaceMapper
 	log       log.Logger
 }
 
-func ProvidePublisher(cfg *setting.Cfg, bus nats.Publisher) *Publisher {
+func ProvidePublisher(cfg *setting.Cfg, bus Bus) *Publisher {
 	return NewPublisher(bus, request.GetNamespaceMapper(cfg))
 }
 
-func NewPublisher(bus nats.Publisher, namespace request.NamespaceMapper) *Publisher {
+func NewPublisher(bus Bus, namespace request.NamespaceMapper) *Publisher {
 	return &Publisher{bus: bus, namespace: namespace, log: log.New("legacywatch")}
 }
 
 // Enabled reports whether Publish can deliver, so a writer can skip work (e.g. a
 // lookup of the name) that only a notification needs.
 func (p *Publisher) Enabled() bool {
-	return p != nil && nats.Enabled(p.bus)
+	return p != nil && p.bus != nil && p.bus.Enabled()
 }
 
 // Publish announces a change to the named resource in the org's namespace.

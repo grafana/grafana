@@ -61,7 +61,7 @@ func Subject(gvr schema.GroupVersionResource, namespace string) string {
 
 // LegacySubject is Subject for writes to the legacy SQL tables, as the tokens
 //
-//	legacy.watch.v1.{group}.{namespace}.{resource}
+//	legacysql.watch.v1.{group}.{namespace}.{resource}
 //
 // It carries the same WatchNotification payload with the same layout rules, so
 // a consumer decodes both roots alike. The resource version of a legacy write
