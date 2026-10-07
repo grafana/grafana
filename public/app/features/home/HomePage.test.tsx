@@ -16,9 +16,9 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { ALERTS_FILTER_STORAGE_KEY } from './AlertsIncidents/alertFilter';
 import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
 import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';
 import { homepageViewed } from './analytics/main';
@@ -125,11 +125,11 @@ describe('HomePage', () => {
     expect(await screen.findByRole('heading', { name: /^Good \w+\.$/ })).toBeInTheDocument();
   });
 
-  it('scopes firing alerts to the team stored in local storage', async () => {
+  it('scopes firing alerts to the label stored in local storage', async () => {
     jest
       .spyOn(contextSrv, 'hasPermission')
       .mockImplementation((action) => action === AccessControlAction.AlertingInstanceRead);
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'platform');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:platform');
     const filters: string[][] = [];
     server.use(
       http.get('/api/alertmanager/:datasourceUid/api/v2/alerts', ({ request }) => {
@@ -141,8 +141,7 @@ describe('HomePage', () => {
     render(<HomePage />);
 
     await waitFor(() => expect(filters.length).toBeGreaterThan(0));
-    expect(filters[0]).toEqual([expect.stringContaining('team=~')]);
-    expect(filters[0][0]).toContain('platform');
+    expect(filters[0]).toEqual(['team="platform"']);
   });
 
   it('scopes active incidents to their own stored filter, not the alerts team', async () => {
@@ -151,7 +150,7 @@ describe('HomePage', () => {
       loading: false,
       settings: { ...pluginMeta[SupportedPlugin.Irm], includes: [] },
     });
-    window.localStorage.setItem(ALERTS_TEAM_FILTER_STORAGE_KEY, 'backend');
+    window.localStorage.setItem(ALERTS_FILTER_STORAGE_KEY, 'team:backend');
     window.localStorage.setItem(INCIDENTS_FILTER_STORAGE_KEY, 'squad:Frontend');
     const queries = mockIncidents([]);
 

@@ -17,8 +17,8 @@ import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncid
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
+import { ALERTS_FILTER_STORAGE_KEY } from './AlertsIncidents/alertFilter';
 import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
-import { ALERTS_TEAM_FILTER_STORAGE_KEY } from './AlertsIncidents/teamFilter';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';
@@ -91,9 +91,9 @@ export default function HomePage() {
   });
 
   // Persisted filter scopes, one per view; each also drives that view's header pill.
-  const [alertsTeam, setAlertsTeam] = useStoredString(ALERTS_TEAM_FILTER_STORAGE_KEY, '');
+  const [alertsFilter, setAlertsFilter] = useStoredString(ALERTS_FILTER_STORAGE_KEY, '');
   const [incidentsFilter, setIncidentsFilter] = useStoredString(INCIDENTS_FILTER_STORAGE_KEY, '');
-  const alertsData = useFiringAlerts(alertsTeam);
+  const alertsData = useFiringAlerts(alertsFilter);
   const incidentsData = useIncidents(incidentsFilter);
   const alertIncidentRef = useRef<AlertIncidentSwitchHandle | null>(null);
 
@@ -184,8 +184,8 @@ export default function HomePage() {
                     <AlertIncidentTabs
                       alertsData={alertsData}
                       incidentsData={incidentsData}
-                      alertsTeam={alertsTeam}
-                      onAlertsTeamChange={setAlertsTeam}
+                      alertsFilter={alertsFilter}
+                      onAlertsFilterChange={setAlertsFilter}
                       incidentsFilter={incidentsFilter}
                       onIncidentsFilterChange={setIncidentsFilter}
                       switchRef={alertIncidentRef}

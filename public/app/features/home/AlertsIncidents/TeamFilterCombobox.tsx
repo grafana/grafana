@@ -21,7 +21,8 @@ function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOpti
   const sorted = [...options].sort(
     (a, b) => collator.compare(a.group ?? '', b.group ?? '') || collator.compare(a.label ?? '', b.label ?? '')
   );
-  // A lone header is noise: most orgs only have `team`, so headers only appear with several groups.
+  // A lone header is noise, e.g. for an org whose only incident label is `team`,
+  // so headers only appear with several groups.
   const singleGroup = new Set(sorted.map((option) => option.group)).size <= 1;
   return singleGroup ? sorted.map(({ group, ...option }) => option) : sorted;
 }
@@ -41,11 +42,11 @@ interface Props {
    * option already means everything.
    */
   offersYourTeams: boolean;
-  /** Label of the unfiltered option, e.g. "All teams" or "All incidents". */
+  /** Label of the unfiltered option, e.g. "All alerts" or "All incidents". */
   allOptionLabel: string;
   /**
-   * How to display a picked option value when it isn't its own label: alerts store the
-   * team name itself, incidents store an encoded `slug:value`.
+   * How to display a picked option value when it isn't its own label, e.g. the value
+   * part of an encoded `key:value`.
    */
   selectionLabel?: (selection: string) => string;
   ariaLabel: string;
@@ -53,7 +54,7 @@ interface Props {
 
 /**
  * Dropdown to filter a homepage view. Presentational: the caller supplies the options
- * (alert team label values or incident label values) and owns the selection.
+ * (alert rule label values or incident label values) and owns the selection.
  */
 export function TeamFilterCombobox({
   options,

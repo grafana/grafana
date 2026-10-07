@@ -13,9 +13,9 @@ import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { TeamFilterCombobox } from './TeamFilterCombobox';
+import { type AlertFilterSelection, alertFilterLabel } from './alertFilter';
 import { type IncidentFilterSelection, incidentFilterLabel } from './incidentFilter';
-import { type TeamSelection } from './teamFilter';
-import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
+import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
@@ -37,16 +37,16 @@ export type AlertIncidentSwitchHandle = {
 export function AlertIncidentTabs({
   alertsData,
   incidentsData,
-  alertsTeam,
-  onAlertsTeamChange,
+  alertsFilter,
+  onAlertsFilterChange,
   incidentsFilter,
   onIncidentsFilterChange,
   switchRef,
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
-  alertsTeam: TeamSelection;
-  onAlertsTeamChange: (team: TeamSelection) => void;
+  alertsFilter: AlertFilterSelection;
+  onAlertsFilterChange: (filter: AlertFilterSelection) => void;
   incidentsFilter: IncidentFilterSelection;
   onIncidentsFilterChange: (filter: IncidentFilterSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
@@ -67,7 +67,7 @@ export function AlertIncidentTabs({
     canAccess: incidentsCanAccess,
   } = incidentsData;
   // Fetched here rather than in the dropdown so the options survive tab switches.
-  const alertTeamOptions = useAlertTeamLabelValues(canViewAlerts);
+  const alertOptions = useAlertFilterOptions(canViewAlerts);
   const incidentOptions = useIncidentFilterOptions(canViewIncidents);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
@@ -100,7 +100,7 @@ export function AlertIncidentTabs({
         ? t('home.alerts-incidents.title-incidents', 'Incidents')
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
-  // Each tab keeps its own selection: alerts filter by the `team` label, incidents by any
+  // Each tab keeps its own selection: alerts filter by any alert rule label, incidents by any
   // incident label, so a shared pick would often name a value the other tab can't hold.
   const tabs = [
     ...(canViewAlerts
@@ -111,12 +111,13 @@ export function AlertIncidentTabs({
             // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
             counter: loading ? undefined : count,
             filter: {
-              options: alertTeamOptions,
-              selected: alertsTeam,
-              onChange: onAlertsTeamChange,
+              options: alertOptions,
+              selected: alertsFilter,
+              onChange: onAlertsFilterChange,
               offersYourTeams: hasTeams,
-              allOptionLabel: t('home.alerts-incidents.team-filter-all', 'All teams'),
-              ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
+              allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
+              selectionLabel: alertFilterLabel,
+              ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
             },
           },
         ]
