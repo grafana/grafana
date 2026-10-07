@@ -46,7 +46,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	userStore := ProvideStore(legacysql.NewDatabaseProvider(ss), setting.NewCfg())
 	usrSvc, err := ProvideService(
 		legacysql.NewDatabaseProvider(ss), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
@@ -562,7 +562,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.NoError(t, err)
 		usrSvc, err := ProvideService(
 			legacysql.NewDatabaseProvider(ss), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil,
 		)
 		require.NoError(t, err)
 
@@ -1181,7 +1181,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	require.NoError(t, err)
 	usrSvc, err := ProvideService(
 		legacysql.NewDatabaseProvider(store), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(t, err)
 

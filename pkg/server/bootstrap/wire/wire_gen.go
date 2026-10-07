@@ -387,11 +387,11 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1178,11 +1178,11 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1911,12 +1911,12 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	cacheService := localcache.ProvideService()
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return server.Runner{}, err
 	}
@@ -2134,11 +2134,11 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	config := nats.ProvideNATSConfig(cfg, natsServer)
 	publisherService := nats.ProvidePublisher(config, registerer)
 	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	teamimplService, err := teamimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
+	userimplService, err := userimpl.ProvideServiceWithWatch(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}

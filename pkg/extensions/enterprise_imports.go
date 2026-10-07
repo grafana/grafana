@@ -538,6 +538,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/storage/legacysql"
 	_ "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	_ "github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	_ "github.com/grafana/grafana/pkg/storage/secret/database"
 	_ "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	_ "github.com/grafana/grafana/pkg/storage/secret/metadata"

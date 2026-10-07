@@ -38,7 +38,14 @@ func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
+	return ProvideServiceWithWatch(sql, cfg, tracer, configProvider, iamFeatures, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces legacy team
+// writes on the legacy watch subjects. It is separate so wire sets without the
+// NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
 	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err

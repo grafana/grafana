@@ -56,7 +56,7 @@ func ProvideFolderPermissions(
 	if err != nil {
 		return nil, err
 	}
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{}, nil)
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sqlStore), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func ProvideFolderPermissions(
 		tracing.InitializeTracerForTest(),
 		quotaService,
 		bundleregistry.ProvideService(),
-		nil, nil,
+		nil,
 	)
 	if err != nil {
 		return nil, err

@@ -169,7 +169,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	require.NoError(c.t, err)
 	usrSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(store), orgService, c.env.Cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil,
 	)
 	require.NoError(c.t, err)
 
