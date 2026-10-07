@@ -3,6 +3,11 @@ import { type PanelData } from '@grafana/data';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import {
+  reduceQueryCoauthoringGroup,
+  type QueryCoauthoringGroupEvent,
+  type QueryCoauthoringGroupState,
+} from './queryCoauthoringGroupLayout';
+import {
   findQueryCoauthoringMention,
   queryCoauthoringMentionOptions,
   type QueryCoauthoringMention,
@@ -38,7 +43,7 @@ type SessionSnapshot<T = QueryCoauthoringSessionState> = T extends QueryCoauthor
   : never;
 type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
 
-interface SessionData {
+interface SessionData extends QueryCoauthoringGroupState {
   engaged: boolean;
   prompt: PromptSnapshot;
   feedback?: QueryCoauthoringFeedbackState;
@@ -56,6 +61,7 @@ interface SessionData {
 
 export type QueryCoauthoringReducerState = SessionSnapshot & { data: SessionData };
 export type QueryCoauthoringSessionEvent =
+  | QueryCoauthoringGroupEvent
   | { type: 'assistant-loading' }
   | { type: 'assistant-unavailable' }
   | { type: 'assistant-ready' }
@@ -170,6 +176,16 @@ export function queryCoauthoringSessionReducer(
 ): QueryCoauthoringReducerState {
   const { data: _data, ...current } = state;
   switch (event.type) {
+    case 'group-layout-frozen':
+    case 'group-pointer-started':
+    case 'group-pointer-moved':
+    case 'group-pointer-ended':
+    case 'group-viewport-changed':
+    case 'group-adjustment-reported': {
+      const data = reduceQueryCoauthoringGroup(state.data, event);
+      return data === state.data ? state : { ...state, data };
+    }
+
     case 'assistant-loading':
     case 'assistant-unavailable': {
       const resume =

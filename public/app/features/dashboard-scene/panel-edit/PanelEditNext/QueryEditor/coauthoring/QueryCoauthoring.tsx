@@ -20,6 +20,7 @@ import {
   QueryCoauthoringWorking,
 } from './QueryCoauthoringViews';
 import { selectionSummary } from './queryCoauthoringPrompts';
+import { useQueryCoauthoringGroup } from './useQueryCoauthoringGroup';
 import { useQueryCoauthoringSession, type QueryCoauthoringSessionOptions } from './useQueryCoauthoringSession';
 import { useQueryCoauthoringViewport } from './useQueryCoauthoringViewport';
 
@@ -34,6 +35,13 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mentionMenuRef = useRef<HTMLDivElement | null>(null);
   const session = useQueryCoauthoringSession(sessionOptions);
+  const group = useQueryCoauthoringGroup({
+    portalTarget,
+    containerRef,
+    isProposal: session.state.kind === 'proposal',
+    layout: session.groupLayout,
+    update: session.updateGroup,
+  });
   const { dismissUntouched } = session;
   const focusState = session.state.kind;
   const previousFocusStateRef = useRef(focusState);
@@ -108,14 +116,64 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       ref={containerRef}
       className={cx(
         styles.container,
+        state.kind === 'proposal' && styles.proposalGroup,
+        session.groupLayout && styles.frozenGroup,
+        session.groupGesture?.kind === 'drag' && styles.dimmed,
         session.state.kind === 'proposal' && session.state.peekIndex !== undefined && styles.dimmed
       )}
       role="dialog"
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       tabIndex={-1}
       onKeyDownCapture={onKeyDownCapture}
-      style={availableHeight === undefined ? undefined : { maxHeight: availableHeight }}
+      onPointerDown={group.start}
+      onAnimationEnd={(event) => {
+        if (event.target === event.currentTarget) {
+          group.freeze();
+        }
+      }}
+      style={
+        session.groupLayout
+          ? {
+              position: 'fixed',
+              left: session.groupLayout.left,
+              top: session.groupLayout.top,
+              width: session.groupLayout.width,
+              maxHeight: Math.max(window.innerHeight - session.groupLayout.top - 8, 0),
+            }
+          : availableHeight === undefined
+            ? undefined
+            : { maxHeight: availableHeight }
+      }
     >
+      {state.kind === 'proposal' && (
+        <>
+          <div className={styles.dragHandle} data-proposal-drag-handle aria-hidden>
+            <Icon name="draggabledots" />
+          </div>
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('query-editor-coauthoring.resize-left', 'Resize proposal from left')}
+            data-proposal-resize="left"
+            className={cx(
+              styles.resizeHandle,
+              styles.resizeLeft,
+              session.groupGesture?.kind === 'resize-left' && styles.resizeActive
+            )}
+          />
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t('query-editor-coauthoring.resize-right', 'Resize proposal from right')}
+            data-proposal-resize="right"
+            className={cx(
+              styles.resizeHandle,
+              styles.resizeRight,
+              session.groupGesture?.kind === 'resize-right' && styles.resizeActive
+            )}
+          />
+        </>
+      )}
       {state.kind === 'assistant-loading' && (
         <QueryCoauthoringHeader onClose={session.dismiss} pulse>
           <Spinner size="sm" />
@@ -284,6 +342,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
+          width={session.groupLayout?.width}
           why={state.proposal.options[state.proposal.selectedIndex]?.why ?? []}
           baseline={state.proposal.context.query}
           diff={state.proposal.options[state.proposal.selectedIndex]?.diff ?? []}
@@ -303,6 +362,6 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {session.feedback && <QueryCoauthoringFeedback feedback={session.feedback} onClose={session.closeFeedback} />}
     </div>,
-    portalTarget
+    group.surfaceTarget
   );
 }
