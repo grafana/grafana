@@ -1087,11 +1087,6 @@ export interface FeatureToggles {
   */
   lokiQueryLimitsContext?: boolean;
   /**
-  * Adds support for Kubernetes alerting historian APIs
-  * @default true
-  */
-  kubernetesAlertingHistorian?: boolean;
-  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */
@@ -1201,26 +1196,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingIgnorePendingForNoDataAndError?: boolean;
-  /**
-  * Enables the notification history tab in the rule viewer
-  * @default true
-  */
-  alertingNotificationHistoryRuleViewer?: boolean;
-  /**
-  * Enables the notification history global menu item viewer
-  * @default true
-  */
-  alertingNotificationHistoryGlobal?: boolean;
-  /**
-  * Enables the notification history timeline in the triage instance details drawer
-  * @default true
-  */
-  alertingNotificationHistoryTriage?: boolean;
-  /**
-  * Enables the notification history detail page
-  * @default true
-  */
-  alertingNotificationHistoryDetail?: boolean;
   /**
   * Enables managed plugins v2 (expanded rollout, community plugin coverage)
   * @default false

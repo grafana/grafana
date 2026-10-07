@@ -254,7 +254,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
-2025-11-27,kubernetesAlertingHistorian,GA,@grafana/alerting-squad,false,true,false
 2026-05-08,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-08-05,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
@@ -287,10 +286,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-02-13,alertingNotificationHistoryRuleViewer,GA,@grafana/alerting-squad,false,false,false
-2026-02-13,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
-2026-03-05,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
-2026-03-17,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
 2026-08-26,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-13,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
