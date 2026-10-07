@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestDatasourceProxyPermissions(t *testing.T) {
@@ -35,4 +37,14 @@ func TestDatasourceProxyPermissions(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDatasourceProxyUnmappedAction(t *testing.T) {
+	service := NewTestService("user-1", []accesscontrol.Permission{{Action: "custom:action", Scope: "datasources:uid:ds-1"}}, nil)
+	ctx := types.WithAuthInfo(t.Context(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{Rest: authn.AccessTokenClaims{Namespace: "default"}}))
+	res, err := service.Check(ctx, &authzv1.CheckRequest{Namespace: "default", Subject: "user:user-1", Group: "prometheus.datasource.grafana.app", Resource: "datasources", Name: "ds-1", Verb: "custom:action"})
+	require.Equal(t, codes.NotFound, status.Code(err))
+	require.ErrorContains(t, err, "unsupported verb")
+	require.NotNil(t, res)
+	require.False(t, res.Allowed)
 }

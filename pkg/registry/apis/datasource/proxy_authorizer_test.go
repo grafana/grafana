@@ -27,6 +27,7 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 		"datasources:query",
 		"alert.rules.external:read",
 		"alert.rules.external:write",
+		"custom:action",
 	} {
 		t.Run(action, func(t *testing.T) {
 			user := &user.SignedInUser{UserUID: "user-1", OrgID: 1}
@@ -44,10 +45,6 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 			require.NoError(t, err)
 			require.True(t, allowed)
 			require.Equal(t, 1, calls)
-			allowed, err = check(ctx, user, "ds-1", "custom:unknown")
-			require.ErrorContains(t, err, "unsupported")
-			require.False(t, allowed)
-			require.Equal(t, 1, calls)
 			allowed, err = check(t.Context(), user, "ds-1", action)
 			require.Error(t, err)
 			require.False(t, allowed)
@@ -58,7 +55,7 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 		check := NewProxyRouteAccessChecker(proxyAccessClient{check: func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
 			return authlib.CheckResponse{}, backendErr
 		}}, "prometheus.datasource.grafana.app")
-		allowed, err := check(krequest.WithNamespace(t.Context(), "stacks-11"), &user.SignedInUser{}, "ds-1", "datasources:query")
+		allowed, err := check(krequest.WithNamespace(t.Context(), "stacks-11"), &user.SignedInUser{}, "ds-1", "custom:action")
 		require.False(t, allowed)
 		require.Equal(t, backendErr, err)
 	}
