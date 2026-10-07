@@ -133,7 +133,7 @@ const setup = async (queries: DataQuery[], paneDatasource?: DataSourceApi) => {
 
 describe('<SignalExplorer />', () => {
   beforeEach(() => {
-    useMetricCatalogMock.mockReset().mockReturnValue({ metrics: [], loading: false });
+    useMetricCatalogMock.mockReset().mockReturnValue({ metrics: [], truncated: false, loading: false });
     reportInteractionMock.mockReset();
   });
 
@@ -378,7 +378,7 @@ describe('<SignalExplorer />', () => {
 
     // A leads, so it is open by default; B has to be opened by hand.
     const openCard = async (refId: 'A' | 'B') => {
-      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, truncated: false, loading: false });
       const rendered = await setup([promQuery('A'), promQuery('B')]);
       if (refId === 'B') {
         await rendered.user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query B' }));
@@ -475,7 +475,7 @@ describe('<SignalExplorer />', () => {
 
     // Neither ref carries a uid, so only the type tells the two catalogs apart.
     it('closes when a query with a type-only datasource ref moves to another Prometheus flavor', async () => {
-      useMetricCatalogMock.mockReturnValue({ metrics: catalog, loading: false });
+      useMetricCatalogMock.mockReturnValue({ metrics: catalog, truncated: false, loading: false });
       const typeOnlyQuery = (type: string) => ({ refId: 'A', datasource: { type } }) as DataQuery;
 
       const { user, rerender } = await setup([typeOnlyQuery('prometheus')]);
@@ -543,7 +543,11 @@ describe('<SignalExplorer />', () => {
     // event deliberately disagree about the datasource: the card names its query's, the panel names
     // the pane's.
     it('reports the card’s own datasource on a card event, and the stacked query count with it', async () => {
-      useMetricCatalogMock.mockReturnValue({ metrics: [{ name: 'up', type: 'gauge' }], loading: false });
+      useMetricCatalogMock.mockReturnValue({
+        metrics: [{ name: 'up', type: 'gauge' }],
+        truncated: false,
+        loading: false,
+      });
       const { user } = await setup([promQuery('A'), lokiQuery('B')], mixedPane);
 
       await user.click(within(screen.getByTestId('signal-card-A')).getByRole('button', { name: 'Expand up' }));

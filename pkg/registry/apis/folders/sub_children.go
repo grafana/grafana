@@ -29,8 +29,8 @@ type subChildrenREST struct {
 	searcher resourcepb.ResourceIndexClient
 }
 
-var _ = rest.Connecter(&subChildrenREST{})
-var _ = rest.StorageMetadata(&subChildrenREST{})
+var _ rest.Connecter = (*subChildrenREST)(nil)
+var _ rest.StorageMetadata = (*subChildrenREST)(nil)
 
 func (r *subChildrenREST) New() runtime.Object {
 	return &folders.FolderList{}

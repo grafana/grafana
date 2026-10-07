@@ -148,6 +148,23 @@ describe('metricResourceClient', () => {
       await searchCatalog({ uid: 'p1' }, range, 'term0');
       expect(lp.queryLabelValues).toHaveBeenCalledTimes(22);
     });
+
+    it('keeps a term that is searched again, evicting the least recently used one instead', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      for (let i = 0; i < 20; i++) {
+        await searchCatalog({ uid: 'p1' }, range, `term${i}`);
+      }
+      await searchCatalog({ uid: 'p1' }, range, 'term0');
+      await searchCatalog({ uid: 'p1' }, range, 'term20');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(21);
+
+      await searchCatalog({ uid: 'p1' }, range, 'term0');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(21);
+      await searchCatalog({ uid: 'p1' }, range, 'term1');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(22);
+    });
   });
 
   // Prometheus keys `/api/v1/metadata` by the BASE metric name, but the catalog lists the series. A

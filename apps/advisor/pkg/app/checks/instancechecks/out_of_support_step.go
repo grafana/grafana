@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/translations"
 )
 
-var _ checks.Step = &outOfSupportVersionStep{}
+var _ checks.Step = (*outOfSupportVersionStep)(nil)
 
 const (
 	outOfSupportVersion = "out_of_support_version"
