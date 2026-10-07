@@ -1019,13 +1019,14 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DefaultPathJoinsAmbientSession
 		}); err != nil {
 			return err
 		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
 		_, err := store.getLatestVersionOfRulesByUID(ctx, 1, []string{"does-not-exist"})
 		return err
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, ambientSess)
-	require.NotNil(t, spy.lastSession)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
@@ -1192,13 +1193,14 @@ func TestIntegration_ListAlertRuleUIDsInFolder_DefaultPathJoinsAmbientSession(t 
 		}); err != nil {
 			return err
 		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
 		_, err := store.ListAlertRuleUIDsInFolder(ctx, rule.OrgID, rule.NamespaceUID)
 		return err
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, ambientSess)
-	require.NotNil(t, spy.lastSession)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
@@ -1285,13 +1287,14 @@ func TestIntegration_CountInFolders_DefaultPathJoinsAmbientSession(t *testing.T)
 		}); err != nil {
 			return err
 		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
 		_, err := store.CountInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
 		return err
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, ambientSess)
-	require.NotNil(t, spy.lastSession)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
@@ -1372,13 +1375,14 @@ func TestIntegration_GetAllFoldersWithRules_DefaultPathJoinsAmbientSession(t *te
 		}); err != nil {
 			return err
 		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
 		_, err := store.GetAllFoldersWithRules(ctx, rule.OrgID)
 		return err
 	})
 	require.NoError(t, err)
 
 	require.NotNil(t, ambientSess)
-	require.NotNil(t, spy.lastSession)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
