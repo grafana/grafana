@@ -38,6 +38,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
+| `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
@@ -62,6 +63,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
+| `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
 | `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
 | `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
 | `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
@@ -89,7 +91,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
-| `timeComparison`                   | Enables time comparison option in supported panels                                                                             |
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
 | `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
 | `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
@@ -101,7 +102,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
-| `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |

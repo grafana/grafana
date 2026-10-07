@@ -326,7 +326,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   /**
   * Enables time comparison option in supported panels
-  * @default false
+  * @default true
   */
   timeComparison?: boolean;
   /**
@@ -1063,7 +1063,7 @@ export interface FeatureToggles {
   pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
-  * @default false
+  * @default true
   */
   panelTimeSettings?: boolean;
   /**
