@@ -24,11 +24,27 @@ cert_file =
 key_file =
 # this will log the request and response for each unary gRPC call
 enable_logging = false
-# Maximum size of a message that can be received in bytes. If not set, uses the gRPC default (4MiB).
+# Maximum size of a message that can be received in bytes. If not set, defaults to 32 MiB.
 max_recv_msg_size =
 # Maximum size of a message that can be sent in bytes. If not set, uses the gRPC default (unlimited).
 max_send_msg_size =
 ```
+
+### Blob transport limits
+
+Blob support uses unary `PutBlob` and `GetBlob` calls, which carry the entire payload
+in one message. The default server receive limit is 32 MiB. Blob uploads larger than
+the gRPC default of 4 MiB require this higher limit on the storage server.
+
+When using a separate unified-storage service, upgrade that service before enabling
+large blob uploads, or set `grpc_server.max_recv_msg_size = 33554432` on the existing
+service. These settings must be applied to the storage server, not just the Grafana
+API server. Explicit server limits still apply.
+
+For payloads approaching or exceeding 32 MiB, increase the receive limit to include
+both the blob content and protobuf metadata. If you configure `max_send_msg_size`,
+it must also accommodate blob downloads. Clients must use compatible send and
+receive limits; the gRPC client receive default is 4 MiB.
 
 ### Optional: Connection Management and Load Balancing
 
