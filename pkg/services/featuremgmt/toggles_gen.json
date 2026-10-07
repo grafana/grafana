@@ -318,7 +318,8 @@
       "metadata": {
         "name": "alertingBulkActionsInUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-24T14:49:59Z"
+        "creationTimestamp": "2025-04-24T14:49:59Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting bulk actions in the UI",
@@ -477,7 +478,8 @@
       "metadata": {
         "name": "alertingMigrationUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-14T16:40:05Z"
+        "creationTimestamp": "2025-03-14T16:40:05Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
@@ -583,7 +585,8 @@
       "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-22T11:07:45Z"
+        "creationTimestamp": "2024-11-22T11:07:45Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables simplified step mode in the notifications section",
@@ -666,7 +669,8 @@
       "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-03T11:18:25Z"
+        "creationTimestamp": "2025-04-03T11:18:25Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables UI functionality to permanently delete alert rules",
@@ -695,7 +699,8 @@
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-02-17T12:25:32Z"
+        "creationTimestamp": "2025-02-17T12:25:32Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
@@ -767,7 +772,8 @@
       "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-18T10:59:00Z"
+        "creationTimestamp": "2024-11-18T10:59:00Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
