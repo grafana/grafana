@@ -15,6 +15,8 @@ const lokiSettings = {
 
 const defaultOptions: TraceToLogsOptionsV2 = {
   customQuery: false,
+  filterByTraceID: true,
+  filterBySpanID: true,
   datasourceUid: 'loki1_uid',
 };
 
@@ -71,6 +73,39 @@ describe('getTraceToLogsQuery loki alternatives', () => {
     );
 
     expect(query).toEqual([{ expr: '{job="custom"} |= "${__trace.traceId}"', refId: 't2l:custom' }]);
+  });
+
+  it.each([false, undefined])('returns a tag-only query when both ID filters are %s', (enabled) => {
+    const { query } = getTraceToLogsSpanQuery(createSpan(), lokiSettings, {
+      ...defaultOptions,
+      filterByTraceID: enabled,
+      filterBySpanID: enabled,
+    });
+
+    expect(query).toEqual({ expr: '{${__tags}}', refId: '' });
+  });
+
+  it.each([
+    { filterByTraceID: true, filterBySpanID: false },
+    { filterByTraceID: false, filterBySpanID: true },
+  ])('preserves discovery when trace=$filterByTraceID and span=$filterBySpanID', (filters) => {
+    const { query } = getTraceToLogsQuery(
+      [{ key: 'cluster', value: 'cluster1' }],
+      lokiSettings,
+      { ...defaultOptions, ...filters },
+      'trace1',
+      'span1'
+    );
+    const queries = query as LokiQuery[];
+
+    expect(queries[0]).toEqual({
+      expr: '{cluster="cluster1"} | logfmt | json | drop __error__ | trace_id="trace1" | span_id="span1"',
+      refId: 't2l:default:trace_id',
+    });
+    expect(queries[6]).toEqual({
+      expr: '{cluster="cluster1"} |= "trace1" |= "span1"',
+      refId: 't2l:line-contains',
+    });
   });
 
   it('returns the legacy query when dynamicTraceToLogs is disabled', () => {

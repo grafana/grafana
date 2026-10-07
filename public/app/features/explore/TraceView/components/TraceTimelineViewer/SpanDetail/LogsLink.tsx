@@ -175,8 +175,14 @@ function useHasLogs(
   const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
 
   useEffect(() => {
-    if (!query || !queryKey || !dynamicTraceToLogsEnabled) {
+    if (
+      !query ||
+      !queryKey ||
+      !dynamicTraceToLogsEnabled ||
+      (query.datasource?.type === 'loki' && !alternativeQueries)
+    ) {
       setPresence('present');
+      setMatch(undefined);
       return;
     }
 
@@ -520,13 +526,16 @@ export function getLogsButtonCTA(
     return defaultCTA;
   }
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+  const options = getTraceToLogsOptions(settings.jsonData);
+  if (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false) &&
+    (options?.filterByTraceID || options?.filterBySpanID)
+  ) {
     return type === 'trace'
       ? t('explore.span-detail-link-buttons.logs-for-this-trace.button', 'Logs for this trace')
       : t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
   }
 
-  const options = getTraceToLogsOptions(settings.jsonData);
   if (options?.filterBySpanID && type === 'span') {
     return t('explore.span-detail-link-buttons.logs-for-this-span.button', 'Logs for this span');
   }
@@ -550,7 +559,11 @@ export function getLogsButtonTooltip(
     return defaultCTA;
   }
 
-  if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+  const options = getTraceToLogsOptions(settings.jsonData);
+  if (
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false) &&
+    (options?.filterByTraceID || options?.filterBySpanID)
+  ) {
     if (presence === 'present') {
       return t('explore.span-detail-link-buttons.logs-for-this-trace.logs-found-tooltip', 'See related logs');
     }
@@ -564,8 +577,6 @@ export function getLogsButtonTooltip(
           'No matching logs found for this span'
         );
   }
-
-  const options = getTraceToLogsOptions(settings.jsonData);
 
   if (presence === 'absent') {
     if (type === 'trace') {

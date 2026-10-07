@@ -172,7 +172,7 @@ describe('createSpanLinkFactory', () => {
       'includes the datasource type in the Explore URL with dynamic queries %s',
       (dynamicQueries) => {
         setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: dynamicQueries });
-        const createLink = setupSpanLinkFactory();
+        const createLink = setupSpanLinkFactory({ filterByTraceID: true, filterBySpanID: true });
         const link = createLink!(createTraceSpan())![0];
         const pane = JSON.parse(new URL(link.href, 'http://localhost').searchParams.get('left')!);
 
@@ -181,7 +181,7 @@ describe('createSpanLinkFactory', () => {
     );
 
     it('with default keys when tags not configured', () => {
-      const createLink = setupSpanLinkFactory();
+      const createLink = setupSpanLinkFactory({ filterByTraceID: true, filterBySpanID: true });
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
       const linkDef = links?.[0];
@@ -190,6 +190,21 @@ describe('createSpanLinkFactory', () => {
       expectLokiLink(linkDef, 'cluster="cluster1", hostname="hostname1", service_namespace="namespace1"', [
         'test service',
       ]);
+    });
+
+    it('opens the configured tag-only query without discovery alternatives when both ID filters are off', () => {
+      const createLink = setupSpanLinkFactory({ filterByTraceID: false, filterBySpanID: false });
+      const link = createLink!(createTraceSpan())![0];
+      const pane = JSON.parse(new URL(link.href, 'http://localhost').searchParams.get('left')!);
+
+      expect(pane.queries).toEqual([
+        {
+          expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"}',
+          refId: '',
+          datasource: { type: 'loki', uid: 'loki1_uid' },
+        },
+      ]);
+      expect(link.linkModel?.interpolatedParams?.alternativeQueries).toBeUndefined();
     });
 
     it('opens split view with a query rewritten on the original interpolatedParams object', () => {
@@ -226,6 +241,8 @@ describe('createSpanLinkFactory', () => {
 
     it('with tags that passed in and without tags that are not in the span', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [{ key: 'ip' }, { key: 'newTag' }],
       });
       expect(createLink).toBeDefined();
@@ -248,6 +265,8 @@ describe('createSpanLinkFactory', () => {
 
     it('from tags and process tags as well', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [{ key: 'ip' }, { key: 'host' }],
       });
       expect(createLink).toBeDefined();
@@ -270,6 +289,8 @@ describe('createSpanLinkFactory', () => {
 
     it('with adjusted start and end time', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         spanStartTimeShift: '-1m',
         spanEndTimeShift: '1m',
       });
@@ -336,6 +357,8 @@ describe('createSpanLinkFactory', () => {
 
     it('handles renamed tags', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [
           { key: 'service.name', value: 'service' },
           { key: 'k8s.pod.name', value: 'pod' },
@@ -362,6 +385,8 @@ describe('createSpanLinkFactory', () => {
 
     it('handles incomplete renamed tags', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [
           { key: 'service.name', value: '' },
           { key: 'k8s.pod.name', value: 'pod' },
@@ -388,6 +413,8 @@ describe('createSpanLinkFactory', () => {
 
     it('handles empty queries', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [],
       });
       expect(createLink).toBeDefined();
@@ -405,6 +432,8 @@ describe('createSpanLinkFactory', () => {
 
     it('interpolates span intrinsics', () => {
       const createLink = setupSpanLinkFactory({
+        filterByTraceID: true,
+        filterBySpanID: true,
         tags: [{ key: 'name', value: 'spanName' }],
       });
       expect(createLink).toBeDefined();

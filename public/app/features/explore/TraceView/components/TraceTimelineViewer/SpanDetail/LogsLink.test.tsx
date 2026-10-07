@@ -77,7 +77,7 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
 function createProbingLinkModel(query: DataQuery, overrides: Partial<LinkModel> = {}): LinkModel {
   return createLinkModel({
     ...overrides,
-    interpolatedParams: { query, ...overrides.interpolatedParams },
+    interpolatedParams: { query, alternativeQueries: [query], ...overrides.interpolatedParams },
   });
 }
 
@@ -154,6 +154,21 @@ describe('LogsLinkButton', () => {
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
+  it('keeps tag-only Loki links enabled without probing for matching logs', async () => {
+    mockDatasourceReturningFrames([emptyFrame], 'loki');
+    const query = { expr: '{service_name="api"}', refId: '', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+
+    render(
+      <LogsLinkButton
+        linkModel={createLinkModel({ interpolatedParams: { query } })}
+        traceDatasourceUid={TRACE_DATASOURCE_UID}
+      />
+    );
+
+    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
+    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
+  });
+
   it('does not check for logs when the dynamicTraceToLogs flag is disabled', async () => {
     await act(async () => {
       setTestFlags({ [DYNAMIC_TRACE_TO_LOGS_FLAG]: false });
@@ -225,7 +240,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([emptyFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -246,7 +261,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([emptyFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -267,7 +282,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -291,7 +306,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = jest.fn().mockReturnValue(throwError(() => new Error('boom')));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -312,7 +327,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     let resolveQuery: ((value: { data: Array<typeof logsFrame> }) => void) | undefined;
     const query = jest.fn().mockReturnValue(
@@ -341,7 +356,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = jest
       .fn()
@@ -381,7 +396,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = mockDatasourceReturningFrames([logsFrame], 'loki');
 
@@ -421,7 +436,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = jest
       .fn()
@@ -471,7 +486,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = mockDatasourceReturningFrames([emptyFrame], 'loki');
 
@@ -500,7 +515,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = mockDatasourceReturningFrames([emptyFrame], 'loki');
     const queries: DataQuery[] = [
@@ -532,7 +547,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
 
     const primaryQuery = jest.fn().mockReturnValue(of({ data: [emptyFrame] }));
@@ -577,7 +592,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
 
     const primaryQuery = jest.fn().mockReturnValue(of({ data: [emptyFrame] }));
@@ -622,7 +637,7 @@ describe('LogsLinkButton', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
 
     const withSpanExpr =
@@ -675,7 +690,7 @@ describe('LogsLinkButton', () => {
       datasource: { uid: 'logs-ds-uid', type: 'loki' },
       expr: '{job="api"} |= "trace1"',
     };
-    const interpolatedParams = { query: interpolatedQuery };
+    const interpolatedParams = { query: interpolatedQuery, alternativeQueries: [interpolatedQuery] };
 
     render(
       <LogsLinkButton
@@ -805,7 +820,7 @@ describe('LogsLinkMenuItem', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([emptyFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -841,7 +856,7 @@ describe('LogsLinkMenuItem', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([emptyFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -860,7 +875,7 @@ describe('LogsLinkMenuItem', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     mockDatasourceReturningFrames([logsFrame], 'loki');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
@@ -880,7 +895,7 @@ describe('LogsLinkMenuItem', () => {
     useDataSourceInstanceSettingsMock.mockReturnValue({
       isLoading: false,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: { jsonData: {} } as any,
+      settings: { jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } } } as any,
     });
     const query = jest.fn().mockReturnValue(throwError(() => new Error('boom')));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -929,6 +944,15 @@ describe('getLogsButtonCTA', () => {
     setTestFlags({});
   });
 
+  it.each(['trace', 'span'] as const)('labels a tag-only %s link as related logs with discovery enabled', (type) => {
+    setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+    const settings = {
+      jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: false, filterBySpanID: false } },
+    } as unknown as DataSourceInstanceSettings;
+
+    expect(getLogsButtonCTA(settings, type)).toBe('Related logs');
+  });
+
   it.each([
     {
       name: 'shows "Related logs" when the datasource has no settings',
@@ -965,7 +989,7 @@ describe('getLogsButtonCTA', () => {
     expect(getLogsButtonCTA(settings as DataSourceInstanceSettings | undefined, type)).toBe(expected);
   });
 
-  it('uses the link type when dynamic trace-to-logs is enabled, ignoring filter settings', () => {
+  it('uses the link type when dynamic trace-to-logs is enabled and ID filtering is configured', () => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
     const settings = {
       jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } },
@@ -1079,7 +1103,9 @@ describe('getLogsButtonTooltip', () => {
     },
   ])('dynamic flag: $name', ({ presence, type, expected }) => {
     setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
-    const settings = { jsonData: {} } as DataSourceInstanceSettings;
+    const settings = {
+      jsonData: { tracesToLogsV2: { filterByTraceID: true, filterBySpanID: true } },
+    } as unknown as DataSourceInstanceSettings;
 
     // @ts-expect-error
     expect(getLogsButtonTooltip(settings, presence, type)).toBe(expected);
@@ -1095,6 +1121,8 @@ describe('addNoSpanIdFallback', () => {
 
   const defaultOptions = {
     customQuery: false,
+    filterByTraceID: true,
+    filterBySpanID: true,
     datasourceUid: 'loki1_uid',
   };
 

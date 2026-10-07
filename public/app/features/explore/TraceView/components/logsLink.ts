@@ -208,7 +208,10 @@ function getQueryForLoki(
     return undefined;
   }
 
-  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false)) {
+  if (
+    !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDynamicTraceToLogs, false) ||
+    (!options.filterByTraceID && !options.filterBySpanID)
+  ) {
     return getLegacyQueryForLoki(traceID, spanID, options);
   }
 

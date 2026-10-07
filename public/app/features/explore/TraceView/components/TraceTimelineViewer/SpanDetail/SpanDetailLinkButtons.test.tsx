@@ -292,6 +292,9 @@ describe('SpanDetailLinkButtons', () => {
             origin: {},
             interpolatedParams: {
               query: { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' }, expr: '{job="api"} |= "t1"' },
+              alternativeQueries: [
+                { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' }, expr: '{job="api"} |= "t1"' },
+              ],
             },
           },
         },
