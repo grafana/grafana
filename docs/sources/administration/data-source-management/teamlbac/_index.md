@@ -3,9 +3,13 @@ description: Use label-based access control (LBAC) to restrict team access to lo
 keywords:
   - grafana
   - loki
+  - prometheus
   - mimir
   - tempo
   - traces
+  - metrics
+  - lbac
+  - team
 labels:
   products:
     - enterprise
@@ -78,7 +82,7 @@ Remove any label selectors from the Cloud Access Policy (CAP) configured for the
 
 LBAC for data sources has the following limitations:
 
-- A data source supports a limited number of rules, depending on their size. The upper limit is around 500 to 600 rules.
+- A data source supports a limited number of rules, depending on their size. The upper limit is around 5,000 to 6,000 rules.
 - If no LBAC rules apply to any of a user's teams, that user can query all logs or metrics. Because permissions are additive, a user who belongs to a team with rules and a team without rules is still restricted by the rules.
 - If an administrator belongs to a team with LBAC rules, those rules apply to the administrator's requests.
 - Cloud Access Policy (CAP) LBAC rules override LBAC rules. CAPs are the access controls from Grafana Cloud.
@@ -119,7 +123,10 @@ resource "grafana_data_source" "loki" {
   basic_auth_username = "<USERNAME>"
 
   json_data_encoded = jsonencode({
-    authType          = "default"
+    authType = "default"
+  })
+
+  secure_json_data_encoded = jsonencode({
     basicAuthPassword = "<PASSWORD>"
   })
 }
