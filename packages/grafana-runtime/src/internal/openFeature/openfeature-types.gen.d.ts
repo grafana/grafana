@@ -92,6 +92,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
+    | "grafana.scopesDashboardsMegaMenu"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "paneledit.buttonLabels"

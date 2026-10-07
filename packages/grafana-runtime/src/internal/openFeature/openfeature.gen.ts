@@ -146,6 +146,8 @@ export const FlagKeys = {
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer */
+  GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
@@ -982,6 +984,17 @@ export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer
+ *
+ * **Details:**
+ * - flag key: `grafana.scopesDashboardsMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scopesDashboardsMegaMenu", false, options).value;
 };
 
 /**
