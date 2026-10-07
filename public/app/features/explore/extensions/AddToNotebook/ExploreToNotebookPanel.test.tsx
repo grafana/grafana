@@ -1,8 +1,10 @@
 import { render } from 'test/test-utils';
 
-import { type DataSourceApi } from '@grafana/data';
+import { type DataSourceApi, rangeUtil, type RawTimeRange } from '@grafana/data';
 import { type DataSourceRef } from '@grafana/schema';
 import { buildPanelElementFromExplore } from 'app/features/notebook/addPanel/buildPanelElementFromExplore';
+import { type CapturedTimeRange } from 'app/features/notebook/addPanel/capturedTimeRange';
+import { initialUserState } from 'app/features/profile/state/reducers';
 import { type ExploreState } from 'app/types/explore';
 
 import { createEmptyQueryResponse } from '../../state/utils';
@@ -12,12 +14,13 @@ import { ExploreToNotebookPanel } from './ExploreToNotebookPanel';
 interface ModalBodyProps {
   buildPanel: () => Promise<unknown>;
   onDismiss: () => void;
+  capturedTimeRange: CapturedTimeRange;
 }
 
 const mockModalBody = jest.fn();
 
 // Stood in for rather than rendered: it has its own suite, and reaching it for real here would mean
-// standing up the notebook list API to test a component that only forwards two props to it.
+// standing up the notebook list API to test a component that only forwards a few props to it.
 jest.mock('app/features/notebook/addPanel/AddPanelToNotebookModalBody', () => ({
   AddPanelToNotebookModalBody: (props: ModalBodyProps) => {
     mockModalBody(props);
@@ -29,11 +32,12 @@ jest.mock('app/features/notebook/addPanel/buildPanelElementFromExplore');
 
 const DATASOURCE_REF: DataSourceRef = { type: 'prometheus', uid: 'prom' };
 
-function setup({ withDatasource = true } = {}) {
+function setup({ withDatasource = true, rawRange = { from: 'now-6h', to: 'now' } as RawTimeRange } = {}) {
   const onClose = jest.fn();
   const queries = [{ refId: 'A' }];
   const queryResponse = createEmptyQueryResponse();
   const panelsState = { logs: { id: 'log-row-1' } };
+  const range = rangeUtil.convertRawToRange(rawRange, 'utc');
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- a whole pane, of which the component reads four fields
   const datasourceInstance = { getRef: () => DATASOURCE_REF } as DataSourceApi;
 
@@ -46,10 +50,12 @@ function setup({ withDatasource = true } = {}) {
             queries,
             queryResponse,
             panelsState,
+            range,
             datasourceInstance: withDatasource ? datasourceInstance : undefined,
           },
         },
       } as unknown as ExploreState,
+      user: { ...initialUserState, timeZone: 'utc' },
     },
   });
 
@@ -90,5 +96,25 @@ describe('ExploreToNotebookPanel', () => {
     const { props, onClose } = setup();
 
     expect(props.onDismiss).toBe(onClose);
+  });
+
+  /**
+   * The window the pane is showing, so the picker can offer to keep it. Zooming turns the range
+   * absolute, and that is the case the lock defaults on for - see capturedTimeRange.
+   */
+  it('captures a zoomed window as the instants the pane was showing', () => {
+    const { props } = setup({ rawRange: { from: '2026-10-05T08:00:00.000Z', to: '2026-10-05T09:30:00.000Z' } });
+
+    expect(props.capturedTimeRange).toEqual({
+      from: '2026-10-05T08:00:00.000Z',
+      to: '2026-10-05T09:30:00.000Z',
+      timeZone: 'utc',
+    });
+  });
+
+  it('captures a relative window as the picker wrote it', () => {
+    const { props } = setup();
+
+    expect(props.capturedTimeRange).toEqual({ from: 'now-6h', to: 'now', timeZone: 'utc' });
   });
 });
