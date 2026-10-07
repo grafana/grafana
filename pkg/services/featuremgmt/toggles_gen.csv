@@ -283,6 +283,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesTeamSync,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersRedirectNoFallback,experimental,@grafana/identity-access-team,false,false,false
+2026-10-06,kubernetesUsersDeterministicUID,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesAuthInfoRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,alertingPolicyRoutingSettings,experimental,@grafana/alerting-squad,false,false,true
@@ -344,6 +345,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.panelEditNextFeedbackEvent,experimental,@grafana/datapro,false,false,true
 2026-09-16,grafana.visualDesignRefresh,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,dashboard.vectorSearch,experimental,@grafana/search-and-storage,false,false,false
+2026-09-24,alerting.hybridSearch,experimental,@grafana/search-and-storage,false,false,false
 2026-09-16,grafana.vectorSearchCmdk,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,grafana.cmdkHybridSearch,experimental,@grafana/search-and-storage,false,false,true
 2026-09-16,assistant.fullscreenWorkspace,experimental,@grafana/grafana-frontend-platform,false,false,true
