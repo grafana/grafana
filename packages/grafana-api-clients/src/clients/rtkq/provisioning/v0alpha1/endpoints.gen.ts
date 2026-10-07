@@ -2085,6 +2085,8 @@ export type SyncStatus = {
   incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** When an interval sync check was last attempted (Unix milliseconds). */
+  lastChecked?: number;
   /** The repository ref when the last successful sync ran */
   lastRef?: string;
   /** Summary messages (will be shown to users) */

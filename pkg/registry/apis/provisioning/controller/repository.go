@@ -594,6 +594,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	}
 
 	syncAge := time.Since(time.UnixMilli(obj.Status.Sync.Finished))
+	checkAge := time.Since(time.UnixMilli(max(obj.Status.Sync.Finished, obj.Status.Sync.LastChecked)))
 	// In case the sync interval is lower than the minimum sync interval set by the system
 	// we should default to the latter
 	syncInterval := max(time.Duration(obj.Spec.Sync.IntervalSeconds)*time.Second, rc.minSyncInterval)
@@ -628,7 +629,7 @@ func (rc *RepositoryController) shouldResync(ctx context.Context, obj *provision
 	pendingForTooLong := syncAge >= syncInterval/2 && obj.Status.Sync.State == provisioning.JobStatePending
 	isRunning := obj.Status.Sync.State == provisioning.JobStateWorking
 
-	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
+	return obj.Spec.Sync.Enabled && checkAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
 
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
@@ -816,7 +817,7 @@ func (rc *RepositoryController) addSyncJob(ctx context.Context, obj *provisionin
 	return nil
 }
 
-func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus) []map[string]interface{} {
+func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Repository, syncOptions *provisioning.SyncJobOptions, healthStatus provisioning.HealthStatus, shouldResync bool) []map[string]interface{} {
 	const unhealthyMessage = "Repository is unhealthy"
 
 	hasUnhealthyMessage := len(obj.Status.Sync.Message) > 0 && obj.Status.Sync.Message[0] == unhealthyMessage
@@ -853,6 +854,14 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"op":    "replace",
 			"path":  "/status/sync/message",
 			"value": []string{unhealthyMessage},
+		})
+	}
+
+	if shouldResync && obj.Spec.Sync.Enabled && healthStatus.Healthy {
+		patchOperations = append(patchOperations, map[string]interface{}{
+			"op":    "add",
+			"path":  "/status/sync/lastChecked",
+			"value": time.Now().UnixMilli(),
 		})
 	}
 
@@ -1399,7 +1408,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 
 	// determine the sync strategy and sync status to apply
 	syncOptions := rc.determineSyncStrategy(ctx, obj, repo, shouldResync, isOverQuota, healthStatus)
-	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus)...)
+	patchOperations = append(patchOperations, rc.determineSyncStatusOps(obj, syncOptions, healthStatus, shouldResync)...)
 	// Persist a timestamp-only quota refresh with other status changes so it does not
 	// create its own informer update and reconciliation loop.
 	if !hasQuotaChanged && obj.Status.Quota != newQuota && len(patchOperations) > 0 {

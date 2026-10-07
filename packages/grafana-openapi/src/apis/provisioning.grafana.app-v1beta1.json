@@ -5829,6 +5829,11 @@
             "description": "The ID for the job that ran this sync",
             "type": "string"
           },
+          "lastChecked": {
+            "description": "When an interval sync check was last attempted (Unix milliseconds).",
+            "type": "integer",
+            "format": "int64"
+          },
           "lastRef": {
             "description": "The repository ref when the last successful sync ran",
             "type": "string"
