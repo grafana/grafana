@@ -133,6 +133,34 @@ describe('v0alpha1DatasourceMapper', () => {
       expect(resultRest.updated).toEqual(spec.pluginJson.info.updated);
       expect(resultRest.author.name).toEqual(spec.pluginJson.info.author?.name || '');
     });
+
+    it('should map extensions property correctly', () => {
+      const extensions = result[pluginId].extensions ?? {
+        addedComponents: [],
+        addedFunctions: [],
+        addedLinks: [],
+        exposedComponents: [],
+        extensionPoints: [],
+      };
+
+      expect(extensions.addedComponents).toEqual(spec.pluginJson.extensions?.addedComponents ?? []);
+      expect(extensions.addedFunctions).toEqual(spec.pluginJson.extensions?.addedFunctions ?? []);
+      expect(extensions.addedLinks).toEqual(spec.pluginJson.extensions?.addedLinks ?? []);
+      expect(extensions.exposedComponents).toEqual(
+        (spec.pluginJson.extensions?.exposedComponents ?? []).map((v) => ({
+          ...v,
+          description: v.description ?? '',
+          title: v.title ?? '',
+        }))
+      );
+      expect(extensions.extensionPoints).toEqual(
+        (spec.pluginJson.extensions?.extensionPoints ?? []).map((v) => ({
+          ...v,
+          description: v.description ?? '',
+          title: v.title ?? '',
+        }))
+      );
+    });
   });
 
   it('should only map specs with type datasource', () => {
