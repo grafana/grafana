@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -148,8 +149,39 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 		})
 	}
 
-	// The snapshot lookup is global in the legacy store. A result from another
-	// namespace must not be used to mint blob access for that namespace.
+	t.Run("anonymous public lookup through the default namespace", func(t *testing.T) {
+		store.get = nil
+		ctx := k8srequest.WithNamespace(context.Background(), "default")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		responder := &capturingResponder{}
+		handler, err := rest.(*dashboardREST).Connect(ctx, "snap-1", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		require.NoError(t, responder.err)
+		require.Equal(t, "CPU", responder.obj.(*dashv0.Dashboard).Spec.Object["title"])
+		require.NotNil(t, store.get)
+		require.Equal(t, namespace, store.get.Resource.Namespace)
+	})
+
+	t.Run("inline public lookup through the default namespace", func(t *testing.T) {
+		inline := snap.DeepCopy()
+		inline.Blobs.Dashboard = nil
+		inline.Spec.Dashboard = map[string]any{"title": "CPU"}
+		getter := grafanarest.NewMockStorage(t)
+		getter.On("Get", mock.Anything, "snap-1", mock.Anything).Return(inline, nil)
+		r, err := NewDashboardREST(getter, nil)
+		require.NoError(t, err)
+		ctx := k8srequest.WithNamespace(context.Background(), "default")
+		ctx = identity.WithRequester(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous})
+		responder := &capturingResponder{}
+		handler, err := r.(*dashboardREST).Connect(ctx, "snap-1", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
+		require.NoError(t, responder.err)
+		require.Equal(t, "CPU", responder.obj.(*dashv0.Dashboard).Spec.Object["title"])
+	})
+
+	// An explicit org namespace must still match the returned snapshot.
 	snap.Namespace = "org-3"
 	store.get = nil
 	_, err = rest.(*dashboardREST).Connect(ctx, "snap-1", nil, nil)

@@ -79,7 +79,8 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
-	if snap.Namespace != ns.Value {
+	// Public snapshot keys are global; default is the anonymous client's placeholder namespace.
+	if ns.Value != "default" && snap.Namespace != ns.Value {
 		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 	}
 
@@ -87,10 +88,10 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 	blobCtx := ctx
 	if snap.Blobs.Dashboard != nil && snap.Blobs.Dashboard.Uid != "" {
 		caller, ok := authlib.AuthInfoFrom(ctx)
-		if !ok || caller == nil || !authlib.NamespaceMatches(caller.GetNamespace(), ns.Value) {
+		if !ok || caller == nil || !authlib.NamespaceMatches(caller.GetNamespace(), snap.Namespace) {
 			// The public GET was already authorized. Anonymous and cross-org callers
 			// need a namespace-scoped identity for the delegated blob read.
-			blobCtx = authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: ns.Value})
+			blobCtx = authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: snap.Namespace})
 		}
 	}
 	if fromBlob, ok, err := readDashboardBlob(blobCtx, r.blobs, snap); err != nil {

@@ -1724,6 +1724,10 @@ func (b *DashboardsAPIBuilder) snapshotReadFromUnified(ctx context.Context) (boo
 	if b.isStandalone {
 		return true, nil
 	}
+	// A legacy-only instance retains its initial store even after migration changes the mode.
+	if _, legacyOnly := b.snapshotStorage.(*snapshot.SnapshotLegacyStore); legacyOnly {
+		return false, nil
+	}
 	return b.dualWriter.ReadFromUnified(ctx, dashv0.SnapshotResourceInfo.GroupResource())
 }
 
