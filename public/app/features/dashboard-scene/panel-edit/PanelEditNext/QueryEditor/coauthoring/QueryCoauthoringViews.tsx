@@ -231,6 +231,8 @@ export function QueryCoauthoringPromptInput({
           aria-label={ariaLabel}
           aria-describedby={ariaDescribedBy}
           aria-autocomplete={mention ? 'list' : undefined}
+          aria-expanded={!!mention}
+          aria-haspopup="listbox"
           aria-controls={mention ? menuId : undefined}
           aria-activedescendant={mention ? `${menuId}-${mention.selectedIndex}` : undefined}
           onChange={handleChange}
