@@ -20,28 +20,23 @@ type cachedProxyTransport struct {
 	fingerprint [sha256.Size]byte
 	transport   http.RoundTripper
 	closeIdle   func()
-	lastUsed    time.Time
-	timer       *time.Timer
 }
 
-// The cache owns connection pools, never request credentials or authorization results.
-// Its lifetime follows the REST storage; entries also expire when no requests use them.
+// Bound retained transports while leaving idle connection expiry to net/http.
 type proxyTransportCache struct {
 	mu      sync.Mutex
 	entries *simplelru.LRU[proxyTransportKey, *cachedProxyTransport]
-	idleTTL time.Duration
 	closed  bool
 }
 
-func newProxyTransportCache(size int, idleTTL time.Duration) *proxyTransportCache {
+func newProxyTransportCache(size int) *proxyTransportCache {
 	entries, err := simplelru.NewLRU[proxyTransportKey, *cachedProxyTransport](size, func(_ proxyTransportKey, entry *cachedProxyTransport) {
-		entry.timer.Stop()
 		entry.closeIdle()
 	})
 	if err != nil {
 		panic(err)
 	}
-	return &proxyTransportCache{entries: entries, idleTTL: idleTTL}
+	return &proxyTransportCache{entries: entries}
 }
 
 func (c *proxyTransportCache) get(key proxyTransportKey, fingerprint [sha256.Size]byte, build func() (http.RoundTripper, func(), error)) (http.RoundTripper, error) {
@@ -51,9 +46,7 @@ func (c *proxyTransportCache) get(key proxyTransportKey, fingerprint [sha256.Siz
 		return nil, errors.New("datasource proxy transport cache is closed")
 	}
 	if entry, ok := c.entries.Get(key); ok {
-		if entry.fingerprint == fingerprint && time.Since(entry.lastUsed) < c.idleTTL {
-			entry.lastUsed = time.Now()
-			entry.timer.Reset(c.idleTTL)
+		if entry.fingerprint == fingerprint {
 			return entry.transport, nil
 		}
 		c.entries.Remove(key)
@@ -64,24 +57,9 @@ func (c *proxyTransportCache) get(key proxyTransportKey, fingerprint [sha256.Siz
 		closeIdle()
 		return nil, err
 	}
-	entry := &cachedProxyTransport{fingerprint: fingerprint, transport: rt, closeIdle: closeIdle, lastUsed: time.Now()}
-	entry.timer = time.AfterFunc(c.idleTTL, func() { c.expire(key, entry) })
+	entry := &cachedProxyTransport{fingerprint: fingerprint, transport: rt, closeIdle: closeIdle}
 	c.entries.Add(key, entry)
 	return rt, nil
-}
-
-func (c *proxyTransportCache) expire(key proxyTransportKey, entry *cachedProxyTransport) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if current, ok := c.entries.Peek(key); !ok || current != entry {
-		return
-	}
-	// A timer may already be firing when a request refreshes the idle deadline.
-	if remaining := c.idleTTL - time.Since(entry.lastUsed); remaining > 0 {
-		entry.timer.Reset(remaining)
-		return
-	}
-	c.entries.Remove(key)
 }
 
 func (c *proxyTransportCache) close() {

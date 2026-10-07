@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -78,7 +77,7 @@ func (r *subProxyREST) Destroy() {
 }
 
 func (r *subProxyREST) transportCache() *proxyTransportCache {
-	r.cacheOnce.Do(func() { r.transports = newProxyTransportCache(256, 5*time.Minute) })
+	r.cacheOnce.Do(func() { r.transports = newProxyTransportCache(256) })
 	return r.transports
 }
 

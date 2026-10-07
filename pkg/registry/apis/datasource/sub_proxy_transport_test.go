@@ -24,7 +24,7 @@ import (
 )
 
 func TestProxyTransportCacheConcurrentReuseAndEviction(t *testing.T) {
-	cache := newProxyTransportCache(2, time.Minute)
+	cache := newProxyTransportCache(2)
 	t.Cleanup(cache.close)
 	var built, closed atomic.Int32
 	build := func() (http.RoundTripper, func(), error) {
@@ -70,23 +70,52 @@ func TestProxyTransportCacheConcurrentReuseAndEviction(t *testing.T) {
 	require.ErrorContains(t, err, "closed")
 }
 
-func TestProxyTransportCacheExpiresWithoutAnotherRequest(t *testing.T) {
-	cache := newProxyTransportCache(2, 20*time.Millisecond)
-	t.Cleanup(cache.close)
-	closed := make(chan struct{}, 1)
-	_, err := cache.get(proxyTransportKey{"stack", "plugin", "uid"}, [32]byte{}, func() (http.RoundTripper, func(), error) {
-		return &http.Transport{}, func() { closed <- struct{}{} }, nil
-	})
-	require.NoError(t, err)
-	select {
-	case <-closed:
-	case <-time.After(time.Second):
-		t.Fatal("unused transport was not evicted")
+func TestProxyTransportCacheRetainsTransportAfterIdleConnectionCloses(t *testing.T) {
+	closed := make(chan struct{}, 2)
+	upstream := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, "pong")
+	}))
+	upstream.Config.ConnState = func(_ net.Conn, state http.ConnState) {
+		if state == http.StateClosed {
+			closed <- struct{}{}
+		}
 	}
+	upstream.Start()
+	t.Cleanup(upstream.Close)
+	cache := newProxyTransportCache(2)
+	t.Cleanup(cache.close)
+	built := 0
+	build := func() (http.RoundTripper, func(), error) {
+		built++
+		transport := &http.Transport{IdleConnTimeout: 20 * time.Millisecond}
+		return transport, transport.CloseIdleConnections, nil
+	}
+	var first http.RoundTripper
+	for range 2 {
+		rt, err := cache.get(proxyTransportKey{"stack", "plugin", "uid"}, [32]byte{}, build)
+		require.NoError(t, err)
+		if first == nil {
+			first = rt
+		}
+		require.Same(t, first, rt)
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, upstream.URL, nil)
+		require.NoError(t, err)
+		resp, err := rt.RoundTrip(req)
+		require.NoError(t, err)
+		_, err = io.Copy(io.Discard, resp.Body)
+		require.NoError(t, resp.Body.Close())
+		require.NoError(t, err)
+		select {
+		case <-closed:
+		case <-time.After(time.Second):
+			t.Fatal("transport did not close its idle connection")
+		}
+	}
+	require.Equal(t, 1, built)
 }
 
 func TestProxyTransportCacheDoesNotCacheErrors(t *testing.T) {
-	cache := newProxyTransportCache(1, time.Minute)
+	cache := newProxyTransportCache(1)
 	t.Cleanup(cache.close)
 	for range 2 {
 		_, err := cache.get(proxyTransportKey{}, [32]byte{}, func() (http.RoundTripper, func(), error) {
