@@ -279,6 +279,7 @@ const getStyles = (theme: GrafanaTheme2, justify = 'start', marginRight?: string
   label: css({ display: 'inline' }),
   value: css({
     fontWeight: 500,
+    fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     textOverflow: 'ellipsis',
     overflow: 'hidden',
   }),

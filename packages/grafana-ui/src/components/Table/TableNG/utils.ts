@@ -11,7 +11,6 @@ import {
   formattedValueToString,
   type GrafanaTheme2,
   type DisplayValue,
-  type LinkModel,
   type DisplayValueAlignmentFactors,
   type DataFrame,
   type DisplayProcessor,
@@ -36,6 +35,7 @@ import { type OpenLayersContextValue, isGeometry } from '../geo';
 import { type TableCellOptions } from '../types';
 
 import { AutoCellRenderer, getAutoRendererDisplayMode, getCellRenderer } from './Cells/renderers';
+import { getCellLinks } from './cellLinks';
 import {
   CELL_HORIZONTAL_CHROME,
   COLUMN,
@@ -62,6 +62,7 @@ import type {
   GetActionsFunctionLocal,
   TableColumn,
   FromFieldsResult,
+  TextWrapFallback,
 } from './types';
 
 // inferPills lives here rather than in PillCell.tsx to avoid a circular dependency:
@@ -236,7 +237,8 @@ export function createTypographyContext(
   letterSpacing = 0.15,
   fontWeight?: number
 ): TypographyCtx {
-  const font = `${fontWeight != null ? `${fontWeight} ` : ''}${fontSize}px ${fontFamily}`;
+  const weightPrefix = fontWeight != null ? `${fontWeight} ` : '';
+  const font = `${weightPrefix}${fontSize}px ${fontFamily}`;
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d')!;
 
@@ -251,11 +253,27 @@ export function createTypographyContext(
   const avgCharWidth = txtWidth / txt.length + letterSpacing;
   const uwrap = varPreLine(ctx);
 
+  // The grid applies `font-variant-numeric: tabular-nums`, so every digit renders at the font's
+  // uniform (widest) figure advance. Canvas can't set that feature, so measure each digit and take
+  // the max as a safe over-estimate of the tabular advance.
+  let maxDigitWidth = 0;
+  for (let d = 0; d <= 9; d++) {
+    maxDigitWidth = Math.max(maxDigitWidth, ctx.measureText(String(d)).width);
+  }
+  const numericCharWidth = maxDigitWidth + letterSpacing;
+
+  // JSON/Geo cells render in a monospace font; measure one character there (all are equal-width).
+  ctx.font = `${weightPrefix}${fontSize}px monospace`;
+  const monoCharWidth = ctx.measureText('0').width + letterSpacing;
+  ctx.font = font; // restore the primary font on the shared context
+
   return {
     ctx,
     fontFamily,
     letterSpacing,
     avgCharWidth,
+    numericCharWidth,
+    monoCharWidth,
     estimateHeight: getTextHeightEstimator(avgCharWidth),
     measureHeight: getTextHeightMeasurerFromUwrapCount(uwrap.count),
     measureWidth: createFitWidthMeasurer(ctx, uwrap),
@@ -277,7 +295,7 @@ export function createFitWidthMeasurer(ctx: CanvasRenderingContext2D, { test }: 
     // A `pre-line` newline is a hard break, so uwrap calls a string that contains one wrapped at
     // *any* width and the nudging below would never terminate. Each hard-broken segment is a line
     // regardless, so measure them separately: the widest is what the whole string needs.
-    for (const segment of text.split('\n')) {
+    for (const segment of text.slice(0, TABLE.MAX_WRAP_TEXT_LENGTH).split('\n')) {
       let width = Math.ceil(ctx.measureText(segment).width);
       while (test(segment, width)) {
         width++;
@@ -297,7 +315,7 @@ export function getTextHeightMeasurerFromUwrapCount(count: Count): MeasureCellHe
       return lineHeight;
     }
 
-    const lines = count(String(value), width);
+    const lines = count(String(value).slice(0, TABLE.MAX_WRAP_TEXT_LENGTH), width);
     return lines * lineHeight;
   };
 }
@@ -470,7 +488,8 @@ export function buildCellHeightMeasurers(
   fields: Field[],
   typographyCtx: TypographyCtx,
   theme: GrafanaTheme2,
-  maxHeight?: number
+  maxHeight?: number,
+  wrapFallback?: TextWrapFallback
 ): MeasureCellHeightEntry[] | undefined {
   const result: Record<string, MeasureCellHeightEntry> = {};
   let wrappedFields = 0;
@@ -500,9 +519,16 @@ export function buildCellHeightMeasurers(
   const setupMeasurerForIdx = (measurerFactoryKey: keyof typeof measurerFactory, fieldIdx: number) => {
     if (!result[measurerFactoryKey]) {
       const [measure, estimate] = measurerFactory[measurerFactoryKey]();
+      const guard = (measurer: MeasureCellHeight): MeasureCellHeight => {
+        if (measurerFactoryKey !== TableCellDisplayMode.Auto || wrapFallback == null) {
+          return measurer;
+        }
+        return (value, width, field, rowIdx, lineHeight) =>
+          wrapFallback.shouldDisable(field, value) ? -1 : measurer(value, width, field, rowIdx, lineHeight);
+      };
       result[measurerFactoryKey] = {
-        measure: clampByMaxHeight(measure, maxHeight),
-        estimate: estimate != null ? clampByMaxHeight(estimate, maxHeight) : undefined,
+        measure: guard(clampByMaxHeight(measure, maxHeight)),
+        estimate: estimate != null ? guard(clampByMaxHeight(estimate, maxHeight)) : undefined,
         fieldIdxs: [],
       };
     }
@@ -511,7 +537,7 @@ export function buildCellHeightMeasurers(
 
   for (let fieldIdx = 0; fieldIdx < fields.length; fieldIdx++) {
     const field = fields[fieldIdx];
-    if (shouldTextWrap(field)) {
+    if (shouldTextWrap(field) && !wrapFallback?.disabledFields.has(getDisplayName(field))) {
       wrappedFields++;
 
       const cellType = getCellOptions(field).type;
@@ -519,9 +545,8 @@ export function buildCellHeightMeasurers(
         setupMeasurerForIdx(TableCellDisplayMode.DataLinks, fieldIdx);
       } else if (cellType === TableCellDisplayMode.Pill) {
         setupMeasurerForIdx(TableCellDisplayMode.Pill, fieldIdx);
-      } else if (getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
-        // Any field rendered by AutoCellRenderer (string, time, number, boolean, etc.) can
-        // produce a multi-line formatted string, so we include it in height measurement.
+      } else if (rendersAsJson(field) || getCellRenderer(field, getCellOptions(field)) === AutoCellRenderer) {
+        // JSON and Auto cells can produce multiline formatted strings, so both need measurement.
         setupMeasurerForIdx(TableCellDisplayMode.Auto, fieldIdx);
       } else {
         // no measurer was configured for this cell type
@@ -797,41 +822,7 @@ export const extractPixelValue = (spacing: string | number): number => {
   return typeof spacing === 'number' ? spacing : parseFloat(spacing) || 0;
 };
 
-/* ------------------------------- Data links ------------------------------- */
-/**
- * @internal
- */
-export const getCellLinks = (field: Field, rowIdx: number) => {
-  let links: Array<LinkModel<unknown>> | undefined;
-  if (field.getLinks) {
-    links = field.getLinks({
-      valueRowIndex: rowIdx,
-    });
-  }
-
-  if (!links) {
-    return;
-  }
-
-  for (let i = 0; i < links?.length; i++) {
-    if (links[i].onClick) {
-      const origOnClick = links[i].onClick;
-
-      links[i].onClick = (event: MouseEvent) => {
-        // Allow opening in new tab
-        if (!(event.ctrlKey || event.metaKey || event.shiftKey)) {
-          event.preventDefault();
-          origOnClick!(event, {
-            field,
-            rowIndex: rowIdx,
-          });
-        }
-      };
-    }
-  }
-
-  return links.filter((link) => link.href || link.onClick != null);
-};
+export { getCellLinks } from './cellLinks';
 
 /**
  * @internal
@@ -1317,6 +1308,7 @@ function sampleIndices(totalLen: number, sampleSize: number): number[] {
 }
 
 export interface ContentAwareColWidthsOptions {
+  hasAssistantAction?: boolean;
   typographyCtx: TypographyCtx;
   /**
    * Header labels render at `fontWeightMedium`, which is wider than the body text `typographyCtx`
@@ -1456,6 +1448,7 @@ function measureInlineRunWidth(
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
+  hasAssistantAction?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
@@ -1471,7 +1464,7 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered }: HeaderAffordanceOptions
+  { showTypeIcons, tableRefreshEnabled, isFiltered, hasAssistantAction }: HeaderAffordanceOptions
 ): number {
   const isFilterable = field.config.custom?.filterable ?? false;
   let width = 0;
@@ -1484,8 +1477,8 @@ export function getHeaderAffordanceWidth(
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
     // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
-    // stays in flow (opacity-faded, not unmounted) whenever the column is filterable at all.
-    width += isFilterable ? HEADER_MENU_SPACE : 0;
+    // stays in flow (opacity-faded, not unmounted) whenever filtering or Assistant is available.
+    width += isFilterable || hasAssistantAction ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1618,10 +1611,23 @@ const measureActionsColWidth: MeasureColWidth = (field, sampleSize, { typography
 // columns stay tight on purpose.
 const TEXT_WIDTH_WIGGLE = TABLE.CELL_PADDING;
 
-const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
-  const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
-  const isText = field.type === FieldType.string || field.type === FieldType.time;
-  return isText ? width + TEXT_WIDTH_WIGGLE : width;
+const measureTextColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx, theme }) => {
+  // Numeric and date/time columns are digit-dominated and render with tabular-nums under
+  // `dataviz.tabularNums`, so estimate them with the (wider, uniform) tabular digit width rather than the
+  // prose average. Without the toggle the grid keeps proportional digits, so fall back to the prose
+  // average and the original wiggle rule (string and time both get slack).
+  if (!theme?.flags.tabularNums) {
+    const width = measureLongestContentWidth(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+    const isText = field.type === FieldType.string || field.type === FieldType.time;
+    return isText ? width + TEXT_WIDTH_WIGGLE : width;
+  }
+
+  const isNumericLike = field.type === FieldType.number || field.type === FieldType.time;
+  const charWidth = isNumericLike ? typographyCtx.numericCharWidth : typographyCtx.avgCharWidth;
+  const width = measureLongestContentWidth(field, sampleSize, charWidth) + CELL_HORIZONTAL_CHROME;
+  // String columns still get slack because the prose average under-measures them; numeric/time now
+  // use the wider tabular width, so they no longer need the extra wiggle.
+  return field.type === FieldType.string ? width + TEXT_WIDTH_WIGGLE : width;
 };
 
 // Markdown always wraps and renders formatted, so its raw source is a poor proxy for rendered width
@@ -1635,7 +1641,8 @@ const measureMarkdownColWidth: MeasureColWidth = () => 0;
 // under-measure and clip it.
 const measureJsonColWidth: MeasureColWidth = (field, sampleSize, { typographyCtx }) => {
   const measure = shouldTextWrap(field) ? measureLongestLineWidth : measureLongestContentWidth;
-  return measure(field, sampleSize, typographyCtx.avgCharWidth) + CELL_HORIZONTAL_CHROME;
+  // JSON renders in a monospace font, so size with the monospace character width.
+  return measure(field, sampleSize, typographyCtx.monoCharWidth) + CELL_HORIZONTAL_CHROME;
 };
 
 // Cell types that size differently from plain text register here; anything absent falls back to
@@ -1770,6 +1777,7 @@ export function computeContentAwareColWidths(
     typographyCtx,
     headerTypographyCtx,
     showTypeIcons = false,
+    hasAssistantAction = false,
     hasHeader = true,
     getActions,
     tableRefreshEnabled = false,
@@ -1824,6 +1832,7 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasAssistantAction,
         })
       : 0;
 
@@ -1944,6 +1953,20 @@ export function markEdgeColumns(fromFieldsResult: FromFieldsResult): undefined {
   }
   addEdgeClass(columns[0], FIRST_COLUMN_CLASS);
   addEdgeClass(columns[columns.length - 1], LAST_COLUMN_CLASS);
+}
+
+/**
+ * True when a cell keydown is Shift+Tab on the first cell of the first row — the point where focus
+ * should jump back up into the header. `column`/`row` can be undefined for keydowns that aren't on a
+ * data cell (e.g. header/summary rows), so both are guarded.
+ */
+export function isShiftTabToHeader(
+  column: { key: string } | undefined,
+  row: { __index: number } | undefined,
+  event: Pick<KeyboardEvent, 'shiftKey' | 'key'>,
+  firstColumnKey: string
+): boolean {
+  return column?.key === firstColumnKey && row?.__index === 0 && event.shiftKey && event.key === 'Tab';
 }
 
 export function buildNestedColumnWidthsMap(fields: Field[], widths: number[]): ColumnWidths {

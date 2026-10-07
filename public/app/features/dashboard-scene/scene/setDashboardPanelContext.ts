@@ -17,7 +17,7 @@ import {
 import { type DataSourceRef } from '@grafana/schema';
 import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
 import { FILTER_OUT_OPERATOR } from '@grafana/ui/internal';
-import { getAssistantChatIdToContinue } from 'app/core/components/AssistantTooltip/assistantSidebarState';
+import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 import { annotationServer } from 'app/features/annotations/api';
 import { InspectTab } from 'app/features/inspector/types';
 
@@ -48,6 +48,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     configurable: true,
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
+
+  context.adHocTransformations = vizPanel.getRuntimeTransformations();
 
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
@@ -242,7 +244,7 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
 
   // Only wire up the status-popover inspector opener when the new panel errors UI is enabled.
   // Its presence is also the signal the panel renderer uses to show the new errors/notices popover.
-  // Opening goes through a registered opener to avoid importing PanelInspectDrawer here (circular dep).
+  // The opener loads the inspector on demand to avoid importing the drawer here (and creating a circular dependency).
   //
   // A third route to inspect-panel, independent of the 'i' keyboard shortcut (guarded in
   // keyboardShortcuts.ts) and the menu item (unreachable -- preview panels have no menu at all).

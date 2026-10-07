@@ -1,12 +1,11 @@
 import { css } from '@emotion/css';
 
-import { useAssistant } from '@grafana/assistant';
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, usePluginContext } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
+import { useAddToAssistant } from 'app/core/assistant/useAddToAssistant';
 
-import { getAssistantChatIdToContinue } from './assistantSidebarState';
 import { type AssistantTooltipContext, buildDatapointAssistantContext } from './buildAssistantContext';
 
 interface AssistantTooltipButtonProps {
@@ -27,11 +26,11 @@ export function AssistantTooltipButton({
   context,
   xVal,
 }: AssistantTooltipButtonProps) {
-  const { isAvailable, openAssistant } = useAssistant();
+  const { isAvailable, addToAssistant } = useAddToAssistant({ origin: 'grafana/panel-tooltip' });
   const pluginContext = usePluginContext();
   const styles = useStyles2(getStyles);
 
-  if (!isAvailable || !openAssistant) {
+  if (!isAvailable) {
     return null;
   }
 
@@ -53,13 +52,7 @@ export function AssistantTooltipButton({
       visualizationType: pluginContext?.meta?.id ?? 'unknown',
     });
 
-    openAssistant({
-      origin: 'grafana/panel-tooltip',
-      context: items,
-      autoSend: false,
-      appendContext: true,
-      chatId: getAssistantChatIdToContinue(),
-    });
+    addToAssistant(items);
   };
 
   return (

@@ -30,19 +30,19 @@ LBAC for data sources helps you:
 
 ## Supported data sources
 
-LBAC for data sources is generally available for Loki and Prometheus. Traces support, through Tempo or Cloud Traces, is in public preview on Grafana Cloud. Support for additional data sources may be added in future updates.
+LBAC for data sources is generally available for Loki and Prometheus. Traces support, through Tempo or Cloud Traces, is in public preview and requires Grafana Cloud Traces as the trace backend. Support for additional data sources may be added in future updates.
 
 | Data source | Grafana Cloud  | Grafana Enterprise                             | Cross-tenant query support |
 | ----------- | -------------- | ---------------------------------------------- | -------------------------- |
 | Loki        | GA             | GA (requires GEL - Grafana Enterprise Logs)    | No                         |
 | Prometheus  | GA             | GA (requires GEM - Grafana Enterprise Metrics) | No                         |
-| Tempo       | Public preview | Not available                                  | No                         |
+| Tempo       | Public preview | Public preview (requires Cloud Traces)         | No                         |
 
 {{< admonition type="note" >}}
-LBAC is available for traces that Grafana Cloud can access, whether those traces come from a Tempo data source configured for a Grafana Cloud stack or the built-in Cloud Traces database.
+Traces LBAC is in public preview and requires Grafana Cloud Traces as the trace backend. It works when Grafana Cloud or Grafana Enterprise v12.3 and later connects to Grafana Cloud Traces. It doesn't work with self-hosted Tempo OSS or Grafana Enterprise Traces (GET).
 {{< /admonition >}}
 
-On Grafana Enterprise, LBAC for data sources requires Grafana Enterprise Metrics (GEM) for metrics or Grafana Enterprise Logs (GEL) for logs.
+On Grafana Enterprise, LBAC for data sources requires Grafana Enterprise Metrics (GEM) for metrics or Grafana Enterprise Logs (GEL) for logs. Traces LBAC requires Grafana Cloud Traces as the trace backend, even on Grafana Enterprise.
 
 ## How LBAC works
 

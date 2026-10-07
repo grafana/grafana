@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import dev from './rspack.dev.ts';
 import prod from './rspack.prod.ts';
@@ -67,6 +67,32 @@ describe('the dev config without hmr', () => {
 });
 
 describe('the dev config with hmr', () => {
+  describe('runtime error overlay', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    it.each([
+      ['ResizeObserver loop completed with undelivered notifications.', true, false],
+      ['ResizeObserver loop limit exceeded', true, false],
+      ['ResizeObserver loop completed with undelivered notifications.', false, true],
+      ['ResizeObserver loop limit exceeded', false, true],
+      ['Unrelated runtime error', true, true],
+      ['Unrelated runtime error', false, true],
+      ['ResizeObserver loop completed', true, true],
+      ['ResizeObserver loop limit exceeded in another operation', true, true],
+    ])('handles %j with grid present=%s: display=%s', (message, hasGrid, shouldDisplay) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const server = inspect(dev({ ...noChecks, hmr: '1' })).devServer as {
+        client: { overlay: { runtimeErrors: (error: Error) => boolean } };
+      };
+      const querySelector = vi.fn().mockReturnValue(hasGrid ? {} : null);
+      vi.stubGlobal('document', { querySelector });
+
+      // The dev server serializes this function and evaluates it in the browser without its closure.
+      const filter = new Function('error', `return (${server.client.overlay.runtimeErrors.toString()})(error)`);
+      expect(filter(new Error(message))).toBe(shouldDisplay);
+    });
+  });
+
   it('drops content hashes, since hot updates patch stable names', () => {
     const built = inspect(dev({ ...noChecks, hmr: '1' }));
 

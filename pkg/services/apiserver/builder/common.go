@@ -93,6 +93,12 @@ type APIGroupResourceProvider interface {
 	GetResourceInfos(gv schema.GroupVersion) []utils.ResourceInfo
 }
 
+// APIGroupManifestProvider lets a builder expose its full app manifest to
+// manifest-driven route builders.
+type APIGroupManifestProvider interface {
+	ManifestData() *app.ManifestData
+}
+
 type APIGroupPostStartHookProvider interface {
 	// GetPostStartHooks returns a list of functions that will be called after the server has started
 	GetPostStartHooks() (map[string]genericapiserver.PostStartHookFunc, error)
@@ -210,9 +216,18 @@ func ServedGroupVersions(
 
 // ManifestsFromBuilders synthesizes manifests for resources that builders
 // advertise directly, so manifest-driven per-kind routes can discover them.
+// Builders can implement APIGroupManifestProvider to supply their full manifest
+// when per-kind settings must be preserved.
 func ManifestsFromBuilders(builders []APIGroupBuilder) []*app.ManifestData {
 	var manifests []*app.ManifestData
 	for _, b := range builders {
+		if provider, ok := b.(APIGroupManifestProvider); ok {
+			if manifest := provider.ManifestData(); manifest != nil {
+				manifests = append(manifests, manifest)
+				continue
+			}
+		}
+
 		provider, ok := b.(APIGroupResourceProvider)
 		if !ok {
 			continue

@@ -2,11 +2,17 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
+import { RuntimeDataSource } from '../RuntimeDataSource';
 import { setBackendSrv } from '../backendSrv';
+import { type DataSourceSrv, setDataSourceSrv } from '../dataSourceSrv';
 import { setDatasourcePluginMetas } from '../pluginMeta/datasources';
 import { setTemplateSrv, type TemplateSrv } from '../templateSrv';
 
-import { _resetForTests as resetPlugin, setDataSourcePluginImporter } from './dataSource';
+import {
+  _resetForTests as resetPlugin,
+  registerRuntimeDataSourceInstance,
+  setDataSourcePluginImporter,
+} from './dataSource';
 import {
   useDataSourceInstance,
   useDataSourceInstanceList,
@@ -15,7 +21,12 @@ import {
   useDefaultDataSourceInstanceListItem,
   useHasDataSourceInstance,
 } from './hooks';
-import { setDataSourceInstanceSettings } from './settings';
+import { _resetForTests as resetPluginCache } from './pluginCache';
+import {
+  reloadDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
+} from './settings';
 
 function ds(overrides: Partial<DataSourceInstanceSettings>): DataSourceInstanceSettings {
   return {
@@ -57,10 +68,18 @@ const templateSrv = {
   replace: (value?: string) => value ?? '',
 } as unknown as TemplateSrv;
 
+const backendGet = jest.fn();
+
+class TestRuntime extends RuntimeDataSource {
+  query() {
+    return Promise.resolve({ data: [] });
+  }
+}
+
 beforeAll(() => {
   setTemplateSrv(templateSrv);
   setBackendSrv({
-    get: jest.fn().mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' }),
+    get: backendGet,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
 });
@@ -71,8 +90,11 @@ const testDbPluginMeta = { ...ds({}).meta, name: 'Test DB (plugin meta)' };
 
 beforeEach(() => {
   resetPlugin();
+  resetPluginCache();
+  setDataSourceSrv(undefined as unknown as DataSourceSrv);
   setDataSourceInstanceSettings(fixtures, 'Bravo');
   setDatasourcePluginMetas({ 'test-db': testDbPluginMeta });
+  backendGet.mockReset().mockResolvedValue({ datasources: fixtures, defaultDatasource: 'Bravo' });
 });
 
 describe('useDataSourceInstanceSettings', () => {
@@ -94,6 +116,19 @@ describe('useDataSourceInstanceSettings', () => {
 
     rerender({ ref: 'uid-bravo' });
     await waitFor(() => expect(result.current.settings?.name).toBe('Bravo'));
+  });
+
+  it('refetches with the same ref when the cache is reloaded', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceSettings('uid-alpha'));
+    await waitFor(() => expect(result.current.settings?.name).toBe('Alpha'));
+
+    backendGet.mockResolvedValue({
+      datasources: { Renamed: ds({ id: 1, uid: 'uid-alpha', name: 'Renamed', type: 'test-db' }) },
+      defaultDatasource: 'Renamed',
+    });
+    await act(() => reloadDataSourceInstanceSettings());
+
+    await waitFor(() => expect(result.current.settings?.name).toBe('Renamed'));
   });
 });
 
@@ -126,6 +161,46 @@ describe('useDataSourceInstanceListItem', () => {
 
     rerender({ ref: 'uid-bravo' });
     await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
+  });
+
+  it('refetches with the same ref when the cache is reloaded', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
+    await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
+
+    backendGet.mockResolvedValue({
+      datasources: { Renamed: ds({ id: 1, uid: 'uid-alpha', name: 'Renamed', type: 'test-db' }) },
+      defaultDatasource: 'Renamed',
+    });
+    await act(() => reloadDataSourceInstanceSettings());
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Renamed'));
+  });
+
+  it('refetches when the legacy service synchronizes the cache', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
+    await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
+
+    act(() => {
+      syncDataSourceInstanceSettings({
+        datasources: { Synced: ds({ id: 1, uid: 'uid-alpha', name: 'Synced', type: 'test-db' }) },
+        defaultDatasource: 'Synced',
+      });
+    });
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Synced'));
+  });
+
+  it('resolves a runtime data source registered after the hook mounted', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceListItem('runtime-uid'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.item).toBeUndefined();
+
+    const runtime = new TestRuntime('runtime-db', 'runtime-uid');
+    act(() => {
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+    });
+
+    await waitFor(() => expect(result.current.item?.name).toBe('RuntimeDataSource-runtime-db'));
   });
 });
 
@@ -170,6 +245,19 @@ describe('useDataSourceInstanceList', () => {
 
     expect(result.current.items.every((x) => x.name === 'Bravo')).toBe(true);
   });
+
+  it('updates the list when the cache is reloaded', async () => {
+    const { result } = renderHook(() => useDataSourceInstanceList());
+    await waitFor(() => expect(result.current.items.map((item) => item.name)).toEqual(['Alpha', 'Bravo']));
+
+    backendGet.mockResolvedValue({
+      datasources: { Charlie: ds({ id: 3, uid: 'uid-charlie', name: 'Charlie', type: 'test-db' }) },
+      defaultDatasource: 'Charlie',
+    });
+    await act(() => reloadDataSourceInstanceSettings());
+
+    await waitFor(() => expect(result.current.items.map((item) => item.name)).toEqual(['Charlie']));
+  });
 });
 
 describe('useDataSourceInstance', () => {
@@ -190,6 +278,25 @@ describe('useDataSourceInstance', () => {
     const { result } = renderHook(() => useDataSourceInstance('missing'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeInstanceOf(Error);
+  });
+
+  it('rebuilds the plugin instance when the cache is reloaded', async () => {
+    const initial = ds({ id: 4, uid: 'refresh-uid', name: 'Initial', type: 'test-db' });
+    setDataSourceInstanceSettings({ Initial: initial }, 'Initial');
+    const DataSourceClass = jest.fn().mockImplementation(() => ({}));
+    setDataSourcePluginImporter(jest.fn().mockResolvedValue({ DataSourceClass, components: {} }));
+
+    const { result } = renderHook(() => useDataSourceInstance('refresh-uid'));
+    await waitFor(() => expect(result.current.dataSource?.name).toBe('Initial'));
+
+    backendGet.mockResolvedValue({
+      datasources: { Refreshed: ds({ id: 4, uid: 'refresh-uid', name: 'Refreshed', type: 'test-db' }) },
+      defaultDatasource: 'Refreshed',
+    });
+    await act(() => reloadDataSourceInstanceSettings());
+
+    await waitFor(() => expect(result.current.dataSource?.name).toBe('Refreshed'));
+    expect(DataSourceClass).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -270,5 +377,19 @@ describe('useHasDataSourceInstance', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.hasInstance).toBe(false);
+  });
+
+  it('updates instance presence when the cache is reloaded', async () => {
+    const { result } = renderHook(() => useHasDataSourceInstance('new-db'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+    expect(result.current.hasInstance).toBe(false);
+
+    backendGet.mockResolvedValue({
+      datasources: { New: ds({ id: 5, uid: 'uid-new', name: 'New', type: 'new-db' }) },
+      defaultDatasource: 'New',
+    });
+    await act(() => reloadDataSourceInstanceSettings());
+
+    await waitFor(() => expect(result.current.hasInstance).toBe(true));
   });
 });

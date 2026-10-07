@@ -9,6 +9,7 @@ import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjec
 import { Button, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 
+import { reorderRows } from '../../actions/layout/reorderRows';
 import { useSoloPanelContext } from '../../solo/SoloPanelContext';
 import { isRepeatCloneOrChildOf } from '../../utils/clone';
 import { useDashboardState, getLayoutOrchestratorFor } from '../../utils/utils';
@@ -58,7 +59,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
         return;
       }
 
-      model.moveRow(result.draggableId, result.source.index, result.destination.index);
+      reorderRows(model, result.source.index, result.destination.index);
     },
     [model, orchestrator]
   );

@@ -45,13 +45,11 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
   // buildVizPanel attaches a dropdown menu unconditionally. A preview panel must have none: a
   // plugin's View pane can mutate and persist panel options (e.g. timeseries legend toggles)
   // with no isPlanning() gate. Clearing menu removes PanelChrome's button entirely.
-  vizPanel.setState({ key: getVizPanelKeyForPanelId(id), menu: undefined });
-
-  // buildVizPanel's sample-vs-spec merge lets a real spec's options/fieldConfig win over the
-  // sample, but this payload never has real ones, so the synthetic empty spec would clobber the
-  // sample it just set. Re-apply it rather than change that merge for every other caller.
-  const sample = getPlanningPanelData(title, vizType);
-  vizPanel.setState({ options: sample.options, fieldConfig: sample.fieldConfig });
+  // buildVizPanel preserves a real spec's options/fieldConfig, but this payload never has real
+  // ones: its synthetic empty spec would clobber the sample's visualization settings. Apply the
+  // sample here rather than change that behavior for every other caller. Its synthetic $data
+  // also stays in this lazy command instead of loading with the shared serializer.
+  vizPanel.setState({ ...getPlanningPanelData(title, vizType), key: getVizPanelKeyForPanelId(id), menu: undefined });
 
   return vizPanel;
 }
@@ -143,7 +141,6 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         planning: {
           planId,
           planTitle: payload.title,
-          panelCount: payload.sections.reduce((count, section) => count + section.panels.length, 0),
           onBuild: () => notify('build'),
           onDismiss: () => notify('dismiss'),
         },

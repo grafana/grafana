@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { useDispatch } from 'app/types/store';
@@ -32,7 +32,6 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
   // feature toggles
-  const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
   const listView2Enabled = shouldUseAlertingListViewV2();
 
   const { granted: canExportRules } = useGlobalRuleAbility(RuleAction.ExportRules);
@@ -63,7 +62,7 @@ export const FolderActionsButton = ({ folderUID }: Props) => {
       <BulkActions folderUID={folderUID} onClickDelete={setIsDeleteModalOpen} isLoading={deleteState.isLoading} />
       {canExportRules && (
         <>
-          {bulkActionsEnabled && <Menu.Divider />}
+          <Menu.Divider />
           <ExportFolderButton onClickExport={() => setIsExporting(true)} />
         </>
       )}
@@ -131,7 +130,6 @@ function BulkActions({
 }) {
   // feature toggles
   const listView2Enabled = shouldUseAlertingListViewV2();
-  const bulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
   // abilities
   const { granted: canPause } = useFolderBulkActionAbility(FolderBulkAction.Pause);
@@ -144,10 +142,6 @@ function BulkActions({
   // URLs
   const viewComponent = listView2Enabled ? 'list' : 'grouped';
   const redirectToListView = useRedirectToListView(viewComponent);
-
-  if (!bulkActionsEnabled) {
-    return null;
-  }
 
   if (!canPause && !canDelete) {
     return null;
