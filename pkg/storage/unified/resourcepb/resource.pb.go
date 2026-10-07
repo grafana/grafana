@@ -773,10 +773,8 @@ type ErrorCause struct {
 	// Optional.
 	//
 	// Examples:
-	//
-	//	"name" - the field "name" on the current resource
-	//	"items[0].name" - the field "name" on the first array entry in "items"
-	//
+	//   "name" - the field "name" on the current resource
+	//   "items[0].name" - the field "name" on the first array entry in "items"
 	// +optional
 	Field         string `protobuf:"bytes,3,opt,name=field,proto3" json:"field,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1443,7 +1441,7 @@ type ListRequest struct {
 	// ListResponse returns only metadata for each item, without their value
 	// Available for STORE source only
 	// Does not support field/label selectors
-	// Must be cluster-wide: the key namespace has to be empty
+	// Supports both namespaced and cluster-wide STORE requests
 	KeysOnly      bool `protobuf:"varint,8,opt,name=keys_only,json=keysOnly,proto3" json:"keys_only,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

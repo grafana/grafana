@@ -30,6 +30,8 @@ import {
   type CurrentUserDTO,
 } from '@grafana/data';
 
+import { getLegacyFeatureToggleMode, reportOrBlockLegacyFeatureToggles } from './utils/legacyFeatureToggles';
+
 /**
  * @deprecated Use the type from `@grafana/data`
  */
@@ -215,9 +217,6 @@ export class GrafanaBootConfig {
   recordedQueries = {
     enabled: true,
   };
-  featureHighlights = {
-    enabled: false,
-  };
   reporting = {
     enabled: true,
   };
@@ -234,6 +233,7 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  rudderstackBatchInterval?: number;
   postHogToken?: string;
   postHogHost?: string;
   analyticsConsoleReporting = false;
@@ -241,7 +241,6 @@ export class GrafanaBootConfig {
   dashboardPerformanceMetrics: string[] = [];
   panelSeriesLimit = 0;
   dashboardDefaultPreload = false;
-  reportRenderQueryGracePeriodMs = 3000;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -292,6 +291,15 @@ export class GrafanaBootConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
+    // Installed after the overrides so the URL and localStorage switches still reach the real map,
+    // and before the bootData aliasing below so both access paths share the same proxy.
+    const legacyMode = getLegacyFeatureToggleMode();
+    if (legacyMode !== 'off') {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles
+      this.featureToggles = reportOrBlockLegacyFeatureToggles(this.featureToggles, legacyMode);
+    }
+
+    // eslint-disable-next-line @grafana/no-config-feature-toggles -- owns the legacy toggle map
     this.bootData.settings.featureToggles = this.featureToggles;
 
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
@@ -304,6 +312,7 @@ export class GrafanaBootConfig {
 // localstorage key: grafana.featureToggles
 // example value: panelEditor=1,panelInspector=1
 function overrideFeatureTogglesFromLocalStorage(config: GrafanaBootConfig) {
+  // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the localStorage toggle override
   const featureToggles = config.featureToggles;
   const localStorageKey = 'grafana.featureToggles';
   const localStorageValue = store.get(localStorageKey);
@@ -333,6 +342,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   const params = new URLSearchParams(window.location.search);
   params.forEach((value, key) => {
     if (key.startsWith('__feature.')) {
+      // eslint-disable-next-line @grafana/no-config-feature-toggles -- implements the URL toggle override
       const featureToggles = config.featureToggles as Record<string, boolean>;
       const featureName = key.substring(10);
 

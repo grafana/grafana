@@ -104,6 +104,7 @@ export function DeleteActionButton({
   text,
   yesText,
   onConfirm,
+  tooltip,
   disabled,
   disabledTooltip,
 }: {
@@ -111,6 +112,7 @@ export function DeleteActionButton({
   text: string;
   yesText: string;
   onConfirm: () => void;
+  tooltip?: string;
   disabled?: boolean;
   disabledTooltip?: string;
 }) {
@@ -129,7 +131,8 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm]);
 
-  const tooltip = (disabled && disabledTooltip) || t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+  tooltip =
+    tooltip ?? ((disabled && disabledTooltip) || t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete'));
 
   return (
     <IconButton

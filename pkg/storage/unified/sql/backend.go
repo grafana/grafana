@@ -8,7 +8,6 @@ import (
 	"iter"
 	"math"
 	"math/rand"
-	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/go-sql-driver/mysql"
-	"github.com/google/uuid"
 	"github.com/grafana/dskit/services"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
@@ -26,10 +24,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -124,10 +121,11 @@ func WithNatsNotifierShadow(s resource.EventSubscriber) StorageBackendOption {
 // WithNatsNotifier feeds the watch pipeline directly from the NATS bus instead
 // of polling. Delivery is at-most-once; the backend falls back to polling when
 // the subscriber is disabled. KV backend only.
-func WithNatsNotifier(s resource.EventSubscriber) StorageBackendOption {
+func WithNatsNotifier(s resource.EventSubscriber, invalidator resource.Invalidator) StorageBackendOption {
 	return func(o *resource.KVBackendOptions) {
 		o.EventSubscriber = s
 		o.EnableNatsNotifier = true
+		o.WatchInvalidator = invalidator
 	}
 }
 
@@ -207,7 +205,7 @@ func NewStorageBackend(
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
 	kvBackendOpts.UseChannelNotifier = !isHA
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.DBKeepAlive = eDB
 	kvBackendOpts.GCGate = gcGate
 	// The KV backend has one switch for all background write jobs, so the older
@@ -232,13 +230,6 @@ func NewStorageBackend(
 		kvBackendOpts.RvManager = rvManager
 	}
 
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
-	}
-
 	return resource.NewKVStorageBackend(kvBackendOpts)
 }
 
@@ -253,16 +244,9 @@ func newKVGrpcBackendOptions(cfg *setting.Cfg, reg prometheus.Registerer, disabl
 	kvBackendOpts := resource.NewKVBackendOptions(cfg)
 	kvBackendOpts.KvStore = kvStore
 	kvBackendOpts.Reg = reg
-	kvBackendOpts.Log = log.New("storage-backend")
+	kvBackendOpts.Log = logging.DefaultLogger.With("logger", "storage-backend")
 	kvBackendOpts.GCGate = gcGate
 	kvBackendOpts.DisableStorageServices = disableStorageServices || cfg.DisablePruner
-
-	if cfg.EnableKVLeases {
-		kvBackendOpts.EnableKVLeases = true
-		kvBackendOpts.Holder = ResolveLeaseHolder(cfg)
-		kvBackendOpts.LeaseTTL = cfg.KVLeaseTTL
-		kvBackendOpts.LeaseAutoRenew = cfg.KVLeaseAutoRenew
-	}
 
 	for _, opt := range opts {
 		opt(&kvBackendOpts)
@@ -277,27 +261,10 @@ func NewFileBackend(cfg *setting.Cfg, kvStore kv.KV) (resource.StorageBackend, e
 	}
 	return resource.NewKVStorageBackend(resource.KVBackendOptions{
 		KvStore:                 kvStore,
-		Log:                     log.New("storage-backend"),
+		Log:                     logging.DefaultLogger.With("logger", "storage-backend"),
 		DashboardVersionsToKeep: cfg.DashboardVersionsToKeep,
+		ResourceVersionMaxWait:  cfg.ResourceVersionMaxWait,
 	})
-}
-
-// ResolveLeaseHolder builds a stable-per-process identifier used for KV
-// lease ownership. Exported so other unified-storage backend wirings
-// (e.g. the enterprise unified-kv-grpc backend) can produce the same
-// holder format without duplicating the logic.
-func ResolveLeaseHolder(cfg *setting.Cfg) string {
-	id := "unknown"
-	if cfg.InstanceID != "" {
-		id = cfg.InstanceID
-	}
-
-	hostname, err := os.Hostname()
-	if err == nil {
-		id = hostname
-	}
-
-	return fmt.Sprintf("%s-%s", id, uuid.NewString())
 }
 
 type BackendOptions struct {
@@ -1134,6 +1101,12 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 	return resource.NewConflictStatusError(key.Group, key.Resource, key.Name, "requested RV does not match current RV")
 }
 
+// BatchReadResource is unsupported: the SQL backend is retiring, so batched
+// search-list reads live only on the KV backend.
+func (*backend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
+	return nil, resource.ErrBatchReadUnsupported
+}
+
 func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
 	b.logCall("ReadResource")
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
@@ -1224,7 +1197,12 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 		return 0, fmt.Errorf("only works for the 'latest' resource version")
 	}
 
-	iter := &listIter{sortAsc: false}
+	iter := &listIter{
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		var err error
 		iter.listRV, err = b.fetchLatestRV(ctx, tx, b.dialect, req.Options.Key.Group, req.Options.Key.Resource)
@@ -1336,17 +1314,39 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	return latestRv, seq
 }
 
+func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListRequest) bool {
+	if !token.KeysOnly {
+		return !req.KeysOnly || req.Options.Key.Namespace == ""
+	}
+	if !req.KeysOnly {
+		return false
+	}
+	if req.Options.Key.Namespace == "" {
+		return token.ClusterWide
+	}
+	return !token.ClusterWide && token.Namespace == req.Options.Key.Namespace
+}
+
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
 func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listAtRevision")
 	defer span.End()
 
 	// Get the RV
-	iter := &listIter{listRV: req.ResourceVersion, sortAsc: false}
+	iter := &listIter{
+		listRV:      req.ResourceVersion,
+		sortAsc:     false,
+		keysOnly:    req.KeysOnly,
+		listScope:   req.Options.Key.Namespace,
+		clusterWide: req.KeysOnly && req.Options.Key.Namespace == "",
+	}
 	if req.NextPageToken != "" {
 		continueToken, err := GetContinueToken(req.NextPageToken)
 		if err != nil {
 			return 0, fmt.Errorf("get continue token (%q): %w", req.NextPageToken, err)
+		}
+		if !continueTokenMatchesListRequest(continueToken, req) {
+			return 0, apierrors.NewBadRequest("continue token scope does not match request")
 		}
 		iter.listRV = toMicrosecondRV(continueToken.ResourceVersion)
 		iter.offset = continueToken.StartOffset
@@ -1514,6 +1514,12 @@ func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, c
 	return iter.listRV, err
 }
 
+// WatchWrittenKeys is not supported: only the KV backend reads written keys
+// from NATS.
+func (b *backend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+	return nil, resource.ErrWrittenKeysUnsupported
+}
+
 func (b *backend) WatchWriteEvents(ctx context.Context) (<-chan *resource.WrittenEvent, error) {
 	b.logCall("WatchWriteEvents")
 	if b.disableStorageServices {
@@ -1623,6 +1629,19 @@ func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.Na
 		}
 	}
 	return time.Time{}, nil
+}
+
+func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource.NamespacedResource]time.Time, error) {
+	result := make(map[resource.NamespacedResource]time.Time)
+	for entry, err := range b.GetResourceLastImportTimes(ctx) {
+		if err != nil {
+			return result, err
+		}
+		if entry.LastImportTime.After(result[entry.NamespacedResource]) {
+			result[entry.NamespacedResource] = entry.LastImportTime
+		}
+	}
+	return result, nil
 }
 
 func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {

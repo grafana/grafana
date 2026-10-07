@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	k8srest "k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -42,7 +43,6 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		AppModeProduction:    true,
 		DisableAnonymous:     true,
 		APIServerStorageType: "unified",
-		EnableSearchAPI:      true,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
 			"dashboards.dashboard.grafana.app": {DualWriterMode: rest.Mode5},
 			"folders.folder.grafana.app":       {DualWriterMode: rest.Mode5},
@@ -269,12 +269,119 @@ func TestIntegrationSearchAPI(t *testing.T) {
 		assert.Equal(t, http.StatusUnprocessableEntity, code)
 	})
 
+	// A regex leaf on a keyword field matches the way a Prometheus =~ matcher
+	// does on the same values: whole-term and case-sensitive. It does not claim
+	// full parity (empty-value and missing-field semantics differ).
+	t.Run("regex matches whole-term and case-sensitive", func(t *testing.T) {
+		eu, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "eu.*"},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Equal(t, []string{"searchapi-tags-both"}, names(eu))
+
+		prod, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "pro(d|dy)"},
+			},
+			Limit: 10,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.ElementsMatch(t, []string{"searchapi-tags-both", "searchapi-tags-prod"}, names(prod))
+
+		// notregex also matches documents that have no such tag at all, so the
+		// negation includes the tag-less dashboards, not just the mismatching one.
+		notEu, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "eu.*", Negate: true},
+			},
+			Limit: 20,
+		})
+		require.Equal(t, http.StatusOK, code)
+		assert.Contains(t, names(notEu), "searchapi-tags-prod")
+		assert.NotContains(t, names(notEu), "searchapi-tags-both")
+	})
+
+	// The backend owns the regex subset and the case-preservation rule, and reports
+	// a violation as a plain bad request, never a 500 and never an empty 200.
+	t.Run("rejects a pattern the backend cannot honour", func(t *testing.T) {
+		// Lazy quantifiers are outside the supported subset.
+		_, code := search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "tags", Pattern: "prod.*?"},
+			},
+			Limit: 10,
+		})
+		assert.Equal(t, http.StatusBadRequest, code)
+
+		// title is indexed lowercased, so a case-sensitive regex cannot be honoured.
+		_, code = search(t, ctx, helper.Org1.Admin, gvr, searchV0.SearchQuery{
+			Where: &searchV0.WhereNode{
+				Regex: &searchV0.RegexPredicate{Field: "title", Pattern: "CPU.*"},
+			},
+			Limit: 10,
+		})
+		assert.Equal(t, http.StatusBadRequest, code)
+	})
+
 	// A malformed body cannot be validated at all, so it is a bad request.
 	t.Run("rejects an unknown top-level field", func(t *testing.T) {
 		code := postRaw(t, ctx, helper.Org1.Admin, gvr,
 			[]byte(`{"apiVersion":"`+searchV0.APIVERSION+`","kind":"`+searchV0.KindSearchQuery+`","nope":1}`))
 		assert.Equal(t, http.StatusBadRequest, code)
 	})
+}
+
+func TestIntegrationSearchAndTrashIgnoreRemovedSettings(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Setenv(setting.EnvKey("grafana-apiserver", "enable_search_api"), "false")
+	t.Setenv(setting.EnvKey("grafana-apiserver", "enable_trash_api"), "false")
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:    true,
+		DisableAnonymous:     true,
+		APIServerStorageType: "unified",
+	})
+	defer helper.Shutdown()
+
+	for _, tc := range []struct {
+		groupVersion string
+		resource     string
+		trash        bool
+	}{
+		{dashboardV1.GROUP + "/" + dashboardV1.VERSION, "dashboards", true},
+		{"folder.grafana.app/v1beta1", "folders", false},
+	} {
+		t.Run(tc.resource, func(t *testing.T) {
+			rsp := apis.DoRequest(helper, apis.RequestParams{
+				User: helper.Org1.Admin,
+				Path: "/openapi/v3/apis/" + tc.groupVersion,
+			}, &spec3.OpenAPI{})
+			require.Equal(t, http.StatusOK, rsp.Response.StatusCode, string(rsp.Body))
+			require.NotNil(t, rsp.Result)
+			root := "/apis/" + tc.groupVersion + "/namespaces/{namespace}/" + tc.resource
+			require.Contains(t, rsp.Result.Paths.Paths, root+"/search")
+			if !tc.trash {
+				require.NotContains(t, rsp.Result.Paths.Paths, root+"/trash")
+				return
+			}
+			require.Contains(t, rsp.Result.Paths.Paths, root+"/trash")
+
+			// A malformed query checks that the handlers are mounted without depending on an index build.
+			for _, endpoint := range []string{"search", "trash"} {
+				response := apis.DoRequest(helper, apis.RequestParams{
+					User:        helper.Org1.Admin,
+					Method:      http.MethodPost,
+					Path:        "/apis/" + tc.groupVersion + "/namespaces/" + helper.Org1.Admin.Identity.GetNamespace() + "/" + tc.resource + "/" + endpoint,
+					Body:        []byte("{"),
+					ContentType: "application/json",
+				}, &metav1.Status{})
+				require.Equal(t, http.StatusBadRequest, response.Response.StatusCode, "%s: %s", endpoint, string(response.Body))
+			}
+		})
+	}
 }
 
 // search posts a SearchQuery to the kind's search endpoint as user, returning the

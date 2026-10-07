@@ -46,6 +46,7 @@ import (
 	dashboardmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/migrator"
 	snapshotmigrator "github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot/migrator"
 	dsmigrator "github.com/grafana/grafana/pkg/registry/apis/datasource/migrator"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	iamsso "github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	legacypreferences "github.com/grafana/grafana/pkg/registry/apis/preferences/legacy"
 	secretclock "github.com/grafana/grafana/pkg/registry/apis/secret/clock"
@@ -62,6 +63,7 @@ import (
 	playlistmigrator "github.com/grafana/grafana/pkg/registry/apps/playlist/migrator"
 	querycachingmigrator "github.com/grafana/grafana/pkg/registry/apps/querycaching/migrator"
 	shorturlmigrator "github.com/grafana/grafana/pkg/registry/apps/shorturl/migrator"
+	"github.com/grafana/grafana/pkg/router"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/dualwrite"
@@ -124,6 +126,8 @@ import (
 	ngimage "github.com/grafana/grafana/pkg/services/ngalert/image"
 	ngmetrics "github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
@@ -202,6 +206,8 @@ var withOTelSet = wire.NewSet(
 )
 
 var Basic = wire.NewSet(
+	iam.ProvideFeatures,
+	wire.Bind(new(acimpl.IAMFeatures), new(iam.Features)),
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
 	server.New,
@@ -260,6 +266,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	authinfoimpl.ProvideService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoimpl.Service)),
+	authinfoimpl.ProvideLegacyStore,
 	authinfoimpl.ProvideStore,
 	datasourceproxy.ProvideService,
 	sort.ProvideService,
@@ -275,6 +282,8 @@ var Basic = wire.NewSet(
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
+	ngprovenance.ProvideProvenanceStore,
+	ngrules.ProvideRuleStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
@@ -472,6 +481,8 @@ var Basic = wire.NewSet(
 	unifiedmigrations.ProvideMigrationStatusReader,
 	// Kubernetes API server
 	grafanaapiserver.WireSet,
+	router.ProvideService,
+	wire.Bind(new(grafanaapiserver.RequestRouter), new(*router.Service)),
 	apiregistry.WireSet,
 	appregistry.WireSet,
 	// Dashboard Kubernetes helpers
@@ -490,7 +501,7 @@ var Server = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Server only — builds the kvlease-backed Elector for the embedded zanzana
 	// reconciler. CLI/test sets bind Elector to NewDefaultElector instead, so
 	// the unified-storage KV is never opened from grafana-cli.
@@ -531,7 +542,7 @@ var Test = wire.NewSet(
 	oauthtoken.ProvideService,
 	oauthtokentest.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtokentest.Service)),
-	wire.Bind(new(cleanup.AlertRuleService), new(*ngstore.DBstore)),
+	wire.Bind(new(ngrules.MaintenanceStore), new(*ngrules.RuleStore)),
 	// Tests get a default elector — none of the integration tests today need to
 	// exercise real leader election.
 	leaderelection.NewDefaultElector,

@@ -10,6 +10,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
@@ -40,7 +41,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'Panel options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.sidebar.viz-panel.options.title-option', 'Title'),
@@ -57,6 +58,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
           title: t('dashboard.sidebar.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
+          skipField: true,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
         })
       )
@@ -140,8 +142,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public onDuplicate(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.duplicatePanel?.(this.panel);
+    duplicatePanel(this.panel);
   }
 
   public onCopy(source: EditActionSource = 'edit_pane') {
@@ -155,7 +156,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
-    return new MultiSelectedVizPanelsEditableElement(items);
+    return new MultiSelectedVizPanelsEditableElement(items, getDashboardSceneFor(this.panel));
   }
 
   public scrollIntoView() {

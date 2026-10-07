@@ -537,12 +537,12 @@ func parseNamespace(path string) string {
 	// Possbile url paths can be found here:
 	// https://github.com/kubernetes/kubernetes/blob/803e9d64952407981b3815b1d749cc96a39ba3c6/staging/src/k8s.io/apiserver/pkg/endpoints/request/requestinfo.go#L104-L127
 	const namespacePath = "/namespaces/"
-	index := strings.Index(path, namespacePath)
-	if index == -1 {
+	_, after, ok := strings.Cut(path, namespacePath)
+	if !ok {
 		return ""
 	}
 
-	parts := strings.Split(path[index+len(namespacePath):], "/")
+	parts := strings.Split(after, "/")
 	if len(parts) == 0 {
 		return ""
 	}

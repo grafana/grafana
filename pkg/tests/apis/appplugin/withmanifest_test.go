@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
+	"slices"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -26,214 +29,145 @@ import (
 // A manifest kind is served under the group the manifest declares, not the plugin id.
 const thingAPIVersion = testAppGroup + "/v1"
 
-// The manifest declares only v1, but a plugin's settings API must keep working
-// after a manifest ships, so v0alpha1 is served alongside the manifest versions.
-func TestIntegrationPluginManifestDiscovery(t *testing.T) {
+// A manifest serves only its declared API; settings stay under the plugin ID.
+func TestIntegrationPluginManifestSettingsUsePluginID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5,
+		featuremgmt.FlagGrafanaUseRouterMiddleware,
+		featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings,
+	)
 
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
 	require.JSONEq(t, `[
-		{
-			"version": "v1",
-			"freshness": "Current",
-			"resources": [
-				{
-					"resource": "app",
-					"responseKind": {
-						"group": "",
-						"kind": "Settings",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "app",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "HealthCheckResult",
-								"version": ""
-							},
-							"subresource": "health",
-							"verbs": [
-								"get"
-							]
-						},
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Status",
-								"version": ""
-							},
-							"subresource": "resources",
-							"verbs": [
-								"create",
-								"delete",
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				},
-				{
-					"resource": "things",
-					"responseKind": {
-						"group": "",
-						"kind": "Thing",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "thing",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Thing",
-								"version": ""
-							},
-							"subresource": "status",
-							"verbs": [
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				},
-				{
-					"resource": "widgets",
-					"responseKind": {
-						"group": "",
-						"kind": "Widget",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "widget",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Widget",
-								"version": ""
-							},
-							"subresource": "status",
-							"verbs": [
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				}
-			]
-		},
-		{
-			"version": "v0alpha1",
-			"freshness": "Current",
-			"resources": [
-				{
-					"resource": "app",
-					"responseKind": {
-						"group": "",
-						"kind": "Settings",
-						"version": ""
-					},
-					"scope": "Namespaced",
-					"singularResource": "app",
-					"subresources": [
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "HealthCheckResult",
-								"version": ""
-							},
-							"subresource": "health",
-							"verbs": [
-								"get"
-							]
-						},
-						{
-							"responseKind": {
-								"group": "",
-								"kind": "Status",
-								"version": ""
-							},
-							"subresource": "resources",
-							"verbs": [
-								"create",
-								"delete",
-								"get",
-								"patch",
-								"update"
-							]
-						}
-					],
-					"verbs": [
-						"create",
-						"delete",
-						"deletecollection",
-						"get",
-						"list",
-						"patch",
-						"update",
-						"watch"
-					]
-				}
-			]
-		}
-	]`, disco)
+  {
+    "version": "v1",
+    "freshness": "Current",
+    "resources": [
+      {
+        "resource": "things",
+        "responseKind": {
+          "group": "",
+          "kind": "Thing",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "thing",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "Thing",
+              "version": ""
+            },
+            "subresource": "status",
+            "verbs": [
+              "get",
+              "patch",
+              "update"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      },
+      {
+        "resource": "widgets",
+        "responseKind": {
+          "group": "",
+          "kind": "Widget",
+          "version": ""
+        },
+        "scope": "Namespaced",
+        "singularResource": "widget",
+        "subresources": [
+          {
+            "responseKind": {
+              "group": "",
+              "kind": "Widget",
+              "version": ""
+            },
+            "subresource": "status",
+            "verbs": [
+              "get",
+              "patch",
+              "update"
+            ]
+          }
+        ],
+        "verbs": [
+          "create",
+          "delete",
+          "deletecollection",
+          "get",
+          "list",
+          "patch",
+          "update",
+          "watch"
+        ]
+      }
+    ]
+  }
+]`, disco)
+	settingsDiscovery, err := helper.GetGroupVersionInfoJSON(testAppID)
+	require.NoError(t, err)
+	require.Contains(t, settingsDiscovery, `"resource": "app"`)
+	require.Contains(t, settingsDiscovery, `"version": "v0alpha1"`)
+	for _, version := range []string{"v1", "v0alpha1"} {
+		client := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: helper.Org1.Admin,
+			GVR:  schema.GroupVersionResource{Group: testAppGroup, Version: version, Resource: "app"},
+		})
+		_, err := client.Resource.List(t.Context(), metav1.ListOptions{})
+		require.True(t, apierrors.IsNotFound(err), "settings must not be served under the manifest group: %v", err)
+	}
 }
 
-// TestIntegrationPluginManifestOpenAPIV2 verifies the aggregate spec resolves manifest schemas.
-func TestIntegrationPluginManifestOpenAPIV2(t *testing.T) {
+// TestIntegrationPluginManifestOpenAPIV3 verifies discovery links resolve the plugin's schemas.
+func TestIntegrationPluginManifestOpenAPIV3(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	for _, keepSettings := range []bool{false, true} {
+		t.Run(fmt.Sprintf("keepSettings=%t", keepSettings), func(t *testing.T) {
+			features := []string{featuremgmt.FlagGrafanaUseRouterMiddleware}
+			if keepSettings {
+				features = append(features, featuremgmt.FlagApppluginsLoadAppManifestAndKeepSettings)
+			}
+			helper := setupHelperWithManifest(t, rest.Mode5, features...)
 
-	disco := helper.NewDiscoveryClient()
-	result := disco.RESTClient().Get().AbsPath("/openapi/v2").Do(context.Background())
-	require.NoError(t, result.Error())
+			disco := helper.NewDiscoveryClient()
+			paths, err := disco.OpenAPIV3().Paths()
+			require.NoError(t, err)
+			require.Contains(t, paths, "apis/"+testAppGroup+"/v1")
+			_, hasSettingsVersion := paths["apis/"+testAppGroup+"/v0alpha1"]
+			require.False(t, hasSettingsVersion)
+			require.Contains(t, paths, "apis/folder.grafana.app/v1", "embedded APIs must remain discoverable")
 
-	var statusCode int
-	result.StatusCode(&statusCode)
-	require.Equal(t, 200, statusCode)
-
-	raw, err := result.Raw()
-	require.NoError(t, err)
-	require.Contains(t, string(raw), testAppGroup)
+			raw, err := paths["apis/"+testAppGroup+"/v1"].Schema("application/json")
+			require.NoError(t, err)
+			doc, err := openapi3.NewLoader().LoadFromData(raw)
+			require.NoError(t, err, "all schema references must resolve")
+			require.Nil(t, doc.Paths.Find("/apis/"+testAppGroup+"/v1/namespaces/{namespace}/app/instance"))
+			path := "/apis/" + testAppGroup + "/v1/namespaces/{namespace}/things/{name}"
+			thing := doc.Paths.Find(path)
+			require.NotNil(t, thing)
+			response := thing.Get.Responses.Status(http.StatusOK)
+			require.NotNil(t, response)
+			spec := response.Value.Content["application/json"].Schema.Value.Properties["spec"]
+			require.NotNil(t, spec)
+			require.True(t, spec.Value.Properties["foo"].Value.Type.Is("string"))
+			require.True(t, spec.Value.Properties["count"].Value.Type.Is("integer"))
+		})
+	}
 }
 
 // newThing is the body of a valid Thing, ready to be given a name.
@@ -269,7 +203,7 @@ func thingsClient(t *testing.T, helper *apis.K8sTestHelper) dynamic.ResourceInte
 func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	client := thingsClient(t, helper)
 	ctx := context.Background()
 
@@ -483,7 +417,7 @@ func TestIntegrationPluginManifestKindCRUD(t *testing.T) {
 func TestIntegrationPluginManifestFolderScopedKind(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	ctx := context.Background()
 	client := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
@@ -577,7 +511,10 @@ func createFolder(t *testing.T, ctx context.Context, helper *apis.K8sTestHelper,
 func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagPluginStoreServiceLoading)
+	helper := setupHelperWithManifest(t, rest.Mode5,
+		featuremgmt.FlagGrafanaUseRouterMiddleware,
+		featuremgmt.FlagPluginStoreServiceLoading,
+	)
 
 	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
 	require.NoError(t, err)
@@ -590,7 +527,7 @@ func TestIntegrationPluginManifestServiceLoading(t *testing.T) {
 func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := setupHelperWithManifest(t, rest.Mode5)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
 	client := helper.NewDiscoveryClient().RESTClient()
 	ctx := context.Background()
 
@@ -608,18 +545,17 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	require.Contains(t, doc.Paths, prefix+"/{name}/reload", "the kind route belongs in the OpenAPI spec")
 	require.Contains(t, doc.Paths, prefix+"/{name}", "alongside the kind's own paths")
 
-	// Search is mounted on the terms every other Grafana kind gets it on: Thing
-	// declares search fields, so it is enrolled, and its endpoint names its own
-	// path so it can never collide with a kind route, which is always mounted
-	// under an object name.
+	// Search is mounted on the terms every other Grafana kind gets it on, and its
+	// endpoint names its own path so it can never collide with a kind route,
+	// which is always mounted under an object name.
 	require.Contains(t, doc.Paths, prefix+"/search")
 	// Trash grants access to whoever deleted the object; no plugin kind is on
 	// the allowlist for it.
 	require.NotContains(t, doc.Paths, prefix+"/trash")
 
-	// Widget declares no search fields, so it is not enrolled -- declaring them
-	// is what marks a kind as reviewed for search.
-	require.NotContains(t, doc.Paths,
+	// Widget declares no search fields, which is no longer a reason to withhold
+	// the endpoint: search over the fields every resource has still works.
+	require.Contains(t, doc.Paths,
 		"/apis/"+testAppGroup+"/v1/namespaces/{namespace}/widgets/search")
 
 	route := "/apis/" + testAppGroup + "/v1/namespaces/default/things/thing-route/reload"
@@ -658,9 +594,70 @@ func TestIntegrationPluginManifestKindRoutes(t *testing.T) {
 	raw, err = client.Get().AbsPath(route).DoRaw(ctx)
 	require.Error(t, err)
 
-	// The lazy v3 client returns a ServiceUnavailable, but httpadapter.HandlerFunc
-	// turns any CallRoute failure into a plain-text 500, so the status reason
-	// and the k8s Status body are both lost on the way out.
-	require.True(t, apierrors.IsInternalError(err), "got %v", err)
+	// The lazy v3 client returns a ServiceUnavailable, and httpadapter.HandlerFunc
+	// preserves APIStatus errors and their Kubernetes Status body.
+	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+	require.Contains(t, string(raw), "does not implement ClientV3")
+}
+
+func TestIntegrationPluginManifestDiscovery(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := setupHelperWithManifest(t, rest.Mode5, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
+	require.NoError(t, err)
+	var versions []struct {
+		Version   string `json:"version"`
+		Resources []struct {
+			Resource string `json:"resource"`
+		} `json:"resources"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
+	require.Len(t, versions, 1)
+	require.Equal(t, "v1", versions[0].Version)
+	require.NotEmpty(t, versions[0].Resources)
+	for _, resource := range versions[0].Resources {
+		require.NotEqual(t, "app", resource.Resource)
+	}
+}
+
+// A manifest may declare custom routes and no kinds. The version still needs
+// storage for the apiserver to install it, and that placeholder must not leak
+// into the OpenAPI spec.
+func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := setupHelperFull(t, rest.Mode5, "app-sdk-manifest-routes-only.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+	client := helper.NewDiscoveryClient().RESTClient()
+	ctx := context.Background()
+
+	disco, err := helper.GetGroupVersionInfoJSON(testAppGroup)
+	require.NoError(t, err)
+	var versions []struct {
+		Version   string `json:"version"`
+		Resources []struct {
+			Resource string   `json:"resource"`
+			Verbs    []string `json:"verbs"`
+		} `json:"resources"`
+	}
+	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
+	require.Len(t, versions, 1)
+	require.Equal(t, "v1", versions[0].Version)
+	// The placeholder is visible in discovery, but serves no verbs.
+	for _, resource := range versions[0].Resources {
+		require.Empty(t, resource.Verbs, "resource %s", resource.Resource)
+	}
+
+	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppGroup + "/v1").DoRaw(ctx)
+	require.NoError(t, err)
+	var doc struct {
+		Paths map[string]json.RawMessage `json:"paths"`
+	}
+	require.NoError(t, json.Unmarshal(raw, &doc))
+	root := "/apis/" + testAppGroup + "/v1/"
+	require.ElementsMatch(t, []string{root, root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)))
+
+	// The route is mounted and reaches the plugin, which has no v3 backend.
+	raw, err = client.Get().AbsPath(root + "namespaces/default/ping").DoRaw(ctx)
+	require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
 	require.Contains(t, string(raw), "does not implement ClientV3")
 }

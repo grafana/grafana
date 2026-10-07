@@ -35,9 +35,20 @@ type evalContext struct {
 type APIBuilder struct {
 	providerType    setting.OpenFeatureProviderType
 	url             *url.URL
+	goffURL         *url.URL
 	transport       *http.Transport
 	staticEvaluator featuremgmt.StaticFlagEvaluator
 	logger          log.Logger
+	hgOverrideFlags map[string]bool
+}
+
+func (b *APIBuilder) EnableLegacyOverrideLookupBypass(goffURL *url.URL, flagsWithOverrides []string) {
+	b.logger.Info("Legacy override lookup bypass configured", "goffURL", goffURL.String(), "flagsWithOverridesCount", len(flagsWithOverrides))
+	b.goffURL = goffURL
+	b.hgOverrideFlags = make(map[string]bool, len(flagsWithOverrides))
+	for _, f := range flagsWithOverrides {
+		b.hgOverrideFlags[f] = true
+	}
 }
 
 func NewAPIBuilder(providerType setting.OpenFeatureProviderType, url *url.URL, insecure bool, caFile string, staticEvaluator featuremgmt.StaticFlagEvaluator) (*APIBuilder, error) {

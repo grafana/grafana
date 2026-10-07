@@ -8,11 +8,10 @@ import (
 	"path/filepath"
 	"slices"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,6 +40,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngalertprovisioning "github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	ngalertstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngalertprovenance "github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
+	ngalertrules "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	ngalertfakes "github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
@@ -386,7 +387,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	uid := uuid.NewString()
+	uid := uuid.NewV4().String()
 	err = s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 		UID:            uid,
 		SessionUID:     sess.UID,
@@ -424,7 +425,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		cloudmigration.SnapshotStatusProcessing,
 	} {
 		// in this case since the background sync will run, we can create a brand new snapshot to avoid race problems.
-		snapshotUID := uuid.NewString()
+		snapshotUID := uuid.NewV4().String()
 		require.NoError(t, s.store.CreateSnapshot(context.Background(), cloudmigration.CloudMigrationSnapshot{
 			UID:            snapshotUID,
 			SessionUID:     sess.UID,
@@ -445,7 +446,7 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 			func() bool {
 				cms, err := s.store.GetSnapshotByUID(context.Background(), sess.OrgID, sess.UID, snapshotUID, cloudmigration.SnapshotResultQueryParams{})
 				return err == nil && cms != nil && cms.Status == cloudmigration.SnapshotStatusFinished &&
-					atomic.LoadInt32(&s.isSyncSnapshotStatusFromGMSRunning) == 0
+					s.isSyncSnapshotStatusFromGMSRunning.Load() == 0
 			},
 			5*time.Second,
 			100*time.Millisecond,
@@ -919,7 +920,7 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 
 	cfg.CloudMigration.Enabled = true
 	cfg.CloudMigration.IsDeveloperMode = true // ensure local implementations are used
-	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewString())
+	cfg.CloudMigration.SnapshotFolder = filepath.Join(os.TempDir(), uuid.NewV4().String())
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 
@@ -948,15 +949,19 @@ func setUpServiceTest(t *testing.T, cfgOverrides ...configOverrides) cloudmigrat
 	cfg.UnifiedAlerting.DefaultRuleEvaluationInterval = time.Minute
 	cfg.UnifiedAlerting.BaseInterval = time.Minute
 	cfg.UnifiedAlerting.InitializationTimeout = 30 * time.Second
-	ruleStore, err := ngalertstore.ProvideDBStore(cfg, featureToggles, sqlStore, mockFolder, dashboardService, accessControl, bus)
+	alertingStore, err := ngalertstore.ProvideDBStore(sqlStore)
+	require.NoError(t, err)
+	provenanceStore := ngalertprovenance.ProvideProvenanceStore(featureToggles, sqlStore)
+	ruleStore, err := ngalertrules.ProvideRuleStore(cfg, featureToggles, sqlStore, mockFolder, accessControl, provenanceStore)
 	require.NoError(t, err)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featureToggles, nil, nil, rr, sqlStore, kvStore, nil, nil, ngalertprovisioning.NoopRuleMutationValidator{}, quotatest.New(false, nil),
 		secretsService, nil, alertMetrics, mockFolder, accessControl, dashboardService, nil, bus, fakeAccessControlService,
-		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, ruleStore,
+		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore,
 		httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
+		nil, // cfgProvider
 	)
 	require.NoError(t, err)
 

@@ -10,13 +10,13 @@ import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/fi
 import { ALERTMANAGER_NAME_QUERY_KEY, GRAFANA_RULES_SOURCE_NAME } from 'app/features/alerting/unified/utils/constants';
 import { ALERTING_PATHS, alertListPageLink } from 'app/features/alerting/unified/utils/navigation';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
-import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { severityLevelRank } from './severity';
+import { type TeamSelection, resolveTeamScope } from './teamFilter';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
 function alertSeverityLevel(alert: AlertmanagerAlert) {
@@ -62,17 +62,19 @@ function buildTolerantTeamMatchers(teamNames: string[]) {
  * an explicit "All teams" pick means no filter at all, a specific team wins next,
  * and with no selection we fall back to the user's own teams when they have any.
  */
-function resolveTeamMatchers(selectedTeam: string | undefined, userTeamNames: string[]) {
-  if (selectedTeam === ALL_VARIABLE_VALUE) {
-    return [];
+function resolveTeamMatchers(selectedTeam: TeamSelection, userTeamNames: string[]) {
+  const scope = resolveTeamScope(selectedTeam);
+  switch (scope.kind) {
+    case 'all':
+      return [];
+    case 'team':
+      // Dropdown selections are real `team` label values, so they're matched exactly.
+      return buildTeamMatchers([scope.team]);
+    case 'default':
+      // The `team` alert label is free-form — typically some slugged or re-cased variant
+      // of the Grafana team name — so the own-teams default matches tolerantly.
+      return buildTolerantTeamMatchers(userTeamNames);
   }
-  if (selectedTeam) {
-    // Dropdown selections are real `team` label values, so they're matched exactly.
-    return buildTeamMatchers([selectedTeam]);
-  }
-  // The `team` alert label is free-form — typically some slugged or re-cased variant
-  // of the Grafana team name — so the own-teams default matches tolerantly.
-  return buildTolerantTeamMatchers(userTeamNames);
 }
 
 // Exported so the homepage skeleton reserves the card slot using the same gate.
@@ -87,7 +89,7 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
  * When `selectedTeam` is set (from the team dropdown) it overrides the default
  * filter of the user's own teams.
  */
-export function useFiringAlerts(selectedTeam?: string) {
+export function useFiringAlerts(selectedTeam: TeamSelection = '') {
   // The hook gates its own fetching so it's safe to call unconditionally,
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();

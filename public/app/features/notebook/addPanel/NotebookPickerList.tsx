@@ -82,7 +82,7 @@ export function NotebookPickerList({
         <Text color="secondary">
           {!isFiltered ? (
             // Pointing at the create tab is only advice if the reader has one. Adding to an existing
-            // notebook needs dashboards:write and creating needs dashboards:create, so a reader can
+            // notebook needs notebooks:write and creating needs notebooks:create, so a reader can
             // open this picker with no way to make the notebook it is telling them to make.
             canCreate ? (
               <Trans i18nKey="notebooks.add-panel.list-none">You have no notebooks yet. Create one instead.</Trans>

@@ -6,6 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { type VizPanel } from '@grafana/scenes';
 import { Button, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { duplicatePanel } from '../../actions/layout/duplicatePanel';
 import { getEditableElementFor } from '../../actions/utils/getEditableElementFor';
 import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
@@ -79,7 +80,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
   const onClickDuplicate = () => {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('duplicate', panelId, 'edit_popover');
-    getLayoutManagerFor(panel).duplicatePanel?.(panel);
+    duplicatePanel(panel);
   };
 
   const onClickDelete = () => {

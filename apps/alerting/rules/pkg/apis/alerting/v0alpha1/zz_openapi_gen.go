@@ -9,6 +9,7 @@ import (
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
 		AlertRule{}.OpenAPIModelName():                                                 schema_pkg_apis_alerting_v0alpha1_AlertRule(ref),
+		AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_AlertRuleAlertRuleInstanceTotals(ref),
 		AlertRuleExpression{}.OpenAPIModelName():                                       schema_pkg_apis_alerting_v0alpha1_AlertRuleExpression(ref),
 		AlertRuleIntervalTrigger{}.OpenAPIModelName():                                  schema_pkg_apis_alerting_v0alpha1_AlertRuleIntervalTrigger(ref),
 		AlertRuleList{}.OpenAPIModelName():                                             schema_pkg_apis_alerting_v0alpha1_AlertRuleList(ref),
@@ -20,13 +21,14 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		AlertRuleSpec{}.OpenAPIModelName():                                             schema_pkg_apis_alerting_v0alpha1_AlertRuleSpec(ref),
 		AlertRuleStatus{}.OpenAPIModelName():                                           schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref),
 		AlertRulestatusOperatorState{}.OpenAPIModelName():                              schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref),
-		CreateSearchRulesBody{}.OpenAPIModelName():                                     schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesBody(ref),
-		CreateSearchRulesFacetValue{}.OpenAPIModelName():                               schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesFacetValue(ref),
-		CreateSearchRulesResponse{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref),
-		CreateSearchRulesRuleSearchHitFields{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesRuleSearchHitFields(ref),
-		CreateSearchRulesSearchResultHit{}.OpenAPIModelName():                          schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultHit(ref),
-		CreateSearchRulesSearchResultResource{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultResource(ref),
-		CreateSearchRulesSearchResultsMetadata{}.OpenAPIModelName():                    schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultsMetadata(ref),
+		Config{}.OpenAPIModelName():                                                    schema_pkg_apis_alerting_v0alpha1_Config(ref),
+		ConfigCondition{}.OpenAPIModelName():                                           schema_pkg_apis_alerting_v0alpha1_ConfigCondition(ref),
+		ConfigList{}.OpenAPIModelName():                                                schema_pkg_apis_alerting_v0alpha1_ConfigList(ref),
+		ConfigSpec{}.OpenAPIModelName():                                                schema_pkg_apis_alerting_v0alpha1_ConfigSpec(ref),
+		ConfigStatus{}.OpenAPIModelName():                                              schema_pkg_apis_alerting_v0alpha1_ConfigStatus(ref),
+		ConfigV0alpha1SpecExternalRulerSync{}.OpenAPIModelName():                       schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref),
+		ConfigV0alpha1StatusExternalRulerSync{}.OpenAPIModelName():                     schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref),
+		ConfigstatusOperatorState{}.OpenAPIModelName():                                 schema_pkg_apis_alerting_v0alpha1_ConfigstatusOperatorState(ref),
 		ListAlertRuleSearchRulesV0alpha1Body{}.OpenAPIModelName():                      schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1Body(ref),
 		ListAlertRuleSearchRulesV0alpha1FacetValue{}.OpenAPIModelName():                schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1FacetValue(ref),
 		ListAlertRuleSearchRulesV0alpha1Response{}.OpenAPIModelName():                  schema_pkg_apis_alerting_v0alpha1_ListAlertRuleSearchRulesV0alpha1Response(ref),
@@ -102,6 +104,55 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRule(ref common.ReferenceCallback) c
 		},
 		Dependencies: []string{
 			AlertRuleSpec{}.OpenAPIModelName(), AlertRuleStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_AlertRuleAlertRuleInstanceTotals(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Count of alert instances per state. error also counts instances whose evaluation errored but were mapped to another state via execErrState, so it can overlap.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"healthy": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"firing": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"pending": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"recovering": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"nodata": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"error": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -531,6 +582,43 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"health": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"stateReason": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"lastEvaluationTime": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"evaluationDuration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "duration of the last evaluation in seconds",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
+					"lastError": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -543,6 +631,11 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 									},
 								},
 							},
+						},
+					},
+					"totals": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName()),
 						},
 					},
 					"additionalFields": {
@@ -564,7 +657,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRuleStatus(ref common.ReferenceCallb
 			},
 		},
 		Dependencies: []string{
-			AlertRulestatusOperatorState{}.OpenAPIModelName()},
+			AlertRuleAlertRuleInstanceTotals{}.OpenAPIModelName(), AlertRulestatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
@@ -619,89 +712,7 @@ func schema_pkg_apis_alerting_v0alpha1_AlertRulestatusOperatorState(ref common.R
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesBody(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "listMeta is intentionally omitted: #SearchResults carries its own metadata (continue, totalHits).",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"metadata": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(CreateSearchRulesSearchResultsMetadata{}.OpenAPIModelName()),
-						},
-					},
-					"items": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Ref: ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"facets": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"metadata", "items"},
-			},
-		},
-		Dependencies: []string{
-			CreateSearchRulesFacetValue{}.OpenAPIModelName(), CreateSearchRulesSearchResultHit{}.OpenAPIModelName(), CreateSearchRulesSearchResultsMetadata{}.OpenAPIModelName()},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesFacetValue(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "#FacetValue is a single value/count pair in a facet breakdown.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"value": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"count": {
-						SchemaProps: spec.SchemaProps{
-							Default: 0,
-							Type:    []string{"integer"},
-							Format:  "int64",
-						},
-					},
-				},
-				Required: []string{"value", "count"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_Config(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
@@ -724,7 +735,110 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.Refe
 					"metadata": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref(CreateSearchRulesSearchResultsMetadata{}.OpenAPIModelName()),
+							Ref:     ref(metav1.ObjectMeta{}.OpenAPIModelName()),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the Config",
+							Default:     map[string]interface{}{},
+							Ref:         ref(ConfigSpec{}.OpenAPIModelName()),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(ConfigStatus{}.OpenAPIModelName()),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec", "status"},
+			},
+		},
+		Dependencies: []string{
+			ConfigSpec{}.OpenAPIModelName(), ConfigStatus{}.OpenAPIModelName(), metav1.ObjectMeta{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_ConfigCondition(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "Condition mirrors metav1.Condition. Inlined because the app-sdk codegen here can't reference metav1.Condition from CUE. Field semantics are k8s-standard; reason values are produced by SyncReason in the syncer.",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"type": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"lastTransitionTime": {
+						SchemaProps: spec.SchemaProps{
+							Description: "RFC3339",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"reason": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"message": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"observedGeneration": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+				},
+				Required: []string{"type", "status", "lastTransitionTime", "reason"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_ConfigList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(metav1.ListMeta{}.OpenAPIModelName()),
 						},
 					},
 					"items": {
@@ -733,27 +847,7 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.Refe
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Ref: ref(CreateSearchRulesSearchResultHit{}.OpenAPIModelName()),
-									},
-								},
-							},
-						},
-					},
-					"facets": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type: []string{"array"},
-										Items: &spec.SchemaOrArray{
-											Schema: &spec.Schema{
-												SchemaProps: spec.SchemaProps{
-													Ref: ref(CreateSearchRulesFacetValue{}.OpenAPIModelName()),
-												},
-											},
-										},
+										Ref: ref(Config{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -764,253 +858,202 @@ func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesResponse(ref common.Refe
 			},
 		},
 		Dependencies: []string{
-			CreateSearchRulesFacetValue{}.OpenAPIModelName(), CreateSearchRulesSearchResultHit{}.OpenAPIModelName(), CreateSearchRulesSearchResultsMetadata{}.OpenAPIModelName()},
+			Config{}.OpenAPIModelName(), metav1.ListMeta{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesRuleSearchHitFields(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_ConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#RuleSearchHitFields is the per-kind field payload returned on each hit. It carries the union of alert- and recording-rule search fields; only the fields relevant to a hit's kind are populated. This maps to the kind's declared searchFields.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"externalRulerSync": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref(ConfigV0alpha1SpecExternalRulerSync{}.OpenAPIModelName()),
 						},
 					},
-					"folder": {
+				},
+			},
+		},
+		Dependencies: []string{
+			ConfigV0alpha1SpecExternalRulerSync{}.OpenAPIModelName()},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_ConfigStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"observedGeneration": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Description: "observedGeneration is the spec.generation last evaluated by the controllers writing this status.",
+							Type:        []string{"integer"},
+							Format:      "int64",
 						},
 					},
-					"type": {
+					"externalRulerSync": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
+							Ref: ref(ConfigV0alpha1StatusExternalRulerSync{}.OpenAPIModelName()),
 						},
 					},
-					"interval": {
+					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"paused": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"boolean"},
-							Format: "",
-						},
-					},
-					"labels": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"object"},
-							AdditionalProperties: &spec.SchemaOrBool{
-								Allows: true,
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"datasourceUIDs": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
-										Format: "",
-									},
-								},
-							},
-						},
-					},
-					"annotations": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Alert-rule fields.",
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
 							Type:        []string{"object"},
 							AdditionalProperties: &spec.SchemaOrBool{
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Type:   []string{"string"},
+										Ref: ref(ConfigstatusOperatorState{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"conditions": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Standard k8s-style condition list. Each binary-state feature owns one condition type. Current types:\n  - ExternalRulerSynced: True after a successful sync, False after a\n    failed attempt, Unknown until the first attempt.",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(ConfigCondition{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
 										Format: "",
 									},
 								},
 							},
 						},
 					},
-					"for": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"keepFiringFor": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"dashboardUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"panelID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"receiver": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"notificationType": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"routingTree": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"metric": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Recording-rule fields.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
-					"targetDatasourceUID": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
 				},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultHit(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultHit is a single match: its identity, an optional relevance score (present only when the query included free text), and the requested fields.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"resource": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(CreateSearchRulesSearchResultResource{}.OpenAPIModelName()),
-						},
-					},
-					"score": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"number"},
-							Format: "double",
-						},
-					},
-					"fields": {
-						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref(CreateSearchRulesRuleSearchHitFields{}.OpenAPIModelName()),
-						},
-					},
-				},
-				Required: []string{"resource", "fields"},
 			},
 		},
 		Dependencies: []string{
-			CreateSearchRulesRuleSearchHitFields{}.OpenAPIModelName(), CreateSearchRulesSearchResultResource{}.OpenAPIModelName()},
+			ConfigCondition{}.OpenAPIModelName(), ConfigV0alpha1StatusExternalRulerSync{}.OpenAPIModelName(), ConfigstatusOperatorState{}.OpenAPIModelName()},
 	}
 }
 
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1SpecExternalRulerSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultResource is the full identity of a hit.",
-				Type:        []string{"object"},
+				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"group": {
+					"datasourceUid": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
+							Description: "datasourceUid is the UID of the Mimir/Cortex Prometheus datasource to sync alert rules from. Empty means no sync is configured for the current org. The operator ini setting `unified_alerting.external_ruler_uid` overrides this when set; see status.externalRulerSync.origin.",
+							Type:        []string{"string"},
+							Format:      "",
 						},
 					},
-					"resource": {
+					"pollInterval": {
 						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"kind": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-					"name": {
-						SchemaProps: spec.SchemaProps{
-							Default: "",
-							Type:    []string{"string"},
-							Format:  "",
-						},
-					},
-				},
-				Required: []string{"group", "resource", "kind", "name"},
-			},
-		},
-	}
-}
-
-func schema_pkg_apis_alerting_v0alpha1_CreateSearchRulesSearchResultsMetadata(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "#SearchResultsMetadata carries the paging token and total authorised match count.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"continue": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"string"},
-							Format: "",
-						},
-					},
-					"totalHits": {
-						SchemaProps: spec.SchemaProps{
-							Type:   []string{"integer"},
-							Format: "int64",
-						},
-					},
-					"totalHitsRelation": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Always read totalHits together with totalHitsRelation.",
+							Description: "pollInterval sets how often this org's rules are re-synced from datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The worker checks orgs against a short internal baseline and only does real work for an org once its own pollInterval has elapsed, so this is a lower bound, not a guarantee — an org's actual sync can lag slightly past its configured interval. Has no effect on the operator ini path, which always uses the 5m default.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_ConfigV0alpha1StatusExternalRulerSync(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"datasourceUid": {
+						SchemaProps: spec.SchemaProps{
+							Description: "datasourceUid is the UID actually used on the last sync attempt; may lag spec until the next tick. When origin=ini, this is the ini override value.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"origin": {
+						SchemaProps: spec.SchemaProps{
+							Description: "origin records which source supplied datasourceUid on the last run. \"ini\" (grafana.ini's unified_alerting.external_ruler_uid) wins over \"api\" (spec.externalRulerSync.datasourceUid).",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"lastAppliedHash": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastAppliedHash is the upstream config hash from the last successful sync via this resource. The worker reads it back (API path only) to skip an unchanged re-apply across restarts and replicas, where an in-memory-only dedup cache would otherwise start empty. Internal bookkeeping; not user-facing.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_alerting_v0alpha1_ConfigstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
 			},
 		},
 	}
@@ -1825,6 +1868,25 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"health": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"lastEvaluationTime": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "date-time",
+						},
+					},
+					"evaluationDuration": {
+						SchemaProps: spec.SchemaProps{
+							Description: "duration of the last evaluation in seconds",
+							Type:        []string{"number"},
+							Format:      "double",
+						},
+					},
 					"operatorStates": {
 						SchemaProps: spec.SchemaProps{
 							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
@@ -1837,6 +1899,12 @@ func schema_pkg_apis_alerting_v0alpha1_RecordingRuleStatus(ref common.ReferenceC
 									},
 								},
 							},
+						},
+					},
+					"lastError": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 					"additionalFields": {

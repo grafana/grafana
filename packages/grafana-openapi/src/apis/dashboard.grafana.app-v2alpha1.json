@@ -279,6 +279,44 @@
         }
       }
     },
+    "/dashboards/search/hybrid": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Hybrid lexical and semantic search for Dashboard resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
+        "operationId": "listDashboardHybridSearchV2alpha1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A HybridSearchQuery describing what to match and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HybridSearchQuery"
+              },
+              "example": {
+                "kind": "HybridSearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "query": "production",
+                "limit": 10,
+                "skipRerank": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A HybridSearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HybridSearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboards/trash": {
       "post": {
         "tags": ["Search"],
@@ -838,12 +876,7 @@
           "variables": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardActionVariable"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardActionVariable"
             }
           }
         }
@@ -899,15 +932,13 @@
           "valueLabels": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -943,12 +974,7 @@
           "baseFilters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "datasource": {
@@ -957,12 +983,7 @@
           "defaultKeys": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardMetricFindValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardMetricFindValue"
             }
           },
           "description": {
@@ -975,12 +996,7 @@
           "filters": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAdHocFilterWithLabels"
             }
           },
           "hide": {
@@ -1031,8 +1047,7 @@
             "type": "array",
             "items": {
               "type": "number",
-              "format": "double",
-              "default": 0
+              "format": "double"
             }
           }
         }
@@ -1091,12 +1106,7 @@
             "description": "Mappings define how to convert data frame fields to annotation event fields.",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationEventFieldMapping"
             }
           },
           "name": {
@@ -1182,12 +1192,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAutoGridLayoutItemKind"
             }
           },
           "maxColumnCount": {
@@ -1516,12 +1521,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "query": {
@@ -1580,8 +1580,7 @@
             "description": "List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "targetBlank": {
@@ -1683,6 +1682,10 @@
             "description": "Options to be passed to the transformer Valid options depend on the transformer id",
             "type": "object"
           },
+          "refId": {
+            "description": "Unique identifier of the instance of the transformer",
+            "type": "string"
+          },
           "topic": {
             "description": "Where to pull DataFrames from as input to transformation",
             "type": "string"
@@ -1765,12 +1768,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "pluginId": {
@@ -1830,8 +1828,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -1845,8 +1842,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -1888,12 +1884,7 @@
             "description": "Define interactive HTTP requests that can be triggered from data visualizations.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAction"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAction"
             }
           },
           "color": {
@@ -2008,12 +1999,7 @@
             "description": "Overrides are the options applied to specific fields overriding the defaults.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardV2alpha1FieldConfigSourceOverrides"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardV2alpha1FieldConfigSourceOverrides"
             }
           }
         }
@@ -2133,12 +2119,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardGridLayoutItemKind"
             }
           }
         }
@@ -2202,12 +2183,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "skipUrlSync": {
@@ -2232,8 +2208,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -2247,8 +2222,7 @@
             "items": {
               "type": "array",
               "items": {
-                "type": "string",
-                "default": ""
+                "type": "string"
               }
             }
           },
@@ -2331,12 +2305,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "query": {
@@ -2424,12 +2393,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Dashboard"
-                }
-              ]
+              "$ref": "#/components/schemas/Dashboard"
             }
           },
           "kind": {
@@ -2512,6 +2476,7 @@
         }
       },
       "DashboardPanelKindOrLibraryPanelKind": {
+        "description": "Supported dashboard elements |* more element types in the future",
         "type": "object",
         "properties": {
           "LibraryPanelKind": {
@@ -2589,12 +2554,7 @@
           "links": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDataLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDataLink"
             }
           },
           "subtitle": {
@@ -2643,12 +2603,7 @@
           "queries": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardPanelQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardPanelQueryKind"
             }
           },
           "queryOptions": {
@@ -2662,12 +2617,7 @@
           "transformations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTransformationKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTransformationKind"
             }
           }
         }
@@ -2818,12 +2768,7 @@
           "options": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "placeholder": {
@@ -2859,12 +2804,7 @@
           "staticOptions": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardVariableOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardVariableOption"
             }
           },
           "staticOptionsOrder": {
@@ -3017,12 +2957,7 @@
           "rows": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardRowsLayoutRowKind"
             }
           }
         }
@@ -3045,12 +2980,7 @@
           "annotations": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardAnnotationQueryKind"
             }
           },
           "cursorSync": {
@@ -3079,12 +3009,7 @@
             "description": "Links with references to other dashboards or external websites.",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDashboardLink"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDashboardLink"
             }
           },
           "liveNow": {
@@ -3105,8 +3030,7 @@
             "description": "Tags associated with dashboard.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "timeSettings": {
@@ -3169,8 +3093,7 @@
           "ArrayOfString": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "String": {
@@ -3284,12 +3207,7 @@
           "tabs": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTabsLayoutTabKind"
             }
           }
         }
@@ -3416,12 +3334,7 @@
           "steps": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardThreshold"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardThreshold"
             }
           }
         }
@@ -3458,8 +3371,7 @@
             "description": "Interval options available in the refresh picker dropdown. v1: timepicker.refresh_intervals",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fiscalYearStartMonth": {
@@ -3486,12 +3398,7 @@
             "description": "Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard. v1: timepicker.quick_ranges , not exposed in the UI",
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardTimeRangeOption"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardTimeRangeOption"
             }
           },
           "timezone": {
@@ -3555,12 +3462,7 @@
           "properties": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardDynamicConfigValue"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardDynamicConfigValue"
             }
           }
         }
@@ -3639,12 +3541,7 @@
             "description": "Map with <value_to_match>: ValueMappingResult. For example: { \"10\": { text: \"Perfection!\", color: \"green\" } }",
             "type": "object",
             "additionalProperties": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/DashboardValueMappingResult"
-                }
-              ]
+              "$ref": "#/components/schemas/DashboardValueMappingResult"
             }
           },
           "type": {
@@ -3702,8 +3599,7 @@
             "description": "Additional properties for multi-props variables",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "selected": {
@@ -3876,9 +3772,168 @@
           "values": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
+          }
+        }
+      },
+      "HybridSearchChunk": {
+        "description": "HybridSearchChunk is matching text from an embedded resource or subresource.",
+        "type": "object",
+        "required": ["subresource", "content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "subresource": {
+            "description": "Subresource identifies a chunk, for example panel/5. Empty means the whole resource, or a synthesized chunk for a lexical-only hit.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchFilter": {
+        "description": "HybridSearchFilter matches any of Values against Field (IN semantics). Unlike lexical search filters, no other operators are supported.",
+        "type": "object",
+        "required": ["field", "values"],
+        "properties": {
+          "field": {
+            "description": "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "HybridSearchManagedBy": {
+        "description": "HybridSearchManagedBy identifies the manager of a returned resource.",
+        "type": "object",
+        "required": ["kind", "id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchQuery": {
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "filters": {
+            "description": "Filters are ANDed together. Each field may appear once, with at most 1000 values across all filters. Embedding fields supply text only and do not make additional fields available for filtering.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchFilter"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "minRelevance": {
+            "description": "MinRelevance is lowest, low, medium, high or highest. Empty keeps every result. Filtering is best-effort: no results are dropped when reranking is unavailable or fails. It cannot be combined with SkipRerank.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes.",
+            "type": "string",
+            "default": ""
+          },
+          "semanticQuery": {
+            "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
+            "type": "string"
+          },
+          "skipRerank": {
+            "description": "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+            "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResultItem": {
+        "description": "HybridSearchResultItem is one matching resource, with its matching chunks.",
+        "type": "object",
+        "required": ["resource", "score", "title", "folder", "chunks"],
+        "properties": {
+          "chunks": {
+            "description": "Chunks contains matching text, best first. A lexical-only hit has a synthesized chunk containing the resource's title.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchChunk"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "folder": {
+            "description": "Folder is the containing folder's UID. Empty and \"general\" denote the root folder.",
+            "type": "string",
+            "default": ""
+          },
+          "folderTitle": {
+            "description": "FolderTitle is best-effort display data and can be absent.",
+            "type": "string"
+          },
+          "managedBy": {
+            "description": "ManagedBy is absent for unmanaged resources or when lookup fails.",
+            "$ref": "#/components/schemas/HybridSearchManagedBy"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances.",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchResults": {
+        "description": "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResultItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
           }
         }
       },
@@ -3906,6 +3961,25 @@
           "lte": {
             "type": "number",
             "format": "double"
+          }
+        }
+      },
+      "RegexPredicate": {
+        "description": "RegexPredicate matches a single field against a regular expression, one pattern per leaf the way a single Prometheus matcher works. Negate turns the leaf from =~ into !~.\n\nMatching is against the whole indexed term and is case-sensitive, so it is restricted to filterable keyword string fields that keep their original case. The pattern is a portable RE2 subset: literals, character classes, grouping, alternation, and greedy repetition. The backend is the source of truth for what the subset admits; it rejects unsupported syntax, fields that do not preserve case, and patterns that expand to too many terms with a 400.",
+        "type": "object",
+        "required": ["field", "pattern"],
+        "properties": {
+          "field": {
+            "type": "string",
+            "default": ""
+          },
+          "negate": {
+            "description": "Negate inverts the match: the field must not match the pattern.",
+            "type": "boolean"
+          },
+          "pattern": {
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -3961,13 +4035,13 @@
             "type": "string"
           },
           "totalHits": {
-            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation, which says whether the count is exact.",
+            "description": "TotalHits counts the resources matching the query. Always read it together with TotalHitsRelation. When the relation is \"unknown\", this is a zero placeholder that must not be interpreted as a count.",
             "type": "integer",
             "format": "int64",
             "default": 0
           },
           "totalHitsRelation": {
-            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound.",
+            "description": "TotalHitsRelation is \"eq\" when TotalHits is exact and \"lte\" when it is an upper bound. \"unknown\" means no count is available and TotalHits must be ignored.",
             "type": "string",
             "default": ""
           }
@@ -3993,15 +4067,13 @@
           "facets": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -4020,7 +4092,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -4045,7 +4116,6 @@
             "additionalProperties": {
               "type": "array",
               "items": {
-                "default": {},
                 "$ref": "#/components/schemas/FacetTerm"
               }
             }
@@ -4053,7 +4123,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -4094,8 +4163,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "value": {
@@ -4118,8 +4186,7 @@
           "fields": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           },
           "kind": {
@@ -4133,7 +4200,6 @@
           "sort": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/SortField"
             }
           },
@@ -4154,7 +4220,6 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/ResultItem"
             }
           },
@@ -4169,14 +4234,13 @@
         }
       },
       "WhereNode": {
-        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter and range leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
+        "description": "WhereNode is a single node of the where tree. Exactly one field must be set; the set field names the node's type. Combinators (and/or/not) compose other nodes, leaves (text/filter/range/regex/exists) are terminal predicates.\n\nAll node types are modelled so the schema is future-proof, but v1 only accepts a narrow subset (top-level single leaf or a single and of leaves; text, filter, range and regex leaves; In/NotIn/All filter operators). Everything else is rejected with 422 Unprocessable Entity by the validation layer. exists is sketched for a future version and always rejected today.",
         "type": "object",
         "properties": {
           "and": {
             "description": "Combinators.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
@@ -4192,12 +4256,14 @@
           "or": {
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/WhereNode"
             }
           },
           "range": {
             "$ref": "#/components/schemas/RangePredicate"
+          },
+          "regex": {
+            "$ref": "#/components/schemas/RegexPredicate"
           },
           "text": {
             "description": "Leaves.",
@@ -4363,7 +4429,6 @@
             "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
             "type": "array",
             "items": {
-              "default": {},
               "$ref": "#/components/schemas/LabelSelectorRequirement"
             },
             "x-kubernetes-list-type": "atomic"
@@ -4372,8 +4437,7 @@
             "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
             "type": "object",
             "additionalProperties": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         },
@@ -4398,8 +4462,7 @@
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "atomic"
           }

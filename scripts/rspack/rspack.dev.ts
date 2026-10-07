@@ -12,7 +12,7 @@ import WebpackBar from 'webpackbar';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
-import { assetsManifestOptions } from './plugins/assetsManifest.ts';
+import { createAssetsManifestOptions } from './plugins/assetsManifest.ts';
 import common, { PUBLIC_PATH, type Env } from './rspack.common.ts';
 
 const require = createRequire(import.meta.url);
@@ -124,6 +124,17 @@ function getDevServer(): DevServerConfiguration {
     allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
 
     client: {
+      overlay: {
+        runtimeErrors: (error) => {
+          const isResizeObserverWarning =
+            error.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+            error.message === 'ResizeObserver loop limit exceeded';
+
+          // These browser notifications have no observer identity. Grid presence scopes the overlay
+          // filter without attributing the notification to RDG or changing resize delivery.
+          return !(isResizeObserverWarning && document.querySelector('.rdg'));
+        },
+      },
       // The page is served by Grafana on another port, so the client cannot infer where its
       // socket lives. Point it back at this server.
       webSocketURL: `ws://${hostname}:${port}/ws`,
@@ -148,7 +159,7 @@ export default (env: Env = {}) => {
 
     // If we enabled watch option via CLI
     watchOptions: {
-      ignored: ['**/node_modules', ...decoupledPlugins],
+      ignored: ['**/node_modules', '**/public/build/**', ...decoupledPlugins],
     },
 
     resolve: {
@@ -169,7 +180,7 @@ export default (env: Env = {}) => {
 
     optimization: {
       moduleIds: 'named',
-      runtimeChunk: true,
+      runtimeChunk: false,
       removeEmptyChunks: false,
       splitChunks: false,
     },
@@ -180,7 +191,7 @@ export default (env: Env = {}) => {
           NODE_ENV: JSON.stringify('development'),
         },
       }),
-      new RspackManifestPlugin(assetsManifestOptions),
+      new RspackManifestPlugin(createAssetsManifestOptions(PUBLIC_PATH)),
       new WebpackBar({
         color: '#eb7b18',
         name: 'Grafana',

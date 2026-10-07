@@ -3,26 +3,22 @@ package rbac
 import (
 	"context"
 	"fmt"
-	"slices"
 	"testing"
 	"time"
 
 	"github.com/go-jose/go-jose/v4/jwt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/sync/singleflight"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
 	"github.com/grafana/authlib/authn"
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -203,6 +199,52 @@ func TestService_checkPermission(t *testing.T) {
 				Name:         "admin-only",
 				ParentFolder: "",
 				Verb:         utils.VerbGet,
+			},
+			expected: false,
+		},
+		{
+			// Regression for folder-move escalation masking: a general grant must
+			// not gate write on an empty-parent root folder, else the move-escalation
+			// probe reads an inflated old tier and masks a privilege increase.
+			name: "should not treat general as parent of root folders on update",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbUpdate,
+			},
+			expected: false,
+		},
+		{
+			// Same as above for the Admin-tier setpermissions verb.
+			name: "should not treat general as parent of root folders on setpermissions",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "folders.permissions:write",
+					Scope:      "folders:uid:general",
+					Kind:       "folders",
+					Attribute:  "uid",
+					Identifier: "general",
+				},
+			},
+			check: checkRequest{
+				Action:       "folders.permissions:write",
+				Group:        "folder.grafana.app",
+				Resource:     "folders",
+				Name:         "admin-only",
+				ParentFolder: "",
+				Verb:         utils.VerbSetPermissions,
 			},
 			expected: false,
 		},
@@ -1334,7 +1376,7 @@ func TestService_listPermission(t *testing.T) {
 			expectedFolders: []string{"folder-a"},
 		},
 		{
-			name: "should not alias empty parent for dashboard list with general grant",
+			name: "should not inherit general folder grants for dashboard list",
 			permissions: []accesscontrol.Permission{
 				{
 					Action:     "dashboards:read",
@@ -1351,7 +1393,6 @@ func TestService_listPermission(t *testing.T) {
 				Resource: "dashboards",
 				Options:  &ListRequestOptions{},
 			},
-			expectedFolders: []string{accesscontrol.GeneralFolderUID},
 		},
 		{
 			name: "should return dashboards that user has annotation read access to via subresource",
@@ -2759,7 +2800,8 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 		expected    bool
 	}
 
-	testCases := []testCase{
+	testCases := make([]testCase, 0, 43)
+	testCases = append(testCases, []testCase{
 		{
 			name: "resource with stack role and folder read permission",
 			permissions: []accesscontrol.Permission{
@@ -2859,6 +2901,27 @@ func TestService_checkPermissionWithFolderAuthz(t *testing.T) {
 			req:      &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: utils.VerbSetPermissions, Name: "w1", Folder: "f1"},
 			expected: false,
 		},
+	}...)
+
+	for _, parent := range []string{"", accesscontrol.GeneralFolderUID} {
+		for _, name := range []string{"", "w1"} {
+			for _, verb := range []string{utils.VerbCreate, utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, hasStackRole := range []bool{false, true} {
+					var permissions []accesscontrol.Permission
+					if hasStackRole {
+						permissions = []accesscontrol.Permission{stackRole(group + "/widgets:" + verb)}
+					} else {
+						permissions = []accesscontrol.Permission{folderPerm("folders:read", accesscontrol.GeneralFolderUID), folderPerm("folders:write", accesscontrol.GeneralFolderUID)}
+					}
+					testCases = append(testCases, testCase{
+						name:        fmt.Sprintf("root parent=%q name=%q verb=%s stackRole=%t", parent, name, verb, hasStackRole),
+						permissions: permissions,
+						req:         &authzv1.CheckRequest{Group: group, Resource: "widgets", Verb: verb, Name: name, Folder: parent},
+						expected:    hasStackRole,
+					})
+				}
+			}
+		}
 	}
 
 	for _, tc := range testCases {
@@ -3441,244 +3504,6 @@ func actionSetsForVerb(t *testing.T, group, resource, subresource, verb string) 
 	_, actionSets, err := setupService().validateAction(context.Background(), group, resource, subresource, verb)
 	require.NoError(t, err)
 	return actionSets
-}
-
-func setupService() *Service {
-	cache := cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 5 * time.Minute})
-	logger := log.New("authz-rbac-service")
-	fStore := &fakeStore{}
-	tracer := tracing.NewNoopTracerService()
-	return &Service{
-		logger:          logger,
-		mapper:          NewMapperRegistry(),
-		tracer:          tracer,
-		metrics:         newMetrics(nil),
-		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, tracer, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, tracer, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, tracer, shortCacheTTL),
-		userTeamCache:   newCacheWrap[[]int64](cache, logger, tracer, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, tracer, longCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, tracer, shortCacheTTL),
-		teamIDCache:     newCacheWrap[map[int64]string](cache, logger, tracer, shortCacheTTL),
-		settings:        Settings{AnonOrgRole: "Viewer"},
-		store:           fStore,
-		permissionStore: fStore,
-		folderStore:     fStore,
-		identityStore:   &fakeIdentityStore{},
-		sf:              new(singleflight.Group),
-	}
-}
-
-type fakeStore struct {
-	store.Store
-	// The namespace has to be set in the handlers for the correct organization to be picked up.
-	disableNsCheck  bool
-	folders         []store.Folder
-	basicRole       *store.BasicRole
-	userID          *store.UserIdentifiers
-	userPermissions []accesscontrol.Permission
-	err             bool
-	calls           int
-	// folderListCalls counts only ListFolders, since calls counts every store call.
-	folderListCalls int
-}
-
-func (f *fakeStore) GetBasicRoles(ctx context.Context, namespace types.NamespaceInfo, query store.BasicRoleQuery) (*store.BasicRole, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("store error")
-	}
-	return f.basicRole, nil
-}
-
-func (f *fakeStore) GetUserIdentifiers(ctx context.Context, query store.UserIdentifierQuery) (*store.UserIdentifiers, error) {
-	if _, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && !ok {
-		return nil, fmt.Errorf("namespace not found")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("store error")
-	}
-	return f.userID, nil
-}
-
-func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.NamespaceInfo, query store.PermissionsQuery) ([]accesscontrol.Permission, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("store error")
-	}
-	var permissions []accesscontrol.Permission
-	for _, p := range f.userPermissions {
-		if p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
-			permissions = append(permissions, p)
-		}
-	}
-	return permissions, nil
-}
-
-func (f *fakeStore) ListFolders(ctx context.Context, namespace types.NamespaceInfo) ([]store.Folder, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	f.folderListCalls++
-	if f.err {
-		return nil, fmt.Errorf("store error")
-	}
-	return f.folders, nil
-}
-
-type fakeIdentityStore struct {
-	legacy.LegacyIdentityStore
-	userTeams       []int64
-	teams           []team.Team
-	serviceAccounts []legacy.ServiceAccount
-	users           []common.UserWithRole
-	pageSize        int // if > 0, simulates pagination with this page size
-	disableNsCheck  bool
-	err             bool
-	calls           int
-}
-
-func (f *fakeIdentityStore) ListUserTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserTeamsQuery) (*legacy.ListUserTeamsResult, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("identity store error")
-	}
-	items := make([]legacy.UserTeam, 0, len(f.userTeams))
-	for _, teamID := range f.userTeams {
-		items = append(items, legacy.UserTeam{ID: teamID})
-	}
-	return &legacy.ListUserTeamsResult{
-		Items:    items,
-		Continue: 0,
-	}, nil
-}
-
-func (f *fakeIdentityStore) ListTeams(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListTeamQuery) (*legacy.ListTeamResult, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("identity store error")
-	}
-	if query.Pagination.Limit < 1 && f.pageSize > 0 {
-		query.Pagination.Limit = int64(f.pageSize)
-	}
-	return paginateTeams(f.teams, query.Pagination), nil
-}
-
-func (f *fakeIdentityStore) ListServiceAccounts(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListServiceAccountsQuery) (*legacy.ListServiceAccountResult, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("identity store error")
-	}
-	if query.Pagination.Limit < 1 && f.pageSize > 0 {
-		query.Pagination.Limit = int64(f.pageSize)
-	}
-	return paginateServiceAccounts(f.serviceAccounts, query.Pagination), nil
-}
-
-func (f *fakeIdentityStore) ListUsers(ctx context.Context, namespace types.NamespaceInfo, query legacy.ListUserQuery) (*legacy.ListUserResult, error) {
-	if ns, ok := request.NamespaceFrom(ctx); !f.disableNsCheck && (!ok || ns != namespace.Value) {
-		return nil, fmt.Errorf("namespace mismatch")
-	}
-	f.calls++
-	if f.err {
-		return nil, fmt.Errorf("identity store error")
-	}
-	if query.Pagination.Limit < 1 && f.pageSize > 0 {
-		query.Pagination.Limit = int64(f.pageSize)
-	}
-	return paginateUsers(f.users, query.Pagination), nil
-}
-
-// paginateTeams simulates cursor-based pagination over a slice of teams.
-func paginateTeams(items []team.Team, p common.Pagination) *legacy.ListTeamResult {
-	limit := int(p.Limit)
-	if limit < 1 {
-		limit = len(items) // no limit = return all
-	}
-	start := 0
-	if p.Continue > 0 {
-		for i, t := range items {
-			if t.ID >= p.Continue {
-				start = i
-				break
-			}
-		}
-	}
-	end := start + limit
-	if end >= len(items) {
-		return &legacy.ListTeamResult{Teams: items[start:]}
-	}
-	return &legacy.ListTeamResult{
-		Teams:    items[start:end],
-		Continue: items[end].ID,
-	}
-}
-
-// paginateServiceAccounts simulates cursor-based pagination over a slice of service accounts.
-func paginateServiceAccounts(items []legacy.ServiceAccount, p common.Pagination) *legacy.ListServiceAccountResult {
-	limit := int(p.Limit)
-	if limit < 1 {
-		limit = len(items)
-	}
-	start := 0
-	if p.Continue > 0 {
-		for i, sa := range items {
-			if sa.ID >= p.Continue {
-				start = i
-				break
-			}
-		}
-	}
-	end := start + limit
-	if end >= len(items) {
-		return &legacy.ListServiceAccountResult{Items: items[start:]}
-	}
-	return &legacy.ListServiceAccountResult{
-		Items:    items[start:end],
-		Continue: items[end].ID,
-	}
-}
-
-// paginateUsers simulates cursor-based pagination over a slice of users.
-func paginateUsers(items []common.UserWithRole, p common.Pagination) *legacy.ListUserResult {
-	limit := int(p.Limit)
-	if limit < 1 {
-		limit = len(items)
-	}
-	start := 0
-	if p.Continue > 0 {
-		for i, u := range items {
-			if u.ID >= p.Continue {
-				start = i
-				break
-			}
-		}
-	}
-	end := start + limit
-	if end >= len(items) {
-		return &legacy.ListUserResult{Items: items[start:]}
-	}
-	return &legacy.ListUserResult{
-		Items:    items[start:end],
-		Continue: items[end].ID,
-	}
 }
 
 func TestService_BatchCheck(t *testing.T) {
@@ -4803,4 +4628,64 @@ func TestService_BatchCheckRebuildsFolderTreeAtMostOnce(t *testing.T) {
 
 	assert.LessOrEqual(t, fStore.folderListCalls, 2,
 		"the folder list is fetched once and rebuilt at most once, not once per item")
+}
+
+func TestRootFolderInheritance(t *testing.T) {
+	s := &Service{}
+	for _, resource := range []string{"dashboards", "folders"} {
+		for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+			allowed, err := s.checkInheritedPermissions(t.Context(), map[string]bool{"folders:uid:general": true}, &checkRequest{Resource: resource, Verb: verb, ParentFolder: "general"}, func(bool) (*folderTree, error) {
+				t.Fatal("root is not a parent to inherit from")
+				return nil, nil
+			})
+			require.NoError(t, err)
+			require.False(t, allowed)
+		}
+	}
+	tree := newFolderTree(nil)
+	scopes := map[string]bool{"folders:uid:general": true}
+	require.Empty(t, buildItemList(scopes, tree, "dashboards:uid:", false, false).Folders)
+	require.ElementsMatch(t, []string{"general"}, buildItemList(scopes, tree, "dashboards:uid:", false, true).Folders)
+	require.ElementsMatch(t, []string{"", "general"}, buildItemList(scopes, tree, "", true, false).Folders)
+}
+
+func TestRootFolderPermissionMapping(t *testing.T) {
+	for _, resource := range []string{"variables", "librarypanels", "dashboards"} {
+		for _, parent := range []string{"", "general"} {
+			for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete} {
+				for _, scope := range []string{"general", "other-folder"} {
+					t.Run(fmt.Sprintf("%s/%q/%s/%s", resource, parent, verb, scope), func(t *testing.T) {
+						s := setupService()
+						ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+						s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+						req := &checkRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Name: "resource", Verb: verb, ParentFolder: parent}
+						allowed, err := s.checkPermission(t.Context(), map[string]bool{"folders:uid:" + scope: true}, nil, req, s.newFolderTreeGetter(t.Context(), ns, false))
+						require.NoError(t, err)
+						require.Equal(t, resource != "dashboards" && scope == "general", allowed)
+					})
+				}
+			}
+		}
+		for _, verb := range []string{utils.VerbList, utils.VerbWatch} {
+			t.Run(resource+"/"+verb, func(t *testing.T) {
+				s := setupService()
+				ns := types.NamespaceInfo{Value: "default", OrgID: 1}
+				s.folderCache.Set(t.Context(), folderCacheKey(ns.Value), newFolderTree(nil))
+				action := "variables:read"
+				switch resource {
+				case "librarypanels":
+					action = "library.panels:read"
+				case "dashboards":
+					action = "dashboards:read"
+				}
+				result, err := s.listPermission(t.Context(), map[string]bool{"folders:uid:general": true}, &listRequest{Namespace: ns, Group: "dashboard.grafana.app", Resource: resource, Verb: verb, Action: action, Options: &ListRequestOptions{}})
+				require.NoError(t, err)
+				if resource == "dashboards" {
+					require.Empty(t, result.Folders)
+				} else {
+					require.ElementsMatch(t, []string{"", "general"}, result.Folders)
+				}
+			})
+		}
+	}
 }

@@ -358,14 +358,15 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	}
 
 	guids := ""
-	setCases := "CASE"
+	var setCases strings.Builder
+	setCases.WriteString("CASE")
 	for _, row := range updates {
 		guids += fmt.Sprintf("'%s',", row.GUID)
-		setCases += fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", row.GUID, row.KeyPath)
+		setCases.WriteString(fmt.Sprintf(" WHEN guid = '%s' THEN '%s'", row.GUID, row.KeyPath))
 	}
 
 	guids = strings.TrimRight(guids, ",")
-	setCases += " ELSE key_path END "
+	setCases.WriteString(" ELSE key_path END ")
 
 	// the query will look like this
 	// UPDATE resource_history
@@ -380,7 +381,7 @@ func updateResourceHistoryKeyPath(sess *xorm.Session, rows []resourceHistoryRow)
 	SET key_path = %s
 	WHERE guid IN (%s)
 	AND key_path = '';
-	`, setCases, guids)
+	`, setCases.String(), guids)
 
 	if _, err := sess.Exec(sql); err != nil {
 		return err

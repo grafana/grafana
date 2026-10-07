@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	grpccodes "google.golang.org/grpc/codes"
-	grpcstatus "google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
@@ -63,68 +62,35 @@ func NewNotFoundError(key *resourcepb.ResourceKey) *resourcepb.ErrorResult {
 	}
 }
 
+// The helpers live in pkg/storage/unified/resourceclient/resourceutil. These forwarders keep
+// existing callers compiling.
+
 func NewResourceVersionExpiredError(rv int64) error {
-	result := &resourcepb.ErrorResult{
-		Message: fmt.Sprintf("too old resource version: %d", rv),
-		Code:    http.StatusGone,
-		Reason:  string(metav1.StatusReasonExpired),
-	}
-	st := grpcstatus.New(grpccodes.OutOfRange, result.Message)
-	if withDetails, err := st.WithDetails(result); err == nil {
-		st = withDetails
-	}
-	return st.Err()
+	return resourceutil.NewResourceVersionExpiredError(rv)
 }
 
 func IsResourceVersionExpired(err error) bool {
-	if err == nil {
-		return false
-	}
-	if apierrors.IsResourceExpired(err) || apierrors.IsGone(err) {
-		return true
-	}
-	if res := errorResultFromGRPCDetails(err); res != nil {
-		return res.Code == http.StatusGone || res.Reason == string(metav1.StatusReasonExpired)
-	}
-	return false
+	return resourceutil.IsResourceVersionExpired(err)
 }
 
-// IsConflict reports whether err is a storage conflict, whether it arrived as a typed
-// Kubernetes error or as a gRPC status whose ErrorResult apierrors cannot inspect.
 func IsConflict(err error) bool {
-	if apierrors.IsConflict(err) {
-		return true
-	}
-	return apierrors.IsConflict(GetError(errorResultFromGRPCDetails(err)))
+	return resourceutil.IsConflict(err)
 }
 
-// ErrorFromResponse resolves the outcome of a unified storage call — which
-// reports failure either through a transport error or through a response that
-// embeds an ErrorResult — into a single error, so callers need one error
-// branch. The transport error is returned untouched to keep its gRPC status,
-// cancellation semantics and errors.Is/As chain intact; a response-embedded
-// result is converted to a typed Kubernetes error. Callers that need an ErrorResult
-// representation for status checks can convert the returned error with AsErrorResult.
-// Attached or response-embedded details are preserved when available.
-// Returns nil only when the call fully succeeded.
 func ErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
-	if err != nil {
-		return err
-	}
-	return GetError(respErr)
+	return resourceutil.ErrorFromResponse(respErr, err)
 }
 
-func errorResultFromGRPCDetails(err error) *resourcepb.ErrorResult {
-	st, ok := grpcstatus.FromError(err)
-	if !ok || st == nil {
-		return nil
-	}
-	for _, detail := range st.Details() {
-		if res, ok := detail.(*resourcepb.ErrorResult); ok {
-			return res
-		}
-	}
-	return nil
+func AsErrorResult(err error) *resourcepb.ErrorResult {
+	return resourceutil.AsErrorResult(err)
+}
+
+func StatusError(res *resourcepb.ErrorResult) error {
+	return resourceutil.StatusError(res)
+}
+
+func StatusErrorFromResponse(respErr *resourcepb.ErrorResult, err error) error {
+	return resourceutil.StatusErrorFromResponse(respErr, err)
 }
 
 func NewTooManyRequestsError(msg string) *resourcepb.ErrorResult {
@@ -168,6 +134,40 @@ func newInvalidFieldError(
 	}
 }
 
+// SelectableFieldNotIndexedReason is a cause reason, not a top-level one: the
+// top-level reason has to stay a Kubernetes reason so grpcCodeFromErrorResult can
+// map it without falling back to the HTTP code.
+const SelectableFieldNotIndexedReason = "SelectableFieldNotIndexed"
+
+// NewSelectableFieldNotIndexedError reports that the index cannot answer a filter
+// on the given fields.
+func NewSelectableFieldNotIndexedError(fields []string) *resourcepb.ErrorResult {
+	causes := make([]*resourcepb.ErrorCause, 0, len(fields))
+	for _, f := range fields {
+		causes = append(causes, &resourcepb.ErrorCause{
+			Reason: SelectableFieldNotIndexedReason,
+			Field:  f,
+		})
+	}
+	return &resourcepb.ErrorResult{
+		Message: fmt.Sprintf("the index does not hold the selectable fields %v, so it cannot answer a filter on them", fields),
+		Code:    http.StatusBadRequest,
+		Reason:  string(metav1.StatusReasonBadRequest),
+		Details: &resourcepb.ErrorDetails{Causes: causes},
+	}
+}
+
+// IsSelectableFieldNotIndexed reports whether a search was refused because the
+// index does not hold a field the request filtered on.
+func IsSelectableFieldNotIndexed(res *resourcepb.ErrorResult) bool {
+	for _, c := range res.GetDetails().GetCauses() {
+		if c.GetReason() == SelectableFieldNotIndexedReason {
+			return true
+		}
+	}
+	return false
+}
+
 func newRequiredFieldError(
 	obj utils.GrafanaMetaAccessor,
 	detail string,
@@ -192,90 +192,6 @@ func newRequiredFieldError(
 			},
 		},
 	}
-}
-
-// AsErrorResult converts golang errors to status result errors that can be returned to a client.
-// Returns the first status details entity that matches the resourcepb.ErrorResult type, if given. If multiple entries
-// are given in the status details array, only the first matching one is used; all others are discarded.
-func AsErrorResult(err error) *resourcepb.ErrorResult {
-	if err == nil {
-		return nil
-	}
-
-	// Structured results attached to a gRPC error keep their reason/code across
-	// the wire, so prefer them over the generic mapping below.
-	if res := errorResultFromGRPCDetails(err); res != nil {
-		return res
-	}
-
-	var apistatus apierrors.APIStatus
-	if errors.As(err, &apistatus) {
-		s := apistatus.Status()
-		res := &resourcepb.ErrorResult{
-			Message: s.Message,
-			Reason:  string(s.Reason),
-			Code:    s.Code,
-		}
-		if s.Details != nil {
-			res.Details = &resourcepb.ErrorDetails{
-				Group:             s.Details.Group,
-				Kind:              s.Details.Kind,
-				Name:              s.Details.Name,
-				Uid:               string(s.Details.UID),
-				RetryAfterSeconds: s.Details.RetryAfterSeconds,
-			}
-			for _, c := range s.Details.Causes {
-				res.Details.Causes = append(res.Details.Causes, &resourcepb.ErrorCause{
-					Reason:  string(c.Type),
-					Message: c.Message,
-					Field:   c.Field,
-				})
-			}
-		}
-		return res
-	}
-
-	code := 500
-
-	st, ok := grpcstatus.FromError(err)
-	if ok {
-		code = runtime.HTTPStatusFromCode(st.Code())
-	}
-
-	return &resourcepb.ErrorResult{
-		Message: err.Error(),
-		Code:    int32(code),
-	}
-}
-
-func GetError(res *resourcepb.ErrorResult) error {
-	if res == nil {
-		return nil
-	}
-
-	status := &apierrors.StatusError{ErrStatus: metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    res.Code,
-		Reason:  metav1.StatusReason(res.Reason),
-		Message: res.Message,
-	}}
-	if res.Details != nil {
-		status.ErrStatus.Details = &metav1.StatusDetails{
-			Group:             res.Details.Group,
-			Kind:              res.Details.Kind,
-			Name:              res.Details.Name,
-			UID:               types.UID(res.Details.Uid),
-			RetryAfterSeconds: res.Details.RetryAfterSeconds,
-		}
-		for _, c := range res.Details.Causes {
-			status.ErrStatus.Details.Causes = append(status.ErrStatus.Details.Causes, metav1.StatusCause{
-				Type:    metav1.CauseType(c.Reason),
-				Message: c.Message,
-				Field:   c.Field,
-			})
-		}
-	}
-	return status
 }
 
 func HandleQueueError[T any](err error, makeResp func(*resourcepb.ErrorResult) *T) (*T, error) {
@@ -307,19 +223,30 @@ func NewValidationError(field, value, msg string) error {
 	return ValidationError{Field: field, Value: value, Msg: msg}
 }
 
-// grpcCodeFromHTTPStatus is lossy in a way runtime.HTTPStatusFromCode is not:
-// several gRPC codes collapse onto the same HTTP status going out
-// (AlreadyExists and Aborted both become 409, InvalidArgument /
-// FailedPrecondition / OutOfRange all become 400), so coming back we pick the
-// code that unified storage actually produces for that status.
-// An unmapped code labels as Unknown — a signal to add a mapping, not a silent
-// mislabel.
-// This is just a helper to set the correct codes in metric labels
-func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
+var errorMappingLog = log.New("resource-error-mapping")
+
+// grpcCodeFromErrorResult returns a grpc status code based on the ErrorResult. If no ErrorResult is given "OK" is
+// returned. ErrorResult reason takes priority over the embedded http code due to a generally lossy http to grpc code
+// conversion.
+// A non nil ErrorResult will never return "OK".
+func grpcCodeFromErrorResult(res *resourcepb.ErrorResult) grpccodes.Code {
+	if res == nil {
+		return grpccodes.OK
+	}
+	httpCode, reason := res.Code, res.Reason
+	if code, ok := grpcCodeFromReason(metav1.StatusReason(reason)); ok {
+		return code
+	}
+	if reason != "" {
+		errorMappingLog.Warn("Unrecognized error reason, falling back to HTTP status", "httpCode", httpCode, "reason", reason)
+	}
+
 	switch httpCode {
 	case http.StatusOK:
-		return grpccodes.OK
-	case http.StatusBadRequest:
+		// An embedded error must not be labeled as a success.
+		errorMappingLog.Warn("ErrorResult is non nil with a 200 OK http code", "reason", reason)
+		return grpccodes.Internal
+	case http.StatusBadRequest, http.StatusRequestEntityTooLarge:
 		return grpccodes.InvalidArgument
 	case http.StatusUnauthorized:
 		return grpccodes.Unauthenticated
@@ -333,7 +260,7 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.AlreadyExists
 	case http.StatusPreconditionFailed:
 		return grpccodes.FailedPrecondition
-	case http.StatusRequestedRangeNotSatisfiable:
+	case http.StatusGone, http.StatusRequestedRangeNotSatisfiable:
 		return grpccodes.OutOfRange
 	case http.StatusUnprocessableEntity:
 		return grpccodes.InvalidArgument
@@ -351,5 +278,43 @@ func grpcCodeFromHTTPStatus(httpCode int32) grpccodes.Code {
 		return grpccodes.Canceled
 	}
 
-	return grpccodes.Unknown
+	if httpCode >= 400 && httpCode < 500 {
+		errorMappingLog.Warn("Unmapped HTTP status, assuming InvalidArgument", "httpCode", httpCode)
+		return grpccodes.InvalidArgument
+	}
+	errorMappingLog.Warn("Unmapped HTTP status, assuming Internal", "httpCode", httpCode)
+	return grpccodes.Internal
+}
+
+func grpcCodeFromReason(reason metav1.StatusReason) (grpccodes.Code, bool) {
+	switch reason {
+	case metav1.StatusReasonUnauthorized:
+		return grpccodes.Unauthenticated, true
+	case metav1.StatusReasonForbidden:
+		return grpccodes.PermissionDenied, true
+	case metav1.StatusReasonNotFound:
+		return grpccodes.NotFound, true
+	case metav1.StatusReasonAlreadyExists:
+		return grpccodes.AlreadyExists, true
+	case metav1.StatusReasonConflict:
+		return grpccodes.Aborted, true
+	case metav1.StatusReasonGone, metav1.StatusReasonExpired:
+		return grpccodes.OutOfRange, true
+	case metav1.StatusReasonBadRequest, metav1.StatusReasonInvalid,
+		metav1.StatusReasonNotAcceptable, metav1.StatusReasonUnsupportedMediaType,
+		metav1.StatusReasonRequestEntityTooLarge:
+		return grpccodes.InvalidArgument, true
+	case metav1.StatusReasonTimeout:
+		return grpccodes.DeadlineExceeded, true
+	case metav1.StatusReasonServerTimeout, metav1.StatusReasonServiceUnavailable:
+		return grpccodes.Unavailable, true
+	case metav1.StatusReasonTooManyRequests:
+		return grpccodes.ResourceExhausted, true
+	case metav1.StatusReasonMethodNotAllowed:
+		return grpccodes.Unimplemented, true
+	case metav1.StatusReasonInternalError, metav1.StatusReasonStoreReadError:
+		return grpccodes.Internal, true
+	default:
+		return grpccodes.Unknown, false
+	}
 }

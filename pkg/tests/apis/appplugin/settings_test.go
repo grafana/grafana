@@ -7,19 +7,24 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanafs "github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -41,12 +46,25 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAppPluginSettings(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "")
+}
+
+func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "", featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func TestIntegrationAppPluginSettingsWithManifestRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, features ...string) {
+	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := setupHelper(t, mode)
+			helper := setupHelperFull(t, mode, manifestFile, features...)
 			ctx := context.Background()
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -239,6 +257,31 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 				}
 			})
 
+			t.Run("stores settings under the plugin ID in the shared group", func(t *testing.T) {
+				if mode == rest.Mode0 {
+					t.Skip("legacy-only storage")
+				}
+				served := writeSettings(t)
+				require.Equal(t, instanceName, served.GetName())
+				require.Equal(t, testAppID+"/v0alpha1", served.GetAPIVersion())
+				svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+						Namespace: client.Args.Namespace,
+						Group:     apppluginV0.GROUP,
+						Resource:  apppluginV0.APP_RESOURCE_NAME,
+						Name:      testAppID,
+					}})
+					require.NoError(c, err)
+					require.Nil(c, rsp.Error)
+					stored := &unstructured.Unstructured{}
+					require.NoError(c, stored.UnmarshalJSON(rsp.Value))
+					require.Equal(c, testAppID, stored.GetName())
+					require.Equal(c, apppluginV0.GROUP+"/v0alpha1", stored.GetAPIVersion())
+					require.Equal(c, served.Object["spec"], stored.Object["spec"])
+				}, 5*time.Second, 50*time.Millisecond)
+			})
+
 			t.Run("list returns the settings resource after write", func(t *testing.T) {
 				writeSettings(t)
 
@@ -342,28 +385,23 @@ func TestIntegrationAppPluginSettings(t *testing.T) {
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, false, extraFeatures...)
-}
-
 // setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, true, extraFeatures...)
+	return setupHelperFull(t, mode, "app-sdk-manifest.json", extraFeatures...)
 }
 
-func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
+// setupHelperFull installs the test app with the named testdata manifest, or
+// with no manifest when manifestFile is empty.
+func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	withManifest := manifestFile != ""
 
-	features := append([]string{featuremgmt.FlagApppluginsRegisterAPIServer}, extraFeatures...)
-	if withManifest {
-		features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
-	}
-
-	// The settings resource moves to the manifest group along with the rest of
-	// the plugin's API, and the storage config is keyed by <resource>.<group>.
-	storageGroup := testAppID
-	if withManifest {
-		storageGroup = testAppGroup
+	features := slices.Clone(extraFeatures)
+	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
+		features = append(features, featuremgmt.FlagApppluginsRegisterAPIServer)
+		if withManifest {
+			features = append(features, featuremgmt.FlagApppluginsLoadAppManifest)
+		}
 	}
 
 	baseOpts := testinfra.GrafanaOpts{
@@ -372,7 +410,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("app.%s", storageGroup): {
+			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
 			},
 		},
@@ -391,7 +429,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
 	if withManifest {
-		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json")
+		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
 		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
 	}
 

@@ -164,9 +164,10 @@ func (h *ContextHandler) setRequestContext(ctx context.Context) context.Context 
 
 	// Set open feature evaluation context with namespace
 	ns := "default"
-	if id != nil {
+	switch {
+	case id != nil && id.Namespace != "" && id.Namespace != "*":
 		ns = id.Namespace
-	} else if h.cfg.StackID != "" {
+	case h.cfg.StackID != "":
 		ns = "stacks-" + h.cfg.StackID
 	}
 	evalCtx := openfeature.NewEvaluationContext(ns, map[string]any{

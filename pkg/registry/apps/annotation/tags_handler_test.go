@@ -83,7 +83,7 @@ func TestIntegrationTagsHandler(t *testing.T) {
 	}
 
 	allowAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return true }}
-	handler := newTagsHandler(store, allowAll, ProvideMetrics(nil), log.NewNopLogger())
+	handler := newTagsHandler(store, testTracer, allowAll, ProvideMetrics(nil), log.NewNopLogger())
 
 	tests := []struct {
 		name             string
@@ -362,7 +362,7 @@ func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
 
 	t.Run("denies callers without organization annotation read", func(t *testing.T) {
 		denyAll := &fakeAccessClient{fn: func(authtypes.BatchCheckItem) bool { return false }}
-		handler := newTagsHandler(store, denyAll, ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, testTracer, denyAll, ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)
@@ -381,7 +381,7 @@ func TestIntegrationTagsHandlerAuthorization(t *testing.T) {
 				item.Name == "organization" &&
 				item.Verb == utils.VerbList
 		}}
-		handler := newTagsHandler(store, orgReader, ProvideMetrics(nil), log.NewNopLogger())
+		handler := newTagsHandler(store, testTracer, orgReader, ProvideMetrics(nil), log.NewNopLogger())
 
 		req, writer := newRequest()
 		err := handler(ctx, writer, req)

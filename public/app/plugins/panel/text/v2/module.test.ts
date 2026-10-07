@@ -6,6 +6,7 @@ import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/compon
 import { type Options, RenderMode } from '../panelcfg.gen';
 
 import { textNGPanelOptions } from './module';
+import { MAX_RENDERED_ROWS } from './renderContent';
 
 beforeEach(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -33,16 +34,40 @@ function getItem(path: string) {
 }
 
 /** The options pane shows only these; everything else is edited in the panel itself. */
-const paneOptions = ['renderMode'];
+const paneOptions = ['renderMode', 'pageSize'];
+
+/** Page size only applies to a per-row render, so it takes the mode that shows it. */
+// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+const perRow = { renderMode: RenderMode.PerRow } as Options;
 
 describe('textNGPanelOptions', () => {
   it('registers renderMode with a default that preserves a single render', () => {
     expect(getItem('renderMode').defaultValue).toBe(RenderMode.Once);
   });
 
+  it('leaves pageSize unset, so the page is fitted to the panel height', () => {
+    expect(getItem('pageSize').defaultValue).toBeUndefined();
+    expect(getItem('pageSize').settings).toMatchObject({ placeholder: 'auto' });
+  });
+
+  it('bounds the pageSize input by the hard ceiling on a single render', () => {
+    expect(getItem('pageSize').settings).toMatchObject({ min: 1, max: MAX_RENDERED_ROWS, integer: true });
+  });
+
+  it('says in the pageSize description what an empty field falls back to', () => {
+    expect(getItem('pageSize').description).toMatch(/based on the panel height/i);
+  });
+
+  it('hides pageSize for a once render, which has no rows to page through', () => {
+    const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
+
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    expect(getItem('pageSize').showIf?.({ renderMode: RenderMode.Once } as Options, data)).toBe(false);
+  });
+
   it('are the only options visible in the pane', () => {
     const visible = getItems().filter((option) =>
-      option.showIf?.({} as Options, [toDataFrame({ fields: [{ name: 'a', values: [1] }] })])
+      option.showIf?.(perRow, [toDataFrame({ fields: [{ name: 'a', values: [1] }] })])
     );
 
     expect(visible.map((option) => option.path)).toEqual(paneOptions);
@@ -54,20 +79,20 @@ describe('textNGPanelOptions', () => {
       ['no frames were returned', []],
       ['the frame has no rows', [toDataFrame({ fields: [{ name: 'a', values: [] }] })]],
     ])('is hidden when %s', (_name, data) => {
-      expect(getItem(path).showIf?.({} as Options, data)).toBe(false);
+      expect(getItem(path).showIf?.(perRow, data)).toBe(false);
     });
 
     it('is shown once a frame has rows', () => {
       const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
-      expect(getItem(path).showIf?.({} as Options, data)).toBe(true);
+      expect(getItem(path).showIf?.(perRow, data)).toBe(true);
     });
 
     it('is hidden when the text.newFeatures flag is off, even with rows', () => {
       setTestFlags({ [FlagKeys.TextNewFeatures]: false });
       const data = [toDataFrame({ fields: [{ name: 'a', values: [1] }] })];
 
-      expect(getItem(path).showIf?.({} as Options, data)).toBe(false);
+      expect(getItem(path).showIf?.(perRow, data)).toBe(false);
     });
   });
 });

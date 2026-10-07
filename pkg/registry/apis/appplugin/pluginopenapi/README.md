@@ -36,14 +36,14 @@ group declared in the manifest when one is present and may differ from the plugi
 
 Naming a single version writes a single spec, to `-o <file>` or to stdout. Otherwise every
 served version is written into the `-o <directory>`, which is created if it doesn't exist.
-That set always includes the `v0alpha1` settings API, which every app plugin serves whether
-or not its manifest mentions the version.
+Legacy plugins include the `v0alpha1` settings API. Manifest-backed plugins omit settings
+unless `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 ## How the spec is built
 
 `Build` in [spec.go](spec.go) assembles the same pipeline the server does, and nothing else:
 
-1. `appplugin.NewAppPluginAPIBuilder` over the loaded plugin definition, with the plugin
+1. `pluginroute.NewAPI` over the loaded plugin definition, with the plugin
    client, the plugin context, the decrypter and access control stubbed — none of them
    contribute to the spec.
 2. `builder.SetupConfig`, which installs the OpenAPI definitions and, more importantly, the
@@ -57,9 +57,7 @@ or not its manifest mentions the version.
 
 ## Deliberate rendering choices
 
-The generated contract always enables search and trash route registration. This is
-independent of the `enable_search_api` and `enable_trash_api` settings of the Grafana
-installation used to locate a plugin. The usual per-kind eligibility rules still apply.
+The generated contract always enables search, trash and hybrid route registration. Hybrid registration is independent of the `enable_hybrid_api` setting of the Grafana installation used to locate a plugin. The usual per-kind eligibility rules still apply: trash is limited to dashboards, and hybrid requires `search.hybrid: true` on a namespaced kind in a served version.
 
 Step 3 also describes the API as unified storage serves it. On a deployment where the
 settings resource still uses legacy storage, the generated `v0alpha1` spec carries two
