@@ -1,5 +1,6 @@
-import { type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 
+import { frameFilterFor, getSourceFrameIndex, prepareColumnContext } from './columnContext';
 import { EMPTY_OPTIONS, findColumnsEntry, writeColumnsEntry } from './organizeFields';
 import { type ColumnContext, type TableTransformation } from './types';
 
@@ -27,6 +28,32 @@ export function encodeHiddenColumns(
     { ...EMPTY_OPTIONS, ...findColumnsEntry(transformations, frameFilter)?.options, excludeByName },
     frameFilter
   );
+}
+
+export function ensureVisibleColumnPerFrame(
+  transformations: readonly DataTransformerConfig[],
+  sourceSeries: readonly DataFrame[]
+): readonly DataTransformerConfig[] {
+  return sourceSeries.reduce((current, _frame, index) => {
+    if (getSourceFrameIndex(sourceSeries, index, sourceSeries) === undefined) {
+      return current;
+    }
+    const { hiddenColumns } = readColumnVisibility(current, frameFilterFor(sourceSeries, index));
+    if (hiddenColumns.size === 0) {
+      return current;
+    }
+    const context = prepareColumnContext(sourceSeries, index);
+    if (!context || context.catalog.length === 0) {
+      return current;
+    }
+    if (context.catalog.some((name) => !hiddenColumns.has(name))) {
+      return current;
+    }
+
+    // A refresh can leave only hidden columns. Reveal one so the table and its controls remain reachable.
+    hiddenColumns.delete(context.catalog[0]);
+    return encodeHiddenColumns(current, hiddenColumns, context.frameFilter);
+  }, transformations);
 }
 
 export const columnVisibility = {

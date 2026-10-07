@@ -156,7 +156,9 @@ export function TableFlat(props: TableNGProps) {
   const orderedVisibleFields = preparedFields;
 
   // Use the pre-hide fields so the sidebar remains available after hiding a column.
-  const hasColumnSidebar = canManageColumns(orderedVisibleFields);
+  const hasColumnSidebar =
+    canManageColumns(orderedVisibleFields) ||
+    Boolean(onHiddenColumnsChange && columnCatalog?.some((name) => hiddenColumns.has(name)));
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -209,6 +211,10 @@ export function TableFlat(props: TableNGProps) {
 
   // Also filter controlled data during the render before its transformed frame arrives.
   const displayedFields = filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns);
+  const displayedRawFields = useMemo(
+    () => filterFieldsByHiddenColumns(visibleFields, hiddenColumns),
+    [visibleFields, hiddenColumns]
+  );
 
   // Catalog-only columns were necessarily hideable.
   const sidebarColumns: SidebarColumn[] = useMemo(() => {
@@ -472,9 +478,10 @@ export function TableFlat(props: TableNGProps) {
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
   const { columns, cellRootRenderers } = useMemo(() => {
-    const result = fromFields(displayedFields, widths, data, rows, sortedRows);
+    // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
+    const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
     return { ...result, columns: markEdgeColumns(result.columns) };
-  }, [fromFields, displayedFields, widths, data, rows, sortedRows]);
+  }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps

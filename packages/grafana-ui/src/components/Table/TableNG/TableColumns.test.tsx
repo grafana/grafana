@@ -3,11 +3,76 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
 import { applyFieldOverrides, createDataFrame, createTheme, FieldType } from '@grafana/data';
+import { TableCellDisplayMode } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
 
 beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+
+it('does not wrap JSON display processors again when filtering hidden columns', () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'Temperature',
+        type: FieldType.number,
+        values: [118.7],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+        display: () => ({ text: '118.7', numeric: 118.7, suffix: ' °' }),
+      },
+      {
+        name: 'Hidden',
+        type: FieldType.string,
+        values: ['hidden value'],
+        config: { custom: { hideable: true } },
+      },
+    ],
+  });
+
+  render(
+    <TableNG
+      data={data}
+      width={800}
+      height={400}
+      hiddenColumns={new Set(['Hidden'])}
+      onHiddenColumnsChange={jest.fn()}
+    />
+  );
+
+  // JSON cells already append the suffix twice; column visibility must not add another copy.
+  expect(screen.getByRole('gridcell', { name: '118.7 ° °' })).toBeVisible();
+  expect(screen.queryByRole('columnheader', { name: 'Hidden' })).not.toBeInTheDocument();
+});
+
+it('keeps restore controls when the only hideable column is absent from transformed data', async () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.string,
+        values: ['visible'],
+        config: { custom: { hideable: false } },
+        display: () => ({ text: 'visible', numeric: NaN }),
+      },
+    ],
+  });
+  const onHiddenColumnsChange = jest.fn();
+  render(
+    <TableNG
+      data={data}
+      width={800}
+      height={400}
+      showColumnsSidebar
+      columnCatalog={['A', 'B']}
+      hiddenColumns={new Set(['B'])}
+      onHiddenColumnsChange={onHiddenColumnsChange}
+    />
+  );
+
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Show B' }));
+
+  expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set());
+});
 
 function Harness({ revision = 0 }: { revision?: number }) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());

@@ -1,19 +1,26 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 import { type TableNGProps } from '../types';
 
 import { prepareColumnContext } from './columnContext';
+import { ensureVisibleColumnPerFrame } from './columnVisibility';
 import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
   sourceIndex: number | undefined,
   api: PanelRuntimeTransformations | undefined,
-  owner: string
+  owner: string,
+  enabled = sourceIndex !== undefined
 ) {
   const { transformations, sourceSeries, update } = useTableTransformations(api, owner);
-  const sourceFrame = sourceIndex !== undefined ? sourceSeries?.[sourceIndex] : undefined;
+  useEffect(() => {
+    if (enabled && sourceSeries && transformations.length > 0) {
+      update((current) => ensureVisibleColumnPerFrame(current, sourceSeries));
+    }
+  }, [enabled, sourceSeries, transformations, update]);
+  const sourceFrame = enabled && sourceIndex !== undefined ? sourceSeries?.[sourceIndex] : undefined;
   const context = useMemo(
     () =>
       sourceFrame && sourceSeries && sourceIndex !== undefined

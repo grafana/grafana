@@ -33,6 +33,15 @@ function Harness({ initialHidden = new Set<string>() }: { initialHidden?: Set<st
 }
 
 describe('ColumnVisibilitySidePanel', () => {
+  it('ignores hidden names absent from the current catalog when protecting the last visible column', async () => {
+    render(<Harness initialHidden={new Set(['Missing'])} />);
+
+    await userEvent.click(screen.getByLabelText('Hide Column A'));
+
+    expect(screen.getByLabelText('Show Column A')).not.toBeChecked();
+    expect(screen.getByLabelText('Hide Column B')).toBeDisabled();
+  });
+
   it('prevents hiding the last visible column', async () => {
     render(<Harness initialHidden={new Set(['Column B'])} />);
 

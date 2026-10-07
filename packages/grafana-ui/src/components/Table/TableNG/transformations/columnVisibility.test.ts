@@ -127,8 +127,15 @@ describe('frameFilterFor', () => {
   const frame = (refId?: string) =>
     toDataFrame({ refId, fields: [{ name: 'A', type: FieldType.number, values: [1] }] });
 
-  it('does not scope a single frame', () => {
-    expect(frameFilterFor([frame('A')], 0)).toBeUndefined();
+  it('keeps the same scope when another frame appears or disappears', () => {
+    const singleScope = frameFilterFor([frame('A')], 0);
+    const multipleScope = frameFilterFor([frame('A'), frame('B')], 0);
+    expect(singleScope).toEqual({ id: 'byRefId', options: 'A' });
+    expect(multipleScope).toEqual(singleScope);
+
+    const hidden = encodeHiddenColumns([], new Set(['B']), singleScope);
+    expect(readColumnVisibility(hidden, multipleScope).hiddenColumns).toEqual(new Set(['B']));
+    expect(encodeHiddenColumns(hidden, new Set(), multipleScope)).toEqual([]);
   });
 
   it('scopes to the selected frame when there are several', () => {

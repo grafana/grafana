@@ -40,7 +40,7 @@ export function ColumnVisibilitySidePanel({
   willCloseOnRelease = false,
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
-  const visibleCount = columns.length - hiddenColumns.size;
+  const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
   return (
     // A complementary landmark cannot be nested inside the page's main landmark.
