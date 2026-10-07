@@ -210,8 +210,9 @@ const FlameGraph = ({
           <ColorSchemeButton
             value={colorScheme}
             onChange={onColorSchemeChange}
-            isDiffMode={isDiffMode} 
-            dataSource={data.getDataSource()} />
+            isDiffMode={isDiffMode}
+            dataSource={data.getDataSource()}
+          />
           <ButtonGroup className={styles.buttonSpacing}>
             <Button
               variant={'secondary'}

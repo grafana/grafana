@@ -8,7 +8,7 @@ import {
   bySpaceGradient,
   byValueGradient,
   diffColorBlindGradient,
-  diffDefaultGradient
+  diffDefaultGradient,
 } from './FlameGraph/colors';
 import { ColorScheme, ColorSchemeDiff, DataSourceType } from './types';
 

@@ -8,9 +8,9 @@ import {
   type GrafanaTheme2,
 } from '@grafana/data';
 
-import {DataSourceType, FrameType, SampleUnit} from '../types';
+import { DataSourceType, FrameType, SampleUnit } from '../types';
 
-import {mergeParentSubtrees, mergeSubtrees} from './treeTransforms';
+import { mergeParentSubtrees, mergeSubtrees } from './treeTransforms';
 
 export type LevelItem = {
   // Offset from the start of the level.
@@ -285,8 +285,12 @@ export class FlameGraphDataContainer {
   private collapsedMap: CollapsedMap | undefined;
   private dataSource: DataSourceType;
 
-
-  constructor(data: DataFrame, options: Options, theme: GrafanaTheme2 = createTheme(), dataSource: DataSourceType = DataSourceType.Unknown) {
+  constructor(
+    data: DataFrame,
+    options: Options,
+    theme: GrafanaTheme2 = createTheme(),
+    dataSource: DataSourceType = DataSourceType.Unknown
+  ) {
     this.data = data;
     this.options = options;
     this.dataSource = dataSource;
@@ -346,8 +350,8 @@ export class FlameGraphDataContainer {
   }
 
   getFrameType(index: number): FrameType {
-    if (this.dataSource == DataSourceType.PprofPyroscope) {
-      return getFrameTypeByFilename(this.filenameField!.values[index])
+    if (this.dataSource === DataSourceType.PprofPyroscope) {
+      return getFrameTypeByFilename(this.filenameField!.values[index]);
     }
     return this.frameTypeField?.values[index] ?? FrameType.Unknown;
   }

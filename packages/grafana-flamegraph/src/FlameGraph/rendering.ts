@@ -16,7 +16,7 @@ import {
   GROUP_STRIP_MARGIN_LEFT,
   GROUP_TEXT_OFFSET,
 } from '../constants';
-import { type ClickedItemData, ColorScheme, ColorSchemeDiff, FrameType, type TextAlign } from '../types';
+import { type ClickedItemData, ColorScheme, ColorSchemeDiff, type FrameType, type TextAlign } from '../types';
 
 import {
   BAR_GROUP_STRIP_COLOR,
@@ -24,7 +24,7 @@ import {
   getBarColorByDiff,
   getBarColorByPackage,
   getBarColorByValue,
-  getBarColorBySpace
+  getBarColorBySpace,
 } from './colors';
 import { type CollapseConfig, type CollapsedMap, type FlameGraphDataContainer, type LevelItem } from './dataTransform';
 
@@ -153,7 +153,15 @@ export function useFlameRender(options: RenderOptions) {
   ]);
 }
 
-type RenderFunc = (item: LevelItem, x: number, y: number, width: number, height: number, label: string, frameType: FrameType) => void;
+type RenderFunc = (
+  item: LevelItem,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  label: string,
+  frameType: FrameType
+) => void;
 
 type RenderFuncWrap = (
   item: LevelItem,
