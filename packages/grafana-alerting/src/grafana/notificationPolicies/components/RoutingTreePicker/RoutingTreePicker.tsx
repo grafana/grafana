@@ -5,7 +5,7 @@ import { Trans, t } from '@grafana/i18n';
 import { Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type Label } from '../../../matchers/types';
-import { USER_DEFINED_TREE_NAME, isDefaultRoutingTree } from '../../routingTrees';
+import { USER_DEFINED_TREE_NAME, isDefaultRoutingTree } from '../../routingTree.utils';
 import { RoutingTreePreview } from '../RoutingTreePreview/RoutingTreePreview';
 import { RoutingTreeSelector } from '../RoutingTreeSelector/RoutingTreeSelector';
 

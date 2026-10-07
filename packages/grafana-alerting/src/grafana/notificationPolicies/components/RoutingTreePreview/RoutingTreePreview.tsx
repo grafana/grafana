@@ -3,8 +3,8 @@ import { Alert, Stack, Text } from '@grafana/ui';
 
 import { type Label } from '../../../matchers/types';
 import { useMatchInstancesToSpecificRouteTree } from '../../hooks/useMatchPolicies';
-import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
-import { isDefaultRoutingTree, isDefaultRoutingTreeName } from '../../routingTrees';
+import { useRoutingTrees } from '../../hooks/useRoutingTrees';
+import { findRoutingTreeByName } from '../../routingTree.utils';
 
 export interface RoutingTreePreviewProps {
   /** The tree to preview by name. Unset or a default name previews the default policy. A named tree that is
@@ -17,12 +17,8 @@ export interface RoutingTreePreviewProps {
 /** Shows which receivers the given alert instances would notify under a routing tree. */
 export function RoutingTreePreview({ routingTreeName, instances }: RoutingTreePreviewProps) {
   // Same list RoutingTreeSelector fetches; RTKQ dedupes the request.
-  const { currentData: routingTrees } = useListRoutingTrees();
-  const usesDefault = isDefaultRoutingTreeName(routingTreeName);
-  const resolvedTree =
-    routingTrees?.items?.find((tree) =>
-      usesDefault ? isDefaultRoutingTree(tree) : tree.metadata.name === routingTreeName
-    ) ?? null;
+  const { trees } = useRoutingTrees();
+  const resolvedTree = findRoutingTreeByName(trees, routingTreeName) ?? null;
 
   const match = useMatchInstancesToSpecificRouteTree(resolvedTree, instances);
 

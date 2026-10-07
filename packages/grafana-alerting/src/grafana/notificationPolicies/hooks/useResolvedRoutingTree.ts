@@ -1,6 +1,8 @@
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
-import { useListRoutingTrees } from './useRoutingTrees';
+import { findRoutingTreeByName } from '../routingTree.utils';
+
+import { useRoutingTrees } from './useRoutingTrees';
 
 export interface ResolvedRoutingTree {
   /** The tree named `name`, or `null` when no name is given or none matches. */
@@ -15,12 +17,11 @@ export interface ResolvedRoutingTree {
 /** Looks a routing tree up by name, telling apart "still loading", "doesn't exist" and "failed to load"
  * so callers don't fall back to the default policy for a tree they merely couldn't confirm yet. */
 export function useResolvedRoutingTree(name?: string): ResolvedRoutingTree {
-  const { currentData: routingTrees, isError } = useListRoutingTrees();
+  const { trees, currentData, isError } = useRoutingTrees();
 
-  const items = routingTrees?.items;
-  const tree = name ? (items?.find((candidate) => candidate.metadata.name === name) ?? null) : null;
-  const isResolving = Boolean(name) && !items && !isError;
-  const isNotFound = Boolean(name) && Boolean(items) && !tree;
+  const tree = name ? (findRoutingTreeByName(trees, name) ?? null) : null;
+  const isResolving = Boolean(name) && !currentData && !isError;
+  const isNotFound = Boolean(name) && Boolean(currentData) && !tree;
 
   return { tree, isResolving, isNotFound, isError };
 }

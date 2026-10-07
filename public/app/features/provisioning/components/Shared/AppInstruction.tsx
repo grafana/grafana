@@ -14,7 +14,7 @@ const githubAppDocsUrl = 'https://docs.github.com/en/apps/creating-github-apps/r
 
 const GITLAB_SCOPE = 'api';
 
-const docsUrls: Record<OAuthConnectionType, string> = {
+const docsUrls: Record<Exclude<OAuthConnectionType, 'gitOAuth'>, string> = {
   githubOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   githubEnterpriseOAuth: 'https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app',
   gitlabOAuth: 'https://docs.gitlab.com/integration/oauth_provider/',

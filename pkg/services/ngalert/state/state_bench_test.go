@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"net/url"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -32,7 +32,7 @@ func BenchmarkCreateAndPatch(b *testing.B) {
 		r.Values = map[string]eval.NumberValueCapture{
 			"A": {
 				Var:    "A",
-				Labels: data.Labels{"instance": uuid.New().String()},
+				Labels: data.Labels{"instance": uuid.NewV4().String()},
 				Value:  func(f float64) *float64 { return &f }(rand.Float64()),
 			},
 		}

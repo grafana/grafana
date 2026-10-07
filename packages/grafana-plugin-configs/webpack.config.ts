@@ -160,7 +160,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           test: /module\.tsx?$/,
           use: [
             {
-              loader: 'imports-loader',
+              loader: require.resolve('imports-loader'),
               options: {
                 imports: `side-effects grafana-public-path`,
               },
@@ -171,8 +171,8 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            // Resolved from this package, which declares swc-loader. A bare specifier would be
-            // resolved from the plugin being built, and those workspaces don't depend on it.
+            // Loaders are resolved from this package, which declares them. A bare specifier would be
+            // resolved from the plugin being built, and those workspaces don't depend on them.
             loader: require.resolve('swc-loader'),
             options: {
               jsc: {
@@ -196,11 +196,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
-        },
-        {
-          test: /\.s[ac]ss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
+          use: [require.resolve('style-loader'), require.resolve('css-loader')],
         },
         {
           test: /\.(png|jpe?g|gif|svg)$/,

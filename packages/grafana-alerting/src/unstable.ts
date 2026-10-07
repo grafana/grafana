@@ -18,7 +18,7 @@ export {
 } from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
-export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export {
   useResolvedRoutingTree,
@@ -33,7 +33,13 @@ export {
   RoutingTreePreview,
   type RoutingTreePreviewProps,
 } from './grafana/notificationPolicies/components/RoutingTreePreview/RoutingTreePreview';
-export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
+export {
+  buildRoutingTreeOptions,
+  findRoutingTreeByName,
+  getRoutingTreeDisplayName,
+  isDefaultRoutingTreeName,
+  isDefaultRoutingTree,
+} from './grafana/notificationPolicies/routingTree.utils';
 
 // Time Intervals
 export { useListTimeIntervals } from './grafana/muteTimings/hooks/useListTimeIntervals';

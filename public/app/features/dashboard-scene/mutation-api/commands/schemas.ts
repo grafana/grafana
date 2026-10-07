@@ -418,6 +418,10 @@ const transformationKindSchema = z
     kind: z.literal('Transformation').describe('Fixed literal "Transformation"'),
     group: z.string().describe('Transformation ID (e.g., "organize", "sortBy", "filterByValue")'),
     spec: z.object({
+      refId: z
+        .string()
+        .optional()
+        .describe('Unique identifier of this transformation instance (e.g., "T1"), used to name its output frame'),
       disabled: z.boolean().optional().describe('Disabled transformations are skipped'),
       filter: z
         .object({
@@ -901,6 +905,9 @@ export const payloads = {
     'Update an existing panel (partial update, deep-merge for options/fieldConfig)'
   ),
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
+  getPanelErrors: listPanelsPayloadSchema
+    .pick({ elements: true })
+    .describe('Read current panel errors without panel specifications'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'

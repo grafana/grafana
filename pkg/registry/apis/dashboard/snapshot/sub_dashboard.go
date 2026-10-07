@@ -5,25 +5,31 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // Currently only works with v0alpha1
 type dashboardREST struct {
 	getter rest.Getter
+	blobs  resourcepb.BlobStoreClient
 }
 
 func NewDashboardREST(
 	getter rest.Getter,
+	blobs resourcepb.BlobStoreClient,
 ) (rest.Storage, error) {
 	return &dashboardREST{
 		getter: getter,
+		blobs:  blobs,
 	}, nil
 }
 
@@ -72,6 +78,18 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
+	// Public snapshot keys are global; default is the anonymous client's placeholder namespace.
+	if ns.Value != "default" && snap.Namespace != ns.Value {
+		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
+	}
+
+	// The public GET was already authorized; blob reads must not depend on caller credentials.
+	blobCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, snap.Namespace)
+	content, err := loadDashboardContent(blobCtx, r.blobs, snap)
+	if err != nil {
+		return nil, err
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// TODO... support conversions (not required in v0)
 		dash := &dashv0.Dashboard{
@@ -79,7 +97,7 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 				Namespace: ns.Value,
 			},
 			Spec: v0alpha1.Unstructured{
-				Object: snap.Spec.Dashboard,
+				Object: content,
 			},
 		}
 		responder.Object(200, dash)

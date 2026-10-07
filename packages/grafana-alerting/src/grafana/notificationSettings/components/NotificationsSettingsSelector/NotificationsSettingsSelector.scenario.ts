@@ -12,7 +12,7 @@ import { ListTimeIntervalApiResponseFactory } from '../../../api/notifications/v
 import { listReceiverHandler } from '../../../api/notifications/v1beta1/mocks/handlers/ReceiverHandlers/listReceiverHandler';
 import { listRoutingTreeHandler } from '../../../api/notifications/v1beta1/mocks/handlers/RoutingTreeHandlers/listRoutingTreeHandler';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
-import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTrees';
+import { USER_DEFINED_TREE_NAME } from '../../../notificationPolicies/routingTree.utils';
 
 export const slackOncallContactPoint = ContactPointFactory.build({ spec: { title: 'slack-oncall' } });
 

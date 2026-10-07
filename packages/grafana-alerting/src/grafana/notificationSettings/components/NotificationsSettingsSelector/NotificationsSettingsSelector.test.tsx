@@ -94,7 +94,7 @@ describe('NotificationsSettingsSelector', () => {
 
   it('does not show "Default policy" for a named tree while routing trees are still loading', () => {
     // Assert synchronously, right after render and before MSW has resolved anything - this is
-    // exactly the in-flight state useListRoutingTrees() is in immediately after mount.
+    // exactly the in-flight state useRoutingTrees() is in immediately after mount.
     renderPicker({ mode: 'notificationPolicy', value: { type: 'NamedRoutingTree', routingTree: 'deployment-tools' } });
 
     expect(screen.queryByText(/default policy/i)).not.toBeInTheDocument();

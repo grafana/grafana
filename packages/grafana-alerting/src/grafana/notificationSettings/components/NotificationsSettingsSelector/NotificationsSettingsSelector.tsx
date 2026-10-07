@@ -15,7 +15,7 @@ import { useResolvedContactPoint } from '../../../contactPoints/hooks/v1beta1/us
 import { type Label } from '../../../matchers/types';
 import { RoutingTreePicker } from '../../../notificationPolicies/components/RoutingTreePicker/RoutingTreePicker';
 import { useResolvedRoutingTree } from '../../../notificationPolicies/hooks/useResolvedRoutingTree';
-import { isDefaultRoutingTree } from '../../../notificationPolicies/routingTrees';
+import { isDefaultRoutingTree } from '../../../notificationPolicies/routingTree.utils';
 import {
   asNamedRoutingTree,
   asSimplifiedRouting,

@@ -169,6 +169,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Set indexer config for unified storage
 	section := cfg.Raw.Section("unified_storage")
+	cfg.UnifiedStorageClusterSlug = strings.TrimSpace(section.Key("cluster_slug").String())
 	cfg.MigrationCacheSizeKB = section.Key("migration_cache_size_kb").MustInt(1000000)
 	cfg.MigrationParquetBuffer = section.Key("migration_parquet_buffer").MustBool(false)
 	cfg.MigrationChunkedWrites = section.Key("migration_chunked_writes").MustBool(false)
@@ -177,6 +178,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.RenameWaitDeadline = section.Key("rename_wait_deadline").MustDuration(time.Minute)
 	cfg.UnifiedStorageAuthzExemptionEnabled = section.Key("authz_exemption_enabled").MustBool(false)
 	cfg.UnifiedStorageAuthzExemptResources = parseCommaSeparatedList(section.Key("authz_exempt_resources").String())
+	cfg.UnifiedStorageGRPCErrorResultToStatus = section.Key("grpc_error_result_to_status").MustBool(false)
 	cfg.SearchInjectFailuresPercent = section.Key("search_inject_failures_percent").MustInt(0)
 	if cfg.SearchInjectFailuresPercent < 0 {
 		cfg.SearchInjectFailuresPercent = 0
@@ -200,12 +202,15 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorAllowedExternalCollections = section.Key("vector_allowed_external_collections").Strings(",")
 	cfg.VectorAllowedWriteServices = section.Key("vector_allowed_write_services").Strings(",")
 	cfg.VectorIndexingEnabled = section.Key("vector_indexing_enabled").MustBool(false)
+	cfg.VectorBackfillPageSize = section.Key("vector_backfill_page_size").MustInt(0)
 	cfg.VectorReconcilerInterval = section.Key("vector_reconciler_interval").MustDuration(time.Minute)
 	// Full aggregate scan of the embeddings table; hourly by default, zero disables.
 	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
+	cfg.SearchClientForwardAuthEnabled = section.Key("search_client_forward_auth_enabled").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
+	cfg.AuthorizeBeforeFetchEnabled = section.Key("authorize_before_fetch_enabled").MustBool(false)
 	cfg.IndexPath = section.Key("index_path").String()
 	cfg.IndexWorkers = section.Key("index_workers").MustInt(10)
 	cfg.IndexRebuildWorkers = section.Key("index_rebuild_workers").MustInt(5)
@@ -229,6 +234,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexCacheTTL = section.Key("index_cache_ttl").MustDuration(10 * time.Minute)
 	cfg.IndexMinUpdateInterval = section.Key("index_min_update_interval").MustDuration(0)
 	cfg.IndexModificationCacheTTL = section.Key("index_modification_cache_ttl").MustDuration(0)
+	// Off by default: this builds a global index per namespace, holding the
+	// dashboards and folders already covered by their own indexes.
+	cfg.GlobalSearchIndexEnabled = section.Key("global_search_index_enabled").MustBool(false)
 	cfg.SprinklesApiServer = section.Key("sprinkles_api_server").String()
 	cfg.SprinklesApiServerPageLimit = section.Key("sprinkles_api_server_page_limit").MustInt(10000)
 	cfg.CACertPath = section.Key("ca_cert_path").String()
@@ -273,7 +281,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.EventPruningInterval = section.Key("event_pruning_interval").MustDuration(5 * time.Minute)
 	cfg.SearchLookback = section.Key("search_lookback").MustDuration(1 * time.Second)
 	cfg.NotifierSettleDelay = section.Key("notifier_settle_delay").MustDuration(3 * time.Second)
+	cfg.SeededWatchesEnabled = section.Key("seeded_watches_enabled").MustBool(false)
 	cfg.ResourceVersionBatchTransactionTimeout = section.Key("resource_version_batch_transaction_timeout").MustDuration(5 * time.Second)
+	cfg.ResourceVersionMaxWait = section.Key("resource_version_max_wait").MustDuration(time.Second)
 
 	// TTL for caching statusReader results in the dynamic dualwrite service. 0 = no expiration.
 	cfg.StorageModeCacheTTL = section.Key("storage_mode_cache_ttl").MustDuration(5 * time.Second)
@@ -301,8 +311,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 
 	// Index snapshot settings
 	cfg.IndexSnapshotEnabled = section.Key("index_snapshot_enabled").MustBool(false)
-	cfg.IndexSnapshotBucketURL = section.Key("index_snapshot_bucket_url").String()
-	cfg.IndexSnapshotStorageKV = section.Key("index_snapshot_storage_kv").MustBool(false)
 	cfg.IndexSnapshotKVChunkConcurrency = section.Key("index_snapshot_kv_chunk_concurrency").MustInt(1)
 	cfg.IndexSnapshotKVChunkSizeMiB = section.Key("index_snapshot_kv_chunk_size_mib").MustInt(0)
 	cfg.IndexSnapshotThreshold = section.Key("index_snapshot_threshold").MustInt(5000)

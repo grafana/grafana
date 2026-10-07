@@ -93,12 +93,14 @@ export function DeleteActionButton({
   yesText,
   onConfirm,
   isRepeated,
+  tooltip: tooltipOverride,
 }: {
   title: string;
   text: string;
   yesText: string;
   onConfirm: () => void;
   isRepeated?: boolean;
+  tooltip?: string;
 }) {
   const styles = useStyles2(getActionStyles);
   const { closePopover } = useEditActionsPopover();
@@ -115,9 +117,14 @@ export function DeleteActionButton({
     );
   }, [closePopover, title, text, yesText, onConfirm]);
 
-  const tooltip = isRepeated
-    ? t('dashboard-scene.control-edit-actions.delete-tooltip-disabled', "Repeated panels can't be deleted individually")
-    : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete');
+  const tooltip =
+    tooltipOverride ??
+    (isRepeated
+      ? t(
+          'dashboard-scene.control-edit-actions.delete-tooltip-disabled',
+          "Repeated panels can't be deleted individually"
+        )
+      : t('dashboard-scene.control-edit-actions.delete-tooltip', 'Delete'));
 
   return (
     <IconButton
