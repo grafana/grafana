@@ -16,6 +16,7 @@ import { enterEditModeCommand } from './enterEditMode';
 import { getDashboardInfoCommand } from './getDashboardInfo';
 import { getLayoutCommand } from './getLayout';
 import { getMetadataAnnotationsCommand } from './getMetadataAnnotations';
+import { getPanelRenderStatusCommand } from './getPanelRenderStatus';
 import { getSpecCommand } from './getSpec';
 import { listAnnotationsCommand } from './listAnnotations';
 import { listPanelsCommand } from './listPanels';
@@ -65,6 +66,7 @@ export const DASHBOARD_COMMANDS: Array<MutationCommand<any>> = [
   updatePanelCommand,
   removePanelCommand,
   listPanelsCommand,
+  getPanelRenderStatusCommand,
   getDashboardInfoCommand,
   getMetadataAnnotationsCommand,
   updateMetadataAnnotationsCommand,

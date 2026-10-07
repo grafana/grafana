@@ -21,6 +21,8 @@ import { TabItem } from './TabItem';
 import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
 import { type TabsLayoutManager } from './TabsLayoutManager';
+import { addLandingTab } from './addLandingTab';
+import { buildLandingPageRequest, useCustomPanelAssistant } from './customPanelAssistant';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
@@ -173,6 +175,7 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
                 >
                   <Trans i18nKey="dashboard.canvas-actions.new-tab">New tab</Trans>
                 </Button>
+                <AddLandingTabButton manager={model} />
                 {hasCopiedTab && (
                   <Button
                     icon="clipboard-alt"
@@ -203,6 +206,42 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 
       {currentTab && <TabItemLayoutRenderer tab={currentTab} isEditing={isEditing} />}
     </div>
+  );
+}
+
+function AddLandingTabButton({ manager }: { manager: TabsLayoutManager }) {
+  const { customPanelAvailable, openAssistant } = useCustomPanelAssistant();
+
+  if (!customPanelAvailable) {
+    return null;
+  }
+
+  // With the Assistant, the landing page is designed for this dashboard; without it, it starts from a template.
+  const onClick = () => {
+    if (openAssistant) {
+      openAssistant(buildLandingPageRequest(getDashboardSceneFor(manager)));
+    } else {
+      void addLandingTab(manager);
+    }
+  };
+
+  return (
+    <Button
+      icon={openAssistant ? 'ai-sparkle' : 'apps'}
+      variant="secondary"
+      size="sm"
+      tooltip={
+        openAssistant
+          ? t('dashboard.canvas-actions.add-landing-tab-assistant', 'Ask the Assistant to design a landing page')
+          : undefined
+      }
+      onClick={onClick}
+      onPointerUp={(evt) => evt.stopPropagation()}
+      onPointerDown={(evt) => evt.stopPropagation()}
+      data-testid={selectors.components.CanvasGridAddActions.addLandingTab}
+    >
+      <Trans i18nKey="dashboard.canvas-actions.add-landing-tab">Add landing tab</Trans>
+    </Button>
   );
 }
 

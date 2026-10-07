@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { type Observable, debounce, debounceTime, defer, filter, finalize, first, interval, map, of } from 'rxjs';
 
 import {
@@ -12,6 +13,7 @@ import {
   type DataFrame,
   LoadingState,
   type Field,
+  type FieldConfig,
   FieldType,
   type AdHocVariableFilter,
   type MetricFindValue,
@@ -21,12 +23,14 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   isSceneObject,
   sceneGraph,
   type SceneDataProvider,
   SceneDataTransformer,
   type SceneObject,
+  VizPanel,
 } from '@grafana/scenes';
 import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
 import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/utils';
@@ -35,6 +39,68 @@ import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/uti
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
+
+interface DashboardSourceMeta {
+  panelId: number;
+  title: string;
+  /** The source panel's standard options, which its own visualization applies to these frames. */
+  standardOptions: FieldConfig;
+}
+
+// Standard options a source panel sets in its field config defaults; overrides stay with the source.
+const CARRIED_STANDARD_OPTIONS = [
+  'unit',
+  'decimals',
+  'min',
+  'max',
+  'noValue',
+  'thresholds',
+  'mappings',
+  'color',
+] as const;
+
+function pickStandardOptions(panel: VizPanel): FieldConfig {
+  const defaults = panel.state.fieldConfig?.defaults ?? {};
+  const picked: FieldConfig = {};
+  for (const key of CARRIED_STANDARD_OPTIONS) {
+    if (defaults[key] != null) {
+      Object.assign(picked, { [key]: defaults[key] });
+    }
+  }
+  return picked;
+}
+
+/** The source options fill only what the field leaves unset, as panel defaults would. */
+function withStandardOptions(field: Field, options: FieldConfig): FieldConfig {
+  if (field.type === FieldType.time) {
+    return field.config;
+  }
+  const config: FieldConfig = { ...field.config };
+  for (const key of CARRIED_STANDARD_OPTIONS) {
+    if (config[key] == null && options[key] != null) {
+      // A copy: applying field config can change thresholds in place.
+      Object.assign(config, { [key]: cloneDeep(options[key]) });
+    }
+  }
+  return config;
+}
+
+// Only the custom panel groups frames by source panel, so only its queries get the attribution.
+const SOURCE_ATTRIBUTION_CONSUMERS: ReadonlySet<string> = new Set(['custom-panel']);
+
+function wantsSourceAttribution(consumer: SceneObject): boolean {
+  if (!getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaCustomPanel, false)) {
+    return false;
+  }
+  let current: SceneObject | undefined = consumer;
+  while (current) {
+    if (current instanceof VizPanel) {
+      return SOURCE_ATTRIBUTION_CONSUMERS.has(current.state.pluginId);
+    }
+    current = current.parent;
+  }
+  return false;
+}
 
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
   if (!a?.from || !a?.to || !b?.from || !b?.to) {
@@ -95,6 +161,15 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     // Extract AdHoc filters from the request
     const adHocFilters = options.filters || [];
 
+    const source: DashboardSourceMeta | undefined = wantsSourceAttribution(scene)
+      ? {
+          panelId,
+          // The format the panel header uses, so a drawing that prints the title matches it.
+          title: sceneGraph.interpolate(sourcePanel, sourcePanel.state.title, undefined, 'text'),
+          standardOptions: pickStandardOptions(sourcePanel),
+        }
+      : undefined;
+
     return defer(() => {
       if (!sourceDataProvider!.isActive && sourceDataProvider?.setContainerWidth) {
         sourceDataProvider?.setContainerWidth(500);
@@ -141,7 +216,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         }),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
+            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters, source),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -161,7 +236,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   private getDataFramesForQueryTopic(
     data: PanelData,
     query: DashboardQuery,
-    filters: AdHocVariableFilter[]
+    filters: AdHocVariableFilter[],
+    source: DashboardSourceMeta | undefined
   ): DataFrame[] {
     // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
@@ -179,10 +255,25 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
+        // Source attribution for the custom panel; other consumers get the frames unchanged. Frames
+        // take the refId of the query that asked for them, so the panel's refId-based overrides and
+        // code match them; the source refId (which collides across source panels) moves to meta.
+        ...(source && {
+          refId: query.refId,
+          meta: {
+            ...s.meta,
+            custom: {
+              ...s.meta?.custom,
+              dashboardSourcePanelId: source.panelId,
+              dashboardSourcePanelTitle: source.title,
+              ...(s.refId !== undefined && { dashboardSourceRefId: s.refId }),
+            },
+          },
+        }),
         fields: s.fields.map((field: Field) => ({
           ...field,
           config: {
-            ...field.config,
+            ...(source ? withStandardOptions(field, source.standardOptions) : field.config),
             // Enable AdHoc filtering for string and numeric fields only when per-panel setting is enabled
             filterable: query.adHocFiltersEnabled
               ? field.type === FieldType.string || field.type === FieldType.number

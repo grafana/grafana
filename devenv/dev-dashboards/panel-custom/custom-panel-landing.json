@@ -1,0 +1,595 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "custom-panel-landing"
+  },
+  "spec": {
+    "annotations": [],
+    "cursorSync": "Off",
+    "description": "Custom panel: an Overview landing tab drawn from the Details tab panels. Requires enable_alpha and the grafana.customPanel feature flag.",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Overview",
+          "description": "Custom panel: drawing code only. Data comes from the Details panels through -- Dashboard -- queries.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 2,
+                        "withTransforms": true
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 3,
+                        "withTransforms": true
+                      }
+                    },
+                    "refId": "B",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 4,
+                        "withTransforms": true
+                      }
+                    },
+                    "refId": "C",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "-- Dashboard --"
+                      },
+                      "spec": {
+                        "panelId": 5,
+                        "withTransforms": true
+                      }
+                    },
+                    "refId": "D",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "custom-panel",
+            "version": "",
+            "spec": {
+              "options": {
+                "code": "// Incident layout: switches between a calm summary and an incident view.\n// A metric is critical when its absolute thresholds have more than one step and its last value is\n// at or above the last step. The dashboard variable \"incident_mode\" (\"on\" / \"off\"), read from the\n// URL, forces the mode. ctx mirrors Grafana's PanelProps; see the custom panel README.\n\nfunction escapeHtml(value) {\n  const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' };\n  return String(value == null ? '' : value).replace(/[&<>\"']/g, (c) => escapes[c]);\n}\n\nfunction lastNotNull(values) {\n  for (let i = values.length - 1; i >= 0; i--) {\n    if (values[i] != null) {\n      return values[i];\n    }\n  }\n  return null;\n}\n\n// Frames that came from another panel through \"-- Dashboard --\" carry it in meta.custom. Frames of\n// one source panel share a group; any other frame gets a group of its own.\nfunction groupBySource(series) {\n  const groups = [];\n  const byPanel = new Map();\n  for (const frame of series) {\n    const custom = (frame.meta && frame.meta.custom) || {};\n    const panelId = typeof custom.dashboardSourcePanelId === 'number' ? custom.dashboardSourcePanelId : null;\n    if (panelId === null) {\n      groups.push({ panelId, title: null, frames: [frame] });\n      continue;\n    }\n    let group = byPanel.get(panelId);\n    if (!group) {\n      group = { panelId, title: custom.dashboardSourcePanelTitle || null, frames: [] };\n      byPanel.set(panelId, group);\n      groups.push(group);\n    }\n    group.frames.push(frame);\n  }\n  return groups;\n}\n\n// One metric per group: the first number field, with its last value as Grafana formats it\n// (unit, decimals, mappings, thresholds color).\nfunction collectMetrics(series) {\n  const metrics = [];\n  for (const group of groupBySource(series)) {\n    let frame = null;\n    let field = null;\n    for (const candidate of group.frames) {\n      field = candidate.fields.find((f) => f.type === 'number') || null;\n      if (field) {\n        frame = candidate;\n        break;\n      }\n    }\n    if (!field) {\n      continue;\n    }\n    const display = field.state.lastNotNullDisplay;\n    const last = lastNotNull(field.values);\n    metrics.push({\n      panelId: group.panelId,\n      title: group.title || frame.name || field.state.displayName || field.name || frame.refId || '',\n      field,\n      last,\n      text: display ? (display.prefix || '') + display.text + (display.suffix || '') : last == null ? '–' : String(last),\n      color: (display && display.color) || 'var(--gf-color-text-primary)',\n    });\n  }\n  return metrics;\n}\n\nfunction criticalLimit(field) {\n  const thresholds = field.config.thresholds;\n  const steps = thresholds && thresholds.mode === 'absolute' ? thresholds.steps : [];\n  return steps.length > 1 ? steps[steps.length - 1].value : null;\n}\n\n// Dashboard variables are URL-synced as var-<name>.\nfunction forcedMode(location) {\n  const value = String(new URLSearchParams(location.search).get('var-incident_mode') || '').toLowerCase();\n  return value === 'on' || value === 'off' ? value : null;\n}\n\nfunction link(metric, inner, className) {\n  return metric.panelId != null\n    ? '<a class=\"' + className + '\" href=\"#panel-' + metric.panelId + '\">' + inner + '</a>'\n    : '<div class=\"' + className + '\">' + inner + '</div>';\n}\n\nconst STYLE =\n  '<style>' +\n  '#root{padding:var(--gf-spacing);box-sizing:border-box}' +\n  'a{color:inherit;text-decoration:none}' +\n  '.muted{color:var(--gf-color-text-secondary)}' +\n  '.banner{padding:12px 16px;border-radius:var(--gf-radius);background:var(--gf-color-error);color:#fff;font-weight:500;margin-bottom:var(--gf-spacing)}' +\n  '.offenders{display:flex;flex-direction:column;gap:var(--gf-spacing)}' +\n  '.offender{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:baseline;padding:8px 12px;' +\n  'border:1px solid var(--gf-color-error);border-radius:var(--gf-radius)}' +\n  '.offender .value{font-size:1.5em;font-weight:500}' +\n  '.others{margin-top:var(--gf-spacing);color:var(--gf-color-text-secondary)}' +\n  '.others ul{margin:4px 0;padding-left:20px}' +\n  '.calm{color:var(--gf-color-success);font-weight:500;margin:0 0 var(--gf-spacing)}' +\n  '.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--gf-spacing)}' +\n  '.tile{display:flex;flex-direction:column;padding:8px;border:1px solid var(--gf-color-border-weak);border-radius:var(--gf-radius)}' +\n  '.tile .name{color:var(--gf-color-text-secondary);font-size:0.85em}' +\n  '.tile .value{font-size:1.25em}' +\n  '</style>';\n\npanel.onRender(({ root, data, location }) => {\n  const metrics = collectMetrics(data.series).map((m) => {\n    const limit = criticalLimit(m.field);\n    const critical = typeof m.last === 'number' && typeof limit === 'number' && m.last >= limit;\n    // How far past its limit the metric is, relative to the limit when that is meaningful.\n    const severity = critical ? (limit > 0 ? m.last / limit : m.last - limit + 1) : 0;\n    return Object.assign({}, m, { limit, critical, severity });\n  });\n  const critical = metrics.filter((m) => m.critical).sort((a, b) => b.severity - a.severity);\n  const forced = forcedMode(location);\n  const incident = forced ? forced === 'on' : critical.length > 0;\n\n  if (metrics.length === 0 && !incident) {\n    const message = data.state === 'Loading' ? 'Loading…' : 'No data to show';\n    root.innerHTML = STYLE + '<p class=\"muted\">' + escapeHtml(message) + '</p>';\n    return;\n  }\n\n  if (incident) {\n    const others = metrics.filter((m) => !m.critical);\n    const headline = critical.length\n      ? 'Incident: ' + critical.length + ' of ' + metrics.length + ' signals critical'\n      : 'Incident mode';\n    const offenders = critical\n      .map((m) =>\n        link(\n          m,\n          '<span class=\"name\">' + escapeHtml(m.title) + '</span><span class=\"value\" style=\"color:' + escapeHtml(m.color) + '\">' +\n            escapeHtml(m.text) + '</span><span class=\"muted\">limit ' + escapeHtml(m.limit) + '</span>',\n          'offender'\n        )\n      )\n      .join('');\n    const rest = others.length\n      ? '<details class=\"others\"><summary>' + others.length + ' other signals</summary><ul>' +\n        others.map((m) => '<li>' + link(m, escapeHtml(m.title) + ': ' + escapeHtml(m.text), 'compact') + '</li>').join('') +\n        '</ul></details>'\n      : '';\n    root.innerHTML =\n      STYLE + '<div class=\"banner\" role=\"alert\">' + escapeHtml(headline) + '</div><div class=\"offenders\">' + offenders + '</div>' + rest;\n    return;\n  }\n\n  const tiles = metrics\n    .map((m) =>\n      link(m, '<span class=\"name\">' + escapeHtml(m.title) + '</span><span class=\"value\" style=\"color:' + escapeHtml(m.color) + '\">' +\n        escapeHtml(m.text) + '</span>', 'tile')\n    )\n    .join('');\n  root.innerHTML =\n    STYLE + '<p class=\"calm\">All clear: ' + metrics.length + ' signals below their critical thresholds</p><div class=\"tiles\">' + tiles + '</div>';\n});\n",
+                "apiVersion": 1
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "CPU usage",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "startValue": 55,
+                        "min": 0,
+                        "max": 100,
+                        "spread": 6,
+                        "alias": "cpu"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "min": 0,
+                  "max": 100,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Error rate",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "csv_metric_values",
+                        "stringInput": "0.4,0.6,0.5,1.2,2.8,4.1,6.3",
+                        "alias": "errors"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": ["lastNotNull"],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "percent",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 5,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Latency p95",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "startValue": 240,
+                        "min": 80,
+                        "max": 700,
+                        "spread": 25,
+                        "alias": "p95"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "",
+            "spec": {
+              "options": {
+                "legend": {
+                  "displayMode": "list",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "ms",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 500,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  },
+                  "custom": {
+                    "thresholdsStyle": {
+                      "mode": "line"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-5": {
+        "kind": "Panel",
+        "spec": {
+          "id": 5,
+          "title": "Requests per second",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-testdata-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PD8C576611E62080A"
+                      },
+                      "spec": {
+                        "scenarioId": "random_walk",
+                        "seriesCount": 1,
+                        "startValue": 1200,
+                        "min": 0,
+                        "spread": 40,
+                        "alias": "rps"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "",
+            "spec": {
+              "options": {
+                "colorMode": "value",
+                "graphMode": "area",
+                "justifyMode": "auto",
+                "orientation": "auto",
+                "reduceOptions": {
+                  "calcs": ["lastNotNull"],
+                  "fields": "",
+                  "values": false
+                },
+                "textMode": "auto"
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "reqps",
+                  "decimals": 0,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "TabsLayout",
+      "spec": {
+        "tabs": [
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Overview",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 1,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": true,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-1"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "TabsLayoutTab",
+            "spec": {
+              "title": "Details",
+              "layout": {
+                "kind": "AutoGridLayout",
+                "spec": {
+                  "maxColumnCount": 2,
+                  "columnWidthMode": "standard",
+                  "rowHeightMode": "standard",
+                  "fillScreen": false,
+                  "items": [
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-2"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-3"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-4"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "AutoGridLayoutItem",
+                      "spec": {
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-5"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": ["gdev", "panel-tests", "custom-panel"],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-6h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Panel tests - Custom panel landing",
+    "variables": [
+      {
+        "kind": "CustomVariable",
+        "spec": {
+          "name": "incident_mode",
+          "label": "Incident mode",
+          "query": "auto,on,off",
+          "current": {
+            "text": "auto",
+            "value": "auto"
+          },
+          "options": [
+            {
+              "selected": true,
+              "text": "auto",
+              "value": "auto"
+            },
+            {
+              "selected": false,
+              "text": "on",
+              "value": "on"
+            },
+            {
+              "selected": false,
+              "text": "off",
+              "value": "off"
+            }
+          ],
+          "multi": false,
+          "includeAll": false,
+          "hide": "dontHide",
+          "skipUrlSync": false,
+          "allowCustomValue": false
+        }
+      }
+    ]
+  }
+}

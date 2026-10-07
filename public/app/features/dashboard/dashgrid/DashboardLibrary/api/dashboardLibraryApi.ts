@@ -13,6 +13,8 @@ const UNSAFE_PANEL_TYPE_SLUGS = [
   'ae3e-plotly-panel',
   'gapit-htmlgraphics-panel',
   'marcusolsson-dynamictext-panel',
+  // Core custom panel: executes drawing code stored in the dashboard JSON.
+  'custom-panel',
   'volkovlabs-echarts-panel',
   'volkovlabs-form-panel',
 ];

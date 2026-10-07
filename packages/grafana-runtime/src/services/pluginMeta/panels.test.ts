@@ -735,3 +735,26 @@ describe('immutability', () => {
     expect(result!.info.links).toHaveLength(0);
   });
 });
+
+describe('custom panel flag', () => {
+  const customPanel = { ...panel, id: 'custom-panel', name: 'Custom panel' };
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
+  it('leaves the custom panel out while grafana.customPanel is off', async () => {
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: false });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, 'custom-panel': customPanel });
+
+    expect(await getPanelPluginMeta('custom-panel')).toBeNull();
+    expect(Object.keys(await getPanelPluginMetasMap())).toEqual(['grafana-test-panel']);
+  });
+
+  it('keeps the custom panel when grafana.customPanel is on', async () => {
+    setTestFlags({ [FlagKeys.GrafanaCustomPanel]: true });
+    setPanelPluginMetas({ 'grafana-test-panel': panel, 'custom-panel': customPanel });
+
+    expect(await getPanelPluginMeta('custom-panel')).toMatchObject({ id: 'custom-panel' });
+  });
+});

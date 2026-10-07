@@ -680,6 +680,52 @@ const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
 });
 
+export const MAX_RENDER_STATUS_IMAGES = 20;
+/** The most image data URL characters one response carries, across all its images. */
+export const MAX_RENDER_STATUS_IMAGE_CHARS = 16 * 1024 * 1024;
+export const MAX_RENDER_STATUS_WAIT_MS = 15_000;
+
+const getPanelRenderStatusPayloadSchema = z
+  .object({
+    elements: z
+      .array(z.string())
+      .max(100)
+      .optional()
+      .describe('Element names to return (e.g. ["panel-3"]). Omit to return every panel that reports.'),
+    includeImage: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        `When true, also return a PNG data URL of each drawing, for panels that can capture themselves (at most ${MAX_RENDER_STATUS_IMAGES}, and less once the images reach the response size limit).`
+      ),
+    includeData: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        'When true, also return the shape of the data each drawing received: per frame its refId, name, length and source panel, and per field its name, type, display name, unit and formatted last value.'
+      ),
+    includeLayout: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        'When true, also measure the layout of each drawing: elements that reach past the panel edges, text cut by its box, and text drawn over other text.'
+      ),
+    waitMs: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_RENDER_STATUS_WAIT_MS)
+      .optional()
+      .default(0)
+      .describe(
+        `Wait up to this many milliseconds (at most ${MAX_RENDER_STATUS_WAIT_MS}) for the requested Custom panels to settle (drawn with final data, or error) before answering.`
+      ),
+  })
+  .strict();
+
 const listPanelsPayloadSchema = z.object({
   elements: z
     .array(z.string())
@@ -906,6 +952,9 @@ export const payloads = {
   ),
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
+  getPanelRenderStatus: getPanelRenderStatusPayloadSchema.describe(
+    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, whether the panel is paused out of view, and optionally a capture of the drawing, the shape of the data it received and a layout report (overflow, clipped text, text over text). A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted. waitMs waits for the drawings to settle.'
+  ),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
   ),

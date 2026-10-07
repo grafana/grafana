@@ -704,6 +704,82 @@ List elements on the dashboard (panels, library panels, etc.) as an array of `{ 
 
 Each entry uses the same `{ element, layoutItem }` shape as write commands. The element name is in `layoutItem.spec.element.name`.
 
+### `GET_PANEL_RENDER_STATUS`
+
+Read the last draw result of panels that report one. Today that is the Custom panel, whose drawing
+runs in a sandboxed frame that the DOM, `LIST_PANELS` and browser-side screenshots cannot see into.
+It never changes the dashboard or what is in view.
+
+**Request:**
+
+```json
+{ "type": "GET_PANEL_RENDER_STATUS", "payload": { "elements": ["panel-3"], "includeImage": false } }
+```
+
+- `elements` (optional): element names to return. Omit to return every panel that reports.
+- `includeImage` (optional, default `false`): also return `image`, a PNG data URL of the drawing,
+  for at most 20 panels and 16 MiB of data URLs in all. A panel that cannot capture itself, or
+  whose image would go over that budget, returns `imageError` instead.
+- `includeData` (optional, default `false`): also return `data`, the shape of the data the drawing
+  received: per frame `refId`, `name`, `length` and, for `-- Dashboard --` frames, `sourcePanelId`,
+  `sourcePanelTitle` and `sourceRefId`; per field `name`, `type`, `displayName`, `unit` and `last`
+  (the last non-null value as the panel formats it). At most 20 frames of 30 fields, no values.
+- `includeLayout` (optional, default `false`): also measure the drawing as it is now and return
+  `layout`: `overflowing` (elements that reach past the panel edges), `clippedText` (text cut by
+  its box) and `overlaps` (text drawn over other text), each with an exact `count` and at most 5
+  `samples`. A panel that cannot measure itself returns `layoutError` instead. Diagnostics only;
+  see "Layout report" in the Custom panel README for the fields.
+- `waitMs` (optional, default `0`, at most `15000`): wait up to this long for the requested Custom
+  panels to settle (`drawn` with `final: true`, or `error`) before answering. A panel out of view
+  counts as settled.
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "panels": [
+      {
+        "element": "panel-3",
+        "panelId": 3,
+        "pluginId": "custom-panel",
+        "state": "error",
+        "final": true,
+        "dataState": "Done",
+        "digest": "9a1f03bc",
+        "error": { "kind": "runtime", "message": "TypeError: Cannot read properties of undefined" },
+        "ageMs": 820
+      }
+    ]
+  },
+  "changes": []
+}
+```
+
+- `state`: `pending` (no draw finished yet), `drawn` (the last draw finished), `error` (it
+  failed, or the panel could not draw at all: unsupported API version, code too large, data over
+  the limits) or `not-mounted` (a Custom panel that is not rendered right now, so it has no draw;
+  `reason` is `inactive-tab`, `collapsed-row`, `no-code` or `not-rendered`, the last for a panel
+  that lazy loading has not reached yet). It draws once it is in view.
+- `final`: the drawn data will not change (`Done`, `Error` or `PartialResult`) and the draw is of
+  the latest input. Wait for `final: true` or `state: "error"` before judging a drawing.
+- `paused`: `true` while the panel is scrolled out of view. It does not draw until it is in view
+  again, so a `pending` panel that is paused stays pending until it is scrolled into view.
+- `instanceKey`: the scene key of the mounted panel. A repeated panel returns one entry per
+  repeat, all with the same `element` and each with its own `instanceKey`.
+- `digest`: for the Custom panel, FNV-1a 32-bit over the UTF-16 code units of `options.code`, as
+  8 lowercase hex digits. A caller that just wrote the code computes the same value to tell the new
+  drawing's report from the previous one.
+- `diagnostics`: non-fatal problems reported during a draw that still finished, such as a resource
+  the sandbox blocked, or links in the drawing that Grafana will not follow (`link: ...`).
+- `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
+
+Requested panels that are not on the dashboard, or do not report, and Custom panels that are
+`not-mounted`, are named in `warnings`.
+
+---
+
 ### `MOVE_PANEL`
 
 Move a panel to a different group or reposition it within a grid. The `layoutItem.kind` is optional -- it is auto-detected from the target layout. If provided and mismatched, a warning is emitted.

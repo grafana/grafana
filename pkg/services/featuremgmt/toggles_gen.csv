@@ -390,6 +390,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.panelPluginTransformations,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,grafana.dashboardsAutoHeightPanels,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,grafana.dashboardAutoGridDefault,GA,@grafana/dashboards-squad,false,false,true
+2026-10-06,grafana.customPanel,experimental,@grafana/dashboards-squad,false,false,true
 2026-09-16,saml.gosaml2Provider,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,grafana.multiTenantUserPermissions,experimental,@grafana/identity-access-team,false,false,true
 2026-09-16,datasources.gatewayGuardrails,experimental,@grafana/data-sources-plugins,false,false,false
