@@ -42,7 +42,7 @@ func TestSnapshotBlobRemoteTransport(t *testing.T) {
 		size     int
 		wantCode codes.Code
 	}{
-		{name: "default limits support snapshots larger than 4 MiB", size: 5 << 20, wantCode: codes.OK},
+		{name: "default limits reject unary snapshots larger than 4 MiB", size: 5 << 20, wantCode: codes.ResourceExhausted},
 		{name: "explicit receive limit is respected", limit: 4 << 20, size: 5 << 20, wantCode: codes.ResourceExhausted},
 		{name: "higher receive limit supports snapshots larger than 32 MiB", limit: 64 << 20, size: 33 << 20, wantCode: codes.OK},
 	} {

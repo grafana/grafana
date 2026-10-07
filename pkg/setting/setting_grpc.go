@@ -12,9 +12,6 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// DefaultGRPCMaxRecvMsgSize allows larger blob uploads while keeping unary requests bounded.
-const DefaultGRPCMaxRecvMsgSize = 32 << 20
-
 type GRPCServerSettings struct {
 	Enabled                 bool
 	Network                 string

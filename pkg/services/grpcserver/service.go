@@ -63,10 +63,6 @@ func provideService(cfg *setting.Cfg, authenticator interceptors.Authenticator, 
 		listener:         listener,
 	}
 
-	if s.cfg.MaxRecvMsgSize <= 0 {
-		s.cfg.MaxRecvMsgSize = setting.DefaultGRPCMaxRecvMsgSize
-	}
-
 	// Register the metric here instead of an init() function so that we do
 	// nothing unless the gRPC server is actually enabled.
 	if grpcRequestDuration == nil {
