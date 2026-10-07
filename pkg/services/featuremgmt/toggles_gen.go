@@ -519,6 +519,10 @@ const (
 	// Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in multi-tenant datasource services
 	FlagDatasourcesTeamHttpHeadersFromAppPlatformMT = "datasources.teamHttpHeadersFromAppPlatformMT"
 
+	// FlagDatasourcesTeamHttpHeadersWriteGuard
+	// Guard embedded Team LBAC rules against external datasource Kubernetes API writes
+	FlagDatasourcesTeamHttpHeadersWriteGuard = "datasources.teamHttpHeadersWriteGuard"
+
 	// FlagTeamLBACApiReadFromAppPlatform
 	// Use the Kubernetes TeamLBACRule API for reading team LBAC rules in the legacy API server
 	FlagTeamLBACApiReadFromAppPlatform = "teamLBACApiReadFromAppPlatform"
@@ -802,6 +806,10 @@ const (
 	// Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back
 	FlagKubernetesUsersRedirectNoFallback = "kubernetesUsersRedirectNoFallback"
 
+	// FlagKubernetesUsersDeterministicUID
+	// Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value
+	FlagKubernetesUsersDeterministicUID = "kubernetesUsersDeterministicUID"
+
 	// FlagKubernetesAuthInfoApi
 	// Enables auth info APIs in the app platform
 	FlagKubernetesAuthInfoApi = "kubernetesAuthInfoApi"
@@ -945,6 +953,10 @@ const (
 	// FlagDashboardVectorSearch
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
+
+	// FlagAlertingHybridSearch
+	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
+	FlagAlertingHybridSearch = "alerting.hybridSearch"
 
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2

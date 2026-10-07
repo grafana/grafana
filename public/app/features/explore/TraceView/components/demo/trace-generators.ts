@@ -83,7 +83,7 @@ const OPERATIONS_LIST = [
   'MongoDB::update',
 ];
 
-function setupParentSpan(spans: TraceSpanData[], parentSpanValues: TraceSpanData) {
+function setupParentSpan(spans: TraceSpanData[], parentSpanValues: Pick<TraceSpanData, 'startTime' | 'duration'>) {
   Object.assign(spans[0], parentSpanValues);
   return spans;
 }
@@ -169,7 +169,7 @@ export default chance.mixin({
     });
     spans = attachReferences(spans, maxDepth, spansPerLevel);
     if (spans.length > 1) {
-      spans = setupParentSpan(spans, { startTime: timestamp, duration } as TraceSpanData);
+      spans = setupParentSpan(spans, { startTime: timestamp, duration });
     }
 
     return {

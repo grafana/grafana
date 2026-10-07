@@ -20,6 +20,8 @@ type BleveIndexMetrics struct {
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
 
+	GlobalReconcileDuration *prometheus.HistogramVec
+
 	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
 	IndexSnapshotDownloadDuration         prometheus.Histogram
 	IndexSnapshotUploads                  *prometheus.CounterVec
@@ -32,8 +34,9 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations *prometheus.CounterVec
-	SearchResultFormats        *prometheus.CounterVec
+	SearchCapabilityViolations      *prometheus.CounterVec
+	SearchResultFormats             *prometheus.CounterVec
+	SearchServicePermissionFailures *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -135,6 +138,13 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
+		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
+			Help:                            "Time to compare one global search index with storage and repair what differs",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"result"}),
 		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_snapshot_download_attempts_total",
 			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
@@ -203,6 +213,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_capability_violations_total",
 			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
 		}, []string{"resource", "capability"}),
+		SearchServicePermissionFailures: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_service_permission_failures_total",
+			Help: "Search requests rejected before scanning because the service token lacks a required direct or delegated permission.",
+		}, []string{"mode"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",
@@ -216,6 +230,8 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 	m.OpenIndexes.WithLabelValues("memory").Set(0)
 	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
 	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
+	m.SearchServicePermissionFailures.WithLabelValues("direct").Add(0)
+	m.SearchServicePermissionFailures.WithLabelValues("delegated").Add(0)
 	return m
 }
 

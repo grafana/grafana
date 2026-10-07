@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/blevesearch/bleve/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -275,57 +276,57 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 }
 
 var (
-	importTimesKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
-	importedA      = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
-	importedB      = schema.GroupResource{Group: "b.grafana.app", Resource: "bs"}
-	importMonday   = time.Date(2026, 9, 28, 10, 0, 0, 123456789, time.UTC)
+	typeBuildsKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	importedA     = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
+	importedB     = schema.GroupResource{Group: "b.grafana.app", Resource: "bs"}
+	importMonday  = time.Date(2026, 9, 28, 10, 0, 0, 123456789, time.UTC)
 )
 
-func TestImportTimesAreEmptyOnANewIndex(t *testing.T) {
+func TestCompletedTypeBuildsAreEmptyOnANewIndex(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	times, err := idx.ImportTimes()
+	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Empty(t, times)
+	assert.Empty(t, builds)
 }
 
 // Recording one type keeps what is recorded for the others, to the nanosecond.
-func TestImportTimesAreRecordedPerType(t *testing.T) {
+func TestCompletedTypeBuildsAreRecordedPerType(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	require.NoError(t, idx.RecordImportTime(importedA, importMonday))
-	require.NoError(t, idx.RecordImportTime(importedB, importMonday.Add(time.Hour)))
-	require.NoError(t, idx.RecordImportTime(importedA, importMonday.Add(2*time.Hour)))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday.Add(time.Hour)}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday.Add(2 * time.Hour)}))
 
-	times, err := idx.ImportTimes()
+	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]time.Time{
-		importedA: importMonday.Add(2 * time.Hour),
-		importedB: importMonday.Add(time.Hour),
-	}, times)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{
+		importedA: {StorageImportTime: importMonday.Add(2 * time.Hour)},
+		importedB: {StorageImportTime: importMonday.Add(time.Hour)},
+	}, builds)
 }
 
 // A type the index holds but never saw imported is recorded with the zero time,
 // and a forgotten type is no longer recorded at all.
-func TestImportTimesRecordNeverImportedAndForgottenTypes(t *testing.T) {
+func TestCompletedTypeBuildsRecordNeverImportedAndForgottenTypes(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
-	idx, err := backend.BuildIndex(t.Context(), importTimesKey, 1, "test", indexTestDocs(importTimesKey, 1, 100), nil, false, time.Time{}, 0)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	require.NoError(t, idx.RecordImportTime(importedA, time.Time{}))
-	require.NoError(t, idx.RecordImportTime(importedB, importMonday))
-	times, err := idx.ImportTimes()
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday}))
+	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: {}, importedB: importMonday}, times)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}, importedB: {StorageImportTime: importMonday}}, builds)
 
 	require.NoError(t, idx.ForgetType(importedB))
-	times, err = idx.ImportTimes()
+	builds, err = idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: {}}, times)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}}, builds)
 }
 
 // A type is recorded as it is first written, and a delete does not forget it:
@@ -350,7 +351,7 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 			Action: resource.ActionDelete,
 			Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: foldersGR.Group, Resource: foldersGR.Resource, Name: "folder-a"},
 		}}}))
-		require.NoError(t, idx.RecordImportTime(playlists, importMonday))
+		require.NoError(t, idx.RecordCompletedTypeBuild(playlists, resource.TypeBuild{StorageImportTime: importMonday}))
 		require.NoError(t, idx.ForgetType(playlists))
 		backend.Stop()
 	}
@@ -364,37 +365,69 @@ func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 	types, err := idx.DocumentTypes()
 	require.NoError(t, err)
 	assert.Equal(t, []schema.GroupResource{dashboardsGR, foldersGR}, types)
-	times, err := idx.ImportTimes()
+	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Empty(t, times, "forgotten from both records")
+	assert.Empty(t, builds, "forgotten from both records")
+}
+
+// Zero until recorded, then kept to the nanosecond.
+func TestReconciledAtIsRecorded(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	at, err := idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Zero(t, at)
+
+	require.NoError(t, idx.RecordReconciledAt(importMonday))
+	at, err = idx.ReconciledAt()
+	require.NoError(t, err)
+	assert.Equal(t, importMonday, at)
 }
 
 // Kept inside the index, so a restarted server does not redo an import it has
 // already caught up with.
-func TestImportTimesSurviveReopening(t *testing.T) {
+func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 	dir := t.TempDir()
 	const docs = 10
 	{
 		backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
 		build := func(index resource.ResourceIndex) (int64, error) {
-			rv, err := indexTestDocs(importTimesKey, docs, 100)(index)
+			rv, err := indexTestDocs(typeBuildsKey, docs, 100)(index)
 			if err != nil {
 				return rv, err
 			}
-			return rv, index.RecordImportTime(importedA, importMonday)
+			return rv, index.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday})
 		}
-		_, err := backend.BuildIndex(t.Context(), importTimesKey, docs, "test", build, nil, false, time.Time{}, 0)
+		_, err := backend.BuildIndex(t.Context(), typeBuildsKey, docs, "test", build, nil, false, time.Time{}, 0)
 		require.NoError(t, err)
 		backend.Stop()
 	}
 
 	reopened, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
-	idx, err := reopened.BuildIndex(t.Context(), importTimesKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
+	idx, err := reopened.BuildIndex(t.Context(), typeBuildsKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	times, err := idx.ImportTimes()
+	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]time.Time{importedA: importMonday}, times)
+	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {StorageImportTime: importMonday}}, builds)
+}
+
+// Notifications write to a global index outside its updater, so an index closed
+// under them, as one evicted or replaced, must refuse the write rather than
+// panic.
+func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
+	backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(t.TempDir()))
+	key := resource.GlobalSearchKey("ns")
+	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	backend.Stop()
+
+	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
+	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 }

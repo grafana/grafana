@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"iter"
 	"net/http"
+	"path"
 	"slices"
+	"strings"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -41,20 +43,24 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	}
 
 	page, errRes, err := s.executeSearchListPage(ctx, req, srq, span)
-	if err != nil {
-		return nil, err
-	}
 	if errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
-	if searchErr := page.response.GetError(); searchErr != nil {
-		err := ErrorFromResponse(searchErr, nil)
+	searchErr := err
+	if searchErr == nil {
+		searchErr = ErrorFromResponse(page.response.GetError(), nil)
+	}
+	if searchErr != nil {
+		result := AsErrorResult(searchErr)
 		// A later page carries a position in search results that the store cannot resume from.
-		if IsSelectableFieldNotIndexed(searchErr) && req.NextPageToken == "" {
-			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, err)
+		if IsSelectableFieldNotIndexed(result) && req.NextPageToken == "" {
+			return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerList, searchErr)
 		}
-		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
-		return &resourcepb.ListResponse{Error: AsErrorResult(err)}, nil
+		if err != nil {
+			return nil, err
+		}
+		s.log.Error("Search failed for List with selectors", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", searchErr)
+		return &resourcepb.ListResponse{Error: result}, nil
 	}
 
 	rsp := &resourcepb.ListResponse{
@@ -75,7 +81,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		return result, nil
 	}
 
-	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, rsp); errRes != nil {
+	if errRes := setSearchListContinueToken(req, page.response, page.rows, page.resourceVersion, false, rsp); errRes != nil {
 		return &resourcepb.ListResponse{Error: errRes}, nil
 	}
 
@@ -133,6 +139,7 @@ func setSearchListContinueToken(
 	searchResp *resourcepb.ResourceSearchResponse,
 	rows []listSearchRow,
 	listRV int64,
+	sortAscending bool,
 	rsp *resourcepb.ListResponse,
 ) *resourcepb.ErrorResult {
 	if !searchListNeedsContinue(req.Limit, len(rows), searchResp.GetTotalHitsExact()) {
@@ -142,7 +149,7 @@ func setSearchListContinueToken(
 	if len(sortFields) == 0 {
 		return nil
 	}
-	token, err := NewSearchContinueToken(sortFields, listRV)
+	token, err := newSearchContinueToken(sortFields, listRV, sortAscending)
 	if err != nil {
 		return NewBadRequestError("invalid continue token")
 	}
@@ -304,7 +311,9 @@ func (s *server) consumeSearchRows(
 	return nil
 }
 
-const searchReadChunkSize = 10
+// readChunkSize is how many objects one batch read asks storage for, which
+// bounds how many bodies are fetched together.
+const readChunkSize = 10
 
 func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
 	requests := make([]*resourcepb.ReadRequest, len(rows))
@@ -314,7 +323,7 @@ func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.
 			ResourceVersion: row.resourceVersion,
 		}
 	}
-	return readResourcesInChunks(ctx, s.backend, requests, searchReadChunkSize)
+	return readResourcesInChunks(ctx, s.backend, requests, readChunkSize)
 }
 
 // readResourcesInChunks reads the requests a chunk at a time, falling back to one
@@ -428,7 +437,26 @@ type SearchBackedListConfig struct {
 }
 
 func (c SearchBackedListConfig) Allowed(group, resource string) bool {
-	return c.AllowedResources[group+"/"+resource]
+	return resourceAllowed(c.AllowedResources, group, resource)
+}
+
+func resourceAllowed(allowed map[string]bool, group, resource string) bool {
+	if enabled, ok := allowed[group+"/"+resource]; ok {
+		return enabled
+	}
+	if enabled, ok := allowed[group]; ok {
+		return enabled
+	}
+	for pattern, enabled := range allowed {
+		if !enabled || strings.Contains(pattern, "/") {
+			continue
+		}
+		matched, err := path.Match(pattern, group)
+		if err == nil && matched {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *server) shouldUseSearchForList(req *resourcepb.ListRequest) bool {

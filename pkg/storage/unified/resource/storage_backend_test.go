@@ -120,6 +120,35 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.resourceVersions)
 }
 
+func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	now := time.Now().UTC().Truncate(time.Second)
+	expected := map[NamespacedResource]time.Time{
+		{Namespace: "aaa", Group: "dashboards", Resource: "dashboard"}: now.Add(-time.Minute),
+		{Namespace: "zzz", Group: "dashboards", Resource: "dashboard"}: now,
+	}
+	for key, importedAt := range expected {
+		require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+			NamespacedResource: key, LastImportTime: importedAt,
+		}))
+	}
+	malformed := []string{"bbb-invalid-key", "yyy-invalid-key"}
+	for _, key := range malformed {
+		writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, key)
+		require.NoError(t, err)
+		_, err = writer.Write([]byte{1})
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+
+	times, err := backend.ListResourceLastImportTimes(t.Context())
+	require.Error(t, err)
+	for _, key := range malformed {
+		require.ErrorContains(t, err, key)
+	}
+	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
+}
+
 func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -3742,7 +3771,6 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// Create defaultPrunerHistoryLimit deleted events by repeatedly deleting and recreating the resource
 		// This will create: 1 initial ADDED + defaultPrunerHistoryLimit cycles of (DELETE + ADDED)
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
-		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
 		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
@@ -3779,9 +3807,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		err = backend.pruneEvents(ctx, pruningKey)
 		require.NoError(t, err)
 
-		// Assert all deleted events exist (20) + the most recent 20 non-deleted events
-		// Pruner should keep: all 20 DELETED + 20 most recent non-deleted = 40 total
-		// The oldest non-deleted event (initial ADDED) should be pruned
+		// Every incarnation has a single non-deleted revision, so each stays
+		// within its own retention budget and remains available with its delete.
 		counter := 0
 		deletedCount := 0
 		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
@@ -3797,7 +3824,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			counter++
 		}
 		require.Equal(t, defaultPrunerHistoryLimit, deletedCount, "All deleted events should be kept")
-		require.Equal(t, defaultPrunerHistoryLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
+		require.Equal(t, defaultPrunerHistoryLimit*2+1, counter, "Should retain all 20 deleted and 21 non-deleted revisions")
 	})
 
 	t.Run("will prune oldest events for cluster-scoped resources", func(t *testing.T) {

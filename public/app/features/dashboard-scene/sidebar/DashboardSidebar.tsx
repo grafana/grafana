@@ -26,6 +26,7 @@ import {
   DashboardBatchEditActionEndEvent,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
+  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -96,6 +97,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
+    meta: DashboardActionMeta;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
@@ -205,12 +207,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, actions: [] };
+    this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
@@ -223,6 +225,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      meta: batch.meta,
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -272,6 +275,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
+        meta: { actionId: 'panel.moveOrResize' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,
@@ -305,6 +309,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    // How far back the user has already stepped through history before this undo
+    const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -314,7 +320,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.undoSingleAction(action);
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
-    reportInteraction('grafana_dashboard_undo');
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
@@ -362,6 +372,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
+    const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -371,7 +382,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.performAction(action);
 
     this.setState({ redoStack, undoStack: this.pushToUndoStack(action) });
-    reportInteraction('grafana_dashboard_redo');
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   public enableSelection() {
