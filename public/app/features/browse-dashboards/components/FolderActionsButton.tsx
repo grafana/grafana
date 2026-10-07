@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
@@ -42,7 +41,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const [showMoveProvisionedFolderDrawer, setShowMoveProvisionedFolderDrawer] = useState(false);
   const [moveFolder] = useMoveFolderMutationFacade();
   const deleteFolder = useDeleteFolderMutationFacade();
-  const provisioningFolderMetadataEnabled = useBooleanFlagValue('provisioningFolderMetadata', false);
 
   const {
     canEditFolders,
@@ -58,8 +56,6 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
   // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
-  // Show permissions only if the folder is not provisioned, or if the provisioningFolderMetadata flag is enabled
-  const canShowPermissions = canViewPermissions && (!isProvisionedFolder || provisioningFolderMetadataEnabled);
 
   const onMove = async (destinationUID: string) => {
     await moveFolder({ folderUID: folder.uid, destinationUID: destinationUID });
@@ -153,7 +149,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
 
   const menu = (
     <Menu>
-      {canShowPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
+      {canViewPermissions && <MenuItem onClick={() => setShowPermissionsDrawer(true)} label={managePermissionsLabel} />}
       {showManageOwners && (
         <MenuItem
           onClick={() => {
@@ -179,7 +175,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
     </Menu>
   );
 
-  if (!canShowPermissions && !canMoveFolder && !canDeleteFolders) {
+  if (!canViewPermissions && !canMoveFolder && !canDeleteFolders) {
     return null;
   }
 

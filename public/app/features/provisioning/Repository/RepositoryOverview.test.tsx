@@ -4,11 +4,6 @@ import { type Repository, type RepositorySpec } from 'app/api/clients/provisioni
 
 import { RepositoryOverview } from './RepositoryOverview';
 
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: jest.fn().mockReturnValue(false),
-}));
-
 jest.mock('../Job/RecentJobs', () => ({
   RecentJobs: () => null,
 }));
@@ -42,6 +37,27 @@ const createMockRepository = (
 });
 
 describe('RepositoryOverview', () => {
+  it('shows the missing folder metadata warning when the repository reports it', () => {
+    const repo = createMockRepository({});
+    repo.status = {
+      ...repo.status!,
+      conditions: [
+        {
+          type: 'PullStatus',
+          status: 'False',
+          reason: 'MissingFolderMetadata',
+          message: 'Folder metadata is missing',
+          lastTransitionTime: new Date().toISOString(),
+          observedGeneration: 1,
+        },
+      ],
+    };
+
+    render(<RepositoryOverview repo={repo} />);
+
+    expect(screen.getByText('Some folders are missing metadata in this repository.')).toBeInTheDocument();
+  });
+
   describe('webhook link', () => {
     it('should link to GitHub webhook settings for github repositories', () => {
       const repo = createMockRepository({

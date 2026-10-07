@@ -1,7 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
 import { config } from '@grafana/runtime';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { type FolderMetadataStatus } from '../../hooks/useFolderMetadataStatus';
 
@@ -82,10 +81,6 @@ describe('FolderPermissions', () => {
 
   afterEach(() => {
     config.provisioningEnabled = originalProvisioningEnabled;
-  });
-
-  beforeEach(() => {
-    setTestFlags({ provisioningFolderMetadata: true });
   });
 
   it('renders permissions directly when folder is not provisioned', () => {
