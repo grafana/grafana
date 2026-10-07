@@ -68,6 +68,14 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 	}
 }
 
+var _ ac.UserPermissionsEvaluator = (*Loader)(nil)
+
+// GetLocalUserPermissions is the existing RBAC RPC's evaluator seam. Identity
+// reconstruction and final deduplication stay in that RPC, not in the loader.
+func (l *Loader) GetLocalUserPermissions(ctx context.Context, user identity.Requester, options ac.Options) ([]ac.Permission, error) {
+	return l.GetUserPermissions(ctx, user, options)
+}
+
 // GetUserPermissions accepts an already authenticated, normalized requester.
 // The eventual transport adapter must validate caller trust and namespace before
 // constructing it. This method does not authenticate arbitrary identity claims.
