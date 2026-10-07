@@ -100,6 +100,91 @@ describe('startQueryPreview', () => {
     expect(queryRunner.state.data).toBe(baselineData);
   });
 
+  it('peeks cached options and Original without a request and restores the selected result on release', () => {
+    const { baselineData, panel, queryRunner, requests, result } = setupPreview();
+    const preview = startQueryPreview(panel, 'A', optionOne)!;
+    const first = result(11);
+    requests[0].setState({ data: first });
+    preview.select(optionTwo);
+    const second = result(12);
+    requests[1].setState({ data: second });
+    preview.peek(optionOne);
+    expect(queryRunner.state.data).toBe(first);
+    preview.stopPeek();
+    expect(queryRunner.state.data).toBe(second);
+    preview.peek(queryA);
+    expect(queryRunner.state.data).toBe(baselineData);
+    preview.stopPeek();
+    expect(queryRunner.state.data).toBe(second);
+    expect(requests).toHaveLength(2);
+    expect(queryRunner.state.queries).toEqual([queryA, queryB]);
+    preview.dispose();
+  });
+
+  it('keeps the selected clone running during an uncached peek and caches its result without taking over', () => {
+    const { panel, queryRunner, requests, result } = setupPreview();
+    const preview = startQueryPreview(panel, 'A', optionOne)!;
+    const selected = requests[0];
+    const cancellations = jest.mocked(selected.cancelQuery).mock.calls.length;
+    preview.peek(optionTwo);
+    expect(panel.state.$behaviors).toEqual([selected, requests[1]]);
+    expect(jest.mocked(selected.cancelQuery).mock.calls.length).toBe(cancellations);
+    const peeked = result(12);
+    requests[1].setState({ data: peeked });
+    const first = result(11);
+    selected.setState({ data: first });
+    expect(queryRunner.state.data).toBe(peeked);
+    preview.stopPeek();
+    expect(queryRunner.state.data).toBe(first);
+    expect(panel.state.$behaviors).toHaveLength(0);
+    preview.select(optionTwo);
+    expect(queryRunner.state.data).toBe(peeked);
+    expect(requests).toHaveLength(2);
+    preview.dispose();
+  });
+
+  it('restores the selected snapshot when a peek interrupts a pending keyboard selection', () => {
+    jest.useFakeTimers();
+    try {
+      const { panel, queryRunner, requests, result } = setupPreview();
+      const preview = startQueryPreview(panel, 'A', optionOne)!;
+      const first = result(11);
+      requests[0].setState({ data: first });
+      preview.select(optionTwo, { debounce: true });
+      preview.peek(optionThree);
+      requests[1].setState({ data: result(13) });
+      preview.stopPeek();
+      expect(queryRunner.state.data).toBe(first);
+      expect(requests).toHaveLength(3);
+      const second = result(12);
+      requests[2].setState({ data: second });
+      expect(queryRunner.state.data).toBe(second);
+      preview.dispose();
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('limits consecutive uncached peeks to the selected clone plus one and cancels the peek on release', () => {
+    const { baselineData, panel, queryRunner, requests, result } = setupPreview();
+    const preview = startQueryPreview(panel, 'A', optionOne)!;
+    preview.peek(optionTwo);
+    preview.peek(optionThree);
+    expect(panel.state.$behaviors).toEqual([requests[0], requests[2]]);
+    requests[1].setState({ data: result(12) });
+    expect(queryRunner.state.data).toBe(baselineData);
+    preview.stopPeek();
+    expect(panel.state.$behaviors).toEqual([requests[0]]);
+    expect(requests).toHaveLength(3);
+    requests[2].setState({ data: result(13) });
+    expect(queryRunner.state.data).toBe(baselineData);
+    const selected = result(11);
+    requests[0].setState({ data: selected });
+    expect(queryRunner.state.data).toBe(selected);
+    preview.dispose();
+    expect(panel.state.$behaviors).toHaveLength(0);
+  });
+
   it('cancels a switched-away clone and caches its late result without projecting it', () => {
     const { baselineData, panel, queryRunner, requests, result } = setupPreview();
     const preview = startQueryPreview(panel, 'A', optionOne)!;

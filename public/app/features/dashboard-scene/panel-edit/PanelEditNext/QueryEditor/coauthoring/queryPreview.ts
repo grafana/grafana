@@ -13,6 +13,8 @@ export interface QueryPreviewSelection {
 export interface QueryPreview {
   readonly data?: PanelData;
   select(query: DataQuery, options?: QueryPreviewSelection): boolean;
+  peek(query: DataQuery): boolean;
+  stopPeek(): void;
   dispose(): void;
   subscribeToState(listener: (state: LoadingState) => void): VoidFunction;
   subscribeToData(listener: (data: PanelData | undefined) => void): VoidFunction;
@@ -51,6 +53,10 @@ export function startQueryPreview(
   const stateListeners = new Set<(state: LoadingState) => void>();
   const dataListeners = new Set<(data: PanelData | undefined) => void>();
   let activeRun: PreviewRun | undefined;
+  let selectedQuery = proposedQuery;
+  let isPeeking = false;
+  let peekRestoreRun: PreviewRun | undefined;
+  let peekRestoreData: PanelData | undefined;
   let cancellingRun: PreviewRun | undefined;
   let selectedKey: string | undefined;
   let latestData: PanelData | undefined;
@@ -103,6 +109,8 @@ export function startQueryPreview(
       detach(run);
     });
     runs.clear();
+    peekRestoreRun = undefined;
+    peekRestoreData = undefined;
   };
   const dispose = () => {
     if (disposed) {
@@ -119,7 +127,7 @@ export function startQueryPreview(
     }
   };
 
-  const select = (query: DataQuery, options?: QueryPreviewSelection): boolean => {
+  const display = (query: DataQuery, options?: QueryPreviewSelection): boolean => {
     if (disposed || query.refId !== originalRefId) {
       return false;
     }
@@ -136,9 +144,10 @@ export function startQueryPreview(
       return true;
     }
     clearPendingStart();
-    if (activeRun) {
+    if (activeRun && activeRun !== peekRestoreRun) {
       detach(activeRun);
     }
+    activeRun = undefined;
     selectedKey = key;
     const cached = cache.get(key);
     if (cached) {
@@ -202,6 +211,74 @@ export function startQueryPreview(
     return true;
   };
 
+  const select = (query: DataQuery, options?: QueryPreviewSelection): boolean => {
+    if (disposed || query.refId !== originalRefId) {
+      return false;
+    }
+    if (isPeeking) {
+      if (activeRun && activeRun !== peekRestoreRun) {
+        detach(activeRun);
+      }
+      if (peekRestoreRun) {
+        detach(peekRestoreRun);
+      }
+      isPeeking = false;
+      peekRestoreRun = undefined;
+      peekRestoreData = undefined;
+    }
+    selectedQuery = query;
+    return display(query, options);
+  };
+
+  const peek = (query: DataQuery): boolean => {
+    if (disposed || query.refId !== originalRefId) {
+      return false;
+    }
+    if (!isPeeking) {
+      isPeeking = true;
+      peekRestoreRun = activeRun;
+      peekRestoreData = queryRunner.state.data;
+    }
+    return display(query);
+  };
+
+  const stopPeek = () => {
+    if (!isPeeking || disposed) {
+      return;
+    }
+    if (activeRun && activeRun !== peekRestoreRun) {
+      detach(activeRun);
+    }
+    activeRun = undefined;
+    isPeeking = false;
+    const restoreRun = peekRestoreRun;
+    const restoreData = peekRestoreData;
+    peekRestoreRun = undefined;
+    peekRestoreData = undefined;
+    const key = isEqual(selectedQuery, baselineQuery) ? 'original' : JSON.stringify(selectedQuery);
+    const cached = readRangeKey() === rangeKey ? cache.get(key) : undefined;
+    if (cached) {
+      if (restoreRun) {
+        detach(restoreRun);
+      }
+      selectedKey = key;
+      project(cached);
+      publish(cached);
+    } else if (restoreRun?.runner.parent === panel && readRangeKey() === rangeKey) {
+      activeRun = restoreRun;
+      selectedKey = key;
+      if (restoreData) {
+        project(restoreData);
+      }
+      publish(restoreRun.runner.state.data);
+    } else {
+      if (restoreData && readRangeKey() === rangeKey) {
+        project(restoreData);
+      }
+      display(selectedQuery);
+    }
+  };
+
   canonicalSubscription = queryRunner.subscribeToState((state, previousState) => {
     if (state.queries !== previousState.queries && !isEqual(state.queries, baselineQueries)) {
       dispose();
@@ -218,6 +295,8 @@ export function startQueryPreview(
       return latestData;
     },
     select,
+    peek,
+    stopPeek,
     dispose,
     subscribeToState: (listener) => {
       stateListeners.add(listener);

@@ -48,6 +48,7 @@ import {
   trackQueryCoauthoringPromptSubmitted,
   trackQueryCoauthoringProposalAccepted,
   trackQueryCoauthoringOptionSelected,
+  trackQueryCoauthoringOptionPeeked,
   trackQueryCoauthoringPreviewOutcomeShown,
 } from './queryCoauthoringTracking';
 import { type QueryPreviewSelection } from './queryPreview';
@@ -106,6 +107,9 @@ export type QueryCoauthoringSessionState =
     }
   | {
       kind: 'proposal';
+      peekIndex?: number;
+      peek(index: number): void;
+      stopPeek(): void;
       previewOutcome: QueryPreviewOutcome;
       isPreviewRunning: boolean;
       proposal: RankedProposal;
@@ -123,6 +127,8 @@ export interface QueryCoauthoringSessionOptions {
   onAccept: (query: DataQuery) => boolean;
   onPreview: (query: DataQuery, options?: QueryPreviewSelection) => boolean;
   onRevertPreview: () => void;
+  onPeek?: (query: DataQuery) => boolean;
+  onStopPeek?: () => void;
   isPreviewRunning?: boolean;
   previewData?: PanelData;
   readPreviewData?: () => PanelData | undefined;
@@ -144,6 +150,8 @@ export function useQueryCoauthoringSession({
   onAccept,
   onPreview,
   onRevertPreview,
+  onPeek,
+  onStopPeek,
   isPreviewRunning = false,
   previewData,
   readPreviewData,
@@ -462,6 +470,23 @@ export function useQueryCoauthoringSession({
     dismiss();
   }, [datasourceType, dismiss, onAccept, send]);
 
+  const stopPeek = useCallback(() => {
+    onStopPeek?.();
+    send({ type: 'peek-stopped', previewData: readCurrentPreviewData() });
+  }, [onStopPeek, readCurrentPreviewData, send]);
+
+  const peek = (index: number) => {
+    const current = sessionRef.current;
+    if (current.kind !== 'proposal' || index < -1 || index >= current.proposal.options.length) {
+      return;
+    }
+    const query = index < 0 ? readBaseline() : current.proposal.options[index].prepared.query;
+    if (query && onPeek?.(query)) {
+      send({ type: 'peek-started', index });
+      trackQueryCoauthoringOptionPeeked(index + 1);
+    }
+  };
+
   const selectOption = (index: number, source?: 'keyboard') => {
     const current = sessionRef.current;
     if (current.kind !== 'proposal') {
@@ -574,6 +599,9 @@ export function useQueryCoauthoringSession({
     case 'proposal':
       state = {
         kind: 'proposal',
+        peekIndex: session.peekIndex,
+        peek,
+        stopPeek,
         previewOutcome: session.previewOutcome,
         isPreviewRunning: session.isPreviewRunning,
         proposal: session.proposal,

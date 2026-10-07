@@ -29,6 +29,8 @@ interface QueryCoauthoringHost {
   readPreviewData?(): PanelData | undefined;
   timeRange?: { from: number; to: number };
   preview(query: DataQuery, options?: QueryPreviewSelection): boolean;
+  peek?(query: DataQuery): boolean;
+  stopPeek?(): void;
   accept(query: DataQuery): boolean;
   revert(): void;
 }
@@ -120,6 +122,8 @@ function QueryCoauthoringAdapterSurface({
       datasourceType={host.datasourceType}
       onAccept={host.accept}
       onPreview={host.preview}
+      onPeek={host.peek}
+      onStopPeek={host.stopPeek}
       onRevertPreview={host.revert}
       previewData={host.previewData}
       readPreviewData={host.readPreviewData}
