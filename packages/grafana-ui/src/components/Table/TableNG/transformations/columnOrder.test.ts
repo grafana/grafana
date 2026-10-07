@@ -1,9 +1,9 @@
 import { type DataTransformerConfig } from '@grafana/data';
 
-import { tableTransformations } from './registry';
+import { columnTransformations } from './registry';
 
 const context = { catalog: ['A', 'B', 'C', 'D'] };
-const { columnOrder, columnVisibility } = tableTransformations;
+const { columnOrder, columnVisibility } = columnTransformations;
 
 it('preserves source order until the user reorders', () => {
   expect(columnOrder.read([], context).columnOrder).toBeUndefined();
