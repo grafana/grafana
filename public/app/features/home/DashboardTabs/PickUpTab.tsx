@@ -51,19 +51,20 @@ function toRow(item: PickUpItem, navTree: NavModelItem[], foldersByUid: Record<s
       };
     case 'investigation':
       return {
-        title: t('home.pick-up-tab.investigation', 'Investigation {{id}}', { id: item.id.slice(0, 8) }),
+        title: item.title ?? t('home.pick-up-tab.investigation', 'Investigation {{id}}', { id: item.id.slice(0, 8) }),
         details: [getNavTitle(navTree, `/a/${item.pluginId}`) ?? item.pluginId],
         badge: { text: t('home.pick-up-tab.kind-investigation', 'Investigation'), color: 'purple' },
       };
+    // Rows recorded before titles were captured fall back to the nav label, then the path.
     case 'alerting':
       return {
-        title: getNavTitle(navTree, pathname) ?? pathname,
+        title: item.title ?? getNavTitle(navTree, pathname) ?? pathname,
         details: [describeAppState(search)],
         badge: { text: t('home.pick-up-tab.kind-alerting', 'Alerting'), color: 'red' },
       };
     case 'app':
       return {
-        title: getNavTitle(navTree, pathname) ?? pathname,
+        title: item.title ?? getNavTitle(navTree, pathname) ?? pathname,
         details: [describeAppState(search)],
         badge: { text: t('home.pick-up-tab.kind-app', 'App'), color: 'darkgrey' },
       };

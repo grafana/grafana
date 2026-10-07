@@ -365,7 +365,7 @@ export class GrafanaApp {
 
       // Feeds the homepage "Pick up where you left off" tab; same flag as the tab so the control arm pays no storage writes.
       if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGrowthHomepage, false)) {
-        pageHistorySrv.start();
+        pageHistorySrv.start(chromeService);
       }
 
       // Read initial kiosk mode from url at app startup

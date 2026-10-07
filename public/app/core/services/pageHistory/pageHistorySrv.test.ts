@@ -5,6 +5,7 @@ import { store } from '@grafana/data';
 import { config, HistoryWrapper, locationService, setBackendSrv, setLocationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -28,11 +29,22 @@ let srv: PageHistorySrv | undefined;
 const originalUser = { ...config.bootData.user };
 const originalOrgId = contextSrv.user.orgId;
 
+let chrome: AppChromeService;
+
 function startAt(path: string) {
   setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: [path] })));
+  chrome = new AppChromeService();
   srv = new PageHistorySrv();
-  srv.start();
+  srv.start(chrome);
   return srv;
+}
+
+/** What a rendered page does: sets its section, optionally a page-specific nav. */
+function renderPage(section: string, main: string, pageNav?: string) {
+  chrome.update({
+    sectionNav: { node: { text: section }, main: { text: main } },
+    pageNav: pageNav ? { text: pageNav } : undefined,
+  });
 }
 
 function stored(entries: PageHistoryEntry[]) {
@@ -166,6 +178,31 @@ describe('PageHistorySrv', () => {
         href: '/a/grafana-ml-app/investigations/123?x=1',
         lastVisited: T0,
       },
+    ]);
+  });
+
+  it('stamps the title a page sets in the chrome onto that page, newest nav wins', async () => {
+    const srv = startAt('/alerting/list');
+    await srv.getEntries();
+    expect((await srv.getEntries())[0].title).toBeUndefined();
+
+    renderPage('Alert rules', 'Alerting');
+    locationService.push('/alerting/grafana/abc/view');
+    // The route-change placeholder (empty main, no pageNav) must not be taken as the new page's title.
+    chrome.update({ sectionNav: { node: { text: 'Home' }, main: { text: '' } }, pageNav: undefined });
+    renderPage('Alert rules', 'Alerting', 'High CPU');
+    locationService.push('/dashboards');
+    renderPage('Dashboards', 'Dashboards');
+
+    expect(await srv.getEntries()).toEqual([
+      expect.objectContaining({ href: '/alerting/grafana/abc/view', title: 'High CPU' }),
+      expect.objectContaining({ href: '/alerting/list', title: 'Alert rules' }),
+    ]);
+
+    await jest.advanceTimersByTimeAsync(1000);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual([
+      { href: '/alerting/grafana/abc/view', lastVisited: T0, title: 'High CPU' },
+      { href: '/alerting/list', lastVisited: T0, title: 'Alert rules' },
     ]);
   });
 

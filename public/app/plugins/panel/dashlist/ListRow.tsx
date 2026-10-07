@@ -70,7 +70,7 @@ export function ListRow({
         )}
       </Stack>
 
-      {trailing && <div>{trailing}</div>}
+      {trailing && <div className={styles.trailingCell}>{trailing}</div>}
     </div>
   );
 }
@@ -88,8 +88,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
   listCompact: css({
     margin: 0,
   }),
-  // Prevents a long title from squeezing the prefix; width policy stays with callers.
+  // Prevents a long title from squeezing the prefix or trailing cells; width policy stays with callers.
   prefixCell: css({
+    flexShrink: 0,
+  }),
+  trailingCell: css({
     flexShrink: 0,
   }),
   flush: css({

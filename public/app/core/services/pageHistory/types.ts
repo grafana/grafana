@@ -13,4 +13,6 @@ export type PageHistoryEntry = PageIdentity & {
   href: string;
   /** Epoch ms of the last visit or in-page URL update. */
   lastVisited: number;
+  /** What the page last put in the chrome (the browser-tab title); absent until the page sets its nav. */
+  title?: string;
 };

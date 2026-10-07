@@ -426,6 +426,7 @@ describe('DashboardTabs', () => {
       pathname: '/a/grafana-k8s-app/clusters',
       href: '/a/grafana-k8s-app/clusters?cluster=prod',
       lastVisited: Date.now() - 10_000,
+      title: 'Clusters',
     };
     const navBarTree = [
       { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },
@@ -474,9 +475,9 @@ describe('DashboardTabs', () => {
       const dashboardLink = screen.getByRole('link', { name: /Recent Dashboard 1/ });
       expect(dashboardLink).toHaveTextContent('Last 90 days · Plugin=finnhub');
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
-      // Exact nav match gets the nav label; deep links fall back to the path.
+      // A captured page title wins; rows without one use the nav label for an exact url match.
       expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
-      expect(screen.getByRole('link', { name: /\/a\/grafana-k8s-app\/clusters/ })).toHaveTextContent('cluster=prod');
+      expect(screen.getByRole('link', { name: /^Clusters/ })).toHaveTextContent('cluster=prod');
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Alerting')).toBeInTheDocument();

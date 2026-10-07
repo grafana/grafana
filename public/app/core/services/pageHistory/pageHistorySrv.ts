@@ -1,9 +1,11 @@
 import { type Location } from 'history';
 import { debounce } from 'lodash';
+import { type Subscription } from 'rxjs';
 import * as z from 'zod';
 
 import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
+import { type AppChromeService, type AppChromeState } from 'app/core/components/AppChrome/AppChromeService';
 import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -25,12 +27,22 @@ const StoredEntrySchema = z.object({
     .startsWith('/')
     .refine((href) => !href.startsWith('//')),
   lastVisited: z.number().int().min(0).max(MAX_EPOCH_MS),
+  title: z.string().optional(),
 });
 
 type StoredEntry = z.infer<typeof StoredEntrySchema>;
 
-function toStored({ href, lastVisited }: PageHistoryEntry): StoredEntry {
-  return { href, lastVisited };
+function toStored({ href, lastVisited, title }: PageHistoryEntry): StoredEntry {
+  return { href, lastVisited, title };
+}
+
+/** The page's own title, as the browser tab shows it; `undefined` until the page sets its nav after a route change. */
+function pageTitle({ pageNav, sectionNav }: AppChromeState): string | undefined {
+  if (pageNav?.text) {
+    return pageNav.text;
+  }
+  // The route-change placeholder has an empty main section.
+  return sectionNav.main.text ? sectionNav.node.text : undefined;
 }
 
 /** Per page, keeps the entry with the larger `lastVisited`; result is newest first. */
@@ -98,11 +110,14 @@ export class PageHistorySrv {
   /** Newest first by construction; `lastVisited` is only used for merging and display. */
   private entries: PageHistoryEntry[] = [];
   private currentPathname: string | undefined;
+  /** Key of the recorded page the user is on; titles from the chrome are stamped onto it. */
+  private currentKey: string | undefined;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
   private readonly key = `org-${contextSrv.user.orgId}`;
   private ready: Promise<void> | undefined;
   private disposed = false;
   private unlisten: (() => void) | undefined;
+  private chromeSubscription: Subscription | undefined;
 
   private persist = debounce(() => this.write(), PERSIST_MS);
 
@@ -112,7 +127,7 @@ export class PageHistorySrv {
     }
   };
 
-  start(): void {
+  start(chrome: AppChromeService): void {
     if (this.ready) {
       return;
     }
@@ -130,6 +145,8 @@ export class PageHistorySrv {
       this.currentPathname = location.pathname;
       this.apply(location, isNavigation);
     });
+    // Pages set their nav after they render, so the title arrives after the navigation was recorded.
+    this.chromeSubscription = chrome.state.subscribe((state) => this.setTitle(pageTitle(state)));
     document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
@@ -146,6 +163,8 @@ export class PageHistorySrv {
     this.disposed = true;
     this.unlisten?.();
     this.unlisten = undefined;
+    this.chromeSubscription?.unsubscribe();
+    this.chromeSubscription = undefined;
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
     this.persist.cancel();
   }
@@ -162,6 +181,7 @@ export class PageHistorySrv {
   }
 
   private apply(location: Location, isNavigation: boolean): void {
+    this.currentKey = undefined;
     const page = classifyPage(location.pathname);
     if (!page) {
       return;
@@ -173,13 +193,30 @@ export class PageHistorySrv {
     if (index === -1 && !isNavigation) {
       return;
     }
-    if (index !== -1) {
-      this.entries.splice(index, 1);
-    }
+    const [existing] = index === -1 ? [] : this.entries.splice(index, 1);
 
     // Hash deliberately ignored. Query churn refreshes the href and moves the row to the top.
-    this.entries.unshift({ ...page, href: location.pathname + location.search, lastVisited: Date.now() });
+    this.entries.unshift({
+      ...page,
+      href: location.pathname + location.search,
+      lastVisited: Date.now(),
+      // Kept until the page sets its nav again, in case the user leaves before it does.
+      title: existing?.title,
+    });
     this.entries = capEntries(this.entries);
+    this.currentKey = key;
+    this.persist();
+  }
+
+  private setTitle(title: string | undefined): void {
+    if (!title || !this.currentKey) {
+      return;
+    }
+    const index = this.entries.findIndex((entry) => pageKey(entry) === this.currentKey);
+    if (index === -1 || this.entries[index].title === title) {
+      return;
+    }
+    this.entries[index] = { ...this.entries[index], title };
     this.persist();
   }
 
