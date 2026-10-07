@@ -705,6 +705,104 @@ func TestIntegrationRBACParityFolderWrites(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Wildcard dashboard creation parity
+// ---------------------------------------------------------------------------
+
+func TestIntegrationRBACParityDashboardWildcardCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	grants := []struct {
+		action  string
+		allowed bool
+	}{
+		{"dashboards:view", false},
+		{"dashboards:edit", false},
+		{"dashboards:admin", false},
+		{"dashboards:create", true},
+	}
+
+	srv := setupOpenFGAServer(t)
+	namespaceIndex := 0
+	for _, scope := range []string{"dashboards:uid:*", "folders:uid:*"} {
+		t.Run(scope, func(t *testing.T) {
+			for _, grant := range grants {
+				t.Run(grant.action, func(t *testing.T) {
+					ns := parityNamespace(namespaceIndex)
+					namespaceIndex++
+					permissions := []accesscontrol.Permission{{Action: grant.action, Scope: scope}}
+					folders := []rbacstore.Folder{{UID: "folder1"}}
+					rbacService := rbac.NewTestService(parityUserUID, permissions, folders)
+					writeParityTuples(t, srv, ns, permissions, folders)
+
+					t.Run("List", func(t *testing.T) {
+						expected := normalizeParityList(parityListResult{All: grant.allowed})
+						req := parityListReq(dashboardGroup, dashboardResource, "", utils.VerbCreate)
+						rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						require.Equal(t, expected, toParityListResult(rbacRes), "RBAC answer changed")
+						zanzanaRes, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						assert.Equal(t, expected, toParityListResult(zanzanaRes), "Zanzana diverges from RBAC")
+					})
+
+					targets := []struct {
+						name   string
+						folder string
+					}{
+						{"root", ""},
+						{"folder", "folder1"},
+					}
+					t.Run("Check", func(t *testing.T) {
+						for _, target := range targets {
+							t.Run(target.name, func(t *testing.T) {
+								req := parityCheckReq(dashboardGroup, dashboardResource, "", utils.VerbCreate, "", target.folder)
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								require.Equal(t, grant.allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								zanzanaRes, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								assert.Equal(t, grant.allowed, zanzanaRes.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+
+					t.Run("BatchCheck", func(t *testing.T) {
+						req := &authzv1.BatchCheckRequest{Namespace: ns, Subject: paritySubject}
+						for _, target := range targets {
+							req.Checks = append(req.Checks, &authzv1.BatchCheckItem{
+								CorrelationId: target.name,
+								Group:         dashboardGroup,
+								Resource:      dashboardResource,
+								Verb:          utils.VerbCreate,
+								Folder:        target.folder,
+							})
+						}
+						rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, rbacRes.GetResults(), len(targets))
+						zanzanaRes, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, zanzanaRes.GetResults(), len(targets))
+						for _, target := range targets {
+							t.Run(target.name, func(t *testing.T) {
+								require.Contains(t, rbacRes.GetResults(), target.name)
+								require.Contains(t, zanzanaRes.GetResults(), target.name)
+								rbacResult := rbacRes.GetResults()[target.name]
+								zanzanaResult := zanzanaRes.GetResults()[target.name]
+								require.Empty(t, rbacResult.GetError())
+								require.Empty(t, zanzanaResult.GetError())
+								require.Equal(t, grant.allowed, rbacResult.GetAllowed(), "RBAC answer changed")
+								assert.Equal(t, grant.allowed, zanzanaResult.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+				})
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------
 
