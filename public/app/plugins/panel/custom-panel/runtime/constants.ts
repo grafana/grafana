@@ -53,6 +53,8 @@ export const MAX_LAYOUT_SAMPLES = 5;
 export const MAX_LAYOUT_LABEL_LENGTH = 120;
 /** Extra links inside this window are dropped silently. */
 export const LINK_MIN_INTERVAL_MS = 1_000;
+/** Distinct link targets the frame reports with a draw, so the host can name the ones it refuses. */
+export const MAX_DECLARED_LINKS = 20;
 
 /** Written by the dashboard datasource into frame.meta.custom. */
 export const DASHBOARD_SOURCE_PANEL_ID_META_KEY = 'dashboardSourcePanelId';

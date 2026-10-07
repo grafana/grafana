@@ -3,6 +3,7 @@ import {
   MAX_DIAGNOSTIC_LENGTH,
   MAX_DOM_NODES,
   MAX_HEIGHT_HINT_PX,
+  MAX_DECLARED_LINKS,
   MAX_HREF_LENGTH,
   MAX_LAYOUT_ELEMENTS,
   MAX_LAYOUT_LABEL_LENGTH,
@@ -91,6 +92,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var MAX_DOM_NODES = ${MAX_DOM_NODES};
   var MAX_HEIGHT = ${MAX_HEIGHT_HINT_PX};
   var MAX_HREF_LENGTH = ${MAX_HREF_LENGTH};
+  var MAX_DECLARED_LINKS = ${MAX_DECLARED_LINKS};
   var MAX_CAPTURE_LENGTH = ${MAX_CAPTURE_LENGTH};
   var MAX_LAYOUT_ELEMENTS = ${MAX_LAYOUT_ELEMENTS};
   var MAX_LAYOUT_TEXT_RECTS = ${MAX_LAYOUT_TEXT_RECTS};
@@ -989,7 +991,17 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     scheduleHeight();
     waitForPaint().then(function () {
-      post({ type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount });
+      var message = { type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount };
+      var links = [];
+      try {
+        links = declaredLinks();
+      } catch (e) {
+        // The list is optional; a drawing that breaks the DOM APIs only loses it.
+      }
+      if (links.length > 0) {
+        message.links = links;
+      }
+      post(message);
       finish();
     });
   }
@@ -1037,15 +1049,55 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     return node.closest('a,area');
   }
 
+  /** The href of an a or area element (SVG links may use xlink:href), or null without one. */
+  function anchorHref(anchor) {
+    var href = anchor.getAttribute('href');
+    if (href === null && typeof anchor.getAttributeNS === 'function') {
+      href = anchor.getAttributeNS(XLINK, 'href');
+    }
+    return href;
+  }
+
+  /** The element a #id link points to inside the frame, or null when it leaves the frame. */
+  function localTarget(href) {
+    if (href.charAt(0) !== '#' || href.length < 2) {
+      return null;
+    }
+    var id = null;
+    try {
+      id = decodeURIComponent(href.slice(1));
+    } catch (e) {
+      id = null;
+    }
+    return id ? document.getElementById(id) : null;
+  }
+
+  /** The distinct link targets in the drawing that would go to Grafana if clicked. */
+  function declaredLinks() {
+    var found = [];
+    var seen = new Map();
+    var tags = ['a', 'area'];
+    for (var t = 0; t < tags.length; t++) {
+      var anchors = root.getElementsByTagName(tags[t]);
+      for (var i = 0; i < anchors.length && found.length < MAX_DECLARED_LINKS; i++) {
+        var href = anchorHref(anchors[i]);
+        href = href === null ? '' : String(href).trim();
+        if (!href || href.length > MAX_HREF_LENGTH || seen.has(href) || localTarget(href)) {
+          continue;
+        }
+        seen.set(href, true);
+        found.push(href);
+      }
+    }
+    return found;
+  }
+
   function onLinkActivation(event) {
     var anchor = findAnchor(event.target);
     if (!anchor) {
       return;
     }
-    var href = anchor.getAttribute('href');
-    if (href === null && typeof anchor.getAttributeNS === 'function') {
-      href = anchor.getAttributeNS(XLINK, 'href');
-    }
+    var href = anchorHref(anchor);
     if (href === null) {
       return;
     }
@@ -1057,20 +1109,12 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     if (!href) {
       return;
     }
-    if (href.charAt(0) === '#' && href.length > 1) {
-      var id = null;
-      try {
-        id = decodeURIComponent(href.slice(1));
-      } catch (e) {
-        id = null;
+    var local = localTarget(href);
+    if (local) {
+      if (typeof local.scrollIntoView === 'function') {
+        local.scrollIntoView();
       }
-      var local = id ? document.getElementById(id) : null;
-      if (local) {
-        if (typeof local.scrollIntoView === 'function') {
-          local.scrollIntoView();
-        }
-        return;
-      }
+      return;
     }
     if (href.length > MAX_HREF_LENGTH) {
       return;

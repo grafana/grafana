@@ -23,6 +23,8 @@ const VARIABLE_KEY = /^var-([\w-]{1,100})$/;
 const MAX_VARIABLE_VALUE_LENGTH = 512;
 const TAB_KEY = /^([a-z0-9-]+-)?dtab$/i;
 const TAB_VALUE = /^[a-z0-9-]{1,100}$/i;
+const MAX_NAMED_REFUSED_LINKS = 5;
+const MAX_NAMED_LINK_LENGTH = 120;
 
 /**
  * Decides what a link requested by the frame may do. Only same-dashboard state, actions on a panel
@@ -81,6 +83,29 @@ export function validateRenderLink(href: string): RenderLinkTarget | null {
   }
 
   return null;
+}
+
+/**
+ * Explains, for the draw status, which of these links Grafana will not follow and which ones it
+ * does. Undefined when it follows all of them.
+ */
+export function describeRefusedLinks(hrefs: string[]): string | undefined {
+  const refused = [...new Set(hrefs)].filter((href) => validateRenderLink(href) === null);
+  if (refused.length === 0) {
+    return undefined;
+  }
+  const named = refused
+    .slice(0, MAX_NAMED_REFUSED_LINKS)
+    .map((href) =>
+      JSON.stringify(href.length > MAX_NAMED_LINK_LENGTH ? `${href.slice(0, MAX_NAMED_LINK_LENGTH - 1)}…` : href)
+    );
+  const more = refused.length > named.length ? ` and ${refused.length - named.length} more` : '';
+  return (
+    `Grafana will not follow ${refused.length === 1 ? 'this link' : 'these links'}: ${named.join(', ')}${more}. ` +
+    'It follows only #panel-<id>, #explore-panel-<id> and #focus-panel-<id> for a panel of this dashboard, ' +
+    '?<params> for this dashboard and /d/<uid>[/<slug>][?<params>] for another dashboard, with the parameters ' +
+    'viewPanel, editPanel, from, to, var-<name> and tab keys (dtab).'
+  );
 }
 
 /** Returns null when any key or value is outside the allowlist; one bad key rejects the link. */

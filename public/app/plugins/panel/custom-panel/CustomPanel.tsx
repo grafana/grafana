@@ -20,6 +20,7 @@ import {
   buildRenderDocument,
   codeDigest,
   createRenderFrameController,
+  describeRefusedLinks,
   holdRenderReadiness,
   readHostNonce,
   getRenderInputBuilder,
@@ -42,6 +43,8 @@ const TERMINAL_STATES: ReadonlySet<string> = new Set([LoadingState.Done, Loading
 
 /** Non-fatal errors kept with a draw that still finished, for its status report. */
 const MAX_REPORTED_DIAGNOSTICS = 5;
+/** Refused link targets kept for the status report, declared by the drawing or clicked. */
+const MAX_REFUSED_LINKS = 20;
 
 /** Errors for one draw: a draw of final data that fails will not draw anything else. */
 const SETTLING_ERRORS: ReadonlySet<RenderFrameErrorKind> = new Set(['runtime', 'output-limit', 'render-timeout']);
@@ -120,16 +123,43 @@ function RenderFrameHost({
   const reportBaseRef = useRef({ digest, dataState: String(data.state) });
   // Non-fatal errors since the last input was sent; a draw that still finishes carries them along.
   const diagnosticsRef = useRef<string[]>([]);
+  // Links Grafana does not follow, declared by the drawing or clicked since the last input was sent.
+  const refusedLinksRef = useRef<string[]>([]);
+  // The last finished draw, reported again when a click adds a refused link to it.
+  const lastDrawRef = useRef<{ seq: number; durationMs: number; nodeCount: number } | null>(null);
+  const lastStateRef = useRef<ReportUpdate['state']>('pending');
   reportBaseRef.current.digest = digest;
   const report = useCallback((update: ReportUpdate, seq?: number) => {
     const latest = latestSeqRef.current;
     const current = seq === undefined || latest === undefined || seq >= latest;
+    lastStateRef.current = update.state;
     reporterRef.current?.report({
       ...update,
       digest: reportBaseRef.current.digest,
       dataState: reportBaseRef.current.dataState,
       final: lastInputFinalRef.current && current,
     });
+  }, []);
+  const reportDrawn = useCallback(
+    (draw: { seq: number; durationMs: number; nodeCount: number }) => {
+      lastDrawRef.current = draw;
+      const refused = describeRefusedLinks(refusedLinksRef.current);
+      const diagnostics = refused ? [...diagnosticsRef.current, `link: ${refused}`] : diagnosticsRef.current;
+      report(
+        {
+          state: 'drawn',
+          durationMs: draw.durationMs,
+          nodeCount: draw.nodeCount,
+          ...(diagnostics.length > 0 && { diagnostics }),
+        },
+        draw.seq
+      );
+    },
+    [report]
+  );
+  const resetDiagnostics = useCallback(() => {
+    diagnosticsRef.current = [];
+    refusedLinksRef.current = [];
   }, []);
   useEffect(() => {
     // Repeat clones share the panel id; the scene key on the panel element tells them apart.
@@ -174,20 +204,31 @@ function RenderFrameHost({
     [releaseHold]
   );
 
-  const handleLink = useCallback((href: string) => {
-    if (config.publicDashboardAccessToken) {
-      return;
-    }
-    // Only follow links that come right after a user gesture; userActivation is missing in some browsers.
-    const activation = 'userActivation' in navigator ? navigator.userActivation : undefined;
-    if (activation && !activation.isActive) {
-      return;
-    }
-    const target = validateRenderLink(href);
-    if (target) {
-      void followLink(target);
-    }
-  }, []);
+  const handleLink = useCallback(
+    (href: string) => {
+      if (config.publicDashboardAccessToken) {
+        return;
+      }
+      // Only follow links that come right after a user gesture; userActivation is missing in some browsers.
+      const activation = 'userActivation' in navigator ? navigator.userActivation : undefined;
+      if (activation && !activation.isActive) {
+        return;
+      }
+      const target = validateRenderLink(href);
+      if (target) {
+        void followLink(target);
+        return;
+      }
+      // A refused click joins the report of the drawing it came from.
+      if (!refusedLinksRef.current.includes(href) && refusedLinksRef.current.length < MAX_REFUSED_LINKS) {
+        refusedLinksRef.current = [...refusedLinksRef.current, href];
+        if (lastStateRef.current === 'drawn' && lastDrawRef.current) {
+          reportDrawn(lastDrawRef.current);
+        }
+      }
+    },
+    [reportDrawn]
+  );
 
   useEffect(() => {
     if (!frameKey) {
@@ -196,6 +237,7 @@ function RenderFrameHost({
     holdRef.current = holdRenderReadiness();
     holdSeqRef.current = undefined;
     latestSeqRef.current = undefined;
+    lastDrawRef.current = null;
     setFatalError(null);
     setFrameError(null);
     setHeightHint(null);
@@ -204,10 +246,13 @@ function RenderFrameHost({
 
     const created = createRenderFrameController({
       onReady: () => {},
-      onRenderComplete: ({ seq, durationMs, nodeCount }) => {
+      onRenderComplete: ({ seq, durationMs, nodeCount, links }) => {
         setFrameError(null);
-        const diagnostics = diagnosticsRef.current;
-        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) }, seq);
+        const refused = (links ?? []).filter(
+          (href) => !refusedLinksRef.current.includes(href) && validateRenderLink(href) === null
+        );
+        refusedLinksRef.current = [...refusedLinksRef.current, ...refused].slice(0, MAX_REFUSED_LINKS);
+        reportDrawn({ seq, durationMs, nodeCount });
         settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),
@@ -250,7 +295,7 @@ function RenderFrameHost({
         controllerRef.current = null;
       }
     };
-  }, [frameKey, handleLink, releaseHold, settleSeq, report]);
+  }, [frameKey, handleLink, releaseHold, settleSeq, report, reportDrawn]);
 
   // A fatal error already removed the iframe, which tears its document down; a retry mounts a new
   // element with a new controller.
@@ -305,7 +350,7 @@ function RenderFrameHost({
         return;
       }
       sentRef.current = { ...sent, width, height };
-      diagnosticsRef.current = [];
+      resetDiagnostics();
       const seq = controller.resize({ width, height });
       if (seq >= 0) {
         latestSeqRef.current = seq;
@@ -345,7 +390,7 @@ function RenderFrameHost({
     sentRef.current = { controller, sources, width, height };
     lastInputFinalRef.current = isFinalData(data);
     reportBaseRef.current.dataState = String(data.state);
-    diagnosticsRef.current = [];
+    resetDiagnostics();
     const seq = controller.render(result.input);
     if (seq >= 0) {
       latestSeqRef.current = seq;
@@ -372,6 +417,7 @@ function RenderFrameHost({
     releaseHold,
     holdForSeq,
     report,
+    resetDiagnostics,
   ]);
 
   // Pause drawing while the panel is scrolled out of view. Render targets always draw.

@@ -460,6 +460,31 @@ describe('CustomPanel', () => {
       );
     });
 
+    it('names the links in the drawing that Grafana will not follow, declared or clicked', () => {
+      const { props } = setup();
+      act(() =>
+        latestController().handlers.onRenderComplete({
+          seq: 1,
+          durationMs: 1,
+          nodeCount: 2,
+          links: ['#panel-4', 'https://example.com/docs'],
+        })
+      );
+      expect(getPanelRenderStatus(props.id)?.diagnostics).toEqual([
+        expect.stringMatching(
+          /^link: Grafana will not follow this link: "https:\/\/example\.com\/docs"\. It follows only/
+        ),
+      ]);
+
+      act(() => latestController().handlers.onLink('/explore?left=x'));
+      expect(getPanelRenderStatus(props.id)).toEqual(
+        expect.objectContaining({
+          state: 'drawn',
+          diagnostics: [expect.stringContaining('these links: "https://example.com/docs", "/explore?left=x".')],
+        })
+      );
+    });
+
     it('reports data over the limit as an error', () => {
       const values = Array.from({ length: 100_001 }, (_, i) => i);
       const { props } = setup({ data: makeData(values) });

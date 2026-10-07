@@ -283,7 +283,9 @@ Only these parameters are allowed: `viewPanel`, `editPanel` (this dashboard only
 from the dashboard, never from the frame. A link with any other parameter, a scheme or a host is
 dropped. At most one link per second is followed, and only while the page has transient user
 activation (shortly after a click). Links to an element inside the frame (`#section`) scroll the
-frame and never leave it.
+frame and never leave it. After each draw, the frame reports up to 20 distinct link targets in the
+drawing, and the draw status names the ones Grafana will not follow, and any refused link a user
+clicks, in its diagnostics (`link: ...`).
 
 ### Not available
 

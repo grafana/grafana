@@ -3,6 +3,7 @@ import {
   HEARTBEAT_MS,
   LAYOUT_TIMEOUT_MS,
   LINK_MIN_INTERVAL_MS,
+  MAX_DECLARED_LINKS,
   MAX_FRAME_MESSAGES_PER_SECOND,
   RENDER_TIMEOUT_MS,
   STARTUP_TIMEOUT_MS,
@@ -213,6 +214,23 @@ describe('createRenderFrameController', () => {
     jest.advanceTimersByTime(RENDER_TIMEOUT_MS * 2);
     expect(handlers.onRenderComplete).toHaveBeenCalledWith({ seq, durationMs: 3, nodeCount: 5 });
     expect(handlers.onError).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'render-timeout' }));
+  });
+
+  it('passes the link targets of a draw through, and fails on more than the frame may report', () => {
+    const { controller, handlers, connect, fromFrame } = setup();
+    connect();
+    const seq = controller.render(input());
+    fromFrame({ type: 'render-complete', seq, durationMs: 3, nodeCount: 5, links: ['#panel-1', 'https://x'] });
+    expect(handlers.onRenderComplete).toHaveBeenCalledWith({
+      seq,
+      durationMs: 3,
+      nodeCount: 5,
+      links: ['#panel-1', 'https://x'],
+    });
+
+    const links = Array.from({ length: MAX_DECLARED_LINKS + 1 }, (_, i) => `#panel-${i}`);
+    fromFrame({ type: 'render-complete', seq, durationMs: 3, nodeCount: 5, links });
+    expect(handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
   });
 
   it('forwards frame errors as non-fatal', () => {

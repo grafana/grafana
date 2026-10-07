@@ -772,7 +772,7 @@ It never changes the dashboard or what is in view.
   8 lowercase hex digits. A caller that just wrote the code computes the same value to tell the new
   drawing's report from the previous one.
 - `diagnostics`: non-fatal problems reported during a draw that still finished, such as a resource
-  the sandbox blocked.
+  the sandbox blocked, or links in the drawing that Grafana will not follow (`link: ...`).
 - `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
 
 Requested panels that are not on the dashboard, or do not report, and Custom panels that are

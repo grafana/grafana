@@ -25,7 +25,7 @@ export {
   type RenderInputBuilder,
 } from './serializeData';
 export { serializeTheme } from './theme';
-export { validateRenderLink, type RenderLinkTarget } from './links';
+export { describeRefusedLinks, validateRenderLink, type RenderLinkTarget } from './links';
 export { holdRenderReadiness, type RenderReadinessHold } from './readiness';
 export {
   createRenderFrameController,

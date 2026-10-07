@@ -1,4 +1,26 @@
-import { validateRenderLink } from './links';
+import { describeRefusedLinks, validateRenderLink } from './links';
+
+describe('describeRefusedLinks', () => {
+  it('is undefined when Grafana follows every link', () => {
+    expect(describeRefusedLinks([])).toBeUndefined();
+    expect(describeRefusedLinks(['#panel-3', '?var-env=prod', '/d/abc'])).toBeUndefined();
+  });
+
+  it('names each refused link once and says which links Grafana follows', () => {
+    const text = describeRefusedLinks(['https://example.com', '#panel-3', 'https://example.com', '?foo=bar']);
+    expect(text).toMatch(
+      /^Grafana will not follow these links: "https:\/\/example\.com", "\?foo=bar"\. It follows only #panel-<id>/
+    );
+  });
+
+  it('names at most five links, each cut to a readable length', () => {
+    const long = `https://example.com/${'x'.repeat(200)}`;
+    const text = describeRefusedLinks([long, ...['a', 'b', 'c', 'd', 'e', 'f'].map((path) => `/${path}`)]) ?? '';
+    expect(text).toContain('and 2 more.');
+    expect(text).not.toContain(long);
+    expect(text).toContain('…"');
+  });
+});
 
 describe('validateRenderLink', () => {
   it.each([

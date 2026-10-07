@@ -1,6 +1,12 @@
 import { type DOMWindow, JSDOM, VirtualConsole } from 'jsdom';
 
-import { MAX_DOM_NODES, MAX_LAYOUT_ELEMENTS, RENDER_INIT_MESSAGE_TYPE, RENDER_PROTOCOL_VERSION } from './constants';
+import {
+  MAX_DECLARED_LINKS,
+  MAX_DOM_NODES,
+  MAX_LAYOUT_ELEMENTS,
+  RENDER_INIT_MESSAGE_TYPE,
+  RENDER_PROTOCOL_VERSION,
+} from './constants';
 import { contentDocument } from './document';
 import type { RenderInput } from './protocol';
 
@@ -306,11 +312,50 @@ describe('content frame bootstrap', () => {
     expect(notPrevented).toBe(false);
     expect(messagesOfType(port, 'link')).toEqual([{ type: 'link', href: '/d/abc' }]);
 
+    // The draw names the distinct link targets that would leave the frame.
+    expect(messagesOfType(port, 'render-complete')[0].links).toEqual(['/d/abc']);
+
     // A fragment that exists in the frame scrolls locally and is never sent.
     window.document
       .getElementById('local')!
       .dispatchEvent(new window.MouseEvent('click', { bubbles: true, cancelable: true }));
     expect(messagesOfType(port, 'link')).toHaveLength(1);
+  });
+
+  it('reports the distinct link targets of a draw that would leave the frame', async () => {
+    const code = `panel.onRender(function (ctx) {
+      ctx.root.innerHTML =
+        '<a href=" https://example.com ">x</a><a href="https://example.com">y</a><a href="">empty</a><a>none</a>' +
+        '<a href="#here">local</a><p id="here"></p><a href="#panel-2">panel</a>' +
+        '<svg><a xlink:href="javascript:alert(1)"><text>svg</text></a></svg><map><area href="/d/abc"></map>' +
+        '<a href="?var-n=1">n</a><a href="?var-n=1">n</a>';
+    });`;
+    const { port, send } = connect(code);
+    send({ type: 'render', seq: 1, input: makeInput() });
+    await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+    expect(messagesOfType(port, 'render-complete')[0].links).toEqual([
+      'https://example.com',
+      '#panel-2',
+      'javascript:alert(1)',
+      '?var-n=1',
+      '/d/abc',
+    ]);
+  });
+
+  it('caps the link targets it reports', async () => {
+    const code = `panel.onRender(function (ctx) {
+      var html = '';
+      for (var i = 0; i < ${MAX_DECLARED_LINKS + 5}; i++) {
+        html += '<a href="?var-n=' + i + '">' + i + '</a>';
+      }
+      ctx.root.innerHTML = html;
+    });`;
+    const { port, send } = connect(code);
+    send({ type: 'render', seq: 1, input: makeInput() });
+    await until(() => messagesOfType(port, 'render-complete').length > 0);
+
+    expect(messagesOfType(port, 'render-complete')[0].links).toHaveLength(MAX_DECLARED_LINKS);
   });
 
   describe('layout report', () => {

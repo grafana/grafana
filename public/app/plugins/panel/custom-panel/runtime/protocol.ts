@@ -8,6 +8,7 @@ import {
   MAX_LAYOUT_ELEMENTS,
   MAX_LAYOUT_LABEL_LENGTH,
   MAX_LAYOUT_SAMPLES,
+  MAX_DECLARED_LINKS,
   RENDER_PROTOCOL_VERSION,
 } from './constants';
 
@@ -194,6 +195,8 @@ export const frameMessageSchema = z.discriminatedUnion('type', [
     seq: z.number().int().min(0),
     durationMs: z.number().finite().min(0),
     nodeCount: z.number().int().min(0),
+    /** The distinct link targets in the drawing, except links to an element inside the frame. */
+    links: z.array(z.string().min(1).max(MAX_HREF_LENGTH)).max(MAX_DECLARED_LINKS).optional(),
   }),
   z.strictObject({ type: z.literal('height'), height: z.number().finite().min(0).max(MAX_HEIGHT_HINT_PX) }),
   z.strictObject({
