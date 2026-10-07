@@ -39,6 +39,7 @@ import {
   useSortedRows,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -64,6 +65,7 @@ import {
   getDisplayName,
   getStableRowKey,
   getVisibleFields,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
@@ -90,6 +92,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
     onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
@@ -139,7 +142,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const nestedResizeHandler = useColumnResize(onColumnResize, 'nested');
 
   const nestedFramesFieldName = useMemo(() => getDisplayName(nestedFramesField), [nestedFramesField]);
-  const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField]);
+  // New results can reuse the nested field while replacing frames inside its values buffer.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const nestedData: DataFrame[] = useMemo(() => nestedFramesField.values.map((v) => v[0]), [nestedFramesField, data]);
 
   const frameToRecords = useRowCompiler(data, nestedFramesFieldName);
   const rows = useMemo(() => frameToRecords(data), [frameToRecords, data]);
@@ -154,6 +159,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const firstRowNestedData = nestedData[0];
   const nestedFields = useMemo(() => firstRowNestedData?.fields ?? [], [firstRowNestedData]);
   const nestedVisibleFields = useMemo(() => getVisibleFields(nestedFields), [nestedFields]);
+  const wrapFallback = useTextWrapFallback(data);
+  const nestedWrapFallback = useTextWrapFallback(data);
   // Row-height and column-width measurement must both see the same rendered value column-building
   // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
   // `prepareFieldsForDisplay`), so measuring against the raw visible fields would stringify its raw
@@ -257,6 +264,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
@@ -271,6 +279,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   const lastColumnExtraPadding = tableRefreshEnabled ? TABLE.CELL_PADDING : 0;
 
   const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
@@ -302,6 +311,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   });
 
   const nestedHeaderHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
     columnWidths: nestedFieldWidths,
     fields: nestedVisibleFields,
     enabled: hasNestedHeaders,
@@ -323,6 +333,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
   );
 
   const rowHeight = useRowHeight({
+    wrapFallback,
+    nestedWrapFallback,
     columnWidths: widths,
     fields: preparedFields,
     hasNestedFrames: true,
@@ -441,6 +453,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
+      nestedWrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -452,6 +466,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
@@ -466,6 +481,8 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       typographyCtx,
     }),
     [
+      wrapFallback,
+      nestedWrapFallback,
       disableKeyboardEvents,
       hoverOverflow,
       disableSanitizeHtml,
@@ -476,6 +493,7 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       getTextColorForBackground,
       maxRowHeight,
       onCellFilterAdded,
+      onFieldAddToAssistant,
       onCellAddToAssistant,
       rowHeight,
       rowHeightFn,
@@ -710,9 +728,9 @@ export function TableNested(props: TableNGProps & { nestedFramesField: Field<Dat
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents || event.isDefaultPrevented()) {
