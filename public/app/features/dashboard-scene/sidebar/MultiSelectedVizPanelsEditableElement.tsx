@@ -10,6 +10,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { getGroupSelectedCategory } from '../scene/layouts-shared/GroupSelectedActions';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import {
+  type EditActionSource,
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
@@ -52,7 +53,7 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
     );
   }
 
-  public onDelete() {
+  public onDelete(source: EditActionSource = 'edit_pane') {
     const panels = this.getPanels();
 
     startBatch(
@@ -64,10 +65,12 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
       { actionId: 'panel.remove', scope: 'multiple' }
     );
 
-    this._panels.forEach((panel) => {
-      panel.onDelete();
-    });
-
-    endBatch(this._dashboard);
+    try {
+      this._panels.forEach((panel) => {
+        panel.onDelete(source);
+      });
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }

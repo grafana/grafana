@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, userEvent } from 'test/test-utils';
+import { act, fireEvent, render, screen, testWithFeatureToggles, userEvent } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { locationService, setPluginImportUtils } from '@grafana/runtime';
@@ -475,6 +475,39 @@ describe('<PanelEditActionsBulk />', () => {
     );
     expect(groupIntoRow).toBeDisabled();
     expect(groupIntoTab).toBeDisabled();
+  });
+
+  describe('with dashboardNewLayouts enabled', () => {
+    testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
+
+    test('when selected panels are deleted, one undo restores them and one redo removes them', async () => {
+      const { scene, layoutManager, panels } = buildTestScene({ panelCount: 2 });
+      deactivate = activateFullSceneTree(scene);
+      const selected = [{ id: 'panel-1' }, { id: 'panel-2' }];
+      const { actions } = renderPanelEditActionsBulk({ panel: panels[0], selected });
+
+      await actions.clickDelete();
+      const [event] = mockPublishAppEvent.mock.calls[0];
+      act(() => event.payload.onConfirm());
+
+      expect(layoutManager.getVizPanels().map((panel) => panel.state.key)).toEqual([]);
+      expect(scene.state.sidebar.state.undoStack.map((action) => action.description)).toEqual(['Remove panels (2)']);
+
+      act(() => scene.state.sidebar.undoAction());
+
+      expect(
+        layoutManager
+          .getVizPanels()
+          .map((panel) => panel.state.key)
+          .sort()
+      ).toEqual(['panel-1', 'panel-2']);
+      expect(scene.state.sidebar.state.undoStack).toEqual([]);
+
+      act(() => scene.state.sidebar.redoAction());
+
+      expect(layoutManager.getVizPanels().map((panel) => panel.state.key)).toEqual([]);
+      expect(scene.state.sidebar.state.redoStack).toEqual([]);
+    });
   });
 
   test('when the user clicks Delete and confirms, every selected panel is removed', async () => {

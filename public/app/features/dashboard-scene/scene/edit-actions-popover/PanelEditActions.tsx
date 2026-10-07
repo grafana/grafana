@@ -7,7 +7,7 @@ import { type VizPanel } from '@grafana/scenes';
 import { Button, Text, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { duplicatePanel } from '../../actions/layout/duplicatePanel';
-import { getEditableElementFor } from '../../actions/utils/getEditableElementFor';
+import { getEditableElementForSelection } from '../../sidebar/shared';
 import { getRenderedInstanceCount, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { getLayoutManagerFor } from '../../utils/getLayoutManagerFor';
 import { DashboardInteractions } from '../../utils/interactions';
@@ -147,12 +147,14 @@ export function PanelEditActionsBulk({ panel }: { panel: VizPanel }) {
   const { rowGrouping, tabGrouping, group } = useGroupSelection(panels, 'edit_popover');
 
   const onClickDelete = () => {
-    panels.forEach((panel) => {
-      const element = getEditableElementFor(panel);
-      if (element && isBulkActionElement(element)) {
-        element.onDelete('edit_popover');
-      }
-    });
+    const element = getEditableElementForSelection(
+      getDashboardSceneLike(panel).state.sidebar,
+      panels.map((panel) => ({ id: panel.state.key! }))
+    );
+
+    if (element && isBulkActionElement(element)) {
+      element.onDelete('edit_popover');
+    }
   };
 
   return (
