@@ -98,6 +98,7 @@ var BasicSet = wire.NewSet(
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,
+	legacypermissions.ProvideLoader,
 	legacypermissions.ProvideClient,
 	wire.Bind(new(accesscontrol.RoleRegistry), new(*acimpl.Service)),
 	wire.Bind(new(pluginaccesscontrol.RoleRegistry), new(*acimpl.Service)),

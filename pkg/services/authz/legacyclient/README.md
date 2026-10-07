@@ -6,6 +6,8 @@ The wire contract is the separate `LegacyAuthzService` in [`../proto/v1/legacy_p
 
 `Service` is the complete-snapshot Go interface used for injection. `LegacyClient` implements it using the generated streaming client. Its request/response types, buffering, and validation belong to Grafana, not authlib. Only existing authlib identity and service-permission helpers are reused; no new authlib version is required.
 
+Both embedded permission RPCs share one AuthZ-owned `legacypermissions.Loader`. The existing authlib RPC still reconstructs identities from its stores/caches, maps its single skip-cache option, handles renderer grants, and deduplicates the final snapshot. It calls the loader through the existing `GetLocalUserPermissions` evaluator seam, not through Access Control or another RPC. The separate legacy RPC preserves trusted requester assertions and legacy duplicate counts. Standalone AuthZ retains its tenant-aware SQL path; this unification does not change either wire contract or production routing gates. The legacy toggle selects the legacy RPC, not every use of the loader: the existing embedded RPC now uses the shared loader whenever it is called, including when that toggle is off.
+
 ## Compatibility invariants
 
 - Caller service identity is separate from the target identity. Role, Grafana Admin status, team IDs, contextual groups, cache key, and original requester namespace are trusted Grafana assertions, not end-user overrides.
@@ -22,6 +24,8 @@ The generated service/messages and this client can be removed together once lega
 
 ```sh
 go test ./pkg/services/authz/legacyclient ./pkg/services/authz/rbac/legacypermissions
+go test ./pkg/services/authz/rbac -run 'TestService_GetUserPermissions|TestIntegrationUserPermissionsRPCCompatibility' -count=1
+go test ./pkg/services/authz -run '^TestIntegrationEmbeddedPermissionRPCsShareLoader$' -count=1
 go test ./pkg/services/accesscontrol/acimpl -run '^TestIntegrationLegacyRoutingContracts$' -count=1 -v
 ```
 
