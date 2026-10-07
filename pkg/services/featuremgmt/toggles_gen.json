@@ -2471,6 +2471,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.customPanel",
+        "resourceVersion": "1791367067158",
+        "creationTimestamp": "2026-10-07T09:57:47Z"
+      },
+      "spec": {
+        "description": "Enables the custom panel, which draws panel data with sandboxed code stored in the dashboard. Also requires alpha panels to be enabled",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.customizableMegaMenu",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -208,6 +208,11 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		"xychart":        {},
 	}
 
+	// Alpha core panels added behind a feature flag land in a separate frontend change, so they may or may not be present.
+	optionalPanels := map[string]struct{}{
+		"custom-panel": {},
+	}
+
 	expDataSources := map[string]struct{}{
 		"cloudwatch":                       {},
 		"grafana-azure-monitor-datasource": {},
@@ -224,13 +229,18 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 	}
 
 	panels := ps.Plugins(ctx, plugins.TypePanel)
-	require.Equal(t, len(expPanels), len(panels))
+	foundOptionalPanels := 0
 	for _, p := range panels {
 		p, exists := ps.Plugin(ctx, p.ID)
 		require.NotEqual(t, pluginstore.Plugin{}, p)
 		require.True(t, exists)
+		if _, ok := optionalPanels[p.ID]; ok {
+			foundOptionalPanels++
+			continue
+		}
 		require.Contains(t, expPanels, p.ID)
 	}
+	require.Equal(t, len(expPanels), len(panels)-foundOptionalPanels)
 
 	dataSources := ps.Plugins(ctx, plugins.TypeDataSource)
 	require.Equal(t, len(expDataSources), len(dataSources))
@@ -250,7 +260,7 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *pluginstor
 		require.Contains(t, expApps, app.ID)
 	}
 
-	require.Equal(t, len(expPanels)+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
+	require.Equal(t, len(expPanels)+foundOptionalPanels+len(expDataSources)+len(expApps), len(ps.Plugins(ctx)))
 }
 
 func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, ps *pluginstore.Service) {
