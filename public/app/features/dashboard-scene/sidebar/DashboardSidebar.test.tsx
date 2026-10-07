@@ -558,6 +558,7 @@ describe('DashboardSidebar', () => {
     function pushActions(scene: DashboardScene, count: number, calls: string[] = [], prefix = 'action') {
       for (let i = 0; i < count; i++) {
         edit({
+          meta: { actionId: 'test.acttion' },
           source: scene,
           description: `${prefix} ${i}`,
           perform: () => calls.push(`perform-${prefix}-${i}`),
@@ -567,7 +568,7 @@ describe('DashboardSidebar', () => {
     }
 
     function pushBatch(scene: DashboardScene, description: string, count: number, calls: string[] = []) {
-      startBatch(scene, description);
+      startBatch(scene, description, { actionId: 'test.batch' });
       pushActions(scene, count, calls, description);
       endBatch(scene);
     }
