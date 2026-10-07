@@ -4,26 +4,12 @@ import { useEffect, useState } from 'react';
 import { type AlertRuleSimplifiedRouting } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import {
-  Alert,
-  CollapsableSection,
-  Field,
-  InlineField,
-  MultiSelect,
-  Stack,
-  Switch,
-  Text,
-  useStyles2,
-} from '@grafana/ui';
+import { Alert, CollapsableSection, Field, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { useListTimeIntervals } from '../../../muteTimings/hooks/useListTimeIntervals';
-import { DurationField } from '../DurationField/DurationField';
-import { GroupByField } from '../GroupByField/GroupByField';
-
-const TIMING_DEFAULTS = { groupWait: '30s', groupInterval: '5m', repeatInterval: '4h' };
-// Mirrors the internal RouteSettings.tsx's REQUIRED_FIELDS_IN_GROUPBY: what "Grouping: ..." shows
-// when the user hasn't overridden it, and what a fresh override starts from.
-const REQUIRED_GROUP_BY_LABELS = ['grafana_folder', 'alertname'];
+import { GroupingOverride } from '../GroupingOverride/GroupingOverride';
+import { TimeIntervalsSelect } from '../TimeIntervalsSelect/TimeIntervalsSelect';
+import { TimingsOverride } from '../TimingsOverride/TimingsOverride';
 
 export type SimplifiedRoutingFieldsValue = Omit<AlertRuleSimplifiedRouting, 'receiver' | 'type'>;
 
@@ -36,54 +22,27 @@ export interface SimplifiedRoutingFieldsProps {
 }
 
 /** The "Muting, grouping and timings (optional)" section, matching AlertManagerManualRouting.tsx /
- * RouteSettings.tsx. Excludes `receiver` — RecipientPicker owns that shared field. */
+ * RouteSettings.tsx. Excludes `receiver` — NotificationsSettingsSelector owns that shared field. */
 export function SimplifiedRoutingFields({ value, onChange, disabledReason }: SimplifiedRoutingFieldsProps) {
   const styles = useStyles2(getStyles);
-  const { currentData: timeIntervals, isError: isTimeIntervalsError } = useListTimeIntervals();
+  const { isError: isTimeIntervalsError } = useListTimeIntervals();
   const disabled = Boolean(disabledReason);
 
-  const groupingOverridden = Boolean(value.groupBy?.length);
-  const timingsOverridden = Boolean(value.groupWait || value.groupInterval || value.repeatInterval);
-
-  const [overrideGrouping, setOverrideGrouping] = useState(groupingOverridden);
-  const [overrideTimings, setOverrideTimings] = useState(timingsOverridden);
+  const hasRouteSettings = Boolean(
+    value.groupBy?.length ||
+      value.groupWait ||
+      value.groupInterval ||
+      value.repeatInterval ||
+      value.muteTimeIntervals?.length ||
+      value.activeTimeIntervals?.length
+  );
 
   // Local state drives a user's own click; this resyncs it when `value` itself changes, so a rule
   // loaded asynchronously after mount (the `useQuery` then `value={data ?? null}` pattern) still shows.
-  useEffect(() => {
-    setOverrideGrouping(groupingOverridden);
-  }, [groupingOverridden]);
-
-  useEffect(() => {
-    setOverrideTimings(timingsOverridden);
-  }, [timingsOverridden]);
-
-  const hasRouteSettings =
-    overrideGrouping ||
-    overrideTimings ||
-    groupingOverridden ||
-    timingsOverridden ||
-    Boolean(value.muteTimeIntervals?.length) ||
-    Boolean(value.activeTimeIntervals?.length);
-
   const [isSectionOpen, setIsSectionOpen] = useState(hasRouteSettings);
   useEffect(() => {
     setIsSectionOpen(hasRouteSettings);
   }, [hasRouteSettings]);
-
-  // Mirrors RouteSettings.tsx's own effect: seed the required labels on opt-in, rather than
-  // starting empty (which would mean "group by nothing", not "the defaults plus whatever you add").
-  useEffect(() => {
-    if (overrideGrouping && !value.groupBy?.length) {
-      onChange({ ...value, groupBy: REQUIRED_GROUP_BY_LABELS });
-    }
-    // Runs only on the switch flip, not on every keystroke in the field it seeds.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [overrideGrouping]);
-
-  const timeIntervalOptions = (timeIntervals?.items ?? [])
-    .filter((ti): ti is typeof ti & { metadata: { name: string } } => Boolean(ti.metadata.name))
-    .map((ti) => ({ label: ti.metadata.name, value: ti.metadata.name }));
 
   return (
     <div className={styles.routingSection}>
@@ -123,12 +82,10 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
             disabled={disabled}
             noMargin
           >
-            <MultiSelect
+            <TimeIntervalsSelect
               aria-label={t('alerting.simplified-routing-fields.mute-timings', 'Mute timings')}
-              placeholder={t('alerting.simplified-routing-fields.select-time-intervals', 'Select time intervals...')}
-              options={timeIntervalOptions}
               value={value.muteTimeIntervals ?? []}
-              onChange={(opts) => onChange({ ...value, muteTimeIntervals: opts.map((opt) => opt.value ?? '') })}
+              onChange={(muteTimeIntervals) => onChange({ ...value, muteTimeIntervals })}
             />
           </Field>
           <Field
@@ -140,116 +97,22 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
             disabled={disabled}
             noMargin
           >
-            <MultiSelect
+            <TimeIntervalsSelect
               aria-label={t('alerting.simplified-routing-fields.active-timings', 'Active timings')}
-              placeholder={t('alerting.simplified-routing-fields.select-time-intervals', 'Select time intervals...')}
-              options={timeIntervalOptions}
               value={value.activeTimeIntervals ?? []}
-              onChange={(opts) => onChange({ ...value, activeTimeIntervals: opts.map((opt) => opt.value ?? '') })}
+              onChange={(activeTimeIntervals) => onChange({ ...value, activeTimeIntervals })}
             />
           </Field>
-
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-            <InlineField
-              label={t('alerting.simplified-routing-fields.override-grouping', 'Override grouping')}
-              transparent
-              disabled={disabled}
-              className={styles.switchElement}
-            >
-              <Switch
-                id="override-grouping-toggle"
-                value={overrideGrouping}
-                onChange={(e) => {
-                  const next = e.currentTarget.checked;
-                  setOverrideGrouping(next);
-                  // Turning the override off must drop groupBy too, or a caller that persists
-                  // `value` still ships the override the summary text claims no longer applies.
-                  if (!next) {
-                    onChange({ ...value, groupBy: undefined });
-                  }
-                }}
-              />
-            </InlineField>
-            {!overrideGrouping && (
-              <Text variant="body" color="secondary">
-                <Trans
-                  i18nKey="alerting.simplified-routing-fields.grouping-summary"
-                  values={{ fields: REQUIRED_GROUP_BY_LABELS.join(', ') }}
-                >
-                  Grouping: <strong>{'{{fields}}'}</strong>
-                </Trans>
-              </Text>
-            )}
-          </Stack>
-          {overrideGrouping && (
-            <GroupByField
-              value={value.groupBy ?? []}
-              onChange={(groupBy) => onChange({ ...value, groupBy })}
-              disabled={disabled}
-            />
-          )}
-
-          <Stack direction="row" gap={1} alignItems="center" justifyContent="space-between">
-            <InlineField
-              label={t('alerting.simplified-routing-fields.override-timings', 'Override timings')}
-              transparent
-              disabled={disabled}
-              className={styles.switchElement}
-            >
-              <Switch
-                id="override-timings-toggle"
-                value={overrideTimings}
-                onChange={(e) => {
-                  const next = e.currentTarget.checked;
-                  setOverrideTimings(next);
-                  // Same reasoning as the grouping switch above: drop the timing fields on opt-out.
-                  if (!next) {
-                    onChange({ ...value, groupWait: undefined, groupInterval: undefined, repeatInterval: undefined });
-                  }
-                }}
-              />
-            </InlineField>
-            {!overrideTimings && (
-              <Text variant="body" color="secondary">
-                <Trans
-                  i18nKey="alerting.simplified-routing-fields.timings-summary"
-                  values={{
-                    groupWait: TIMING_DEFAULTS.groupWait,
-                    groupInterval: TIMING_DEFAULTS.groupInterval,
-                    repeatInterval: TIMING_DEFAULTS.repeatInterval,
-                  }}
-                >
-                  Group wait: <strong>{'{{groupWait}}'}</strong>, Group interval: <strong>{'{{groupInterval}}'}</strong>
-                  , Repeat interval: <strong>{'{{repeatInterval}}'}</strong>
-                </Trans>
-              </Text>
-            )}
-          </Stack>
-          {overrideTimings && (
-            <Stack direction="column" gap={1}>
-              <DurationField
-                label={t('alerting.simplified-routing-fields.group-wait', 'Group wait')}
-                value={value.groupWait ?? ''}
-                placeholder={TIMING_DEFAULTS.groupWait}
-                onChange={(groupWait) => onChange({ ...value, groupWait })}
-                disabled={disabled}
-              />
-              <DurationField
-                label={t('alerting.simplified-routing-fields.group-interval', 'Group interval')}
-                value={value.groupInterval ?? ''}
-                placeholder={TIMING_DEFAULTS.groupInterval}
-                onChange={(groupInterval) => onChange({ ...value, groupInterval })}
-                disabled={disabled}
-              />
-              <DurationField
-                label={t('alerting.simplified-routing-fields.repeat-interval', 'Repeat interval')}
-                value={value.repeatInterval ?? ''}
-                placeholder={TIMING_DEFAULTS.repeatInterval}
-                onChange={(repeatInterval) => onChange({ ...value, repeatInterval })}
-                disabled={disabled}
-              />
-            </Stack>
-          )}
+          <GroupingOverride
+            value={value.groupBy}
+            onChange={(groupBy) => onChange({ ...value, groupBy })}
+            disabled={disabled}
+          />
+          <TimingsOverride
+            value={value}
+            onChange={(timings) => onChange({ ...value, ...timings })}
+            disabled={disabled}
+          />
         </Stack>
       </CollapsableSection>
     </div>
@@ -277,10 +140,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // above already pads the whole box, so zero this out to avoid doubling up.
   collapsableSectionContent: css({
     padding: 0,
-  }),
-  switchElement: css({
-    flexFlow: 'row-reverse',
-    gap: theme.spacing(1),
-    alignItems: 'center',
   }),
 });

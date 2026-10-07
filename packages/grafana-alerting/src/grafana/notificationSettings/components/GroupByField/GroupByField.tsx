@@ -2,9 +2,10 @@ import { type SelectableValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Field, MultiSelect } from '@grafana/ui';
 
-// Mirrors amroutes.ts's REQUIRED_FIELDS_IN_GROUPBY/DISABLE_GROUPING/commonGroupByOptions — ported
-// since RecipientPicker can't depend on internals code.
-const REQUIRED_GROUP_BY_LABELS = ['grafana_folder', 'alertname'];
+import { REQUIRED_GROUP_BY_LABELS } from '../../constants';
+
+// Mirrors amroutes.ts's DISABLE_GROUPING/commonGroupByOptions — ported since
+// NotificationsSettingsSelector can't depend on internals code.
 const DISABLE_GROUPING = '...';
 // Only the *values* are locale-independent and safe to hoist — the label goes through t() inside
 // the component, since a module-scope t() call runs once at import and never updates on a language change.

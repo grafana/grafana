@@ -110,14 +110,14 @@ describe('custom policy selected', () => {
 });
 
 describe('preview', () => {
-  it('previews which policy would receive the notification once a tree is selected', () => {
+  it('previews which policy would receive the notification once a tree is selected', async () => {
     const selectedTree = simpleRoutingTreesList.items[1];
 
     render(
       <RoutingTreePicker value={selectedTree} onChange={jest.fn()} instancesToPreview={[[['severity', 'critical']]]} />
     );
 
-    expect(screen.getByText('Who would get notified')).toBeInTheDocument();
+    expect(await screen.findByText('Who would get notified')).toBeInTheDocument();
     expect(screen.getByText(selectedTree.spec.defaults.receiver!)).toBeInTheDocument();
   });
 

@@ -11,11 +11,17 @@ import { Alert, Icon, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type ContactPoint } from '../../../api/notifications/v1beta1/types';
 import { ContactPointSelector } from '../../../contactPoints/components/ContactPointSelector/ContactPointSelector';
-import { useListContactPoints } from '../../../contactPoints/hooks/v1beta1/useContactPoints';
+import { useResolvedContactPoint } from '../../../contactPoints/hooks/v1beta1/useResolvedContactPoint';
 import { type Label } from '../../../matchers/types';
 import { RoutingTreePicker } from '../../../notificationPolicies/components/RoutingTreePicker/RoutingTreePicker';
-import { useListRoutingTrees } from '../../../notificationPolicies/hooks/useRoutingTrees';
+import { useResolvedRoutingTree } from '../../../notificationPolicies/hooks/useResolvedRoutingTree';
 import { isDefaultRoutingTree } from '../../../notificationPolicies/routingTrees';
+import {
+  asNamedRoutingTree,
+  asSimplifiedRouting,
+  toNamedRoutingTree,
+  toSimplifiedRouting,
+} from '../../utils/routingValue';
 import {
   SimplifiedRoutingFields,
   type SimplifiedRoutingFieldsValue,
@@ -23,7 +29,7 @@ import {
 
 export type RecipientMode = 'contactPoint' | 'notificationPolicy';
 
-export interface RecipientPickerProps {
+export interface NotificationsSettingsSelectorProps {
   mode: RecipientMode;
   value: AlertRuleNotificationSettings | null;
   onChange: (value: AlertRuleNotificationSettings | null) => void;
@@ -36,25 +42,9 @@ export interface RecipientPickerProps {
   manageContactPointsHref?: string;
 }
 
-// `type` isn't a true discriminant here (both branches share AlertRuleNotificationSettingsType) — narrow
-// on `receiver`/`routingTree` instead. Exported so consumers don't reimplement this.
-export function asSimplifiedRouting(value: AlertRuleNotificationSettings | null): AlertRuleSimplifiedRouting | null {
-  if (value !== null && 'receiver' in value) {
-    return value;
-  }
-  return null;
-}
-
-export function asNamedRoutingTree(value: AlertRuleNotificationSettings | null): AlertRuleNamedRoutingTree | null {
-  if (value !== null && 'routingTree' in value) {
-    return value;
-  }
-  return null;
-}
-
 /** Picks where an alert rule's notifications go — a contact point or named policy tree — with no
  * RuleFormValues/AlertmanagerProvider dependency. `mode` is caller-controlled; no toggle rendered. */
-export function RecipientPicker({
+export function NotificationsSettingsSelector({
   mode,
   value,
   onChange,
@@ -62,7 +52,7 @@ export function RecipientPicker({
   instancesToPreview,
   viewPoliciesHref,
   manageContactPointsHref,
-}: RecipientPickerProps) {
+}: NotificationsSettingsSelectorProps) {
   const isValid = mode === 'notificationPolicy' || Boolean(asSimplifiedRouting(value)?.receiver);
 
   useEffect(() => {
@@ -96,14 +86,7 @@ interface ContactPointRecipientProps {
 }
 
 function ContactPointRecipient({ value, onChange, manageContactPointsHref }: ContactPointRecipientProps) {
-  const { currentData: contactPoints, isError } = useListContactPoints();
-
-  // receiver is the contact point's *title*, but ContactPointSelector's option value is uid-or-title —
-  // resolve by title match so a titled receiver still shows selected even when the contact point has a uid.
-  const selectedContactPoint = contactPoints?.items?.find((cp) => cp.spec.title === value?.receiver);
-  const comboboxValue = selectedContactPoint
-    ? (selectedContactPoint.metadata.uid ?? selectedContactPoint.spec.title)
-    : null;
+  const { selectorValue, isError } = useResolvedContactPoint(value?.receiver);
 
   const timingsValue: SimplifiedRoutingFieldsValue = {
     groupBy: value?.groupBy,
@@ -119,7 +102,7 @@ function ContactPointRecipient({ value, onChange, manageContactPointsHref }: Con
       onChange(null);
       return;
     }
-    onChange({ type: 'SimplifiedRouting', receiver: contactPoint.spec.title, ...timingsValue });
+    onChange(toSimplifiedRouting(contactPoint.spec.title, timingsValue));
   };
 
   const handleTimingsChange = (timings: SimplifiedRoutingFieldsValue) => {
@@ -128,7 +111,7 @@ function ContactPointRecipient({ value, onChange, manageContactPointsHref }: Con
       // gets `disabledReason` below so the fields are visibly inert instead of silently discarding input.
       return;
     }
-    onChange({ type: 'SimplifiedRouting', receiver: value.receiver, ...timings });
+    onChange(toSimplifiedRouting(value.receiver, timings));
   };
 
   // Mirrors RoutingTreePolicyField's isError guard: a failed fetch would otherwise resolve to null,
@@ -137,7 +120,7 @@ function ContactPointRecipient({ value, onChange, manageContactPointsHref }: Con
     return (
       <Alert
         severity="error"
-        title={t('alerting.recipient-picker.contact-points-error', 'Could not load contact points')}
+        title={t('alerting.notifications-settings-selector.contact-points-error', 'Could not load contact points')}
       />
     );
   }
@@ -145,24 +128,26 @@ function ContactPointRecipient({ value, onChange, manageContactPointsHref }: Con
   return (
     <Stack direction="column" gap={1}>
       <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="alerting.recipient-picker.contact-point-description">
+        <Trans i18nKey="alerting.notifications-settings-selector.contact-point-description">
           Notifications for firing alerts are routed to a selected contact point.
         </Trans>
       </Text>
       <Stack direction="row" alignItems="center" gap={1}>
         <Icon name="grafana" />
-        <Text>{t('alerting.recipient-picker.alertmanager-label', 'Alertmanager: grafana')}</Text>
+        <Text>{t('alerting.notifications-settings-selector.alertmanager-label', 'Alertmanager: grafana')}</Text>
       </Stack>
       <Stack direction="row" alignItems="center" gap={1}>
         <ContactPointSelector
-          value={comboboxValue}
+          value={selectorValue}
           onChange={handleContactPointChange}
           isClearable
-          aria-label={t('alerting.recipient-picker.contact-point-aria', 'Contact point')}
+          aria-label={t('alerting.notifications-settings-selector.contact-point-aria', 'Contact point')}
         />
         {manageContactPointsHref && (
           <TextLink href={manageContactPointsHref} external>
-            <Trans i18nKey="alerting.recipient-picker.manage-contact-points">View or create contact points</Trans>
+            <Trans i18nKey="alerting.notifications-settings-selector.manage-contact-points">
+              View or create contact points
+            </Trans>
           </TextLink>
         )}
       </Stack>
@@ -170,7 +155,9 @@ function ContactPointRecipient({ value, onChange, manageContactPointsHref }: Con
         value={timingsValue}
         onChange={handleTimingsChange}
         disabledReason={
-          value?.receiver ? undefined : t('alerting.recipient-picker.timings-disabled', 'Select a contact point first')
+          value?.receiver
+            ? undefined
+            : t('alerting.notifications-settings-selector.timings-disabled', 'Select a contact point first')
         }
       />
     </Stack>
@@ -190,48 +177,41 @@ function NotificationPolicyRecipient({
   instancesToPreview,
   viewPoliciesHref,
 }: NotificationPolicyRecipientProps) {
-  const { currentData: routingTrees, isError } = useListRoutingTrees();
-
-  // Same reasoning as ContactPointRecipient's isError guard: falling back to null here would show
-  // "Default policy" for a rule that actually has a named tree we just couldn't confirm yet.
-  const isResolvingTree = Boolean(value?.routingTree) && !routingTrees?.items;
-
-  const selectedTree = value?.routingTree
-    ? (routingTrees?.items?.find((tree) => tree.metadata.name === value.routingTree) ?? null)
-    : null;
-
-  // A deleted/inaccessible tree also resolves selectedTree to null - warn instead of silently
-  // showing "Default policy" for it, without clearing the caller's actual value.
-  const isTreeNotFound = Boolean(value?.routingTree) && !isResolvingTree && !selectedTree;
+  // A tree we couldn't confirm yet or couldn't find must not silently show as "Default policy" while the
+  // caller's actual value is untouched, so resolving and not-found are told apart from the default.
+  const { tree: selectedTree, isResolving, isNotFound, isError } = useResolvedRoutingTree(value?.routingTree);
 
   const handleChange = (tree: RoutingTree | null) => {
     if (!tree || !tree.metadata.name || isDefaultRoutingTree(tree)) {
       onChange(null);
       return;
     }
-    onChange({ type: 'NamedRoutingTree', routingTree: tree.metadata.name });
+    onChange(toNamedRoutingTree(tree.metadata.name));
   };
 
   if (isError) {
     return (
       <Alert
         severity="error"
-        title={t('alerting.recipient-picker.routing-trees-error', 'Could not load notification policies')}
+        title={t(
+          'alerting.notifications-settings-selector.routing-trees-error',
+          'Could not load notification policies'
+        )}
       />
     );
   }
 
-  if (isResolvingTree) {
+  if (isResolving) {
     return null;
   }
 
   return (
     <Stack direction="column" gap={1}>
-      {isTreeNotFound && (
+      {isNotFound && (
         <Alert
           severity="warning"
           title={t(
-            'alerting.recipient-picker.routing-tree-not-found',
+            'alerting.notifications-settings-selector.routing-tree-not-found',
             'The previously selected notification policy could not be found — it may have been deleted'
           )}
         />
@@ -239,7 +219,7 @@ function NotificationPolicyRecipient({
       <RoutingTreePicker
         value={selectedTree}
         onChange={handleChange}
-        instancesToPreview={instancesToPreview}
+        instancesToPreview={isNotFound ? undefined : instancesToPreview}
         viewPoliciesHref={viewPoliciesHref}
       />
     </Stack>

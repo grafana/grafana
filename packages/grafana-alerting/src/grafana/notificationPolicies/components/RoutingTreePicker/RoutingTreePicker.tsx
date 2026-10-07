@@ -2,12 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
-import { Alert, Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
+import { Badge, Button, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type Label } from '../../../matchers/types';
-import { useMatchInstancesToSpecificRouteTree } from '../../hooks/useMatchPolicies';
-import { useListRoutingTrees } from '../../hooks/useRoutingTrees';
 import { USER_DEFINED_TREE_NAME, isDefaultRoutingTree } from '../../routingTrees';
+import { RoutingTreePreview } from '../RoutingTreePreview/RoutingTreePreview';
 import { RoutingTreeSelector } from '../RoutingTreeSelector/RoutingTreeSelector';
 
 export interface RoutingTreePickerProps {
@@ -130,51 +129,8 @@ export function RoutingTreePicker({ value, onChange, instancesToPreview, viewPol
         </>
       )}
       {instancesToPreview && instancesToPreview.length > 0 && (
-        <RoutingTreePickerPreview routingTree={value} instances={instancesToPreview} />
+        <RoutingTreePreview routingTreeName={value?.metadata.name} instances={instancesToPreview} />
       )}
-    </Stack>
-  );
-}
-
-interface RoutingTreePickerPreviewProps {
-  routingTree: RoutingTree | null;
-  instances: Label[][];
-}
-
-function RoutingTreePickerPreview({ routingTree, instances }: RoutingTreePickerPreviewProps) {
-  // `routingTree` is null for the default policy (no explicit selection) — resolve the actual default
-  // tree from the list RoutingTreeSelector already fetches (RTKQ dedupes the query).
-  const { currentData: routingTrees } = useListRoutingTrees();
-  const defaultTree = routingTrees?.items?.find(isDefaultRoutingTree) ?? null;
-  const resolvedTree = routingTree ?? defaultTree;
-
-  const match = useMatchInstancesToSpecificRouteTree(resolvedTree, instances);
-
-  if (!resolvedTree) {
-    return null;
-  }
-
-  const matchedRoutes = match ? Array.from(match.matchedPolicies.keys()) : [];
-
-  if (matchedRoutes.length === 0) {
-    return (
-      <Alert
-        severity="info"
-        title={t('alerting.routing-tree-picker.preview-no-match', 'No matching notification policy found')}
-      />
-    );
-  }
-
-  return (
-    <Stack direction="column" gap={1}>
-      <Text variant="bodySmall" color="secondary">
-        <Trans i18nKey="alerting.routing-tree-picker.preview-heading">Who would get notified</Trans>
-      </Text>
-      {matchedRoutes.map((route) => (
-        <Text key={route.id}>
-          {route.receiver || t('alerting.routing-tree-picker.preview-default-receiver', 'Default receiver')}
-        </Text>
-      ))}
     </Stack>
   );
 }

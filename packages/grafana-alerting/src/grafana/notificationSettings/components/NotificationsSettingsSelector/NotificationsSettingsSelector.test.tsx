@@ -3,7 +3,7 @@ import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
 
-import { RecipientPicker, asNamedRoutingTree, asSimplifiedRouting } from './RecipientPicker';
+import { NotificationsSettingsSelector } from './NotificationsSettingsSelector';
 import {
   contactPointsErrorScenario,
   contactPointsListScenario,
@@ -12,7 +12,7 @@ import {
   routingTreesErrorScenario,
   routingTreesListScenario,
   slackOncallContactPoint,
-} from './RecipientPicker.scenario';
+} from './NotificationsSettingsSelector.scenario';
 
 const server = setupMockServer();
 
@@ -24,11 +24,11 @@ beforeEach(() => {
   server.use(...contactPointsListScenario, ...routingTreesListScenario, ...emptyTimeIntervalsScenario);
 });
 
-function renderPicker(props: Partial<React.ComponentProps<typeof RecipientPicker>> = {}) {
-  return render(<RecipientPicker mode="contactPoint" value={null} onChange={jest.fn()} {...props} />);
+function renderPicker(props: Partial<React.ComponentProps<typeof NotificationsSettingsSelector>> = {}) {
+  return render(<NotificationsSettingsSelector mode="contactPoint" value={null} onChange={jest.fn()} {...props} />);
 }
 
-describe('RecipientPicker', () => {
+describe('NotificationsSettingsSelector', () => {
   it('renders the contact point selector in contactPoint mode', async () => {
     renderPicker();
 
@@ -107,6 +107,17 @@ describe('RecipientPicker', () => {
     expect(screen.getByText(/default policy/i)).toBeInTheDocument();
   });
 
+  it('does not preview the default policy for a routing tree that no longer exists', async () => {
+    renderPicker({
+      mode: 'notificationPolicy',
+      value: { type: 'NamedRoutingTree', routingTree: 'deleted-tree' },
+      instancesToPreview: [[['severity', 'critical']]],
+    });
+
+    expect(await screen.findByText(/could not be found/i)).toBeInTheDocument();
+    expect(screen.queryByText('Who would get notified')).not.toBeInTheDocument();
+  });
+
   it('emits null when resetting an existing named policy back to default', async () => {
     const onChange = jest.fn();
     const { user } = renderPicker({
@@ -129,7 +140,7 @@ describe('onValidityChange', () => {
     expect(onValidityChange).toHaveBeenCalledWith(false);
 
     renderResult.rerender(
-      <RecipientPicker
+      <NotificationsSettingsSelector
         mode="contactPoint"
         value={{ type: 'SimplifiedRouting', receiver: 'slack-oncall' }}
         onChange={jest.fn()}
@@ -145,35 +156,5 @@ describe('onValidityChange', () => {
     renderPicker({ mode: 'notificationPolicy', onValidityChange });
 
     expect(onValidityChange).toHaveBeenCalledWith(true);
-  });
-});
-
-describe('asSimplifiedRouting', () => {
-  it('returns the value when it has a receiver', () => {
-    const value = { type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' };
-    expect(asSimplifiedRouting(value)).toBe(value);
-  });
-
-  it('returns null for a named-routing-tree value', () => {
-    expect(asSimplifiedRouting({ type: 'NamedRoutingTree' as const, routingTree: 'deployment-tools' })).toBeNull();
-  });
-
-  it('returns null for null', () => {
-    expect(asSimplifiedRouting(null)).toBeNull();
-  });
-});
-
-describe('asNamedRoutingTree', () => {
-  it('returns the value when it has a routingTree', () => {
-    const value = { type: 'NamedRoutingTree' as const, routingTree: 'deployment-tools' };
-    expect(asNamedRoutingTree(value)).toBe(value);
-  });
-
-  it('returns null for a simplified-routing value', () => {
-    expect(asNamedRoutingTree({ type: 'SimplifiedRouting' as const, receiver: 'slack-oncall' })).toBeNull();
-  });
-
-  it('returns null for null', () => {
-    expect(asNamedRoutingTree(null)).toBeNull();
   });
 });
