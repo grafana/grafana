@@ -51,19 +51,23 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	Storage         StorageProvider
-	PluginClient    appplugin.PluginClient
-	ClientV3        appclientv3.Client
-	ContextProvider appplugin.PluginContextWrapper
-	Decrypter       decrypt.DecryptService
-	AccessChecker   appplugin.PluginAccessChecker
-	Search          resourcepb.ResourceIndexClient
-	Store           resourcepb.ResourceStoreClient
-	Runner          appplugin.AppPluginRunnerOptions
-	Tracer          tracing.Tracer
-	Features        featuremgmt.FeatureToggles
-	BuildVersion    string
-	MetricsRegister prometheus.Registerer
+	Storage          StorageProvider
+	PluginClient     appplugin.PluginClient
+	ClientV3         appclientv3.Client
+	ContextProvider  appplugin.PluginContextWrapper
+	Decrypter        decrypt.DecryptService
+	AccessChecker    appplugin.PluginAccessChecker
+	SearchAPIEnabled bool
+	TrashAPIEnabled  bool
+	HybridAPIEnabled bool
+	KeysAPIEnabled   bool
+	Search           resourcepb.ResourceIndexClient
+	Store            resourcepb.ResourceStoreClient
+	Runner           appplugin.AppPluginRunnerOptions
+	Tracer           tracing.Tracer
+	Features         featuremgmt.FeatureToggles
+	BuildVersion     string
+	MetricsRegister  prometheus.Registerer
 
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service
@@ -84,7 +88,7 @@ func (h *Handler) Destroy() {
 
 // APIGroup describes the versions actually served, including the settings API.
 func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
-	b, err := newBuilder(plugin, opts)
+	b, err := NewAPI(plugin, opts)
 	if err != nil {
 		return metav1.APIGroup{}, err
 	}
@@ -106,7 +110,7 @@ func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
 func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
-	b, err := newBuilder(plugin, opts)
+	b, err := NewAPI(plugin, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +207,16 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	return &Handler{Handler: server.Handler, destroy: server.Destroy}, nil
 }
 
-func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
+// PluginAPI supplies the schema and storage installation for a routed plugin.
+type PluginAPI interface {
+	builder.APIGroupBuilder
+	builder.APIGroupVersionsProvider
+	GetAuthorizer() authorizer.Authorizer
+}
+
+// NewAPI selects settings for legacy plugins and manifest APIs for SDK plugins.
+// It is also used by offline OpenAPI generation so discovery matches the router.
+func NewAPI(plugin definition.PluginDefinition, opts Options) (PluginAPI, error) {
 	if plugin.Manifest != nil {
 		if plugin.Manifest.IsEmpty() {
 			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
@@ -224,9 +237,23 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
-		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
-		opts.Runner, opts.Tracer, opts.Features)
+	if plugin.Manifest == nil {
+		return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient,
+			opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Runner, opts.Tracer, opts.Features)
+	}
+	return &manifestBuilder{
+		group:         plugin.Manifest.Group,
+		manifest:      plugin.Manifest,
+		pluginJSON:    plugin.JSONData,
+		clientV3:      opts.ClientV3,
+		decrypter:     newSecureValueLookup(opts.Decrypter),
+		accessChecker: opts.AccessChecker,
+		search:        opts.Search,
+		store:         opts.Store,
+		tracer:        opts.Tracer,
+		opts:          opts,
+		kindPolicies:  kindPolicies(plugin.Manifest),
+	}, nil
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

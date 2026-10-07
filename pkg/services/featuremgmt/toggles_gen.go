@@ -954,6 +954,10 @@ const (
 	// Exposes the semantic (vector) search endpoint for dashboards under the dashboard API
 	FlagDashboardVectorSearch = "dashboard.vectorSearch"
 
+	// FlagAlertingHybridSearch
+	// Enables hybrid (lexical and semantic) search for alert rules in unified storage
+	FlagAlertingHybridSearch = "alerting.hybridSearch"
+
 	// FlagSplunkUseLegacyResultsApi
 	// Makes the Splunk data source use the deprecated REST API v1 search result endpoints instead of v2
 	FlagSplunkUseLegacyResultsApi = "splunk.useLegacyResultsApi"

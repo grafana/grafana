@@ -279,6 +279,10 @@ type StorageBackend interface {
 
 	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
 	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
+
+	// ListResourceLastImportTimes returns the latest import times using the same age limit as single lookups.
+	// On failure, it may return times collected before the error so scans can still use them.
+	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
 type ModifiedResource struct {
@@ -2946,13 +2950,16 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		if err != nil {
 			return &resourcepb.GetBlobResponse{Error: err}, nil
 		}
-		if hasBlobs && !refs[req.Uid] {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-				Message: "blob is not referenced by the resource",
-				Code:    http.StatusNotFound,
-			}}, nil
+		info = refs[req.Uid]
+		if info == nil {
+			if hasBlobs {
+				return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+					Message: "blob is not referenced by the resource",
+					Code:    http.StatusNotFound,
+				}}, nil
+			}
+			info = &utils.BlobInfo{UID: req.Uid}
 		}
-		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
@@ -2971,7 +2978,7 @@ type BlobReference struct {
 	ContentType string `json:"contentType,omitempty"`
 }
 
-func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, bool, *resourcepb.ErrorResult) {
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]*utils.BlobInfo, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
 		return nil, false, r
 	}
@@ -2996,14 +3003,16 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 	if obj.Blobs == nil {
 		return nil, false, nil
 	}
-	refs := make(map[string]bool, len(obj.Blobs)+1)
+	refs := make(map[string]*utils.BlobInfo, len(obj.Blobs)+1)
 	for _, ref := range obj.Blobs {
 		if ref.UID != "" {
-			refs[ref.UID] = true
+			info := &utils.BlobInfo{UID: ref.UID, Size: ref.Size, Hash: ref.Hash}
+			info.SetContentType(ref.ContentType)
+			refs[ref.UID] = info
 		}
 	}
 	if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
-		refs[info.UID] = true
+		refs[info.UID] = info
 	}
 	return refs, true, nil
 }
