@@ -21,7 +21,7 @@ import { DashboardLinksSet } from '../../settings/links/DashboardLinksSet';
 import { LinkEdit } from '../../settings/links/LinkEdit';
 import { DashboardFiltersSet } from '../../settings/variables/DashboardFiltersSet';
 import { SectionFiltersSet } from '../../settings/variables/SectionFiltersSet';
-import { isRepeatCloneOrChildOf } from '../../utils/clone';
+import { getRepeatSourceObject, isRepeatCloneOrChildOf } from '../../utils/clone';
 import { DashboardInteractions } from '../../utils/interactions';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { SidebarCategoryType, type DashboardSidebarLike } from '../types';
@@ -304,6 +304,7 @@ export interface OutlineSettingsTarget {
 /**
  * maps an outline item (variables/annotations/links/filters) to the sidebar settings it references
  * Hooks up to redirect to sidebar and scroll to the correct section
+ * Sections inside a repeat clone resolve to their repeat source, since edits made on a clone are discarded
  */
 export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSettingsTarget | undefined {
   if (sceneObject instanceof DashboardFiltersSet) {
@@ -317,10 +318,10 @@ export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSetti
   if (sceneObject instanceof DashboardDataLayerSet) {
     const owner = sceneObject.parent;
     if (owner instanceof RowItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.RowSectionAnnotations };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.RowSectionAnnotations };
     }
     if (owner instanceof TabItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.TabSectionAnnotations };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.TabSectionAnnotations };
     }
     return { parent: getDashboardSceneFor(sceneObject), categoryId: SidebarCategoryType.DashboardAnnotations };
   }
@@ -328,10 +329,10 @@ export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSetti
   if (sceneObject instanceof SectionFiltersSet) {
     const owner = sceneObject.state.sectionRef.resolve();
     if (owner instanceof RowItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.RowSectionFilters };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.RowSectionFilters };
     }
     if (owner instanceof TabItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.TabSectionFilters };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.TabSectionFilters };
     }
     return undefined;
   }
@@ -342,10 +343,10 @@ export function getOutlineSettingsTarget(sceneObject: SceneObject): OutlineSetti
       return { parent: owner, categoryId: SidebarCategoryType.DashboardVariables };
     }
     if (owner instanceof RowItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.RowSectionVariables };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.RowSectionVariables };
     }
     if (owner instanceof TabItem) {
-      return { parent: owner, categoryId: SidebarCategoryType.TabSectionVariables };
+      return { parent: getRepeatSourceObject(owner), categoryId: SidebarCategoryType.TabSectionVariables };
     }
     return undefined;
   }

@@ -121,6 +121,46 @@ describe('getOutlineSettingsTarget', () => {
     });
   });
 
+  describe('repeat clone section nodes', () => {
+    it('maps a repeated row clone annotation set to the source row', () => {
+      const cloneDataLayerSet = new DashboardDataLayerSet({ annotationLayers: [] });
+      const clone = new RowItem({
+        key: 'row-clone',
+        repeatSourceKey: 'row-source',
+        $data: cloneDataLayerSet,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const source = new RowItem({
+        key: 'row-source',
+        $data: new DashboardDataLayerSet({ annotationLayers: [] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+        repeatedRows: [clone],
+      });
+
+      expect(getOutlineSettingsTarget(cloneDataLayerSet)?.categoryId).toBe(SidebarCategoryType.RowSectionAnnotations);
+      expect(getOutlineSettingsTarget(cloneDataLayerSet)?.parent.state.key).toBe(source.state.key);
+    });
+
+    it('maps a repeated tab clone variable set to the source tab', () => {
+      const cloneVariables = new SceneVariableSet({ variables: [] });
+      const clone = new TabItem({
+        key: 'tab-clone',
+        repeatSourceKey: 'tab-source',
+        $variables: cloneVariables,
+        layout: AutoGridLayoutManager.createEmpty(),
+      });
+      const source = new TabItem({
+        key: 'tab-source',
+        $variables: new SceneVariableSet({ variables: [] }),
+        layout: AutoGridLayoutManager.createEmpty(),
+        repeatedTabs: [clone],
+      });
+
+      expect(getOutlineSettingsTarget(cloneVariables)?.categoryId).toBe(SidebarCategoryType.TabSectionVariables);
+      expect(getOutlineSettingsTarget(cloneVariables)?.parent.state.key).toBe(source.state.key);
+    });
+  });
+
   describe('regular nodes', () => {
     it('returns undefined for nodes that should keep the default select behavior', () => {
       expect(getOutlineSettingsTarget(new VizPanel({}))).toBeUndefined();
