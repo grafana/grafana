@@ -93,6 +93,15 @@ func (ds *DataSource) executeLogActions(ctx context.Context, req *backend.QueryD
 				return nil
 			}
 
+			if dataframe == nil {
+				resultChan <- backend.Responses{
+					query.RefID: backend.ErrorResponseWithErrorSource(
+						fmt.Errorf("no data frame returned for log action subtype %q", logsQuery.Subtype),
+					),
+				}
+				return nil
+			}
+
 			groupedFrames, err := groupResponseFrame(dataframe, logsQuery.StatsGroups)
 			if err != nil {
 				return err
@@ -143,6 +152,8 @@ func (ds *DataSource) executeLogAction(ctx context.Context, logsQuery models.Log
 		frame, err = ds.handleGetQueryResults(ctx, logsClient, logsQuery, query.RefID)
 	case "GetLogEvents":
 		frame, err = ds.handleGetLogEvents(ctx, logsClient, logsQuery)
+	default:
+		return nil, fmt.Errorf("unknown log action subtype %q", logsQuery.Subtype)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute log action with subtype: %s: %w", logsQuery.Subtype, err)

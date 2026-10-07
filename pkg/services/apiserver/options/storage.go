@@ -319,11 +319,12 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 // - Retry interceptor for transient connection issues
 // - Keepalive for long-lived connections
 func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
-	// Retry interceptor for transient connection issues (codes.Unavailable includes connection refused)
+	// Retry transient failures (codes.Unavailable includes connection refused), but leave
+	// resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 
 	opts := []grpc.DialOption{

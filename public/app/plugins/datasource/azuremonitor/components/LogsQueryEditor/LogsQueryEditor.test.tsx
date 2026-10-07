@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, LoadingState } from '@grafana/data';
 import { config } from '@grafana/runtime';
+// eslint-disable-next-line no-restricted-imports
+import type * as ui from '@grafana/ui';
 
 import {
   BuilderQueryEditorExpressionType,
@@ -34,6 +36,12 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual<typeof ui>('@grafana/ui'),
+  CodeEditor: function CodeEditor({ value }: { value: string }) {
+    return <pre>{value}</pre>;
+  },
+}));
 const variableOptionGroup = {
   label: 'Template variables',
   options: [],
@@ -51,9 +59,10 @@ describe('LogsQueryEditor', () => {
 
   it('should select multiple resources', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
+    const query = createMockQuery({
+      azureLogAnalytics: { mode: LogsEditorMode.Raw, resources: [] },
+    });
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
     const onChange = jest.fn();
     const onQueryChange = jest.fn();
     const basicLogsEnabled = false;
@@ -99,13 +108,14 @@ describe('LogsQueryEditor', () => {
         }),
       })
     );
-  }, 10000);
+  });
 
   it('should disable other resource types when selecting multiple resources', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
+    const query = createMockQuery({
+      azureLogAnalytics: { mode: LogsEditorMode.Raw, resources: [] },
+    });
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
     const onQueryChange = jest.fn();
@@ -140,9 +150,10 @@ describe('LogsQueryEditor', () => {
 
   it('should show info about multiple selection', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
+    const query = createMockQuery({
+      azureLogAnalytics: { mode: LogsEditorMode.Raw, resources: [] },
+    });
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
     const onQueryChange = jest.fn();
@@ -177,9 +188,10 @@ describe('LogsQueryEditor', () => {
 
   it('should call onApply with a new subscription uri when a user types it in the selection box', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
-    const query = createMockQuery();
+    const query = createMockQuery({
+      azureLogAnalytics: { mode: LogsEditorMode.Raw, resources: [] },
+    });
     delete query?.subscription;
-    delete query?.azureLogAnalytics?.resources;
     const basicLogsEnabled = false;
     const onChange = jest.fn();
     const onQueryChange = jest.fn();

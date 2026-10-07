@@ -91,6 +91,7 @@ Follow these guidelines when you write rules:
 - Use only resource scope attributes, for example `{ resource.env="prod" }`.
 - Use double quotes for string values. Only string values are supported.
 - Use the `=~` operator for regular expression matching, for example `{ resource.team =~ "team-a|team-b" }`.
+- If you use negation (`!=` or `!~`), refer to [Troubleshoot missing service traces](#troubleshoot-missing-service-traces). TraceQL negation behaves differently from PromQL when an attribute is missing.
 - Use up to two conditions in a single rule, separated by a comma (`,`), which acts as an `AND` operator.
 
 For more detail, refer to [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/).
@@ -163,6 +164,42 @@ Non-matching spans are removed from the response entirely. This can result in br
 
 If any span in a requested trace doesn't match the LBAC policy, the entire request returns a `404` error. This is the strictest mode and suits environments where partial trace visibility isn't acceptable.
 
+## Troubleshoot missing service traces
+
+If a team can't see traces from a service you expect, a negation rule combined with a missing attribute may be excluding those spans.
+
+If you're familiar with PromQL label matching, TraceQL attribute selectors behave differently for negation.
+
+In PromQL, `labelFoo != "abc"` matches series that don't have `labelFoo` or have a value other than `"abc"`.
+In TraceQL, `resource.attr != "abc"` and `resource.attr !~ "abc"` match only spans that **have** `resource.attr` and whose value matches the condition.
+Spans that don't include that attribute aren't returned.
+
+This difference matters when you combine attributes in one rule with `,` (AND).
+For example, this rule matches only spans from `checkout-api` that also have the `resource.k8s.namespace.name` attribute.
+Services such as `checkout-api` that don't set `resource.k8s.namespace.name` won't match, even if you want to include them.
+
+```
+{ resource.service.name="checkout-api", resource.k8s.namespace.name !~ "prod-main" }
+```
+
+To include services that don't set the attribute, add a separate rule for each service.
+Multiple rules for a team combine with **OR**:
+
+```
+{ resource.service.name="checkout-api", resource.k8s.namespace.name !~ "prod-main" }
+{ resource.service.name="checkout-api" }
+```
+
+Add similar OR rules for other services that don't set the namespace attribute.
+
+To find services that don't set an attribute, run this query in Grafana Explore:
+
+```
+{ resource.k8s.namespace.name = nil } | rate() by (resource.service.name)
+```
+
+This query returns services that don't have `resource.k8s.namespace.name` set.
+
 ## Manage LBAC rules
 
 You can edit or delete existing LBAC rules from the data source's **Permissions** tab.
@@ -189,3 +226,5 @@ You can edit or delete existing LBAC rules from the data source's **Permissions*
 
 - [LBAC for data sources overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/) explains how LBAC works, which data sources are supported, and current limitations.
 - [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/) explains how to define and manage rules.
+- [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) explains attribute selector syntax, including `!=`, `!~`, and `= nil`.
+- [Search traces using the query builder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/) explains how to run the diagnostic query in Explore.

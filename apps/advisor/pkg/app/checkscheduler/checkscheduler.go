@@ -231,29 +231,35 @@ func (r *Runner) listChecks(ctx context.Context, logger logging.Logger, namespac
 	return checks, nil
 }
 
-// listChecksMetadata lists Check object metadata (PartialObjectMetadata) for a
-// namespace, paginating as needed. Passing metav1.NamespaceAll lists across all
-// namespaces (used by the MT scheduler for cluster-wide discovery). Only object
-// metadata is fetched (no spec/status), which keeps these list calls cheap when
-// callers just need fields like the creation timestamp.
-func (r *Runner) listChecksMetadata(ctx context.Context, logger logging.Logger, namespace string) ([]metav1.PartialObjectMetadata, error) {
+// forEachCheckMetadata lists Check object metadata (PartialObjectMetadata) for a
+// namespace, paginating as needed, and calls fn for every item. Passing
+// metav1.NamespaceAll lists across all namespaces (used by the MT scheduler for
+// cluster-wide discovery). Only object metadata is fetched (no spec/status), which
+// keeps these list calls cheap when callers just need fields like the creation
+// timestamp.
+//
+// Items are handed to fn one page at a time and never accumulated: a cluster-wide
+// list can span every Check of every tenant, so holding them all would make memory
+// grow with the total number of Checks rather than with what the caller keeps.
+func (r *Runner) forEachCheckMetadata(ctx context.Context, logger logging.Logger, namespace string, fn func(item *metav1.PartialObjectMetadata)) error {
 	client := r.checksMetadata.Namespace(namespace)
-	list, err := client.List(ctx, metav1.ListOptions{
+	opts := metav1.ListOptions{
 		Limit: 1000, // Avoid pagination for normal use cases, which is a costly operation
-	})
-	if err != nil {
-		return nil, err
 	}
-	items := list.Items
-	for list.GetContinue() != "" {
-		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
-		list, err = client.List(ctx, metav1.ListOptions{Continue: list.GetContinue(), Limit: 1000})
+	for {
+		list, err := client.List(ctx, opts)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		items = append(items, list.Items...)
+		for i := range list.Items {
+			fn(&list.Items[i])
+		}
+		if list.GetContinue() == "" {
+			return nil
+		}
+		logger.Debug("List has continue token, listing next page", "continue", list.GetContinue())
+		opts.Continue = list.GetContinue()
 	}
-	return items, nil
 }
 
 // checkLastCreated returns the creation time of the last check created for a specific namespace.
@@ -261,15 +267,14 @@ func (r *Runner) listChecksMetadata(ctx context.Context, logger logging.Logger, 
 func (r *Runner) checkLastCreated(ctx context.Context, log logging.Logger, namespaces []string) (map[string]time.Time, error) {
 	lastCreated := map[string]time.Time{}
 	for _, namespace := range namespaces {
-		checkList, err := r.listChecksMetadata(ctx, log, namespace)
-		if err != nil {
-			return nil, err
-		}
-		for _, item := range checkList {
+		err := r.forEachCheckMetadata(ctx, log, namespace, func(item *metav1.PartialObjectMetadata) {
 			itemCreated := item.GetCreationTimestamp().Time
 			if itemCreated.After(lastCreated[namespace]) {
 				lastCreated[namespace] = itemCreated
 			}
+		})
+		if err != nil {
+			return nil, err
 		}
 	}
 	return lastCreated, nil

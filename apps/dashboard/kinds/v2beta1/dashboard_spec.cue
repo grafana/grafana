@@ -149,6 +149,8 @@ DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames
 DataTransformerConfig: {
 	// Unique identifier of transformer
 	id: string
+	// Unique identifier of the instance of the transformer
+	refId?: string
 	// Disabled transformations are skipped
 	disabled?: bool
 	// Optional frame matcher. When missing it will be applied to all results
@@ -657,6 +659,7 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 AutoGridLayoutKind: {
@@ -705,6 +708,7 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 PanelSpec: {

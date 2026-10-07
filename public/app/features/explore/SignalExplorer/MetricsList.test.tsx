@@ -115,6 +115,16 @@ describe('<MetricsList />', () => {
     expect(screen.getByText('Loading metrics…')).toBeInTheDocument();
   });
 
+  // A line of text above the rows would shift the list on every keystroke of a server-side search.
+  it('shows a spinner in the search box instead of the loading text while rows stay on screen', () => {
+    setCatalog([row('up')], { loading: true });
+    renderList();
+
+    expect(screen.getByText('up')).toBeInTheDocument();
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText('Loading metrics…')).not.toBeInTheDocument();
+  });
+
   // Announced rather than merely coloured: the error replaces the loading text with nothing focused,
   // so a screen reader user gets no other cue that the list is not coming. The message comes with it,
   // because "failed" alone leaves nothing to act on.

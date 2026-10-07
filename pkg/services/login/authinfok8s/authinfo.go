@@ -460,13 +460,20 @@ func created(obj iamv0alpha1.AuthInfo) time.Time {
 	return obj.CreationTimestamp.Time
 }
 
-// toUserAuth deliberately leaves UserAuth.Id (the legacy  primary key) zero-valued
+// toUserAuth converts a k8s AuthInfo object into the legacy login.UserAuth
 func toUserAuth(userID int64, obj iamv0alpha1.AuthInfo) *login.UserAuth {
 	var externalUID string
 	if obj.Spec.ExternalUID != nil {
 		externalUID = *obj.Spec.ExternalUID
 	}
+
+	var id int64
+	if meta, err := utils.MetaAccessor(&obj); err == nil {
+		id = meta.GetDeprecatedInternalID() // nolint:staticcheck
+	}
+
 	return &login.UserAuth{
+		Id:          id,
 		UserId:      userID,
 		UserUID:     obj.Spec.UserRef.Name,
 		AuthModule:  obj.Spec.AuthModule,

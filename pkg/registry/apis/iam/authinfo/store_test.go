@@ -18,6 +18,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -59,7 +60,7 @@ func TestLegacyStore_Get(t *testing.T) {
 	t.Run("returns the object for a known user and module", func(t *testing.T) {
 		authInfoStore := authinfotest.NewMockAuthInfoStore(t)
 		authInfoStore.On("GetAuthInfo", mock.Anything, &login.GetAuthInfoQuery{UserId: 1, AuthModule: "oauth_github"}).
-			Return(&login.UserAuth{UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
+			Return(&login.UserAuth{Id: 123, UserId: 1, UserUID: "user-uid", AuthModule: "oauth_github", AuthId: "gh-123", Created: created}, nil)
 
 		store := NewLegacyStore(identities, authInfoStore, noop.NewTracerProvider().Tracer("test"), remotecache.NewFakeCacheStorage())
 
@@ -72,6 +73,10 @@ func TestLegacyStore_Get(t *testing.T) {
 		require.Equal(t, "user-uid", authInfo.Spec.UserRef.Name)
 		require.Equal(t, "oauth_github", authInfo.Spec.AuthModule)
 		require.Equal(t, "gh-123", authInfo.Spec.AuthID)
+
+		meta, err := utils.MetaAccessor(authInfo)
+		require.NoError(t, err)
+		require.Equal(t, int64(123), meta.GetDeprecatedInternalID()) // nolint:staticcheck
 	})
 
 	t.Run("not found when the user doesn't exist", func(t *testing.T) {

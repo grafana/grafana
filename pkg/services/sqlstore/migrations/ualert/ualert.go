@@ -101,7 +101,7 @@ type upgradeNgAlerting struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = &upgradeNgAlerting{}
+var _ migrator.CodeMigration = (*upgradeNgAlerting)(nil)
 
 func (u *upgradeNgAlerting) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
 	firstOrgId, err := u.updateAlertConfigurations(sess, migrator)
