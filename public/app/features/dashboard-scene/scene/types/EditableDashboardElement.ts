@@ -32,6 +32,11 @@ export interface EditableDashboardElement {
   renderTopButton?(): ReactNode;
 
   /**
+   * When true, header actions that change or remove the element are hidden.
+   */
+  isReadOnly?: boolean;
+
+  /**
    * Supports delete action
    */
   onDelete?(): void;
@@ -40,6 +45,11 @@ export interface EditableDashboardElement {
    * Should confirm delete action
    */
   onConfirmDelete?(): void;
+
+  /**
+   * Opts a read-only element out of this dashboard. Shown as Remove.
+   */
+  onRemove?(): void;
 
   /**
    * Supports duplicate action

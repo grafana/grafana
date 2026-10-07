@@ -150,7 +150,7 @@ func IndexFieldDefinitions(group, resource string) (standard, deleted []SearchFi
 //
 // openIndexes is every open index, per-resource and global, as the rebuild scan
 // lists them; only the global ones have types to sync.
-func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource) ([]chan struct{}, error) {
+func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []NamespacedResource, lastImportTimes map[NamespacedResource]time.Time) ([]chan struct{}, error) {
 	var completeChs []chan struct{}
 	var errs []error
 	for _, key := range openIndexes {
@@ -161,7 +161,7 @@ func (s *searchServer) queueTypeSyncs(ctx context.Context, openIndexes []Namespa
 		if idx == nil {
 			continue
 		}
-		stale, err := s.outOfDateTypes(ctx, key, idx, nil)
+		stale, err := s.outOfDateTypes(ctx, key, idx, nil, lastImportTimes)
 		if err != nil {
 			errs = append(errs, fmt.Errorf("checking which types of %s are out of date: %w", key.String(), err))
 			continue
@@ -201,7 +201,8 @@ type staleType struct {
 // and types it may hold documents of but no longer covers. Only a newer import counts, the same as for a
 // per-resource index, which is rebuilt when its build time is before the last
 // import.
-func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource) ([]staleType, error) {
+// A nil lastImportTimes reads storage directly so rebuild workers re-check queued imports.
+func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResource, idx ResourceIndex, only []schema.GroupResource, lastImportTimes map[NamespacedResource]time.Time) ([]staleType, error) {
 	recorded, err := idx.CompletedTypeBuilds()
 	if err != nil {
 		return nil, err
@@ -215,9 +216,12 @@ func (s *searchServer) outOfDateTypes(ctx context.Context, key NamespacedResourc
 		if !wanted(gr) {
 			continue
 		}
-		importedAt, err := s.storage.GetResourceLastImportTime(ctx, src)
-		if err != nil {
-			return nil, err
+		importedAt := lastImportTimes[src]
+		if lastImportTimes == nil {
+			importedAt, err = s.storage.GetResourceLastImportTime(ctx, src)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if build, held := recorded[gr]; held && !importedAt.After(build.StorageImportTime) {
 			continue
@@ -259,7 +263,7 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 	}
 	// The import time is read before the rebuild, so an import that lands during
 	// it is still seen as newer next time.
-	stale, err := s.outOfDateTypes(ctx, key, idx, only)
+	stale, err := s.outOfDateTypes(ctx, key, idx, only, nil)
 	if err != nil || len(stale) == 0 {
 		return err
 	}
@@ -716,28 +720,42 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 // notification stream after one ends unexpectedly.
 const watchRetryDelay = 5 * time.Second
 
-// maxWatchBatch is how many notifications are taken at once. Notifications
-// arrive one at a time, so a busy instance would otherwise read and write once
-// per changed object.
-const maxWatchBatch = 100
+// maxWatchBatch is how many written keys are taken at once, and
+// globalWatchBatchWait how long to wait for more after the first, so a burst of
+// writes is read and written together rather than one object at a time.
+const (
+	maxWatchBatch        = 100
+	globalWatchBatchWait = 100 * time.Millisecond
+)
 
-// runGlobalIndexWatch applies write notifications to the global indexes as they
-// arrive. A global index replays no events, so this is how it learns of changes.
+// runGlobalIndexWatch applies writes to the global indexes as they happen. A
+// global index replays no events, so this is how it learns of changes.
 //
-// It is the fast path, not the reliable one: whatever a dropped notification or
-// a failed write misses is repaired by the next reconcile, so a failure here is
-// logged and the stream is reopened rather than escalated.
+// It takes keys straight from the bus rather than the watch pipeline, which holds
+// every notification for a few seconds to put them in order. Order does not
+// matter here, because each key is only a reason to read the object again.
+//
+// It is the fast path, not the reliable one: whatever it misses is repaired by
+// reconcile, so a failure is logged and the watch opened again.
 func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 	for ctx.Err() == nil {
-		events, err := s.storage.WatchWriteEvents(ctx)
+		keys, err := s.watchWrittenKeys(ctx)
 		if err != nil {
-			s.log.Warn("failed to watch write events for global search indexes", "error", err)
+			s.log.Warn("failed to watch written keys for global search indexes", "error", err)
 		} else {
-			s.consumeWriteEvents(ctx, events)
+			// Writes made before the watch was ready, as while the bus was
+			// unreachable, were not delivered.
+			s.queueReconcileAfterLostKeys("")
+			for {
+				batch, ok := nextWrittenKeysBatch(ctx, keys)
+				if !ok {
+					break
+				}
+				s.applyWrittenKeys(ctx, batch)
+			}
 		}
-
-		// The stream ended. Wait before reopening so a backend that keeps failing
-		// is not asked in a tight loop.
+		// The watch failed or its stream ended. Wait before opening it again, so
+		// a backend that keeps failing is not asked in a tight loop.
 		select {
 		case <-ctx.Done():
 			return
@@ -746,70 +764,117 @@ func (s *searchServer) runGlobalIndexWatch(ctx context.Context) {
 	}
 }
 
-// consumeWriteEvents applies notifications until the stream ends.
-func (s *searchServer) consumeWriteEvents(ctx context.Context, events <-chan *WrittenEvent) {
-	for {
-		batch, ok := nextWriteEventBatch(ctx, events)
-		if !ok {
-			return
+// watchWrittenKeys watches written keys straight from the bus when the backend
+// can, and otherwise takes them from the watch stream, which is a few seconds
+// slower but needs no bus.
+func (s *searchServer) watchWrittenKeys(ctx context.Context) (<-chan *resourcepb.ResourceKey, error) {
+	keys, err := s.storage.WatchWrittenKeys(ctx, GlobalSearchResourceTypes(), s.queueReconcileAfterLostKeys)
+	if !errors.Is(err, ErrWrittenKeysUnsupported) {
+		return keys, err
+	}
+	s.log.Info("global search indexes follow the watch stream, which is slower than watching written keys", "reason", err)
+	events, err := s.storage.WatchWriteEvents(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make(chan *resourcepb.ResourceKey, maxWatchBatch)
+	go func() {
+		defer close(out)
+		for {
+			var event *WrittenEvent
+			select {
+			case <-ctx.Done():
+				return
+			case e, ok := <-events:
+				if !ok {
+					return
+				}
+				event = e
+			}
+			if event == nil || event.Key == nil {
+				continue
+			}
+			select {
+			case out <- event.Key:
+			case <-ctx.Done():
+				return
+			}
 		}
-		if ctx.Err() != nil {
-			return
+	}()
+	return out, nil
+}
+
+// queueReconcileAfterLostKeys queues a reconcile of the open global index this
+// instance owns for a namespace that may have lost written keys, or of every one
+// for an empty namespace: once a watch is ready, after a reconnect, and when
+// keys were dropped. It only queues, so it does not block the bus's callback,
+// and repeated pending requests for an index are merged.
+func (s *searchServer) queueReconcileAfterLostKeys(namespace string) {
+	if namespace != "" {
+		key := GlobalSearchKey(namespace)
+		if s.ownsGlobalIndex(key) && s.search.GetIndex(key) != nil {
+			s.queueReconcile(key)
 		}
-		s.applyWriteEvents(ctx, batch)
+		return
+	}
+	for _, key := range s.search.GetOpenIndexes() {
+		if key.IsGlobal() && s.ownsGlobalIndex(key) {
+			s.queueReconcile(key)
+		}
 	}
 }
 
-// nextWriteEventBatch blocks for one notification, then takes whatever else has
-// already arrived. It reports false once the stream is closed.
-func nextWriteEventBatch(ctx context.Context, events <-chan *WrittenEvent) ([]*WrittenEvent, bool) {
-	// Also on the context: a stream that never sends, as some backends return,
-	// would otherwise hold up shutdown.
-	var first *WrittenEvent
+// nextWrittenKeysBatch blocks for one key, then takes what else arrives within
+// globalWatchBatchWait. It reports false once ctx is cancelled or the stream
+// ends.
+func nextWrittenKeysBatch(ctx context.Context, keys <-chan *resourcepb.ResourceKey) ([]*resourcepb.ResourceKey, bool) {
+	var first *resourcepb.ResourceKey
 	select {
 	case <-ctx.Done():
 		return nil, false
-	case event, ok := <-events:
+	case key, ok := <-keys:
 		if !ok {
 			return nil, false
 		}
-		first = event
+		first = key
 	}
-	batch := make([]*WrittenEvent, 0, maxWatchBatch)
+	batch := make([]*resourcepb.ResourceKey, 0, maxWatchBatch)
 	batch = append(batch, first)
+	wait := time.NewTimer(globalWatchBatchWait)
+	defer wait.Stop()
 	for len(batch) < maxWatchBatch {
 		select {
-		case event, ok := <-events:
+		case <-ctx.Done():
+			return nil, false
+		case key, ok := <-keys:
 			if !ok {
 				return batch, true
 			}
-			batch = append(batch, event)
-		default:
+			batch = append(batch, key)
+		case <-wait.C:
 			return batch, true
 		}
 	}
 	return batch, true
 }
 
-// applyWriteEvents re-reads the objects a batch of notifications names and writes
-// their current state to the global indexes they belong to. Notifications for
-// types the index does not cover, and for indexes this instance does not own or
-// has not opened, are ignored: an index that is not open catches up when it is
-// opened.
+// applyWrittenKeys re-reads the objects a batch of written keys names and writes
+// their current state to the global indexes they belong to. Keys of types the
+// index does not cover, and of indexes this instance does not own or has not
+// opened, are ignored: an index that is not open catches up when it is opened.
 //
-// Only the key of a notification is used, not its body or version. A late or
-// repeated notification then just reads the current state again, so it cannot
-// put back an older version or a deleted object. That relies on a read after a
-// notification seeing the write it announces, which holds while storage reads
-// from the database the writes go to.
-func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEvent) {
+// Only the key is used. A late or repeated key then just reads the current
+// state again, so it cannot put back an older version or a deleted object. That
+// relies on a read after a write is announced seeing that write, which holds
+// while storage reads from the database the writes go to.
+func (s *searchServer) applyWrittenKeys(ctx context.Context, batch []*resourcepb.ResourceKey) {
 	changed := map[NamespacedResource][]string{}
 	var sources []NamespacedResource
-	for _, event := range batch {
-		if event == nil || event.Key == nil {
+	for _, key := range batch {
+		if key == nil {
 			continue
 		}
-		src := NamespacedResource{Namespace: event.Key.Namespace, Group: event.Key.Group, Resource: event.Key.Resource}
+		src := NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource}
 		if !GlobalIndexCoversType(groupResourceOf(src)) {
 			continue
 		}
@@ -817,8 +882,8 @@ func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEve
 		if !seen {
 			sources = append(sources, src)
 		}
-		if !slices.Contains(names, event.Key.Name) {
-			changed[src] = append(names, event.Key.Name)
+		if !slices.Contains(names, key.Name) {
+			changed[src] = append(names, key.Name)
 		}
 	}
 
@@ -837,7 +902,7 @@ func (s *searchServer) applyWriteEvents(ctx context.Context, batch []*WrittenEve
 		}
 		if err := s.writeCurrentState(ctx, idx, src, changed[src]); err != nil {
 			// The next reconcile repairs whatever this missed.
-			s.log.Warn("failed to apply write notifications to the global search index",
+			s.log.Warn("failed to apply written keys to the global search index",
 				"namespace", src.Namespace, "resource", src.GroupResource(), "error", err)
 		}
 	}
