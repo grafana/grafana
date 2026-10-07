@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"io"
 	"sync"
 	"time"
@@ -138,7 +139,7 @@ func (r *blobStreamReader) Read(p []byte) (int, error) {
 		case <-r.ctx.Done():
 			return 0, status.FromContextError(r.ctx.Err()).Err()
 		}
-		if received.err == io.EOF && r.total == 0 {
+		if errors.Is(received.err, io.EOF) && r.total == 0 {
 			return 0, status.Error(codes.InvalidArgument, "empty blob")
 		}
 		if received.err != nil {

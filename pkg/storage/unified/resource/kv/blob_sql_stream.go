@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"hash"
 	"io"
 	"time"
 )
@@ -37,7 +36,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 	}
 	update := fmt.Sprintf("UPDATE %s SET %s = %s WHERE %s", q(resourceBlobTable), q("value"), appendValue, k.blobWhereOffset(blobIdentityColumns, 2))
 	buffer := make([]byte, 64<<10)
-	var h hash.Hash = md5.New() // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
+	h := md5.New() // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	for {
 		n, readErr := value.Read(buffer)
 		if n > 0 {
@@ -48,7 +47,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 			_, _ = h.Write(buffer[:n])
 			size += int64(n)
 		}
-		if readErr == io.EOF {
+		if errors.Is(readErr, io.EOF) {
 			break
 		}
 		if readErr != nil {
