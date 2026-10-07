@@ -33,7 +33,6 @@ import {
   type DashboardAPI,
   DashboardVersionError,
   type DashboardWithAccessInfo,
-  type DashboardWithLoadInfo,
   type ListDashboardHistoryOptions,
   type ListDeletedDashboardsOptions,
 } from './types';
@@ -58,7 +57,7 @@ export class K8sDashboardV2API
 
   async getDashboardDTO(uid: string, params?: UrlQueryMap) {
     try {
-      const dashboard = await this.client.subresource<DashboardWithLoadInfo<DashboardV2Spec>>(uid, 'dto', params);
+      const dashboard = await this.client.subresource<DashboardWithAccessInfo<DashboardV2Spec>>(uid, 'dto', params);
       // FOR /dto calls returning v2 spec we are ignoring the conversion status to avoid runtime errors caused by the status
       // being saved for v2 resources that's been client-side converted to v2 and then PUT to the API server.
       // This could come as conversion error from v0 or v2 to V1.
@@ -91,10 +90,6 @@ export class K8sDashboardV2API
       if (isManagedByRepository(dashboard) && dashboard.spec.links?.length) {
         dashboard.spec.links = removeExistingSourceLinks(dashboard.spec.links);
       }
-
-      // The apiserver resolved any library panel repeat options onto the grid item while converting.
-      // This signals that the LibraryPanelBehavior doesn't need to copy the library panel definition's repeat over it.
-      dashboard.libraryPanelRepeatResolved = true;
 
       return dashboard;
     } catch (e) {

@@ -132,16 +132,13 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
   }
 
   /**
-   * A library panel's repeat has to be copied onto the grid item unless the server already did it.
-   * The apiserver resolves it during the v1->v2 conversion, so only a spec that came from there
-   * arrives with the repeat in place; a v1 spec and a spec converted in the browser by
-   * ensureV2Response do not, because neither can fetch library panel definitions.
+   * A library panel's repeat has to be copied onto the grid item only where nothing resolved it already.
    */
   private shouldMigrateRepeat(): boolean {
     const dashboard = getDashboardSceneFor(this);
 
     if (getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution, false)) {
-      return dashboard.state.meta.libraryPanelRepeatResolved !== true;
+      return dashboard.state.meta.libraryPanelRepeatUnresolved === true;
     }
 
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;

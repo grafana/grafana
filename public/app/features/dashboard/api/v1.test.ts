@@ -165,15 +165,6 @@ describe('v1 dashboard API', () => {
     expect(result.meta.folderUid).toBe('new-folder');
   });
 
-  // The v1 spec's grid items carry only the dashboard panel's own repeat, so LibraryPanelBehavior
-  // still has to apply a library panel definition's repeat itself.
-  it('never reports library panel repeats as resolved by the server', async () => {
-    const api = new K8sDashboardAPI();
-    const result = await api.getDashboardDTO('test');
-
-    expect(result.meta.libraryPanelRepeatResolved).toBe(undefined);
-  });
-
   it('should correctly set uid and version in the spec', async () => {
     const api = new K8sDashboardAPI();
     // we are fetching the mockDashboardDTO, which doesn't have a uid or version

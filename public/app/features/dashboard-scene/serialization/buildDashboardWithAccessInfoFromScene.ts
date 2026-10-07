@@ -48,7 +48,7 @@ export function buildDashboardWithAccessInfoFromScene(
     metadata: resolveMetadata(scene),
     access: resolveAccess(scene),
     apiVersion: `${DASHBOARD_API_GROUP}/${dashboardAPIVersionResolver.getV2()}`,
-    libraryPanelRepeatResolved: scene.state.meta.libraryPanelRepeatResolved,
+    libraryPanelRepeatUnresolved: scene.state.meta.libraryPanelRepeatUnresolved,
     spec,
   };
 }

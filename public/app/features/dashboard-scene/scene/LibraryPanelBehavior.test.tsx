@@ -336,7 +336,11 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('migrates repeat onto the grid item when the server did not resolve it', async () => {
-      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // only a spec that reached the browser unresolved carries the marker
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
 
       expect(gridItem.state.variableName).toBe('server');
       expect(gridItem.state.repeatDirection).toBe('h');
@@ -346,7 +350,6 @@ describe('LibraryPanelBehavior', () => {
     it('skips the migration when the server already resolved it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { libraryPanelRepeatResolved: true },
         // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
@@ -359,7 +362,11 @@ describe('LibraryPanelBehavior', () => {
     it('migrates when dashboardNewLayouts is enabled but the server did not resolve it', async () => {
       config.featureToggles.dashboardNewLayouts = true;
 
-      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        // only a spec that reached the browser unresolved carries the marker
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
 
       expect(gridItem.state.variableName).toBe('server');
       expect(gridItem.state.maxPerRow).toBe(4);
@@ -370,7 +377,6 @@ describe('LibraryPanelBehavior', () => {
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { libraryPanelRepeatResolved: true },
         // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
@@ -382,7 +388,7 @@ describe('LibraryPanelBehavior', () => {
     it('still migrates for a public dashboard when the server did not resolve it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { publicDashboardEnabled: true },
+        meta: { publicDashboardEnabled: true, libraryPanelRepeatUnresolved: true },
       });
 
       expect(gridItem.state.variableName).toBe('server');
@@ -392,7 +398,7 @@ describe('LibraryPanelBehavior', () => {
     it('skips the migration for a public dashboard when the server already resolved it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { publicDashboardEnabled: true, libraryPanelRepeatResolved: true },
+        meta: { publicDashboardEnabled: true },
         // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
@@ -404,7 +410,7 @@ describe('LibraryPanelBehavior', () => {
     it('still migrates for a scripted dashboard when the server did not resolve it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { fromScript: true },
+        meta: { fromScript: true, libraryPanelRepeatUnresolved: true },
       });
 
       expect(gridItem.state.variableName).toBe('server');
@@ -414,7 +420,7 @@ describe('LibraryPanelBehavior', () => {
     it('skips the migration for a scripted dashboard when the server already resolved it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
-        meta: { fromScript: true, libraryPanelRepeatResolved: true },
+        meta: { fromScript: true },
         // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
@@ -438,7 +444,7 @@ interface BuildTestSceneOptions {
   /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
   repeat?: string;
   /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
-  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatResolved?: boolean };
+  meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatUnresolved?: boolean };
   /**
    * Seeded on the grid item the way DefaultGridLayoutSerializer builds it from
    * GridLayoutItemKind.spec.repeat, standing in for a repeat the server already resolved.

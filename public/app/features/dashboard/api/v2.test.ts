@@ -131,13 +131,15 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  it('marks the response as having its library panel repeats resolved by the server', async () => {
+  // The apiserver resolves library panel repeats while converting, so its response needs no mark.
+  // Only a spec converted in the browser does.
+  it('leaves the response unmarked, so LibraryPanelBehavior treats its repeats as resolved', async () => {
     mockGet.mockResolvedValueOnce(mockDashboardDto);
 
     const api = new K8sDashboardV2API();
     const result = (await api.getDashboardDTO('test')) as DashboardWithLoadInfo<DashboardV2Spec>;
 
-    expect(result.libraryPanelRepeatResolved).toBe(true);
+    expect(result.libraryPanelRepeatUnresolved).toBe(undefined);
   });
 
   it('throws an error if folder service returns an error other than 403', async () => {

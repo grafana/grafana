@@ -68,9 +68,9 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
 
 // A DashboardWithAccessInfo plus what the client knows about where it came from.
 export interface DashboardWithLoadInfo<T> extends DashboardWithAccessInfo<T> {
-  // Whether a library panel's repeat is already resolved onto the grid item.
-  // Currently only true when this spec came from the apiserver.
-  libraryPanelRepeatResolved?: boolean;
+  // Whether a library panel's repeat still has to be resolved onto the grid item.
+  // Only true when this spec was converted to v2 in the browser, which cannot resolve it.
+  libraryPanelRepeatUnresolved?: boolean;
 }
 
 export interface DashboardVersionError extends Error {

@@ -171,8 +171,6 @@ export function ensureV2Response(
         metadata,
         spec: dto.dashboard,
         access: accessMeta,
-        // Already a v2 spec so its grid items still carry the repeat options that were resolved by apiserver.
-        libraryPanelRepeatResolved: true,
       };
     }
   }
@@ -236,6 +234,8 @@ export function ensureV2Response(
     metadata,
     spec,
     access: accessMeta,
+    // This path is converted from v1 spec which has no repeat options on the grid items
+    libraryPanelRepeatUnresolved: true,
   };
 }
 

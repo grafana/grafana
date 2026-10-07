@@ -111,13 +111,13 @@ describe('buildDashboardWithAccessInfoFromScene', () => {
     });
   });
 
-  it('carries libraryPanelRepeatResolved back out of the scene meta', () => {
+  it('carries libraryPanelRepeatUnresolved back out of the scene meta', () => {
     expect(
-      buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: { libraryPanelRepeatResolved: true } }), spec)
-        .libraryPanelRepeatResolved
+      buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: { libraryPanelRepeatUnresolved: true } }), spec)
+        .libraryPanelRepeatUnresolved
     ).toBe(true);
 
-    expect(buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: {} }), spec).libraryPanelRepeatResolved).toBe(
+    expect(buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: {} }), spec).libraryPanelRepeatUnresolved).toBe(
       undefined
     );
   });

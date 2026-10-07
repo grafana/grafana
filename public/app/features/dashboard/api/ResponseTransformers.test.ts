@@ -91,24 +91,24 @@ describe('ResponseTransformers', () => {
     });
   });
 
-  describe('libraryPanelRepeatResolved', () => {
+  describe('libraryPanelRepeatUnresolved', () => {
     const legacyV1Dto: DashboardDTO = {
       meta: {},
       dashboard: { schemaVersion: 41, title: 'Converted here', uid: 'dash-1', version: 1 },
     };
 
-    it('leaves libraryPanelRepeatResolved unset when it converts a v1 spec', () => {
-      expect(ResponseTransformers.ensureV2Response(legacyV1Dto).libraryPanelRepeatResolved).toBe(undefined);
+    it('marks a v1 spec it converts, because it cannot fetch library panel definitions', () => {
+      expect(ResponseTransformers.ensureV2Response(legacyV1Dto).libraryPanelRepeatUnresolved).toBe(true);
     });
 
-    it('sets libraryPanelRepeatResolved for a v2 spec handed through the legacy API', () => {
+    it('leaves a v2 spec handed through the legacy API unmarked, since it only rewraps it', () => {
       const v2ViaLegacyApi = {
         meta: {},
         // Should hold a v1 spec but legacy endpoint can return a v2 spec.
         dashboard: handyTestingSchema as unknown as DashboardDataDTO,
       };
 
-      expect(ResponseTransformers.ensureV2Response(v2ViaLegacyApi).libraryPanelRepeatResolved).toBe(true);
+      expect(ResponseTransformers.ensureV2Response(v2ViaLegacyApi).libraryPanelRepeatUnresolved).toBe(undefined);
     });
   });
 

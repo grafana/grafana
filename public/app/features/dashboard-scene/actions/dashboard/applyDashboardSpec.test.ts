@@ -153,7 +153,7 @@ function makeTabsSpec(title: string): DashboardV2Spec {
   };
 }
 
-function buildScene(spec: DashboardV2Spec, libraryPanelRepeatResolved?: boolean): DashboardScene {
+function buildScene(spec: DashboardV2Spec, libraryPanelRepeatUnresolved?: boolean): DashboardScene {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal resource envelope for the test
   const dto = {
     kind: 'DashboardWithAccessInfo',
@@ -161,7 +161,7 @@ function buildScene(spec: DashboardV2Spec, libraryPanelRepeatResolved?: boolean)
     metadata: { name: 'dash-1', generation: 1, creationTimestamp: '2026-08-03T00:00:00Z', annotations: {} },
     access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: true, canAdmin: true },
     spec: cloneDeep(spec),
-    libraryPanelRepeatResolved,
+    libraryPanelRepeatUnresolved,
   } as unknown as DashboardWithAccessInfo<DashboardV2Spec>;
 
   const scene = transformSaveModelSchemaV2ToScene(dto);
@@ -275,13 +275,13 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.sidebar).toBe(originalSidebar);
   });
 
-  it('keeps libraryPanelRepeatResolved across the rebuild', () => {
+  it('keeps libraryPanelRepeatUnresolved across the rebuild', () => {
     const scene = buildScene(makeSpec('Old title'), true);
-    expect(scene.state.meta.libraryPanelRepeatResolved).toBe(true);
+    expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
 
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
-    expect(scene.state.meta.libraryPanelRepeatResolved).toBe(true);
+    expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
   });
 
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
