@@ -266,7 +266,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			Angular:                   plugin.Angular,
 			MultiValueFilterOperators: plugin.MultiValueFilterOperators,
 			LoadingStrategy:           plugin.LoadingStrategy,
-			Extensions:                plugins.DataSourceExtensions{ExtensionPoints: plugin.Extensions.ExtensionPoints},
+			Extensions:                plugin.Extensions,
 			Translations:              plugin.Translations,
 		}
 
@@ -348,7 +348,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 					// ModuleHash: hs.pluginAssets.ModuleHash(c.Req.Context(), ds),
 					BaseURL:      ds.BaseURL,
 					Angular:      ds.Angular,
-					Extensions:   plugins.DataSourceExtensions{ExtensionPoints: ds.Extensions.ExtensionPoints},
+					Extensions:   ds.Extensions,
 					Translations: ds.Translations,
 				},
 			}

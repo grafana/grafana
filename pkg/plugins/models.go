@@ -147,10 +147,6 @@ type ExtensionsDependencies struct {
 	ExposedComponents []string `json:"exposedComponents"`
 }
 
-type DataSourceExtensions struct {
-	ExtensionPoints []ExtensionPoint `json:"extensionPoints"`
-}
-
 type Includes struct {
 	Name       string            `json:"name"`
 	Path       string            `json:"path"`
@@ -272,15 +268,15 @@ type Signature struct {
 
 type PluginMetaDTO struct {
 	JSONData
-	Signature                 SignatureStatus      `json:"signature"`
-	Module                    string               `json:"module"`
-	ModuleHash                string               `json:"moduleHash,omitempty"`
-	BaseURL                   string               `json:"baseUrl"`
-	Angular                   AngularMeta          `json:"angular"`
-	MultiValueFilterOperators bool                 `json:"multiValueFilterOperators"`
-	LoadingStrategy           LoadingStrategy      `json:"loadingStrategy"`
-	Extensions                DataSourceExtensions `json:"extensions"`
-	Translations              map[string]string    `json:"translations,omitempty"`
+	Signature                 SignatureStatus   `json:"signature"`
+	Module                    string            `json:"module"`
+	ModuleHash                string            `json:"moduleHash,omitempty"`
+	BaseURL                   string            `json:"baseUrl"`
+	Angular                   AngularMeta       `json:"angular"`
+	MultiValueFilterOperators bool              `json:"multiValueFilterOperators"`
+	LoadingStrategy           LoadingStrategy   `json:"loadingStrategy"`
+	Extensions                Extensions        `json:"extensions"`
+	Translations              map[string]string `json:"translations,omitempty"`
 }
 
 type DataSourceDTO struct {
