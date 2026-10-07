@@ -54,11 +54,11 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
         <span>{t('explore.span-detail.attribute-category.error', 'Error details')}</span>
       </div>
       <div className={styles.content}>
-        {messages.map((item) => (
-          <ErrorValue key={`message-${item.key}`} item={item} variant="message" />
-        ))}
         {other.map((item) => (
           <ErrorValue key={`other-${item.key}`} item={item} variant="message" />
+        ))}
+        {messages.map((item) => (
+          <ErrorValue key={`message-${item.key}`} item={item} variant="message" />
         ))}
         {stacktraces.map((item) => (
           <StacktraceValue key={`stacktrace-${item.key}`} item={item} />
