@@ -272,17 +272,15 @@ func (g clientRepositoryGetter) CountActiveRepositories(_ context.Context, names
 }
 
 // The snapshot holds projections, never whole repositories. These four functions
-// are the only places one is built, so they are the whole answer to what the
-// snapshot carries: the identity the Store's diff keys off, and the
-// deletionTimestamp the active count reads. A Repository is 912 bytes against the
-// projection's 264 and more than half of that is a Spec and Status that are
-// inline, so storing one and zeroing the body still pays for it.
+// are the only places one is built, so they are the whole answer to what it
+// carries: the identity the Store's diff keys off, and the deletionTimestamp the
+// active count reads.
 
 // repositoryProjection is the shape the snapshot holds.
 type repositoryProjection = metav1.PartialObjectMetadata
 
 // projectIdentity builds a projection from an identity alone, for a keys-only
-// re-list and for a live event, neither of which carries a body.
+// re-list and for a live event.
 func projectIdentity(namespace, name, resourceVersion string) *repositoryProjection {
 	return &repositoryProjection{ObjectMeta: metav1.ObjectMeta{
 		Namespace:       namespace,
@@ -292,7 +290,7 @@ func projectIdentity(namespace, name, resourceVersion string) *repositoryProject
 }
 
 // projectRepository builds a projection from a whole repository, for a full list
-// and for the reconcile's write-back.
+// and the reconcile's write-back.
 func projectRepository(repo *provisioningapis.Repository) *repositoryProjection {
 	projected := projectIdentity(repo.Namespace, repo.Name, repo.ResourceVersion)
 	if ts := repo.DeletionTimestamp; ts != nil {
@@ -301,8 +299,8 @@ func projectRepository(repo *provisioningapis.Repository) *repositoryProjection 
 	return projected
 }
 
-// projectRepositories projects a full list in place, so the snapshot holds the
-// same shape whichever re-list produced it.
+// projectRepositories projects a full list in place, so the snapshot holds one
+// shape whichever re-list produced it.
 func projectRepositories(objs []runtime.Object) []runtime.Object {
 	for i, obj := range objs {
 		if repo, ok := obj.(*provisioningapis.Repository); ok {

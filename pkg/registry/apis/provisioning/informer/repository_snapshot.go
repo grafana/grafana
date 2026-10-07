@@ -11,19 +11,13 @@ import (
 )
 
 // RepositorySnapshot is the informer's snapshot with a running count of the
-// active (not terminating) repositories in each namespace.
+// active (not terminating) repositories per namespace, so the quota check reads
+// a number instead of walking a cluster-wide snapshot on every reconcile.
 //
-// The count exists because the quota check runs once per reconcile, and a
-// reconcile runs for every repository on every tick. Counting by walking the
-// snapshot made that quadratic: the snapshot is cluster-wide, so each of N
-// reconciles allocated and scanned all N entries under the store's lock. Keeping
-// the tallies here makes a quota check a map read.
-//
-// Every mutation passes through, so the tallies are derived from exactly the
-// snapshot's own contents and answer what a scan would have. That includes the
-// subtle one: a live MODIFIED is deliberately never written to the snapshot
-// (it carries namespace and name only, so it would blank a real
-// deletionTimestamp), so it cannot reach the tallies either.
+// Every mutation passes through, so the tallies see exactly what the snapshot
+// holds. A live MODIFIED never reaches the store (it carries namespace and name
+// only, so it would blank a real deletionTimestamp) and so never reaches these
+// either.
 type RepositorySnapshot struct {
 	usinformer.Store
 
@@ -41,8 +35,8 @@ func NewRepositorySnapshot(store usinformer.Store) *RepositorySnapshot {
 	}
 }
 
-// CountActive reports the namespace's active repositories. It tolerates
-// staleness to the same degree the snapshot does.
+// CountActive reports the namespace's active repositories, as stale as the
+// snapshot itself.
 func (s *RepositorySnapshot) CountActive(namespace string) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -71,18 +65,15 @@ func (s *RepositorySnapshot) DeleteAt(ctx context.Context, namespace, name strin
 	s.drop(repositoryKey(namespace, name), namespace)
 }
 
-// Replace rebuilds the tallies from what the store installed rather than from
-// objs: Replace carries forward a live write the snapshot predates and suppresses
-// a resurrection the snapshot would have re-added, so objs is not what ends up
-// stored. One pass per re-list, against one per reconcile before.
+// Replace rebuilds the tallies from what the store installed, not from objs: it
+// carries forward a live write the snapshot predates and suppresses a
+// resurrection, so objs is not what ends up stored.
 func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added, updated, removed []runtime.Object) {
 	added, updated, removed = s.Store.Replace(objs, listRV)
 
-	// Deliberately the embedded store's List and not the promoted one: these
-	// tallies describe what the store installed, so a List override added here
-	// later must not silently redirect this read (and QF1008 would have it call
-	// itself).
-	//nolint:staticcheck // QF1008: the qualifier is the point, see above.
+	// The embedded store's List, not the promoted one: a List override added here
+	// later must not silently redirect this read.
+	//nolint:staticcheck // QF1008: the qualifier is the point.
 	stored := s.Store.List(context.Background())
 	active := make(map[string]bool, len(stored))
 	counts := make(map[string]int, len(s.counts))
@@ -103,8 +94,7 @@ func (s *RepositorySnapshot) Replace(objs []runtime.Object, listRV int64) (added
 	return added, updated, removed
 }
 
-// set records whether a key is active, adjusting its namespace tally by the
-// change. Callers hold the lock.
+// set records whether a key is active. Callers hold the lock.
 func (s *RepositorySnapshot) set(key, namespace string, isActive bool) {
 	was, known := s.active[key]
 	s.active[key] = isActive
@@ -127,8 +117,8 @@ func (s *RepositorySnapshot) drop(key, namespace string) {
 	}
 }
 
-// decrement keeps empty namespaces out of the map, so a cluster-wide snapshot
-// does not accumulate an entry per namespace that ever held a repository.
+// decrement prunes empty namespaces, so a cluster-wide snapshot does not retain
+// an entry per namespace that ever held a repository.
 func (s *RepositorySnapshot) decrement(namespace string) {
 	if s.counts[namespace] <= 1 {
 		delete(s.counts, namespace)
@@ -137,9 +127,8 @@ func (s *RepositorySnapshot) decrement(namespace string) {
 	s.counts[namespace]--
 }
 
-// repositoryState reads the identity and deletion state the tallies need. It
-// goes through meta.Accessor rather than a type assertion so the snapshot can
-// hold any projection of a repository.
+// repositoryState reads what the tallies need, through meta.Accessor rather than
+// a type assertion so the snapshot can hold any projection of a repository.
 func repositoryState(obj runtime.Object) (namespace, name string, terminating, ok bool) {
 	acc, err := meta.Accessor(obj)
 	if err != nil {

@@ -218,10 +218,9 @@ func (rc *RepositoryController) EventHandler() cache.ResourceEventHandlerDetaile
 	}
 }
 
-// repoKeyFunc keys a delivered object without asking what it is. The two feeds
-// deliver different types -- the apiserver informer a whole Repository, the NATS
-// informer a metadata projection of one -- and the controller only ever needs the
-// key and the resource version from either.
+// repoKeyFunc keys a delivered object without asking what it is: the apiserver
+// informer delivers a whole Repository and the NATS informer a projection of
+// one, and only the key and resource version are ever read.
 func repoKeyFunc(obj any) (string, error) {
 	return cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 }
