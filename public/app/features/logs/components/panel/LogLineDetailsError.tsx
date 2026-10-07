@@ -180,8 +180,8 @@ const getValueStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize, variant
   const actions = css({
     background: variant === 'stacktrace' ? theme.colors.background.canvas : theme.colors.background.primary,
     position: 'absolute',
-    top: variant === 'stacktrace' ? theme.spacing(0.5) : 0,
-    right: variant === 'stacktrace' ? theme.spacing(0.5) : 0,
+    top: variant === 'stacktrace' ? theme.spacing(2) : 0,
+    right: variant === 'stacktrace' ? theme.spacing(2) : 0,
     visibility: 'hidden',
     '& > button': {
       color: theme.colors.text.secondary,
