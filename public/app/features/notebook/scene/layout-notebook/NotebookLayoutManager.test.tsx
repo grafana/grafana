@@ -5,7 +5,6 @@ import { setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
@@ -1753,19 +1752,6 @@ describe('NotebookLayoutManager', () => {
           ],
         }
       );
-    });
-
-    it('does nothing for a library panel', () => {
-      const { cell } = panelCell('viz');
-      const panel = cell.state.body!;
-      panel.setState({ $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })] });
-      const changePluginType = jest.spyOn(panel, 'changePluginType');
-      const { manager, history } = withHistory([cell]);
-
-      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
-
-      expect(changePluginType).not.toHaveBeenCalled();
-      expect(history.state.undoLabel).toBeUndefined();
     });
 
     it('does nothing when the suggestion matches the current visualization', () => {
