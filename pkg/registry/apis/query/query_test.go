@@ -25,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/query/clientapi"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func loadTestdataFrames(t *testing.T, filename string) *backend.QueryDataResponse {
@@ -170,8 +169,7 @@ func TestQueryAPI(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			builder := &QueryAPIBuilder{
 				converter: &expr.ResultConverter{
-					Features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
-					Tracer:   tracing.InitializeTracerForTest(),
+					Tracer: tracing.InitializeTracerForTest(),
 				},
 				instanceProvider: mockInstanceProvider{
 					stubbedFrame: tc.stubbedFrame,
@@ -303,7 +301,6 @@ func (m mockClient) QueryData(ctx context.Context, req dataapi.QueryDataRequest)
 func (m mockInstance) GetSettings() clientapi.InstanceConfigurationSettings {
 	return clientapi.InstanceConfigurationSettings{
 		ExpressionsEnabled: true,
-		FeatureToggles:     featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions),
 	}
 }
 

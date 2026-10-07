@@ -133,13 +133,6 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 		return nil, fmt.Errorf("invalid command type in expression '%v': %w", rn.RefID, err)
 	}
 
-	if commandType == TypeSQL {
-		//nolint:staticcheck // not yet migrated to OpenFeature
-		if !toggles.IsEnabledGlobally(featuremgmt.FlagSqlExpressions) {
-			return nil, fmt.Errorf("sql expressions are disabled")
-		}
-	}
-
 	node := &CMDNode{
 		baseNode: baseNode{
 			id:    rn.idx,
