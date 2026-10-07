@@ -333,6 +333,16 @@ func (f *ParsedResource) ExistingFolder() string {
 	return meta.GetFolder()
 }
 
+func (f *ParsedResource) IsFolder() bool {
+	return f.GVR.GroupResource() == FolderResource.GroupResource()
+}
+
+// IsPreviewRead classifies a read using its ref; callers must use it only for reads.
+// Folder manifests retain their existing authorization.
+func (f *ParsedResource) IsPreviewRead(configuredBranch string) bool {
+	return !f.IsFolder() && f.Info != nil && f.Info.Ref != "" && f.Info.Ref != configuredBranch
+}
+
 func (f *ParsedResource) DryRun(ctx context.Context) error {
 	if f.DryRunResponse != nil {
 		return nil // this already ran (and helpful for testing)
