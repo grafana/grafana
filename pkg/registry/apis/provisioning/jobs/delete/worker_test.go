@@ -487,6 +487,54 @@ func TestDeleteWorker_Process_FileNotFoundIsWarning(t *testing.T) {
 	mockProgress.AssertExpectations(t)
 }
 
+// The sync guard keys on targets *attempted*, not targets successfully deleted.
+// A path whose file is already gone from git leaves git unchanged, but means git
+// and Grafana disagree - reconciling that is exactly what the sync is for, so it
+// must still run. Counting only successful deletions would silently drop this.
+func TestDeleteWorker_ProcessFileNotFoundStillSyncs(t *testing.T) {
+	job := v0alpha1.Job{
+		Spec: v0alpha1.JobSpec{
+			Action: v0alpha1.JobActionDelete,
+			Delete: &v0alpha1.DeleteJobOptions{
+				Paths: []string{"test/nonexistent.yaml"},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockSyncWorker := jobs.NewMockWorker(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Deleting test/nonexistent.yaml").Return()
+	mockProgress.On("TooManyErrors").Return(nil)
+	mockProgress.On("Record", mock.Anything, mock.Anything).Return()
+	mockProgress.On("ResetResults", true).Return()
+	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(v0alpha1.JobStatus{})
+
+	mockRepo.On("Delete", mock.Anything, "test/nonexistent.yaml", "", "Delete test/nonexistent.yaml").Return(repository.ErrFileNotFound)
+
+	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
+		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
+	}), mockProgress).Return(nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockSyncWorker.AssertExpectations(t)
+}
+
 func TestDeleteWorker_Process_ResourceNotFoundIsWarning(t *testing.T) {
 	job := v0alpha1.Job{
 		Spec: v0alpha1.JobSpec{
@@ -798,18 +846,18 @@ func TestDeleteWorker_ProcessResourceResolutionError(t *testing.T) {
 	})).Return()
 	mockProgress.On("TooManyErrors").Return(nil)
 
-	// Mock sync worker behavior that happens when no ref is specified
-	mockProgress.On("ResetResults", true).Return()
-	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
-
+	// The only ref failed to resolve, so no path was ever attempted and the
+	// follow-up sync must not run: this full sync is the same side effect as the
+	// admin-only manual pull, so a delete job that touched nothing would hand a
+	// zero-change pull trigger to anyone who can delete a file. No Process
+	// expectation - an unexpected call fails the test.
 	mockSyncWorker := jobs.NewMockWorker(t)
-	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob v0alpha1.Job) bool {
-		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
-	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should succeed even with resource resolution error
+
+	mockSyncWorker.AssertExpectations(t)
 }
 
 func TestDeleteWorker_ProcessResourcesFactoryError(t *testing.T) {

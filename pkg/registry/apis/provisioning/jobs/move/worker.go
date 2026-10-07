@@ -73,6 +73,10 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	progress.SetTotal(ctx, len(paths)+len(opts.Resources))
 	progress.StrictMaxErrors(1) // Fail fast on any error during move
 
+	// moved counts the files actually renamed, which decides whether the follow-up
+	// sync below runs. wrapFn invokes fn exactly once, so a plain capture is safe.
+	var moved int
+
 	fn := func(repo repository.Repository, _ bool) error {
 		rw, ok := repo.(repository.ReaderWriter)
 		if !ok {
@@ -92,7 +96,9 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		// Deduplicate paths to avoid attempting to move the same file multiple times
 		paths = deduplicatePaths(paths)
 
-		return w.moveFiles(ctx, rw, progress, opts, paths...)
+		var err error
+		moved, err = w.moveFiles(ctx, rw, progress, opts, paths...)
+		return err
 	}
 
 	msg := fmt.Sprintf("Move files from Grafana %s", job.Name)
@@ -119,7 +125,15 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 		}
 	}
 
-	if opts.Ref == "" {
+	// Only resync if something actually moved. Every target can legitimately be
+	// skipped as a no-op (source already sits at its destination), and this full
+	// sync is the same side effect as the admin-only manual pull - so running it
+	// for a job that changed nothing would hand a zero-change pull trigger to
+	// anyone who can move a single file. Skipping it is also simply correct: no
+	// rename means no emptied folder and no git change, so there is nothing for a
+	// sync to reconcile. Only the worker can tell - authorization cannot predict
+	// which targets the worker will skip (see authorizeMoveJob).
+	if opts.Ref == "" && moved > 0 {
 		progress.ResetResults(false)
 		progress.SetMessage(ctx, "pull resources")
 
@@ -145,7 +159,11 @@ func (w *Worker) Process(ctx context.Context, repo repository.Repository, job pr
 	return nil
 }
 
-func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.MoveJobOptions, paths ...string) error {
+// moveFiles renames each path into opts.TargetPath and returns how many were
+// actually renamed. A source already sitting at its target is skipped and not
+// counted; Process uses the count to decide whether the follow-up sync runs.
+func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, progress jobs.JobProgressRecorder, opts provisioning.MoveJobOptions, paths ...string) (int, error) {
+	var moved int
 	for _, path := range paths {
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
@@ -155,7 +173,7 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+opts.TargetPath)
 			progress.Record(ctx, jobs.NewPathOnlyResult(path).WithAction(repository.FileActionIgnored).Build())
 			if err := progress.TooManyErrors(); err != nil {
-				return err
+				return moved, err
 			}
 			continue
 		}
@@ -163,15 +181,17 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 		progress.SetMessage(ctx, "Moving "+path+" to "+targetPath)
 		if err := rw.Move(ctx, path, targetPath, opts.Ref, "Move "+path+" to "+targetPath); err != nil {
 			resultBuilder.WithError(fmt.Errorf("moving file %s to %s: %w", path, targetPath, err))
+		} else {
+			moved++
 		}
 
 		progress.Record(ctx, resultBuilder.Build())
 		if err := progress.TooManyErrors(); err != nil {
-			return err
+			return moved, err
 		}
 	}
 
-	return nil
+	return moved, nil
 }
 
 // TargetPath combines the job's target path with the file/folder name from the source path.

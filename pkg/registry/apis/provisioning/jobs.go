@@ -685,12 +685,12 @@ func (c *jobsConnector) authorizeDeleteAllSupported(ctx context.Context, repo re
 
 // authorizeDeleteJob checks delete permissions on targeted paths and resources.
 //
-// A delete job with no paths and no resources isn't a no-op: when Ref is empty,
-// the worker follows an empty delete with a full non-incremental sync (the only
-// way it supports removing an entire folder), which is the same effect as the
-// admin-only manual pull. Without this check, that full-sync side effect would be
-// reachable by anyone who can pass the per-path/resource checks below (trivially,
-// since there are none to check), rather than being gated like a real pull.
+// A delete job with no paths and no resources is rejected rather than trivially
+// authorized: there are no per-path/resource checks to apply, so accepting it
+// would authorize nothing at all. The worker no longer turns such a job into a
+// full non-incremental sync (the same effect as the admin-only manual pull) - it
+// only syncs when at least one target survived resolution - so this check is an
+// explicit client error rather than the guard on that side effect.
 //
 // requireManaged is threaded through to authorizeResourceRefs - see its doc.
 func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, paths []string, resources []provisioning.ResourceRef, ref string, requireManaged bool) error {
@@ -717,7 +717,9 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 	// above rather than rejected outright (matching how the worker resolves them
 	// later), so a request naming only such resources must still be rejected here -
 	// otherwise it would authorize nothing and fall through to the same trivial
-	// success the empty-target check above guards against.
+	// success the empty-target check above guards against. Refs that pass here can
+	// still be gone by the time the worker resolves them; the worker's own
+	// "did anything survive resolution" check covers that race.
 	if len(paths) == 0 && len(found) == 0 {
 		return apierrors.NewBadRequest("delete jobs must target at least one existing path or resource")
 	}
@@ -726,18 +728,23 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 
 // authorizeMoveJob checks update permission on sources and create permission on targets.
 //
-// Like delete, an empty Paths+Resources move isn't a no-op given how the worker
-// handles an empty ref, so it's rejected outright rather than trivially authorized.
+// Like delete, an empty Paths+Resources move is rejected rather than trivially
+// authorized - there would be nothing to check.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
 	if len(opts.Paths) == 0 && len(opts.Resources) == 0 {
 		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
 	}
 
-	// A move whose source already sits at its target is a no-op the worker skips,
-	// but with an empty Ref it still runs the follow-up full sync afterwards -
-	// the same admin-only side effect the empty-target check above exists to keep
-	// out of reach. Reject it here so a syntactically non-empty move can't be used
-	// to trigger a resync without changing anything.
+	// A move whose source already sits at its target is a no-op the worker skips.
+	// Reject it as a client error: the caller named a literal path and a destination
+	// that contradict each other, so there is nothing to do and saying so beats
+	// accepting a job that reports every target as ignored.
+	//
+	// This is no longer what keeps the worker's follow-up full sync (the same side
+	// effect as the admin-only manual pull) out of reach - that sync now only runs
+	// when something actually moved. It can't be, in general: resource refs resolve
+	// to paths server-side, so authorization here cannot enumerate every target the
+	// worker will end up skipping. Only the worker knows what it changed.
 	for _, path := range opts.Paths {
 		if path == movepkg.TargetPath(opts.TargetPath, path) {
 			return apierrors.NewBadRequest(fmt.Sprintf("move jobs must change a path: %q is already at %q", path, opts.TargetPath))

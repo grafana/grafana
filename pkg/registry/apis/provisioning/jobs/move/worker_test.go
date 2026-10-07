@@ -430,30 +430,37 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 		tooManyErrors error
 		expectedError string
 		expectedCalls int
+		expectedMoved int
 	}{
 		{
 			name:          "single file success",
 			paths:         []string{"test/file1.yaml"},
 			moveResults:   []error{nil},
 			expectedCalls: 1,
+			expectedMoved: 1,
 		},
 		{
 			name:          "multiple files success",
 			paths:         []string{"test/file1.yaml", "test/file2.yaml", "test/file3.yaml"},
 			moveResults:   []error{nil, nil, nil},
 			expectedCalls: 3,
+			expectedMoved: 3,
 		},
 		{
 			name:          "mixed files and folders",
 			paths:         []string{"file.json", "folder/", "nested/file.yaml"},
 			moveResults:   []error{nil, nil, nil},
 			expectedCalls: 3,
+			expectedMoved: 3,
 		},
 		{
 			name:          "single file with error continues",
 			paths:         []string{"test/file1.yaml", "test/file2.yaml"},
 			moveResults:   []error{errors.New("move failed"), nil},
 			expectedCalls: 2,
+			// Only the second path moved; a failed Move must not be counted, or a
+			// job that changed nothing would still trigger the follow-up sync.
+			expectedMoved: 1,
 		},
 		{
 			name:          "too many errors stops processing",
@@ -462,6 +469,7 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			tooManyErrors: errors.New("too many errors"),
 			expectedError: "too many errors",
 			expectedCalls: 1,
+			expectedMoved: 0,
 		},
 	}
 
@@ -498,13 +506,14 @@ func TestMoveWorker_moveFiles(t *testing.T) {
 			}
 
 			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-			err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
+			moved, err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, tt.paths...)
 
 			if tt.expectedError != "" {
 				require.EqualError(t, err, tt.expectedError)
 			} else {
 				require.NoError(t, err)
 			}
+			require.Equal(t, tt.expectedMoved, moved)
 
 			mockRepo.AssertExpectations(t)
 			mockProgress.AssertExpectations(t)
@@ -531,8 +540,9 @@ func TestMoveWorker_moveFilesToRoot(t *testing.T) {
 	mockProgress.On("TooManyErrors").Return(nil)
 
 	worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-	err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
+	moved, err := worker.moveFiles(context.Background(), mockRepo, mockProgress, opts, "nested/dashboard.json")
 	require.NoError(t, err)
+	require.Equal(t, 1, moved)
 
 	mockRepo.AssertExpectations(t)
 	mockProgress.AssertExpectations(t)
@@ -670,6 +680,108 @@ func TestMoveWorker_ProcessWithResourceReferences(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// A resource-ref-only move whose resolved source already sits at the target is a
+// no-op the worker skips. It must not fall through to the follow-up full sync:
+// that sync is the same side effect as the admin-only manual pull, so a job that
+// moves nothing would hand a zero-change pull trigger to anyone who can move a
+// file. Authorization can't catch this case - it never resolves refs to paths.
+func TestMoveWorker_ProcessNoOpResourceReferenceSkipsSync(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				TargetPath: "team/sub/",
+				Resources: []provisioning.ResourceRef{
+					{
+						Name:  "dashboard-uid",
+						Kind:  "Dashboard",
+						Group: "dashboard.grafana.app",
+					},
+				},
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+	mockRepoResources := resources.NewMockRepositoryResources(t)
+	// No Process expectation: an unexpected call fails the test, which is the assertion.
+	mockSyncWorker := jobs.NewMockWorker(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Resolving resource paths").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Finding path for resource dashboard.grafana.app/Dashboard/dashboard-uid").Return()
+	mockProgress.On("SetMessage", mock.Anything, "Skipping team/sub/dashboard.json because it is already in team/sub/").Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "team/sub/dashboard.json" && result.Action() == repository.FileActionIgnored
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil).Once()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
+
+	mockResourcesFactory.On("Client", mock.Anything, mockRepo).Return(mockRepoResources, nil)
+	mockRepoResources.On("FindResourcePath", mock.Anything, "dashboard-uid", schema.GroupVersionKind{
+		Group: "dashboard.grafana.app",
+		Kind:  "Dashboard",
+	}).Return("team/sub/dashboard.json", nil)
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockSyncWorker.AssertExpectations(t)
+}
+
+// The same guard for a literal path. Authorization rejects this request up front,
+// so the worker shouldn't ever see it - but the worker must not depend on that.
+func TestMoveWorker_ProcessNoOpPathSkipsSync(t *testing.T) {
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMove,
+			Move: &provisioning.MoveJobOptions{
+				Paths:      []string{"team/sub/dashboard.json"},
+				TargetPath: "team/sub/",
+			},
+		},
+	}
+
+	mockRepo := &mockReaderWriter{
+		MockRepository: repository.NewMockRepository(t),
+	}
+	mockProgress := jobs.NewMockJobProgressRecorder(t)
+	mockWrapFn := repository.NewMockWrapWithStageFn(t)
+	mockSyncWorker := jobs.NewMockWorker(t)
+
+	mockWrapFn.On("Execute", mock.Anything, mockRepo, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, stageOptions repository.StageOptions, fn func(repository.Repository, bool) error) error {
+		return fn(mockRepo, false)
+	})
+
+	mockProgress.On("SetTotal", mock.Anything, 1).Return()
+	mockProgress.On("StrictMaxErrors", 1).Return()
+	mockProgress.On("SetMessage", mock.Anything, "Skipping team/sub/dashboard.json because it is already in team/sub/").Return()
+	mockProgress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+		return result.Path() == "team/sub/dashboard.json" && result.Action() == repository.FileActionIgnored
+	})).Return()
+	mockProgress.On("TooManyErrors").Return(nil).Once()
+	mockProgress.On("Complete", mock.Anything, mock.Anything).Return(provisioning.JobStatus{})
+
+	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
+	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
+	require.NoError(t, err)
+
+	mockRepo.AssertExpectations(t)
+	mockSyncWorker.AssertExpectations(t)
+}
+
 func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 	job := provisioning.Job{
 		Spec: provisioning.JobSpec{
@@ -719,17 +831,18 @@ func TestMoveWorker_ProcessResourceReferencesError(t *testing.T) {
 			result.Error() != nil && result.Error().Error() == "find path for resource dashboard.grafana.app/Dashboard/non-existent-uid: resource not found"
 	})).Return()
 
-	// Add expectations for sync worker (called when ref is empty)
+	// The only ref failed to resolve, so nothing moved and the follow-up sync must
+	// not run - same reasoning as the no-op cases above. No Process expectation: an
+	// unexpected call fails the test. (With StrictMaxErrors(1) a real recorder would
+	// have aborted at TooManyErrors; this mock returns nil, so the job runs on to
+	// the point the guard matters.)
 	mockSyncWorker := jobs.NewMockWorker(t)
-	mockProgress.On("ResetResults", false).Return()
-	mockProgress.On("SetMessage", mock.Anything, "pull resources").Return()
-	mockSyncWorker.On("Process", mock.Anything, mockRepo, mock.MatchedBy(func(syncJob provisioning.Job) bool {
-		return syncJob.Spec.Pull != nil && !syncJob.Spec.Pull.Incremental
-	}), mockProgress).Return(nil)
 
 	worker := NewWorker(mockSyncWorker, mockWrapFn.Execute, mockResourcesFactory, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
 	err := worker.Process(context.Background(), mockRepo, job, mockProgress)
 	require.NoError(t, err) // Should continue despite individual resource errors
+
+	mockSyncWorker.AssertExpectations(t)
 }
 
 func TestMoveWorker_ProcessResourcesFactoryError(t *testing.T) {
