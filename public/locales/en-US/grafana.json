@@ -16135,6 +16135,7 @@
       "update-preferences": "Error updating preferences"
     },
     "fields": {
+      "home-dashboard-global-home": "Grafana home",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",

@@ -14,6 +14,11 @@ import { type DashboardDTO } from 'app/types/dashboard';
 interface Props extends Omit<AsyncSelectProps<DashboardPickerDTO>, 'value' | 'onChange' | 'loadOptions' | ''> {
   value?: DashboardPickerDTO['uid'];
   onChange?: (value?: DashboardPickerDTO) => void;
+  /**
+   * Pre-resolved options listed ahead of search results whenever the query matches their label.
+   * A `value` matching one of them renders without a dashboard fetch.
+   */
+  staticOptions?: Array<SelectableValue<DashboardPickerDTO>>;
   showUnknown?: boolean;
 }
 
@@ -44,7 +49,7 @@ const getDashboards = debounce(findDashboards, 250, { leading: true });
 
 // TODO: this component should provide a way to apply different filters to the search APIs
 export const DashboardPicker = forwardRef<HTMLElement, Props>(
-  ({ value, onChange, placeholder, noOptionsMessage, showUnknown, ...props }, ref) => {
+  ({ value, onChange, placeholder, noOptionsMessage, showUnknown, staticOptions, ...props }, ref) => {
     const [current, setCurrent] = useState<SelectableValue<DashboardPickerDTO>>();
     const abortRef = useRef<AbortController | null>(null);
 
@@ -52,6 +57,12 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
     // We can not use a simple Select because the dashboard search should not return *everything*
     useEffect(() => {
       if (!value || value === current?.value?.uid) {
+        return;
+      }
+
+      const staticOption = staticOptions?.find((option) => option.value?.uid === value);
+      if (staticOption) {
+        setCurrent(staticOption);
         return;
       }
 
@@ -112,7 +123,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       };
       // we don't need to rerun this effect every time `current` changes
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value, showUnknown]);
+    }, [value, staticOptions, showUnknown]);
 
     const onPicked = useCallback(
       (sel: SelectableValue<DashboardPickerDTO>) => {
@@ -123,9 +134,22 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
       [onChange, setCurrent]
     );
 
+    const loadOptions = useCallback(
+      async (query = '') => {
+        const dashboards = await getDashboards(query);
+        if (!staticOptions) {
+          return dashboards;
+        }
+        // AsyncSelect does no client-side filtering, so match static options against the query here.
+        const lowerQuery = query.toLowerCase();
+        return [...staticOptions.filter((option) => option.label?.toLowerCase().includes(lowerQuery)), ...dashboards];
+      },
+      [staticOptions]
+    );
+
     return (
       <AsyncSelect
-        loadOptions={getDashboards}
+        loadOptions={loadOptions}
         onChange={onPicked}
         placeholder={placeholder ?? t('dashboard-picker.placeholder', 'Select dashboard')}
         noOptionsMessage={noOptionsMessage ?? t('dashboard-picker.no-options', 'No dashboards found')}
