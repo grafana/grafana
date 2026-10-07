@@ -20,14 +20,13 @@ import {
   useHeaderHeight,
   useManagedSort,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
 } from './hooks';
 import { type ColumnBuildConfig, useColumnBuilderFromFields, useDataGridRows } from './render-hooks';
 import { shouldReserveScrollbarGutter } from './scrollbar';
-import { IS_SAFARI_26 } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -206,7 +205,7 @@ export function TableFlat(props: TableNGProps) {
     rowHeight: fullRowHeight,
     pageSize,
   });
-  const reserveGutter = shouldReserveScrollbarGutter(
+  const needsScrollbarSpace = shouldReserveScrollbarGutter(
     fullPagination.rows,
     fullRowHeight,
     fullWidths,
@@ -216,8 +215,8 @@ export function TableFlat(props: TableNGProps) {
       footerHeight -
       (enablePagination && fullPagination.numRows > 0 ? 32 : 0)
   );
-  const scrollbarWidth = useScrollbarWidth(gridRef, height, reserveGutter);
-  const availableWidth = width - (reserveGutter ? scrollbarWidth : 0);
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const availableWidth = width - (needsScrollbarSpace ? scrollbarWidth : 0);
 
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
@@ -335,7 +334,6 @@ export function TableFlat(props: TableNGProps) {
   return (
     <TableDataGrid
       role="grid"
-      style={IS_SAFARI_26 ? undefined : { scrollbarGutter: reserveGutter ? 'stable' : 'auto' }}
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}

@@ -1,6 +1,58 @@
 import { test, expect } from '@playwright/test';
 
+// Otherwise stable itself can create the gutter even though native scrollbars consume no space.
+test.use({ launchOptions: { ignoreDefaultArgs: ['--hide-scrollbars'] } });
+
+test.describe('Hidden scrollbars', () => {
+  test('overflowing tables do not introduce a gutter when native scrollbars consume no width', async ({
+    playwright,
+    baseURL,
+  }, testInfo) => {
+    const browser = await playwright.chromium.launch({
+      args: ['--hide-scrollbars'],
+      ignoreDefaultArgs: [],
+      channel: testInfo.project.use.channel,
+    });
+    try {
+      const page = await browser.newPage();
+      await page.goto(
+        `${baseURL}/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story&args=width:800;rowCount:80`
+      );
+      const grid = page.getByRole('grid');
+      await expect(grid.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+      await expect
+        .poll(() =>
+          grid.evaluate((element) => ({
+            overflowing: element.scrollHeight > element.clientHeight,
+            gutter: element.offsetWidth - element.clientWidth,
+            columns: getComputedStyle(element).gridTemplateColumns,
+            policy: getComputedStyle(element).scrollbarGutter,
+          }))
+        )
+        .toEqual({ overflowing: true, gutter: 0, columns: '400px 400px', policy: 'auto' });
+    } finally {
+      await browser.close();
+    }
+  });
+});
+
 test.describe('Table scrollbar geometry', () => {
+  test('fits columns beside a native scrollbar without reserving a stable gutter', async ({ page }) => {
+    await page.goto('/iframe.html?id=plugins-table-ng--scrollbar-boundary&viewMode=story&args=width:800;rowCount:80');
+    const grid = page.getByRole('grid');
+    await expect(grid.getByRole('columnheader', { name: 'Name', exact: true })).toBeVisible();
+    await expect.poll(() => grid.evaluate((element) => element.offsetWidth - element.clientWidth)).toBeGreaterThan(0);
+    await expect
+      .poll(() =>
+        grid.evaluate((element) => ({
+          overflowing: element.scrollHeight > element.clientHeight,
+          horizontalOverflow: element.scrollWidth > element.clientWidth,
+          policy: getComputedStyle(element).scrollbarGutter,
+        }))
+      )
+      .toEqual({ overflowing: true, horizontalOverflow: false, policy: 'auto' });
+  });
+
   for (const refreshed of [false]) {
     test(`nested grids do not reserve an unused gutter (refreshed ${refreshed})`, async ({ page }) => {
       await page.goto(
