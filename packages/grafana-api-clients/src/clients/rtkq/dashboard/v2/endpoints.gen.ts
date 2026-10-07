@@ -386,7 +386,38 @@ export type DashboardLibraryPanelKind = {
   kind: string;
   spec: DashboardLibraryPanelKindSpec;
 };
+export type DashboardConditionalRenderingTimeRangeSizeSpec = {
+  value: string;
+};
+export type DashboardConditionalRenderingTimeRangeSizeKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingTimeRangeSizeSpec;
+};
+export type DashboardConditionalRenderingVariableSpec = {
+  operator: string;
+  value: string;
+  variable: string;
+};
+export type DashboardConditionalRenderingVariableKind = {
+  kind: string;
+  spec: DashboardConditionalRenderingVariableSpec;
+};
+export type DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind = {
+  ConditionalRenderingTimeRangeSizeKind?: DashboardConditionalRenderingTimeRangeSizeKind;
+  ConditionalRenderingVariableKind?: DashboardConditionalRenderingVariableKind;
+};
+export type DashboardQueryConditionalRenderingGroupSpec = {
+  condition: string;
+  items: DashboardConditionalRenderingVariableKindOrConditionalRenderingTimeRangeSizeKind[];
+  visibility: string;
+};
+export type DashboardQueryConditionalRenderingGroupKind = {
+  kind: string;
+  spec: DashboardQueryConditionalRenderingGroupSpec;
+};
 export type DashboardPanelQuerySpec = {
+  /** When set, the query only runs while the group evaluates to visible */
+  conditionalRendering?: DashboardQueryConditionalRenderingGroupKind;
   hidden: boolean;
   query: DashboardDataQueryKind;
   refId: string;
@@ -662,22 +693,6 @@ export type DashboardConditionalRenderingDataSpec = {
 export type DashboardConditionalRenderingDataKind = {
   kind: string;
   spec: DashboardConditionalRenderingDataSpec;
-};
-export type DashboardConditionalRenderingTimeRangeSizeSpec = {
-  value: string;
-};
-export type DashboardConditionalRenderingTimeRangeSizeKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingTimeRangeSizeSpec;
-};
-export type DashboardConditionalRenderingVariableSpec = {
-  operator: string;
-  value: string;
-  variable: string;
-};
-export type DashboardConditionalRenderingVariableKind = {
-  kind: string;
-  spec: DashboardConditionalRenderingVariableSpec;
 };
 export type DashboardConditionalRenderingVariableKindOrConditionalRenderingDataKindOrConditionalRenderingTimeRangeSizeKind =
   {
