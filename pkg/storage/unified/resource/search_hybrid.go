@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -155,7 +156,7 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 	fused := fuseRRF(req.Key, lex, sem)
 	if !req.SkipRerank {
 		var err error
-		fused, err = s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+		fused, err = s.rerankHybridResults(ctx, embedText, fused, lex, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
@@ -187,11 +188,19 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 // index enforces authz itself).
 func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo, req *resourcepb.HybridSearchRequest, coll vector.Collection, depth int, filters []vector.SearchFilter) ([]lexicalHit, error) {
 	if !coll.IsExternal {
-		lexResp, err := s.Search(ctx, hybridLexicalRequest(req, depth))
+		lexReq := hybridLexicalRequest(req, depth)
+		queryFields, rerankFields := s.hybridLexicalFields(req)
+		lexReq.QueryFields = queryFields
+		for _, field := range rerankFields {
+			if !slices.Contains(lexReq.Fields, field) {
+				lexReq.Fields = append(lexReq.Fields, field)
+			}
+		}
+		lexResp, err := s.Search(ctx, lexReq)
 		if err := searchCallError(lexResp, err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
-		hits, err := lexicalHitsFromResponse(lexResp)
+		hits, err := lexicalHitsFromResponse(lexResp, rerankFields, req.Query)
 		if err != nil {
 			return nil, fmt.Errorf("lexical leg: decode response: %w", err)
 		}
@@ -300,7 +309,7 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 		return
 	}
 
-	hits, err := lexicalHitsFromResponse(resp)
+	hits, err := lexicalHitsFromResponse(resp, nil, "")
 	if err != nil {
 		s.log.Warn("hybrid search: managed-by response decoding failed", "err", err)
 		return
@@ -361,7 +370,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		return
 	}
 
-	hits, err := lexicalHitsFromResponse(resp)
+	hits, err := lexicalHitsFromResponse(resp, nil, "")
 	if err != nil {
 		s.log.Warn("hybrid search: folder title response decoding failed", "err", err)
 		return
@@ -439,17 +448,29 @@ func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 }
 
 // rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).
-func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
+func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, lex []lexicalHit, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
 	if s.reranker == nil || len(results) == 0 {
 		return results, nil
 	}
 	if len(results) > maxRerankCandidates {
 		results = results[:maxRerankCandidates]
 	}
-	// Chunks[0] is the best text per resource: closest embedded chunk, whole-resource text for unchunked kinds, or the synthesized title chunk for lexical-only hits.
+	lexicalText := make(map[string]string, len(lex))
+	for _, hit := range lex {
+		lexicalText[hit.uid] = hit.rerankText
+	}
+	// Keep the best semantic chunk (or title), with matching lexical text as
+	// additional context even when the resource was found by both legs.
 	texts := make([]string, len(results))
 	for i, r := range results {
 		texts[i] = r.Chunks[0].Content
+		if text := lexicalText[r.Key.Name]; text != "" && !strings.Contains(texts[i], text) {
+			if strings.Contains(text, texts[i]) {
+				texts[i] = text
+			} else {
+				texts[i] = strings.TrimSpace(texts[i] + "\n" + text)
+			}
+		}
 		// One empty document (titleless lexical-only hit) would 400 the whole provider call.
 		if texts[i] == "" {
 			texts[i] = r.Key.Name
@@ -521,6 +542,7 @@ type lexicalHit struct {
 	folder      string
 	managerKind string
 	managerID   string
+	rerankText  string
 
 	// Best chunk, only set by the external leg; bleve hits get a
 	// synthesized title chunk in fuseRRF instead.
@@ -655,7 +677,7 @@ func titleFromChunkMetadata(meta []byte, fallback string) string {
 
 // lexicalHitsFromResponse decodes search rows into rank-ordered hits. Missing
 // fields remain empty; uid always comes from the row key.
-func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
+func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse, rerankFields []string, query string) ([]lexicalHit, error) {
 	if resp == nil {
 		return nil, nil
 	}
@@ -664,7 +686,7 @@ func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexical
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
 		return lexicalHitsFromTable(resp.GetResults()), nil
 	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return lexicalHitsFromFieldValues(resp)
+		return lexicalHitsFromFieldValues(resp, rerankFields, query)
 	default:
 		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
 	}
@@ -710,8 +732,9 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 	return hits
 }
 
-func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
+func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse, rerankFields []string, query string) ([]lexicalHit, error) {
 	hits := make([]lexicalHit, 0, len(resp.GetRows()))
+	terms := lexicalRerankTerms(query)
 	for i, row := range resp.GetRows() {
 		if row == nil || row.GetKey() == nil {
 			continue
@@ -733,6 +756,7 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexi
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
 		}
+		hit.rerankText = matchingLexicalText(values, rerankFields, terms)
 		hits = append(hits, hit)
 	}
 	return hits, nil

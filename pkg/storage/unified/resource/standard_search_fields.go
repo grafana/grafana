@@ -40,9 +40,8 @@ func StandardSearchFieldDefinitions() []SearchFieldDefinition {
 		{
 			Name: SEARCH_FIELD_DESCRIPTION,
 			Type: SearchFieldTypeString,
-			// unranked: description is indexed as text (the proto column declares
-			// FreeText:true), but no caller scores against it today; skipping
-			// BM25 frequency and length stats keeps the index small.
+			// Keep description indexing compact: text matching works without
+			// storing full BM25 frequency and length stats.
 			Capabilities: []SearchCapability{SearchCapabilityText, SearchCapabilityRetrieve, SearchCapabilityUnranked},
 			Description:  "Free-text description of the resource.",
 		},
