@@ -97,11 +97,11 @@ describe('ResponseTransformers', () => {
       dashboard: { schemaVersion: 41, title: 'Converted here', uid: 'dash-1', version: 1 },
     };
 
-    it('marks a v1 spec it converts, because it cannot fetch library panel definitions', () => {
+    it('set libraryPanelRepeatUnresolved for a v1 spec', () => {
       expect(ResponseTransformers.ensureV2Response(legacyV1Dto).libraryPanelRepeatUnresolved).toBe(true);
     });
 
-    it('leaves a v2 spec handed through the legacy API unmarked, since it only rewraps it', () => {
+    it('leaves a v2 spec handed through the legacy API unset', () => {
       const v2ViaLegacyApi = {
         meta: {},
         // Should hold a v1 spec but legacy endpoint can return a v2 spec.

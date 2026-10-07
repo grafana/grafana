@@ -416,8 +416,8 @@ export function createDashboardSceneFromDashboardModel(
       preload: dto.preload,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
-      // buildGridItemForPanel reads only the dashboard panel's own repeat options, so a library panel
-      // definition's repeat options has not been migrated.
+      // buildGridItemForPanel reads only the dashboard panel's own repeat options,
+      // so a library panel definition's repeat options has not been migrated.
       meta: { ...oldModel.meta, libraryPanelRepeatUnresolved: true },
       tags: oldModel.tags || [],
       title: oldModel.title,

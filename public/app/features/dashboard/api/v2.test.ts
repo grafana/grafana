@@ -131,8 +131,7 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  // The apiserver resolves library panel repeats while converting, so its response needs no mark.
-  // Only a spec converted in the browser does.
+  // The apiserver resolves library panel repeats while converting for v2 spec so libraryPanelRepeatUnresolved is unset.
   it('leaves the response unmarked, so LibraryPanelBehavior treats its repeats as resolved', async () => {
     mockGet.mockResolvedValueOnce(mockDashboardDto);
 
