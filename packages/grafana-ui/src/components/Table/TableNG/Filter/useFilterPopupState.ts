@@ -1,7 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { type Field, type SelectableValue } from '@grafana/data';
+import { type Field, type RangeValueMatcherOptions, type SelectableValue } from '@grafana/data';
+import { type ValueSetOptions } from '@grafana/data/internal';
 
+import { useTableView } from '../TableViewContext';
+import { tableFilterKey } from '../transformations/filterByValue';
+import { editableTableFilter, filterTransformations } from '../transformations/registry';
 import { FilterOperator, type FilterType, type TableRow } from '../types';
 
 import { type FilterPopupProps } from './FilterPopup';
@@ -45,14 +49,33 @@ export function useFilterPopupState({
   crossFilterRows,
   crossFilterTailRows,
 }: UseFilterPopupStateOptions): UseFilterPopupState {
-  const filterKey = typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name;
-  const filterValue = filter[filterKey]?.filtered;
+  const view = useTableView();
+  const legacyKey = typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name;
+  const selected = field ? (view?.getFilters(field, parentIndex) ?? []) : [];
+  const snapshot = JSON.stringify(selected);
+  const transformed = Boolean(view);
+  const predicate = selected[0]?.options.filters[0]?.config;
+  const unsupported = selected.length > 1 || selected.some((config) => !editableTableFilter(config));
+  const selection: ValueSetOptions | undefined = predicate?.id === 'inSet' ? predicate.options : undefined;
+  const range: RangeValueMatcherOptions<number> | undefined =
+    predicate?.id === 'between' ? predicate.options : undefined;
+  const filterKey = view && field ? tableFilterKey(field, parentIndex) : legacyKey;
+  const filterValue = view
+    ? selection?.values.map((value) => ({ value, label: String(value) }))
+    : filter[legacyKey]?.filtered;
 
   const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
-  const [searchFilter, setSearchFilter] = useState(filter[filterKey]?.searchFilter || '');
+  const [searchFilter, setSearchFilter] = useState(filter[legacyKey]?.searchFilter || '');
   const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
-    filter[filterKey]?.operator ?? operatorSelectableValues()[FilterOperator.CONTAINS]
+    filter[legacyKey]?.operator ?? operatorSelectableValues()[FilterOperator.CONTAINS]
   );
+
+  useEffect(() => {
+    if (transformed) {
+      setSearchFilter('');
+      setOperator(operatorSelectableValues()[FilterOperator.CONTAINS]);
+    }
+  }, [snapshot, transformed]);
 
   // Show options scoped to the current cross-filter state:
   // - Active filter: rows available before that filter was applied (keeps its own options visible).
@@ -63,8 +86,49 @@ export function useFilterPopupState({
   return {
     isPopoverVisible,
     setPopoverVisible,
-    filterEnabled: Boolean(filterValue),
+    filterEnabled: view ? selected.length > 0 : Boolean(filterValue),
     popupProps: {
+      typed: Boolean(view),
+      stateKey: view ? snapshot : undefined,
+      unsupported,
+      onApplyValues:
+        view && field
+          ? (values) => {
+              if (values.length === 0) {
+                view.clearFilter(field, parentIndex);
+              } else {
+                view.applyFilter(
+                  field,
+                  filterTransformations.valueFilter.createPredicate(
+                    field,
+                    values.map((item) => item.value),
+                    selection
+                  ),
+                  parentIndex
+                );
+              }
+            }
+          : undefined,
+      onApplyRange:
+        view && field
+          ? ({ min, max, includeMissing }) =>
+              view.applyFilter(
+                field,
+                {
+                  id: 'between',
+                  options: {
+                    from: min,
+                    to: max,
+                    inclusive: true,
+                    allowOpenBounds: true,
+                    includeMissing,
+                  } satisfies RangeValueMatcherOptions<number>,
+                },
+                parentIndex
+              )
+          : undefined,
+      onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
+      range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       name,
       rows: rowsForPopup,
       filterValue,

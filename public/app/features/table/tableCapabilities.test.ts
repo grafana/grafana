@@ -11,18 +11,18 @@ const frame = () =>
   });
 
 describe('withRefreshedTableCapabilities', () => {
-  it('opts every column into reordering and hiding', () => {
+  it('opts every column into filtering, reordering and hiding', () => {
     const withCapabilities = withRefreshedTableCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ reorderable: true, hideable: true });
+      expect(field.config.custom).toMatchObject({ filterable: true, reorderable: true, hideable: true });
     }
   });
 
-  it('preserves the existing filter setting', () => {
+  it('overrides a capability the field config turned off', () => {
     const [, b] = withRefreshedTableCapabilities(frame()).fields;
 
-    expect(b.config.custom?.filterable).toBe(false);
+    expect(b.config.custom?.filterable).toBe(true);
   });
 
   it('leaves the rest of the field config alone', () => {
@@ -58,7 +58,7 @@ describe('withRefreshedTableCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withRefreshedTableCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ reorderable: false, hideable: false });
+      expect(field.config.custom).toMatchObject({ filterable: true, reorderable: false, hideable: false });
     }
   });
 });

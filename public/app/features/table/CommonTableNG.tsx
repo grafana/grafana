@@ -1,15 +1,13 @@
 import { type ComponentProps } from 'react';
 
-import {
-  useFlagTableAutoColumnWidths,
-  useFlagTableRefresh,
-  useFlagTableRefreshNewFeatures,
-} from '@grafana/runtime/internal';
+import { useFlagTableAutoColumnWidths, useFlagTableRefresh } from '@grafana/runtime/internal';
 import { TableNG } from '@grafana/ui/unstable';
+
+import { useTableRefreshNewFeatures } from './hooks';
 
 export type CommonTableNGProps = Omit<
   ComponentProps<typeof TableNG>,
-  'tableRefreshEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
+  'tableRefreshEnabled' | 'rowTransformationsEnabled' | 'contentAwareWidthsEnabled' | 'jsonSyntaxHighlightingEnabled'
 >;
 
 /**
@@ -19,16 +17,17 @@ export type CommonTableNGProps = Omit<
  * feed it. This reads just the flags and needs nothing else.
  */
 export function CommonTableNG(props: CommonTableNGProps) {
+  const isTableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const tableRefreshEnabled = useFlagTableRefresh();
   const contentAwareWidthsEnabled = useFlagTableAutoColumnWidths();
-  const jsonSyntaxHighlightingEnabled = useFlagTableRefreshNewFeatures();
 
   return (
     <TableNG
       {...props}
+      rowTransformationsEnabled={isTableRefreshNewFeaturesEnabled}
       tableRefreshEnabled={tableRefreshEnabled}
       contentAwareWidthsEnabled={contentAwareWidthsEnabled}
-      jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
+      jsonSyntaxHighlightingEnabled={isTableRefreshNewFeaturesEnabled}
     />
   );
 }
