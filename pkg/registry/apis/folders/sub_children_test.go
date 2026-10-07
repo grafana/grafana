@@ -54,6 +54,9 @@ func (c *capturingSearchClient) VectorSearch(ctx context.Context, in *resourcepb
 func (c *capturingSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, nil
 }
+func (c *capturingSearchClient) HybridSearchResources(ctx context.Context, in *resourcepb.HybridSearchResourcesRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
 
 type recordingResponder struct {
 	obj    runtime.Object
