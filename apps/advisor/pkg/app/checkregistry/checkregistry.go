@@ -96,8 +96,6 @@ type AdvisorAppConfig struct {
 	PluginConfig  map[string]string
 	StackID       string
 	OrgService    org.Service
-	// LeaderElector, when set, gates the multi-tenant check scheduler so it only
-	// runs on the replica holding the elector's lease. Ignored in single-tenant
-	// mode. When nil, every replica runs the scheduler.
+	// LeaderElector, when set check scheduler only runs on the replica holding the elector's lease
 	LeaderElector leaderelection.Elector
 }
