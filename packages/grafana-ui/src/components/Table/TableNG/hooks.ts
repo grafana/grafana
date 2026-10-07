@@ -611,7 +611,7 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number, reserveGutter?: boolean) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
@@ -624,7 +624,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       setScrollbarWidth(el.offsetWidth - el.clientWidth);
     }, 150);
 
-    updateScrollbarDimensions();
+    setScrollbarWidth(el.offsetWidth - el.clientWidth);
 
     const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
     resizeObserver.observe(el);
@@ -632,7 +632,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       resizeObserver.disconnect();
       updateScrollbarDimensions.cancel();
     };
-  }, [ref, height]);
+  }, [ref, height, reserveGutter]);
 
   return scrollbarWidth;
 }

@@ -10,6 +10,7 @@ describe('useScrollbarWidth cleanup', () => {
   let notifyResize: () => void;
 
   beforeEach(() => {
+    jest.clearAllMocks();
     jest.useFakeTimers();
     jest.spyOn(global, 'ResizeObserver').mockImplementation((callback) => {
       const observer = { observe, disconnect, unobserve: jest.fn() };
@@ -33,21 +34,20 @@ describe('useScrollbarWidth cleanup', () => {
     });
     const ref = { current: { element } as DataGridHandle };
     return {
-      ...renderHook(({ height }) => useScrollbarWidth(ref, height), { initialProps: { height: 300 } }),
+      ...renderHook(({ height, reserveGutter }) => useScrollbarWidth(ref, height, reserveGutter), {
+        initialProps: { height: 300, reserveGutter: true },
+      }),
       readClientWidth,
       element,
     };
   }
 
-  it('keeps the observer across rerenders and preserves the initial debounce', () => {
+  it('measures immediately and keeps the observer across unrelated rerenders', () => {
     const { result, rerender, element, unmount } = setup();
     expect(observe).toHaveBeenCalledWith(element);
-    act(() => jest.advanceTimersByTime(149));
-    expect(result.current).toBe(0);
-    act(() => jest.advanceTimersByTime(1));
     expect(result.current).toBe(15);
 
-    rerender({ height: 300 });
+    rerender({ height: 300, reserveGutter: true });
     expect(observe).toHaveBeenCalledTimes(1);
     expect(disconnect).not.toHaveBeenCalled();
     unmount();
@@ -68,15 +68,22 @@ describe('useScrollbarWidth cleanup', () => {
 
   it('cancels the previous measurement when height changes', () => {
     const { result, rerender, readClientWidth, unmount } = setup();
-    act(() => jest.advanceTimersByTime(100));
-    rerender({ height: 400 });
+    act(() => notifyResize());
+    readClientWidth.mockReturnValue(480);
+    rerender({ height: 400, reserveGutter: true });
     expect(disconnect).toHaveBeenCalledTimes(1);
-
-    act(() => jest.advanceTimersByTime(50));
+    expect(result.current).toBe(20);
+    readClientWidth.mockClear();
+    act(() => jest.advanceTimersByTime(150));
     expect(readClientWidth).not.toHaveBeenCalled();
-    act(() => jest.advanceTimersByTime(100));
-    expect(result.current).toBe(15);
-    expect(readClientWidth).toHaveBeenCalledTimes(1);
     unmount();
+  });
+
+  it('remeasures immediately when gutter reservation changes without a resize', () => {
+    const { result, rerender, readClientWidth } = setup();
+    expect(result.current).toBe(15);
+    readClientWidth.mockReturnValue(500);
+    rerender({ height: 300, reserveGutter: false });
+    expect(result.current).toBe(0);
   });
 });
