@@ -574,6 +574,137 @@ func TestIntegrationRBACParityBatchCheck(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Folder write and permission parity
+// ---------------------------------------------------------------------------
+
+func TestIntegrationRBACParityFolderWrites(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	operations := []struct {
+		verb                  string
+		folderAction          string
+		dashboardAction       string
+		folderEditAllowed     bool
+		dashboardEditAllowed  bool
+		dashboardAdminAllowed bool
+	}{
+		// Dashboard action sets manage existing dashboards; creation belongs to folder Edit/Admin.
+		{utils.VerbCreate, "folders:create", "dashboards:create", true, false, false},
+		{utils.VerbUpdate, "folders:write", "dashboards:write", true, true, true},
+		{utils.VerbDelete, "folders:delete", "dashboards:delete", true, true, true},
+		{utils.VerbGetPermissions, "folders.permissions:read", "dashboards.permissions:read", false, false, true},
+		{utils.VerbSetPermissions, "folders.permissions:write", "dashboards.permissions:write", false, false, true},
+	}
+
+	srv := setupOpenFGAServer(t)
+	namespaceIndex := 0
+	for _, op := range operations {
+		t.Run(op.verb, func(t *testing.T) {
+			grants := []struct {
+				action  string
+				allowed bool
+			}{
+				{op.folderAction, false},
+				{op.dashboardAction, true},
+				{"folders:view", false},
+				{"folders:edit", op.folderEditAllowed},
+				{"folders:admin", true},
+				{"dashboards:view", false},
+				{"dashboards:edit", op.dashboardEditAllowed},
+				{"dashboards:admin", op.dashboardAdminAllowed},
+			}
+			for _, grant := range grants {
+				t.Run(grant.action, func(t *testing.T) {
+					ns := parityNamespace(namespaceIndex)
+					namespaceIndex++
+					permissions := []accesscontrol.Permission{{Action: grant.action, Scope: "folders:uid:parent"}}
+					folders := []rbacstore.Folder{
+						{UID: "parent"},
+						{UID: "child", ParentUID: new("parent")},
+						{UID: "unrelated"},
+					}
+					rbacService := rbac.NewTestService(parityUserUID, permissions, folders)
+					writeParityTuples(t, srv, ns, permissions, folders)
+
+					name := "dash1"
+					if op.verb == utils.VerbCreate {
+						name = ""
+					}
+					targets := []struct {
+						folder  string
+						allowed bool
+					}{
+						{"parent", grant.allowed},
+						{"child", grant.allowed},
+						{"unrelated", false},
+					}
+
+					t.Run("Check", func(t *testing.T) {
+						for _, target := range targets {
+							t.Run(target.folder, func(t *testing.T) {
+								req := parityCheckReq(dashboardGroup, dashboardResource, "", op.verb, name, target.folder)
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								require.Equal(t, target.allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								zanzanaRes, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								assert.Equal(t, target.allowed, zanzanaRes.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+
+					t.Run("List", func(t *testing.T) {
+						expected := parityListResult{}
+						if grant.allowed {
+							expected.Folders = []string{"parent", "child"}
+						}
+						req := parityListReq(dashboardGroup, dashboardResource, "", op.verb)
+						rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+						zanzanaRes, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						assert.Equal(t, normalizeParityList(expected), toParityListResult(zanzanaRes), "Zanzana diverges from RBAC")
+					})
+
+					t.Run("BatchCheck", func(t *testing.T) {
+						req := &authzv1.BatchCheckRequest{Namespace: ns, Subject: paritySubject}
+						for _, target := range targets {
+							req.Checks = append(req.Checks, &authzv1.BatchCheckItem{
+								CorrelationId: target.folder,
+								Group:         dashboardGroup,
+								Resource:      dashboardResource,
+								Verb:          op.verb,
+								Name:          name,
+								Folder:        target.folder,
+							})
+						}
+						rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, rbacRes.GetResults(), len(targets))
+						zanzanaRes, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, zanzanaRes.GetResults(), len(targets))
+						for _, target := range targets {
+							t.Run(target.folder, func(t *testing.T) {
+								require.Contains(t, rbacRes.GetResults(), target.folder)
+								require.Contains(t, zanzanaRes.GetResults(), target.folder)
+								rbacResult := rbacRes.GetResults()[target.folder]
+								zanzanaResult := zanzanaRes.GetResults()[target.folder]
+								require.Empty(t, rbacResult.GetError())
+								require.Empty(t, zanzanaResult.GetError())
+								require.Equal(t, target.allowed, rbacResult.GetAllowed(), "RBAC answer changed")
+								assert.Equal(t, target.allowed, zanzanaResult.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+				})
+			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Harness
 // ---------------------------------------------------------------------------
 
