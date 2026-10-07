@@ -449,7 +449,7 @@ function fieldAccessor(field: Field | undefined, index: number | number[]) {
   }, 0);
 }
 
-function getFrameTypeByFilename(filename: string): FrameType {
+function getFrameTypeByFilename(filename?: string): FrameType {
   if (!filename) {
     return FrameType.Unknown;
   }
