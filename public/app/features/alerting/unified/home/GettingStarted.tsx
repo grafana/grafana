@@ -166,17 +166,6 @@ export function WelcomeHeader() {
   );
 }
 
-const getWelcomeHeaderStyles = (theme: GrafanaTheme2) => ({
-  separator: css({
-    width: '1px',
-    backgroundColor: theme.colors.border.medium,
-
-    [theme.breakpoints.down('lg')]: {
-      display: 'none',
-    },
-  }),
-});
-
 interface WelcomeCTABoxProps {
   title: string;
   description: string;
