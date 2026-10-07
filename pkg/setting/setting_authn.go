@@ -177,3 +177,24 @@ func readUserLastSeenUpdateInterval(iniFile *ini.File, cfg *Cfg) error {
 	}
 	return nil
 }
+
+// ApplyLoginSettings applies the settings the multi-tenant IAM app needs to list
+// login mechanisms: LDAPAuthEnabled, DisableLoginForm, AllowUserSignUp, LoginHint
+// and PasswordHint. The caller transfers ownership of iniFile to cfg and must not
+// reuse it concurrently.
+func (cfg *Cfg) ApplyLoginSettings(iniFile *ini.File) error {
+	if iniFile == nil {
+		return errors.New("login settings cannot be nil")
+	}
+
+	// readLDAPConfig() requires cfg.Raw to be set
+	cfg.Raw = iniFile
+	cfg.readLDAPConfig()
+	readDisableLoginForm(iniFile, cfg)
+
+	return readUserSettings(iniFile, cfg)
+}
+
+func readDisableLoginForm(iniFile *ini.File, cfg *Cfg) {
+	cfg.DisableLoginForm = iniFile.Section("auth").Key("disable_login_form").MustBool(false)
+}

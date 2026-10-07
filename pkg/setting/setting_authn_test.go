@@ -143,3 +143,55 @@ func TestApplyAuthnSettings(t *testing.T) {
 		assert.ErrorContains(t, err, "auth.login_maximum_lifetime_duration")
 	})
 }
+
+func TestApplyLoginSettings(t *testing.T) {
+	t.Run("no ini file", func(t *testing.T) {
+		err := NewCfg().ApplyLoginSettings(nil)
+		assert.ErrorContains(t, err, "cannot be nil")
+	})
+
+	t.Run("empty ini file uses defaults", func(t *testing.T) {
+		cfg := NewCfg()
+		err := cfg.ApplyLoginSettings(ini.Empty())
+		require.NoError(t, err)
+
+		assert.False(t, cfg.LDAPAuthEnabled)
+		assert.False(t, cfg.DisableLoginForm)
+		assert.True(t, cfg.AllowUserSignUp)
+		assert.Empty(t, cfg.LoginHint)
+		assert.Empty(t, cfg.PasswordHint)
+	})
+
+	t.Run("sets keys", func(t *testing.T) {
+		settings := ini.Empty()
+
+		ldap, err := settings.NewSection("auth.ldap")
+		require.NoError(t, err)
+		_, err = ldap.NewKey("enabled", "true")
+		require.NoError(t, err)
+
+		auth, err := settings.NewSection("auth")
+		require.NoError(t, err)
+		_, err = auth.NewKey("disable_login_form", "true")
+		require.NoError(t, err)
+
+		users, err := settings.NewSection("users")
+		require.NoError(t, err)
+		_, err = users.NewKey("allow_sign_up", "false")
+		require.NoError(t, err)
+		_, err = users.NewKey("login_hint", "a login hint")
+		require.NoError(t, err)
+		_, err = users.NewKey("password_hint", "a password hint")
+		require.NoError(t, err)
+
+		cfg := NewCfg()
+		err = cfg.ApplyLoginSettings(settings)
+		require.NoError(t, err)
+
+		assert.True(t, cfg.DisableLoginForm)
+		assert.True(t, cfg.LDAPAuthEnabled)
+		assert.False(t, cfg.AllowUserSignUp)
+		assert.Equal(t, "a login hint", cfg.LoginHint)
+		assert.Equal(t, "a password hint", cfg.PasswordHint)
+	})
+}

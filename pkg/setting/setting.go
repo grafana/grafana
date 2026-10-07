@@ -2152,7 +2152,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 
-	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	readDisableLoginForm(iniFile, cfg)
 	cfg.DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
