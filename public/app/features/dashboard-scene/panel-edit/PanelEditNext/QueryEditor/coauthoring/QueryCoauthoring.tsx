@@ -47,8 +47,8 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
         dismissUntouched();
       }
     };
-    document.addEventListener('pointerdown', onOutsidePointerDown);
-    return () => document.removeEventListener('pointerdown', onOutsidePointerDown);
+    document.addEventListener('pointerdown', onOutsidePointerDown, true);
+    return () => document.removeEventListener('pointerdown', onOutsidePointerDown, true);
   }, [dismissUntouched]);
 
   useEffect(() => {

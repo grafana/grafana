@@ -152,10 +152,10 @@ function QueryCoauthoringEntry({
         adapter.dismiss();
       }
     };
-    document.addEventListener('pointerdown', onOutsidePointerDown);
+    document.addEventListener('pointerdown', onOutsidePointerDown, true);
     document.addEventListener('keydown', onEscape);
     return () => {
-      document.removeEventListener('pointerdown', onOutsidePointerDown);
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true);
       document.removeEventListener('keydown', onEscape);
     };
   }, [adapter, portalTarget]);
