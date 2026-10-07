@@ -131,7 +131,8 @@ declare module "@openfeature/core" {
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
     | "grafana.logDetailsDisplayedFieldControls"
-    | "grafana.globalHomePreference";
+    | "grafana.globalHomePreference"
+    | "grafana.otelLogDetails";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

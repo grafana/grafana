@@ -138,6 +138,8 @@ export const FlagKeys = {
   GrafanaNewTextPanel: "grafana.newTextPanel",
   /** Adds a 'Download diagnostics' action that bundles diagnostic artifacts such as HTTP traffic (HAR), server log, dashboard and panel JSONs, and more */
   GrafanaOnDemandDiagnostics: "grafana.onDemandDiagnostics",
+  /** Enables a new version of log details optimized for displaying OTel logs */
+  GrafanaOtelLogDetails: "grafana.otelLogDetails",
   /** Enables firing an event for PanelEditNext feedback that triggers an in-house survey */
   GrafanaPanelEditNextFeedbackEvent: "grafana.panelEditNextFeedbackEvent",
   /** Let panel plugins register system transformations */
@@ -942,6 +944,17 @@ export const useFlagGrafanaNewTextPanel = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagGrafanaOnDemandDiagnostics = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.onDemandDiagnostics", false, options).value;
+};
+
+/**
+ * Enables a new version of log details optimized for displaying OTel logs
+ *
+ * **Details:**
+ * - flag key: `grafana.otelLogDetails`
+ * - default value: `false`
+ */
+export const useFlagGrafanaOtelLogDetails = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.otelLogDetails", false, options).value;
 };
 
 /**

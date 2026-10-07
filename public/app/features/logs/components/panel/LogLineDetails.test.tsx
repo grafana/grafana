@@ -1244,7 +1244,32 @@ describe('LogLineDetails', () => {
     expect(screen.getByRole('menuitem', { name: 'Kubernetes' })).toBeInTheDocument();
   });
 
+  test('shows legacy log details for an OTel log when otel log details are disabled', async () => {
+    await setup(undefined, { labels: { severity_number: '9', 'service.name': 'checkout' } });
+
+    expect(screen.getByText('Log line')).toBeInTheDocument();
+    expect(screen.queryByText('Service')).not.toBeInTheDocument();
+  });
+
+  test('shows OTel log details when the log has an OTel language and the flag is enabled', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
+    await setup(
+      undefined,
+      { labels: { severity_number: '9', 'service.name': 'checkout' } },
+      undefined,
+      undefined,
+      'Service'
+    );
+
+    expect(screen.getByText('Service')).toBeInTheDocument();
+    expect(screen.getByText('checkout')).toBeInTheDocument();
+    expect(screen.queryByText('Log line')).not.toBeInTheDocument();
+  });
+
   test('OTel details wrap a single attribute extension link around the value', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
     const usePluginLinksMock = jest.fn().mockReturnValue({
       links: [
         {
@@ -1274,6 +1299,8 @@ describe('LogLineDetails', () => {
   });
 
   test('OTel details show a dropdown when an attribute has multiple extension links', async () => {
+    setBooleanFlags({ [FlagKeys.GrafanaOtelLogDetails]: true });
+
     const usePluginLinksMock = jest.fn().mockReturnValue({
       links: [
         {
