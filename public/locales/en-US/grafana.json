@@ -5626,6 +5626,7 @@
     },
     "canvas-actions": {
       "add-landing-tab": "Add landing tab",
+      "add-landing-tab-assistant": "Ask the Assistant to design a landing page",
       "add-panel": "Add panel",
       "disabled-child-contains-tabs": "Cannot change to tabs because a row already contains tabs",
       "disabled-nested-grouping": "Grouping is limited to {{maxDepth}} levels",

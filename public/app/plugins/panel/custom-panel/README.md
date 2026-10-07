@@ -458,11 +458,13 @@ key as `instanceKey`.
 ## Landing tab
 
 In edit mode, a dashboard with tabs has an **Add landing tab** action next to the other tab actions
-when this panel is available. It adds an Overview tab in first position with one Custom panel that
-fills the tab. The panel gets one `-- Dashboard --` query (with transformations) per panel it can
-reuse, in layout order and up to eight: Custom panels, panels that already read `-- Dashboard --`
-and repeat clones are left out. Its code starts from a template that groups the frames by source
-panel.
+when this panel is available. When the Grafana Assistant is available, the action opens it with the
+request "Create a landing page for this dashboard." and the dashboard as context, so the landing
+page is designed for this dashboard. Without the Assistant, it adds an Overview tab in first
+position with one Custom panel that fills the tab. The panel gets one `-- Dashboard --` query (with
+transformations) per panel it can reuse, in layout order and up to eight: Custom panels, panels
+that already read `-- Dashboard --` and repeat clones are left out. Its code starts from a template
+that groups the frames by source panel.
 
 ## Migrating from the Dynamic text panel
 

@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
+import { useAssistant } from '@grafana/assistant';
 import { type PanelPluginMeta } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
@@ -326,6 +327,40 @@ describe('TabsLayoutManagerRenderer add landing tab button', () => {
 
     expect(await screen.findByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true');
     expect(manager.state.tabs.map((tab) => tab.state.title)).toEqual(['Overview', 'Metrics', 'Details']);
+  });
+
+  it('asks the Assistant for a landing page instead of adding the template tab when it is available', async () => {
+    const openAssistant = jest.fn();
+    jest.mocked(useAssistant).mockReturnValue({
+      isLoading: false,
+      isAvailable: true,
+      openAssistant,
+      closeAssistant: jest.fn(),
+      toggleAssistant: jest.fn(),
+    });
+    try {
+      setPanelPluginMetas({ text: textPanelMeta, 'custom-panel': customPanelMeta });
+      const manager = renderTabs(true);
+      await waitForEditableTabBar();
+
+      await userEvent.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addLandingTab));
+
+      expect(openAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'grafana/dashboards/custom-panel-landing',
+          prompt: 'Create a landing page for this dashboard.',
+        })
+      );
+      expect(manager.state.tabs.map((tab) => tab.state.title)).toEqual(['Metrics', 'Details']);
+    } finally {
+      jest.mocked(useAssistant).mockReturnValue({
+        isLoading: false,
+        isAvailable: false,
+        openAssistant: undefined,
+        closeAssistant: jest.fn(),
+        toggleAssistant: jest.fn(),
+      });
+    }
   });
 
   it('hides the button when the custom panel is not registered', async () => {

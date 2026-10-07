@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { usePanelPluginMeta } from '@grafana/runtime/internal';
 import { MultiValueVariable, type SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, IconButton, TabsBar, useStyles2 } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
@@ -23,6 +22,7 @@ import { TabItemLayoutRenderer } from './TabItemRenderer';
 import { TabItemRepeater } from './TabItemRepeater';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 import { addLandingTab } from './addLandingTab';
+import { buildLandingPageRequest, useCustomPanelAssistant } from './customPanelAssistant';
 
 export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLayoutManager>) {
   const styles = useStyles2(getStyles);
@@ -210,19 +210,32 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
 }
 
 function AddLandingTabButton({ manager }: { manager: TabsLayoutManager }) {
-  // The custom panel is only registered when alpha panels and the grafana.customPanel flag are enabled
-  const { value: customPanelMeta } = usePanelPluginMeta('custom-panel');
+  const { customPanelAvailable, openAssistant } = useCustomPanelAssistant();
 
-  if (!customPanelMeta) {
+  if (!customPanelAvailable) {
     return null;
   }
 
+  // With the Assistant, the landing page is designed for this dashboard; without it, it starts from a template.
+  const onClick = () => {
+    if (openAssistant) {
+      openAssistant(buildLandingPageRequest(getDashboardSceneFor(manager)));
+    } else {
+      void addLandingTab(manager);
+    }
+  };
+
   return (
     <Button
-      icon="apps"
+      icon={openAssistant ? 'ai-sparkle' : 'apps'}
       variant="secondary"
       size="sm"
-      onClick={() => addLandingTab(manager)}
+      tooltip={
+        openAssistant
+          ? t('dashboard.canvas-actions.add-landing-tab-assistant', 'Ask the Assistant to design a landing page')
+          : undefined
+      }
+      onClick={onClick}
       onPointerUp={(evt) => evt.stopPropagation()}
       onPointerDown={(evt) => evt.stopPropagation()}
       data-testid={selectors.components.CanvasGridAddActions.addLandingTab}
