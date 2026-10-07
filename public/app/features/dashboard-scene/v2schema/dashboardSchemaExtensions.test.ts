@@ -123,6 +123,32 @@ describe('Dashboard schema extensions', () => {
     expect(onParseErrorChange).toHaveBeenLastCalledWith(false);
   });
 
+  it('shows and clears schema diagnostics within 100ms of an edit', async () => {
+    jest.useFakeTimers();
+    try {
+      const view = createView('{"kind":"Dashboard","spec":{"title":"Example"}}');
+      await jest.advanceTimersByTimeAsync(1000);
+
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: '{"kind":"Dashboard","spec":{"title":123}}' },
+      });
+      await jest.advanceTimersByTimeAsync(100);
+      const messages: string[] = [];
+      forEachDiagnostic(view.state, (diagnostic) => messages.push(diagnostic.message));
+      expect(messages).toEqual([expect.stringContaining('string')]);
+
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: '{"kind":"Dashboard","spec":{"title":"Example"}}' },
+      });
+      await jest.advanceTimersByTimeAsync(100);
+      const corrected: string[] = [];
+      forEachDiagnostic(view.state, (diagnostic) => corrected.push(diagnostic.message));
+      expect(corrected).toEqual([]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('reports YAML schema errors, syntax errors, and recovery from the current buffer', async () => {
     const onValidationChange = jest.fn();
     const onParseErrorChange = jest.fn();

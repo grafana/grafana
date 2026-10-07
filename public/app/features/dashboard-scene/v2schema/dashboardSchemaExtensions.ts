@@ -116,16 +116,19 @@ export function createDashboardSchemaExtensions(
 ): Extension[] {
   const validate = createDashboardSchemaValidator(schema);
   const parseLinter = jsonParseLinter();
-  const validation = linter((view) => {
-    const result = validate(view.state.doc.toString(), format);
-    onValidationChange?.(result.hasErrors);
-    onParseErrorChange?.(result.hasParseError);
-    if (format === 'json' && result.hasParseError) {
-      const syntaxDiagnostics = parseLinter(view);
-      return syntaxDiagnostics.length ? syntaxDiagnostics : result.diagnostics;
-    }
-    return result.diagnostics;
-  });
+  const validation = linter(
+    (view) => {
+      const result = validate(view.state.doc.toString(), format);
+      onValidationChange?.(result.hasErrors);
+      onParseErrorChange?.(result.hasParseError);
+      if (format === 'json' && result.hasParseError) {
+        const syntaxDiagnostics = parseLinter(view);
+        return syntaxDiagnostics.length ? syntaxDiagnostics : result.diagnostics;
+      }
+      return result.diagnostics;
+    },
+    { delay: 100 }
+  );
 
   if (format === 'yaml') {
     return [validation];
