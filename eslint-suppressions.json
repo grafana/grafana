@@ -943,7 +943,7 @@
   },
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 4
+      "count": 3
     }
   },
   "public/app/features/alerting/state/alertDef.ts": {
@@ -1029,18 +1029,8 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/folder-actions/FolderActionsButton.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/components/import-to-gma/ConfirmConvertModal.tsx": {
     "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/import-to-gma/ImportToGMA.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -1143,11 +1133,6 @@
       "count": 2
     }
   },
-  "public/app/features/alerting/unified/components/rule-editor/NotificationsStep.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-editor/PreviewRule.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1197,9 +1182,6 @@
     }
   },
   "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    },
     "@grafana/no-get-data-source-srv": {
       "count": 1
     }
@@ -1214,18 +1196,8 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/tabs/AlertVersionHistory.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-viewer/tabs/QueryAndCondition.test.tsx": {
     "@grafana/no-get-data-source-srv": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/CloudRules.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
@@ -1284,7 +1256,7 @@
   },
   "public/app/features/alerting/unified/featureToggles.ts": {
     "@grafana/no-config-feature-toggles": {
-      "count": 6
+      "count": 5
     }
   },
   "public/app/features/alerting/unified/group-details/GroupEditPage.tsx": {
@@ -1389,7 +1361,7 @@
   },
   "public/app/features/alerting/unified/rule-list/RuleList.v2.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
+      "count": 1
     }
   },
   "public/app/features/alerting/unified/rule-list/RuleListPageTitle.tsx": {
@@ -1713,11 +1685,6 @@
       "count": 2
     }
   },
-  "public/app/features/dashboard-scene/scene/VariableControls.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/scene/dashboard-controls-menu/DashboardControlsMenu.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -1886,11 +1853,6 @@
   "public/app/features/dashboard-scene/settings/TimePickerSettings.tsx": {
     "@grafana/require-no-margin": {
       "count": 5
-    }
-  },
-  "public/app/features/dashboard-scene/settings/variables/VariableEditableElement.tsx": {
-    "react-hooks/rules-of-hooks": {
-      "count": 4
     }
   },
   "public/app/features/dashboard-scene/settings/variables/VariableSetEditableElement.tsx": {

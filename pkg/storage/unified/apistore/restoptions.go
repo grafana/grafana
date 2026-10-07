@@ -4,11 +4,8 @@ package apistore
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
-	badger "github.com/dgraph-io/badger/v4"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
@@ -18,9 +15,8 @@ import (
 	flowcontrolrequest "k8s.io/apiserver/pkg/util/flowcontrol/request"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
+	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -163,85 +159,6 @@ func NewRESTOptionsGetterForClient(
 		configProvider: configProvider,
 		versionPolicy:  versionPolicy,
 	}
-}
-
-func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, secrets secret.InlineSecureValueSupport) (*RESTOptionsGetter, error) {
-	// Create BadgerDB with in-memory mode
-	db, err := badger.Open(badger.DefaultOptions("").
-		WithInMemory(true).
-		WithMemTableSize(256 << 10).  // 256KB memtable size
-		WithValueThreshold(16 << 10). // 16KB threshold for storing values in LSM vs value log
-		WithNumMemtables(2).          // Keep only 2 memtables in memory
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	kv := resource.NewBadgerKV(db)
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore:                kv,
-		Log:                    logging.DefaultLogger,
-		DisableStorageServices: true,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceClient(server),
-		secrets,
-		originalStorageConfig,
-		nil,
-		nil,
-	), nil
-}
-
-// Optionally, this constructor allows specifying directories
-// for resources that are required to be read/watched on startup and there
-// won't be any write operations that initially bootstrap their directories
-func NewRESTOptionsGetterForFileXX(path string,
-	originalStorageConfig storagebackend.Config,
-	features map[string]any) (*RESTOptionsGetter, error) {
-	if path == "" {
-		path = filepath.Join(os.TempDir(), "grafana-apiserver")
-	}
-
-	db, err := badger.Open(badger.DefaultOptions(filepath.Join(path, "badger")).
-		WithLogger(nil))
-	if err != nil {
-		return nil, err
-	}
-
-	kv := resource.NewBadgerKV(db)
-	backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-		KvStore: kv,
-		Log:     logging.DefaultLogger,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	return NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceClient(server),
-		nil, // secrets
-		originalStorageConfig,
-		nil,
-		nil,
-	), nil
 }
 
 // RegisterOptions declares a resource's storage options for every version that

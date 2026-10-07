@@ -2,6 +2,7 @@ package snapshot
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -34,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/web"
@@ -150,7 +152,7 @@ func createExternalSnapshotLegacy(cmd *dashboardsnapshots.CreateDashboardSnapsho
 }
 
 // nolint:gocyclo
-func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService) *builder.APIRoutes {
+func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, defs map[string]common.OpenAPIDefinition, storageGetter func() rest.Storage, dashboardService dashboards.DashboardService, blobs resourcepb.BlobStoreClient, readFromUnified func(context.Context) (bool, error)) *builder.APIRoutes {
 	prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 	tags := []string{dashv0.SnapshotResourceInfo.GroupVersionKind().Kind}
 
@@ -387,8 +389,23 @@ func GetRoutes(options dashv0.SnapshotSharingOptions, accessControl ac.AccessCon
 					// Set namespace in context for k8s storage layer
 					ctx = k8srequest.WithNamespace(ctx, namespace)
 
-					// Create via storage (dual-write mode decides legacy, unified, or both)
-					// TODO: split creation from Snapshot and the blob
+					useBlobs := blobs != nil && !cmd.External
+					if useBlobs {
+						var err error
+						useBlobs, err = readFromUnified(ctx)
+						if err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
+					}
+					if useBlobs {
+						if err := moveDashboardToBlob(ctx, blobs, snapshot); err != nil {
+							errhttp.Write(ctx, err, w)
+							return
+						}
+					}
+
+					// A failed create can leave the previously uploaded blob orphaned.
 					_, err = creater.Create(ctx, snapshot, nil, &metav1.CreateOptions{})
 					if err != nil {
 						errhttp.Write(ctx, err, w)

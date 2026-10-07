@@ -1537,6 +1537,7 @@ export type DashboardQueryVariableKindOrTextVariableKindOrConstantVariableKindOr
     TextVariableKind?: DashboardTextVariableKind;
   };
 export type DashboardTabsLayoutTabSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   layout: DashboardGridLayoutKindOrRowsLayoutKindOrAutoGridLayoutKindOrTabsLayoutKind;
   repeat?: DashboardTabRepeatOptions;
@@ -1565,6 +1566,7 @@ export type DashboardRowRepeatOptions = {
   value: string;
 };
 export type DashboardRowsLayoutRowSpec = {
+  annotations?: DashboardAnnotationQueryKind[];
   collapse?: boolean;
   conditionalRendering?: DashboardConditionalRenderingGroupKind;
   fillScreen?: boolean;
