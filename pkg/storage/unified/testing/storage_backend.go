@@ -31,22 +31,23 @@ import (
 
 // Test names for the storage backend test suite
 const (
-	TestHappyPath                 = "happy path"
-	TestWatchWriteEvents          = "watch write events from latest"
-	TestList                      = "list"
-	TestBlobSupport               = "blob support"
-	TestGetResourceStats          = "get resource stats"
-	TestListStoredResources       = "list stored resources"
-	TestListHistory               = "list history"
-	TestListHistoryErrorReporting = "list history error reporting"
-	TestListModifiedSince         = "list events since rv"
-	TestListTrash                 = "list trash"
-	TestCreateNewResource         = "create new resource"
-	TestGetResourceLastImportTime = "get resource last import time"
-	TestConcurrentWriteConflicts  = "concurrent write conflicts"
-	TestClusterScopedResources    = "cluster scoped resources"
-	TestErrorResponses            = "error responses"
-	TestReadAtRVBeforeDelete      = "read at RV edge cases"
+	TestHappyPath                   = "happy path"
+	TestWatchWriteEvents            = "watch write events from latest"
+	TestList                        = "list"
+	TestBlobSupport                 = "blob support"
+	TestGetResourceStats            = "get resource stats"
+	TestListStoredResources         = "list stored resources"
+	TestListHistory                 = "list history"
+	TestListHistoryErrorReporting   = "list history error reporting"
+	TestListModifiedSince           = "list events since rv"
+	TestListTrash                   = "list trash"
+	TestCreateNewResource           = "create new resource"
+	TestGetResourceLastImportTime   = "get resource last import time"
+	TestListResourceLastImportTimes = "list resource last import times"
+	TestConcurrentWriteConflicts    = "concurrent write conflicts"
+	TestClusterScopedResources      = "cluster scoped resources"
+	TestErrorResponses              = "error responses"
+	TestReadAtRVBeforeDelete        = "read at RV edge cases"
 )
 
 type NewBackendFunc func(ctx context.Context) resource.StorageBackend
@@ -95,6 +96,7 @@ func RunStorageBackendTest(t *testing.T, newBackend NewBackendFunc, opts *TestOp
 		{TestCreateNewResource, runTestIntegrationBackendCreateNewResource},
 		{TestListModifiedSince, runTestIntegrationBackendListModifiedSince},
 		{TestGetResourceLastImportTime, runTestIntegrationGetResourceLastImportTime},
+		{TestListResourceLastImportTimes, runTestIntegrationListResourceLastImportTimes},
 		{TestConcurrentWriteConflicts, runTestIntegrationBackendConcurrentWriteConflicts},
 		{TestClusterScopedResources, runTestIntegrationBackendClusterScopedResources},
 		{TestErrorResponses, runTestIntegrationBackendErrorResponses},
@@ -1853,6 +1855,59 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
 		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
 	})
+}
+
+func runTestIntegrationListResourceLastImportTimes(t *testing.T, backend resource.StorageBackend, nsPrefix string) {
+	ctx := t.Context()
+	bulk, ok := backend.(resource.BulkProcessingBackend)
+	require.True(t, ok, "backend does not support bulk import")
+
+	keys := []*resourcepb.ResourceKey{
+		{Namespace: nsPrefix + "-batch1", Group: "dashboards", Resource: "dashboard"},
+		{Namespace: nsPrefix + "-batch1", Group: "folders", Resource: "folder"},
+		{Namespace: nsPrefix + "-batch2", Group: "dashboards", Resource: "dashboard"},
+	}
+	missing := resource.NamespacedResource{Namespace: nsPrefix + "-batch2", Group: "folders", Resource: "folder"}
+	times, err := backend.ListResourceLastImportTimes(ctx)
+	require.NoError(t, err)
+	for _, key := range keys {
+		require.NotContains(t, times, resource.NamespacedResource{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource})
+	}
+
+	importCollections := func(collections []*resourcepb.ResourceKey) {
+		t.Helper()
+		requests := make([]*resourcepb.BulkRequest, 0, len(collections))
+		for _, key := range collections {
+			requests = append(requests, &resourcepb.BulkRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "test",
+				},
+				Action: resourcepb.BulkRequest_ADDED,
+				Value:  []byte(`{ "kind": "Test" }`),
+			})
+		}
+		resp := bulk.ProcessBulk(ctx, resource.BulkSettings{Collection: collections}, toBulkIterator(requests))
+		require.Nil(t, resp.Error)
+		require.Empty(t, resp.Rejected)
+	}
+
+	importCollections(keys[:2])
+	first := collectLastImportedTimes(t, backend, ctx, keys[:2])
+	t.Log("waiting 1s so the second import has a newer timestamp")
+	time.Sleep(time.Second)
+	importCollections([]*resourcepb.ResourceKey{keys[0], keys[2]})
+
+	times, err = backend.ListResourceLastImportTimes(ctx)
+	require.NoError(t, err)
+	for key, single := range collectLastImportedTimes(t, backend, ctx, keys) {
+		require.False(t, single.IsZero())
+		require.Equal(t, single, times[key], "resource %s", key)
+	}
+	dashboards := resource.NamespacedResource{Namespace: keys[0].Namespace, Group: keys[0].Group, Resource: keys[0].Resource}
+	require.True(t, times[dashboards].After(first[dashboards]), "the second dashboard import must be newer")
+	folders := resource.NamespacedResource{Namespace: keys[1].Namespace, Group: keys[1].Group, Resource: keys[1].Resource}
+	require.Equal(t, first[folders], times[folders], "importing dashboards leaves folders unchanged")
+	require.NotContains(t, times, missing)
 }
 
 func collectLastImportedTimes(t *testing.T, backend resource.StorageBackend, ctx context.Context, keys []*resourcepb.ResourceKey) map[resource.NamespacedResource]time.Time {

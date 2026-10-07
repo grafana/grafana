@@ -595,6 +595,19 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
+      getHybridSearchAlertRules: build.query<GetHybridSearchAlertRulesApiResponse, GetHybridSearchAlertRulesApiArg>({
+        query: (queryArg) => ({
+          url: `/search/hybrid`,
+          params: {
+            folder: queryArg.folder,
+            limit: queryArg.limit,
+            minRelevance: queryArg.minRelevance,
+            query: queryArg.query,
+            semanticQuery: queryArg.semanticQuery,
+            skipRerank: queryArg.skipRerank,
+          },
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -1367,6 +1380,21 @@ export type UpdateRuleSequenceStatusApiArg = {
   /** Force is going to "force" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests. */
   force?: boolean;
   patch: Patch;
+};
+export type GetHybridSearchAlertRulesApiResponse = unknown;
+export type GetHybridSearchAlertRulesApiArg = {
+  /** Filter by the stored folder UID */
+  folder?: string;
+  /** Maximum number of results (default 50) */
+  limit?: number;
+  /** Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank */
+  minRelevance?: string;
+  /** Search text for lexical and semantic retrieval */
+  query: string;
+  /** Optional text to embed for semantic retrieval instead of query */
+  semanticQuery?: string;
+  /** Skip reranking and return the fused lexical and semantic ordering */
+  skipRerank?: boolean;
 };
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -2166,4 +2194,6 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
+  useGetHybridSearchAlertRulesQuery,
+  useLazyGetHybridSearchAlertRulesQuery,
 } = injectedRtkApi;
