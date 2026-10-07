@@ -50,7 +50,7 @@ describe('JobSummary', () => {
       },
     ]);
 
-    const row = rowFor('Dashboard');
+    const row = await rowFor('Dashboard');
     const cells = within(row).getAllByRole('cell');
     // Column order: resource, created, deleted, updated, unchanged, warnings, errors, total.
     await user.click(within(cells[5]).getByText('1'));
@@ -75,7 +75,7 @@ describe('JobSummary', () => {
       },
     ]);
 
-    const row = rowFor('Dashboard');
+    const row = await rowFor('Dashboard');
     const cells = within(row).getAllByRole('cell');
     await user.click(within(cells[6]).getByText('1'));
     expect(await screen.findByText('legacy error message')).toBeInTheDocument();
