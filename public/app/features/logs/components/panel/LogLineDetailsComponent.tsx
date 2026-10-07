@@ -12,7 +12,10 @@ import {
 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction, getDataSourceInstance } from '@grafana/runtime';
-import { useFlagGrafanaLogDetailsDisplayedFieldControls } from '@grafana/runtime/internal';
+import {
+  useFlagGrafanaLogDetailsDisplayedFieldControls,
+  useFlagGrafanaOtelLogDetails,
+} from '@grafana/runtime/internal';
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
@@ -50,7 +53,9 @@ export const LogLineDetailsComponent = ({
   timeRange,
   timeZone,
 }: LogLineDetailsComponentProps) => {
-  return log.otelLanguage ? (
+  const otelLogDetailsEnabled = useFlagGrafanaOtelLogDetails();
+
+  return log.otelLanguage && otelLogDetailsEnabled ? (
     <LogLineDetailsOTelComponent
       log={log}
       logs={logs}
