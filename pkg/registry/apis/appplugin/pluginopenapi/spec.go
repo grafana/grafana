@@ -67,7 +67,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.P
 	return pluginroute.NewAPI(plugin, pluginroute.Options{
 		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
 		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
-		SearchAPIEnabled: true, TrashAPIEnabled: true, HybridAPIEnabled: true, KeysAPIEnabled: true,
+		HybridAPIEnabled: true, KeysAPIEnabled: true,
 		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
 		},

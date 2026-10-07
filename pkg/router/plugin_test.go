@@ -220,7 +220,9 @@ func TestPluginBackendHybridSearchConfiguration(t *testing.T) {
 	}{
 		{name: "defaults enable opted-in hybrid", wantSearch: true, wantHybrid: true},
 		{name: "hybrid can be disabled independently", ini: "enable_hybrid_api = false", wantSearch: true},
-		{name: "hybrid only", ini: "enable_search_api = false\nenable_trash_api = false", wantHybrid: true},
+		{name: "removed search setting is ignored", ini: "enable_search_api = false", wantSearch: true, wantHybrid: true},
+		{name: "removed trash setting is ignored", ini: "enable_trash_api = false", wantSearch: true, wantHybrid: true},
+		{name: "both removed settings are ignored", ini: "enable_search_api = false\nenable_trash_api = false", wantSearch: true, wantHybrid: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg, err := setting.NewCfgFromBytes([]byte("[grafana-apiserver]\n" + tc.ini))
