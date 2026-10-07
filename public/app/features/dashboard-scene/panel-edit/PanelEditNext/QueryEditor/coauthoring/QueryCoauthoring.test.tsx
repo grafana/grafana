@@ -852,6 +852,38 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
+  it('recovers prompt focus when the editor reclaims it after opening, so Escape closes the untouched session', async () => {
+    let nextFrameId = 1;
+    const frames = new Map<number, FrameRequestCallback>();
+    const requestFrame = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      const id = nextFrameId++;
+      frames.set(id, callback);
+      return id;
+    });
+    const cancelFrame = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => frames.delete(id));
+    const editor = document.createElement('textarea');
+    editor.setAttribute('aria-label', 'Monaco editor');
+    document.body.append(editor);
+    editor.focus();
+    try {
+      const { user, dismissInvocation } = await setup();
+      const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+      prompt.addEventListener('focus', () => requestAnimationFrame(() => editor.focus()), { once: true });
+      while (frames.size > 0) {
+        const [[id, callback]] = frames;
+        frames.delete(id);
+        act(() => callback(0));
+      }
+      expect(prompt).toHaveFocus();
+      await user.keyboard('{Escape}');
+      expect(dismissInvocation).toHaveBeenCalledTimes(1);
+    } finally {
+      editor.remove();
+      requestFrame.mockRestore();
+      cancelFrame.mockRestore();
+    }
+  });
+
   it.each([false, true])('handles an outside click that stops propagation with engaged=%s', async (engaged) => {
     const { user, dismissInvocation } = await setup();
     const chart = document.createElement('div');

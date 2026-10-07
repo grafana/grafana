@@ -258,6 +258,18 @@ describe('QueryCoauthoringPromptInput', () => {
     expect(prompt).toHaveFocus();
   });
 
+  it('preserves a deliberate outside click after the first prompt focus attempt', () => {
+    renderPrompt(initialPrompt);
+    const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
+    runFocusSettle();
+    expect(prompt).toHaveFocus();
+    const editor = screen.getByRole('button', { name: 'Monaco editor' });
+    fireEvent.pointerDown(editor);
+    editor.focus();
+    drainAnimationFrames();
+    expect(editor).toHaveFocus();
+  });
+
   it('does not steal focus when the user focuses another control during the settle', () => {
     renderPrompt(initialPrompt);
     const prompt = screen.getByRole('textbox', { name: 'Describe a query change' });
