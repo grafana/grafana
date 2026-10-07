@@ -1682,6 +1682,7 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 // MockClient implements the ResourceIndexClient interface for testing
 type MockClient struct {
 	resourcepb.ResourceIndexClient
+	resourcepb.BlobStoreClient
 	resource.ResourceIndex
 
 	// Capture the last SearchRequest for assertions
