@@ -111,17 +111,6 @@ describe('buildDashboardWithAccessInfoFromScene', () => {
     });
   });
 
-  it('carries libraryPanelRepeatUnresolved back out of the scene meta', () => {
-    expect(
-      buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: { libraryPanelRepeatUnresolved: true } }), spec)
-        .libraryPanelRepeatUnresolved
-    ).toBe(true);
-
-    expect(buildDashboardWithAccessInfoFromScene(buildFakeScene({ meta: {} }), spec).libraryPanelRepeatUnresolved).toBe(
-      undefined
-    );
-  });
-
   it('applies metadata defaults when no k8s metadata exists on the scene yet', () => {
     const result = buildDashboardWithAccessInfoFromScene(buildFakeScene({ uid: 'dash-1' }), spec);
 

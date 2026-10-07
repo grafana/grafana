@@ -275,13 +275,14 @@ describe('applyDashboardSpec', () => {
     expect(scene.state.sidebar).toBe(originalSidebar);
   });
 
-  it('keeps libraryPanelRepeatUnresolved across the rebuild', () => {
+  // applyDashboardSpec is authoritative, so the rebuilt scene must not inherit the old scene's "unresolved" marker.
+  it('clears libraryPanelRepeatUnresolved across the rebuild', () => {
     const scene = buildScene(makeSpec('Old title'), true);
     expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
 
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
-    expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
+    expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(undefined);
   });
 
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {

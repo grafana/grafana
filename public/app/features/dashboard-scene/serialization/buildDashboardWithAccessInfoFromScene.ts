@@ -3,7 +3,7 @@ import {
   DASHBOARD_API_GROUP,
   dashboardAPIVersionResolver,
 } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
-import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -42,13 +42,12 @@ function resolveAccess(scene: DashboardScene): EnvelopeAccess {
 export function buildDashboardWithAccessInfoFromScene(
   scene: DashboardScene,
   spec: DashboardV2Spec
-): DashboardWithLoadInfo<DashboardV2Spec> {
+): DashboardWithAccessInfo<DashboardV2Spec> {
   return {
     kind: 'DashboardWithAccessInfo',
     metadata: resolveMetadata(scene),
     access: resolveAccess(scene),
     apiVersion: `${DASHBOARD_API_GROUP}/${dashboardAPIVersionResolver.getV2()}`,
-    libraryPanelRepeatUnresolved: scene.state.meta.libraryPanelRepeatUnresolved,
     spec,
   };
 }
