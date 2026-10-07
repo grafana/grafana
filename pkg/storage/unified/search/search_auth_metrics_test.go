@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
-func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzConfig) (resource.ResourceIndex, *resource.SearchAuthMetrics) {
+func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzConfig) (resource.ResourceIndex, *resource.BleveIndexMetrics) {
 	t.Helper()
 	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
 	backend, err := search.NewBleveBackend(search.BleveOptions{
@@ -36,7 +36,7 @@ func newAuthMetricsIndex(t *testing.T, postRank bool, cfg search.PostRankAuthzCo
 	for i := range 100 {
 		indexDocs(t, index, []*resource.BulkIndexItem{newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"tag"})})
 	}
-	return index, metrics.SearchAuth
+	return index, metrics
 }
 
 func authHistogram(t *testing.T, vec *prometheus.HistogramVec, labels ...string) *dto.Histogram {
@@ -57,9 +57,9 @@ func TestSearchAuthMetricsModes(t *testing.T) {
 			}
 			names, _ := searchNames(t, index, access, listQuery(10))
 			require.Len(t, names, 10)
-			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "success").GetSampleCount())
-			require.EqualValues(t, 10, authHistogram(t, metrics.Returned, mode, "page").GetSampleSum())
-			require.EqualValues(t, client.checked, authHistogram(t, metrics.Checks, mode, "page").GetSampleSum())
+			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "success").GetSampleCount())
+			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
+			require.EqualValues(t, client.checked, authHistogram(t, metrics.SearchAuthChecks, mode, "page").GetSampleSum())
 			switch mode {
 			case "pre_rank":
 				require.Equal(t, 100, client.checked)
@@ -87,9 +87,9 @@ func TestSearchAuthMetricsBudgets(t *testing.T) {
 			}
 			_, response := searchNames(t, index, client, query)
 			require.False(t, response.TotalHitsExact)
-			require.EqualValues(t, 1, testutil.ToFloat64(metrics.Events.WithLabelValues(reason)))
-			require.EqualValues(t, client.checked, authHistogram(t, metrics.Checks, "post_rank", kind).GetSampleSum(), "include both facet and page authorization passes")
-			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, "post_rank", kind, "success").GetSampleCount())
+			require.EqualValues(t, 1, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues(reason)))
+			require.EqualValues(t, client.checked, authHistogram(t, metrics.SearchAuthChecks, "post_rank", kind).GetSampleSum(), "include both facet and page authorization passes")
+			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "post_rank", kind, "success").GetSampleCount())
 		})
 	}
 }
@@ -108,9 +108,9 @@ func TestSearchAuthMetricsFailure(t *testing.T) {
 			ctx := authlib.WithAuthInfo(context.Background(), requester)
 			_, err := index.Search(ctx, failingSearchAccessClient{}, listQuery(10), nil, nil)
 			require.Error(t, err)
-			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "error").GetSampleCount())
-			require.Positive(t, authHistogram(t, metrics.Checks, mode, "page").GetSampleSum())
-			require.Zero(t, authHistogram(t, metrics.Returned, mode, "page").GetSampleCount())
+			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "error").GetSampleCount())
+			require.Positive(t, authHistogram(t, metrics.SearchAuthChecks, mode, "page").GetSampleSum())
+			require.Zero(t, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleCount())
 		})
 	}
 }
@@ -121,9 +121,9 @@ func TestSearchAuthMetricsCursorFallback(t *testing.T) {
 	query.SearchAfter = []string{"doc-000", "doc-000"}
 	_, response := searchNames(t, index, &countingAccessClient{allowAll: true}, query)
 	require.NotNil(t, response)
-	require.EqualValues(t, 1, testutil.ToFloat64(metrics.Events.WithLabelValues("cursor_fallback")))
-	require.EqualValues(t, 1, authHistogram(t, metrics.Duration, "pre_rank", "page", "success").GetSampleCount())
-	require.Zero(t, authHistogram(t, metrics.Duration, "post_rank", "page", "success").GetSampleCount())
+	require.EqualValues(t, 1, testutil.ToFloat64(metrics.SearchAuthEvents.WithLabelValues("cursor_fallback")))
+	require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, "pre_rank", "page", "success").GetSampleCount())
+	require.Zero(t, authHistogram(t, metrics.SearchAuthDuration, "post_rank", "page", "success").GetSampleCount())
 }
 
 func TestSearchAuthMetricsFieldValues(t *testing.T) {
@@ -139,8 +139,8 @@ func TestSearchAuthMetricsFieldValues(t *testing.T) {
 			require.Nil(t, response.Error)
 			require.Nil(t, response.Results)
 			require.Len(t, response.Rows, 10)
-			require.EqualValues(t, 10, authHistogram(t, metrics.Returned, mode, "page").GetSampleSum())
-			require.EqualValues(t, 1, authHistogram(t, metrics.Duration, mode, "page", "success").GetSampleCount())
+			require.EqualValues(t, 10, authHistogram(t, metrics.SearchAuthReturned, mode, "page").GetSampleSum())
+			require.EqualValues(t, 1, authHistogram(t, metrics.SearchAuthDuration, mode, "page", "success").GetSampleCount())
 		})
 	}
 }

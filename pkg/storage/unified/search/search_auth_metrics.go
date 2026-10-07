@@ -11,32 +11,29 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-type searchAuthObservationKey struct{}
-
 // A federated PreRank search can authorize several indexes concurrently.
 // Accumulate locally and update histograms once per executed search.
 type searchAuthObservation struct {
-	metrics *resource.SearchAuthMetrics
+	metrics *resource.BleveIndexMetrics
 	checks  atomic.Int64
 }
 
 func newSearchAuthObservation(metrics *resource.BleveIndexMetrics) *searchAuthObservation {
-	if metrics == nil || metrics.SearchAuth == nil {
+	if metrics == nil {
 		return nil
 	}
-	return &searchAuthObservation{metrics: metrics.SearchAuth}
+	return &searchAuthObservation{metrics: metrics}
 }
 
-func withSearchAuthObservation(ctx context.Context, access authlib.AccessClient, metrics *resource.BleveIndexMetrics) (context.Context, authlib.AccessClient, *searchAuthObservation) {
+func withSearchAuthObservation(access authlib.AccessClient, metrics *resource.BleveIndexMetrics) (authlib.AccessClient, *searchAuthObservation) {
 	observation := newSearchAuthObservation(metrics)
 	if observation == nil {
-		return ctx, access, nil
+		return access, nil
 	}
-	ctx = context.WithValue(ctx, searchAuthObservationKey{}, observation)
 	if access != nil {
 		access = &observedSearchAccessClient{AccessClient: access, observation: observation}
 	}
-	return ctx, access, observation
+	return access, observation
 }
 
 func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRank, cursorFallback bool) func(*resourcepb.ResourceSearchResponse, error) {
@@ -50,22 +47,11 @@ func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, acc
 		mode = "post_rank"
 	}
 	if cursorFallback {
-		o.event("cursor_fallback")
+		o.metrics.SearchAuthEvents.WithLabelValues("cursor_fallback").Inc()
 	}
 	started := time.Now()
 	return func(result *resourcepb.ResourceSearchResponse, err error) {
 		o.observe(mode, searchAuthQueryType(req), started, result, err)
-	}
-}
-
-func searchAuthObservationFromContext(ctx context.Context) *searchAuthObservation {
-	observation, _ := ctx.Value(searchAuthObservationKey{}).(*searchAuthObservation)
-	return observation
-}
-
-func (o *searchAuthObservation) event(reason string) {
-	if o != nil {
-		o.metrics.Events.WithLabelValues(reason).Inc()
 	}
 }
 
@@ -91,10 +77,10 @@ func (o *searchAuthObservation) observe(mode, queryType string, started time.Tim
 		if result.Results != nil {
 			returned = len(result.Results.Rows)
 		}
-		o.metrics.Returned.WithLabelValues(mode, queryType).Observe(float64(returned))
+		o.metrics.SearchAuthReturned.WithLabelValues(mode, queryType).Observe(float64(returned))
 	}
-	o.metrics.Duration.WithLabelValues(mode, queryType, outcome).Observe(time.Since(started).Seconds())
-	o.metrics.Checks.WithLabelValues(mode, queryType).Observe(float64(o.checks.Load()))
+	o.metrics.SearchAuthDuration.WithLabelValues(mode, queryType, outcome).Observe(time.Since(started).Seconds())
+	o.metrics.SearchAuthChecks.WithLabelValues(mode, queryType).Observe(float64(o.checks.Load()))
 }
 
 type observedSearchAccessClient struct {

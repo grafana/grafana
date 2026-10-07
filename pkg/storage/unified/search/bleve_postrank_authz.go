@@ -388,7 +388,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
 			if !exhausted {
-				searchAuthObservationFromContext(ctx).event("candidate_budget")
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
 			}
 			break
 		}
@@ -554,7 +554,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
 			if candidates < int64(firstRes.Total) {
-				searchAuthObservationFromContext(ctx).event("facet_budget")
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("facet_budget").Inc()
 			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}

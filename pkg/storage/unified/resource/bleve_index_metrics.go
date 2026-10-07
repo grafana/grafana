@@ -8,7 +8,10 @@ import (
 )
 
 type BleveIndexMetrics struct {
-	SearchAuth           *SearchAuthMetrics
+	SearchAuthDuration   *prometheus.HistogramVec
+	SearchAuthReturned   *prometheus.HistogramVec
+	SearchAuthChecks     *prometheus.HistogramVec
+	SearchAuthEvents     *prometheus.CounterVec
 	IndexSize            prometheus.Gauge
 	IndexedKinds         *prometheus.GaugeVec
 	IndexCreationTime    *prometheus.HistogramVec
@@ -81,8 +84,23 @@ var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 5
 // ProvideIndexMetrics builds the index metrics. A nil reg leaves them
 // unregistered, so callers without a registry never have to check for nil.
 func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
+	histogram := func(name, help string, labels ...string) *prometheus.HistogramVec {
+		return promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            name,
+			Help:                            help,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, labels)
+	}
 	m := &BleveIndexMetrics{
-		SearchAuth: newSearchAuthMetrics(reg),
+		SearchAuthDuration: histogram("grafana_index_server_search_auth_execution_duration_seconds", "Search execution duration after request validation, including authorization, ranking and response conversion, by actual auth mode (pre_rank, post_rank, none), query type and outcome. Count is executed searches, not incoming RPCs.", "mode", "query_type", "outcome"),
+		SearchAuthReturned: histogram("grafana_index_server_search_auth_returned_documents", "Documents returned per successful executed search.", "mode", "query_type"),
+		SearchAuthChecks:   histogram("grafana_index_server_search_auth_checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
+		SearchAuthEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_auth_events_total",
+			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget stop a PostRank scan with unseen matches.",
+		}, []string{"reason"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
 			Help: "Size of the index in bytes - only for file-based indices",

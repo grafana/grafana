@@ -2369,7 +2369,7 @@ func (b *bleveIndex) Search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
-	ctx, access, authMetrics := withSearchAuthObservation(ctx, access, b.indexMetrics)
+	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
 	cursorFallback := false
 
 	// A trash search replaces the read check with the trash rule on whichever authz
