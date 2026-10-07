@@ -26,6 +26,7 @@ import {
   useRowCompiler,
   useTypographyCtx,
   useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -48,6 +49,7 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
 } from './utils';
@@ -78,6 +80,8 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
+    onCellAddToAssistant,
     onColumnResize,
     onDisplayedRowIndicesChange,
     onSortByChange,
@@ -111,6 +115,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const wrapFallback = useTextWrapFallback(data);
   // Row-height and column-width measurement must both see the same rendered value column-building
   // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
   // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
@@ -194,6 +199,7 @@ export function TableFlat(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
@@ -214,6 +220,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
     columnWidths: widths,
     fields: visibleFields,
     enabled: hasHeader,
@@ -231,6 +238,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const rowHeight = useFlatRowHeight({
+    wrapFallback,
     columnWidths: widths,
     fields: preparedFields,
     defaultHeight: defaultRowHeight,
@@ -283,6 +291,7 @@ export function TableFlat(props: TableNGProps) {
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -294,6 +303,8 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
@@ -309,6 +320,7 @@ export function TableFlat(props: TableNGProps) {
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -317,6 +329,8 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
@@ -371,9 +385,9 @@ export function TableFlat(props: TableNGProps) {
       onCellClick={onCellClick}
       className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {

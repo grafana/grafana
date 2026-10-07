@@ -1640,7 +1640,7 @@ spec:
 	// Document connection repositories endpoint
 	sub = oas.Paths.Paths[connectionprefix+"/repositories"]
 	if sub != nil {
-		sub.Get.Description = "List repositories available from the external git provider through this connection"
+		sub.Get.Description = "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories"
 		sub.Get.Summary = "List external repositories"
 		sub.Get.Parameters = []*spec3.Parameter{}
 		sub.Post = nil

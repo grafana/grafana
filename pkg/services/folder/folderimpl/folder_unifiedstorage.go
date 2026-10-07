@@ -274,7 +274,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -345,7 +345,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
