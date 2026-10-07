@@ -375,8 +375,7 @@ pluginsSriChecks,2024-10-04T12:55:09Z,,0db65d229e36b78802c1e8bd0713ac44e7a7cdc7,
 onPremToCloudMigrationsAlerts,2024-10-07T10:53:24Z,2024-12-17T11:56:18Z,712314e8324fd86ec33ecb840f868eb1f1cac154,Matheus Macabu
 appPlatformGrpcClientAuth,2024-10-14T10:47:18Z,,a69ee676babc7644da41781efc5ae2c301f06de6,Claudiu Dragalina-Paraipan
 kubernetesDashboardsAPI,2024-10-15T19:30:05Z,2024-12-10T18:35:36Z,644a16048f034f6bc79883678f1f1a4b48233483,Stephanie Hingtgen
-unifiedStorageBigObjectsSupport,2024-10-17T10:18:29Z,2026-05-11T08:18:09Z,3457f219be1c8bce99f713d7a907ee339ef38229,Ryan McKinley
-timeRangeProvider,2024-10-22T10:52:33Z,,3bf3290340a7842bb1d83647343234b2e9e83b18,Andrej Ocenas
+unifiedStorageBigObjectsSupport,2024-10-17T10:18:29Z,,3457f219be1c8bce99f713d7a907ee339ef38229,Ryan McKinley
 dashboardNewLayouts,2024-10-23T08:55:45Z,,b700de81224caacd327fafb6ce0dfda8b38d39c6,Torkel Ödegaard
 prometheusUsesCombobox,2024-10-23T11:18:33Z,2025-04-22T16:54:10Z,2cf6a6388ba36246ed425664783682a0be4f37f8,Josh Hunt
 lokiShardSplitting,2024-10-23T11:21:03Z,,2573cbec083e8f5160888a455efd435b8d03549f,Matias Chomicki

@@ -81,7 +81,6 @@ declare module "@openfeature/core" {
     | "vizActionsAuth"
     | "alertingPrometheusRulesPrimary"
     | "rolePickerDrawer"
-    | "timeRangeProvider"
     | "enableExtensionsAdminPage"
     | "crashDetection"
     | "azureMonitorEnableUserAuth"
