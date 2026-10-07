@@ -2,7 +2,6 @@ package playlist
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -12,9 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
+	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -37,38 +37,33 @@ type mockAttributes struct {
 
 func (m *mockAttributes) IsResourceRequest() bool { return m.isResourceRequest }
 func (m *mockAttributes) GetVerb() string         { return m.verb }
+func (m *mockAttributes) GetAPIGroup() string     { return "playlist.grafana.app" }
+func (m *mockAttributes) GetResource() string     { return "playlists" }
+func (m *mockAttributes) GetNamespace() string    { return "default" }
+func (m *mockAttributes) GetName() string         { return "my-playlist" }
 
-func installerWithToggle(t *testing.T, on bool, ac accesscontrol.AccessControl) *AppInstaller {
+func installerWithToggle(t *testing.T, on bool, ac authlib.AccessClient) *AppInstaller {
 	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
 		featuremgmt.FlagPlaylistsRBAC: setting.NewInMemoryFlag(featuremgmt.FlagPlaylistsRBAC, on),
 	})
 	return &AppInstaller{
-		accessControl: ac,
-		logger:        log.NewNopLogger(),
+		accessClient: ac,
+		logger:       log.NewNopLogger(),
 	}
 }
 
-// mockAccessControl implements accesscontrol.AccessControl for testing
-type mockAccessControl struct {
-	accesscontrol.AccessControl
-	evaluateFunc func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error)
+// mockAccessClient implements authlib.AccessClient for testing
+type mockAccessClient struct {
+	authlib.AccessClient
+	checkFunc func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error)
 }
 
-func (m *mockAccessControl) Evaluate(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	if m.evaluateFunc != nil {
-		return m.evaluateFunc(ctx, user, evaluator)
+func (m *mockAccessClient) Check(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest, _ string) (authlib.CheckResponse, error) {
+	if m.checkFunc != nil {
+		return m.checkFunc(ctx, info, req)
 	}
-	return false, nil
+	return authlib.CheckResponse{}, nil
 }
-
-func (m *mockAccessControl) RegisterScopeAttributeResolver(prefix string, resolver accesscontrol.ScopeAttributeResolver) {
-}
-
-func (m *mockAccessControl) WithoutResolvers() accesscontrol.AccessControl {
-	return m
-}
-
-func (m *mockAccessControl) InvalidateResolverCache(orgID int64, scope string) {}
 
 func TestGetAuthorizer(t *testing.T) {
 	tests := []struct {
@@ -78,101 +73,87 @@ func TestGetAuthorizer(t *testing.T) {
 		hasPermission    bool
 		withoutUser      bool
 		expectedDecision authorizer.Decision
-		expectedAction   string
 		expectedReason   string
 	}{
-		// Read verbs → playlists:read
 		{
-			name:             "get with read permission allows",
+			name:             "get with permission allows",
 			verb:             "get",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
 		},
 		{
-			name:             "get without read permission denies",
+			name:             "get without permission denies",
 			verb:             "get",
 			isResourceReq:    true,
 			hasPermission:    false,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsRead,
 			expectedReason:   "insufficient permissions",
 		},
 		{
-			name:             "list with read permission allows",
+			name:             "list with permission allows",
 			verb:             "list",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
 		},
 		{
-			name:             "watch with read permission allows",
+			name:             "watch with permission allows",
 			verb:             "watch",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsRead,
 		},
-		// Write verbs → playlists:write
 		{
-			name:             "create with write permission allows",
+			name:             "create with permission allows",
 			verb:             "create",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		{
-			name:             "create without write permission denies",
+			name:             "create without permission denies",
 			verb:             "create",
 			isResourceReq:    true,
 			hasPermission:    false,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsWrite,
 			expectedReason:   "insufficient permissions",
 		},
 		{
-			name:             "update with write permission allows",
+			name:             "update with permission allows",
 			verb:             "update",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		{
-			name:             "patch with write permission allows",
+			name:             "patch with permission allows",
 			verb:             "patch",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		{
-			name:             "delete with write permission allows",
+			name:             "delete with permission allows",
 			verb:             "delete",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		{
-			name:             "delete without write permission denies",
+			name:             "delete without permission denies",
 			verb:             "delete",
 			isResourceReq:    true,
 			hasPermission:    false,
 			expectedDecision: authorizer.DecisionDeny,
-			expectedAction:   ActionPlaylistsWrite,
 			expectedReason:   "insufficient permissions",
 		},
 		{
-			name:             "deletecollection with write permission allows",
+			name:             "deletecollection with permission allows",
 			verb:             "deletecollection",
 			isResourceReq:    true,
 			hasPermission:    true,
 			expectedDecision: authorizer.DecisionAllow,
-			expectedAction:   ActionPlaylistsWrite,
 		},
 		// Edge cases
 		{
@@ -201,16 +182,11 @@ func TestGetAuthorizer(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var evaluatedAction string
-			mockAC := &mockAccessControl{
-				evaluateFunc: func(ctx context.Context, user identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-					evalStr := evaluator.String()
-					if strings.Contains(evalStr, ActionPlaylistsRead) {
-						evaluatedAction = ActionPlaylistsRead
-					} else if strings.Contains(evalStr, ActionPlaylistsWrite) {
-						evaluatedAction = ActionPlaylistsWrite
-					}
-					return tt.hasPermission, nil
+			var checked *authlib.CheckRequest
+			mockAC := &mockAccessClient{
+				checkFunc: func(ctx context.Context, info authlib.AuthInfo, req authlib.CheckRequest) (authlib.CheckResponse, error) {
+					checked = &req
+					return authlib.CheckResponse{Allowed: tt.hasPermission}, nil
 				},
 			}
 
@@ -243,15 +219,23 @@ func TestGetAuthorizer(t *testing.T) {
 			if tt.expectedReason != "" {
 				assert.Contains(t, reason, tt.expectedReason)
 			}
-			if tt.isResourceReq && !tt.withoutUser && tt.expectedAction != "" && tt.verb != "unsupported" {
-				assert.Equal(t, tt.expectedAction, evaluatedAction)
+			if tt.isResourceReq && !tt.withoutUser && tt.verb != "unsupported" {
+				require.NotNil(t, checked)
+				assert.Equal(t, authlib.CheckRequest{
+					Verb:      tt.verb,
+					Group:     "playlist.grafana.app",
+					Resource:  "playlists",
+					Namespace: "default",
+				}, *checked)
+			} else {
+				assert.Nil(t, checked)
 			}
 		})
 	}
 }
 
 func TestGetAuthorizerToggleOff(t *testing.T) {
-	mockAC := &mockAccessControl{}
+	mockAC := &mockAccessClient{}
 
 	noneCtx := identity.WithRequester(context.Background(), &identity.StaticRequester{
 		OrgID:   1,

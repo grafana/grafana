@@ -7,6 +7,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	restclient "k8s.io/client-go/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
@@ -28,25 +29,28 @@ var (
 
 type AppInstaller struct {
 	appsdkapiserver.AppInstaller
-	accessControl accesscontrol.AccessControl
-	logger        log.Logger
+	accessClient authlib.AccessClient
+	logger       log.Logger
 }
 
 func RegisterAppInstaller(
 	cfg *setting.Cfg,
 	accessControlService accesscontrol.Service,
-	ac accesscontrol.AccessControl,
+	accessClient authlib.AccessClient,
 ) (*AppInstaller, error) {
 	if err := DeclareFixedRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("declaring fixed roles: %w", err)
 	}
+	return NewAppInstaller(accessClient, cfg.EnablePlaylistsReconciler)
+}
 
+func NewAppInstaller(accessClient authlib.AccessClient, enableReconcilers bool) (*AppInstaller, error) {
 	installer := &AppInstaller{
-		accessControl: ac,
-		logger:        log.New("playlist.api"),
+		accessClient: accessClient,
+		logger:       log.New("playlist.api"),
 	}
 	specificConfig := any(&playlistapp.PlaylistConfig{
-		EnableReconcilers: cfg.EnablePlaylistsReconciler,
+		EnableReconcilers: enableReconcilers,
 	})
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
 
@@ -90,22 +94,23 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 				}
 			}
 
-			var action string
 			switch attr.GetVerb() {
-			case "get", "list", "watch":
-				action = ActionPlaylistsRead
-			case "create", "update", "patch", "delete", "deletecollection":
-				action = ActionPlaylistsWrite
+			case "get", "list", "watch", "create", "update", "patch", "delete", "deletecollection":
 			default:
 				return authorizer.DecisionDeny, "unsupported verb: " + attr.GetVerb(), nil
 			}
 
-			hasAccess, err := p.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(action))
+			res, err := p.accessClient.Check(ctx, user, authlib.CheckRequest{
+				Verb:      attr.GetVerb(),
+				Group:     attr.GetAPIGroup(),
+				Resource:  attr.GetResource(),
+				Namespace: attr.GetNamespace(),
+			}, "")
 			if err != nil {
 				p.logger.Error("failed to evaluate permission", "error", err)
 				return authorizer.DecisionDeny, "permission evaluation failed", err
 			}
-			if !hasAccess {
+			if !res.Allowed {
 				return authorizer.DecisionDeny, "insufficient permissions", nil
 			}
 
