@@ -1361,8 +1361,9 @@ type HybridSearchResult struct {
 	// when resolution fails — best-effort display data, never an error.
 	FolderTitle string `protobuf:"bytes,6,opt,name=folder_title,json=folderTitle,proto3" json:"folder_title,omitempty"`
 	// Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
-	// With a reranker configured this is the calibrated cross-encoder relevance (roughly
-	// 0-1); otherwise it is the RRF fusion score.
+	// After successful reranking this is the calibrated cross-encoder relevance
+	// (roughly 0-1); otherwise HybridSearch returns the RRF fusion score and
+	// HybridSearchResources returns reciprocal rank in the combined ordering.
 	// This is NOT comparable to VectorSearchResult.score (raw cosine distance).
 	Score float64 `protobuf:"fixed64,4,opt,name=score,proto3" json:"score,omitempty"`
 	// Matching embedded chunks, best first, capped at 10 per result.
@@ -1530,6 +1531,120 @@ func (x *HybridSearchChunk) GetMetadata() []byte {
 	return nil
 }
 
+type HybridSearchResourcesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Required tenant namespace, shared by every requested resource type.
+	Namespace string `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Between 1 and 10 unique group/resource pairs.
+	Resources []*HybridSearchResourcesRequest_Resource `protobuf:"bytes,2,rep,name=resources,proto3" json:"resources,omitempty"`
+	// Required lexical query; also used for semantic search and reranking unless
+	// semantic_query is set. Max 1000 bytes.
+	Query string `protobuf:"bytes,3,opt,name=query,proto3" json:"query,omitempty"`
+	// Optional semantic search and reranking query. Max 1000 bytes.
+	SemanticQuery string `protobuf:"bytes,4,opt,name=semantic_query,json=semanticQuery,proto3" json:"semantic_query,omitempty"`
+	// Overall result limit across all resource types. Defaults to 50, capped at 200.
+	Limit int64 `protobuf:"varint,5,opt,name=limit,proto3" json:"limit,omitempty"`
+	// Exact-match filters applied to every requested resource type. Only "uid"
+	// and "folder" are supported, with the same limits as HybridSearchRequest.
+	Filters []*Requirement `protobuf:"bytes,6,rep,name=filters,proto3" json:"filters,omitempty"`
+	// Applied after combined reranking. Same levels and best-effort behavior as
+	// HybridSearchRequest.min_relevance.
+	MinRelevance string `protobuf:"bytes,7,opt,name=min_relevance,json=minRelevance,proto3" json:"min_relevance,omitempty"`
+	// Skip combined reranking, interleaving results in the requested resource
+	// order while preserving each resource type's ranking. This ordering also
+	// applies when no reranker is configured or reranking fails.
+	// Cannot be combined with min_relevance.
+	SkipRerank    bool `protobuf:"varint,8,opt,name=skip_rerank,json=skipRerank,proto3" json:"skip_rerank,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HybridSearchResourcesRequest) Reset() {
+	*x = HybridSearchResourcesRequest{}
+	mi := &file_search_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HybridSearchResourcesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HybridSearchResourcesRequest) ProtoMessage() {}
+
+func (x *HybridSearchResourcesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_search_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HybridSearchResourcesRequest.ProtoReflect.Descriptor instead.
+func (*HybridSearchResourcesRequest) Descriptor() ([]byte, []int) {
+	return file_search_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *HybridSearchResourcesRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *HybridSearchResourcesRequest) GetResources() []*HybridSearchResourcesRequest_Resource {
+	if x != nil {
+		return x.Resources
+	}
+	return nil
+}
+
+func (x *HybridSearchResourcesRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+func (x *HybridSearchResourcesRequest) GetSemanticQuery() string {
+	if x != nil {
+		return x.SemanticQuery
+	}
+	return ""
+}
+
+func (x *HybridSearchResourcesRequest) GetLimit() int64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *HybridSearchResourcesRequest) GetFilters() []*Requirement {
+	if x != nil {
+		return x.Filters
+	}
+	return nil
+}
+
+func (x *HybridSearchResourcesRequest) GetMinRelevance() string {
+	if x != nil {
+		return x.MinRelevance
+	}
+	return ""
+}
+
+func (x *HybridSearchResourcesRequest) GetSkipRerank() bool {
+	if x != nil {
+		return x.SkipRerank
+	}
+	return false
+}
+
 type ResourceStatsResponse_Stats struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource group
@@ -1544,7 +1659,7 @@ type ResourceStatsResponse_Stats struct {
 
 func (x *ResourceStatsResponse_Stats) Reset() {
 	*x = ResourceStatsResponse_Stats{}
-	mi := &file_search_proto_msgTypes[16]
+	mi := &file_search_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1556,7 +1671,7 @@ func (x *ResourceStatsResponse_Stats) String() string {
 func (*ResourceStatsResponse_Stats) ProtoMessage() {}
 
 func (x *ResourceStatsResponse_Stats) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[16]
+	mi := &file_search_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1603,7 +1718,7 @@ type ResourceSearchRequest_Sort struct {
 
 func (x *ResourceSearchRequest_Sort) Reset() {
 	*x = ResourceSearchRequest_Sort{}
-	mi := &file_search_proto_msgTypes[17]
+	mi := &file_search_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1615,7 +1730,7 @@ func (x *ResourceSearchRequest_Sort) String() string {
 func (*ResourceSearchRequest_Sort) ProtoMessage() {}
 
 func (x *ResourceSearchRequest_Sort) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[17]
+	mi := &file_search_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1655,7 +1770,7 @@ type ResourceSearchRequest_Facet struct {
 
 func (x *ResourceSearchRequest_Facet) Reset() {
 	*x = ResourceSearchRequest_Facet{}
-	mi := &file_search_proto_msgTypes[18]
+	mi := &file_search_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1667,7 +1782,7 @@ func (x *ResourceSearchRequest_Facet) String() string {
 func (*ResourceSearchRequest_Facet) ProtoMessage() {}
 
 func (x *ResourceSearchRequest_Facet) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[18]
+	mi := &file_search_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1711,7 +1826,7 @@ type ResourceSearchRequest_QueryField struct {
 
 func (x *ResourceSearchRequest_QueryField) Reset() {
 	*x = ResourceSearchRequest_QueryField{}
-	mi := &file_search_proto_msgTypes[19]
+	mi := &file_search_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1723,7 +1838,7 @@ func (x *ResourceSearchRequest_QueryField) String() string {
 func (*ResourceSearchRequest_QueryField) ProtoMessage() {}
 
 func (x *ResourceSearchRequest_QueryField) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[19]
+	mi := &file_search_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1768,7 +1883,7 @@ type ResourceSearchResponse_Facet struct {
 
 func (x *ResourceSearchResponse_Facet) Reset() {
 	*x = ResourceSearchResponse_Facet{}
-	mi := &file_search_proto_msgTypes[21]
+	mi := &file_search_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1780,7 +1895,7 @@ func (x *ResourceSearchResponse_Facet) String() string {
 func (*ResourceSearchResponse_Facet) ProtoMessage() {}
 
 func (x *ResourceSearchResponse_Facet) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[21]
+	mi := &file_search_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1834,7 +1949,7 @@ type ResourceSearchResponse_TermFacet struct {
 
 func (x *ResourceSearchResponse_TermFacet) Reset() {
 	*x = ResourceSearchResponse_TermFacet{}
-	mi := &file_search_proto_msgTypes[22]
+	mi := &file_search_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1846,7 +1961,7 @@ func (x *ResourceSearchResponse_TermFacet) String() string {
 func (*ResourceSearchResponse_TermFacet) ProtoMessage() {}
 
 func (x *ResourceSearchResponse_TermFacet) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[22]
+	mi := &file_search_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1887,7 +2002,7 @@ type RebuildIndexesResponse_IndexBuildTime struct {
 
 func (x *RebuildIndexesResponse_IndexBuildTime) Reset() {
 	*x = RebuildIndexesResponse_IndexBuildTime{}
-	mi := &file_search_proto_msgTypes[24]
+	mi := &file_search_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1899,7 +2014,7 @@ func (x *RebuildIndexesResponse_IndexBuildTime) String() string {
 func (*RebuildIndexesResponse_IndexBuildTime) ProtoMessage() {}
 
 func (x *RebuildIndexesResponse_IndexBuildTime) ProtoReflect() protoreflect.Message {
-	mi := &file_search_proto_msgTypes[24]
+	mi := &file_search_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1934,6 +2049,58 @@ func (x *RebuildIndexesResponse_IndexBuildTime) GetBuildTimeUnix() int64 {
 		return x.BuildTimeUnix
 	}
 	return 0
+}
+
+type HybridSearchResourcesRequest_Resource struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Group         string                 `protobuf:"bytes,1,opt,name=group,proto3" json:"group,omitempty"`
+	Resource      string                 `protobuf:"bytes,2,opt,name=resource,proto3" json:"resource,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HybridSearchResourcesRequest_Resource) Reset() {
+	*x = HybridSearchResourcesRequest_Resource{}
+	mi := &file_search_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HybridSearchResourcesRequest_Resource) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HybridSearchResourcesRequest_Resource) ProtoMessage() {}
+
+func (x *HybridSearchResourcesRequest_Resource) ProtoReflect() protoreflect.Message {
+	mi := &file_search_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HybridSearchResourcesRequest_Resource.ProtoReflect.Descriptor instead.
+func (*HybridSearchResourcesRequest_Resource) Descriptor() ([]byte, []int) {
+	return file_search_proto_rawDescGZIP(), []int{16, 0}
+}
+
+func (x *HybridSearchResourcesRequest_Resource) GetGroup() string {
+	if x != nil {
+		return x.Group
+	}
+	return ""
+}
+
+func (x *HybridSearchResourcesRequest_Resource) GetResource() string {
+	if x != nil {
+		return x.Resource
+	}
+	return ""
 }
 
 var File_search_proto protoreflect.FileDescriptor
@@ -2227,38 +2394,69 @@ var file_search_proto_rawDesc = string([]byte{
 	0x62, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x63, 0x6f, 0x6e,
 	0x74, 0x65, 0x6e, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x63, 0x6f, 0x6e, 0x74,
 	0x65, 0x6e, 0x74, 0x12, 0x1a, 0x0a, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x18,
-	0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x32,
-	0x9c, 0x03, 0x0a, 0x0d, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x49, 0x6e, 0x64, 0x65,
-	0x78, 0x12, 0x4b, 0x0a, 0x06, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x1f, 0x2e, 0x72, 0x65,
-	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53,
-	0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x72,
-	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
-	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b,
-	0x0a, 0x08, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x73, 0x12, 0x1e, 0x2e, 0x72, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x74,
-	0x61, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1f, 0x2e, 0x72, 0x65, 0x73,
-	0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x74,
-	0x61, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x53, 0x0a, 0x0e, 0x52,
-	0x65, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x65, 0x73, 0x12, 0x1f, 0x2e,
-	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x62, 0x75, 0x69, 0x6c, 0x64,
-	0x49, 0x6e, 0x64, 0x65, 0x78, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x20,
-	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x62, 0x75, 0x69, 0x6c,
-	0x64, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x4d, 0x0a, 0x0c, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
-	0x12, 0x1d, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x56, 0x65, 0x63, 0x74,
-	0x6f, 0x72, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a,
-	0x1e, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x56, 0x65, 0x63, 0x74, 0x6f,
-	0x72, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
-	0x4d, 0x0a, 0x0c, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12,
-	0x1d, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x48, 0x79, 0x62, 0x72, 0x69,
-	0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e,
-	0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64,
-	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x3b,
-	0x5a, 0x39, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x72, 0x61,
-	0x66, 0x61, 0x6e, 0x61, 0x2f, 0x67, 0x72, 0x61, 0x66, 0x61, 0x6e, 0x61, 0x2f, 0x70, 0x6b, 0x67,
-	0x2f, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2f, 0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64,
-	0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x03, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x08, 0x6d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22,
+	0x93, 0x03, 0x0a, 0x1c, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68,
+	0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x1c, 0x0a, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x09, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x12, 0x4d,
+	0x0a, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x18, 0x02, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x2f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x48, 0x79, 0x62,
+	0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x52, 0x09, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x12, 0x14, 0x0a,
+	0x05, 0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x71, 0x75,
+	0x65, 0x72, 0x79, 0x12, 0x25, 0x0a, 0x0e, 0x73, 0x65, 0x6d, 0x61, 0x6e, 0x74, 0x69, 0x63, 0x5f,
+	0x71, 0x75, 0x65, 0x72, 0x79, 0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0d, 0x73, 0x65, 0x6d,
+	0x61, 0x6e, 0x74, 0x69, 0x63, 0x51, 0x75, 0x65, 0x72, 0x79, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69,
+	0x6d, 0x69, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x03, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74,
+	0x12, 0x2f, 0x0a, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28,
+	0x0b, 0x32, 0x15, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x71,
+	0x75, 0x69, 0x72, 0x65, 0x6d, 0x65, 0x6e, 0x74, 0x52, 0x07, 0x66, 0x69, 0x6c, 0x74, 0x65, 0x72,
+	0x73, 0x12, 0x23, 0x0a, 0x0d, 0x6d, 0x69, 0x6e, 0x5f, 0x72, 0x65, 0x6c, 0x65, 0x76, 0x61, 0x6e,
+	0x63, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x6d, 0x69, 0x6e, 0x52, 0x65, 0x6c,
+	0x65, 0x76, 0x61, 0x6e, 0x63, 0x65, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x6b, 0x69, 0x70, 0x5f, 0x72,
+	0x65, 0x72, 0x61, 0x6e, 0x6b, 0x18, 0x08, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x73, 0x6b, 0x69,
+	0x70, 0x52, 0x65, 0x72, 0x61, 0x6e, 0x6b, 0x1a, 0x3c, 0x0a, 0x08, 0x52, 0x65, 0x73, 0x6f, 0x75,
+	0x72, 0x63, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x05, 0x67, 0x72, 0x6f, 0x75, 0x70, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x72, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x32, 0xfd, 0x03, 0x0a, 0x0d, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x12, 0x4b, 0x0a, 0x06, 0x53, 0x65, 0x61, 0x72, 0x63,
+	0x68, 0x12, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73,
+	0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x1a, 0x20, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4b, 0x0a, 0x08, 0x47, 0x65, 0x74, 0x53, 0x74, 0x61, 0x74, 0x73,
+	0x12, 0x1e, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x1a, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52, 0x65, 0x73, 0x6f,
+	0x75, 0x72, 0x63, 0x65, 0x53, 0x74, 0x61, 0x74, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x65, 0x12, 0x53, 0x0a, 0x0e, 0x52, 0x65, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x6e, 0x64, 0x65,
+	0x78, 0x65, 0x73, 0x12, 0x1f, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x52,
+	0x65, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x65, 0x73, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x20, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
+	0x52, 0x65, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x49, 0x6e, 0x64, 0x65, 0x78, 0x65, 0x73, 0x52, 0x65,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0c, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72,
+	0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x1d, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x2e, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x56, 0x65, 0x63, 0x74, 0x6f, 0x72, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x4d, 0x0a, 0x0c, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53,
+	0x65, 0x61, 0x72, 0x63, 0x68, 0x12, 0x1d, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x71,
+	0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e,
+	0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x5f, 0x0a, 0x15, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65,
+	0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x12, 0x26, 0x2e,
+	0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x2e, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53,
+	0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x73, 0x52, 0x65,
+	0x71, 0x75, 0x65, 0x73, 0x74, 0x1a, 0x1e, 0x2e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x2e, 0x48, 0x79, 0x62, 0x72, 0x69, 0x64, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x3b, 0x5a, 0x39, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e,
+	0x63, 0x6f, 0x6d, 0x2f, 0x67, 0x72, 0x61, 0x66, 0x61, 0x6e, 0x61, 0x2f, 0x67, 0x72, 0x61, 0x66,
+	0x61, 0x6e, 0x61, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x73, 0x74, 0x6f, 0x72, 0x61, 0x67, 0x65, 0x2f,
+	0x75, 0x6e, 0x69, 0x66, 0x69, 0x65, 0x64, 0x2f, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65,
+	0x70, 0x62, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 })
 
 var (
@@ -2274,7 +2472,7 @@ func file_search_proto_rawDescGZIP() []byte {
 }
 
 var file_search_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_search_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
+var file_search_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_search_proto_goTypes = []any{
 	(ResourceSearchRequest_ResultFormat)(0),       // 0: resource.ResourceSearchRequest.ResultFormat
 	(ResourceSearchField_Type)(0),                 // 1: resource.ResourceSearchField.Type
@@ -2294,70 +2492,76 @@ var file_search_proto_goTypes = []any{
 	(*HybridSearchResponse)(nil),                  // 15: resource.HybridSearchResponse
 	(*HybridSearchResult)(nil),                    // 16: resource.HybridSearchResult
 	(*HybridSearchChunk)(nil),                     // 17: resource.HybridSearchChunk
-	(*ResourceStatsResponse_Stats)(nil),           // 18: resource.ResourceStatsResponse.Stats
-	(*ResourceSearchRequest_Sort)(nil),            // 19: resource.ResourceSearchRequest.Sort
-	(*ResourceSearchRequest_Facet)(nil),           // 20: resource.ResourceSearchRequest.Facet
-	(*ResourceSearchRequest_QueryField)(nil),      // 21: resource.ResourceSearchRequest.QueryField
-	nil,                                           // 22: resource.ResourceSearchRequest.FacetEntry
-	(*ResourceSearchResponse_Facet)(nil),          // 23: resource.ResourceSearchResponse.Facet
-	(*ResourceSearchResponse_TermFacet)(nil),      // 24: resource.ResourceSearchResponse.TermFacet
-	nil,                                           // 25: resource.ResourceSearchResponse.FacetEntry
-	(*RebuildIndexesResponse_IndexBuildTime)(nil), // 26: resource.RebuildIndexesResponse.IndexBuildTime
-	(*ErrorResult)(nil),                           // 27: resource.ErrorResult
-	(*ListOptions)(nil),                           // 28: resource.ListOptions
-	(*ResourceKey)(nil),                           // 29: resource.ResourceKey
-	(*ResourceTable)(nil),                         // 30: resource.ResourceTable
-	(*Requirement)(nil),                           // 31: resource.Requirement
+	(*HybridSearchResourcesRequest)(nil),          // 18: resource.HybridSearchResourcesRequest
+	(*ResourceStatsResponse_Stats)(nil),           // 19: resource.ResourceStatsResponse.Stats
+	(*ResourceSearchRequest_Sort)(nil),            // 20: resource.ResourceSearchRequest.Sort
+	(*ResourceSearchRequest_Facet)(nil),           // 21: resource.ResourceSearchRequest.Facet
+	(*ResourceSearchRequest_QueryField)(nil),      // 22: resource.ResourceSearchRequest.QueryField
+	nil,                                           // 23: resource.ResourceSearchRequest.FacetEntry
+	(*ResourceSearchResponse_Facet)(nil),          // 24: resource.ResourceSearchResponse.Facet
+	(*ResourceSearchResponse_TermFacet)(nil),      // 25: resource.ResourceSearchResponse.TermFacet
+	nil,                                           // 26: resource.ResourceSearchResponse.FacetEntry
+	(*RebuildIndexesResponse_IndexBuildTime)(nil), // 27: resource.RebuildIndexesResponse.IndexBuildTime
+	(*HybridSearchResourcesRequest_Resource)(nil), // 28: resource.HybridSearchResourcesRequest.Resource
+	(*ErrorResult)(nil),                           // 29: resource.ErrorResult
+	(*ListOptions)(nil),                           // 30: resource.ListOptions
+	(*ResourceKey)(nil),                           // 31: resource.ResourceKey
+	(*ResourceTable)(nil),                         // 32: resource.ResourceTable
+	(*Requirement)(nil),                           // 33: resource.Requirement
 }
 var file_search_proto_depIdxs = []int32{
-	27, // 0: resource.ResourceStatsResponse.error:type_name -> resource.ErrorResult
-	18, // 1: resource.ResourceStatsResponse.stats:type_name -> resource.ResourceStatsResponse.Stats
-	28, // 2: resource.ResourceSearchRequest.options:type_name -> resource.ListOptions
-	29, // 3: resource.ResourceSearchRequest.federated:type_name -> resource.ResourceKey
-	19, // 4: resource.ResourceSearchRequest.sortBy:type_name -> resource.ResourceSearchRequest.Sort
-	22, // 5: resource.ResourceSearchRequest.facet:type_name -> resource.ResourceSearchRequest.FacetEntry
-	21, // 6: resource.ResourceSearchRequest.query_fields:type_name -> resource.ResourceSearchRequest.QueryField
+	29, // 0: resource.ResourceStatsResponse.error:type_name -> resource.ErrorResult
+	19, // 1: resource.ResourceStatsResponse.stats:type_name -> resource.ResourceStatsResponse.Stats
+	30, // 2: resource.ResourceSearchRequest.options:type_name -> resource.ListOptions
+	31, // 3: resource.ResourceSearchRequest.federated:type_name -> resource.ResourceKey
+	20, // 4: resource.ResourceSearchRequest.sortBy:type_name -> resource.ResourceSearchRequest.Sort
+	23, // 5: resource.ResourceSearchRequest.facet:type_name -> resource.ResourceSearchRequest.FacetEntry
+	22, // 6: resource.ResourceSearchRequest.query_fields:type_name -> resource.ResourceSearchRequest.QueryField
 	0,  // 7: resource.ResourceSearchRequest.result_format:type_name -> resource.ResourceSearchRequest.ResultFormat
-	27, // 8: resource.ResourceSearchResponse.error:type_name -> resource.ErrorResult
-	29, // 9: resource.ResourceSearchResponse.key:type_name -> resource.ResourceKey
-	30, // 10: resource.ResourceSearchResponse.results:type_name -> resource.ResourceTable
-	25, // 11: resource.ResourceSearchResponse.facet:type_name -> resource.ResourceSearchResponse.FacetEntry
+	29, // 8: resource.ResourceSearchResponse.error:type_name -> resource.ErrorResult
+	31, // 9: resource.ResourceSearchResponse.key:type_name -> resource.ResourceKey
+	32, // 10: resource.ResourceSearchResponse.results:type_name -> resource.ResourceTable
+	26, // 11: resource.ResourceSearchResponse.facet:type_name -> resource.ResourceSearchResponse.FacetEntry
 	0,  // 12: resource.ResourceSearchResponse.result_format:type_name -> resource.ResourceSearchRequest.ResultFormat
 	6,  // 13: resource.ResourceSearchResponse.fields:type_name -> resource.ResourceSearchField
 	8,  // 14: resource.ResourceSearchResponse.rows:type_name -> resource.ResourceSearchRow
 	1,  // 15: resource.ResourceSearchField.type:type_name -> resource.ResourceSearchField.Type
-	29, // 16: resource.ResourceSearchRow.key:type_name -> resource.ResourceKey
+	31, // 16: resource.ResourceSearchRow.key:type_name -> resource.ResourceKey
 	7,  // 17: resource.ResourceSearchRow.values:type_name -> resource.ResourceSearchValue
-	29, // 18: resource.RebuildIndexesRequest.keys:type_name -> resource.ResourceKey
-	27, // 19: resource.RebuildIndexesResponse.error:type_name -> resource.ErrorResult
-	26, // 20: resource.RebuildIndexesResponse.buildTimes:type_name -> resource.RebuildIndexesResponse.IndexBuildTime
-	29, // 21: resource.VectorSearchRequest.key:type_name -> resource.ResourceKey
-	31, // 22: resource.VectorSearchRequest.filters:type_name -> resource.Requirement
-	27, // 23: resource.VectorSearchResponse.error:type_name -> resource.ErrorResult
+	31, // 18: resource.RebuildIndexesRequest.keys:type_name -> resource.ResourceKey
+	29, // 19: resource.RebuildIndexesResponse.error:type_name -> resource.ErrorResult
+	27, // 20: resource.RebuildIndexesResponse.buildTimes:type_name -> resource.RebuildIndexesResponse.IndexBuildTime
+	31, // 21: resource.VectorSearchRequest.key:type_name -> resource.ResourceKey
+	33, // 22: resource.VectorSearchRequest.filters:type_name -> resource.Requirement
+	29, // 23: resource.VectorSearchResponse.error:type_name -> resource.ErrorResult
 	13, // 24: resource.VectorSearchResponse.results:type_name -> resource.VectorSearchResult
-	29, // 25: resource.HybridSearchRequest.key:type_name -> resource.ResourceKey
-	31, // 26: resource.HybridSearchRequest.filters:type_name -> resource.Requirement
+	31, // 25: resource.HybridSearchRequest.key:type_name -> resource.ResourceKey
+	33, // 26: resource.HybridSearchRequest.filters:type_name -> resource.Requirement
 	16, // 27: resource.HybridSearchResponse.results:type_name -> resource.HybridSearchResult
-	29, // 28: resource.HybridSearchResult.key:type_name -> resource.ResourceKey
+	31, // 28: resource.HybridSearchResult.key:type_name -> resource.ResourceKey
 	17, // 29: resource.HybridSearchResult.chunks:type_name -> resource.HybridSearchChunk
-	20, // 30: resource.ResourceSearchRequest.FacetEntry.value:type_name -> resource.ResourceSearchRequest.Facet
-	24, // 31: resource.ResourceSearchResponse.Facet.terms:type_name -> resource.ResourceSearchResponse.TermFacet
-	23, // 32: resource.ResourceSearchResponse.FacetEntry.value:type_name -> resource.ResourceSearchResponse.Facet
-	4,  // 33: resource.ResourceIndex.Search:input_type -> resource.ResourceSearchRequest
-	2,  // 34: resource.ResourceIndex.GetStats:input_type -> resource.ResourceStatsRequest
-	9,  // 35: resource.ResourceIndex.RebuildIndexes:input_type -> resource.RebuildIndexesRequest
-	11, // 36: resource.ResourceIndex.VectorSearch:input_type -> resource.VectorSearchRequest
-	14, // 37: resource.ResourceIndex.HybridSearch:input_type -> resource.HybridSearchRequest
-	5,  // 38: resource.ResourceIndex.Search:output_type -> resource.ResourceSearchResponse
-	3,  // 39: resource.ResourceIndex.GetStats:output_type -> resource.ResourceStatsResponse
-	10, // 40: resource.ResourceIndex.RebuildIndexes:output_type -> resource.RebuildIndexesResponse
-	12, // 41: resource.ResourceIndex.VectorSearch:output_type -> resource.VectorSearchResponse
-	15, // 42: resource.ResourceIndex.HybridSearch:output_type -> resource.HybridSearchResponse
-	38, // [38:43] is the sub-list for method output_type
-	33, // [33:38] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	28, // 30: resource.HybridSearchResourcesRequest.resources:type_name -> resource.HybridSearchResourcesRequest.Resource
+	33, // 31: resource.HybridSearchResourcesRequest.filters:type_name -> resource.Requirement
+	21, // 32: resource.ResourceSearchRequest.FacetEntry.value:type_name -> resource.ResourceSearchRequest.Facet
+	25, // 33: resource.ResourceSearchResponse.Facet.terms:type_name -> resource.ResourceSearchResponse.TermFacet
+	24, // 34: resource.ResourceSearchResponse.FacetEntry.value:type_name -> resource.ResourceSearchResponse.Facet
+	4,  // 35: resource.ResourceIndex.Search:input_type -> resource.ResourceSearchRequest
+	2,  // 36: resource.ResourceIndex.GetStats:input_type -> resource.ResourceStatsRequest
+	9,  // 37: resource.ResourceIndex.RebuildIndexes:input_type -> resource.RebuildIndexesRequest
+	11, // 38: resource.ResourceIndex.VectorSearch:input_type -> resource.VectorSearchRequest
+	14, // 39: resource.ResourceIndex.HybridSearch:input_type -> resource.HybridSearchRequest
+	18, // 40: resource.ResourceIndex.HybridSearchResources:input_type -> resource.HybridSearchResourcesRequest
+	5,  // 41: resource.ResourceIndex.Search:output_type -> resource.ResourceSearchResponse
+	3,  // 42: resource.ResourceIndex.GetStats:output_type -> resource.ResourceStatsResponse
+	10, // 43: resource.ResourceIndex.RebuildIndexes:output_type -> resource.RebuildIndexesResponse
+	12, // 44: resource.ResourceIndex.VectorSearch:output_type -> resource.VectorSearchResponse
+	15, // 45: resource.ResourceIndex.HybridSearch:output_type -> resource.HybridSearchResponse
+	15, // 46: resource.ResourceIndex.HybridSearchResources:output_type -> resource.HybridSearchResponse
+	41, // [41:47] is the sub-list for method output_type
+	35, // [35:41] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_search_proto_init() }
@@ -2373,7 +2577,7 @@ func file_search_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_search_proto_rawDesc), len(file_search_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   25,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
