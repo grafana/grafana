@@ -168,6 +168,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-18,alerting.dataSourceManagedRouteProxy,experimental,@grafana/alerting-squad,false,false,true
 2026-07-28,alerting.manualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,true
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
+2026-10-07,alerting.ruleReviews,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
 2024-12-13,lokiLabelNamesQueryApi,GA,@grafana/data-sources-plugins,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false

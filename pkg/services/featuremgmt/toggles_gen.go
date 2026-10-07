@@ -495,6 +495,10 @@ const (
 	// Enable AI-analyze central state history.
 	FlagAlertingAIAnalyzeCentralStateHistory = "alertingAIAnalyzeCentralStateHistory"
 
+	// FlagAlertingRuleReviews
+	// Enable assistant reviews on the alert quality page.
+	FlagAlertingRuleReviews = "alerting.ruleReviews"
+
 	// FlagAlertingRuleQuality
 	// Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them.
 	FlagAlertingRuleQuality = "alerting.ruleQuality"
