@@ -20,7 +20,7 @@ func TestIntegrationGetUserPermissions_ContractFailedRefresh(t *testing.T) {
 			s := setupTestEnv(t, false)
 			s.cfg.RBAC.PermissionCache = cache
 			seedContractSources(t, s.sql)
-			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}
+			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}} //nolint:staticcheck // Exercise failure handling for numeric legacy RBAC memberships.
 			want := []accesscontrol.Permission{
 				{Action: "dashboards:read", Scope: "dashboards:uid:shared"},
 				{Action: "dashboards:read", Scope: "dashboards:uid:shared"},

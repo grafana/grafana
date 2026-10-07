@@ -80,7 +80,7 @@ func TestIntegrationLegacyLoaderRegistrationAndInvalidation(t *testing.T) {
 	// never reads through the Access Control service.
 	loader := newContractLoader(s, s.cache)
 	ctx := context.Background()
-	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}
+	requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}} //nolint:staticcheck // Legacy RBAC memberships require numeric IDs, not contextual team UIDs.
 	baseline := SharedWithMeFolderPermission
 	a := ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:shared"}
 	b := ac.Permission{Action: "dashboards:read", Scope: "dashboards:uid:changed"}

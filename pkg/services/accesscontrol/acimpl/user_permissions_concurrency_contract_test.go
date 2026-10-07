@@ -24,7 +24,7 @@ func TestIntegrationGetUserPermissions_ContractConcurrentIsolation(t *testing.T)
 		requester user.SignedInUser
 		want      []accesscontrol.Permission
 	}{
-		{user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant, grant, grant}},
+		{user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant, grant, grant}}, //nolint:staticcheck // Exercise numeric legacy RBAC memberships, not contextual team UIDs.
 		{user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline}},
 		{user.SignedInUser{UserID: 7, OrgID: 3, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline}},
 	}

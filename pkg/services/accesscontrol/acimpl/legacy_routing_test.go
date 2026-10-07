@@ -37,7 +37,7 @@ func TestIntegrationLegacyPermissionRouting(t *testing.T) {
 			} else {
 				s.legacyClient = nil
 			}
-			permissions, err := s.GetUserPermissions(context.Background(), &user.SignedInUser{UserID: 7, UserUID: "8", OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, ac.Options{})
+			permissions, err := s.GetUserPermissions(context.Background(), &user.SignedInUser{UserID: 7, UserUID: "8", OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, ac.Options{}) //nolint:staticcheck // Verify legacy numeric RBAC membership survives transport.
 			require.NoError(t, err)
 			require.ElementsMatch(t, []ac.Permission{
 				{Action: "folders:read", Scope: "folders:uid:sharedwithme"},

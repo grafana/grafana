@@ -71,9 +71,9 @@ func TestIntegrationGetUserPermissions_ContractRequesterSources(t *testing.T) {
 				requester user.SignedInUser
 				want      []accesscontrol.Permission
 			}{
-				{"combined", user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant, grant, grant}},
+				{"combined", user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant, grant, grant}}, //nolint:staticcheck // Numeric RBAC team grants are distinct from contextual groups.
 				{"direct", user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline, grant}},
-				{"team", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant}},
+				{"team", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant}}, //nolint:staticcheck // Numeric RBAC team grants are distinct from contextual groups.
 				{"basic", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline, grant}},
 				{"none", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline}},
 				{"service-account", user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone, IsServiceAccount: true}, []accesscontrol.Permission{baseline, grant}},
@@ -103,7 +103,7 @@ func TestIntegrationGetUserPermissions_ContractSourceCacheClear(t *testing.T) {
 			s.cfg.RBAC.PermissionCache = cache
 			seedContractSources(t, s.sql)
 			ctx := context.Background()
-			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}}
+			requester := &user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleViewer, TeamIDs: []int64{10}} //nolint:staticcheck // Preserve numeric legacy RBAC membership in the cache contract.
 			baseline := accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}
 			a := accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:shared"}
 			b := accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:changed"}
