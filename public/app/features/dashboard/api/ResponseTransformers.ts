@@ -437,7 +437,7 @@ export function getDefaultDatasource(): DataSourceRef {
   };
 }
 
-function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
+export function getPanelQueries(targets: DataQuery[], panelDatasource: DataSourceRef): PanelQueryKind[] | undefined {
   return targets.map((t) => {
     const { refId, hide, datasource, ...query } = t;
     // Check if target datasource is empty object {} (no keys), treat it as missing

@@ -1,4 +1,4 @@
-import { type VariableModel, VariableRefresh } from '@grafana/schema';
+import { type DataQuery, type VariableModel, VariableRefresh } from '@grafana/schema';
 import {
   defaultDataQueryKind,
   type GridLayoutKind,
@@ -24,7 +24,7 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { getDefaultDatasource, ResponseTransformers } from './ResponseTransformers';
+import { getDefaultDatasource, getPanelQueries, ResponseTransformers } from './ResponseTransformers';
 import { type DashboardWithAccessInfo } from './types';
 
 jest.mock('@grafana/runtime', () => ({
@@ -810,6 +810,78 @@ describe('ResponseTransformers', () => {
       const row4grid = row4.spec.layout as GridLayoutKind;
       expect(row4grid.kind).toBe('GridLayout');
       expect(row4grid.spec.items).toHaveLength(0);
+    });
+  });
+
+  describe('getPanelQueries', () => {
+    it('respects targets data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
+      };
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            type: 'theoretical-ds',
+            uid: 'theoretical-uid',
+          },
+        },
+      ];
+
+      const result = getPanelQueries(targets, panelDs);
+
+      expect(result).toHaveLength(targets.length);
+      // @ts-expect-error
+      expect(result[0].spec.refId).toBe('A');
+      // @ts-expect-error
+      expect(result[1].spec.refId).toBe('B');
+
+      // @ts-expect-error
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.query.group).toEqual('theoretical-ds');
+        expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+        expect(query.spec.query.kind).toBe('DataQuery');
+      });
+    });
+
+    it('respects panel data source', () => {
+      const panelDs = {
+        type: 'theoretical-ds',
+        uid: 'theoretical-uid',
+      };
+      const targets: DataQuery[] = [
+        {
+          refId: 'A',
+        },
+        {
+          refId: 'B',
+        },
+      ];
+
+      const result = getPanelQueries(targets, panelDs);
+
+      expect(result).toHaveLength(targets.length);
+      // @ts-expect-error
+      expect(result[0].spec.refId).toBe('A');
+      // @ts-expect-error
+      expect(result[1].spec.refId).toBe('B');
+
+      // @ts-expect-error
+      result.forEach((query) => {
+        expect(query.kind).toBe('PanelQuery');
+        expect(query.spec.query.group).toEqual('theoretical-ds');
+        expect(query.spec.query.datasource?.name).toEqual('theoretical-uid');
+        expect(query.spec.query.kind).toBe('DataQuery');
+      });
     });
   });
 
