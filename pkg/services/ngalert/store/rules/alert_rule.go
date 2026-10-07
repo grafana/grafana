@@ -18,6 +18,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -113,7 +114,11 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		var versions []alertRuleVersion
 		//nolint:staticcheck // not yet migrated to OpenFeature
 		if st.FeatureToggles.IsEnabledGlobally(featuremgmt.FlagAlertRuleRestore) && st.Cfg.DeletedRuleRetention > 0 && !permanently { // save deleted version only if retention is greater than 0
-			versions, err = st.getLatestVersionOfRulesByUID(ctx, orgID, ruleUID)
+			// Read through sess/alertRuleVersionTable directly rather than calling
+			// getLatestVersionOfRulesByUID, which would open its own session: WithTransactionalDbSession
+			// doesn't put sess back onto ctx, so that call would hit the routed database a second time
+			// while this transaction still holds its only connection, and block until ctx expires.
+			versions, err = latestVersionOfRulesByUID(sess, st.Logger, orgID, ruleUID, alertRuleVersionTable)
 			if err != nil {
 				logger.Error("Failed to get latest version of deleted alert rules. The recovery will not be possible", "error", err)
 			}
@@ -161,36 +166,43 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 
 	var result []alertRuleVersion
 	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
-		args, in := getINSubQueryArgs(ruleUIDs)
-		// take only the latest versions of each rule by GUID
-		rows, err := sess.SQL(fmt.Sprintf(`
-		SELECT v1.* FROM %[1]s AS v1
-			INNER JOIN (
-			    SELECT rule_guid, MAX(id) AS id
-			    FROM %[1]s
-			    WHERE rule_org_id = ?
-			      AND rule_uid IN (%[2]s)
-			    GROUP BY rule_guid
-			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
-		`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
-
-		if err != nil {
-			return err
-		}
-		result = make([]alertRuleVersion, 0, len(ruleUIDs))
-		for rows.Next() {
-			rule := new(alertRuleVersion)
-			err = rows.Scan(rule)
-			if err != nil {
-				st.Logger.Error("Invalid rule version found in DB store, ignoring it", "func", "getLatestVersionOfRulesByUID", "error", err)
-				continue
-			}
-			result = append(result, *rule)
-		}
-		return nil
+		var err error
+		result, err = latestVersionOfRulesByUID(sess, st.Logger, orgID, ruleUIDs, alertRuleVersionTable)
+		return err
 	})
 	if err != nil {
 		return nil, err
+	}
+	return result, nil
+}
+
+// latestVersionOfRulesByUID reads the latest version of each rule by UID directly through sess,
+// so a caller already holding an open transaction (such as DeleteAlertRulesByUID) can reuse it
+// instead of opening a second session on the same connection.
+func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64, ruleUIDs []string, alertRuleVersionTable string) ([]alertRuleVersion, error) {
+	args, in := getINSubQueryArgs(ruleUIDs)
+	// take only the latest versions of each rule by GUID
+	rows, err := sess.SQL(fmt.Sprintf(`
+	SELECT v1.* FROM %[1]s AS v1
+		INNER JOIN (
+		    SELECT rule_guid, MAX(id) AS id
+		    FROM %[1]s
+		    WHERE rule_org_id = ?
+		      AND rule_uid IN (%[2]s)
+		    GROUP BY rule_guid
+		) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
+	`, alertRuleVersionTable, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
+	if err != nil {
+		return nil, err
+	}
+	result := make([]alertRuleVersion, 0, len(ruleUIDs))
+	for rows.Next() {
+		rule := new(alertRuleVersion)
+		if err := rows.Scan(rule); err != nil {
+			logger.Error("Invalid rule version found in DB store, ignoring it", "func", "latestVersionOfRulesByUID", "error", err)
+			continue
+		}
+		result = append(result, *rule)
 	}
 	return result, nil
 }
