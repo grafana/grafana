@@ -49,7 +49,7 @@ function mergeByKey(...lists: PageHistoryEntry[][]): PageHistoryEntry[] {
 }
 
 /** Count cap, then byte budget; always evicts the oldest (last) entries first. */
-export function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
+function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
   let capped = entries.slice(0, PAGE_HISTORY_MAX);
   while (capped.length > 0 && JSON.stringify(capped).length > PAGE_HISTORY_MAX_BYTES) {
     capped = capped.slice(0, -1);
@@ -61,7 +61,7 @@ export function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
  * Validates a stored copy row by row so one bad entry drops only itself. Rows whose href no longer
  * classifies to the stored kind/key (older rules, hand edits) are dropped too.
  */
-export function parseEntries(raw: unknown): PageHistoryEntry[] {
+function parseEntries(raw: unknown): PageHistoryEntry[] {
   let value = raw;
   if (typeof raw === 'string') {
     try {

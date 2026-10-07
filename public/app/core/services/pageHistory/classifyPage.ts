@@ -1,7 +1,7 @@
 import { DASHBOARD_KEY_PREFIX, INVESTIGATION_KEY_PREFIX, type PageHistoryKind } from './types';
 
 /** Apps whose `/a/<pluginId>/investigation(s)/<id>` routes are tracked as one row per investigation id. */
-export const INVESTIGATION_PLUGIN_IDS = ['grafana-assistant-app', 'grafana-ml-app'] as const;
+const INVESTIGATION_PLUGIN_IDS = ['grafana-assistant-app', 'grafana-ml-app'] as const;
 
 const INVESTIGATION_SEGMENTS = ['investigations', 'investigation'];
 
