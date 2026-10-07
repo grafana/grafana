@@ -443,10 +443,6 @@ const (
 	// Enables the new role picker drawer design
 	FlagRolePickerDrawer = "rolePickerDrawer"
 
-	// FlagPluginsSriChecks
-	// Enables SRI checks for plugin assets
-	FlagPluginsSriChecks = "pluginsSriChecks"
-
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"

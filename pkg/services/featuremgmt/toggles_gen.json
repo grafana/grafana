@@ -4430,7 +4430,8 @@
       "metadata": {
         "name": "pluginsSriChecks",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-04T12:55:09Z"
+        "creationTimestamp": "2024-10-04T12:55:09Z",
+        "deletionTimestamp": "2026-10-07T08:59:38Z"
       },
       "spec": {
         "description": "Enables SRI checks for plugin assets",
