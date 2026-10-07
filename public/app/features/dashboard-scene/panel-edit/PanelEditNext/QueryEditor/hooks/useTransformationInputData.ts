@@ -8,7 +8,6 @@ import {
   NO_CONFIGS,
   frameMatcherFor,
   precedingTransformations,
-  transformationTopic,
   useInterpolatedConfigs,
   useTransformedFrames,
 } from './useTransformedFrames';
@@ -43,13 +42,7 @@ export function useTransformationInputData({
     () =>
       // TransformationEditorRenderer won't render without a selected transformation, but the hook
       // accepts null so we guard here too and fall back to rawData.
-      selectedTransformation
-        ? precedingTransformations(
-            selectedTransformation,
-            allTransformations,
-            transformationTopic(selectedTransformation)
-          )
-        : NO_CONFIGS,
+      selectedTransformation ? precedingTransformations(selectedTransformation, allTransformations) : NO_CONFIGS,
     [selectedTransformation, allTransformations]
   );
 
