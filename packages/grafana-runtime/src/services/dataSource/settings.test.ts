@@ -584,12 +584,33 @@ describe('instanceSettings', () => {
       setTemplateSrv(templateSrv);
     });
 
-    it('returns items sorted alphabetically by name', async () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
+    it('sorts items by name case-insensitively, regardless of insertion order', async () => {
+      const unordered: Record<string, DataSourceInstanceSettings> = {
+        zulu: ds({ id: 30, uid: 'uid-zulu', name: 'zulu' }),
+        Charlie: ds({ id: 31, uid: 'uid-charlie', name: 'Charlie' }),
+        alpha: ds({ id: 32, uid: 'uid-alpha', name: 'alpha' }),
+        Bravo: ds({ id: 33, uid: 'uid-bravo', name: 'Bravo' }),
+      };
+      initDataSourceInstanceSettings(unordered, 'Bravo');
+
       const items = await getDataSourceInstanceList();
-      const names = items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
-      const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      expect(names).toEqual(sorted);
+
+      expect(items.map((x) => x.name)).toEqual(['alpha', 'Bravo', 'Charlie', 'zulu']);
+    });
+
+    it('appends built-in datasources after the sorted items', async () => {
+      const unordered: Record<string, DataSourceInstanceSettings> = {
+        '-- Grafana --': fixtures['-- Grafana --'],
+        '-- Dashboard --': fixtures['-- Dashboard --'],
+        '-- Mixed --': fixtures['-- Mixed --'],
+        Zulu: ds({ id: 30, uid: 'uid-zulu', name: 'Zulu' }),
+        Alpha: ds({ id: 31, uid: 'uid-alpha', name: 'Alpha' }),
+      };
+      initDataSourceInstanceSettings(unordered, 'Alpha');
+
+      const items = await getDataSourceInstanceList({ mixed: true, dashboard: true });
+
+      expect(items.map((x) => x.name)).toEqual(['Alpha', 'Zulu', '-- Mixed --', '-- Dashboard --', '-- Grafana --']);
     });
 
     describe('pluginId and type matching', () => {
