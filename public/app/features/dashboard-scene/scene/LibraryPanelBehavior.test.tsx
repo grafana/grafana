@@ -347,7 +347,7 @@ describe('LibraryPanelBehavior', () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { libraryPanelRepeatResolved: true },
-        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
 
@@ -365,9 +365,21 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
-    it('still migrates for a public dashboard when the server did not resolve it', async () => {
+    it('skips the migration when dashboardNewLayouts is enabled but the server resolved it', async () => {
       config.featureToggles.dashboardNewLayouts = true;
 
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatResolved: true },
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
+        resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
+      });
+
+      expect(gridItem.state.variableName).toBe('pod');
+      expect(gridItem.state.maxPerRow).toBe(2);
+    });
+
+    it('still migrates for a public dashboard when the server did not resolve it', async () => {
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { publicDashboardEnabled: true },
@@ -378,12 +390,10 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('skips the migration for a public dashboard when the server already resolved it', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { publicDashboardEnabled: true, libraryPanelRepeatResolved: true },
-        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
 
@@ -392,8 +402,6 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('still migrates for a scripted dashboard when the server did not resolve it', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { fromScript: true },
@@ -404,12 +412,10 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('skips the migration for a scripted dashboard when the server already resolved it', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
-
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
         meta: { fromScript: true, libraryPanelRepeatResolved: true },
-        // what the apiserver resolved onto the grid item during the v1->v2 conversion
+        // apiserver resolved repeat options onto the grid item during the v1->v2 conversion
         resolvedRepeat: { variableName: 'pod', repeatDirection: 'h', maxPerRow: 2 },
       });
 
