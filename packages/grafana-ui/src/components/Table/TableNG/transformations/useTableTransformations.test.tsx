@@ -4,7 +4,7 @@ import { type DataTransformerConfig } from '@grafana/data';
 
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 
-import { tableTransformations } from './registry';
+import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 it('composes successive actions against the latest host state and preserves other frames', () => {
@@ -22,9 +22,9 @@ it('composes successive actions against the latest host state and preserves othe
   const frameB = { catalog: ['C', 'D'], frameFilter: { id: 'byRefId', options: 'B' } };
 
   act(() => {
-    result.current.update((current) => tableTransformations.columnVisibility.write(current, new Set(['B']), frameA));
-    result.current.update((current) => tableTransformations.columnVisibility.write(current, new Set(['D']), frameB));
-    result.current.update((current) => tableTransformations.columnVisibility.write(current, new Set(), frameA));
+    result.current.update((current) => columnTransformations.columnVisibility.write(current, new Set(['B']), frameA));
+    result.current.update((current) => columnTransformations.columnVisibility.write(current, new Set(['D']), frameB));
+    result.current.update((current) => columnTransformations.columnVisibility.write(current, new Set(), frameA));
   });
 
   expect(configs).toEqual([

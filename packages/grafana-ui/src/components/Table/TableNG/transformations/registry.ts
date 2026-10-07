@@ -5,16 +5,16 @@ import { columnVisibility } from './columnVisibility';
 import { rangeFilter } from './rangeFilter';
 import { valueFilter } from './valueFilter';
 
-export const tableTransformations = {
-  rangeFilter,
-  valueFilter,
-  columnOrder,
+export const columnTransformations = {
   columnVisibility,
+  columnOrder,
 };
 
-export const columnTransformations = [tableTransformations.columnVisibility, tableTransformations.columnOrder];
-export const filterTransformations = [tableTransformations.valueFilter, tableTransformations.rangeFilter];
+export const filterTransformations = {
+  valueFilter,
+  rangeFilter,
+};
 
 export function editableTableFilter(config: FilterByValueConfig) {
-  return filterTransformations.some((definition) => definition.isEditable(config));
+  return Object.values(filterTransformations).some((definition) => definition.isEditable(config));
 }

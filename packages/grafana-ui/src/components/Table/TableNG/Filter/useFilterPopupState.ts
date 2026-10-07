@@ -5,7 +5,7 @@ import { type ValueSetOptions } from '@grafana/data/internal';
 
 import { useTableView } from '../TableViewContext';
 import { tableFilterKey } from '../transformations/filterByValue';
-import { editableTableFilter, tableTransformations } from '../transformations/registry';
+import { editableTableFilter, filterTransformations } from '../transformations/registry';
 import { FilterOperator, type FilterType, type TableRow } from '../types';
 
 import { type FilterPopupProps } from './FilterPopup';
@@ -99,7 +99,7 @@ export function useFilterPopupState({
               } else {
                 view.applyFilter(
                   field,
-                  tableTransformations.valueFilter.createPredicate(
+                  filterTransformations.valueFilter.createPredicate(
                     field,
                     values.map((item) => item.value),
                     selection,
@@ -115,7 +115,7 @@ export function useFilterPopupState({
           ? ({ min, max, includeMissing }) =>
               view.applyFilter(
                 field,
-                tableTransformations.rangeFilter.createPredicate({ min, max, includeMissing }),
+                filterTransformations.rangeFilter.createPredicate({ min, max, includeMissing }),
                 parentIndex
               )
           : undefined,

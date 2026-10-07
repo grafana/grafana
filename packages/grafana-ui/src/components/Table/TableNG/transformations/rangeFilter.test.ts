@@ -1,10 +1,10 @@
 import { toDataFrame } from '@grafana/data';
 
-import { tableTransformations, editableTableFilter } from './registry';
+import { filterTransformations, editableTableFilter } from './registry';
 
 const source = toDataFrame({ fields: [{ name: 'time', values: [1000, 2000] }] });
 const context = { source, field: source.fields[0], frameKey: 'A', frameIndex: 0 };
-const { rangeFilter, valueFilter } = tableTransformations;
+const { rangeFilter, valueFilter } = filterTransformations;
 
 it.each([
   { min: undefined, max: 2000, includeMissing: true },
