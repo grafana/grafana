@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import { type ReactNode, type Ref, type RefObject, useId, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,6 +6,7 @@ import { t } from '@grafana/i18n';
 import { Button } from '../../Button/Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
+import { Stack } from '../../Layout/Stack/Stack';
 
 import TimePickerCalendar, { type TimePickerCalendarProps } from './TimePickerCalendar';
 
@@ -54,7 +54,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
         { field: from, label: t('time-picker.range-content.from-input', 'From'), id: fromId },
         { field: to, label: t('time-picker.range-content.to-input', 'To'), id: toId },
       ].map(({ field, label, id }) => (
-        <div key={id} className={rowStyle}>
+        <Stack key={id} gap={0}>
           <Field label={field.label ?? label} invalid={!!field.error} error={field.error}>
             <Input
               id={id}
@@ -76,7 +76,7 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
             />
           </Field>
           {fieldSuffix}
-        </div>
+        </Stack>
       ))}
       <TimePickerCalendar
         {...calendar}
@@ -87,5 +87,3 @@ export function TimeRangeFields({ from, to, inputWidth, onSubmit, fieldSuffix, c
     </>
   );
 }
-
-const rowStyle = css({ display: 'flex' });
