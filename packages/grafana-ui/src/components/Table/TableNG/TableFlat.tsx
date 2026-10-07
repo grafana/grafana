@@ -58,7 +58,6 @@ import {
   isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
-  canManageColumns,
   isFieldHideable,
 } from './utils';
 
@@ -155,11 +154,6 @@ export function TableFlat(props: TableNGProps) {
 
   const orderedVisibleFields = preparedFields;
 
-  // Use the pre-hide fields so the sidebar remains available after hiding a column.
-  const hasColumnSidebar =
-    canManageColumns(orderedVisibleFields) ||
-    Boolean(onHiddenColumnsChange && columnCatalog?.some((name) => hiddenColumns.has(name)));
-
   const resizeHandler = useColumnResize(onColumnResize);
 
   const frameToRecords = useRowCompiler(data);
@@ -227,6 +221,8 @@ export function TableFlat(props: TableNGProps) {
       ...(capabilities.get(name) ?? { hideable: true }),
     }));
   }, [columnCatalog, orderedVisibleFields]);
+  // The catalog includes restored columns before they return in the transformed data.
+  const hasColumnSidebar = sidebarColumns.some((column) => column.hideable);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   // Follow option changes without overriding local open/close actions on every render.

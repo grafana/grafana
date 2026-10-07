@@ -57,21 +57,51 @@ it('keeps restore controls when the only hideable column is absent from transfor
     ],
   });
   const onHiddenColumnsChange = jest.fn();
-  render(
+  const table = (hiddenColumns: ReadonlySet<string>, frame = data) => (
     <TableNG
-      data={data}
+      data={frame}
       width={800}
       height={400}
+      tableRefreshEnabled
       showColumnsSidebar
       columnCatalog={['A', 'B']}
-      hiddenColumns={new Set(['B'])}
+      hiddenColumns={hiddenColumns}
       onHiddenColumnsChange={onHiddenColumnsChange}
     />
   );
+  const { rerender } = render(table(new Set(['B'])));
+  const sidebar = screen.getByRole('group', { name: 'Column visibility' });
 
   await userEvent.click(screen.getByRole('checkbox', { name: 'Show B' }));
 
   expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set());
+
+  // Controlled visibility updates before the transformed data includes B again.
+  rerender(table(new Set()));
+  expect(screen.getByRole('group', { name: 'Column visibility' })).toBe(sidebar);
+  expect(screen.getByRole('checkbox', { name: 'Hide B' })).toBeChecked();
+  expect(screen.queryByRole('columnheader', { name: 'B' })).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for A' }));
+  await userEvent.click(await screen.findByText('Manage columns'));
+  expect(within(screen.getByRole('group', { name: 'Column visibility' })).getByText('B')).toBeVisible();
+
+  const restored = createDataFrame({
+    fields: [
+      ...data.fields,
+      {
+        name: 'B',
+        type: FieldType.string,
+        values: ['restored'],
+        config: { custom: { hideable: true } },
+        display: () => ({ text: 'restored', numeric: NaN }),
+      },
+    ],
+  });
+  rerender(table(new Set(), restored));
+  expect(screen.getByRole('gridcell', { name: 'restored' })).toBeVisible();
+  expect(screen.getByRole('checkbox', { name: 'Hide B' })).toBeChecked();
 });
 
 function Harness({ revision = 0 }: { revision?: number }) {

@@ -1452,11 +1452,6 @@ export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
 }
 
-/** Whether any field can be managed by the column sidebar. @internal */
-export function canManageColumns(fields: Field[]): boolean {
-  return fields.some(isFieldHideable);
-}
-
 /** Whether the column menu has an action to show. @internal */
 export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
   return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;
