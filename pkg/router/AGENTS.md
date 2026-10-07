@@ -91,7 +91,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Loader selection | `loader_factory.go` |
 | Forward-mode backend (RouteBackend CR) | `forward.go` |
 | Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
-| Aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`) | `aggregate_*.go` |
+| Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
@@ -102,7 +102,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 `ProvideRoutesLoader` picks exactly one loader:
 
-1. **The cloud loader**, when any `[cloud_router]` source is configured (see Settings).
+1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is configured (see Settings).
 2. **Otherwise the local plugin loader**, when plugin sources are available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
@@ -111,8 +111,8 @@ earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
    routed to the right stack by the namespace in the path.
-2. **Aggregate targets**, discovered by polling each target's `/apis`. A later target overrides an
-   earlier one.
+2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
+   order wins when multiple targets discover the same group.
 3. **RouteBackend CRs**, correlated by name with an AppManifest CR, or with the manifests embedded
    in the binary for core groups. Only Forward mode is implemented. Backends without a `Forward`
    block (Operator and Plugin modes) are skipped with a warning.
@@ -193,13 +193,38 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
 | `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
 | `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
-| `<target>.url` | Base URL for `baas_apiserver` or `cloud_app_platform_apiserver`. Unset skips that target. |
-| `<target>.audience` | Required when `<target>.url` is set. |
-| `<target>.group_regex` | Comma-separated globs that narrow the discovered groups. Unset matches all. |
-| `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+
+Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
+priority order. Repeating a section name merges its keys; it does not create another target.
+Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
+the corresponding section must exist in the INI configuration.
+
+| Key | Meaning |
+| --- | --- |
+| `url` | Target base URL. Unset skips the target. |
+| `audience` | Required when `url` is set. |
+| `poll_interval` | Positive discovery polling duration, default `30s`. |
+| `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
+| `ca_file`, `insecure` | Per-target TLS settings. |
+
+```ini
+[router.aggregate.baas_apiserver]
+url = https://baas.example.com
+audience = apiextensions.k8s.io
+poll_interval = 10m
+group_regex = *.ext.grafana.app
+
+[router.aggregate.cloud_app_platform_apiserver]
+url = https://cap.example.com
+audience = cloudAppPlatformDiscovery
+group_regex = *.ext.grafana.com
+```
+
+Shared authentication settings remain in `[cloud_router]`. Discovery uses `Authorization` for
+`cloud_app_platform_apiserver` and `X-Access-Token` for other target names.
 
 Every URL must be absolute; a trailing slash is tolerated.
 

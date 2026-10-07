@@ -179,9 +179,10 @@ func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 }
 
 func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"baas_apiserver.url":      "https://baas.invalid",
-		"baas_apiserver.audience": "baas",
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      "https://baas.invalid",
+		"audience": "baas",
 	})
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
@@ -192,11 +193,13 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"cap_token":          "tok",
 		"token_exchange_url": "https://exchange.invalid",
-		"baas_apiserver.url": "https://baas.invalid",
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url": "https://baas.invalid",
 	})
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.ErrorContains(t, err, "baas_apiserver.audience is required")
+	require.ErrorContains(t, err, "router.aggregate.baas_apiserver: audience is required")
 }
 
 // TestNewAggregateBaseTransport_IsPerCallClone pins the property that keeps
@@ -323,12 +326,16 @@ func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 // clients rather than one shared one.
 func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":                             "tok",
-		"token_exchange_url":                    "https://exchange.invalid",
-		"baas_apiserver.url":                    "https://baas.invalid",
-		"baas_apiserver.audience":               "baas",
-		"cloud_app_platform_apiserver.url":      "https://cap.invalid",
-		"cloud_app_platform_apiserver.audience": "cap",
+		"cap_token":          "tok",
+		"token_exchange_url": "https://exchange.invalid",
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      "https://baas.invalid",
+		"audience": "baas",
+	})
+	addAggregateSection(t, cfg, "cloud_app_platform_apiserver", map[string]string{
+		"url":      "https://cap.invalid",
+		"audience": "cap",
 	})
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
@@ -406,11 +413,13 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 	defer tokenExchange.Close()
 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":               "tok",
-		"token_exchange_url":      tokenExchange.URL,
-		"baas_apiserver.url":      aggregateUpstream.URL,
-		"baas_apiserver.audience": "baas",
-		"plugins_url":             pluginsUpstream.URL,
+		"cap_token":          "tok",
+		"token_exchange_url": tokenExchange.URL,
+		"plugins_url":        pluginsUpstream.URL,
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      aggregateUpstream.URL,
+		"audience": "baas",
 	})
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
@@ -462,10 +471,12 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 	defer tokenExchange.Close()
 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":               "tok",
-		"token_exchange_url":      tokenExchange.URL,
-		"baas_apiserver.url":      upstream.URL,
-		"baas_apiserver.audience": "baas",
+		"cap_token":          "tok",
+		"token_exchange_url": tokenExchange.URL,
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      upstream.URL,
+		"audience": "baas",
 	})
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
