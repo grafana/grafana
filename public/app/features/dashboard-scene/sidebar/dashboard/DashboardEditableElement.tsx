@@ -1,7 +1,8 @@
 import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { type SceneObject, SceneVariableSet, sceneUtils } from '@grafana/scenes';
+import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
+import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -25,6 +26,11 @@ import { DashboardDescriptionInput, DashboardTitleInput } from './DashboardBasic
 import { AddFilterIconButton, DashboardFiltersList } from './DashboardFiltersList';
 import { AddLinkButton, DashboardLinksList } from './DashboardLinksList';
 import { AddVariableButton, DashboardVariablesList } from './DashboardVariablesList';
+import {
+  countSidebarVariables,
+  isFilterOrGroupByVariable,
+  partitionSidebarVariables,
+} from './partitionSidebarVariables';
 
 function useDashboardSidebarOptions(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { body } = dashboard.useState();
@@ -130,9 +136,18 @@ export class DashboardEditableElement implements EditableDashboardElement {
 function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { $variables } = dashboard.useState();
   const filterListId = useId();
+  const includePredefined = useFlagGrafanaDashboardGlobalVariables();
 
   return useMemo(() => {
-    const filterCount = $variables?.state.variables.filter(sceneUtils.isAdHocVariable).length ?? 0;
+    const filterCount =
+      $variables instanceof SceneVariableSet
+        ? countSidebarVariables(
+            partitionSidebarVariables($variables.state.variables.filter(isFilterOrGroupByVariable), {
+              includePredefined,
+              excludeFilters: false,
+            })
+          )
+        : 0;
 
     const title = t('dashboard-scene.use-filters-category.category.title.filters', 'Filters');
     const category = new OptionsPaneCategoryDescriptor({
@@ -150,23 +165,29 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
           title: '',
           id: filterListId,
           skipField: true,
-          render: () => <DashboardFiltersList variableSet={$variables} />,
+          render: () => <DashboardFiltersList variableSet={$variables} includePredefined={includePredefined} />,
         })
       );
     }
 
     return [category];
-  }, [$variables, filterListId, dashboard]);
+  }, [$variables, filterListId, dashboard, includePredefined]);
 }
 
 function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDescriptor[] {
   const { $variables } = dashboard.useState();
   const variableListId = useId();
+  const includePredefined = useFlagGrafanaDashboardGlobalVariables();
 
   return useMemo(() => {
     const variableCount =
       $variables instanceof SceneVariableSet
-        ? $variables.state.variables.filter((v) => !sceneUtils.isAdHocVariable(v) && !v.UNSAFE_renderAsHidden).length
+        ? countSidebarVariables(
+            partitionSidebarVariables($variables.state.variables, {
+              includePredefined,
+              excludeFilters: true,
+            })
+          )
         : 0;
 
     const title = t('dashboard-scene.use-variables-category.category.title.variables', 'Variables');
@@ -185,7 +206,9 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
           title: '',
           id: variableListId,
           skipField: true,
-          render: () => <DashboardVariablesList sourceVariableSet={$variables} />,
+          render: () => (
+            <DashboardVariablesList sourceVariableSet={$variables} showPredefinedGroups={includePredefined} />
+          ),
         })
       );
     }
@@ -202,7 +225,7 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
     }
 
     return [category];
-  }, [$variables, variableListId, dashboard]);
+  }, [$variables, variableListId, dashboard, includePredefined]);
 }
 
 function useAnnotationsCategory(dataLayerSet: DashboardDataLayerSet): OptionsPaneCategoryDescriptor[] {

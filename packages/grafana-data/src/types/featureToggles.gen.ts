@@ -1197,6 +1197,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersRedirectNoFallback?: boolean;
   /**
+  * Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value
+  * @default false
+  */
+  kubernetesUsersDeterministicUID?: boolean;
+  /**
   * Enables auth info APIs in the app platform
   * @default false
   */

@@ -148,6 +148,7 @@ export class TabItem
     }
 
     edit({
+      meta: { actionId: 'layout.switch', scope: 'tab' },
       description: t('dashboard.edit-actions.switch-layout-tab', 'Switch layout'),
       source: this,
       perform,

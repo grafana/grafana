@@ -120,6 +120,35 @@ func TestNewKvStorageBackend(t *testing.T) {
 	assert.NotNil(t, backend.resourceVersions)
 }
 
+func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	now := time.Now().UTC().Truncate(time.Second)
+	expected := map[NamespacedResource]time.Time{
+		{Namespace: "aaa", Group: "dashboards", Resource: "dashboard"}: now.Add(-time.Minute),
+		{Namespace: "zzz", Group: "dashboards", Resource: "dashboard"}: now,
+	}
+	for key, importedAt := range expected {
+		require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+			NamespacedResource: key, LastImportTime: importedAt,
+		}))
+	}
+	malformed := []string{"bbb-invalid-key", "yyy-invalid-key"}
+	for _, key := range malformed {
+		writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, key)
+		require.NoError(t, err)
+		_, err = writer.Write([]byte{1})
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+
+	times, err := backend.ListResourceLastImportTimes(t.Context())
+	require.Error(t, err)
+	for _, key := range malformed {
+		require.ErrorContains(t, err, key)
+	}
+	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
+}
+
 func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
 	tests := []struct {
 		name           string

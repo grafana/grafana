@@ -1,3 +1,5 @@
+import { act, renderHook } from '@testing-library/react';
+import { createElement, type PropsWithChildren } from 'react';
 import { delay, of, Subject } from 'rxjs';
 
 import {
@@ -15,11 +17,12 @@ import {
   AdHocFiltersVariable,
   SceneDataNode,
   sceneGraph,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, PanelContextProvider, useAdHocTransformations } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
@@ -119,6 +122,103 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('reads and updates only the selected owner through the panel context hook', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      api.set('table', [{ id: 'organize', options: {} }]);
+      api.set('other', [{ id: 'limit', options: { limitField: 2 } }]);
+      const { result, rerender } = renderHook(({ owner }) => useAdHocTransformations(owner), {
+        initialProps: { owner: 'table' },
+        wrapper: ({ children }: PropsWithChildren) => createElement(PanelContextProvider, { value: context }, children),
+      });
+
+      expect(result.current?.transformations).toEqual([{ id: 'organize', options: {} }]);
+      act(() => result.current?.setTransformations([]));
+      expect(api.get('table')).toEqual([]);
+      expect(api.get('other')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+
+      rerender({ owner: 'other' });
+      act(() => api.set('table', [{ id: 'organize', options: {} }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      act(() => api.set('other', [{ id: 'limit', options: { limitField: 3 } }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 3 } }]);
+    });
+
+    it('keeps each panel’s single view list and subscriptions independent', () => {
+      const first = buildTestScene({});
+      const second = buildTestScene({});
+      const firstApi = first.context.adHocTransformations!;
+      const secondApi = second.context.adHocTransformations!;
+      const firstChanged = jest.fn();
+      const secondChanged = jest.fn();
+      const unsubscribe = firstApi.subscribe('grafana:table-view', firstChanged);
+      const unsubscribeSecond = secondApi.subscribe('grafana:table-view', secondChanged);
+
+      firstApi.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set('grafana:table-view', []);
+
+      expect(firstApi.get('grafana:table-view')).toEqual([]);
+      expect(secondApi.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      expect(secondChanged).toHaveBeenCalledTimes(1);
+      unsubscribe();
+      firstApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 1 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      unsubscribeSecond();
+    });
+
+    it('replaces the entire view list with an immutable snapshot', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const configs = [{ id: 'limit', options: { limitField: 2 } }];
+      api.set('grafana:table-view', configs);
+      const snapshot = api.get('grafana:table-view');
+      configs[0].options.limitField = 99;
+
+      expect(api.get('grafana:table-view')).toBe(snapshot);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(Object.isFrozen(snapshot[0].options)).toBe(true);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+
+    it('retains source values while active and restores cleanup after clearing or changing plugins', () => {
+      const { context, vizPanel } = buildTestScene({});
+      vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
+      const api = context.adHocTransformations!;
+      const changed = jest.fn();
+      const unsubscribe = api.subscribe('grafana:table-view', changed);
+
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      api.set('grafana:table-view', []);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      vizPanel.setState({ pluginId: 'table' });
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      expect(changed).toHaveBeenCalledTimes(4);
+      unsubscribe();
+    });
+
+    it('uses the panel runtime transformation controller across data replacements', () => {
+      const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
+      const controller = vizPanel.getRuntimeTransformations();
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
+
+      controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});

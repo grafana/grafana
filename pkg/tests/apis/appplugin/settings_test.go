@@ -42,21 +42,25 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAppPluginSettings(t *testing.T) {
-	testIntegrationAppPluginSettings(t)
+	testIntegrationAppPluginSettings(t, "")
 }
 
 func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
-	testIntegrationAppPluginSettings(t, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	testIntegrationAppPluginSettings(t, "", featuremgmt.FlagGrafanaUseRouterMiddleware)
 }
 
-func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
+func TestIntegrationAppPluginSettingsWithManifestRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, features ...string) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := setupHelper(t, mode, features...)
+			helper := setupHelperFull(t, mode, manifestFile, features...)
 			ctx := context.Background()
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -352,10 +356,6 @@ func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, "", extraFeatures...)
-}
-
 // setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
 	return setupHelperFull(t, mode, "app-sdk-manifest.json", extraFeatures...)
@@ -375,20 +375,13 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string
 		}
 	}
 
-	// The settings resource moves to the manifest group along with the rest of
-	// the plugin's API, and the storage config is keyed by <resource>.<group>.
-	storageGroup := testAppID
-	if withManifest {
-		storageGroup = testAppGroup
-	}
-
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("app.%s", storageGroup): {
+			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
 			},
 		},
