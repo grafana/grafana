@@ -999,6 +999,60 @@ describe('getObservablePluginFunctions()', () => {
     expect(functions).toHaveLength(0);
   });
 
+  it('should honour the limitPerPlugin arg if its set', async () => {
+    const secondPluginId = 'grafana-extra-app';
+
+    // `pluginId` already has "Function 1" registered in the beforeEach
+    addedFunctionsRegistry.register({
+      pluginId,
+      configs: [
+        {
+          title: 'Function 2',
+          description: 'Function 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Function 3',
+          description: 'Function 3 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    addedFunctionsRegistry.register({
+      pluginId: secondPluginId,
+      configs: [
+        {
+          title: 'Other 1',
+          description: 'Other 1 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Other 2',
+          description: 'Other 2 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+        {
+          title: 'Other 3',
+          description: 'Other 3 description',
+          targets: extensionPointId,
+          fn: () => {},
+        },
+      ],
+    });
+
+    const observable = getObservablePluginFunctions({ extensionPointId, limitPerPlugin: 2 });
+    const functions = await firstValueFrom(observable);
+
+    expect(functions).toHaveLength(4);
+    expect(functions.filter((extension) => extension.pluginId === pluginId)).toHaveLength(2);
+    expect(functions.filter((extension) => extension.pluginId === secondPluginId)).toHaveLength(2);
+  });
+
   it('should apply the caller-provided signature to the returned functions', async () => {
     type GreetFn = (name: string) => string;
 
