@@ -2064,7 +2064,10 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "dst/", "").Return("dst-folder-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json", "")
 
 		assert.NoError(t, err)
@@ -2140,7 +2143,10 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "restricted/", "").Return("restricted-folder-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json", "")
 
 		assert.Error(t, err)
@@ -2151,6 +2157,86 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 // AuthorizeDeleteByPath/AuthorizeMoveByPath, its only callers): file *content* is
 // read from the caller's actual ref, with a narrow ErrRefNotFound-only fallback to
 // the configured branch, while folder *identity* stays pinned regardless of ref.
+// TestTargetFolderResolvesToNearestExistingAncestor covers destination resolution
+// when the target's containing folder chain has not been synced to Grafana.
+//
+// Resolution starts from safepath.Dir(targetPath), so for a directory target it
+// begins at that directory's parent - stepping above the destination is inherent
+// to that, and unchanged here. What changed is the outcome when the folder it
+// lands on does not exist: that used to produce a hash-derived UID Grafana had
+// never stored, which no grant could match and nothing could cascade from, so the
+// caller got an unexplained 403. It now walks up to the nearest folder that does
+// exist, letting an ancestor's grant apply.
+func TestTargetFolderResolvesToNearestExistingAncestor(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+
+	t.Run("an unsynced parent chain inherits from the nearest existing ancestor", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		// "team-a/pending/" exists only on a branch; the walk lands on "team-a".
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-a/pending/", "").
+			Return("team-a-uid", true, nil).Once()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), "team-a-uid").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/pending/child/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("the walk is pinned to the configured branch", func(t *testing.T) {
+		// The ref argument must always be "": which folder stands in for a path
+		// cannot be something a caller selects by editing _folder.json on a branch.
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, mock.Anything, "").
+			Return("team-a-uid", true, nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.Anything, "team-a-uid").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/pending/child/")
+
+		assert.NoError(t, err)
+		folders.AssertExpectations(t)
+	})
+
+	t.Run("no existing ancestor falls back to the repository root", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "nowhere/", "").
+			Return("", false, nil).Once()
+
+		mockAccess.On("Check", mock.Anything, mock.Anything, RootFolder(repo)).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "nowhere/deeper/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("a lookup error is surfaced, not treated as absent", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-a/", "").
+			Return("", false, assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/sub/")
+
+		assert.Error(t, err)
+	})
+}
+
 func TestFileKindResolvesFromRef(t *testing.T) {
 	t.Run("reads file content from the supplied ref, not the configured branch", func(t *testing.T) {
 		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
@@ -2241,7 +2327,10 @@ func TestFileKindResolvesFromRef(t *testing.T) {
 			return req.Group == DashboardResource.Group && req.Resource == DashboardResource.Resource && req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-b/", "").Return("team-b-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
 		err := authorizer.AuthorizeMoveByPath(context.Background(), "team-a/dashboard.json", "team-b/dashboard.json", "feature-branch")
 
 		assert.NoError(t, err)

@@ -683,18 +683,40 @@ func (a *ProvisioningAuthorizer) AuthorizeMoveByPath(ctx context.Context, source
 	return a.checkGVRVerb(ctx, gvr, targetFolderID, utils.VerbCreate)
 }
 
-// getTargetFolderID resolves the folder ID that a move's targetPath lands in,
-// shared by AuthorizeMoveByPath (file sources) and AuthorizeCreateInFolder.
+// getTargetFolderID resolves the folder a move's targetPath lands in, shared by
+// AuthorizeMoveByPath (file sources) and AuthorizeCreateInFolder.
+//
+// Resolution starts at safepath.Dir(targetPath) and walks to the nearest folder
+// that actually exists. The walk is what makes permission cascading work: a
+// folder the move is about to create has no hierarchy recorded in Grafana, so it
+// resolved to a hash-derived UID that was never stored - no grant could match it
+// and nothing could cascade from it, so the caller got an unexplained denial.
+//
+// Starting from Dir means a directory target is resolved from its parent, so a
+// caller scoped to only the exact nested destination is still checked one level
+// above it. That imprecision is inherent to Dir and is not addressed here.
+//
+// The walk stays on the configured branch: which folder stands in for a path must
+// not be something a caller can choose by editing _folder.json on a branch they
+// control. FindExistingAncestor also verifies the stored folder's manager and
+// source path match the path it is standing in for, so a UID collision or a
+// branch-supplied decoy can't be substituted.
 func (a *ProvisioningAuthorizer) getTargetFolderID(ctx context.Context, targetPath string) (string, error) {
 	targetParent := safepath.Dir(targetPath)
 	if targetParent == "" {
 		return RootFolder(a.repo), nil
 	}
-	folderID, err := a.getFolderID(ctx, targetParent)
+
+	ancestor, found, err := a.folders.FindExistingAncestor(ctx, targetParent, "")
 	if err != nil {
-		return "", fmt.Errorf("get target folder ID for %q: %w", targetPath, err)
+		return "", fmt.Errorf("find existing folder for %q: %w", targetPath, err)
 	}
-	return folderID, nil
+	if !found {
+		// Instance and folderless repositories have no wrapper folder to inherit
+		// from, so the authorization context is the repository root.
+		return RootFolder(a.repo), nil
+	}
+	return ancestor, nil
 }
 
 // AuthorizeCreateInFolder checks if the current user has create permission for
@@ -703,19 +725,9 @@ func (a *ProvisioningAuthorizer) getTargetFolderID(ctx context.Context, targetPa
 // resource kind (e.g. from a ResourceRef) instead of needing to read a source
 // file to determine it.
 //
-// Reuses getTargetFolderID (the same Dir-of-targetPath resolution
-// AuthorizeMoveByPath's file-move check uses), which is a deliberate choice, not
-// an oversight: opts.TargetPath commonly names a folder that doesn't exist in
-// Grafana yet (the move creates it), and permission cascading requires the
-// folder hierarchy to already be recorded in Grafana - checking a not-yet-created
-// folder's own ID can never cascade from an ancestor's permission, so it would
-// incorrectly deny a user who only has permission on an existing ancestor.
-// Checking one level up trades that for the reverse imprecision (a user scoped
-// only to the exact nested destination, which does already exist, is denied) -
-// this is the same trade-off AuthorizeMoveByPath already makes for path-based
-// moves. Fixing both cases correctly needs resolving the nearest *existing*
-// ancestor rather than a fixed one-level-up, which is a bigger change than a
-// single-caller fix.
+// Shares getTargetFolderID with AuthorizeMoveByPath's file-move check, so both
+// resolve the destination the same way: to the nearest folder that actually
+// exists. See that function for why walking up is what makes cascading work.
 func (a *ProvisioningAuthorizer) AuthorizeCreateInFolder(ctx context.Context, gvr schema.GroupVersionResource, targetPath string) error {
 	targetFolderID, err := a.getTargetFolderID(ctx, targetPath)
 	if err != nil {
