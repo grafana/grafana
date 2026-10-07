@@ -15755,7 +15755,6 @@
       "noResultsNoScopes": "No scopes selected",
       "toggle": {
         "collapse": "Collapse suggested dashboards list",
-        "disabled": "Suggested dashboards list is disabled due to read only mode",
         "expand": "Expand suggested dashboards list"
       }
     },

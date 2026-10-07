@@ -59,8 +59,8 @@ export const ScopesSelector = () => {
     tree,
     scopes: scopesMap,
   } = selectorServiceState;
-  const { scopesService, scopesSelectorService } = services;
-  const { readOnly, loading } = scopes.state;
+  const { scopesSelectorService } = services;
+  const { loading } = scopes.state;
   const { open, removeAllScopes, closeAndApply, closeAndReset } = scopesSelectorService;
 
   return (
@@ -69,13 +69,9 @@ export const ScopesSelector = () => {
         nodes={nodes}
         scopes={scopesMap}
         appliedScopes={appliedScopes}
-        disabled={readOnly}
+        disabled={false}
         loading={loading}
-        onInputClick={() => {
-          if (!scopesService.state.readOnly) {
-            open();
-          }
-        }}
+        onInputClick={open}
         onRemoveAllClick={removeAllScopes}
       />
 
