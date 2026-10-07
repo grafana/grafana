@@ -14,7 +14,8 @@ export const TimeIntervalFactory = Factory.define<TimeInterval>(({ sequence }) =
   kind: 'TimeInterval',
   apiVersion: `${API_GROUP}/${API_VERSION}`,
   metadata: {
-    name: `time-interval-${sequence}`,
+    // Differs from spec.name on purpose: rules reference a time interval by its title (spec.name).
+    name: `time-interval-uid-${sequence}`,
     namespace: DEFAULT_NAMESPACE,
     resourceVersion: generateResourceVersion(),
   },

@@ -1,7 +1,10 @@
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { render, screen } from '../../../../../tests/test-utils';
-import { ListTimeIntervalApiResponseFactory } from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
+import {
+  ListTimeIntervalApiResponseFactory,
+  TimeIntervalFactory,
+} from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
 
 import { SimplifiedRoutingFields } from './SimplifiedRoutingFields';
@@ -43,7 +46,10 @@ describe('SimplifiedRoutingFields', () => {
     server.use(
       listTimeIntervalHandler(
         ListTimeIntervalApiResponseFactory.build({
-          items: [{ metadata: { name: 'weekends' } } as never, { metadata: { name: 'business-hours' } } as never],
+          items: [
+            TimeIntervalFactory.build({ metadata: { name: 'uid-weekends' }, spec: { name: 'weekends' } }),
+            TimeIntervalFactory.build({ metadata: { name: 'uid-business-hours' }, spec: { name: 'business-hours' } }),
+          ],
         })
       )
     );

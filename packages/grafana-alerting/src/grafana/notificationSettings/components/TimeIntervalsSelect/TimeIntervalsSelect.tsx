@@ -16,9 +16,8 @@ export interface TimeIntervalsSelectProps {
 export function TimeIntervalsSelect({ value, onChange, disabled, 'aria-label': ariaLabel }: TimeIntervalsSelectProps) {
   const { currentData: timeIntervals, isLoading, isError } = useListTimeIntervals();
 
-  const options = (timeIntervals?.items ?? [])
-    .filter((ti): ti is typeof ti & { metadata: { name: string } } => Boolean(ti.metadata.name))
-    .map((ti) => ({ label: ti.metadata.name, value: ti.metadata.name }));
+  // Rules reference a time interval by its title (spec.name), which can differ from metadata.name.
+  const options = (timeIntervals?.items ?? []).map((ti) => ({ label: ti.spec.name, value: ti.spec.name }));
 
   return (
     <MultiSelect
