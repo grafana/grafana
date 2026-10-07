@@ -3,7 +3,7 @@ import { HttpResponse, http } from 'msw';
 import { type ReactNode } from 'react';
 import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
-import { screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
+import { screen, waitFor, within } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setPluginLinksHook } from '@grafana/runtime';
@@ -107,9 +107,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
     await user.type(await ui.inputs.name.find(), 'my great new rule');
     await selectFolderAndGroup(user);
 
-    //select contact point routing
-    await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
-
     // do not select a contact point
     // save and check that call to backend was not made
     await user.click(ui.buttons.save.get());
@@ -125,7 +122,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     // Just to make sure all dropdowns have been loaded
     await selectFolderAndGroup(user);
-    await waitFor(() => expect(ui.inputs.simplifiedRouting.contactPointRouting.query()).not.toBeInTheDocument());
+    await waitFor(() => expect(ui.inputs.simplifiedRouting.contactPoint.query()).not.toBeInTheDocument());
   });
 
   it('can create new grafana managed alert when using simplified routing and selecting a contact point', async () => {
@@ -138,9 +135,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     await selectFolderAndGroup(user);
 
-    //select contact point routing
-    await user.click(ui.inputs.simplifiedRouting.contactPointRouting.get());
-
     await selectContactPoint(contactPointName);
 
     // save and check what was sent to backend
@@ -152,9 +146,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   it('allows selecting a contact point', async () => {
-    const { user } = renderRuleEditor();
-
-    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
+    renderRuleEditor();
 
     await selectContactPoint('lotsa-emails');
     expect(screen.getByDisplayValue('lotsa-emails')).toBeInTheDocument();
@@ -208,8 +200,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
 
     const { user } = renderRuleEditor();
 
-    await user.click(await ui.inputs.simplifiedRouting.contactPointRouting.find());
-
     // Open the contact point dropdown
     const contactPointInput = await ui.inputs.simplifiedRouting.contactPoint.find();
     const combobox = await within(contactPointInput).findByRole('combobox');
@@ -225,8 +215,6 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('switch modes enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingNotificationsStepMode'] });
-
     it('can create the new grafana-managed rule with default modes', async () => {
       const contactPointName = 'lotsa-emails';
       const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));

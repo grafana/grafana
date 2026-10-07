@@ -24,6 +24,7 @@ export function AnnotationQueryEditorModal({ layer, onClose }: { layer: Annotati
 
     if (newQuery !== oldQuery) {
       edit({
+        meta: { actionId: 'annotation.changeQuery' },
         description: t('dashboard.sidebar.annotation.change-query', 'Change annotation query'),
         source: layer,
         perform: () => {

@@ -232,6 +232,7 @@ export function RowHeaderSwitch({ row, id }: { row: RowItem; id?: string }) {
       value={isHeaderHidden}
       onChange={() =>
         edit({
+          meta: { actionId: 'row.changeHeaderVisibility' },
           description: isHeaderHidden
             ? t('dashboard.edit-actions.row-show-header', 'Show row header')
             : t('dashboard.edit-actions.row-hide-header', 'Hide row header'),
@@ -253,6 +254,7 @@ export function FillScreenSwitch({ row, id }: { row: RowItem; id?: string }) {
       value={fillScreen}
       onChange={() =>
         edit({
+          meta: { actionId: 'row.changeFillScreen' },
           description: fillScreen
             ? t('dashboard.edit-actions.row-fill-screen-disable', 'Disable row fill screen')
             : t('dashboard.edit-actions.row-fill-screen-enable', 'Enable row fill screen'),
@@ -292,6 +294,7 @@ export function RowRepeatSelect({ row, id }: { row: RowItem; id?: string }) {
           }
 
           edit({
+            meta: { actionId: 'row.changeRepeat' },
             description: t('dashboard.edit-actions.row-repeat-variable', 'Row repeat by'),
             source: row,
             perform: () => row.onChangeRepeat(nextRepeat),
@@ -341,6 +344,7 @@ function editRowTitleAction(row: RowItem, title: string, prevTitle: string) {
   }
 
   edit({
+    meta: { actionId: 'row.changeTitle' },
     description: t('dashboard.edit-actions.row-title', 'Change row title'),
     source: row,
     perform: () => row.onChangeTitle(title),

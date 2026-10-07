@@ -39,6 +39,25 @@ spec:
           - Error
           - NoData
           type: string
+        AlertRuleInstanceTotals:
+          additionalProperties: false
+          description: |-
+            Count of alert instances per state. error also counts instances whose evaluation
+            errored but were mapped to another state via execErrState, so it can overlap.
+          properties:
+            error:
+              type: integer
+            firing:
+              type: integer
+            healthy:
+              type: integer
+            nodata:
+              type: integer
+            pending:
+              type: integer
+            recovering:
+              type: integer
+          type: object
         AlertRuleState:
           enum:
           - Inactive
@@ -295,9 +314,48 @@ spec:
               $ref: '#/components/schemas/AlertRuleState'
             stateReason:
               $ref: '#/components/schemas/AlertRuleStateReason'
+            totals:
+              $ref: '#/components/schemas/AlertRuleInstanceTotals'
           type: object
       scope: Namespaced
       searchFields:
+      - capabilities:
+        - retrieve
+        description: The number of healthy alert instances
+        name: totalsHealthy
+        path: status.totals.healthy
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of firing alert instances
+        name: totalsFiring
+        path: status.totals.firing
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of pending alert instances
+        name: totalsPending
+        path: status.totals.pending
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of recovering alert instances
+        name: totalsRecovering
+        path: status.totals.recovering
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of no-data alert instances
+        name: totalsNoData
+        path: status.totals.nodata
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of alert instances with evaluation errors, including
+          errors mapped to another state
+        name: totalsError
+        path: status.totals.error
+        type: int64
       - capabilities:
         - filter
         - retrieve

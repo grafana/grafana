@@ -170,7 +170,12 @@ describe('DashboardScene', () => {
       it('clears history on entering edit mode and preserves it on repeated enters', () => {
         const scene = buildTestScene();
         const sidebar = scene.state.sidebar;
-        const action = { source: scene, perform: jest.fn(), undo: jest.fn() };
+        const action = {
+          source: scene,
+          meta: { actionId: 'test.edit' } as const,
+          perform: jest.fn(),
+          undo: jest.fn(),
+        };
         sidebar.setState({ undoStack: [action], redoStack: [action] });
 
         scene.onEnterEditMode();

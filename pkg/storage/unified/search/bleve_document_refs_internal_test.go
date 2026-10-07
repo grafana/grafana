@@ -70,15 +70,17 @@ func TestListDocumentRefsOfGlobalIndex(t *testing.T) {
 		collectRefs(t, index.ListDocumentRefs(t.Context(), foldersGR)))
 }
 
-func TestListDocumentRefsRejectsAnUncoveredType(t *testing.T) {
-	index := buildRefsIndex(t, resource.GlobalSearchKey("ns"), refDoc(dashboardsGR, "ns", "dash-a", 11))
-
+// A type dropped from what the index covers is still listed, so its documents
+// can be removed.
+func TestListDocumentRefsOfATypeNoLongerCovered(t *testing.T) {
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
-	for _, err := range index.ListDocumentRefs(t.Context(), playlists) {
-		require.Error(t, err, "a type this index does not cover is a mistake, not an empty answer")
-		return
-	}
-	t.Fatal("expected an error")
+	index := buildRefsIndex(t, resource.GlobalSearchKey("ns"),
+		refDoc(dashboardsGR, "ns", "dash-a", 11),
+		refDoc(playlists, "ns", "playlist-a", 12),
+	)
+
+	assert.Equal(t, map[string]int64{"playlist-a": 12},
+		collectRefs(t, index.ListDocumentRefs(t.Context(), playlists)))
 }
 
 func TestListDocumentRefsOfPerResourceIndex(t *testing.T) {

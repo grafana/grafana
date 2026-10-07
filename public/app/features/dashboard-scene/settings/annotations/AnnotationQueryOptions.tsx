@@ -56,6 +56,7 @@ function QueryLibraryButton({ layer, onQuerySelected }: { layer: AnnotationLayer
         try {
           const updatedQuery = await updateAnnotationFromSavedQuery(query, selectedQuery);
           edit({
+            meta: { actionId: 'annotation.changeQuery', scope: 'query-library' },
             description: t('dashboard.sidebar.annotation.change-query', 'Change annotation query'),
             source: layer,
             perform: () => {

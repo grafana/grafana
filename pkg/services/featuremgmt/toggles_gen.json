@@ -105,6 +105,19 @@
     },
     {
       "metadata": {
+        "name": "alerting.hybridSearch",
+        "resourceVersion": "1790261991235",
+        "creationTimestamp": "2026-09-24T14:59:51Z"
+      },
+      "spec": {
+        "description": "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+        "stage": "experimental",
+        "codeowner": "@grafana/search-and-storage",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.manualAssistantInvestigation",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -305,7 +318,8 @@
       "metadata": {
         "name": "alertingBulkActionsInUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-24T14:49:59Z"
+        "creationTimestamp": "2025-04-24T14:49:59Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting bulk actions in the UI",
@@ -464,7 +478,8 @@
       "metadata": {
         "name": "alertingMigrationUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-14T16:40:05Z"
+        "creationTimestamp": "2025-03-14T16:40:05Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
@@ -570,7 +585,8 @@
       "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-22T11:07:45Z"
+        "creationTimestamp": "2024-11-22T11:07:45Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables simplified step mode in the notifications section",
@@ -653,7 +669,8 @@
       "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-03T11:18:25Z"
+        "creationTimestamp": "2025-04-03T11:18:25Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables UI functionality to permanently delete alert rules",
@@ -682,7 +699,8 @@
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-02-17T12:25:32Z"
+        "creationTimestamp": "2025-02-17T12:25:32Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
@@ -754,7 +772,8 @@
       "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-18T10:59:00Z"
+        "creationTimestamp": "2024-11-18T10:59:00Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
@@ -1406,7 +1425,8 @@
       "metadata": {
         "name": "dashboard.apiSearchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for requests from the /api/search endpoint",
@@ -1431,23 +1451,27 @@
     {
       "metadata": {
         "name": "dashboard.recentlyDeletedViaTrash",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791194326048",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 09:58:46.048328 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/search-and-storage",
         "frontend": true,
         "hideFromDocs": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
       "metadata": {
         "name": "dashboard.searchFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for dashboard search requests",
@@ -1735,6 +1759,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.queryGatewaySlimAudit",
+        "resourceVersion": "1790805819665",
+        "creationTimestamp": "2026-09-30T22:03:39Z"
+      },
+      "spec": {
+        "description": "Only attach query payloads to query gateway audit events when a guardrail fires",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.queryTypes",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -1768,6 +1806,19 @@
       },
       "spec": {
         "description": "Use the IAM TeamLBACRule rules-for-subject API for team HTTP headers in single-tenant Grafana",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "datasources.teamHttpHeadersWriteGuard",
+        "resourceVersion": "1790977358513",
+        "creationTimestamp": "2026-10-02T21:42:38Z"
+      },
+      "spec": {
+        "description": "Guard embedded Team LBAC rules against external datasource Kubernetes API writes",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "expression": "false"
@@ -1890,6 +1941,23 @@
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
         "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dataviz.tabularNums",
+        "resourceVersion": "1790951488017",
+        "creationTimestamp": "2026-10-02T09:33:37Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-02 14:31:28.017202 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables tabular numerals for visualization legend values",
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true,
         "expression": "false"
       }
     },
@@ -2563,6 +2631,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.globalHomePreference",
+        "resourceVersion": "1791348293298",
+        "creationTimestamp": "2026-10-07T04:44:53Z"
+      },
+      "spec": {
+        "description": "Offers the reserved Grafana home option in the home dashboard preference",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -2857,6 +2940,21 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.scopesDashboardsMegaMenu",
+        "resourceVersion": "1791299236241",
+        "creationTimestamp": "2026-10-06T15:07:16Z"
+      },
+      "spec": {
+        "description": "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -3653,6 +3751,23 @@
     },
     {
       "metadata": {
+        "name": "kubernetesUsersDeterministicUID",
+        "resourceVersion": "1791287388877",
+        "creationTimestamp": "2026-10-06T11:11:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-06 11:49:48.877899 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "kubernetesUsersRedirect",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -4071,14 +4186,17 @@
     {
       "metadata": {
         "name": "panelTimeSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-10-29T08:06:23Z"
+        "resourceVersion": "1791345985856",
+        "creationTimestamp": "2025-10-29T08:06:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables a new panel time settings drawer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4894,12 +5012,15 @@
     {
       "metadata": {
         "name": "reportingFooterSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791199794641",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 11:29:54.641468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the configurable footer settings for PDF reports",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"
@@ -4908,12 +5029,15 @@
     {
       "metadata": {
         "name": "reportingHeaderSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791199794641",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-05 11:29:54.641468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables configuration of PDF report settings",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "frontend": true,
         "expression": "false"
@@ -5034,7 +5158,8 @@
       "metadata": {
         "name": "search.apiFieldValueResults",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "deletionTimestamp": "2026-09-30T12:37:34Z"
       },
       "spec": {
         "description": "Uses field-value results for generic resource search API requests",
@@ -5434,15 +5559,18 @@
     {
       "metadata": {
         "name": "timeComparison",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-24T20:07:28Z"
+        "resourceVersion": "1791345985856",
+        "creationTimestamp": "2025-07-24T20:07:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables time comparison option in supported panels",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {

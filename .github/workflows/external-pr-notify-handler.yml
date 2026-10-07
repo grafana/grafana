@@ -25,7 +25,7 @@ env:
   # community-triage logic version this repo is pinned to.
   # Bump deliberately; re-resolve with:
   #   git ls-remote https://github.com/grafana/community-triage main
-  TRIAGE_REF: e3fc97ce0d62a994ce9a80647f2d2c4f9ac3c003 # trufflehog:ignore
+  TRIAGE_REF: 31f1647906deddca9a193bc2ec3fe44f9a2c3528 # trufflehog:ignore
 
 jobs:
   triage:
@@ -45,9 +45,10 @@ jobs:
       agent_review: ${{ steps.check-teams.outputs.agent_review }}
       pr_type: ${{ steps.classify.outputs.type }}
       review_skill: ${{ steps.classify.outputs.review_skill }}
-      slop_status: ${{ steps.detect-slop.outputs.slop_status }}
-      slop_score: ${{ steps.detect-slop.outputs.slop_score }}
-      slop_reason: ${{ steps.detect-slop.outputs.slop_reason }}
+      read_status: ${{ steps.read-change.outputs.read_status }}
+      coherence: ${{ steps.read-change.outputs.coherence }}
+      coherence_reason: ${{ steps.read-change.outputs.coherence_reason }}
+      flags: ${{ steps.read-change.outputs.flags }}
       size: ${{ steps.metadata.outputs.size }}
       additions: ${{ steps.metadata.outputs.additions }}
       deletions: ${{ steps.metadata.outputs.deletions }}
@@ -145,8 +146,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts classify
 
-      - name: Detect AI slop
-        id: detect-slop
+      - name: Read the change
+        id: read-change
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
         continue-on-error: true
         env:
@@ -154,7 +155,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ steps.validate.outputs.pr_number }}
           REPO: ${{ github.repository }}
-        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts detect-slop
+        run: node ./community-triage/.github/workflows/scripts/pr-notify.mts read-change
 
       - name: Add classification labels
         if: steps.metadata.outputs.skip_processing != 'true' && steps.check-teams.outputs.has_enabled_team == 'true'
@@ -486,9 +487,10 @@ jobs:
           IS_CHAMPION: ${{ needs.triage.outputs.is_champion }}
           SLACK_BOT_TOKEN: ${{ env.SLACK_BOT_TOKEN }}
           REVIEW_SUMMARY: ${{ needs.review.outputs.review_line }}
-          SLOP_STATUS: ${{ needs.triage.outputs.slop_status }}
-          SLOP_SCORE: ${{ needs.triage.outputs.slop_score }}
-          SLOP_REASON: ${{ needs.triage.outputs.slop_reason }}
+          READ_STATUS: ${{ needs.triage.outputs.read_status }}
+          COHERENCE: ${{ needs.triage.outputs.coherence }}
+          COHERENCE_REASON: ${{ needs.triage.outputs.coherence_reason }}
+          FLAGS: ${{ needs.triage.outputs.flags }}
         run: node ./community-triage/.github/workflows/scripts/pr-notify.mts notify
 
       # The script skips the greeting when the review already delivered it, and

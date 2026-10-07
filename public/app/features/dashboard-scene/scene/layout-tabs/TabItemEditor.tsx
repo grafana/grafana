@@ -233,6 +233,7 @@ export function TabRepeatSelect({ tab, id }: { tab: TabItem; id?: string }) {
           }
 
           edit({
+            meta: { actionId: 'tab.changeRepeat' },
             description: t('dashboard.edit-actions.tab-repeat-variable', 'Tab repeat by'),
             source: tab,
             perform: () => tab.onChangeRepeat(nextRepeat),
@@ -280,6 +281,7 @@ function editTabTitleAction(tab: TabItem, title: string, prevTitle: string) {
   }
 
   edit({
+    meta: { actionId: 'tab.changeTitle' },
     description: t('dashboard.edit-actions.tab-title', 'Change tab title'),
     source: tab,
     perform: () => tab.onChangeTitle(title),

@@ -3,9 +3,10 @@ import { isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 
+import { getRoutingTreeDisplayName } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2, OrgRole } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import {
   Alert,
   Badge,
@@ -68,7 +69,6 @@ import {
   useImportNotifications,
   useImportRules,
 } from './useImport';
-import { getRoutingTreeLabel } from './useRoutingTrees';
 
 export interface ImportFormValues {
   // Step 1: Alertmanager resources
@@ -154,8 +154,6 @@ function AutoSyncActiveBlock() {
   // who can reach the wizard: the sync worker mirrors only the Alertmanager configuration, and the
   // convert endpoint rejects notification imports alone.
   const canManageAutoSync = contextSrv.hasRole(OrgRole.Admin);
-  const isRulesImportEnabled = Boolean(config.featureToggles.alertingMigrationUI);
-
   return (
     <Alert severity="warning" title={t('alerting.import-to-gma.autosync-active-block.title', 'Auto-sync is enabled')}>
       <Stack direction="column" gap={1} alignItems="flex-start">
@@ -173,11 +171,9 @@ function AutoSyncActiveBlock() {
           </Text>
         )}
         <Stack direction="row" gap={2} alignItems="center" wrap="wrap">
-          {isRulesImportEnabled && (
-            <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
-              {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
-            </TextLink>
-          )}
+          <TextLink href={createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES)} icon="upload">
+            {t('alerting.import-to-gma.autosync-active-block.import-rules', 'Import alert rules')}
+          </TextLink>
           {canManageAutoSync && (
             <TextLink href={ALERTING_IMPORT_SETTINGS_URL} icon="cog">
               {t('alerting.import-to-gma.autosync-active-block.go-to-settings', 'Go to Alerting settings')}
@@ -841,7 +837,7 @@ function RulesCardContent({ formData, willImportRules, styles }: RulesCardConten
         <Text>
           {formData.selectedRoutingTree
             ? t('alerting.import-to-gma.review.routing-tree', 'Policy tree: {{name}}', {
-                name: getRoutingTreeLabel(formData.selectedRoutingTree),
+                name: getRoutingTreeDisplayName(formData.selectedRoutingTree),
               })
             : t('alerting.import-to-gma.review.routing-none', 'No policy tree selected')}
         </Text>

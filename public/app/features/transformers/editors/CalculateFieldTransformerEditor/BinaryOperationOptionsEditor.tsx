@@ -96,7 +96,7 @@ export const BinaryOperationOptionsEditor = (props: {
   };
 
   const onBinaryLeftChanged = (v: SelectableValue<string>) => {
-    const vObject: BinaryValue = JSON.parse(v.value ?? '');
+    const vObject = parseBinaryValue(v.value, props.names);
     // If no matcher, treat as fixed value
     if (!vObject.matcher) {
       updateBinaryOptions({
@@ -112,7 +112,7 @@ export const BinaryOperationOptionsEditor = (props: {
   };
 
   const onBinaryRightChanged = (v: SelectableValue<string>) => {
-    const vObject: BinaryValue = JSON.parse(v.value ?? '');
+    const vObject = parseBinaryValue(v.value, props.names);
     // If no matcher, treat as fixed value
     if (!vObject.matcher) {
       updateBinaryOptions({
@@ -142,6 +142,7 @@ export const BinaryOperationOptionsEditor = (props: {
           labelWidth={LABEL_WIDTH}
         >
           <Select
+            aria-label={t('transformers.binary-operation-options-editor.aria-label-left-operand', 'Left operand')}
             allowCustomValue={true}
             placeholder={t(
               'transformers.binary-operation-options-editor.placeholder-fields-or-number',
@@ -163,6 +164,7 @@ export const BinaryOperationOptionsEditor = (props: {
         </InlineField>
         <InlineField>
           <Select
+            aria-label={t('transformers.binary-operation-options-editor.aria-label-right-operand', 'Right operand')}
             allowCustomValue={true}
             placeholder={t(
               'transformers.binary-operation-options-editor.placeholder-field-or-number',
@@ -178,3 +180,14 @@ export const BinaryOperationOptionsEditor = (props: {
     </>
   );
 };
+
+// Listed options carry a JSON-encoded BinaryValue, but custom typed values arrive as raw text.
+function parseBinaryValue(value: string | undefined, names: string[]): BinaryValue {
+  try {
+    const parsed = JSON.parse(value ?? '');
+    if (parsed && typeof parsed === 'object') {
+      return parsed;
+    }
+  } catch {}
+  return checkBinaryValueType(value ?? '', names);
+}

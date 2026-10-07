@@ -9,11 +9,12 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -58,7 +59,7 @@ func NewTestSqlKvBackend(t *testing.T, ctx context.Context, backwardsCompatible 
 
 		kvOpts.RvManager = rvManager
 	} else {
-		kvOpts.Holder = "test-holder-" + uuid.NewString()
+		kvOpts.Holder = "test-holder-" + uuid.NewV4().String()
 	}
 
 	backend, err := resource.NewKVStorageBackend(kvOpts)
@@ -2155,7 +2156,10 @@ func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer,
 // verifySearchServerResults verifies Search returns expected results from search server
 func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServer, namespace string, query string, expectedHits int, expectedNames []string) {
 	t.Helper()
-	ctx := testutil.NewDefaultTestContext(t)
+	ctx := claims.WithAuthInfo(testutil.NewDefaultTestContext(t), &identity.StaticRequester{
+		Type:      claims.TypeUser,
+		Namespace: namespace,
+	})
 
 	searchReq := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
