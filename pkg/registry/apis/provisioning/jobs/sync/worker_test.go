@@ -370,7 +370,7 @@ func TestSyncWorker_Process_PullCondition(t *testing.T) {
 
 			require.Equal(t, tt.jobStatus.Finished, capturedSyncStatus.Finished, "all completed syncs, including warnings, must reset the interval")
 			require.Equal(t, tt.jobStatus.State, capturedSyncStatus.State)
-			require.Equal(t, repoConfig.Status.Sync.LastChecked, capturedSyncStatus.LastChecked, "sync jobs must preserve the last interval check")
+			require.Equal(t, repoConfig.Status.Sync.LastChecked, capturedSyncStatus.LastChecked, "sync jobs must preserve the controller's last sync attempt")
 			require.Equal(t, provisioning.ConditionTypePullStatus, capturedPullCondition.Type)
 			require.Equal(t, tt.expectedPullReason, capturedPullCondition.Reason)
 			require.Equal(t, tt.expectedPullStatus, capturedPullCondition.Status)

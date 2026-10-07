@@ -667,7 +667,7 @@ type SyncStatus struct {
 	// When the sync job finished
 	Finished int64 `json:"finished,omitempty"`
 
-	// When an interval sync check was last attempted (Unix milliseconds).
+	// When the controller last attempted a sync or an interval check (Unix milliseconds).
 	LastChecked int64 `json:"lastChecked,omitempty"`
 
 	// When the next sync check is scheduled

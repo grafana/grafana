@@ -5830,7 +5830,7 @@
             "type": "string"
           },
           "lastChecked": {
-            "description": "When an interval sync check was last attempted (Unix milliseconds).",
+            "description": "When the controller last attempted a sync or an interval check (Unix milliseconds).",
             "type": "integer",
             "format": "int64"
           },

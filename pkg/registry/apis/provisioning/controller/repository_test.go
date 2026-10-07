@@ -1541,18 +1541,21 @@ func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.
 	jobStore.MockQueue.AssertNumberOfCalls(t, "Insert", 2)
 }
 
-func TestRepositoryController_FullSyncIntervalCheck(t *testing.T) {
+func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
 	for _, tt := range []struct {
 		name        string
+		initial     bool
 		specChanged bool
 		recovered   bool
 		unversioned bool
 		interval    bool
 	}{
+		{name: "initial sync", initial: true},
 		{name: "spec changed during interval", specChanged: true, interval: true},
 		{name: "health recovered during interval", recovered: true, interval: true},
 		{name: "unversioned repository on interval", unversioned: true, interval: true},
 		{name: "spec changed before interval", specChanged: true},
+		{name: "health recovered before interval", recovered: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			obj := &provisioning.Repository{
@@ -1562,6 +1565,9 @@ func TestRepositoryController_FullSyncIntervalCheck(t *testing.T) {
 					ObservedGeneration: 1,
 					Health:             provisioning.HealthStatus{Healthy: !tt.recovered},
 				},
+			}
+			if tt.initial {
+				obj.Status.ObservedGeneration = 0
 			}
 			if tt.specChanged {
 				obj.Generation++
@@ -1578,11 +1584,9 @@ func TestRepositoryController_FullSyncIntervalCheck(t *testing.T) {
 			require.Equal(t, &provisioning.SyncJobOptions{}, opts)
 			patcher := &capturePatcher{ops: rc.determineSyncStatusOps(obj, opts, health, tt.interval)}
 			op, found := patcher.findPatchOp("/status/sync/lastChecked")
-			require.Equal(t, tt.interval, found, "only a due interval check should advance the timestamp")
-			if found {
-				assert.GreaterOrEqual(t, op["value"].(int64), before)
-				assert.LessOrEqual(t, op["value"].(int64), time.Now().UnixMilli())
-			}
+			require.True(t, found, "every controller sync-job attempt should advance the timestamp")
+			assert.GreaterOrEqual(t, op["value"].(int64), before)
+			assert.LessOrEqual(t, op["value"].(int64), time.Now().UnixMilli())
 		})
 	}
 }
@@ -1611,10 +1615,15 @@ func TestRepositoryController_determineSyncStrategy_SkippedInterval(t *testing.T
 			}
 			repo := &intervalRepository{repository.NewMockRepository(t), repository.NewMockVersioned(t)}
 			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
+			shouldResync := tt.interval && tt.enabled
+			health := obj.Status.Health
+			if tt.blocked {
+				health.Healthy = false
+			}
 
-			opts := rc.determineSyncStrategy(context.Background(), obj, repo, tt.interval, tt.blocked, obj.Status.Health)
+			opts := rc.determineSyncStrategy(context.Background(), obj, repo, shouldResync, tt.blocked, health)
 			assert.Nil(t, opts)
-			ops := rc.determineSyncStatusOps(obj, opts, obj.Status.Health, tt.interval && !tt.blocked)
+			ops := rc.determineSyncStatusOps(obj, opts, health, shouldResync)
 			for _, op := range ops {
 				assert.NotEqual(t, "/status/sync/lastChecked", op["path"], "skipping a check must not reset the sync interval")
 			}

@@ -836,15 +836,29 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"path":  "/status/sync/started",
 			"value": int64(0),
 		})
-	case healthStatus.Healthy && hasUnhealthyMessage: // if the repository is healthy and the message is set, clear it
-		// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
-		// specific errors?
 		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/sync/message",
-			"value": []string{},
+			"op":    "add",
+			"path":  "/status/sync/lastChecked",
+			"value": time.Now().UnixMilli(),
 		})
-	case !healthStatus.Healthy && !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
+	case healthStatus.Healthy:
+		if hasUnhealthyMessage {
+			// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
+			// specific errors?
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/message",
+				"value": []string{},
+			})
+		}
+		if shouldResync {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "add",
+				"path":  "/status/sync/lastChecked",
+				"value": time.Now().UnixMilli(),
+			})
+		}
+	case !hasUnhealthyMessage: // if the repository is unhealthy and the message is not already set, set it
 		patchOperations = append(patchOperations, map[string]interface{}{
 			"op":    "replace",
 			"path":  "/status/sync/state",
@@ -856,15 +870,6 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"value": []string{unhealthyMessage},
 		})
 	}
-
-	if shouldResync && obj.Spec.Sync.Enabled && healthStatus.Healthy {
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "add",
-			"path":  "/status/sync/lastChecked",
-			"value": time.Now().UnixMilli(),
-		})
-	}
-
 	return patchOperations
 }
 

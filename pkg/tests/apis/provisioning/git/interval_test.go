@@ -33,6 +33,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	original := common.MustFromUnstructured[provisioning.Repository](t, repoObj).Status.Sync
 	require.Equal(t, provisioning.JobStateSuccess, original.State)
 	require.NotZero(t, original.Finished)
+	require.NotZero(t, original.LastChecked)
 	require.NotEmpty(t, original.LastRef)
 	require.NotEmpty(t, original.JobID)
 
@@ -44,7 +45,7 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 
 	// Age status without changing the spec, which would force a full sync.
 	staleFinished := time.Now().Add(-time.Hour).UnixMilli()
-	patch := []byte(fmt.Sprintf(`{"status":{"sync":{"finished":%d}}}`, staleFinished))
+	patch := []byte(fmt.Sprintf(`{"status":{"sync":{"finished":%d,"lastChecked":%d}}}`, staleFinished, staleFinished))
 	before := time.Now().UnixMilli()
 	_, err = helper.Repositories.Resource.Patch(t.Context(), repoName, types.MergePatchType, patch, metav1.PatchOptions{}, "status")
 	require.NoError(t, err)

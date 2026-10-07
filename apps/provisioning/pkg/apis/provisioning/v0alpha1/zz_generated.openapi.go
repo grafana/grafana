@@ -3712,7 +3712,7 @@ func schema_pkg_apis_provisioning_v0alpha1_SyncStatus(ref common.ReferenceCallba
 					},
 					"lastChecked": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When an interval sync check was last attempted (Unix milliseconds).",
+							Description: "When the controller last attempted a sync or an interval check (Unix milliseconds).",
 							Type:        []string{"integer"},
 							Format:      "int64",
 						},
