@@ -9013,7 +9013,6 @@
     },
     "span-detail": {
       "attribute-category": {
-        "error": "Error details",
         "other": "Other"
       },
       "exception-message": "Message:",
@@ -11955,6 +11954,11 @@
       "load-more": "Scroll to load more",
       "load-newer": "Loading newer logs...",
       "load-older": "Loading older logs..."
+    },
+    "log-details": {
+      "error": {
+        "error-details": "Error details"
+      }
     },
     "log-labels": {
       "collapse": "Collapse labels",

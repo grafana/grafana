@@ -51,7 +51,7 @@ export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps
     <div className={styles.container}>
       <div className={styles.header}>
         <Icon name="exclamation-circle" className={styles.icon} />
-        <span>{t('explore.span-detail.attribute-category.error', 'Error details')}</span>
+        <span>{t('logs.log-details.error.error-details', 'Error details')}</span>
       </div>
       <div className={styles.content}>
         {other.map((item) => (
