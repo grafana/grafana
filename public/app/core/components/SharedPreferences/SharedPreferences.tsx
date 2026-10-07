@@ -5,6 +5,7 @@ import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
+import { useFlagGrafanaGlobalHomePreference } from '@grafana/runtime/internal';
 import {
   Alert,
   Box,
@@ -47,6 +48,8 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
+  // Rollout gate: the merged preferences backend must resolve the sentinel before it is offered.
+  const includeGlobalHomeOption = useFlagGrafanaGlobalHomePreference();
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -224,7 +227,7 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
               value={state.homeDashboardUID}
               onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
-              includeGlobalHomeOption
+              includeGlobalHomeOption={includeGlobalHomeOption}
               isClearable={true}
               showUnknown={true}
               placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}

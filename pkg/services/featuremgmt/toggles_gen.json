@@ -2625,6 +2625,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.globalHomePreference",
+        "resourceVersion": "1791348293298",
+        "creationTimestamp": "2026-10-07T04:44:53Z"
+      },
+      "spec": {
+        "description": "Offers the reserved Grafana home option in the home dashboard preference",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -129,7 +129,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

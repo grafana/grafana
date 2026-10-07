@@ -1,12 +1,13 @@
 import { HttpResponse } from 'msw';
 import { getSelectParent, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { render, screen, userEvent, waitFor, within } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { preferencesHandlers } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
@@ -290,6 +291,28 @@ describe('SharedPreferences', () => {
         preferenceType: 'user',
         action: 'cleared',
       });
+    });
+  });
+
+  it('does not offer Grafana home while the flag is off', async () => {
+    const { user } = await setup();
+
+    await user.click(await screen.findByRole('combobox', { name: /home dashboard/i }));
+    await screen.findAllByRole('option');
+
+    expect(screen.queryByRole('option', { name: 'Grafana home' })).not.toBeInTheDocument();
+  });
+});
+
+describe('SharedPreferences with grafana.globalHomePreference', () => {
+  beforeEach(() => {
+    setTestFlags({ [FlagKeys.GrafanaGlobalHomePreference]: true });
+  });
+
+  afterEach(async () => {
+    // Resetting fires OpenFeature events into mounted components.
+    await act(async () => {
+      setTestFlags({});
     });
   });
 

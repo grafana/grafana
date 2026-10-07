@@ -112,6 +112,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Offers the reserved Grafana home option in the home dashboard preference */
+  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -795,6 +797,17 @@ export const useFlagGrafanaExploreMetricsSidebar = (options?: ReactFlagEvaluatio
  */
 export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.filterablePanels", false, options).value;
+};
+
+/**
+ * Offers the reserved Grafana home option in the home dashboard preference
+ *
+ * **Details:**
+ * - flag key: `grafana.globalHomePreference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.globalHomePreference", false, options).value;
 };
 
 /**
