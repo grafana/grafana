@@ -1,6 +1,5 @@
 import { renderHook } from 'test/test-utils';
 
-import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../../../mockApi';
@@ -54,6 +53,30 @@ describe('useGlobalTimeIntervalAbility', () => {
     const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Export));
 
     expect(result.current.granted).toBe(true);
+  });
+
+  it('grants Update when write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsWrite]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Update));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('grants Delete when delete permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsDelete]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Delete));
+
+    expect(result.current.granted).toBe(true);
+  });
+
+  it('does not grant Delete when only write permission is held', () => {
+    grantUserPermissions([AccessControlAction.AlertingTimeIntervalsWrite]);
+
+    const { result } = renderHook(() => useGlobalTimeIntervalAbility(TimeIntervalAction.Delete));
+
+    expect(result.current.granted).toBe(false);
   });
 });
 
@@ -129,6 +152,30 @@ describe('useTimeIntervalAbility', () => {
       expect(result.current.granted).toBe(false);
     });
 
+    it('should grant Delete when only delete permission is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsDelete]);
+
+      const { result } = renderHook(
+        () => useTimeIntervalAbility({ action: TimeIntervalAction.Delete, context: notProvisioned as never }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(true);
+    });
+
+    it('should NOT grant Update when only delete permission is held', () => {
+      const amSource = setupGrafanaAlertmanager();
+      grantUserPermissions([GRAFANA_AM_VISIBILITY_PERMISSION, AccessControlAction.AlertingTimeIntervalsDelete]);
+
+      const { result } = renderHook(
+        () => useTimeIntervalAbility({ action: TimeIntervalAction.Update, context: notProvisioned as never }),
+        { wrapper: createAlertmanagerWrapper(amSource) }
+      );
+
+      expect(result.current.granted).toBe(false);
+    });
+
     it('should return Provisioned for Update and Delete when interval is provisioned', () => {
       const amSource = setupGrafanaAlertmanager();
       grantUserPermissions([
@@ -198,7 +245,7 @@ describe('useTimeIntervalAbility', () => {
     it('should deny View and Create and list the expected required permissions', () => {
       // The time interval hooks only check Grafana-AM-specific permissions, so external
       // permissions are never sufficient. The snapshot captures the anyOfPermissions list.
-      setupMimirAlertmanager(MIMIR_DATASOURCE_UID);
+      const amSource = setupMimirAlertmanager();
       grantUserPermissions([
         EXTERNAL_AM_VISIBILITY_PERMISSION,
         AccessControlAction.AlertingNotificationsExternalRead,
@@ -210,7 +257,7 @@ describe('useTimeIntervalAbility', () => {
           view: useTimeIntervalAbility({ action: TimeIntervalAction.View }),
           create: useTimeIntervalAbility({ action: TimeIntervalAction.Create }),
         }),
-        { wrapper: createAlertmanagerWrapper(MIMIR_DATASOURCE_UID) }
+        { wrapper: createAlertmanagerWrapper(amSource) }
       );
 
       expect(result.current.view.granted).toBe(false);

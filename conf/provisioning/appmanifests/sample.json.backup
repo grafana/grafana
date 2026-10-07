@@ -1,0 +1,482 @@
+{
+  "apiVersion": "apps.grafana.app/v1alpha2",
+  "kind": "AppManifest",
+  "metadata": {
+    "name": "customcrdtest"
+  },
+  "spec": {
+    "appName": "customcrdtest",
+    "appDisplayName": "customcrdtest",
+    "group": "customcrdtest.ext.grafana.app",
+    "versions": [
+      {
+        "name": "v0alpha1",
+        "served": true,
+        "kinds": [
+          {
+            "kind": "Widget",
+            "plural": "Widgets",
+            "scope": "Namespaced",
+            "admission": {
+              "validation": {
+                "operations": [
+                  "CREATE",
+                  "UPDATE"
+                ]
+              },
+              "mutation": {
+                "operations": [
+                  "CREATE",
+                  "UPDATE"
+                ]
+              }
+            },
+            "schemas": {
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": true,
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": [
+                      "success",
+                      "in_progress",
+                      "failed"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "lastEvaluation",
+                  "state"
+                ],
+                "type": "object"
+              },
+              "Widget": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "size": {
+                    "enum": [
+                      "small",
+                      "medium",
+                      "large"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "size"
+                ],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": true,
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "conversion": true
+          },
+          {
+            "kind": "WorkflowSteps",
+            "plural": "WorkflowSteps",
+            "scope": "Cluster",
+            "userReadable": true,
+            "schemas": {
+              "WorkflowSteps": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/workflowStepsSpec"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "workflowStepsSpec": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "action": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          },
+          {
+            "kind": "WorkflowConfigs",
+            "plural": "WorkflowConfigs",
+            "scope": "Cluster",
+            "userReadable": false,
+            "schemas": {
+              "WorkflowConfigs": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/workflowConfigsSpec"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "workflowConfigsSpec": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "action": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "name": "v1",
+        "served": true,
+        "kinds": [
+          {
+            "kind": "Widget",
+            "plural": "Widgets",
+            "scope": "Namespaced",
+            "admission": {
+              "validation": {
+                "operations": [
+                  "CREATE",
+                  "UPDATE"
+                ]
+              },
+              "mutation": {
+                "operations": [
+                  "CREATE",
+                  "UPDATE"
+                ]
+              }
+            },
+            "schemas": {
+              "OperatorState": {
+                "additionalProperties": false,
+                "properties": {
+                  "descriptiveState": {
+                    "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+                    "type": "string"
+                  },
+                  "details": {
+                    "additionalProperties": true,
+                    "description": "details contains any extra information that is operator-specific",
+                    "type": "object"
+                  },
+                  "lastEvaluation": {
+                    "description": "lastEvaluation is the ResourceVersion last evaluated",
+                    "type": "string"
+                  },
+                  "state": {
+                    "description": "state describes the state of the lastEvaluation.\nIt is limited to three possible states for machine evaluation.",
+                    "enum": [
+                      "success",
+                      "in_progress",
+                      "failed"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "lastEvaluation",
+                  "state"
+                ],
+                "type": "object"
+              },
+              "Widget": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/spec"
+                  },
+                  "status": {
+                    "$ref": "#/components/schemas/status"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "spec": {
+                "additionalProperties": false,
+                "properties": {
+                  "replicas": {
+                    "maximum": 10,
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "size": {
+                    "enum": [
+                      "small",
+                      "medium",
+                      "large"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "size",
+                  "replicas"
+                ],
+                "type": "object"
+              },
+              "status": {
+                "additionalProperties": false,
+                "properties": {
+                  "additionalFields": {
+                    "additionalProperties": true,
+                    "description": "additionalFields is reserved for future use",
+                    "type": "object"
+                  },
+                  "message": {
+                    "type": "string"
+                  },
+                  "operatorStates": {
+                    "additionalProperties": {
+                      "$ref": "#/components/schemas/OperatorState"
+                    },
+                    "description": "operatorStates is a map of operator ID to operator state evaluations.\nAny operator which consumes this kind SHOULD add its state evaluation information to this field.",
+                    "type": "object"
+                  },
+                  "ready": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "ready",
+                  "message"
+                ],
+                "type": "object"
+              }
+            },
+            "conversion": true
+          },
+          {
+            "kind": "WorkflowSteps",
+            "plural": "WorkflowSteps",
+            "scope": "Cluster",
+            "userReadable": true,
+            "schemas": {
+              "WorkflowSteps": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/workflowStepsSpec"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "workflowStepsSpec": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "action": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          },
+          {
+            "kind": "WorkflowConfigs",
+            "plural": "WorkflowConfigs",
+            "scope": "Cluster",
+            "userReadable": false,
+            "schemas": {
+              "WorkflowConfigs": {
+                "properties": {
+                  "spec": {
+                    "$ref": "#/components/schemas/workflowConfigsSpec"
+                  }
+                },
+                "required": [
+                  "spec"
+                ]
+              },
+              "workflowConfigsSpec": {
+                "type": "object",
+                "properties": {
+                  "steps": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "action": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "steps"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "preferredVersion": "v1",
+    "operator": {
+      "url": "https://localhost:8443",
+      "webhooks": {
+        "conversionPath": "/convert",
+        "validationPath": "/validate",
+        "mutationPath": "/mutate"
+      }
+    },
+    "roles": {
+      "customcrdtest:admin": {
+        "title": "customcrdtest Admin",
+        "description": "Allows all actions on Widgets, WorkflowSteps, and WorkflowConfigs",
+        "kinds": [
+          {
+            "kind": "Widget",
+            "permissionSet": "admin"
+          },
+          {
+            "kind": "Widget/status",
+            "permissionSet": "admin"
+          },
+          {
+            "kind": "WorkflowSteps",
+            "permissionSet": "admin"
+          },
+          {
+            "kind": "WorkflowConfigs",
+            "permissionSet": "admin"
+          }
+        ]
+      },
+      "customcrdtest:editor": {
+        "title": "customcrdtest Editor",
+        "description": "Create, Read, Update, and Delete Widgets and WorkflowSteps",
+        "kinds": [
+          {
+            "kind": "Widget",
+            "permissionSet": "editor"
+          },
+          {
+            "kind": "WorkflowSteps",
+            "permissionSet": "editor"
+          },
+          {
+            "kind": "WorkflowConfigs",
+            "permissionSet": "editor"
+          }
+        ]
+      },
+      "customcrdtest:reader": {
+        "title": "customcrdtest Reader",
+        "description": "Read Widgets and WorkflowSteps",
+        "kinds": [
+          {
+            "kind": "Widget",
+            "permissionSet": "viewer"
+          },
+          {
+            "kind": "WorkflowSteps",
+            "permissionSet": "viewer"
+          }
+        ]
+      }
+    },
+    "roleBindings": {
+      "viewer": [
+        "customcrdtest:reader"
+      ],
+      "editor": [
+        "customcrdtest:editor"
+      ],
+      "admin": [
+        "customcrdtest:admin"
+      ]
+    }
+  }
+}

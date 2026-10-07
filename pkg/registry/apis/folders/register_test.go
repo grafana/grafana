@@ -142,7 +142,6 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 
 			b := &FolderAPIBuilder{
-				namespacer:           func(_ int64) string { return "123" },
 				storage:              us,
 				parents:              newParentsGetter(us, 2),
 				maxNestedFolderDepth: setting.NewCfg().MaxNestedFolderDepth,
@@ -203,6 +202,13 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "should return folder not empty when folder contains variables",
+			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
+				{Count: 4, Resource: "variables", Group: "dashboard.grafana.app"},
+			},
+			wantErr: true,
+		},
+		{
 			name: "should return folder not empty when folder contains alertrules",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
 				{Count: 3, Resource: "alertrules", Group: "alerting.grafana.app"},
@@ -219,14 +225,14 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should return folder not empty when folder contains folders",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Count: 2, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 2, Resource: "folders", Group: "folder.grafana.app"},
 			},
 			wantErr: true,
 		},
 		{
 			name: "should return folder not empty when folder has mixed resources with validated types",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Count: 10, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 10, Resource: "folders", Group: "folder.grafana.app"},
 				{Count: 2, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 5, Resource: "playlists", Group: "playlist.grafana.app"},
 			},
@@ -238,7 +244,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				{Count: 1, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 2, Resource: "alertrules", Group: "alerting.grafana.app"},
 				{Count: 1, Resource: "library_elements", Group: "library.grafana.app"},
-				{Count: 1, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 1, Resource: "folders", Group: "folder.grafana.app"},
 			},
 			wantErr: true,
 		},
@@ -248,7 +254,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 				{Count: 0, Resource: "dashboards", Group: "dashboard.grafana.app"},
 				{Count: 0, Resource: "alertrules", Group: "alerting.grafana.app"},
 				{Count: 0, Resource: "library_elements", Group: "library.grafana.app"},
-				{Count: 0, Resource: "folders", Group: "folders.grafana.app"},
+				{Count: 0, Resource: "folders", Group: "folder.grafana.app"},
 				{Count: 10, Resource: "playlists", Group: "playlist.grafana.app"},
 			},
 			wantErr: false,
@@ -269,7 +275,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should reject force delete when cascade gate disabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
 			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 			cascadeDeleteEnabled: false,
@@ -278,7 +284,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 		{
 			name: "should allow force delete when cascade gate enabled",
 			statsResponse: []*resourcepb.ResourceStatsResponse_Stats{
-				{Resource: "folders", Count: 1, Group: "folders.grafana.app"},
+				{Resource: "folders", Count: 1, Group: "folder.grafana.app"},
 			},
 			deleteOptions:        &metav1.DeleteOptions{GracePeriodSeconds: &zeroGrace},
 			cascadeDeleteEnabled: true,
@@ -309,9 +315,8 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 			setKubernetesFolderCascadeDeleteToggle(t, tt.cascadeDeleteEnabled)
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
+				storage:  us,
+				searcher: sm,
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -399,10 +404,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				m.On("Get", mock.Anything, "new-parent", mock.Anything).Return(
 					&folders.Folder{},
 					nil).Once()
-				// also retrieves old parent for depth difference calculation
-				m.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
-					&folders.Folder{},
-					nil).Once()
+				// the old parent is covered by the shared expectation above
 			},
 		},
 		{
@@ -493,15 +495,22 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
+			// the source chain is resolved to reject moves out of the k6 tree
+			us.On("Get", mock.Anything, "valid-parent", mock.Anything).Return(
+				&folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "valid-parent",
+						Annotations: map[string]string{"grafana.app/folder": folder.GeneralFolderUID},
+					},
+				}, nil).Maybe()
 			if tt.setupFn != nil {
 				tt.setupFn(us)
 			}
 
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
-				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 
 			err := b.Validate(context.Background(), admission.NewAttributesRecord(
@@ -591,10 +600,9 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 			us := grafanarest.NewMockStorage(t)
 			sm := resource.NewMockResourceClient(t)
 			b := &FolderAPIBuilder{
-				namespacer: func(_ int64) string { return "123" },
-				storage:    us,
-				searcher:   sm,
-				parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+				storage:  us,
+				searcher: sm,
+				parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 			}
 			admAttr := admission.NewAttributesRecord(
 				tt.input,
@@ -696,10 +704,9 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	us := grafanarest.NewMockStorage(t)
 	sm := resource.NewMockResourceClient(t)
 	b := &FolderAPIBuilder{
-		namespacer: func(_ int64) string { return "123" },
-		storage:    us,
-		searcher:   sm,
-		parents:    newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
+		storage:  us,
+		searcher: sm,
+		parents:  newParentsGetter(us, setting.NewCfg().MaxNestedFolderDepth),
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

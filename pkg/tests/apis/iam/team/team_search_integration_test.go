@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -13,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -89,14 +91,31 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 		require.GreaterOrEqual(t, result.TotalHits, int64(2), "should find at least 2 teams")
 		require.GreaterOrEqual(t, len(result.Hits), 2, "should return at least 2 hits")
 
+		// expectedInternalID fetches the team's deprecated internal (legacy) ID
+		// from its label, which is what the search hit should surface as InternalId.
+		expectedInternalID := func(name string) int64 {
+			obj, err := teamClient.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			idStr, ok := obj.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+			require.True(t, ok && idStr != "", "team %s should have a deprecated internal ID label", name)
+			id, err := strconv.ParseInt(idStr, 10, 64)
+			require.NoError(t, err)
+			require.Positive(t, id)
+			return id
+		}
+
 		for _, hit := range result.Hits {
 			if hit.Name == team1.GetName() {
 				require.Equal(t, "Test Team 1", hit.Title)
 				require.Equal(t, "testteam1@example123.com", hit.Email)
+				require.NotNil(t, hit.InternalId, "search hit should include the deprecated internal ID")
+				require.Equal(t, expectedInternalID(team1.GetName()), *hit.InternalId)
 			}
 			if hit.Name == team2.GetName() {
 				require.Equal(t, "Another Team", hit.Title)
 				require.Equal(t, "anotherteam@example.com", hit.Email)
+				require.NotNil(t, hit.InternalId, "search hit should include the deprecated internal ID")
+				require.Equal(t, expectedInternalID(team2.GetName()), *hit.InternalId)
 			}
 		}
 	})
@@ -437,6 +456,85 @@ func doTeamSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualW
 	})
 }
 
+func TestIntegrationTeamSearch_Pagination(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5} {
+		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				AppModeProduction:    false,
+				DisableAnonymous:     true,
+				APIServerStorageType: "unified",
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"teams.iam.grafana.app": {DualWriterMode: mode},
+				},
+				EnableFeatureToggles: []string{
+					featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+					featuremgmt.FlagKubernetesTeamsApi,
+				},
+			})
+			t.Cleanup(helper.Shutdown)
+
+			namespace := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
+			teamClient := helper.GetResourceClient(apis.ResourceClientArgs{
+				User: helper.Org1.Admin, Namespace: namespace, GVR: gvrTeams,
+			})
+			names := make([]string, 5)
+			// Create out of title order so pagination must follow the requested sort.
+			for _, i := range []int{2, 0, 4, 1, 3} {
+				name := fmt.Sprintf("pagination-team-%d", i)
+				obj, err := teamClient.Resource.Create(t.Context(), createTeamObject(helper, name,
+					fmt.Sprintf("Pagination Team %d", i), name+"@example.com"), metav1.CreateOptions{})
+				require.NoError(t, err)
+				names[i] = obj.GetName()
+			}
+
+			// Preserve the existing difference: SQL uses whole pages, while unified
+			// search uses the exact offset. Both responses echo the requested offset.
+			unalignedNames := names[2:4]
+			if mode == rest.Mode5 {
+				unalignedNames = names[3:5]
+			}
+			for _, tc := range []struct {
+				name   string
+				params string
+				offset int64
+				names  []string
+			}{
+				{name: "default page", names: names[:2]},
+				{name: "first page", params: "&page=1", names: names[:2]},
+				{name: "second page", params: "&page=2", offset: 2, names: names[2:4]},
+				{name: "partial final page", params: "&page=3", offset: 4, names: names[4:]},
+				{name: "page beyond end", params: "&page=4", offset: 6, names: names[5:]},
+				{name: "zero offset", params: "&offset=0", names: names[:2]},
+				{name: "aligned offset", params: "&offset=2", offset: 2, names: names[2:4]},
+				{name: "partial final offset", params: "&offset=4", offset: 4, names: names[4:]},
+				{name: "offset beyond end", params: "&offset=6", offset: 6, names: names[5:]},
+				{name: "offset overrides page", params: "&offset=2&page=3", offset: 2, names: names[2:4]},
+				{name: "zero offset overrides page", params: "&offset=0&page=3", names: names[:2]},
+				{name: "unaligned offset", params: "&offset=3", offset: 3, names: unalignedNames},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					var result iamv0alpha1.GetSearchTeamsResponse
+					rsp := apis.DoRequest(helper, apis.RequestParams{
+						User:   helper.Org1.Admin,
+						Method: http.MethodGet,
+						Path:   fmt.Sprintf("/apis/iam.grafana.app/v0alpha1/namespaces/%s/searchTeams?query=Pagination&sort=title&limit=2%s", namespace, tc.params),
+					}, &result)
+					require.Equal(t, http.StatusOK, rsp.Response.StatusCode, "%s", rsp.Body)
+					require.Equal(t, int64(len(names)), result.TotalHits)
+					require.Equal(t, tc.offset, result.Offset)
+					got := make([]string, len(result.Hits))
+					for i, hit := range result.Hits {
+						got[i] = hit.Name
+					}
+					require.Equal(t, tc.names, got)
+				})
+			}
+		})
+	}
+}
+
 func TestIntegrationTeamSearch_MemberCount(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -588,7 +686,7 @@ func doTeamSearchMemberCountTests(t *testing.T, helper *apis.K8sTestHelper) {
 func TestIntegrationTeamSearch_AccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{

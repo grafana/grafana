@@ -1,10 +1,11 @@
 import { isEmpty } from 'lodash';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { Stack } from '@grafana/ui';
 import { type DataSourceRulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { featureDiscoveryApi } from '../api/featureDiscoveryApi';
+import { useRouteProxyActive } from '../plugin-proxy/withRouteProxy';
 import { GrafanaRulesSource, getExternalRulesSources } from '../utils/datasource';
 
 import { PaginatedDataSourceLoader } from './PaginatedDataSourceLoader';
@@ -12,6 +13,8 @@ import { PaginatedGrafanaLoader } from './PaginatedGrafanaLoader';
 import { AlertRuleListItemSkeleton } from './components/AlertRuleListItemLoader';
 import { DataSourceErrorBoundary } from './components/DataSourceErrorBoundary';
 import { DataSourceSection } from './components/DataSourceSection';
+import { HiddenDataSourcesNotice } from './components/HiddenDataSourcesNotice';
+import { PendingDataSourcesNotice } from './components/PendingDataSourcesNotice';
 import { type DataSourceLoadState, useDataSourceLoadingStates } from './hooks/useDataSourceLoadingStates';
 
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -19,14 +22,35 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 interface GroupedViewProps {
   groupFilter?: string;
   namespaceFilter?: string;
+  hideEmptyDataSources?: boolean;
+  onHideEmptyDataSourcesChange?: (hideEmptyDataSources: boolean) => void;
 }
 
-export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) {
+export function GroupedView({
+  groupFilter,
+  namespaceFilter,
+  hideEmptyDataSources = true,
+  onHideEmptyDataSourcesChange,
+}: GroupedViewProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
-  const externalRuleSources = useMemo(() => getExternalRulesSources(), []);
+  // Once the Prometheus Alerting plugin is installed it owns these, so we don't render a section
+  // per data source any more. The Grafana-managed section header says where they went.
+  const routeProxyActive = useRouteProxyActive();
+  const externalRuleSources = useMemo(() => (routeProxyActive ? [] : getExternalRulesSources()), [routeProxyActive]);
 
   // Use custom hook for centralized state management
-  const { updateState, loadingDataSources } = useDataSourceLoadingStates();
+  const { updateState, loadingDataSources, dataSourcesWithNoRules, settledDataSourceUids } =
+    useDataSourceLoadingStates();
+
+  // Unmounted loaders can leave stale state, so only count current external sources.
+  const externalUidSet = useMemo(() => new Set(externalRuleSources.map((ds) => ds.uid)), [externalRuleSources]);
+  const hiddenDataSourcesCount = hideEmptyDataSources
+    ? dataSourcesWithNoRules.filter((uid) => externalUidSet.has(uid)).length
+    : 0;
+
+  // Sources have no reported state during discovery and must still count as pending.
+  const settledUidSet = useMemo(() => new Set(settledDataSourceUids), [settledDataSourceUids]);
+  const pendingExternalCount = externalRuleSources.filter((ds) => !settledUidSet.has(ds.uid)).length;
 
   return (
     <Stack direction="column" gap={1} role="list">
@@ -35,6 +59,7 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={updateState}
+          collapsible={!routeProxyActive}
           key={`${groupFilter}-${namespaceFilter}`}
         />
       </DataSourceErrorBoundary>
@@ -46,10 +71,18 @@ export function GroupedView({ groupFilter, namespaceFilter }: GroupedViewProps) 
             groupFilter={groupFilter}
             namespaceFilter={namespaceFilter}
             onLoadingStateChange={updateState}
+            hideEmptyDataSources={hideEmptyDataSources}
           />
         );
       })}
       {hasFilters && !isEmpty(loadingDataSources) && <AlertRuleListItemSkeleton />}
+      {!hasFilters && <PendingDataSourcesNotice count={pendingExternalCount} />}
+      {!hasFilters && (
+        <HiddenDataSourcesNotice
+          count={hiddenDataSourcesCount}
+          onShowAll={onHideEmptyDataSourcesChange ? () => onHideEmptyDataSourcesChange(false) : undefined}
+        />
+      )}
     </Stack>
   );
 }
@@ -59,10 +92,7 @@ interface DataSourceLoaderProps {
   groupFilter?: string;
   namespaceFilter?: string;
   onLoadingStateChange?: (uid: string, state: DataSourceLoadState) => void;
-}
-
-export function GrafanaDataSourceLoader() {
-  return <DataSourceSection name="Grafana" application="grafana" uid="grafana" isLoading={true} />;
+  hideEmptyDataSources?: boolean;
 }
 
 function DataSourceLoader({
@@ -70,11 +100,19 @@ function DataSourceLoader({
   groupFilter,
   namespaceFilter,
   onLoadingStateChange,
+  hideEmptyDataSources,
 }: DataSourceLoaderProps) {
   const hasFilters = Boolean(groupFilter || namespaceFilter);
   const { data: dataSourceInfo, isLoading, error } = useDiscoverDsFeaturesQuery({ uid: rulesSourceIdentifier.uid });
 
   const { uid, name } = rulesSourceIdentifier;
+
+  // Discovery errors bypass PaginatedDataSourceLoader, so report them here to clear the pending count.
+  useEffect(() => {
+    if (error) {
+      onLoadingStateChange?.(uid, { isLoading: false, rulesCount: 0, error });
+    }
+  }, [uid, error, onLoadingStateChange]);
 
   // if we are loading and there are filters configured – we shouldn't show any data source headers
   // dito for errors, we shouldn't show those when we're in filter mode
@@ -96,6 +134,7 @@ function DataSourceLoader({
           groupFilter={groupFilter}
           namespaceFilter={namespaceFilter}
           onLoadingStateChange={onLoadingStateChange}
+          hideEmptyDataSources={hideEmptyDataSources}
         />
       </DataSourceErrorBoundary>
     );

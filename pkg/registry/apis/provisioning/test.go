@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
@@ -96,15 +95,15 @@ func (*testConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ns, ok := request.NamespaceFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing namespace")
-	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ns, ok := request.NamespaceFrom(ctx)
+		if !ok {
+			responder.Error(k8serrors.NewBadRequest("missing namespace"))
+			return
+		}
 
-	logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
-	ctx = logging.Context(ctx, logger)
-
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger := logging.FromContext(ctx).With("logger", "test-connector", "repository_name", name, "namespace", ns)
+		ctx = logging.Context(ctx, logger)
 		body, err := readBody(r, defaultMaxBodySize)
 		if err != nil {
 			responder.Error(err)
@@ -134,6 +133,12 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					old, _ := s.repoGetter.GetRepository(ctx, name)
 					if old != nil {
 						oldCfg := old.Config()
+						if repository.RequiresNewTokenForURLChange(&cfg, oldCfg) {
+							responder.Error(k8serrors.NewBadRequest(
+								"a new token is required when changing the repository URL",
+							))
+							return
+						}
 						repository.CopySecureValues(&cfg, oldCfg)
 
 						// Copying previous finalizers
@@ -153,6 +158,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 				if len(cfg.GetFinalizers()) == 0 {
 					cfg.SetFinalizers([]string{
 						repository.RemoveOrphanResourcesFinalizer,
+						repository.RemovePendingJobsFinalizer,
 						repository.CleanFinalizer,
 					})
 				}
@@ -227,10 +233,6 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					}
 
 					cfg.Secure.Token.Create = token.Token
-					// HACK: currently, Repository validator does not allow for Connection and token
-					// to be declared together in a new / temporary Repository.
-					// We are therefore removing it in such cases.
-					cfg.Spec.Connection = nil
 				}
 
 				// Create a temporary repository
@@ -239,6 +241,11 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 					responder.Error(err)
 					return
 				}
+				// HACK: currently, Repository validator does not allow for Connection and token
+				// to be declared together in a new / temporary Repository. We remove the
+				// connection only after Build so provider extras still see it (e.g. bitbucket
+				// derives the git token user from it).
+				cfg.Spec.Connection = nil
 				repo = tmp
 			}
 		}
@@ -305,7 +312,7 @@ func (s *testConnector) Connect(ctx context.Context, name string, _ runtime.Obje
 		}
 
 		responder.Object(rsp.Code, rsp)
-	}), 30*time.Second), nil
+	}), nil
 }
 
 var (

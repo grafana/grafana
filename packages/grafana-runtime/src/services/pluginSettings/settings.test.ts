@@ -1,6 +1,7 @@
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { FlagKeys } from '../../internal/openFeature/openfeature.gen';
+import { TracedError } from '../../utils/TracedError';
 import { invalidateCachedPromisesCache } from '../../utils/getCachedPromise';
 import { type MonitoringLogger } from '../../utils/logging';
 import { type BackendSrv, setBackendSrv } from '../backendSrv';
@@ -149,10 +150,13 @@ describe('settings', () => {
         const enabled = await isAppPluginEnabled(myOrgTestAppMeta.spec.pluginJson.id);
 
         expect(enabled).toEqual(false);
-        expect(logger.logError).toHaveBeenCalledWith(
-          new Error('isAppPluginEnabled: failed because of unknonw reason'),
-          { pluginId: 'myorg-test-app' }
-        );
+        const calls = (logger.logError as jest.Mock).mock.calls;
+        const call = calls.find(([err]) => err.message === 'isAppPluginEnabled: failed because of unknown reason');
+        const [loggedError, context] = call ?? [];
+        expect(loggedError).toBeInstanceOf(TracedError);
+        expect(loggedError.cause).toBeInstanceOf(Error);
+        expect(loggedError.cause.message).toBe('Unknown Plugin');
+        expect(context).toEqual({ pluginId: 'myorg-test-app' });
         expect(logger.logWarning).not.toHaveBeenCalled();
       });
     });

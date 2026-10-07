@@ -161,10 +161,6 @@ func (ctx *ReqContext) HasUserRole(role org.RoleType) bool {
 	return ctx.SignedInUser.GetOrgRole().Includes(role)
 }
 
-func (ctx *ReqContext) HasHelpFlag(flag user.HelpFlags1) bool {
-	return ctx.HelpFlags1.HasFlag(flag)
-}
-
 func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
 	ctx.PerfmonTimer = timer
 }

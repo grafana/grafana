@@ -1,0 +1,4430 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`TimeSeriesPanel (canvas) — axis range X Axis: defaults 1`] = `
+[
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "top",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/01 00:00",
+      "x": 24,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "8",
+      "x": 19,
+      "y": 357,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 19,
+      "y": 320,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "12",
+      "x": 19,
+      "y": 284,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "14",
+      "x": 19,
+      "y": 247,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "16",
+      "x": 19,
+      "y": 210,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "18",
+      "x": 19,
+      "y": 173,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 19,
+      "y": 137,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "22",
+      "x": 19,
+      "y": 100,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "24",
+      "x": 19,
+      "y": 63,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "26",
+      "x": 19,
+      "y": 26,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 320,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 320,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 284,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 284,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 247,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 247,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 210,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 210,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 173,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 173,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 137,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 137,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 100,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 100,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 63,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 63,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 26,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 26,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 320,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 320,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 284,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 284,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 247,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 247,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 210,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 210,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 173,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 173,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 137,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 137,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 100,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 100,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 63,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 63,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 26,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 26,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) — axis range Y Axis: hard min/max 1`] = `
+[
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "top",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/01 00:00",
+      "x": 24,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0",
+      "x": 19,
+      "y": 357,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "5",
+      "x": 19,
+      "y": 322,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 19,
+      "y": 287,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "15",
+      "x": 19,
+      "y": 252,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 19,
+      "y": 217,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "25",
+      "x": 19,
+      "y": 183,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "30",
+      "x": 19,
+      "y": 148,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "35",
+      "x": 19,
+      "y": 113,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40",
+      "x": 19,
+      "y": 78,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "45",
+      "x": 19,
+      "y": 43,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "50",
+      "x": 19,
+      "y": 8,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 322,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 322,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 287,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 287,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 252,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 252,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 217,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 217,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 183,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 183,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 148,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 148,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 113,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 113,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 78,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 78,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 43,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 43,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 322,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 322,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 287,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 287,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 252,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 252,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 217,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 217,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 183,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 183,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 148,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 148,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 113,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 113,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 78,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 78,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 43,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 43,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) — axis range Y Axis: soft min/max 1`] = `
+[
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "top",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/01 00:00",
+      "x": 31,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/02 00:00",
+      "x": 183,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 336,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 488,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 183,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 183,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 183,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 183,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 336,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 488,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 183,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 336,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 488,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0",
+      "x": 26,
+      "y": 357,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 26,
+      "y": 322,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 26,
+      "y": 287,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "30",
+      "x": 26,
+      "y": 252,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40",
+      "x": 26,
+      "y": 217,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "50",
+      "x": 26,
+      "y": 183,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "60",
+      "x": 26,
+      "y": 148,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "70",
+      "x": 26,
+      "y": 113,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80",
+      "x": 26,
+      "y": 78,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "90",
+      "x": 26,
+      "y": 43,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "100",
+      "x": 26,
+      "y": 8,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 322,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 322,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 287,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 287,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 252,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 252,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 217,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 217,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 183,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 183,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 148,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 148,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 113,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 113,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 78,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 78,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 43,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 43,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 31,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 322,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 322,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 287,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 287,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 252,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 252,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 217,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 217,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 183,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 183,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 148,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 148,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 113,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 113,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 78,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 78,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 43,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 43,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 31,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking 100% 1`] = `
+[
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "top",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/01 00:00",
+      "x": 38,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/02 00:00",
+      "x": 189,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 339,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 490,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 189,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 189,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 189,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 189,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 189,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 189,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 339,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 490,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 189,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 189,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 339,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 490,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "0%",
+      "x": 33,
+      "y": 357,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10%",
+      "x": 33,
+      "y": 322,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20%",
+      "x": 33,
+      "y": 287,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "30%",
+      "x": 33,
+      "y": 252,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40%",
+      "x": 33,
+      "y": 217,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "50%",
+      "x": 33,
+      "y": 183,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "60%",
+      "x": 33,
+      "y": 148,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "70%",
+      "x": 33,
+      "y": 113,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80%",
+      "x": 33,
+      "y": 78,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "90%",
+      "x": 33,
+      "y": 43,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "100%",
+      "x": 33,
+      "y": 8,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 322,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 322,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 287,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 287,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 252,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 252,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 217,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 217,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 183,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 183,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 148,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 148,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 113,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 113,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 78,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 78,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 43,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 43,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 38,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 322,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 322,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 287,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 287,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 252,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 252,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 217,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 217,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 183,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 183,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 148,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 148,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 113,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 113,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 78,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 78,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 43,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 43,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 38,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+]
+`;
+
+exports[`TimeSeriesPanel (canvas) — axis range Y Axis: stacking normal 1`] = `
+[
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "12px 'Inter', 'Helvetica', 'Arial', sans-serif",
+    },
+    "type": "font",
+  },
+  {
+    "props": {
+      "value": "center",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "top",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/01 00:00",
+      "x": 24,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/02 00:00",
+      "x": 178,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/03 00:00",
+      "x": 332,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/04 00:00",
+      "x": 486,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "01/05 00:00",
+      "x": 640,
+      "y": 366,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "strokeStyle",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": 1,
+    },
+    "type": "lineWidth",
+  },
+  {
+    "props": {
+      "value": "round",
+    },
+    "type": "lineJoin",
+  },
+  {
+    "props": {
+      "value": "butt",
+    },
+    "type": "lineCap",
+  },
+  {
+    "props": {
+      "segments": [],
+    },
+    "type": "setLineDash",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 361,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 361,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 178,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 332,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 486,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 8,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 357,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 178,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 332,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 486,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 8,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 357,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "#ccccdc",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {
+      "value": "right",
+    },
+    "type": "textAlign",
+  },
+  {
+    "props": {
+      "value": "middle",
+    },
+    "type": "textBaseline",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "10",
+      "x": 19,
+      "y": 326,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "20",
+      "x": 19,
+      "y": 287,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "30",
+      "x": 19,
+      "y": 248,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "40",
+      "x": 19,
+      "y": 210,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "50",
+      "x": 19,
+      "y": 171,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "60",
+      "x": 19,
+      "y": 132,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "70",
+      "x": 19,
+      "y": 93,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "80",
+      "x": 19,
+      "y": 55,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "maxWidth": null,
+      "text": "90",
+      "x": 19,
+      "y": 16,
+    },
+    "type": "fillText",
+  },
+  {
+    "props": {
+      "x": 0.5,
+      "y": 0.5,
+    },
+    "type": "translate",
+  },
+  {
+    "props": {
+      "value": "rgba(240, 250, 255, 0.09)",
+    },
+    "type": "fillStyle",
+  },
+  {
+    "props": {},
+    "type": "beginPath",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 326,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 326,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 287,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 287,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 248,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 248,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 210,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 210,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 171,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 171,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 132,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 132,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 93,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 93,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 55,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 55,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "x": 24,
+      "y": 16,
+    },
+    "type": "moveTo",
+  },
+  {
+    "props": {
+      "x": 640,
+      "y": 16,
+    },
+    "type": "lineTo",
+  },
+  {
+    "props": {
+      "path": [
+        {
+          "props": {},
+          "type": "beginPath",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 326,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 326,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 287,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 287,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 248,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 248,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 210,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 210,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 171,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 171,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 132,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 132,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 93,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 93,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 55,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 55,
+          },
+          "type": "lineTo",
+        },
+        {
+          "props": {
+            "x": 24,
+            "y": 16,
+          },
+          "type": "moveTo",
+        },
+        {
+          "props": {
+            "x": 640,
+            "y": 16,
+          },
+          "type": "lineTo",
+        },
+      ],
+    },
+    "type": "stroke",
+  },
+  {
+    "props": {
+      "x": -0.5,
+      "y": -0.5,
+    },
+    "type": "translate",
+  },
+]
+`;

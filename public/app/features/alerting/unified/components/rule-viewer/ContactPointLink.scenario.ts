@@ -7,10 +7,10 @@ import {
 } from '@grafana/alerting/testing';
 
 export const RECEIVER_NAME = 'my-receiver';
-export const RECEIVER_UID = 'my-receiver';
+const RECEIVER_UID = 'my-receiver';
 
 // single response scenario
-export const listContactPointsResponse = ListReceiverApiResponseFactory.build({
+const listContactPointsResponse = ListReceiverApiResponseFactory.build({
   items: [
     ContactPointFactory.build({
       metadata: {
@@ -26,7 +26,7 @@ export const listContactPointsResponse = ListReceiverApiResponseFactory.build({
 export const listContactPointsScenario = [listReceiverHandler(listContactPointsResponse)];
 
 // empty response scenario
-export const listContactPointEmptyResponse = ListReceiverApiResponseFactory.build({
+const listContactPointEmptyResponse = ListReceiverApiResponseFactory.build({
   items: [],
 });
 export const listContactPointsEmptyResponseScenario = [listReceiverHandler(listContactPointEmptyResponse)];

@@ -1,13 +1,14 @@
-import { api } from "./baseAPI";
+import { api } from './baseAPI';
 export const addTagTypes = [
-  "API Discovery",
-  "FindScopeDashboardBindingsResults",
-  "FindScopeNavigationsResults",
-  "FindScopeNodeChildrenResults",
-  "ScopeDashboardBinding",
-  "ScopeNavigation",
-  "ScopeNode",
-  "Scope",
+  'API Discovery',
+  'FindDefaultScope',
+  'FindScopeDashboardBindingsResults',
+  'FindScopeNavigationsResults',
+  'FindScopeNodeChildrenResults',
+  'ScopeDashboardBinding',
+  'ScopeNavigation',
+  'ScopeNode',
+  'Scope',
 ] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -15,12 +16,13 @@ const injectedRtkApi = api
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      getApiResources: build.query<
-        GetApiResourcesApiResponse,
-        GetApiResourcesApiArg
-      >({
+      getApiResources: build.query<GetApiResourcesApiResponse, GetApiResourcesApiArg>({
         query: () => ({ url: `/` }),
-        providesTags: ["API Discovery"],
+        providesTags: ['API Discovery'],
+      }),
+      getFindDefaultScope: build.query<GetFindDefaultScopeApiResponse, GetFindDefaultScopeApiArg>({
+        query: () => ({ url: `/find/default_scope` }),
+        providesTags: ['FindDefaultScope'],
       }),
       getFindScopeDashboardBindingsResults: build.query<
         GetFindScopeDashboardBindingsResultsApiResponse,
@@ -30,11 +32,9 @@ const injectedRtkApi = api
           url: `/find/scope_dashboard_bindings`,
           params: {
             scope: queryArg.scope,
-            depth: queryArg.depth,
-            rootScope: queryArg.rootScope,
           },
         }),
-        providesTags: ["FindScopeDashboardBindingsResults"],
+        providesTags: ['FindScopeDashboardBindingsResults'],
       }),
       getFindScopeNavigationsResults: build.query<
         GetFindScopeNavigationsResultsApiResponse,
@@ -48,7 +48,7 @@ const injectedRtkApi = api
             rootScope: queryArg.rootScope,
           },
         }),
-        providesTags: ["FindScopeNavigationsResults"],
+        providesTags: ['FindScopeNavigationsResults'],
       }),
       getFindScopeNodeChildrenResults: build.query<
         GetFindScopeNodeChildrenResultsApiResponse,
@@ -63,29 +63,23 @@ const injectedRtkApi = api
             limit: queryArg.limit,
           },
         }),
-        providesTags: ["FindScopeNodeChildrenResults"],
+        providesTags: ['FindScopeNodeChildrenResults'],
       }),
-      listScopeDashboardBinding: build.query<
-        ListScopeDashboardBindingApiResponse,
-        ListScopeDashboardBindingApiArg
-      >({
+      listScopeDashboardBinding: build.query<ListScopeDashboardBindingApiResponse, ListScopeDashboardBindingApiArg>({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
         }),
-        providesTags: ["ScopeDashboardBinding"],
+        providesTags: ['ScopeDashboardBinding'],
       }),
       createScopeDashboardBinding: build.mutation<
         CreateScopeDashboardBindingApiResponse,
@@ -93,7 +87,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
-          method: "POST",
+          method: 'POST',
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -102,7 +96,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
       deletecollectionScopeDashboardBinding: build.mutation<
         DeletecollectionScopeDashboardBindingApiResponse,
@@ -110,15 +104,14 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -126,22 +119,20 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
-      getScopeDashboardBinding: build.query<
-        GetScopeDashboardBindingApiResponse,
-        GetScopeDashboardBindingApiArg
-      >({
+      getScopeDashboardBinding: build.query<GetScopeDashboardBindingApiResponse, GetScopeDashboardBindingApiArg>({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["ScopeDashboardBinding"],
+        providesTags: ['ScopeDashboardBinding'],
       }),
       replaceScopeDashboardBinding: build.mutation<
         ReplaceScopeDashboardBindingApiResponse,
@@ -149,7 +140,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -158,7 +149,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
       deleteScopeDashboardBinding: build.mutation<
         DeleteScopeDashboardBindingApiResponse,
@@ -166,18 +157,17 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
       updateScopeDashboardBinding: build.mutation<
         UpdateScopeDashboardBindingApiResponse,
@@ -185,7 +175,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -195,7 +185,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
       getScopeDashboardBindingStatus: build.query<
         GetScopeDashboardBindingStatusApiResponse,
@@ -207,7 +197,7 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["ScopeDashboardBinding"],
+        providesTags: ['ScopeDashboardBinding'],
       }),
       replaceScopeDashboardBindingStatus: build.mutation<
         ReplaceScopeDashboardBindingStatusApiResponse,
@@ -215,7 +205,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}/status`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.scopeDashboardBinding,
           params: {
             pretty: queryArg.pretty,
@@ -224,7 +214,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
       updateScopeDashboardBindingStatus: build.mutation<
         UpdateScopeDashboardBindingStatusApiResponse,
@@ -232,7 +222,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopedashboardbindings/${queryArg.name}/status`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -242,37 +232,28 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["ScopeDashboardBinding"],
+        invalidatesTags: ['ScopeDashboardBinding'],
       }),
-      listScopeNavigation: build.query<
-        ListScopeNavigationApiResponse,
-        ListScopeNavigationApiArg
-      >({
+      listScopeNavigation: build.query<ListScopeNavigationApiResponse, ListScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
         }),
-        providesTags: ["ScopeNavigation"],
+        providesTags: ['ScopeNavigation'],
       }),
-      createScopeNavigation: build.mutation<
-        CreateScopeNavigationApiResponse,
-        CreateScopeNavigationApiArg
-      >({
+      createScopeNavigation: build.mutation<CreateScopeNavigationApiResponse, CreateScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations`,
-          method: "POST",
+          method: 'POST',
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -281,7 +262,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
       deletecollectionScopeNavigation: build.mutation<
         DeletecollectionScopeNavigationApiResponse,
@@ -289,15 +270,14 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -305,30 +285,25 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
-      getScopeNavigation: build.query<
-        GetScopeNavigationApiResponse,
-        GetScopeNavigationApiArg
-      >({
+      getScopeNavigation: build.query<GetScopeNavigationApiResponse, GetScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["ScopeNavigation"],
+        providesTags: ['ScopeNavigation'],
       }),
-      replaceScopeNavigation: build.mutation<
-        ReplaceScopeNavigationApiResponse,
-        ReplaceScopeNavigationApiArg
-      >({
+      replaceScopeNavigation: build.mutation<ReplaceScopeNavigationApiResponse, ReplaceScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -337,34 +312,27 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
-      deleteScopeNavigation: build.mutation<
-        DeleteScopeNavigationApiResponse,
-        DeleteScopeNavigationApiArg
-      >({
+      deleteScopeNavigation: build.mutation<DeleteScopeNavigationApiResponse, DeleteScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
-      updateScopeNavigation: build.mutation<
-        UpdateScopeNavigationApiResponse,
-        UpdateScopeNavigationApiArg
-      >({
+      updateScopeNavigation: build.mutation<UpdateScopeNavigationApiResponse, UpdateScopeNavigationApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -374,19 +342,16 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
-      getScopeNavigationStatus: build.query<
-        GetScopeNavigationStatusApiResponse,
-        GetScopeNavigationStatusApiArg
-      >({
+      getScopeNavigationStatus: build.query<GetScopeNavigationStatusApiResponse, GetScopeNavigationStatusApiArg>({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
           params: {
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["ScopeNavigation"],
+        providesTags: ['ScopeNavigation'],
       }),
       replaceScopeNavigationStatus: build.mutation<
         ReplaceScopeNavigationStatusApiResponse,
@@ -394,7 +359,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.scopeNavigation,
           params: {
             pretty: queryArg.pretty,
@@ -403,7 +368,7 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
       updateScopeNavigationStatus: build.mutation<
         UpdateScopeNavigationStatusApiResponse,
@@ -411,7 +376,7 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/scopenavigations/${queryArg.name}/status`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -421,36 +386,28 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["ScopeNavigation"],
+        invalidatesTags: ['ScopeNavigation'],
       }),
-      listScopeNode: build.query<ListScopeNodeApiResponse, ListScopeNodeApiArg>(
-        {
-          query: (queryArg) => ({
-            url: `/scopenodes`,
-            params: {
-              pretty: queryArg.pretty,
-              allowWatchBookmarks: queryArg.allowWatchBookmarks,
-              continue: queryArg["continue"],
-              fieldSelector: queryArg.fieldSelector,
-              labelSelector: queryArg.labelSelector,
-              limit: queryArg.limit,
-              resourceVersion: queryArg.resourceVersion,
-              resourceVersionMatch: queryArg.resourceVersionMatch,
-              sendInitialEvents: queryArg.sendInitialEvents,
-              timeoutSeconds: queryArg.timeoutSeconds,
-              watch: queryArg.watch,
-            },
-          }),
-          providesTags: ["ScopeNode"],
-        },
-      ),
-      createScopeNode: build.mutation<
-        CreateScopeNodeApiResponse,
-        CreateScopeNodeApiArg
-      >({
+      listScopeNode: build.query<ListScopeNodeApiResponse, ListScopeNodeApiArg>({
         query: (queryArg) => ({
           url: `/scopenodes`,
-          method: "POST",
+          params: {
+            pretty: queryArg.pretty,
+            continue: queryArg['continue'],
+            fieldSelector: queryArg.fieldSelector,
+            labelSelector: queryArg.labelSelector,
+            limit: queryArg.limit,
+            resourceVersion: queryArg.resourceVersion,
+            timeoutSeconds: queryArg.timeoutSeconds,
+            watch: queryArg.watch,
+          },
+        }),
+        providesTags: ['ScopeNode'],
+      }),
+      createScopeNode: build.mutation<CreateScopeNodeApiResponse, CreateScopeNodeApiArg>({
+        query: (queryArg) => ({
+          url: `/scopenodes`,
+          method: 'POST',
           body: queryArg.scopeNode,
           params: {
             pretty: queryArg.pretty,
@@ -459,23 +416,19 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeNode"],
+        invalidatesTags: ['ScopeNode'],
       }),
-      deletecollectionScopeNode: build.mutation<
-        DeletecollectionScopeNodeApiResponse,
-        DeletecollectionScopeNodeApiArg
-      >({
+      deletecollectionScopeNode: build.mutation<DeletecollectionScopeNodeApiResponse, DeletecollectionScopeNodeApiArg>({
         query: (queryArg) => ({
           url: `/scopenodes`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -483,10 +436,11 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ["ScopeNode"],
+        invalidatesTags: ['ScopeNode'],
       }),
       getScopeNode: build.query<GetScopeNodeApiResponse, GetScopeNodeApiArg>({
         query: (queryArg) => ({
@@ -495,15 +449,12 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["ScopeNode"],
+        providesTags: ['ScopeNode'],
       }),
-      replaceScopeNode: build.mutation<
-        ReplaceScopeNodeApiResponse,
-        ReplaceScopeNodeApiArg
-      >({
+      replaceScopeNode: build.mutation<ReplaceScopeNodeApiResponse, ReplaceScopeNodeApiArg>({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: "PUT",
+          method: 'PUT',
           body: queryArg.scopeNode,
           params: {
             pretty: queryArg.pretty,
@@ -512,34 +463,27 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["ScopeNode"],
+        invalidatesTags: ['ScopeNode'],
       }),
-      deleteScopeNode: build.mutation<
-        DeleteScopeNodeApiResponse,
-        DeleteScopeNodeApiArg
-      >({
+      deleteScopeNode: build.mutation<DeleteScopeNodeApiResponse, DeleteScopeNodeApiArg>({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["ScopeNode"],
+        invalidatesTags: ['ScopeNode'],
       }),
-      updateScopeNode: build.mutation<
-        UpdateScopeNodeApiResponse,
-        UpdateScopeNodeApiArg
-      >({
+      updateScopeNode: build.mutation<UpdateScopeNodeApiResponse, UpdateScopeNodeApiArg>({
         query: (queryArg) => ({
           url: `/scopenodes/${queryArg.name}`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -549,31 +493,28 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["ScopeNode"],
+        invalidatesTags: ['ScopeNode'],
       }),
       listScope: build.query<ListScopeApiResponse, ListScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes`,
           params: {
             pretty: queryArg.pretty,
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             fieldSelector: queryArg.fieldSelector,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
             timeoutSeconds: queryArg.timeoutSeconds,
             watch: queryArg.watch,
           },
         }),
-        providesTags: ["Scope"],
+        providesTags: ['Scope'],
       }),
       createScope: build.mutation<CreateScopeApiResponse, CreateScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes`,
-          method: "POST",
+          method: 'POST',
           body: queryArg.scope,
           params: {
             pretty: queryArg.pretty,
@@ -582,23 +523,19 @@ const injectedRtkApi = api
             fieldValidation: queryArg.fieldValidation,
           },
         }),
-        invalidatesTags: ["Scope"],
+        invalidatesTags: ['Scope'],
       }),
-      deletecollectionScope: build.mutation<
-        DeletecollectionScopeApiResponse,
-        DeletecollectionScopeApiArg
-      >({
+      deletecollectionScope: build.mutation<DeletecollectionScopeApiResponse, DeletecollectionScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
-            continue: queryArg["continue"],
+            continue: queryArg['continue'],
             dryRun: queryArg.dryRun,
             fieldSelector: queryArg.fieldSelector,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             labelSelector: queryArg.labelSelector,
             limit: queryArg.limit,
             orphanDependents: queryArg.orphanDependents,
@@ -606,10 +543,11 @@ const injectedRtkApi = api
             resourceVersion: queryArg.resourceVersion,
             resourceVersionMatch: queryArg.resourceVersionMatch,
             sendInitialEvents: queryArg.sendInitialEvents,
+            shardSelector: queryArg.shardSelector,
             timeoutSeconds: queryArg.timeoutSeconds,
           },
         }),
-        invalidatesTags: ["Scope"],
+        invalidatesTags: ['Scope'],
       }),
       getScope: build.query<GetScopeApiResponse, GetScopeApiArg>({
         query: (queryArg) => ({
@@ -618,44 +556,41 @@ const injectedRtkApi = api
             pretty: queryArg.pretty,
           },
         }),
-        providesTags: ["Scope"],
+        providesTags: ['Scope'],
       }),
-      replaceScope: build.mutation<ReplaceScopeApiResponse, ReplaceScopeApiArg>(
-        {
-          query: (queryArg) => ({
-            url: `/scopes/${queryArg.name}`,
-            method: "PUT",
-            body: queryArg.scope,
-            params: {
-              pretty: queryArg.pretty,
-              dryRun: queryArg.dryRun,
-              fieldManager: queryArg.fieldManager,
-              fieldValidation: queryArg.fieldValidation,
-            },
-          }),
-          invalidatesTags: ["Scope"],
-        },
-      ),
+      replaceScope: build.mutation<ReplaceScopeApiResponse, ReplaceScopeApiArg>({
+        query: (queryArg) => ({
+          url: `/scopes/${queryArg.name}`,
+          method: 'PUT',
+          body: queryArg.scope,
+          params: {
+            pretty: queryArg.pretty,
+            dryRun: queryArg.dryRun,
+            fieldManager: queryArg.fieldManager,
+            fieldValidation: queryArg.fieldValidation,
+          },
+        }),
+        invalidatesTags: ['Scope'],
+      }),
       deleteScope: build.mutation<DeleteScopeApiResponse, DeleteScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes/${queryArg.name}`,
-          method: "DELETE",
+          method: 'DELETE',
           params: {
             pretty: queryArg.pretty,
             dryRun: queryArg.dryRun,
             gracePeriodSeconds: queryArg.gracePeriodSeconds,
-            ignoreStoreReadErrorWithClusterBreakingPotential:
-              queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
+            ignoreStoreReadErrorWithClusterBreakingPotential: queryArg.ignoreStoreReadErrorWithClusterBreakingPotential,
             orphanDependents: queryArg.orphanDependents,
             propagationPolicy: queryArg.propagationPolicy,
           },
         }),
-        invalidatesTags: ["Scope"],
+        invalidatesTags: ['Scope'],
       }),
       updateScope: build.mutation<UpdateScopeApiResponse, UpdateScopeApiArg>({
         query: (queryArg) => ({
           url: `/scopes/${queryArg.name}`,
-          method: "PATCH",
+          method: 'PATCH',
           body: queryArg.patch,
           params: {
             pretty: queryArg.pretty,
@@ -665,7 +600,7 @@ const injectedRtkApi = api
             force: queryArg.force,
           },
         }),
-        invalidatesTags: ["Scope"],
+        invalidatesTags: ['Scope'],
       }),
     }),
     overrideExisting: false,
@@ -673,28 +608,23 @@ const injectedRtkApi = api
 export { injectedRtkApi as generatedAPI };
 export type GetApiResourcesApiResponse = /** status 200 OK */ ApiResourceList;
 export type GetApiResourcesApiArg = void;
-export type GetFindScopeDashboardBindingsResultsApiResponse =
-  /** status 200 OK */ FindScopeDashboardBindingsResults;
+export type GetFindDefaultScopeApiResponse = /** status 200 OK */ FindDefaultScope;
+export type GetFindDefaultScopeApiArg = void;
+export type GetFindScopeDashboardBindingsResultsApiResponse = /** status 200 OK */ FindScopeDashboardBindingsResults;
 export type GetFindScopeDashboardBindingsResultsApiArg = {
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
-  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
-  depth?: number;
-  /** Root scope for hierarchical navigation context, allowing the backend to optimize sub-scope responses. */
-  rootScope?: string;
 };
-export type GetFindScopeNavigationsResultsApiResponse =
-  /** status 200 OK */ FindScopeNavigationsResults;
+export type GetFindScopeNavigationsResultsApiResponse = /** status 200 OK */ FindScopeNavigationsResults;
 export type GetFindScopeNavigationsResultsApiArg = {
   /** A scope name (id) to match against, this parameter may be repeated */
   scope?: string[];
-  /** Extra levels of sub-scope items to include. 0 or omitted = direct scope only. */
+  /** Depth represents the current nesting level in the rendered navigation tree. 0 or omitted means the request is for a top-level (non-nested) navigation. 1 means the first level of sub-scope expansion, 2 means a sub-scope within a sub-scope, and so on. */
   depth?: number;
-  /** Root scope for hierarchical navigation context, allowing the backend to optimize sub-scope responses. */
+  /** RootScope identifies the top-level navigation scope the user started from. When navigating into sub-scopes, this stays constant and tells the backend which scope initiated the navigation session. Omitted for top-level navigation requests. */
   rootScope?: string;
 };
-export type GetFindScopeNodeChildrenResultsApiResponse =
-  /** status 200 OK */ FindScopeNodeChildrenResults;
+export type GetFindScopeNodeChildrenResultsApiResponse = /** status 200 OK */ FindScopeNodeChildrenResults;
 export type GetFindScopeNodeChildrenResultsApiArg = {
   /** The parent scope node */
   parent?: string;
@@ -702,13 +632,10 @@ export type GetFindScopeNodeChildrenResultsApiArg = {
   names?: string[];
   limit?: number;
 };
-export type ListScopeDashboardBindingApiResponse =
-  /** status 200 OK */ ScopeDashboardBindingList;
+export type ListScopeDashboardBindingApiResponse = /** status 200 OK */ ScopeDashboardBindingList;
 export type ListScopeDashboardBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -725,24 +652,6 @@ export type ListScopeDashboardBindingApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -763,8 +672,7 @@ export type CreateScopeDashboardBindingApiArg = {
   fieldValidation?: string;
   scopeDashboardBinding: ScopeDashboardBinding;
 };
-export type DeletecollectionScopeDashboardBindingApiResponse =
-  /** status 200 OK */ Status;
+export type DeletecollectionScopeDashboardBindingApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionScopeDashboardBindingApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -812,11 +720,33 @@ export type DeletecollectionScopeDashboardBindingApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetScopeDashboardBindingApiResponse =
-  /** status 200 OK */ ScopeDashboardBinding;
+export type GetScopeDashboardBindingApiResponse = /** status 200 OK */ ScopeDashboardBinding;
 export type GetScopeDashboardBindingApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -839,9 +769,7 @@ export type ReplaceScopeDashboardBindingApiArg = {
   fieldValidation?: string;
   scopeDashboardBinding: ScopeDashboardBinding;
 };
-export type DeleteScopeDashboardBindingApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteScopeDashboardBindingApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteScopeDashboardBindingApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -876,18 +804,16 @@ export type UpdateScopeDashboardBindingApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetScopeDashboardBindingStatusApiResponse =
-  /** status 200 OK */ ScopeDashboardBinding;
+export type GetScopeDashboardBindingStatusApiResponse = /** status 200 OK */ ScopeDashboardBinding;
 export type GetScopeDashboardBindingStatusApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeDashboardBindingStatusApiResponse =
-  /** status 200 OK */
-    | ScopeDashboardBinding
-    | /** status 201 Created */ ScopeDashboardBinding;
+export type ReplaceScopeDashboardBindingStatusApiResponse = /** status 200 OK */
+  | ScopeDashboardBinding
+  | /** status 201 Created */ ScopeDashboardBinding;
 export type ReplaceScopeDashboardBindingStatusApiArg = {
   /** name of the ScopeDashboardBinding */
   name: string;
@@ -919,13 +845,10 @@ export type UpdateScopeDashboardBindingStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type ListScopeNavigationApiResponse =
-  /** status 200 OK */ ScopeNavigationList;
+export type ListScopeNavigationApiResponse = /** status 200 OK */ ScopeNavigationList;
 export type ListScopeNavigationApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -942,24 +865,6 @@ export type ListScopeNavigationApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -980,8 +885,7 @@ export type CreateScopeNavigationApiArg = {
   fieldValidation?: string;
   scopeNavigation: ScopeNavigation;
 };
-export type DeletecollectionScopeNavigationApiResponse =
-  /** status 200 OK */ Status;
+export type DeletecollectionScopeNavigationApiResponse = /** status 200 OK */ Status;
 export type DeletecollectionScopeNavigationApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -1029,11 +933,33 @@ export type DeletecollectionScopeNavigationApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
-export type GetScopeNavigationApiResponse =
-  /** status 200 OK */ ScopeNavigation;
+export type GetScopeNavigationApiResponse = /** status 200 OK */ ScopeNavigation;
 export type GetScopeNavigationApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -1056,9 +982,7 @@ export type ReplaceScopeNavigationApiArg = {
   fieldValidation?: string;
   scopeNavigation: ScopeNavigation;
 };
-export type DeleteScopeNavigationApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteScopeNavigationApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteScopeNavigationApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -1093,8 +1017,7 @@ export type UpdateScopeNavigationApiArg = {
   force?: boolean;
   patch: Patch;
 };
-export type GetScopeNavigationStatusApiResponse =
-  /** status 200 OK */ ScopeNavigation;
+export type GetScopeNavigationStatusApiResponse = /** status 200 OK */ ScopeNavigation;
 export type GetScopeNavigationStatusApiArg = {
   /** name of the ScopeNavigation */
   name: string;
@@ -1139,8 +1062,6 @@ export type ListScopeNodeApiResponse = /** status 200 OK */ ScopeNodeList;
 export type ListScopeNodeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -1157,24 +1078,6 @@ export type ListScopeNodeApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1243,6 +1146,29 @@ export type DeletecollectionScopeNodeApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
@@ -1253,9 +1179,7 @@ export type GetScopeNodeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeNodeApiResponse = /** status 200 OK */
-  | ScopeNode
-  | /** status 201 Created */ ScopeNode;
+export type ReplaceScopeNodeApiResponse = /** status 200 OK */ ScopeNode | /** status 201 Created */ ScopeNode;
 export type ReplaceScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1269,9 +1193,7 @@ export type ReplaceScopeNodeApiArg = {
   fieldValidation?: string;
   scopeNode: ScopeNode;
 };
-export type DeleteScopeNodeApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteScopeNodeApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1288,9 +1210,7 @@ export type DeleteScopeNodeApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateScopeNodeApiResponse = /** status 200 OK */
-  | ScopeNode
-  | /** status 201 Created */ ScopeNode;
+export type UpdateScopeNodeApiResponse = /** status 200 OK */ ScopeNode | /** status 201 Created */ ScopeNode;
 export type UpdateScopeNodeApiArg = {
   /** name of the ScopeNode */
   name: string;
@@ -1310,8 +1230,6 @@ export type ListScopeApiResponse = /** status 200 OK */ ScopeList;
 export type ListScopeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
   /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
     
     This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
@@ -1328,24 +1246,6 @@ export type ListScopeApiArg = {
     
     Defaults to unset */
   resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
@@ -1414,6 +1314,29 @@ export type DeletecollectionScopeApiArg = {
     
     Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
   sendInitialEvents?: boolean;
+  /** shardSelector restricts the list of returned objects using a CEL-based shard selector expression. The format uses the shardRange() function combined with || (logical OR) to specify one or more hash ranges:
+    
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000')
+      shardRange(object.metadata.uid, '0x0', '0x8000000000000000') || shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+    
+    Field paths use CEL-style object-rooted syntax (e.g. "object.metadata.uid"), NOT the fieldSelector format ("metadata.uid"). Currently supported paths:
+      - object.metadata.uid
+      - object.metadata.namespace
+    
+    hexStart and hexEnd are single-quoted CEL string literals with a '0x' prefix, defining the inclusive lower and exclusive upper bounds over the 64-bit FNV-1a hash space. The full range is [0x0, 0x10000000000000000), where the exclusive upper bound equals 2^64.
+    
+    Examples:
+      2-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x8000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x8000000000000000', '0x10000000000000000')
+      4-shard split:
+        shard 0: shardRange(object.metadata.uid, '0x0000000000000000', '0x4000000000000000')
+        shard 1: shardRange(object.metadata.uid, '0x4000000000000000', '0x8000000000000000')
+        shard 2: shardRange(object.metadata.uid, '0x8000000000000000', '0xc000000000000000')
+        shard 3: shardRange(object.metadata.uid, '0xc000000000000000', '0x10000000000000000')
+    
+    This is an alpha field and requires enabling the ShardedListAndWatch feature gate. */
+  shardSelector?: string;
   /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
   timeoutSeconds?: number;
 };
@@ -1424,9 +1347,7 @@ export type GetScopeApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceScopeApiResponse = /** status 200 OK */
-  | Scope
-  | /** status 201 Created */ Scope;
+export type ReplaceScopeApiResponse = /** status 200 OK */ Scope | /** status 201 Created */ Scope;
 export type ReplaceScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1440,9 +1361,7 @@ export type ReplaceScopeApiArg = {
   fieldValidation?: string;
   scope: Scope;
 };
-export type DeleteScopeApiResponse = /** status 200 OK */
-  | Status
-  | /** status 202 Accepted */ Status;
+export type DeleteScopeApiResponse = /** status 200 OK */ Status | /** status 202 Accepted */ Status;
 export type DeleteScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1459,9 +1378,7 @@ export type DeleteScopeApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateScopeApiResponse = /** status 200 OK */
-  | Scope
-  | /** status 201 Created */ Scope;
+export type UpdateScopeApiResponse = /** status 200 OK */ Scope | /** status 201 Created */ Scope;
 export type UpdateScopeApiArg = {
   /** name of the Scope */
   name: string;
@@ -1591,6 +1508,42 @@ export type ObjectMeta = {
     Populated by the system. Read-only. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#uids */
   uid?: string;
 };
+export type ScopeFilter = {
+  key: string;
+  /** Possible enum values:
+     - `"equals"`
+     - `"not-equals"`
+     - `"not-one-of"`
+     - `"one-of"`
+     - `"regex-match"`
+     - `"regex-not-match"` */
+  operator: 'equals' | 'not-equals' | 'not-one-of' | 'one-of' | 'regex-match' | 'regex-not-match';
+  value: string;
+  /** Values is used for operators that require multiple values (e.g. one-of and not-one-of). */
+  values?: string[];
+};
+export type ScopeSpec = {
+  /** Provides a default path for the scope. This refers to a list of nodes in the selector. This is used to display the title next to the selected scope and expand the selector to the proper path. This will override whichever is selected from in the selector. The path is a list of node ids, starting at the direct parent of the selected node towards the root. */
+  defaultPath?: string[];
+  filters?: ScopeFilter[];
+  title: string;
+};
+export type Scope = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  metadata?: ObjectMeta;
+  spec?: ScopeSpec;
+};
+export type FindDefaultScope = {
+  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
+  apiVersion?: string;
+  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
+  kind?: string;
+  message?: string;
+  scope?: Scope;
+};
 export type ScopeDashboardBindingSpec = {
   dashboard: string;
   scope: string;
@@ -1680,7 +1633,7 @@ export type ScopeNodeSpec = {
   linkId?: string;
   /** Possible enum values:
      - `"scope"` */
-  linkType?: "scope";
+  linkType?: 'scope';
   nodeType: string;
   parentName?: string;
   /** Redirect to a specific path when this node is selected. */
@@ -1783,40 +1736,6 @@ export type ScopeNodeList = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata?: ListMeta;
-};
-export type ScopeFilter = {
-  key: string;
-  /** Possible enum values:
-     - `"equals"`
-     - `"not-equals"`
-     - `"not-one-of"`
-     - `"one-of"`
-     - `"regex-match"`
-     - `"regex-not-match"` */
-  operator:
-    | "equals"
-    | "not-equals"
-    | "not-one-of"
-    | "one-of"
-    | "regex-match"
-    | "regex-not-match";
-  value: string;
-  /** Values is used for operators that require multiple values (e.g. one-of and not-one-of). */
-  values?: string[];
-};
-export type ScopeSpec = {
-  /** Provides a default path for the scope. This refers to a list of nodes in the selector. This is used to display the title next to the selected scope and expand the selector to the proper path. This will override whichever is selected from in the selector. The path is a list of node ids, starting at the direct parent of the selected node towards the root. */
-  defaultPath?: string[];
-  filters?: ScopeFilter[];
-  title: string;
-};
-export type Scope = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ObjectMeta;
-  spec?: ScopeSpec;
 };
 export type ScopeList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */

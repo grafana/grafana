@@ -6,21 +6,22 @@ import { t } from '@grafana/i18n';
 import { type SceneComponentProps, sceneGraph, SceneObjectBase, sceneUtils } from '@grafana/scenes';
 import { Box, IconButton, Text, useStyles2 } from '@grafana/ui';
 
-import { DashboardEditPane } from '../../edit-pane/DashboardEditPane';
+import { DashboardSidebar } from '../../sidebar/DashboardSidebar';
 
 import { DashboardFiltersOverview } from './DashboardFiltersOverview';
 import { DashboardFiltersOverviewSearch } from './DashboardFiltersOverviewSearch';
 
 export class DashboardFiltersOverviewPane extends SceneObjectBase {
   public static Component = DashboardFiltersOverviewPaneRenderer;
+  public minWidth = 500;
 
   public getId() {
     return 'filters' as const;
   }
 }
 
-export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
-  const editPane = sceneGraph.getAncestor(model, DashboardEditPane);
+function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentProps<DashboardFiltersOverviewPane>) {
+  const sidebar = sceneGraph.getAncestor(model, DashboardSidebar);
   const styles = useStyles2(getStyles);
   const [searchQuery, setSearchQuery] = useState('');
   const { variables } = sceneGraph.getVariables(model)!.useState();
@@ -33,7 +34,7 @@ export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentPr
         <IconButton
           name="times"
           size="lg"
-          onClick={() => editPane.closePane()}
+          onClick={() => sidebar.closePane()}
           aria-label={t('dashboard.filters-overview.close', 'Close')}
         />
         <div className={styles.title}>
@@ -45,7 +46,7 @@ export function DashboardFiltersOverviewPaneRenderer({ model }: SceneComponentPr
         <DashboardFiltersOverview
           adhocFilters={adHocVar}
           groupByVariable={groupByVar}
-          onClose={() => editPane.closePane()}
+          onClose={() => sidebar.closePane()}
           searchQuery={searchQuery}
         />
       </div>

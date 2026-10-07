@@ -15,37 +15,12 @@ labels:
     - oss
 title: Configure inhibition rules
 weight: 450
-refs:
-  configure-alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/set-up/configure-alertmanager/
-  shared-silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
-  alertmanager-architecture:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/#alertmanager-architecture
-  mute-timings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
 ---
 
 # Configure inhibition rules
 
 {{< admonition type="note" >}}
 Available in Grafana 13 or higher.
-
-Inhibition rules require the `alertingMultiplePolicies` feature toggle, which is experimental. Without it, you can create, read, update, and delete rules through the API, but Alertmanager doesn't apply them during alert evaluation, so it doesn't inhibit any alerts.
-
-On Grafana Cloud, contact your account team or support to enable this feature toggle. On self-hosted Grafana, enable the toggle in the `[feature_toggles]` section of your Grafana configuration.
 {{< /admonition >}}
 
 An inhibition rule suppresses notifications for target alerts when source alerts with matching label values are already firing. This lets you reduce noise when a root-cause alert makes dependent alerts redundant.
@@ -53,18 +28,18 @@ An inhibition rule suppresses notifications for target alerts when source alerts
 For example, if a node is down (the **source**), you can inhibit all alerts for services running on that node (the **target**). This prevents your team from receiving individual alerts for each affected service when the underlying cause is already captured in the source alert.
 
 {{< admonition type="note" >}}
-Inhibition rules are assigned to a [specific Alertmanager](ref:alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
+Inhibition rules are assigned to a [specific Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/#alertmanager-architecture) and only suppress notifications for alerts managed by that Alertmanager.
 {{< /admonition >}}
 
 {{< admonition type="caution" >}}
 Inhibition rules are intended for compatibility with configurations imported from Prometheus Alertmanager or Mimir. They have no dedicated management UI in Grafana by design.
 
-If not carefully configured, inhibition rules can silently suppress alerts and make issues harder to detect. Consider [silences](ref:shared-silences) or [mute timings](ref:mute-timings) for most suppression use cases.
+If not carefully configured, inhibition rules can silently suppress alerts and make issues harder to detect. Consider [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) or [mute timings](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/) for most suppression use cases.
 {{< /admonition >}}
 
 ## Inhibition rules vs silences
 
-Both inhibition rules and [silences](ref:shared-silences) suppress alert notifications. The key difference is that inhibition rules suppress alerts automatically based on the presence of another alert, while silences suppress alerts for a fixed time window regardless of other alerts.
+Both inhibition rules and [silences](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/) suppress alert notifications. The key difference is that inhibition rules suppress alerts automatically based on the presence of another alert, while silences suppress alerts for a fixed time window regardless of other alerts.
 
 |              | Inhibition rule                               | Silence                                |
 | ------------ | --------------------------------------------- | -------------------------------------- |
@@ -86,7 +61,7 @@ The API resource is:
 The inhibition rules API is in beta (`v1beta1`) and is subject to change.
 {{< /admonition >}}
 
-Inhibition rules are also supported in the Prometheus Alertmanager. Refer to [Configure Alertmanager](ref:configure-alertmanager) to set up an external Alertmanager.
+Inhibition rules are also supported in the Prometheus Alertmanager. Refer to [Configure Alertmanager](/docs/grafana/<GRAFANA_VERSION>/alerting/set-up/configure-alertmanager/) to set up an external Alertmanager.
 
 ## Inhibition rule schema
 
@@ -145,7 +120,7 @@ In this example:
 
 ## Inhibition rules and managed routes
 
-When the `alertingMultiplePolicies` feature toggle is enabled, an Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:
+An Alertmanager can serve multiple routing trees: the default Grafana-managed route and any routes imported from Prometheus Alertmanager or Mimir configurations. Inhibition rules behave differently depending on how each rule is created:
 
 - **Grafana-managed rules** are created through the API and apply across the entire Alertmanager. They can match alerts handled by any route, including imported routes.
 - **Imported rules** come from an imported Alertmanager configuration and are scoped to the alerts handled by their imported route. Grafana adds an internal label matcher that limits each imported rule to its own imported route, so an imported rule can't suppress alerts that flow through other routes.

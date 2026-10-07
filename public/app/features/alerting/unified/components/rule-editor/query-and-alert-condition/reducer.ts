@@ -62,10 +62,9 @@ export const addExpressions = createAction<AlertQuery[]>('addExpressions');
 export const updateExpression = createAction<ExpressionQuery>('updateExpression');
 export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: string }>('updateExpressionRefId');
 export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
-export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
-export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
-export const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
+const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
+const updateMinInterval = createAction<{ refId: string; minInterval: string }>('updateMinInterval');
 
 export const resetToSimpleCondition = createAction('resetToSimpleCondition');
 export const optimizeReduceExpression = createAction<{

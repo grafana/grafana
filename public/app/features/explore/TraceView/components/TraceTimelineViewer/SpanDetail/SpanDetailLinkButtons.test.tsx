@@ -1,15 +1,29 @@
-import { CoreApp, type TimeRange } from '@grafana/data';
-import { usePluginLinks } from '@grafana/runtime';
-import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
+import { of } from 'rxjs';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
+
+import { CoreApp, type LinkModel, toDataFrame, type TimeRange } from '@grafana/data';
+import { locationService, usePluginLinks } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { SpanLinkType } from '../../types/links';
 import { type TraceSpan } from '../../types/trace';
 
-import { getSpanDetailLinkButtons, getProfileLinkButtonsContext } from './SpanDetailLinkButtons';
+import { getProfileLinkButtonsContext, SpanDetailLinkButtons, RelatedProfilesTitle } from './SpanDetailLinkButtons';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn().mockReturnValue({ isLoading: false, links: [] }),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
+  useDataSourceInstanceList: jest.fn().mockReturnValue({ isLoading: false, items: [] }),
+  // LogsLinkButton resolves the query datasource to check for logs; the links used
+  // here have no interpolated query, so this is only a safety net against real calls.
+  getDataSourceInstance: jest.fn().mockResolvedValue({ query: jest.fn() }),
 }));
 
 const span = {
@@ -25,84 +39,158 @@ const timeRange = {
   to: new Date(1000),
 } as unknown as TimeRange;
 
-function getContent(result: ReturnType<typeof getSpanDetailLinkButtons>) {
-  return result.props.children.props.children[0];
-}
+// The Share button is always rendered by SpanDetailLinkButtons, so every render
+// below produces this button in addition to any link buttons under test.
+const focusSpanLink = {
+  href: '/focus',
+  title: 'Focus',
+  target: '_self',
+  origin: {},
+} as unknown as LinkModel;
 
-describe('getSpanDetailLinkButtons', () => {
+describe('SpanDetailLinkButtons', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should return empty buttons when createSpanLink is not provided', () => {
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink: undefined,
-      datasourceType: 'test',
-      traceToProfilesOptions: undefined,
-      timeRange,
-      app: CoreApp.Explore,
-    });
+  it('should render only the share button when createSpanLink is not provided', () => {
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={undefined}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={undefined}
+        timeRange={timeRange}
+        app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
+      />
+    );
 
-    expect(result.props.children).toBeFalsy();
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(screen.getByText('Share')).toBeInTheDocument();
   });
 
-  it('should create log link button when logs link exists', () => {
+  it('should render log link button when logs link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
 
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink,
-      datasourceType: 'test',
-      traceToProfilesOptions: undefined,
-      timeRange,
-      app: CoreApp.Explore,
-    });
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={undefined}
+        timeRange={timeRange}
+        app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
+      />
+    );
 
-    const content = getContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Logs for this span');
+    // Log link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByText('Related logs')).toBeInTheDocument();
   });
 
-  it('should create profile link button when profiles link exists', () => {
+  describe('logs link CTA copy', () => {
+    it.each([
+      {
+        name: 'shows "Related logs" when the datasource has no settings',
+        settings: undefined,
+        expectedCTA: 'Related logs',
+      },
+      {
+        name: 'shows "Related logs" when neither filterBySpanID nor filterByTraceID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false } } },
+        expectedCTA: 'Related logs',
+      },
+      {
+        name: 'shows "Logs for this trace" when filterByTraceID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterByTraceID: true } } },
+        expectedCTA: 'Logs for this trace',
+      },
+      {
+        name: 'shows "Logs for this span" when filterBySpanID is set',
+        settings: { jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true } } },
+        expectedCTA: 'Logs for this span',
+      },
+      {
+        name: 'prefers "Logs for this span" when both filterBySpanID and filterByTraceID are set',
+        settings: {
+          jsonData: { tracesToLogsV2: { customQuery: false, filterBySpanID: true, filterByTraceID: true } },
+        },
+        expectedCTA: 'Logs for this span',
+      },
+    ])('$name', ({ settings, expectedCTA }) => {
+      (useDataSourceInstanceSettings as jest.Mock).mockReturnValue({ isLoading: false, settings });
+      createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
+
+      render(
+        <SpanDetailLinkButtons
+          span={span}
+          createSpanLink={createSpanLink}
+          datasourceType="test"
+          datasourceUid="test-datasource-uid"
+          traceToProfilesOptions={undefined}
+          timeRange={timeRange}
+          app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
+        />
+      );
+
+      // Log link + the always-present share button.
+      expect(screen.getAllByRole('button')).toHaveLength(2);
+      expect(screen.getByText(expectedCTA)).toBeInTheDocument();
+    });
+  });
+
+  it('should render profile link button when profiles link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
 
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink,
-      datasourceType: 'test',
-      traceToProfilesOptions: {
-        datasourceUid: 'test-uid',
-        profileTypeId: 'test-type',
-        customQuery: false,
-      },
-      timeRange,
-      app: CoreApp.Dashboard,
-    });
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={{
+          datasourceUid: 'test-uid',
+          profileTypeId: 'test-type',
+          customQuery: false,
+        }}
+        timeRange={timeRange}
+        app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
+      />
+    );
 
-    const content = getContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
+    // Profile link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
   });
 
-  it('should create session link button when session link exists', () => {
+  it('should render session link button when session link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Session, href: '/session', title: 'Session' }]);
 
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink,
-      datasourceType: 'test',
-      traceToProfilesOptions: undefined,
-      timeRange,
-      app: CoreApp.Explore,
-    });
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={undefined}
+        timeRange={timeRange}
+        app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
+      />
+    );
 
-    const content = getContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Session for this span');
+    // Session link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByText('Session for this span')).toBeInTheDocument();
   });
 
-  it('should create profile drilldown button when plugin link exists', () => {
+  it('should render profile drilldown button when plugin link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
     (usePluginLinks as jest.Mock).mockReturnValue({
       isLoading: false,
@@ -115,26 +203,30 @@ describe('getSpanDetailLinkButtons', () => {
       ],
     });
 
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink,
-      datasourceType: 'test',
-      traceToProfilesOptions: {
-        datasourceUid: 'test-uid',
-        profileTypeId: 'test-type',
-        customQuery: false,
-      },
-      timeRange,
-      app: CoreApp.Explore,
-    });
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={{
+          datasourceUid: 'test-uid',
+          profileTypeId: 'test-type',
+          customQuery: false,
+        }}
+        timeRange={timeRange}
+        app={CoreApp.Explore}
+        focusSpanLink={focusSpanLink}
+      />
+    );
 
-    const content = getContent(result);
-    expect(content).toHaveLength(2);
-    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
-    expect(content[1].props.spanLinkModel.linkModel.title).toBe('Open in Profiles Drilldown');
+    // Profile link + profiles drilldown link + the always-present share button.
+    expect(screen.getAllByRole('button')).toHaveLength(3);
+    expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
+    expect(screen.getByText('Open in Profiles Drilldown')).toBeInTheDocument();
   });
 
-  it('should not create profile drilldown button when not in Explore', () => {
+  it('should not render profile drilldown button when not in Explore', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
     (usePluginLinks as jest.Mock).mockReturnValue({
       isLoading: false,
@@ -147,22 +239,98 @@ describe('getSpanDetailLinkButtons', () => {
       ],
     });
 
-    const result = getSpanDetailLinkButtons({
-      span,
-      createSpanLink,
-      datasourceType: 'test',
-      traceToProfilesOptions: {
-        datasourceUid: 'test-uid',
-        profileTypeId: 'test-type',
-        customQuery: false,
-      },
-      timeRange,
-      app: CoreApp.Dashboard,
+    render(
+      <SpanDetailLinkButtons
+        span={span}
+        createSpanLink={createSpanLink}
+        datasourceType="test"
+        datasourceUid="test-datasource-uid"
+        traceToProfilesOptions={{
+          datasourceUid: 'test-uid',
+          profileTypeId: 'test-type',
+          customQuery: false,
+        }}
+        timeRange={timeRange}
+        app={CoreApp.Dashboard}
+        focusSpanLink={focusSpanLink}
+      />
+    );
+
+    // Profile link + the always-present share button (no drilldown outside Explore).
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByText('Profiles for this span')).toBeInTheDocument();
+    expect(screen.queryByText('Open in Profiles Drilldown')).not.toBeInTheDocument();
+  });
+
+  describe('logs link click-through', () => {
+    afterEach(() => {
+      // The rendered LogsLinkButton is still mounted at this point (RTL's own cleanup
+      // runs after this hook), and it reacts to the flag change, so wrap it in act().
+      act(() => {
+        setTestFlags({});
+      });
     });
 
-    const content = getContent(result);
-    expect(content).toHaveLength(1);
-    expect(content[0].props.spanLinkModel.linkModel.title).toBe('Profiles for this span');
+    it("opens the discovered href, not the link's original pre-discovery href", async () => {
+      setTestFlags({ [FlagKeys.GrafanaDynamicTraceToLogs]: true });
+
+      const query = jest.fn().mockReturnValue(of({ data: [toDataFrame({ fields: [{ name: 'time', values: [1] }] })] }));
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ query, type: 'loki' });
+
+      // The href/onClick a Logs link starts with, before the presence-check discovers
+      // which query variation actually has logs and rewrites the link in place.
+      createSpanLink.mockReturnValue([
+        {
+          type: SpanLinkType.Logs,
+          href: '/logs-initial',
+          title: 'Logs',
+          field: {},
+          linkModel: {
+            href: '/logs-initial',
+            title: 'Logs',
+            target: '_self',
+            origin: {},
+            interpolatedParams: {
+              query: { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' }, expr: '{job="api"} |= "t1"' },
+            },
+          },
+        },
+      ]);
+
+      const openSpy = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const pushSpy = jest.spyOn(locationService, 'push');
+
+      render(
+        <SpanDetailLinkButtons
+          span={span}
+          createSpanLink={createSpanLink}
+          datasourceType="test"
+          datasourceUid="test-datasource-uid"
+          traceToProfilesOptions={undefined}
+          timeRange={timeRange}
+          app={CoreApp.Explore}
+          focusSpanLink={focusSpanLink}
+        />
+      );
+
+      // Wait for the presence check to resolve and rewrite the link in place.
+      await waitFor(() =>
+        expect(screen.getByRole('link')).toHaveAttribute('href', expect.stringContaining('/explore?left='))
+      );
+      const discoveredHref = screen.getByRole('link').getAttribute('href');
+      expect(discoveredHref).not.toBe('/logs-initial');
+
+      await userEvent.click(screen.getByRole('link'));
+
+      // The click must navigate to the discovered href, not the stale pre-discovery one,
+      // and — since this is a Logs link — always via a new tab, never in-place.
+      expect(openSpy).toHaveBeenCalledWith(discoveredHref, '_blank', 'noopener,noreferrer');
+      expect(pushSpy).not.toHaveBeenCalled();
+
+      openSpy.mockRestore();
+      pushSpy.mockRestore();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ query: jest.fn() });
+    });
   });
 });
 
@@ -179,7 +347,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: 'test-type',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -197,7 +365,7 @@ describe('getProfileLinkButtonsContext', () => {
     expect(context).toEqual({
       serviceName: 'test-service',
       profileTypeId: '',
-      spanSelector: 'test-profile',
+      spanSelector: ['test-profile'],
       explorationType: 'flame-graph',
       timeRange: {
         from: new Date(0).toISOString(),
@@ -228,6 +396,6 @@ describe('getProfileLinkButtonsContext', () => {
 
     const context = getProfileLinkButtonsContext(spanWithoutProfileId, traceToProfilesOptions, timeRange);
 
-    expect(context.spanSelector).toBe('');
+    expect(context.spanSelector).toEqual([]);
   });
 });

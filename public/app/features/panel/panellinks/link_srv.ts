@@ -271,20 +271,6 @@ export const getDataLinksVariableSuggestions = (
       ];
 };
 
-export const getCalculationValueDataLinksVariableSuggestions = (dataFrames: DataFrame[]): VariableSuggestion[] => {
-  const fieldVars = getFieldVars(dataFrames);
-  const valueCalcVar = {
-    value: `${DataLinkBuiltInVars.valueCalc}`,
-    label: t(
-      'panel.get-calculation-value-data-links-variable-suggestions.value-calc-var.label.calculation-name',
-      'Calculation name'
-    ),
-    documentation: 'Name of the calculation the value is a result of',
-    origin: VariableOrigin.Value,
-  };
-  return [...seriesVars, ...fieldVars, ...valueVars, valueCalcVar, ...getPanelLinksVariableSuggestions()];
-};
-
 export interface LinkService {
   getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: DashboardLink) => {

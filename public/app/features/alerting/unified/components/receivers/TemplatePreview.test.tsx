@@ -1,3 +1,5 @@
+import { HttpResponse, http } from 'msw';
+import { type SetupServer } from 'msw/node';
 import { type JSX, default as React } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
@@ -8,7 +10,7 @@ import { Components } from '@grafana/e2e-selectors';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { configureStore } from 'app/store/configureStore';
 
-import { type TemplatePreviewResponse } from '../../api/templateApi';
+import { type TemplatePreviewResponse, type TemplatesTestPayload, previewTemplateUrl } from '../../api/templateApi';
 import {
   REJECTED_PREVIEW_RESPONSE,
   mockPreviewTemplateResponse,
@@ -50,6 +52,18 @@ const ui = {
   errorAlert: byRole('alert', { name: /error/i }),
   resultItems: byRole('listitem'),
 };
+
+// Captures the bodies of preview requests so tests can assert what the UI sends to the backend.
+function capturePreviewRequests(srv: SetupServer): TemplatesTestPayload[] {
+  const requests: TemplatesTestPayload[] = [];
+  srv.use(
+    http.post(previewTemplateUrl, async ({ request }) => {
+      requests.push((await request.json()) as TemplatesTestPayload);
+      return HttpResponse.json<TemplatePreviewResponse>({ results: [] });
+    })
+  );
+  return requests;
+}
 
 describe('TemplatePreview component', () => {
   it('Should render error if payload has wrong format', async () => {
@@ -150,6 +164,48 @@ describe('TemplatePreview component', () => {
     expect(within(previewItems[0]).getByTestId('mockeditor')).toHaveValue('This is the template result bla bla bla');
     expect(within(previewItems[1]).getByRole('banner')).toHaveTextContent('template2');
     expect(within(previewItems[1]).getByTestId('mockeditor')).toHaveValue('This is the template2 result bla bla bla');
+  });
+
+  it('Should send the template kind in the preview request', async () => {
+    const requests = capturePreviewRequests(server);
+    render(
+      <TemplatePreview
+        payload={'[{"a":"b"}]'}
+        templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
+        payloadFormatError={null}
+        setPayloadFormatError={jest.fn()}
+        kind="mimir"
+      />,
+      { wrapper: getProviderWraper() }
+    );
+
+    await waitFor(() => {
+      expect(requests.length).toBeGreaterThan(0);
+    });
+    expect(requests.at(-1)).toMatchObject({ name: 'potato', kind: 'mimir' });
+  });
+
+  // When a new frontend runs against a backend that predates kind support, the request must not carry
+  // anything the older backend would reject — omitting kind keeps the request backwards compatible.
+  it('Should omit kind from the preview request when none is provided', async () => {
+    const requests = capturePreviewRequests(server);
+    render(
+      <TemplatePreview
+        payload={'[{"a":"b"}]'}
+        templateName="potato"
+        templateContent={`{{ define "potato" }}{{ . }}{{ end }}`}
+        payloadFormatError={null}
+        setPayloadFormatError={jest.fn()}
+      />,
+      { wrapper: getProviderWraper() }
+    );
+
+    await waitFor(() => {
+      expect(requests.length).toBeGreaterThan(0);
+    });
+    expect(requests.at(-1)).toMatchObject({ name: 'potato' });
+    expect(requests.at(-1)?.kind).toBeUndefined();
   });
 
   it('Should render preview response with some errors,  if payload has correct format ', async () => {

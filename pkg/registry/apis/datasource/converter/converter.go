@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/authlib/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/authlib/types"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -58,6 +58,9 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		Spec:   datasourceV0.UnstructuredSpec{},
 		Secure: ToInlineSecureValues(ds.UID, maps.Keys(ds.SecureJsonData)),
 	}
+	if ds.Version > 0 {
+		obj.ResourceVersion = strconv.FormatInt(int64(ds.Version), 10)
+	}
 	obj.UID = gapiutil.CalculateClusterWideUID(obj)
 	obj.Spec.SetTitle(ds.Name).
 		SetAccess(string(ds.Access)).
@@ -68,32 +71,24 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 		SetBasicAuth(ds.BasicAuth).
 		SetBasicAuthUser(ds.BasicAuthUser).
 		SetWithCredentials(ds.WithCredentials).
-		SetIsDefault(ds.IsDefault).
 		SetReadOnly(ds.ReadOnly)
 
 	if ds.JsonData != nil && !ds.JsonData.IsEmpty() {
 		obj.Spec.SetJSONData(ds.JsonData.Interface())
 	}
 
-	rv := int64(0)
 	if !ds.Created.IsZero() {
 		obj.CreationTimestamp = metav1.NewTime(ds.Created)
-		rv = ds.Created.UnixMilli()
 	}
 
 	// Only mark updated if the times have actually changed
 	if !ds.Updated.IsZero() {
-		rv = ds.Updated.UnixMilli()
-		delta := rv - obj.CreationTimestamp.UnixMilli()
+		delta := ds.Updated.UnixMilli() - obj.CreationTimestamp.UnixMilli()
 		if delta > 1500 {
 			obj.Annotations = map[string]string{
 				utils.AnnoKeyUpdatedTimestamp: ds.Updated.UTC().Format(time.RFC3339),
 			}
 		}
-	}
-
-	if rv > 0 {
-		obj.ResourceVersion = strconv.FormatInt(rv, 10)
 	}
 
 	if ds.APIVersion != "" {
@@ -105,6 +100,14 @@ func (r *Converter) AsDataSource(ds *datasources.DataSource) (*datasourceV0.Data
 			utils.LabelKeyDeprecatedInternalID: strconv.FormatInt(ds.ID, 10),
 		}
 	}
+
+	if ds.IsDefault {
+		if obj.Labels == nil {
+			obj.Labels = map[string]string{}
+		}
+		obj.Labels["default"] = "true"
+	}
+
 	return obj, nil
 }
 
@@ -140,6 +143,12 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		return nil, err
 	}
 
+	// Can configure in the body or in the labels
+	isDefault := ds.Spec.IsDefault()
+	if ds.Labels != nil && !isDefault {
+		isDefault = ds.Labels["default"] == "true"
+	}
+
 	cmd := &datasources.AddDataSourceCommand{
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
@@ -153,8 +162,8 @@ func (r *Converter) ToAddCommand(ds *datasourceV0.DataSource) (*datasources.AddD
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
 		ReadOnly:        ds.Spec.ReadOnly(),
+		IsDefault:       isDefault,
 	}
 
 	jsonData := ds.Spec.JSONData()
@@ -174,7 +183,11 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 	if err != nil {
 		return nil, err
 	}
+	if ds.Labels == nil {
+		ds.Labels = map[string]string{}
+	}
 
+	version, _ := strconv.Atoi(ds.ResourceVersion)
 	cmd := &datasources.UpdateDataSourceCommand{
 		Name:  ds.Spec.Title(),
 		UID:   ds.Name,
@@ -188,11 +201,11 @@ func (r *Converter) ToUpdateCommand(ds *datasourceV0.DataSource) (*datasources.U
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
+		IsDefault:       ds.Spec.IsDefault() || ds.Labels["default"] == "true",
 		ReadOnly:        ds.Spec.ReadOnly(),
 
 		// The only field different than add
-		Version: int(ds.Generation),
+		Version: version,
 	}
 
 	jsonData := ds.Spec.JSONData()
@@ -243,7 +256,7 @@ func (r Converter) AsLegacyDatasource(ds *datasourceV0.DataSource) (*datasources
 		BasicAuth:       ds.Spec.BasicAuth(),
 		BasicAuthUser:   ds.Spec.BasicAuthUser(),
 		WithCredentials: ds.Spec.WithCredentials(),
-		IsDefault:       ds.Spec.IsDefault(),
+		IsDefault:       ds.Spec.IsDefault() || ds.Labels["default"] == "true",
 		ReadOnly:        ds.Spec.ReadOnly(),
 		SecureJsonData:  make(map[string][]byte),
 	}

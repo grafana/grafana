@@ -34,18 +34,6 @@ linters:
   settings:
     depguard:
       rules:
-        aggregator:
-          list-mode: lax
-          files:
-            - ./pkg/aggregator/*
-            - ./pkg/aggregator/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/aggregator
-            - github.com/grafana/grafana/pkg/semconv
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: apimachinery is not allowed to import grafana core
         apimachinery:
           list-mode: lax
           files:
@@ -70,16 +58,18 @@ linters:
         apps-playlist:
           list-mode: lax
           files:
-            - ./apps/playlist/*
-            - ./apps/playlist/**/*
+            - '**/apps/playlist/*'
+            - '**/apps/playlist/**/*'
+            - '!**/pkg/registry/apps/playlist/*'
+            - '!**/pkg/registry/apps/playlist/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/playlist is not allowed to import grafana core
         apps-dashboard:
           list-mode: lax
           files:
-            - ./apps/dashboard/*
-            - ./apps/dashboard/**/*
+            - '**/apps/dashboard/*'
+            - '**/apps/dashboard/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
           deny:
@@ -88,43 +78,23 @@ linters:
         apps-secret:
           list-mode: lax
           files:
-            - ./apps/secret/*
-            - ./apps/secret/**/*
+            - '**/apps/secret/*'
+            - '**/apps/secret/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: apps/secret is not allowed to import grafana core
         coreplugins:
           files:
-            - '**/pkg/tsdb/grafana-postgresql-datasource/*'
-            - '**/pkg/tsdb/grafana-postgresql-datasource/**/*'
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/*'
-            - '**/pkg/tsdb/grafana-pyroscope-datasource/**/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/*'
             - '**/pkg/tsdb/grafana-testdata-datasource/**/*'
             - '**/pkg/tsdb/azuremonitor/*'
             - '**/pkg/tsdb/azuremonitor/**/*'
-            - '**/pkg/tsdb/cloud-monitoring/*'
-            - '**/pkg/tsdb/cloud-monitoring/**/*'
             - '**/pkg/tsdb/graphite/*'
             - '**/pkg/tsdb/graphite/**/*'
-            - '**/pkg/tsdb/mssql/*'
-            - '**/pkg/tsdb/mssql/**/*'
-            - '**/pkg/tsdb/mysql/*'
-            - '**/pkg/tsdb/mysql/**/*'
-            - '**/pkg/tsdb/opentsdb/*'
-            - '**/pkg/tsdb/opentsdb/**/*'
-            - '**/pkg/tsdb/parca/*'
-            - '**/pkg/tsdb/parca/**/*'
-            - '**/pkg/tsdb/tempo/*'
-            - '**/pkg/tsdb/tempo/**/*'
             - '**/pkg/tsdb/cloudwatch/*'
             - '**/pkg/tsdb/cloudwatch/**/*'
-            - '**/pkg/tsdb/loki/*'
-            - '**/pkg/tsdb/loki/**/*'
-            - '**/pkg/tsdb/jaeger/*'
-            - '**/pkg/tsdb/jaeger/**/*'
-            - '**/pkg/tsdb/influxdb/*'
-            - '**/pkg/tsdb/influxdb/**/*'
           deny:
             - pkg: github.com/grafana/grafana/pkg/api
               desc: Core plugins are not allowed to depend on Grafana core packages
@@ -195,7 +165,9 @@ linters:
             - pkg: github.com/xorcare/pointer
               desc: Use pkg/util.Pointer instead, which is a generic one-liner alternative
             - pkg: github.com/gofrs/uuid
-              desc: Use github.com/google/uuid instead, which we already depend on.
+              desc: Use the standard library uuid package instead.
+            - pkg: github.com/google/uuid
+              desc: Use the standard library uuid package instead.
             - pkg: github.com/bmizerany/assert
               desc: Use github.com/stretchr/testify/assert instead, which we already depend on.
         storage-unified-apistore:
@@ -210,16 +182,6 @@ linters:
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
-        storage-unified-resource:
-          list-mode: lax
-          files:
-            - ./pkg/storage/unified/resource/*
-            - ./pkg/storage/unified/resource/**/*
-          allow:
-            - github.com/grafana/grafana/pkg/apimachinery
-          deny:
-            - pkg: github.com/grafana/grafana/pkg
-              desc: pkg/storage/unified/resource is not allowed to import grafana core
     exhaustive:
       default-signifies-exhaustive: true
     gocritic:
@@ -248,13 +210,13 @@ linters:
         text: ST1001
       - linters:
           - staticcheck
-        text: 'SA1019: http.CloseNotifier'
+        text: 'SA1019: (net/)?http\.CloseNotifier'
       - linters:
           - staticcheck
         text: 'SA1019: strings.Title'
       - linters:
           - staticcheck
-        text: 'SA1019: "go.opentelemetry.io/otel/exporters/jaeger"'
+        text: 'SA1019: "?go\.opentelemetry\.io/otel/exporters/jaeger"? is deprecated:'
       - linters:
           - staticcheck
         text: use fake service and real access control evaluator instead

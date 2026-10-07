@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import { useCallback, useRef, useState, type ReactElement } from 'react';
 
 import { ReducerID } from '@grafana/data';
-import { mockComboboxRect } from '@grafana/test-utils';
 
+import { mockComboboxRect } from '../../test-utils/mockDom';
 import { Field } from '../Forms/Field';
 
 import { StatsPicker } from './StatsPicker';

@@ -53,8 +53,7 @@ func schema_pkg_apis_folder_v1_DescendantCounts(ref common.ReferenceCallback) co
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(ResourceStats{}.OpenAPIModelName()),
+										Ref: ref(ResourceStats{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -158,6 +157,21 @@ func schema_pkg_apis_folder_v1_FolderAccessInfo(ref common.ReferenceCallback) co
 							Default: false,
 							Type:    []string{"boolean"},
 							Format:  "",
+						},
+					},
+					"accessControl": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AccessControl is a flat map of folder-domain action strings to bool, reflecting permissions after parent-chain inheritance has been resolved by the authorization system. Mirrors the shape of legacy dtos.Folder.AccessControl so clients can drop their dual call to /api/folders/{uid}?accesscontrol=true. Only keys for actions the user is granted appear here; absent keys mean \"not granted\".",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"boolean"},
+										Format: "",
+									},
+								},
+							},
 						},
 					},
 				},
@@ -279,8 +293,7 @@ func schema_pkg_apis_folder_v1_FolderInfoList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FolderInfo{}.OpenAPIModelName()),
+										Ref: ref(FolderInfo{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -338,8 +351,7 @@ func schema_pkg_apis_folder_v1_FolderList(ref common.ReferenceCallback) common.O
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Folder{}.OpenAPIModelName()),
+										Ref: ref(Folder{}.OpenAPIModelName()),
 									},
 								},
 							},

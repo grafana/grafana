@@ -61,22 +61,31 @@ func (s *legacyStorage) List(ctx context.Context, options *internalversion.ListO
 	if err != nil {
 		return nil, err
 	}
-	uids := []string{}
-	if options.FieldSelector != nil {
-		for _, r := range options.FieldSelector.Requirements() {
-			switch r.Field {
-			case "spec.source.name",
-				"spec.datasource.name": // this is for backwards compatibility as the selector was previously on datasource.name (which is not an actual path in the schema)
-				switch r.Operator {
-				case selection.Equals, selection.DoubleEquals:
-					uids = []string{r.Value}
-				case selection.In:
-					uids = strings.Split(r.Value, ";") // ??? not sure how/if this supports multiple values
-				default:
+	// only allow selecting up to 100 datasources
+	uids := make([]string, 0, 100)
+	if options.LabelSelector != nil {
+		reqs, selectable := options.LabelSelector.Requirements()
+
+		if !selectable {
+			return nil, fmt.Errorf("label not selectable")
+		}
+
+		for _, r := range reqs {
+			if r.Key() == "correlations.grafana.app/sourceDS-ref" {
+				if r.Operator() == selection.Equals || r.Operator() == selection.In {
+					for _, item := range r.Values().List() {
+						// if we are coming from legacy, we won't have a datasource type / group, so we can use the UID directly without splitting
+						if strings.Contains(item, ".") {
+							uids = append(uids, strings.Split(item, ".")[1])
+						} else {
+							uids = append(uids, item)
+						}
+					}
+				} else {
 					return nil, fmt.Errorf("unsupported operation")
 				}
-			default:
-				return nil, fmt.Errorf("unsupported field")
+			} else {
+				return nil, fmt.Errorf("unsupported label")
 			}
 		}
 	}
@@ -216,6 +225,52 @@ func (s *legacyStorage) Delete(ctx context.Context, name string, deleteValidatio
 		UID:   name,
 	})
 	return nil, (err == nil), err
+}
+
+// CollectionDeleter
+func (s *legacyStorage) DeleteCollection(ctx context.Context, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions, listOptions *internalversion.ListOptions) (runtime.Object, error) {
+	orgID, err := request.OrgIDForList(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	//fieldSelectors := listOptions.FieldSelector.Requirements()
+	isSourceDelete := true
+	datasourceToDelete := make(map[string]string)
+	if dsGroup, ok := listOptions.FieldSelector.RequiresExactMatch("spec.source.group"); ok {
+		datasourceToDelete["group"] = dsGroup
+		if dsName, ok := listOptions.FieldSelector.RequiresExactMatch("spec.source.name"); ok {
+			datasourceToDelete["name"] = dsName
+		}
+	}
+	if dsGroup, ok := listOptions.FieldSelector.RequiresExactMatch("spec.target.group"); ok {
+		isSourceDelete = false
+		datasourceToDelete["group"] = dsGroup
+		if dsName, ok := listOptions.FieldSelector.RequiresExactMatch("spec.target.name"); ok {
+			datasourceToDelete["name"] = dsName
+		}
+	}
+	labelSelector, _ := listOptions.LabelSelector.Requirements()
+	if labelSelector[0].Key() == "correlations.grafana.app/sourceDSProv-ref" {
+		datasourceData := strings.Split(labelSelector[0].Values().List()[0], ".")
+		datasourceToDelete["group"] = datasourceData[0]
+		datasourceToDelete["name"] = datasourceData[1]
+		datasourceToDelete["provisioned"] = datasourceData[2]
+	}
+
+	if datasourceToDelete["name"] == "" || datasourceToDelete["group"] == "" {
+		return nil, fmt.Errorf("deleteCollection to legacy passed invalid field or label selectors")
+	}
+
+	if isSourceDelete {
+		isProvisioned := true
+		if datasourceToDelete["provisioned"] == "false" {
+			isProvisioned = false
+		}
+		return nil, s.service.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{SourceUID: datasourceToDelete["name"], SourceType: datasourceToDelete["group"], OrgId: orgID, OnlyProvisioned: isProvisioned})
+	} else {
+		return nil, s.service.DeleteCorrelationsByTargetUID(ctx, correlations.DeleteCorrelationsByTargetUIDCommand{TargetUID: datasourceToDelete["name"], TargetType: datasourceToDelete["group"], OrgId: orgID})
+	}
 }
 
 type continueToken struct {

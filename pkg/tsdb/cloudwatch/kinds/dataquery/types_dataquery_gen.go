@@ -64,6 +64,18 @@ type CloudWatchMetricsQuery struct {
 	Expression *string `json:"expression,omitempty"`
 	// When the metric query type is set to `Insights`, this field is used to specify the query string.
 	SqlExpression *string `json:"sqlExpression,omitempty"`
+	// When the metric query type is set to `PromQL`, this field is used to specify the PromQL expression.
+	PromqlExpression *string `json:"promqlExpression,omitempty"`
+	// When the metric query type is set to `PromQL`, evaluates the expression at a single point in time. Default false.
+	Instant *bool `json:"instant,omitempty"`
+	// When the metric query type is set to `PromQL`, evaluates the expression across a time range. Default true.
+	Range *bool `json:"range,omitempty"`
+	// When the metric query type is set to `PromQL`, an additional lower bound for the step parameter of range queries and for the $__interval and $__rate_interval variables. Accepts duration strings like "10s", "1m". Empty means auto.
+	Interval *string `json:"interval,omitempty"`
+	// When the metric query type is set to `PromQL`, the response shape to return. Defaults to `time_series`.
+	Format *CloudWatchMetricsQueryFormat `json:"format,omitempty"`
+	// When the metric query type is set to `PromQL`, a template for series names. Supports `{{label}}` placeholders and the special value `__auto`.
+	LegendFormat *string `json:"legendFormat,omitempty"`
 	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
 	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
@@ -118,6 +130,7 @@ type MetricQueryType int64
 const (
 	MetricQueryTypeSearch   MetricQueryType = 0
 	MetricQueryTypeInsights MetricQueryType = 1
+	MetricQueryTypePromQL   MetricQueryType = 2
 )
 
 type MetricEditorMode int64
@@ -334,6 +347,8 @@ type CloudWatchLogsQuery struct {
 	LogGroups []LogGroup `json:"logGroups,omitempty"`
 	// @deprecated use logGroups
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
+	// Data sources to query
+	LogDataSources []LogDataSource `json:"logDataSources,omitempty"`
 	// Language used for querying logs, can be CWLI, SQL, or PPL. If empty, the default language is CWLI.
 	QueryLanguage *LogsQueryLanguage `json:"queryLanguage,omitempty"`
 	// Log group selection scope - determines how log groups are selected for the query
@@ -379,6 +394,18 @@ type LogGroup struct {
 // NewLogGroup creates a new LogGroup object.
 func NewLogGroup() *LogGroup {
 	return &LogGroup{}
+}
+
+type LogDataSource struct {
+	// Name of the data source
+	Name string `json:"name"`
+	// Type of the data source
+	Type string `json:"type"`
+}
+
+// NewLogDataSource creates a new LogDataSource object.
+func NewLogDataSource() *LogDataSource {
+	return &LogDataSource{}
 }
 
 // Shape of a Cloudwatch Log Anomalies query
@@ -471,6 +498,14 @@ type CloudWatchAnnotationQuery struct {
 func NewCloudWatchAnnotationQuery() *CloudWatchAnnotationQuery {
 	return &CloudWatchAnnotationQuery{}
 }
+
+type CloudWatchMetricsQueryFormat string
+
+const (
+	CloudWatchMetricsQueryFormatTimeSeries CloudWatchMetricsQueryFormat = "time_series"
+	CloudWatchMetricsQueryFormatTable      CloudWatchMetricsQueryFormat = "table"
+	CloudWatchMetricsQueryFormatHeatmap    CloudWatchMetricsQueryFormat = "heatmap"
+)
 
 type QueryEditorArrayExpressionType string
 

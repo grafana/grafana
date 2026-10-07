@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { type LogLabelStatsModel, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useStyles2 } from '@grafana/ui';
+import { type IconSize, useStyles2 } from '@grafana/ui';
 
 import { LogLabelStatsRow } from './LogLabelStatsRow';
 
@@ -46,6 +46,10 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 interface Props {
   className?: string;
+  isValueActive?(value: string): Promise<boolean>;
+  include?(value: string): void;
+  exclude?(value: string): void;
+  iconSize?: IconSize;
   stats: LogLabelStatsModel[];
   label: string;
   value: string;
@@ -53,7 +57,7 @@ interface Props {
   isLabel?: boolean;
 }
 
-export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabel }: Props) => {
+export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabel, ...rest }: Props) => {
   const style = useStyles2(getStyles);
   const rows = useMemo(() => {
     const topRows = stats.slice(0, STATS_ROW_LIMIT);
@@ -96,10 +100,10 @@ export const LogLabelStats = ({ className, label, rowCount, stats, value, isLabe
       </div>
       <div className={style.logsStatsBody}>
         {rows.topRows.map((stat) => (
-          <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} />
+          <LogLabelStatsRow key={stat.value} {...stat} active={stat.value === value} {...rest} />
         ))}
         {rows.insertActiveRow && rows.activeRow && (
-          <LogLabelStatsRow key={rows.activeRow.value} {...rows.activeRow} active />
+          <LogLabelStatsRow key={rows.activeRow.value} {...rows.activeRow} active {...rest} />
         )}
         {otherCount > 0 && (
           <LogLabelStatsRow key="__OTHERS__" count={otherCount} value="Other" proportion={otherProportion} />

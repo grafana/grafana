@@ -26,7 +26,7 @@ export interface Props {
   contextValue: SidebarContextValue;
 }
 
-export function SidebarComp({ children, contextValue }: Props) {
+function SidebarComp({ children, contextValue }: Props) {
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
   const { isDocked, position, tabsMode, hasOpenPane, edgeMargin, bottomMargin, onToggleIsHidden } = contextValue;
@@ -85,11 +85,11 @@ export function SidebarComp({ children, contextValue }: Props) {
   );
 }
 
-export interface SiderbarToolbarProps {
+interface SiderbarToolbarProps {
   children?: ReactNode;
 }
 
-export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
+function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
 
@@ -105,17 +105,17 @@ export function SiderbarToolbar({ children }: SiderbarToolbarProps) {
   );
 }
 
-export function SidebarDivider() {
+function SidebarDivider() {
   const styles = useStyles2(getStyles);
 
   return <div className={styles.divider} />;
 }
 
-export interface SidebarOpenPaneProps {
+interface SidebarOpenPaneProps {
   children?: ReactNode;
 }
 
-export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
+function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
   const styles = useStyles2(getStyles);
   const sidebarContext = useSidebarContext();
 
@@ -135,7 +135,7 @@ export function SidebarOpenPane({ children }: SidebarOpenPaneProps) {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
@@ -144,7 +144,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       border: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       zIndex: theme.zIndex.navbarFixed,
       bottom: 0,
       top: 0,
@@ -172,7 +172,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       borderRadius: theme.shape.radius.default,
     }),
     undockedPaneOpen: css({
-      boxShadow: theme.shadows.z3,
+      boxShadow: theme.flags.visualDesignRefresh ? theme.shadows.z2 : theme.shadows.z3,
     }),
     toolbar: css({
       display: 'flex',
@@ -209,7 +209,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     showButton: css({
-      position: 'fixed',
+      // Keep the restore button inside the content area when a sidecar reduces its width.
+      position: 'absolute',
       bottom: theme.spacing(2),
       zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(1),

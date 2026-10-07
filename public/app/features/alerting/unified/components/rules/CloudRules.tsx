@@ -16,6 +16,7 @@ import { usePagination } from '../../hooks/usePagination';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { getPaginationStyles } from '../../styles/pagination';
 import { getRulesDataSources, getRulesSourceUid } from '../../utils/datasource';
+import { ALERTING_PATHS } from '../../utils/navigation';
 import { isAsyncRequestStatePending } from '../../utils/redux';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -144,7 +145,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export function CreateRecordingRuleButton() {
+function CreateRecordingRuleButton() {
   const [createCloudRuleSupported, createCloudRuleAllowed] = useAlertingAbility(AlertingAction.CreateExternalAlertRule);
   const location = useLocation();
 
@@ -169,8 +170,9 @@ export function CreateRecordingRuleButton() {
   return null;
 }
 
+// Not gated on Alertmanager auto-sync: this imports rules only, which the sync worker never touches.
 function MigrateToGMAButton() {
-  const importUrl = createRelativeUrl('/alerting/import-datasource-managed-rules');
+  const importUrl = createRelativeUrl(ALERTING_PATHS.IMPORT_DATASOURCE_MANAGED_RULES);
 
   return (
     <LinkButton variant="secondary" href={importUrl} icon="arrow-up">

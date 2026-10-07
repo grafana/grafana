@@ -18,8 +18,6 @@ import { type TableCellInspectorMode } from './TableCellInspector';
 import { type TableStyles } from './TableRT/styles';
 
 export {
-  type FieldTextAlignment,
-  TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   type TableAutoCellOptions,
   type TableSparklineCellOptions,
@@ -30,15 +28,11 @@ export {
   type TableJsonViewCellOptions,
 } from '@grafana/schema';
 
-export interface TableRow {
-  [x: string]: any;
-}
-
 export type InspectCell = { value: any; mode: TableCellInspectorMode };
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (
@@ -46,7 +40,7 @@ export type TableColumnResizeActionCallback = (
   width: number,
   fieldScope?: schema.MatcherScope
 ) => void;
-export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 export type TableInspectCellCallback = (state: InspectCell) => void;
 
 export interface TableSortByFieldState {
@@ -167,6 +161,9 @@ export type TableCellOptions = schema.TableCellOptions | TableCustomCellOptions;
 export type TableFieldOptions = Omit<schema.TableFieldOptions, 'cellOptions'> & {
   cellOptions: TableCellOptions;
   headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
+  headerTooltip?: string;
+  /** Controls whether this column can be resized. */
+  resizable?: boolean;
 };
 
 // Cell background and text colors

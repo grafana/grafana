@@ -16,6 +16,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -84,15 +86,18 @@ var (
 type localRepository struct {
 	config   *provisioning.Repository
 	resolver *LocalFolderResolver
+	metrics  *repository.OperationRecorder
 
 	// validated path that can be read if not empty
-	path string
+	path     string
+	maxBytes atomic.Int64
 }
 
-func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver) *localRepository {
+func NewRepository(config *provisioning.Repository, resolver *LocalFolderResolver, metrics *repository.OperationMetrics) *localRepository {
 	r := &localRepository{
 		config:   config,
 		resolver: resolver,
+		metrics:  metrics.Recorder(config.Spec.Type),
 	}
 
 	if config.Spec.Local != nil {
@@ -146,8 +151,32 @@ func (r *localRepository) validateRequest(ref string) error {
 	return nil
 }
 
+// resolvePath joins the repository root with a relative path and ensures the
+// result stays within the root. It blocks path traversal (e.g. "../") that can
+// be introduced by unsanitized resource or folder titles during export.
+func (r *localRepository) resolvePath(p string) (string, error) {
+	// Normalize OS-specific separators and collapse the path first, so a
+	// Windows-style traversal like "..\..\etc" is resolved here instead of
+	// surviving the join and being interpreted by the filesystem. safepath.Clean
+	// drops the trailing slash, so restore the directory marker that Create and
+	// Write rely on to choose between MkdirAll and WriteFile.
+	clean := safepath.Clean(p)
+	if clean != "" && safepath.IsDir(p) {
+		clean += "/"
+	}
+
+	full := safepath.Join(r.path, clean)
+	if !safepath.InDir(safepath.EnsureTrailingSlash(full), safepath.EnsureTrailingSlash(r.path)) {
+		return "", apierrors.NewBadRequest(fmt.Sprintf("the path '%s' escapes the repository root", p))
+	}
+	return full, nil
+}
+
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (*repository.FileInfo, error) {
+func (r *localRepository) Read(ctx context.Context, filePath string, ref string) (out *repository.FileInfo, err error) {
+	start := time.Now()
+	defer func() { r.metrics.Read(start, out, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
@@ -167,6 +196,12 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 				Time: info.ModTime(),
 			},
 		}, nil
+	}
+
+	if max := r.maxBytes.Load(); max > 0 && info.Size() > max {
+		return nil, apierrors.NewRequestEntityTooLargeError(
+			fmt.Sprintf("file %q is %d bytes; max allowed is %d bytes", filePath, info.Size(), max),
+		)
 	}
 
 	//nolint:gosec
@@ -190,14 +225,21 @@ func (r *localRepository) Read(ctx context.Context, filePath string, ref string)
 	}, nil
 }
 
+func (r *localRepository) WithMaxFileSize(maxBytes int64) {
+	r.maxBytes.Store(maxBytes)
+}
+
 // ReadResource implements provisioning.Repository.
-func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]repository.FileTreeEntry, error) {
+func (r *localRepository) ReadTree(ctx context.Context, ref string) (tree []repository.FileTreeEntry, err error) {
+	start := time.Now()
+	defer func() { r.metrics.List(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return nil, err
 	}
 
 	// Return an empty list when folder does not exist
-	_, err := os.Stat(r.path)
+	_, err = os.Stat(r.path)
 	if errors.Is(err, fs.ErrNotExist) {
 		return []repository.FileTreeEntry{}, nil
 	}
@@ -257,13 +299,19 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
 }
 
-func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) error {
+func (r *localRepository) Create(ctx context.Context, filepath string, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath := safepath.Join(r.path, filepath)
-	_, err := os.Stat(fpath)
+	fpath, err := r.resolvePath(filepath)
+	if err != nil {
+		return err
+	}
+	_, err = os.Stat(fpath)
 	if !errors.Is(err, os.ErrNotExist) {
 		if err != nil {
 			return apierrors.NewInternalError(fmt.Errorf("failed to check if file exists: %w", err))
@@ -290,12 +338,18 @@ func (r *localRepository) Create(ctx context.Context, filepath string, ref strin
 	return os.WriteFile(fpath, data, 0600)
 }
 
-func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) error {
+func (r *localRepository) Update(ctx context.Context, path string, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	path = safepath.Join(r.path, path)
+	path, err = r.resolvePath(path)
+	if err != nil {
+		return err
+	}
 	if safepath.IsDir(path) {
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
@@ -311,12 +365,18 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 	return os.WriteFile(path, data, 0600)
 }
 
-func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) error {
+func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []byte, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Write(start, len(data), err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fpath = safepath.Join(r.path, fpath)
+	fpath, err = r.resolvePath(fpath)
+	if err != nil {
+		return err
+	}
 	if safepath.IsDir(fpath) {
 		return os.MkdirAll(fpath, 0700)
 	}
@@ -328,14 +388,19 @@ func (r *localRepository) Write(ctx context.Context, fpath, ref string, data []b
 	return os.WriteFile(fpath, data, 0600)
 }
 
-func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) error {
+func (r *localRepository) Delete(ctx context.Context, path string, ref string, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Delete(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	fullPath := safepath.Join(r.path, path)
+	fullPath, err := r.resolvePath(path)
+	if err != nil {
+		return err
+	}
 
-	var err error
 	if safepath.IsDir(path) {
 		// if it is a folder, delete all of its contents
 		err = os.RemoveAll(fullPath)
@@ -352,13 +417,22 @@ func (r *localRepository) Delete(ctx context.Context, path string, ref string, c
 	return nil
 }
 
-func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) error {
+func (r *localRepository) Move(ctx context.Context, oldPath, newPath, ref, comment string) (err error) {
+	start := time.Now()
+	defer func() { r.metrics.Move(start, err) }()
+
 	if err := r.validateRequest(ref); err != nil {
 		return err
 	}
 
-	oldFullPath := safepath.Join(r.path, oldPath)
-	newFullPath := safepath.Join(r.path, newPath)
+	oldFullPath, err := r.resolvePath(oldPath)
+	if err != nil {
+		return err
+	}
+	newFullPath, err := r.resolvePath(newPath)
+	if err != nil {
+		return err
+	}
 
 	// Check if source exists
 	sourceInfo, err := os.Stat(oldFullPath)

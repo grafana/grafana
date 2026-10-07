@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/benbjohnson/clock"
 	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -819,7 +819,7 @@ func TestGetRuleExtraLabels(t *testing.T) {
 	logger := log.New()
 
 	rule := ngmodels.RuleGen.With(ngmodels.RuleMuts.WithNoNotificationSettings()).GenerateRef()
-	folderTitle := uuid.NewString()
+	folderTitle := uuid.NewV4().String()
 
 	cpr := ngmodels.ContactPointRouting{
 		Receiver:  "Test",
@@ -864,22 +864,12 @@ func TestGetRuleExtraLabels(t *testing.T) {
 			},
 		},
 		"with_policy_routing": {
-			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
+			rule: ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
 			expected: map[string]string{
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,
 				models.RuleUIDLabel:      rule.UID,
 				ngmodels.NamedRouteLabel: "policy-a",
-			},
-		},
-		"with_policy_routing_no_ff": {
-			rule:     ngmodels.CopyRule(rule, ngmodels.RuleGen.WithPolicyRouting(ngmodels.PolicyRouting{Policy: "policy-a"})),
-			features: featuremgmt.WithFeatures(),
-			expected: map[string]string{ // Doesn't add ngmodels.NamedRouteLabel when FF is disabled.
-				models.NamespaceUIDLabel: rule.NamespaceUID,
-				model.AlertNameLabel:     rule.Title,
-				models.RuleUIDLabel:      rule.UID,
 			},
 		},
 		"with_both_routing": { // This is technically an invalid state, but we want to ensure that we fallback to something sane instead of failing.
@@ -888,7 +878,6 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				r.NotificationSettings.PolicyRouting = new(ngmodels.PolicyRouting{Policy: "policy-a"})
 				return r
 			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: map[string]string{ // Fallback to using contact point routing.
 				models.NamespaceUIDLabel:                     rule.NamespaceUID,
 				model.AlertNameLabel:                         rule.Title,
@@ -904,7 +893,6 @@ func TestGetRuleExtraLabels(t *testing.T) {
 				r.NotificationSettings = &ngmodels.NotificationSettings{}
 				return r
 			}(),
-			features: featuremgmt.WithFeatures(featuremgmt.FlagAlertingMultiplePolicies),
 			expected: map[string]string{ // Fallback to using no special routing.
 				models.NamespaceUIDLabel: rule.NamespaceUID,
 				model.AlertNameLabel:     rule.Title,
@@ -942,7 +930,7 @@ func TestNewState(t *testing.T) {
 		result := eval.Result{
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -970,7 +958,7 @@ func TestNewState(t *testing.T) {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
 
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range extraLabels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -986,7 +974,7 @@ func TestNewState(t *testing.T) {
 		for key := range rule.Labels {
 			result.Instance[key] = "result-" + util.GenerateShortUID()
 		}
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range rule.Labels {
 			require.Equal(t, expected, state.Labels[key])
 		}
@@ -1008,7 +996,7 @@ func TestNewState(t *testing.T) {
 		}
 		rule.Labels = labelTemplates
 
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
@@ -1034,7 +1022,7 @@ func TestNewState(t *testing.T) {
 		}
 		rule.Annotations = annotationTemplates
 
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 		for key, expected := range extraLabels {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
@@ -1057,14 +1045,14 @@ func TestNewState(t *testing.T) {
 			"__label3":   {},
 			"label4":     {},
 		}
-		result.Instance["__label1__"] = uuid.NewString()
-		result.Instance["label2__"] = uuid.NewString()
-		result.Instance["__label3"] = uuid.NewString()
-		result.Instance["label4"] = uuid.NewString()
+		result.Instance["__label1__"] = uuid.NewV4().String()
+		result.Instance["label2__"] = uuid.NewV4().String()
+		result.Instance["__label3"] = uuid.NewV4().String()
+		result.Instance["label4"] = uuid.NewV4().String()
 
 		rule := generateRule()
 
-		state := newState(context.Background(), l, rule, result, nil, url)
+		state := newState(context.Background(), l, rule, result, nil, url, 0, nil)
 
 		for key := range ngmodels.LabelsUserCannotSpecify {
 			assert.NotContains(t, state.Labels, key)
@@ -1082,11 +1070,11 @@ func TestNewState(t *testing.T) {
 		assert.Equal(t, state.Labels["label4_user"], result.Instance["label4"])
 
 		t.Run("should drop label if renamed collides with existing", func(t *testing.T) {
-			result.Instance["label1"] = uuid.NewString()
-			result.Instance["label1_user"] = uuid.NewString()
-			result.Instance["label4_user"] = uuid.NewString()
+			result.Instance["label1"] = uuid.NewV4().String()
+			result.Instance["label1_user"] = uuid.NewV4().String()
+			result.Instance["label4_user"] = uuid.NewV4().String()
 
-			state = newState(context.Background(), l, rule, result, nil, url)
+			state = newState(context.Background(), l, rule, result, nil, url, 0, nil)
 			assert.NotContains(t, state.Labels, "__label1__")
 			assert.Contains(t, state.Labels, "label1")
 			assert.Equal(t, state.Labels["label1"], result.Instance["label1"])
@@ -1106,9 +1094,9 @@ func TestNewState(t *testing.T) {
 			Instance: ngmodels.GenerateAlertLabels(5, "result-"),
 		}
 
-		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url)
+		expectedLbl, expectedAnn := expandAnnotationsAndLabels(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 
-		state := newState(context.Background(), l, rule, result, extraLabels, url)
+		state := newState(context.Background(), l, rule, result, extraLabels, url, 0, nil)
 
 		assert.Equal(t, rule.OrgID, state.OrgID)
 		assert.Equal(t, rule.UID, state.AlertRuleUID)

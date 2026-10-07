@@ -1,11 +1,14 @@
+import { css } from '@emotion/css';
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { CallToActionCard, EmptyState, LinkButton, TextLink } from '@grafana/ui';
+import { CallToActionCard, EmptyState, LinkButton, TextLink, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
+import { FolderReadmePanel } from 'app/features/provisioning/components/Folders/FolderReadmePanel';
 import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { type DashboardViewItem } from 'app/features/search/types';
@@ -55,28 +58,23 @@ export function BrowseView({
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
   const canSelect = canSelectItems(permissions);
-  const provisioningEnabled = config.featureToggles.provisioning;
+  const provisioningEnabled = config.provisioningEnabled;
   const { data: settingsData } = useGetFrontendSettingsQuery(!provisioningEnabled ? skipToken : undefined);
   const isProvisionedInstance = useIsProvisionedInstance({ settings: settingsData });
   const rootItems = useSelector(rootItemsSelector);
 
   const [, stateManager] = useSearchStateManager();
 
-  const excludeUIDs = useMemo(() => {
+  const excludeFolderUIDs = useMemo(() => {
     if (isProvisionedInstance || !provisioningEnabled) {
       return [];
     }
-    if (provisioningEnabled) {
-      // if only one repo folder and no local folders, then don't exclude it from selection
-      if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
-        return [];
-      }
-      // loop through settingsData to find all available repo name, and exclude them from select all action
-      // repo root folder is not actionable on browse dashboards page
-      return settingsData?.items.map((repo) => repo.name);
+    // A lone repo folder with no local folders stays selectable
+    if (rootItems?.items.length === 1 && settingsData?.items.length === 1) {
+      return [];
     }
-
-    return [];
+    // Repo root folders are not actionable from the browse page
+    return settingsData?.items.map((repo) => repo.name) ?? [];
   }, [isProvisionedInstance, settingsData, provisioningEnabled, rootItems]);
 
   const handleFolderClick = useCallback(
@@ -149,9 +147,11 @@ export function BrowseView({
   );
 
   const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
+  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
+  const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {
-    if (!provisioningReadmesEnabled || !isProvisionedFolder || !folderUID || flatTree.length === 0) {
+    if (!showReadme || flatTree.length === 0) {
       return flatTree;
     }
 
@@ -163,7 +163,7 @@ export function BrowseView({
         isOpen: false,
       },
     ];
-  }, [flatTree, isProvisionedFolder, folderUID, provisioningReadmesEnabled]);
+  }, [flatTree, showReadme, folderUID]);
 
   const isItemLoaded = useCallback(
     (itemIndex: number) => {
@@ -181,7 +181,7 @@ export function BrowseView({
 
   if (status === 'fulfilled' && flatTree.length === 0) {
     return (
-      <div style={{ width }}>
+      <div className={styles.emptyState} style={{ width }}>
         {canSelect ? (
           <EmptyState
             variant="call-to-action"
@@ -219,6 +219,7 @@ export function BrowseView({
             }
           />
         )}
+        {showReadme && <FolderReadmePanel folderUID={folderUID} />}
       </div>
     );
   }
@@ -232,7 +233,9 @@ export function BrowseView({
       height={height}
       isSelected={isSelected}
       onFolderClick={handleFolderClick}
-      onAllSelectionChange={(newState) => dispatch(setAllSelection({ isSelected: newState, folderUID, excludeUIDs }))}
+      onAllSelectionChange={(newState) =>
+        dispatch(setAllSelection({ isSelected: newState, folderUID, excludeFolderUIDs }))
+      }
       onItemSelectionChange={handleItemSelectionChange}
       isItemLoaded={isItemLoaded}
       requestLoadMore={handleLoadMore}
@@ -246,6 +249,11 @@ function hasSelectedDescendants(
   childrenByParentUID: BrowseDashboardsState['childrenByParentUID'],
   selectedItems: DashboardTreeSelection
 ): boolean {
+  // Only folders have children
+  if (item.kind !== 'folder') {
+    return false;
+  }
+
   const collection = childrenByParentUID[item.uid];
   if (!collection) {
     return false;
@@ -260,3 +268,11 @@ function hasSelectedDescendants(
     return hasSelectedDescendants(v, childrenByParentUID, selectedItems);
   });
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  emptyState: css({
+    display: 'flex',
+    flexDirection: 'column',
+    gap: theme.spacing(2),
+  }),
+});

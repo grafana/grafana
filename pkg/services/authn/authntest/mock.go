@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	_ authn.Service              = new(MockService)
-	_ authn.IdentitySynchronizer = new(MockService)
+	_ authn.Service              = (*MockService)(nil)
+	_ authn.IdentitySynchronizer = (*MockService)(nil)
 )
 
 type MockService struct {
@@ -23,11 +23,11 @@ func (m *MockService) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	panic("unimplemented")
 }
 
-func (m *MockService) IsClientEnabled(name string) bool {
+func (m *MockService) IsClientEnabled(context.Context, string) bool {
 	panic("unimplemented")
 }
 
-func (m *MockService) GetClientConfig(name string) (authn.SSOClientConfig, bool) {
+func (m *MockService) GetClientConfig(context.Context, string) (authn.SSOClientConfig, bool) {
 	panic("unimplemented")
 }
 
@@ -73,10 +73,10 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 }
 
 var (
-	_ authn.HookClient             = new(MockClient)
-	_ authn.LogoutClient           = new(MockClient)
-	_ authn.ContextAwareClient     = new(MockClient)
-	_ authn.IdentityResolverClient = new(MockClient)
+	_ authn.HookClient             = (*MockClient)(nil)
+	_ authn.LogoutClient           = (*MockClient)(nil)
+	_ authn.ContextAwareClient     = (*MockClient)(nil)
+	_ authn.IdentityResolverClient = (*MockClient)(nil)
 )
 
 type MockClient struct {
@@ -104,11 +104,11 @@ func (m MockClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	return nil, nil
 }
 
-func (m MockClient) IsEnabled() bool {
+func (m MockClient) IsEnabled(context.Context) bool {
 	return true
 }
 
-func (m MockClient) GetConfig() authn.SSOClientConfig {
+func (m MockClient) GetConfig(context.Context) authn.SSOClientConfig {
 	return nil
 }
 
@@ -155,7 +155,7 @@ func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, typ claim
 	return nil, nil
 }
 
-var _ authn.ProxyClient = new(MockProxyClient)
+var _ authn.ProxyClient = (*MockProxyClient)(nil)
 
 type MockProxyClient struct {
 	AuthenticateProxyFunc func(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error)

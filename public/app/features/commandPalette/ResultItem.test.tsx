@@ -16,14 +16,14 @@ function createActionImpl(props: Record<string, unknown> = {}): ActionImpl {
 }
 
 describe('ResultItem', () => {
-  let originalProvisioning: boolean | undefined;
+  let originalProvisioning: boolean;
 
   beforeEach(() => {
-    originalProvisioning = config.featureToggles.provisioning;
+    originalProvisioning = config.provisioningEnabled;
   });
 
   afterEach(() => {
-    config.featureToggles.provisioning = originalProvisioning;
+    config.provisioningEnabled = originalProvisioning;
   });
 
   it('renders the action name', () => {
@@ -32,45 +32,63 @@ describe('ResultItem', () => {
     expect(screen.getByText('Test Dashboard')).toBeInTheDocument();
   });
 
-  it('renders provisioned badge when managedBy is Repo and provisioning toggle is on', () => {
-    config.featureToggles.provisioning = true;
+  it('renders the managed badge when managedBy is Repo and provisioning toggle is on', () => {
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.getByLabelText('Provisioned')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when managedBy is undefined', () => {
-    config.featureToggles.provisioning = true;
+  it('does not render the managed badge when managedBy is undefined', () => {
+    config.provisioningEnabled = true;
     const action = createActionImpl();
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when managedBy is a non-Repo kind', () => {
-    config.featureToggles.provisioning = true;
+  it('renders the managed badge when managedBy is a non-Repo kind', () => {
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Terraform });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge for classic provisioning (Plugin)', () => {
-    config.featureToggles.provisioning = true;
+  it('renders the managed badge for plugin-managed resources', () => {
+    config.provisioningEnabled = true;
     const action = createActionImpl({ managedBy: ManagerKind.Plugin });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.getByTestId('icon-exchange-alt')).toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when provisioning toggle is off', () => {
-    config.featureToggles.provisioning = false;
+  it('does not render the managed badge when provisioning toggle is off', () => {
+    config.provisioningEnabled = false;
     const action = createActionImpl({ managedBy: ManagerKind.Repo });
     render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
   });
 
-  it('does not render provisioned badge when provisioning toggle is undefined', () => {
-    config.featureToggles.provisioning = undefined;
-    const action = createActionImpl({ managedBy: ManagerKind.Repo });
-    render(<ResultItem action={action} active={false} currentRootActionId="" />);
-    expect(screen.queryByLabelText('Provisioned')).not.toBeInTheDocument();
+  it('appends an ellipsis to a parent action that has children but no command or link', () => {
+    const parent = createActionImpl({ name: 'Preferences' });
+    parent.addChild(createActionImpl({ id: 'child-action', name: 'Theme' }));
+    render(<ResultItem action={parent} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Preferences...')).toBeInTheDocument();
+  });
+
+  it('renders ancestor breadcrumbs when no root action is selected', () => {
+    const parent = createActionImpl({ id: 'set-theme', name: 'Set theme' });
+    const child = createActionImpl({ id: 'dark', name: 'Dark' });
+    parent.addChild(child);
+    render(<ResultItem action={child} active={false} currentRootActionId="" />);
+    expect(screen.getByText('Set theme')).toBeInTheDocument();
+    expect(screen.getByText('Dark')).toBeInTheDocument();
+  });
+
+  it('drops the current root action from the breadcrumbs', () => {
+    const parent = createActionImpl({ id: 'set-theme', name: 'Set theme' });
+    const child = createActionImpl({ id: 'dark', name: 'Dark' });
+    parent.addChild(child);
+    render(<ResultItem action={child} active={false} currentRootActionId="set-theme" />);
+    expect(screen.getByText('Dark')).toBeInTheDocument();
+    expect(screen.queryByText('Set theme')).not.toBeInTheDocument();
   });
 });

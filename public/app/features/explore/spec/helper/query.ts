@@ -10,9 +10,3 @@ export function makeLogsQueryResponse(marker = ''): Observable<DataQueryResponse
   df.fields[0].type = FieldType.time;
   return from([{ data: [df] }]);
 }
-
-export function makeMetricsQueryResponse(): Observable<DataQueryResponse> {
-  const df = arrayToDataFrame([{ ts: Date.now(), val: 1 }]);
-  df.fields[0].type = FieldType.time;
-  return from([{ data: [df] }]);
-}

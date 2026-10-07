@@ -22,6 +22,7 @@ v0alpha1: {
 		teamlbacrulev0alpha1,
 		serviceaccountv0alpha1,
 		externalGroupMappingv0alpha1,
+		authInfov0alpha1,
 	]
 
 	routes: {
@@ -68,6 +69,7 @@ v0alpha1: {
 							email:        string
 							provisioned:  bool
 							externalUID:  string
+							internalId?:  int64
 							memberCount?: int64
 							accessControl?: {[string]: bool}
 						}
@@ -115,6 +117,13 @@ v0alpha1: {
 	lastSeenAt:    int64
 	lastSeenAtAge: string
 	provisioned:   bool
-	score:         float64
+	disabled:      bool
+	// Deprecated internal (legacy SQL) id of the user.
+	internalId: int64
+	// Creation timestamp, in epoch milliseconds.
+	created: int64
+	score:   float64
 	accessControl?: {[string]: bool}
+	// Auth module identifiers the user is externally synced with.
+	externalAuthModules?: [...string]
 }

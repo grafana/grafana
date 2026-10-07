@@ -36,36 +36,66 @@ function serializeMatchers(matchers: MatcherExpr[]): string {
   return matchers.map((m) => `${m.name}${m.operator}${quoteWithEscape(m.value)}`).join(',');
 }
 
+function isNegativeOperator(operator: MatcherOperator): boolean {
+  return operator === '!=' || operator === '!~';
+}
+
+/**
+ * `cluster!=""` rules out no value, it only asks "does the series have a cluster label
+ * set?". Any one of the label names can answer yes, so we treat it as an include.
+ */
+function excludesAValue(matcher: MatcherExpr): boolean {
+  return isNegativeOperator(matcher.operator) && matcher.value !== '';
+}
+
+function renameMatchers(matchers: MatcherExpr[], name: string): MatcherExpr[] {
+  return matchers.map((matcher) => ({ ...matcher, name }));
+}
+
 /**
  * Builds one or more metric selectors from the current ad-hoc filter string.
  *
- * Combined filters use a single user-facing key (for example `service`) while
- * alert series may have one of several backing label keys (`service`, `service_name`).
- * We expand those matchers into OR selectors so filtering is consistent.
+ * A combined filter shows one key (`service`), but the series can carry the value under
+ * any of a few label names (`service`, `service_name`), so every matcher on such a key
+ * gets rewritten for each name:
+ *
+ * - Include (`=`, `=~`): one selector per label name, joined with `or`.
+ * - Exclude (`!=`, `!~`): all names in a single selector. Separate `or` branches would
+ *   let the excluded series back in, since Prometheus reads a missing label as empty —
+ *   a series with `cluster="foo"` and no `cluster_name` passes `cluster_name!="foo"`.
+ *
+ * See `excludesAValue` for why `!=""` counts as an include.
  */
 function buildMetricSelectors(filter: string, extraMatchers: MatcherExpr[] = []): string[] {
   const allMatchers = [...parseFilterMatchers(filter), ...extraMatchers];
   const combinedMatchers = Object.entries(COMBINED_FILTER_LABEL_KEYS)
-    .map(([canonicalKey, labelKeys]) => ({
-      canonicalKey,
-      labelKeys,
-      matchers: allMatchers.filter((m) => m.name === canonicalKey),
-    }))
+    .map(([canonicalKey, labelKeys]) => {
+      const matchers = allMatchers.filter((m) => m.name === canonicalKey);
+      return {
+        canonicalKey,
+        labelKeys,
+        matchers,
+        branchedMatchers: matchers.filter((m) => !excludesAValue(m)),
+        sharedMatchers: matchers.filter(excludesAValue),
+      };
+    })
     .filter((entry) => entry.matchers.length > 0);
 
   const combinedCanonicalKeys = new Set(combinedMatchers.map((entry) => entry.canonicalKey));
   const baseMatchers = allMatchers.filter((m) => !combinedCanonicalKeys.has(m.name));
 
-  let branches: MatcherExpr[][] = [baseMatchers];
+  // Exclusions apply to every branch, so they live alongside the non-combined matchers.
+  const expandedSharedMatchers = combinedMatchers.flatMap((entry) =>
+    entry.labelKeys.flatMap((labelKey) => renameMatchers(entry.sharedMatchers, labelKey))
+  );
+
+  let branches: MatcherExpr[][] = [[...baseMatchers, ...expandedSharedMatchers]];
   for (const entry of combinedMatchers) {
+    if (entry.branchedMatchers.length === 0) {
+      continue;
+    }
     branches = branches.flatMap((branch) =>
-      entry.labelKeys.map((labelKey) => [
-        ...branch,
-        ...entry.matchers.map((matcher) => ({
-          ...matcher,
-          name: labelKey,
-        })),
-      ])
+      entry.labelKeys.map((labelKey) => [...branch, ...renameMatchers(entry.branchedMatchers, labelKey)])
     );
   }
 
@@ -79,6 +109,18 @@ function orSelectors(selectors: string[]): string {
   return `(${selectors.join(' or ')})`;
 }
 
+function withLastOverTime(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `last_over_time(${selector}[${lookback}])`);
+}
+
+/**
+ * Same as withLastOverTime, but ORs the bare selector back in, so a step shorter than the
+ * sampling cadence still gets the bare selector's 5m default lookback instead of a narrower one.
+ */
+function withLastOverTimeFallback(selectors: string[], lookback: string): string[] {
+  return selectors.map((selector) => `(last_over_time(${selector}[${lookback}]) or ${selector})`);
+}
+
 /** Time series for the summary bar chart: count by alertstate */
 export function summaryChartQuery(filter: string): SceneDataQuery {
   return getDataQuery(`count by (alertstate) (${orSelectors(buildMetricSelectors(filter))})`, {
@@ -86,10 +128,15 @@ export function summaryChartQuery(filter: string): SceneDataQuery {
   });
 }
 
-/** Range table query (A) for tree rows + deduplicated instant query (B) for badge counts */
+/**
+ * Range table query (A) for tree rows + deduplicated instant query (B) for badge counts.
+ * Query A's step-robust wrapping matches alertRuleInstancesQuery — see its docstring.
+ */
 export function getWorkbenchQueries(countBy: string, filter: string): [SceneDataQuery, SceneDataQuery] {
+  const lookbackSelectors = withLastOverTimeFallback(buildMetricSelectors(filter), '$__interval');
+
   return [
-    getDataQuery(`count by (${countBy}) (${orSelectors(buildMetricSelectors(filter))})`, {
+    getDataQuery(`count by (${countBy}) (${orSelectors(lookbackSelectors)})`, {
       refId: 'A',
       format: 'table',
     }),
@@ -107,15 +154,11 @@ export function summaryInstanceCountQuery(filter: string): SceneDataQuery {
   return getDataQuery(getAlertsSummariesQuery('alertstate', filter), { instant: true, format: 'table' });
 }
 
-/** Deduplicated instant count by rule fields + alertstate for summary rule counts */
-export function summaryRuleCountQuery(filter: string): SceneDataQuery {
-  return getDataQuery(getAlertsSummariesQuery('alertname, grafana_folder, grafana_rule_uid, alertstate', filter), {
-    instant: true,
-    format: 'table',
-  });
-}
-
-/** Instance timeseries for a specific alert rule, optionally scoped to parent group labels. */
+/**
+ * Instance timeseries for a specific alert rule, optionally scoped to parent group labels.
+ * Uses withLastOverTimeFallback so a short-lived instance can't fall between grid points and
+ * vanish once the step exceeds Prometheus's 5m lookback delta — see its docstring.
+ */
 export function alertRuleInstancesQuery(
   ruleUID: string,
   filter: string,
@@ -131,9 +174,10 @@ export function alertRuleInstancesQuery(
     { name: 'grafana_rule_uid', operator: '=', value: ruleUID },
     ...groupMatchers,
   ]);
+  const lookbackSelectors = withLastOverTimeFallback(selectors, '$__interval');
 
   return getDataQuery(
-    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(selectors)})`,
+    `count without (alertname, grafana_alertstate, grafana_folder, grafana_rule_uid) (${orSelectors(lookbackSelectors)})`,
     { format: 'timeseries', legendFormat: '{{alertstate}}' }
   );
 }
@@ -150,8 +194,8 @@ export function alertRuleInstancesQuery(
 function uniqueAlertInstancesExpr(filter: string): string {
   const firingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'firing' }]);
   const pendingSelectors = buildMetricSelectors(filter, [{ name: 'alertstate', operator: '=', value: 'pending' }]);
-  const firingExpr = orSelectors(firingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
-  const pendingExpr = orSelectors(pendingSelectors.map((selector) => `last_over_time(${selector}[$__range])`));
+  const firingExpr = orSelectors(withLastOverTime(firingSelectors, '$__range'));
+  const pendingExpr = orSelectors(withLastOverTime(pendingSelectors, '$__range'));
 
   return (
     `${firingExpr} or ` + `(${pendingExpr} ` + `unless ignoring(alertstate, grafana_alertstate) ` + `${firingExpr})`

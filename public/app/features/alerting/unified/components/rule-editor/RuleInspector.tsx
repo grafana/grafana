@@ -154,7 +154,7 @@ function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormVal
   return {};
 }
 
-export const yamlTabStyle = (theme: GrafanaTheme2) => ({
+const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css({
     flexGrow: 1,
     height: '100%',
@@ -171,7 +171,7 @@ export const yamlTabStyle = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const drawerStyles = () => ({
+const drawerStyles = () => ({
   subtitle: css({
     display: 'flex',
     alignItems: 'center',

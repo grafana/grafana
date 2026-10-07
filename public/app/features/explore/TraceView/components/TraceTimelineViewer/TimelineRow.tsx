@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { useStyles2 } from '@grafana/ui';
@@ -52,7 +52,7 @@ export default function TimelineRow({ children, className = '', ...rest }: TTime
   );
 }
 
-export function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
+function TimelineRowCell({ children, className = '', width, style = {}, ...rest }: TimelineRowCellProps) {
   const widthPercent = `${width * 100}%`;
   const mergedStyle = { ...style, flexBasis: widthPercent, maxWidth: widthPercent };
   const styles = useStyles2(getStyles);

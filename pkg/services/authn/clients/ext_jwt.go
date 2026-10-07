@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.Client = new(ExtendedJWT)
+var _ authn.Client = (*ExtendedJWT)(nil)
 
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"
@@ -109,7 +109,7 @@ func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*auth
 	return s.authenticateAsService(*accessTokenClaims, jwtToken)
 }
 
-func (s *ExtendedJWT) IsEnabled() bool {
+func (s *ExtendedJWT) IsEnabled(context.Context) bool {
 	return s.cfg.ExtJWTAuth.Enabled
 }
 

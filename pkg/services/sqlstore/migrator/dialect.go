@@ -85,6 +85,8 @@ type Dialect interface {
 	IsDeadlock(err error) bool
 	Lock(LockCfg) error
 	Unlock(LockCfg) error
+	// SupportsAdvisoryLocks returns whether Lock and Unlock actually lock anything.
+	SupportsAdvisoryLocks() bool
 
 	GetDBName(string) (string, error)
 
@@ -241,12 +243,12 @@ func (b *BaseDialect) CreateIndexSQL(tableName string, index *Index) string {
 }
 
 func (b *BaseDialect) QuoteColList(cols []string) string {
-	var sourceColsSQL = ""
+	var sourceColsSQL strings.Builder
 	for _, col := range cols {
-		sourceColsSQL += b.dialect.Quote(col)
-		sourceColsSQL += "\n, "
+		sourceColsSQL.WriteString(b.dialect.Quote(col))
+		sourceColsSQL.WriteString("\n, ")
 	}
-	return strings.TrimSuffix(sourceColsSQL, "\n, ")
+	return strings.TrimSuffix(sourceColsSQL.String(), "\n, ")
 }
 
 func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string {
@@ -375,6 +377,10 @@ func (b *BaseDialect) Lock(_ LockCfg) error {
 
 func (b *BaseDialect) Unlock(_ LockCfg) error {
 	return nil
+}
+
+func (b *BaseDialect) SupportsAdvisoryLocks() bool {
+	return false
 }
 
 func (b *BaseDialect) OrderBy(order string) string {

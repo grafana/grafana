@@ -99,10 +99,10 @@ func (e *Evaluation) Fingerprint() fingerprint {
 }
 
 type alertRulesRegistry struct {
-	ruleChainFingerprints map[string]uint64
-	rules                 map[models.AlertRuleKey]*models.AlertRule
-	folderTitles          map[models.FolderKey]string
-	mu                    sync.RWMutex
+	ruleSequenceFingerprints map[string]uint64
+	rules                    map[models.AlertRuleKey]*models.AlertRule
+	folderTitles             map[models.FolderKey]string
+	mu                       sync.RWMutex
 }
 
 // all returns all rules in the registry.
@@ -122,14 +122,14 @@ func (r *alertRulesRegistry) get(k models.AlertRuleKey) *models.AlertRule {
 	return r.rules[k]
 }
 
-// set replaces all rules in the registry. Rules belonging to a chain are
-// enriched with synthetic group names, sequential indices, and the chain's
-// interval (no-op when chains is empty). Returns the difference between the
-// previous and the new version of the registry.
-func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string, ruleChains []models.SchedulableRuleChain) diff {
+// set replaces all rules in the registry. Rules belonging to a sequence are
+// enriched with synthetic group names, sequential indices, and the sequence's
+// interval (no-op when sequences is empty). Returns the difference between
+// the previous and the new version of the registry.
+func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.FolderKey]string, ruleSequences []models.SchedulableRuleSequence) diff {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	models.EnrichRulesWithChainMembership(rules, ruleChains)
+	models.EnrichRulesWithSequenceMembership(rules, ruleSequences)
 	rulesMap := make(map[models.AlertRuleKey]*models.AlertRule)
 	for _, rule := range rules {
 		rulesMap[rule.GetKey()] = rule
@@ -138,11 +138,11 @@ func (r *alertRulesRegistry) set(rules []*models.AlertRule, folders map[models.F
 	r.rules = rulesMap
 	// return the map as is without copying because it is not mutated
 	r.folderTitles = folders
-	fingerprints := make(map[string]uint64, len(ruleChains))
-	for _, chain := range ruleChains {
-		fingerprints[chain.UID] = ruleChainFingerprint(chain)
+	fingerprints := make(map[string]uint64, len(ruleSequences))
+	for _, seq := range ruleSequences {
+		fingerprints[seq.UID] = ruleSequenceFingerprint(seq)
 	}
-	r.ruleChainFingerprints = fingerprints
+	r.ruleSequenceFingerprints = fingerprints
 	return d
 }
 
@@ -172,14 +172,14 @@ func (r *alertRulesRegistry) isEmpty() bool {
 	return len(r.rules) == 0
 }
 
-func (r *alertRulesRegistry) ruleChainsNeedUpdate(ruleChains []models.SchedulableRuleChain) bool {
+func (r *alertRulesRegistry) ruleSequencesNeedUpdate(ruleSequences []models.SchedulableRuleSequence) bool {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	if len(r.ruleChainFingerprints) != len(ruleChains) {
+	if len(r.ruleSequenceFingerprints) != len(ruleSequences) {
 		return true
 	}
-	for _, chain := range ruleChains {
-		if fp, ok := r.ruleChainFingerprints[chain.UID]; !ok || fp != ruleChainFingerprint(chain) {
+	for _, seq := range ruleSequences {
+		if fp, ok := r.ruleSequenceFingerprints[seq.UID]; !ok || fp != ruleSequenceFingerprint(seq) {
 			return true
 		}
 	}

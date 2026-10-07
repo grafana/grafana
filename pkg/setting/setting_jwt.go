@@ -22,8 +22,10 @@ type AuthJWTSettings struct {
 	JWKSetBearerTokenFile   string
 	CacheTTL                time.Duration
 	KeyFile                 string
+	KeyValue                string
 	KeyID                   string
 	JWKSetFile              string
+	JWKSetValue             string
 	AutoSignUp              bool
 	RoleAttributePath       string
 	RoleAttributeStrict     bool
@@ -39,10 +41,11 @@ type AuthJWTSettings struct {
 }
 
 type ExtJWTSettings struct {
-	Enabled      bool
-	ExpectIssuer string
-	JWKSUrl      string
-	Audiences    []string
+	Enabled       bool
+	ExpectIssuer  string
+	JWKSUrl       string
+	Audiences     []string
+	WildcardOrgID int64
 }
 
 func (cfg *Cfg) readAuthExtJWTSettings() {
@@ -50,8 +53,13 @@ func (cfg *Cfg) readAuthExtJWTSettings() {
 	jwtSettings := ExtJWTSettings{}
 	jwtSettings.Enabled = authExtendedJWT.Key("enabled").MustBool(false)
 	jwtSettings.JWKSUrl = authExtendedJWT.Key("jwks_url").MustString("")
-	// for Grafana, this is hard coded, but we leave it as a configurable param for other use-cases
-	jwtSettings.Audiences = []string{extJWTAccessTokenExpectAudience}
+	jwtSettings.WildcardOrgID = authExtendedJWT.Key("wildcard_org_id").MustInt64(0)
+	// for Grafana, this defaults to hard coded value, but we leave it as a configurable param for other use-cases
+	audiences := extJWTAccessTokenExpectAudience
+	if authExtendedJWT.HasKey("audiences") {
+		audiences = authExtendedJWT.Key("audiences").String()
+	}
+	jwtSettings.Audiences = util.SplitString(audiences)
 
 	cfg.ExtJWTAuth = jwtSettings
 }
@@ -69,8 +77,10 @@ func (cfg *Cfg) readAuthJWTSettings() {
 	jwtSettings.JWKSetBearerTokenFile = valueAsString(authJWT, "jwk_set_bearer_token_file", "")
 	jwtSettings.CacheTTL = authJWT.Key("cache_ttl").MustDuration(time.Minute * 60)
 	jwtSettings.KeyFile = valueAsString(authJWT, "key_file", "")
+	jwtSettings.KeyValue = valueAsString(authJWT, "key_value", "")
 	jwtSettings.KeyID = authJWT.Key("key_id").MustString("")
 	jwtSettings.JWKSetFile = valueAsString(authJWT, "jwk_set_file", "")
+	jwtSettings.JWKSetValue = valueAsString(authJWT, "jwk_set_value", "")
 	jwtSettings.AutoSignUp = authJWT.Key("auto_sign_up").MustBool(false)
 	jwtSettings.RoleAttributePath = valueAsString(authJWT, "role_attribute_path", "")
 	jwtSettings.RoleAttributeStrict = authJWT.Key("role_attribute_strict").MustBool(false)

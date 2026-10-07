@@ -141,10 +141,10 @@ func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
 	}
 
 	t.Run("transient conflict is retried and succeeds", func(t *testing.T) {
-		var calls int32
+		var calls atomic.Int32
 		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
 		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				return true, nil, apierrors.NewConflict(
 					schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
@@ -157,14 +157,14 @@ func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
 
 		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
 		require.NoError(t, err)
-		require.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should retry once after conflict")
+		require.Equal(t, int32(2), calls.Load(), "patch should retry once after conflict")
 	})
 
 	t.Run("persistent conflict surfaces the error", func(t *testing.T) {
-		var calls int32
+		var calls atomic.Int32
 		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
 		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
-			atomic.AddInt32(&calls, 1)
+			calls.Add(1)
 			return true, nil, apierrors.NewConflict(
 				schema.GroupResource{Group: provisioning.GROUP, Resource: "repositories"},
 				"test-repo",
@@ -175,27 +175,27 @@ func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
 		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unable to update repo with job status")
-		require.Greater(t, atomic.LoadInt32(&calls), int32(1), "patch should retry at least once before giving up")
+		require.Greater(t, calls.Load(), int32(1), "patch should retry at least once before giving up")
 	})
 
 	t.Run("non-conflict errors are not retried", func(t *testing.T) {
-		var calls int32
+		var calls atomic.Int32
 		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
 		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
-			atomic.AddInt32(&calls, 1)
+			calls.Add(1)
 			return true, nil, fmt.Errorf("boom")
 		})
 
 		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
 		require.Error(t, err)
-		require.Equal(t, int32(1), atomic.LoadInt32(&calls), "non-conflict errors should not be retried")
+		require.Equal(t, int32(1), calls.Load(), "non-conflict errors should not be retried")
 	})
 
 	t.Run("transient SQLITE_BUSY is retried and succeeds", func(t *testing.T) {
-		var calls int32
+		var calls atomic.Int32
 		c := fake.FakeProvisioningV0alpha1{Fake: &k8testing.Fake{}}
 		c.AddReactor("patch", "repositories", func(action k8testing.Action) (bool, runtime.Object, error) {
-			n := atomic.AddInt32(&calls, 1)
+			n := calls.Add(1)
 			if n == 1 {
 				// Mimics the wrapped error returned by the unified storage SQL
 				// backend when SQLite write contention bubbles up through the
@@ -211,6 +211,6 @@ func TestRepositoryStatusPatcher_Patch_RetriesOnConflict(t *testing.T) {
 
 		err := NewRepositoryStatusPatcher(&c).Patch(context.Background(), repo, ops...)
 		require.NoError(t, err)
-		require.Equal(t, int32(2), atomic.LoadInt32(&calls), "patch should retry once after SQLITE_BUSY")
+		require.Equal(t, int32(2), calls.Load(), "patch should retry once after SQLITE_BUSY")
 	})
 }

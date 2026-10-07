@@ -1,7 +1,7 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 /** @jsxImportSource @emotion/react */
 import { css, cx } from '@emotion/css';
-import classnames from 'classnames';
+import classnames from 'clsx';
 import React, { Profiler, type ProfilerOnRenderCallback, useState, type FC } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -27,7 +27,7 @@ export function EmotionPerfTest() {
   );
 }
 
-export const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
+const TestScenario: FC<{ name: string; Component: FC<TestComponentProps> }> = ({ name, Component }) => {
   const [render, setRender] = useState(0);
 
   return (

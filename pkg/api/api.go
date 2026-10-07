@@ -34,6 +34,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -295,15 +296,11 @@ func (hs *HTTPServer) registerRoutes() {
 			userRoute.Get("/teams", routing.Wrap(hs.GetSignedInUserTeamList))
 
 			userRoute.Get("/stars", routing.Wrap(hs.starApi.GetStars))
-			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))
-			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID))
+			userRoute.Post("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.StarDashboardByUID))     //nolint:staticcheck // legacy plumbing
+			userRoute.Delete("/stars/dashboard/uid/:uid", routing.Wrap(hs.starApi.UnstarDashboardByUID)) //nolint:staticcheck // legacy plumbing
 
 			userRoute.Put("/password", routing.Wrap(hs.ChangeUserPassword))
 			userRoute.Get("/quotas", routing.Wrap(hs.GetUserQuotas))
-			userRoute.Put("/helpflags/:id", routing.Wrap(hs.SetHelpFlag))
-			// For dev purpose
-			userRoute.Get("/helpflags/clear", routing.Wrap(hs.ClearHelpFlags))
-
 			userRoute.Get("/preferences", routing.Wrap(hs.GetUserPreferences))
 			userRoute.Put("/preferences", routing.Wrap(hs.UpdateUserPreferences))
 			userRoute.Patch("/preferences", routing.Wrap(hs.PatchUserPreferences))
@@ -505,6 +502,18 @@ func (hs *HTTPServer) registerRoutes() {
 		// DataSource w/ expressions
 		apiRoute.Post("/ds/query", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), authorize(ac.EvalPermission(datasources.ActionQuery)), hs.getDSQueryEndpoint())
 
+		// On-demand datasource diagnostics. Admin-only, on-prem-only, experimental.
+		// Two deliberate, independent gates:
+		// 1. on-prem only (empty StackID => never on Grafana Cloud)
+		// 2. grafana.onDemandDiagnostics flag at request time
+		if hs.Cfg.StackID == "" {
+			apiRoute.Post("/ds/diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDiagnostics))
+			// Dashboard-level diagnostics: async create/poll/download (support-bundle style).
+			apiRoute.Post("/ds/dashboard-diagnostics", requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow), reqGrafanaAdmin, routing.Wrap(hs.QueryDashboardDiagnostics))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid", reqGrafanaAdmin, routing.Wrap(hs.GetDashboardDiagnosticsStatus))
+			apiRoute.Get("/ds/dashboard-diagnostics/:uid/download", reqGrafanaAdmin, routing.Wrap(hs.DownloadDashboardDiagnostics))
+		}
+
 		// Unified Alerting
 		apiRoute.Get("/alert-notifiers", reqSignedIn, requestmeta.SetOwner(requestmeta.TeamAlerting), routing.Wrap(
 			hs.GetAlertNotifiers()),
@@ -566,18 +575,18 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
 		userIDScope := ac.Scope("global.users", "id", ac.Parameter(":id"))
 
-		adminUserRoute.Post("/", authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
-		adminUserRoute.Put("/:id/password", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
-		adminUserRoute.Put("/:id/permissions", userUIDResolver, reqGrafanaAdmin, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
-		adminUserRoute.Delete("/:id", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
-		adminUserRoute.Post("/:id/disable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
-		adminUserRoute.Post("/:id/enable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
-		adminUserRoute.Get("/:id/quotas", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
-		adminUserRoute.Put("/:id/quotas/:target", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
+		adminUserRoute.Post("/", authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersCreate)), routing.Wrap(hs.AdminCreateUser))
+		adminUserRoute.Put("/:id/password", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPasswordUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPassword))
+		adminUserRoute.Put("/:id/permissions", userUIDResolver, reqGrafanaAdmin, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersPermissionsUpdate, userIDScope)), routing.Wrap(hs.AdminUpdateUserPermissions))
+		adminUserRoute.Delete("/:id", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDelete, userIDScope)), routing.Wrap(hs.AdminDeleteUser))
+		adminUserRoute.Post("/:id/disable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersDisable, userIDScope)), routing.Wrap(hs.AdminDisableUser))
+		adminUserRoute.Post("/:id/enable", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersEnable, userIDScope)), routing.Wrap(hs.AdminEnableUser))
+		adminUserRoute.Get("/:id/quotas", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersQuotasList, userIDScope)), routing.Wrap(hs.GetUserQuotas))
+		adminUserRoute.Put("/:id/quotas/:target", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersQuotasUpdate, userIDScope)), routing.Wrap(hs.UpdateUserQuota))
 
-		adminUserRoute.Post("/:id/logout", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
-		adminUserRoute.Get("/:id/auth-tokens", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
-		adminUserRoute.Post("/:id/revoke-auth-token", userUIDResolver, authorizeInOrg(ac.UseGlobalOrg, ac.EvalPermission(ac.ActionUsersAuthTokenUpdate, userIDScope)), routing.Wrap(hs.AdminRevokeUserAuthToken))
+		adminUserRoute.Post("/:id/logout", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
+		adminUserRoute.Get("/:id/auth-tokens", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
+		adminUserRoute.Post("/:id/revoke-auth-token", userUIDResolver, authorizeInOrg(ac.UseGlobalOrSingleOrg(hs.Cfg), ac.EvalPermission(ac.ActionUsersAuthTokenUpdate, userIDScope)), routing.Wrap(hs.AdminRevokeUserAuthToken))
 	}, reqSignedIn)
 
 	// rendering
@@ -613,6 +622,8 @@ func middlewareUserUIDResolver(userService user.Service, paramName string) web.H
 		} else {
 			if errors.Is(err, user.ErrUserNotFound) {
 				c.JsonApiErr(http.StatusNotFound, "User not found", nil)
+			} else if k8serrors.IsForbidden(err) {
+				c.JsonApiErr(http.StatusForbidden, "Access denied to user", err)
 			} else {
 				c.JsonApiErr(http.StatusInternalServerError, "Failed to resolve user", err)
 			}

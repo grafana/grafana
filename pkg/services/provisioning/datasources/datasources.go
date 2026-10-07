@@ -62,7 +62,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 		if err != nil && !errors.Is(err, datasources.ErrDataSourceNotFound) {
 			return err
@@ -93,7 +93,7 @@ func (dc *DatasourceProvisioner) provisionDataSources(ctx context.Context, cfg *
 
 func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg *configs) error {
 	for _, ds := range cfg.Datasources {
-		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name}
+		cmd := &datasources.GetDataSourceQuery{OrgID: ds.OrgID, Name: ds.Name} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := dc.dsService.GetDataSource(ctx, cmd)
 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
@@ -102,6 +102,7 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 
 		if err := dc.correlationsStore.DeleteCorrelationsBySourceUID(ctx, correlations.DeleteCorrelationsBySourceUIDCommand{
 			SourceUID:       dataSource.UID,
+			SourceType:      dataSource.Type,
 			OrgId:           dataSource.OrgID,
 			OnlyProvisioned: true,
 		}); err != nil {
@@ -109,7 +110,18 @@ func (dc *DatasourceProvisioner) provisionCorrelations(ctx context.Context, cfg 
 		}
 
 		for _, correlation := range ds.Correlations {
-			createCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, dataSource.OrgID)
+			targetUID, ok := correlation["targetUID"].(string)
+			targetType := ""
+			if ok {
+				cmd := &datasources.GetDataSourceQuery{OrgID: dataSource.OrgID, UID: targetUID}
+				targetDS, err := dc.dsService.GetDataSource(ctx, cmd)
+				if errors.Is(err, datasources.ErrDataSourceNotFound) {
+					return err
+				}
+				targetType = targetDS.Type
+			}
+
+			createCorrelationCmd, err := makeCreateCorrelationCommand(ctx, correlation, dataSource.UID, dataSource.Type, targetType, dataSource.OrgID)
 			if err != nil {
 				dc.log.Error("failed to parse correlation", "correlation", correlation)
 				return err
@@ -181,7 +193,7 @@ func (dc *DatasourceProvisioner) applyChanges(ctx context.Context, configPath st
 	return nil
 }
 
-func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
+func makeCreateCorrelationCommand(ctx context.Context, correlation map[string]any, SourceUID string, SourceType string, TargetType string, OrgId int64) (correlations.CreateCorrelationCommand, error) {
 	// we look for a correlation type at the root if it is defined, if not use default
 	// we ignore the legacy config.type value - the only valid value at that version was "query"
 	var corrTypeStr = correlation["type"]
@@ -195,6 +207,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	createCommand := correlations.CreateCorrelationCommand{
 		SourceUID:   SourceUID,
+		SourceType:  SourceType,
 		Label:       correlation["label"].(string),
 		Description: correlation["description"].(string),
 		OrgId:       OrgId,
@@ -205,6 +218,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 	targetUID, ok := correlation["targetUID"].(string)
 	if ok {
 		createCommand.TargetUID = &targetUID
+		createCommand.TargetType = &TargetType
 	}
 
 	if correlation["transformations"] != nil {
@@ -238,7 +252,7 @@ func makeCreateCorrelationCommand(correlation map[string]any, SourceUID string, 
 
 func (dc *DatasourceProvisioner) deleteDatasources(ctx context.Context, dsToDelete []*deleteDatasourceConfig, willExistAfterProvisioning map[DataSourceMapKey]bool) error {
 	for _, ds := range dsToDelete {
-		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID}
+		getDsQuery := &datasources.GetDataSourceQuery{Name: ds.Name, OrgID: ds.OrgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		existingDs, err := dc.dsService.GetDataSource(ctx, getDsQuery)
 
 		if err != nil {

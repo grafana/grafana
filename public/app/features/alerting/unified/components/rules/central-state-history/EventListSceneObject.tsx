@@ -16,7 +16,7 @@ import {
   type VariableValue,
   sceneGraph,
 } from '@grafana/scenes';
-import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
+import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import {
   type GrafanaAlertStateWithReason,
   isAlertStateWithReason,
@@ -67,9 +67,6 @@ export const HistoryEventsList = ({
   addFilter,
   hideAlertRuleColumn,
 }: HistoryEventsListProps) => {
-  const from = timeRange?.from.unix();
-  const to = timeRange?.to.unix();
-
   const stateTo = valueInStateToFilter.toString();
   const stateFrom = valueInStateFromFilter.toString();
 
@@ -79,8 +76,7 @@ export const HistoryEventsList = ({
     isError,
     error,
   } = stateHistoryApi.endpoints.getRuleHistory.useQuery({
-    from: from,
-    to: to,
+    timeRange: { from: timeRange.from, to: timeRange.to },
     limit: LIMIT_EVENTS,
     matchers: toMatchersParam(valueInLabelFilter.toString()),
     current: stateTo !== 'all' ? stateTo : undefined,
@@ -101,7 +97,7 @@ export const HistoryEventsList = ({
 
   const maximumEventsReached = !isLoading && stateHistory?.data?.values?.[0]?.length === LIMIT_EVENTS;
   if (maximumEventsReached) {
-    trackUseCentralHistoryMaxEventsReached({ from, to });
+    trackUseCentralHistoryMaxEventsReached({ from: timeRange.from.unix(), to: timeRange.to.unix() });
   }
 
   return (
@@ -444,9 +440,7 @@ const Timestamp = ({ time }: TimestampProps) => {
   );
 };
 
-export default withErrorBoundary(HistoryEventsList, { style: 'page' });
-
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     header: css({
       display: 'flex',
@@ -564,7 +558,7 @@ export class HistoryEventsListObject extends SceneObjectBase<HistoryEventsListOb
 
 export type FilterType = 'label' | 'stateFrom' | 'stateTo';
 
-export function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
+function HistoryEventsListObjectRenderer({ model }: SceneComponentProps<HistoryEventsListObject>) {
   // This make sure the component is re-rendered when the variables change
   const { hideAlertRuleColumn } = model.useState();
 

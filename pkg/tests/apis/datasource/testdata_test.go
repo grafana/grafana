@@ -85,6 +85,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "test", out.GetName())
 	require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
+	require.Equal(t, "1", out.GetResourceVersion())
 
 	t.Run("get", func(t *testing.T) {
 		out, err := client.Get(ctx, "test", metav1.GetOptions{})
@@ -105,7 +106,8 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Object: map[string]any{
 				"apiVersion": "grafana-testdata-datasource.datasource.grafana.app/v0alpha1",
 				"metadata": map[string]any{
-					"name": "test",
+					"name":            "test",
+					"resourceVersion": out.GetResourceVersion(),
 				},
 				"spec": map[string]any{
 					"title":     "test",
@@ -131,6 +133,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		}, metav1.UpdateOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "test", out.GetName())
+		require.Equal(t, "2", out.GetResourceVersion())
 		require.Equal(t, expectedAPIVersion, out.GetAPIVersion())
 
 		ds, err := datasourceV0alpha1.FromUnstructured(out)
@@ -138,6 +141,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 
 		require.Equal(t, "http://fake.url", ds.Spec.URL())
 		require.Equal(t, "testdb", ds.Spec.Database())
+		require.Equal(t, "true", ds.Labels["default"])
 
 		keys := slices.Collect(maps.Keys(ds.Secure))
 		require.ElementsMatch(t, []string{"bbb", "ccc"}, keys) // removed A and added C
@@ -149,6 +153,7 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.Equal(t, expectedAPIVersion, list.GetAPIVersion())
 		require.Len(t, list.Items, 1, "expected a single datasource")
 		require.Equal(t, "test", list.Items[0].GetName(), "with the test uid")
+		require.Equal(t, "true", list.Items[0].GetLabels()["default"])
 
 		spec, _, _ := unstructured.NestedMap(list.Items[0].Object, "spec")
 		jj, _ := json.MarshalIndent(spec, "", "  ")
@@ -156,7 +161,6 @@ func TestIntegrationTestDatasource(t *testing.T) {
 		require.JSONEq(t, `{
 					"access": "proxy",
 					"database": "testdb",
-					"isDefault": true,
 					"jsonData": {
 						"hello": "world"
 					},
@@ -309,30 +313,50 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			checkCSVResult(qdr.Responses["A"])
 			checkCSVResult(qdr.Responses["B"])
 		})
+	})
 
-		// Use the deprecated connections path
-		// NOTE: remove after this is deployed to hosted grafana
-		t.Run("deprecated connections path", func(t *testing.T) {
-			var statusCode int
-			result := adminClient.Post().
-				Namespace("default").
-				Resource("connections"). // <<<<< should rewrite to datasources
-				Name("test").            // datasource UID
-				SubResource("query").
-				SetHeader("Content-type", "application/json").
-				Body(body).
-				Do(ctx).
-				StatusCode(&statusCode)
+	t.Run("resources", func(t *testing.T) {
+		const base = "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/test/resources/"
 
-			require.Equal(t, int(http.StatusOK), statusCode) // query success
-			raw, _ := result.Raw()
-			require.NotNil(t, raw)
+		// The testdata plugin's /test/json route echoes the request back, so we
+		// can confirm the method, path and body are forwarded to the plugin.
+		t.Run("echo endpoint reflects the forwarded request", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodPost,
+				Path:   base + "test/json",
+				Body:   []byte(`{"hello":"world"}`),
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
 
-			qdr := &backend.QueryDataResponse{}
-			err = json.Unmarshal(raw, qdr)
+			body := string(raw.Body)
+			require.Contains(t, body, `"method":"POST"`, "echoed method")
+			require.Contains(t, body, "test/json", "echoed forwarded path")
+			require.Contains(t, body, `"hello":"world"`, "echoed request body")
+		})
 
-			checkCSVResult(qdr.Responses["A"])
-			checkCSVResult(qdr.Responses["B"])
+		// A forwarded sub path that itself contains "/resources" must be passed
+		// through intact (it falls through to the catch-all handler).
+		t.Run("forwards a sub path containing /resources", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   base + "nested/resources/path",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusOK, raw.Response.StatusCode, "body: %s", raw.Body)
+			require.Contains(t, string(raw.Body), "Hello world from test datasource!")
+		})
+
+		t.Run("returns 404 for an unknown datasource", func(t *testing.T) {
+			raw := apis.DoRequest[any](helper, apis.RequestParams{
+				User:   helper.Org1.Admin,
+				Method: http.MethodGet,
+				Path:   "/apis/grafana-testdata-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/does-not-exist/resources/test/json",
+			}, nil)
+			require.NotNil(t, raw.Response)
+			require.Equal(t, http.StatusNotFound, raw.Response.StatusCode)
 		})
 	})
 

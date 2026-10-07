@@ -20,7 +20,7 @@ import { type AzureMonitorQuery } from './types/query';
 import { type RawAzureResourceItem } from './types/types';
 import messageFromError from './utils/messageFromError';
 
-export function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
+function parseResourceNamesAsTemplateVariable(resources: RawAzureResourceItem[], metricNamespace?: string) {
   return resources.map((r) => {
     if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
       return {
@@ -116,6 +116,84 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
               };
             }
             return { data: [] };
+          case AzureQueryType.DimensionsQuery:
+            if (
+              !queryObj.subscription ||
+              !queryObj.resourceGroup ||
+              !queryObj.namespace ||
+              !queryObj.resource ||
+              !queryObj.metricName
+            ) {
+              return { data: [] };
+            }
+            if (
+              !this.hasValue(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace,
+                queryObj.resource,
+                queryObj.metricName
+              )
+            ) {
+              // A parent like $metric interpolated empty. { data: [] } would keep stale names.
+              return { data: [toDataFrame([])] };
+            }
+            const metadata = await this.datasource.azureMonitorDatasource.getMetricMetadata({
+              subscription: queryObj.subscription,
+              resourceGroup: queryObj.resourceGroup,
+              metricNamespace: queryObj.namespace,
+              resourceName: queryObj.resource,
+              metricName: queryObj.metricName,
+              customNamespace: queryObj.customNamespace,
+            });
+            return {
+              // Return an explicit empty frame so a metric without dimensions
+              // clears options retained from the previously selected metric.
+              data: [
+                toDataFrame(
+                  metadata.dimensions.map((dimension) => ({ text: dimension.label, value: dimension.value }))
+                ),
+              ],
+            };
+          case AzureQueryType.DimensionValuesQuery:
+            if (
+              !queryObj.subscription ||
+              !queryObj.resourceGroup ||
+              !queryObj.namespace ||
+              !queryObj.resource ||
+              !queryObj.metricName ||
+              !queryObj.dimension
+            ) {
+              return { data: [] };
+            }
+            if (
+              !this.hasValue(
+                queryObj.subscription,
+                queryObj.resourceGroup,
+                queryObj.namespace,
+                queryObj.resource,
+                queryObj.metricName,
+                queryObj.dimension
+              )
+            ) {
+              // A parent like $metric interpolated empty. { data: [] } would keep stale names.
+              return { data: [toDataFrame([])] };
+            }
+            const values = await this.datasource.getDimensionValues(
+              queryObj.subscription,
+              queryObj.resourceGroup,
+              queryObj.namespace,
+              queryObj.resource,
+              queryObj.metricName,
+              queryObj.dimension,
+              request.range,
+              queryObj.customNamespace
+            );
+            return {
+              // Return an explicit empty frame so Grafana replaces any options
+              // retained from a previous dashboard time range.
+              data: [toDataFrame(values)],
+            };
           case AzureQueryType.WorkspacesQuery:
             if (queryObj.subscription && this.hasValue(queryObj.subscription)) {
               const rgs = await this.datasource.getAzureLogAnalyticsWorkspaces(queryObj.subscription);

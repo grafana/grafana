@@ -27,6 +27,7 @@ export interface TableCellTooltipProps {
   className?: string;
   data: DataFrame;
   disableSanitizeHtml?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
   field: Field;
   getActions: (field: Field, rowIdx: number) => ActionModel[];
   getTextColorForBackground: (bgColor: string) => string;
@@ -36,7 +37,6 @@ export interface TableCellTooltipProps {
   renderer: TableCellRenderer;
   rowIdx: number;
   style?: CSSProperties;
-  tooltipField: Field;
   theme: GrafanaTheme2;
   width?: number;
 }
@@ -49,6 +49,7 @@ export const TableCellTooltip = memo(
     className,
     data,
     disableSanitizeHtml,
+    jsonSyntaxHighlightingEnabled,
     field,
     getActions,
     getTextColorForBackground,
@@ -59,7 +60,6 @@ export const TableCellTooltip = memo(
     rowIdx,
     style,
     theme,
-    tooltipField,
     width = 300,
   }: TableCellTooltipProps) => {
     const rawValue = field.values[rowIdx];
@@ -69,7 +69,6 @@ export const TableCellTooltip = memo(
     const [pinned, setPinned] = useState(false);
 
     const show = hovered || pinned;
-    const dynamicHeight = tooltipField.config.custom?.cellOptions?.dynamicHeight;
 
     useEffect(() => {
       if (pinned) {
@@ -109,6 +108,7 @@ export const TableCellTooltip = memo(
           cellInspect: false,
           cellOptions,
           disableSanitizeHtml,
+          jsonSyntaxHighlightingEnabled,
           field,
           frame: data,
           getActions,
@@ -124,6 +124,7 @@ export const TableCellTooltip = memo(
         cellOptions,
         data,
         disableSanitizeHtml,
+        jsonSyntaxHighlightingEnabled,
         field,
         getActions,
         getTextColorForBackground,
@@ -154,7 +155,7 @@ export const TableCellTooltip = memo(
             placement={placement}
             wrapperClassName={classes.tooltipWrapper}
             className={className}
-            style={{ ...style, width, ...(!dynamicHeight && { height }) }}
+            style={{ ...style, width }}
             referenceElement={cellElement}
             onMouseLeave={onMouseLeave}
             onMouseEnter={onMouseEnter}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/dataplane/sdata/numeric"
 	"github.com/m3db/prometheus_remote_client_golang/promremote"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -117,11 +119,19 @@ var (
 	ErrDatasourceUnauthorized = errors.New("failed to authenticate in datasource")
 	ErrDatasourceForbidden    = errors.New("failed to authorize in datasource")
 	ErrConnectionFailure      = errors.New("failed to connect to remote write endpoint")
+	ErrRateLimited            = errors.New("write rejected due to rate limit")
 
 	// IgnoredErrors don't cause the Write to fail, but are still logged.
 	IgnoredErrors = []string{
 		MimirSampleDuplicateTimestampError,
 		PrometheusDuplicateTimestampError,
+	}
+
+	// NonRetryableWriteErrors is the deterministic subset of ExpectedErrors: retrying the
+	// same payload in-cycle fails identically. The rest stay retryable (may clear over time).
+	NonRetryableWriteErrors = []string{
+		MimirDistributorMaxWriteMessageSizeError,
+		MimirDistributorMaxWriteRequestDataItemSizeError,
 	}
 
 	// ExpectedErrors are user-level write errors like trying to write an invalid series.
@@ -215,9 +225,7 @@ func PointsFromFrames(name string, t time.Time, frames data.Frames, extraLabels 
 			labels = data.Labels{}
 		}
 		delete(labels, "__name__")
-		for k, v := range extraLabels {
-			labels[k] = v
-		}
+		maps.Copy(labels, extraLabels)
 
 		points = append(points, Point{
 			Name:   name,
@@ -234,11 +242,13 @@ type HttpClientProvider interface {
 }
 
 type PrometheusWriter struct {
-	client      promremote.Client
-	clock       clock.Clock
-	logger      log.Logger
-	metrics     *metrics.RemoteWriter
-	backendType backendType
+	client              promremote.Client
+	clock               clock.Clock
+	logger              log.Logger
+	metrics             *metrics.RemoteWriter
+	backendType         backendType
+	maxBatchSize        int
+	maxWriteConcurrency int
 }
 
 type PrometheusWriterConfig struct {
@@ -246,6 +256,12 @@ type PrometheusWriterConfig struct {
 	HTTPOptions httpclient.Options
 	Timeout     time.Duration
 	BackendType backendType
+	// MaxBatchSize splits a write larger than this many (estimated) bytes into
+	// several requests. 0 never splits.
+	MaxBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 func NewPrometheusWriter(
@@ -280,11 +296,13 @@ func NewPrometheusWriter(
 	}
 
 	return &PrometheusWriter{
-		client:      client,
-		clock:       clock,
-		logger:      l,
-		metrics:     metrics,
-		backendType: backend,
+		client:              client,
+		clock:               clock,
+		logger:              l,
+		metrics:             metrics,
+		backendType:         backend,
+		maxBatchSize:        cfg.MaxBatchSize,
+		maxWriteConcurrency: cfg.MaxWriteConcurrency,
 	}, nil
 }
 
@@ -301,9 +319,14 @@ func (w PrometheusWriter) WriteDatasource(ctx context.Context, dsUID string, nam
 }
 
 // Write writes the given frames to the Prometheus remote write endpoint.
+// If the writer is configured with a MaxBatchSize, a write whose estimated
+// size exceeds it is split into several requests, run with up to
+// MaxWriteConcurrency in parallel: the first batch to fail cancels the
+// others (in flight or not yet started) and its error is returned. In that
+// split case, WriteDuration/WritesTotal are observed once per batch rather
+// than once per Write call.
 func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, frames data.Frames, orgID int64, extraLabels map[string]string) error {
 	l := w.logger.FromContext(ctx)
-	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
 
 	points, err := PointsFromFrames(name, t, frames, extraLabels)
 	if err != nil {
@@ -322,6 +345,42 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	}
 
 	l.Debug("Writing metric", "name", name)
+
+	batches := batchTimeSeries(series, w.maxBatchSize)
+	if len(batches) <= 1 {
+		return w.writeBatch(ctx, orgID, series)
+	}
+
+	l.Debug("Splitting metric write into multiple requests", "requests", len(batches), "maxBatchSize", w.maxBatchSize)
+
+	concurrency := w.maxWriteConcurrency
+	if concurrency <= 0 {
+		concurrency = 1
+	}
+
+	// errgroup cancels gctx as soon as one batch fails, so batches that
+	// haven't started yet are skipped instead of running to completion
+	// regardless, and in-flight requests are aborted rather than left to
+	// report a partial write as a success.
+	g, gctx := errgroup.WithContext(ctx)
+	g.SetLimit(concurrency)
+	for _, batch := range batches {
+		g.Go(func() error {
+			if err := gctx.Err(); err != nil {
+				return err
+			}
+			return w.writeBatch(gctx, orgID, batch)
+		})
+	}
+
+	return g.Wait()
+}
+
+// writeBatch sends a single batch of series to the remote write endpoint.
+func (w PrometheusWriter) writeBatch(ctx context.Context, orgID int64, series []promremote.TimeSeries) error {
+	l := w.logger.FromContext(ctx)
+	lvs := []string{fmt.Sprint(orgID), string(w.backendType)} //nolint:prealloc
+
 	writeStart := w.clock.Now()
 	res, writeErr := w.client.WriteTimeSeries(ctx, series, promremote.WriteOptions{})
 	w.metrics.WriteDuration.WithLabelValues(lvs...).Observe(w.clock.Now().Sub(writeStart).Seconds())
@@ -340,6 +399,38 @@ func (w PrometheusWriter) Write(ctx context.Context, name string, t time.Time, f
 	return nil
 }
 
+// batchTimeSeries splits series into consecutive chunks whose estimated size
+// (label names/values plus a fixed per-sample overhead for the timestamp and
+// value) stays under maxBytes. maxBytes <= 0 disables splitting and returns
+// series unchanged as the single batch.
+func batchTimeSeries(series []promremote.TimeSeries, maxBytes int) [][]promremote.TimeSeries {
+	if maxBytes <= 0 || len(series) == 0 {
+		return [][]promremote.TimeSeries{series}
+	}
+
+	// Timestamp (int64) + value (float64), the fixed per-sample cost on the wire.
+	const perSampleOverhead = 16
+
+	batches := make([][]promremote.TimeSeries, 0, 1)
+	start := 0
+	size := 0
+	for i, ts := range series {
+		tsSize := perSampleOverhead
+		for _, lbl := range ts.Labels {
+			tsSize += len(lbl.Name) + len(lbl.Value)
+		}
+		if size > 0 && size+tsSize > maxBytes {
+			batches = append(batches, series[start:i])
+			start = i
+			size = 0
+		}
+		size += tsSize
+	}
+	batches = append(batches, series[start:])
+
+	return batches
+}
+
 func promremoteLabelsFromPoint(point Point) []promremote.Label {
 	labels := make([]promremote.Label, 0, len(point.Labels))
 	labels = append(labels, promremote.Label{
@@ -354,6 +445,17 @@ func promremoteLabelsFromPoint(point Point) []promremote.Label {
 	}
 	return labels
 }
+
+// ErrNonRetryableWrite is an internal marker (matched via errors.Is, never rendered) for a
+// deterministic write rejection that fails identically on every in-cycle retry.
+var ErrNonRetryableWrite = errors.New("write rejected (non-retryable)")
+
+// nonRetryableWrite tags a rejected write as non-retryable without changing its message;
+// errors.Is matches both ErrNonRetryableWrite and the wrapped ErrRejectedWrite.
+type nonRetryableWrite struct{ error }
+
+func (nonRetryableWrite) Is(target error) bool { return target == ErrNonRetryableWrite }
+func (e nonRetryableWrite) Unwrap() error      { return e.error }
 
 func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	if writeErr == nil {
@@ -389,6 +491,15 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 			}
 		}
 
+		// Check for deterministic, non-retryable rejections first (a subset of
+		// ExpectedErrors). These fail identically on every in-cycle retry.
+		for _, e := range NonRetryableWriteErrors {
+			if strings.Contains(msg, e) {
+				actual := extractActualError(writeErr)
+				return nonRetryableWrite{fmt.Errorf("%w: %s", ErrRejectedWrite, actual)}, false
+			}
+		}
+
 		// Check for expected user errors.
 		for _, e := range ExpectedErrors {
 			if strings.Contains(msg, e) {
@@ -408,6 +519,10 @@ func checkWriteError(writeErr promremote.WriteError) (err error, ignored bool) {
 	if writeErr.StatusCode() == 403 {
 		actual := extractActualError(writeErr)
 		return fmt.Errorf("%w: %s", ErrDatasourceForbidden, actual), false
+	}
+	if writeErr.StatusCode() == 429 {
+		actual := extractActualError(writeErr)
+		return fmt.Errorf("%w: %s", ErrRateLimited, actual), false
 	}
 
 	// All other errors which do not fit into the above categories are also unexpected.
@@ -433,13 +548,13 @@ func extractActualError(err promremote.WriteError) string {
 	errMsg := err.Error()
 
 	// Find the body content prefix
-	bodyIndex := strings.Index(errMsg, bodyPrefix)
-	if bodyIndex == -1 {
+	_, after, ok := strings.Cut(errMsg, bodyPrefix)
+	if !ok {
 		return errMsg // Return original if no body prefix found
 	}
 
 	// Extract content after "body=" prefix
-	bodyContent := strings.TrimSpace(errMsg[bodyIndex+bodyPrefixLen:])
+	bodyContent := strings.TrimSpace(after)
 	if bodyContent == "" {
 		return errMsg // Return original if body is empty
 	}

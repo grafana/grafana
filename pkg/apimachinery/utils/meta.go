@@ -65,8 +65,9 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
-// LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
-// Deprecated: will be removed in grafana 13
+// LabelKeyDeprecatedInternalID holds the deprecated internal ID of a resource.
+// Resources are now identified by their metadata.name (previously grafana UID)
+// Deprecated: This label will be removed when legacy support via internal IDs is no longer required.
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects
@@ -199,6 +200,7 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	if val == "" {
 		if anno != nil {
 			delete(anno, key)
+			anno = nilIfEmpty(anno)
 		}
 	} else {
 		if anno == nil {
@@ -316,7 +318,7 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 	if id == 0 {
 		if labels != nil {
 			delete(labels, LabelKeyDeprecatedInternalID)
-			m.obj.SetLabels(labels)
+			m.obj.SetLabels(nilIfEmpty(labels))
 		}
 		return
 	}
@@ -678,11 +680,16 @@ func (m *grafanaMetaAccessor) GetManagerProperties() (ManagerProperties, bool) {
 			}, true
 		}
 
-		// If the identity is not set, we should ignore the other annotations and return the default values.
-		//
-		// This is to prevent inadvertently marking resources as managed,
-		// since that can potentially block updates from other sources.
-		return res, false
+		// Classic shim kinds (legacy file/API provisioning) have no meaningful identity,
+		// so allow them through without one.
+		kind := ParseManagerKindString(annot[AnnoKeyManagerKind])
+		if !kind.IsClassic() {
+			// If the identity is not set, we should ignore the other annotations and return the default values.
+			//
+			// This is to prevent inadvertently marking resources as managed,
+			// since that can potentially block updates from other sources.
+			return res, false
+		}
 	}
 	res.Identity = id
 
@@ -939,6 +946,15 @@ func (m *grafanaMetaAccessor) SetSecureValues(vals common.InlineSecureValues) (e
 	}
 
 	return fmt.Errorf("unable to set secure values on (%T)", m.raw)
+}
+
+// nilIfEmpty returns nil for an empty map so the field is dropped from the
+// serialized object rather than written as an empty {}.
+func nilIfEmpty(m map[string]string) map[string]string {
+	if len(m) == 0 {
+		return nil
+	}
+	return m
 }
 
 func getJSONFieldName(f reflect.Value, idx int) string {

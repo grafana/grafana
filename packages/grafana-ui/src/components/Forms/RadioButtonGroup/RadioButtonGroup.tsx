@@ -110,6 +110,7 @@ export function RadioButtonGroup<T>({
             disabled={isItemDisabled || disabled}
             active={value === opt.value}
             key={`o.label-${i}`}
+            data-testid={getDataTestId(opt)}
             aria-label={opt.ariaLabel}
             aria-invalid={!!invalid}
             aria-describedby={ariaDescribedBy}
@@ -137,7 +138,6 @@ RadioButtonGroup.displayName = 'RadioButtonGroup';
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     radioGroup: css({
-      backgroundColor: theme.colors.background.primary,
       display: 'inline-flex',
       flexDirection: 'row',
       flexWrap: 'nowrap',
@@ -176,3 +176,17 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
   };
 };
+
+export function getDataTestId(option: SelectableValue): string | undefined {
+  if (option.dataTestId) {
+    return option.dataTestId;
+  }
+
+  // Keyed on the option's value, not its label, so the selector survives translation.
+  // Skipped for objects and undefined, which have no meaningful string form.
+  if (typeof option.value !== 'string' && typeof option.value !== 'number' && typeof option.value !== 'boolean') {
+    return;
+  }
+
+  return selectors.components.RadioButton.option(String(option.value));
+}

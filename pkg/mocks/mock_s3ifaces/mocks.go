@@ -9,9 +9,9 @@ import (
 	reflect "reflect"
 	time "time"
 
+	manager "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	gomock "github.com/golang/mock/gomock"
-
-	s3manager "github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 // MockS3Client is a mock of S3Client interface
@@ -38,10 +38,10 @@ func (m *MockS3Client) EXPECT() *MockS3ClientMockRecorder {
 }
 
 // Upload mocks base method
-func (m *MockS3Client) Upload(ctx context.Context, input *s3manager.UploadInput) (*s3manager.UploadOutput, error) {
+func (m *MockS3Client) Upload(ctx context.Context, input *s3.PutObjectInput) (*manager.UploadOutput, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Upload", ctx, input)
-	ret0, _ := ret[0].(*s3manager.UploadOutput)
+	ret0, _ := ret[0].(*manager.UploadOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -53,16 +53,16 @@ func (mr *MockS3ClientMockRecorder) Upload(ctx, input any) *gomock.Call {
 }
 
 // PresignGetObject mocks base method
-func (m *MockS3Client) PresignGetObject(bucket, key string, expiration time.Duration) (string, error) {
+func (m *MockS3Client) PresignGetObject(ctx context.Context, bucket, key string, expiration time.Duration) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PresignGetObject", bucket, key, expiration)
+	ret := m.ctrl.Call(m, "PresignGetObject", ctx, bucket, key, expiration)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // PresignGetObject indicates an expected call of PresignGetObject
-func (mr *MockS3ClientMockRecorder) PresignGetObject(bucket, key, expiration any) *gomock.Call {
+func (mr *MockS3ClientMockRecorder) PresignGetObject(ctx, bucket, key, expiration any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignGetObject", reflect.TypeOf((*MockS3Client)(nil).PresignGetObject), bucket, key, expiration)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PresignGetObject", reflect.TypeOf((*MockS3Client)(nil).PresignGetObject), ctx, bucket, key, expiration)
 }

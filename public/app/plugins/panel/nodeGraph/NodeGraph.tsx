@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
@@ -84,17 +84,17 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: 'legend',
     background: theme.colors.background.secondary,
     boxShadow: theme.shadows.z1,
-    paddingBottom: '5px',
-    marginRight: '10px',
+    borderRadius: theme.shape.radius.lg,
+    paddingBottom: theme.spacing(0.5),
+    marginRight: theme.spacing(1),
   }),
   viewControlsWrapper: css({
     marginLeft: 'auto',
   }),
   alert: css({
     label: 'alert',
-    padding: '5px 8px',
+    padding: `${theme.spacing(0.5)} ${theme.spacing(1)}`,
     fontSize: '10px',
-    textShadow: '0 1px 0 rgba(0, 0, 0, 0.2)',
     borderRadius: theme.shape.radius.default,
     alignItems: 'center',
     position: 'absolute',
@@ -456,8 +456,8 @@ const Edges = memo(function Edges(props: EdgesProps) {
             key={`${e.id}-${e.source.y ?? ''}-${props.processedNodesLength}-${props.processedEdgesLength}-${index}`}
             edge={e}
             hovering={
-              (e.source as NodeDatum).id === props.nodeHoveringId ||
-              (e.target as NodeDatum).id === props.nodeHoveringId ||
+              e.source.id === props.nodeHoveringId ||
+              e.target.id === props.nodeHoveringId ||
               props.edgeHoveringId === e.id
             }
             onClick={props.onClick}
@@ -483,9 +483,7 @@ const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
         // We show the edge label in case user hovers over the edge directly or if they hover over node edge is
         // connected to.
         const shouldShow =
-          (e.source as NodeDatum).id === props.nodeHoveringId ||
-          (e.target as NodeDatum).id === props.nodeHoveringId ||
-          props.edgeHoveringId === e.id;
+          e.source.id === props.nodeHoveringId || e.target.id === props.nodeHoveringId || props.edgeHoveringId === e.id;
 
         const hasStats = e.mainStat || e.secondaryStat;
         return shouldShow && hasStats && <EdgeLabel key={e.id} edge={e} />;

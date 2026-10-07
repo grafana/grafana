@@ -1,7 +1,6 @@
 package git
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,6 @@ import (
 // no orphan is left behind.
 func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testing.T) {
 	helper := sharedGitHelper(t)
-	ctx := context.Background()
 
 	const repoName = "git-incremental-name-change"
 
@@ -27,8 +25,8 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 	}, "write", "branch")
 
 	common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
-	common.RequireDashboardTitle(t, helper.DashboardsV1, ctx, "name-change-incr-001", "Dashboard One")
+	helper.RequireRepoDashboardCount(t, repoName, 1)
+	common.RequireDashboardTitle(t, helper.DashboardsV1, "name-change-incr-001", "Dashboard One")
 
 	// Change the metadata.name (uid) in the same file path.
 	require.NoError(t, local.UpdateFile("dashboard1.json", string(common.DashboardJSON("name-change-incr-002", "Dashboard One Renamed", 2))))
@@ -43,7 +41,7 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 
 	// The new dashboard should exist with the new name.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		d, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-incr-002", metav1.GetOptions{})
+		d, err := helper.DashboardsV1.Resource.Get(t.Context(), "name-change-incr-002", metav1.GetOptions{})
 		assert.NoError(c, err, "new dashboard should exist")
 		if d != nil {
 			assert.Equal(c, "name-change-incr-002", d.GetName())
@@ -52,9 +50,9 @@ func TestIntegrationProvisioning_IncrementalGitSync_MetadataNameChange(t *testin
 
 	// The old dashboard should be deleted — no orphan left behind.
 	require.EventuallyWithT(t, func(c *assert.CollectT) {
-		_, err := helper.DashboardsV1.Resource.Get(ctx, "name-change-incr-001", metav1.GetOptions{})
+		_, err := helper.DashboardsV1.Resource.Get(t.Context(), "name-change-incr-001", metav1.GetOptions{})
 		assert.True(c, apierrors.IsNotFound(err), "old dashboard should be NotFound, got: %v", err)
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "old dashboard should be deleted after name change")
 
-	common.RequireDashboardCount(t, helper.DashboardsV1, ctx, 1)
+	helper.RequireRepoDashboardCount(t, repoName, 1)
 }

@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -17,11 +19,62 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+func TestCommenter_UnsupportedFork(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+	expected, err := os.ReadFile("testdata/unsupported-fork.md")
+	require.NoError(t, err)
+	repo.On("CommentPullRequest", mock.Anything, 123, string(expected)).Return(nil).Once()
+
+	repo.On("Config").Return(&v0alpha1.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "my-repo", Namespace: "org-2"},
+		Spec:       v0alpha1.RepositorySpec{Title: "My Repo"},
+	}).Once()
+	urls := URLProvider{
+		Internal: func(_ context.Context, namespace string) string {
+			require.Equal(t, "org-2", namespace)
+			return "https://grafana.example.com/grafana/"
+		},
+	}
+	require.NoError(t, NewCommenter(true, urls).Comment(t.Context(), repo, 123, changeInfo{UnsupportedFork: true}))
+}
+
+func TestGenerateComment_EscapesTitle(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+
+	var captured string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		captured = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info:   &repository.FileInfo{Path: "dash.json"},
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					Action: v0alpha1.ResourceActionUpdate,
+				},
+				Title:      "Pipes | Brackets [x]\nnewline",
+				SourceURL:  "https://github.com/example/repo/blob/pr/dash.json",
+				GrafanaURL: "http://grafana/d/uid",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false, URLProvider{})
+	require.NoError(t, commenter.Comment(context.Background(), repo, 1, info))
+	require.Contains(t, captured, "Pipes \\| Brackets \\[x\\] newline")
+	require.NotContains(t, captured, "Brackets [x]")
+}
+
 func TestCommenter_Comment_FailedToComment(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
-	commenter := NewCommenter(false)
+	commenter := NewCommenter(false, URLProvider{})
 	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
 	require.Error(t, err)
 }
@@ -37,9 +90,10 @@ func TestGenerateComment(t *testing.T) {
 			RepositoryTitle: "My Repo",
 		}},
 		{"new dashboard", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -50,15 +104,17 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionCreate,
 					},
 					Title:                "New Dashboard",
+					SourceURL:            "https://github.com/example/repo/blob/pr/file.json",
 					PreviewURL:           "http://grafana/admin/preview",
 					PreviewScreenshotURL: getDummyRenderedURL("http://grafana/admin/preview"),
 				},
 			},
 		}},
 		{"update dashboard", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -69,6 +125,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/file.json",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
 
@@ -78,9 +135,10 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"update dashboard missing renderer", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -91,6 +149,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Existing Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/file.json",
 					GrafanaURL: "http://grafana/d/uid",
 					PreviewURL: "http://grafana/admin/preview",
 				},
@@ -98,10 +157,10 @@ func TestGenerateComment(t *testing.T) {
 			MissingImageRenderer: true,
 		}},
 		{"multiple files", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
-			SkippedFiles:    5,
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -112,6 +171,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash A",
+					SourceURL:  "https://github.com/example/repo/blob/pr/aaa.json",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
@@ -123,18 +183,20 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dash B",
+					SourceURL:  "https://github.com/example/repo/blob/pr/bbb.json",
 					GrafanaURL: "http://grafana/d/bbb",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
 					Parsed: &resources.ParsedResource{
 						Info: &repository.FileInfo{
-							Path: "bbb.json",
+							Path: "ccc.json",
 						},
 						Action: v0alpha1.ResourceActionCreate,
 						GVK:    schema.GroupVersionKind{Kind: "Playlist"},
 					},
-					Title: "My Playlist",
+					Title:     "My Playlist",
+					SourceURL: "https://github.com/example/repo/blob/pr/ccc.json",
 				},
 			},
 		}},
@@ -150,6 +212,7 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionCreate,
 					},
 					Title:      "Broken Dashboard",
+					SourceURL:  "https://github.com/example/repo/blob/pr/broken.json",
 					PreviewURL: "http://grafana/admin/preview",
 					Error:      "strict decoding error: unknown field \"spec.invalidField\"",
 				},
@@ -167,6 +230,7 @@ func TestGenerateComment(t *testing.T) {
 						Action: v0alpha1.ResourceActionUpdate,
 					},
 					Title:              "My Dashboard",
+					SourceURL:          "https://github.com/example/repo/blob/pr/dashboard.json",
 					GrafanaURL:         "http://grafana/d/uid",
 					PreviewURL:         "http://grafana/admin/preview",
 					HasRemovedMetadata: true,
@@ -174,9 +238,10 @@ func TestGenerateComment(t *testing.T) {
 			},
 		}},
 		{"multiple files with stripped metadata", changeInfo{
-			GrafanaBaseURL:  "http://host/",
-			RepositoryName:  "my-repo",
-			RepositoryTitle: "My Repo",
+			GrafanaBaseURL:     "http://host/",
+			RepositoryName:     "my-repo",
+			RepositoryTitle:    "My Repo",
+			RepositoryAdminURL: "http://host/admin/provisioning/my-repo",
 			Changes: []fileChangeInfo{
 				{
 					Parsed: &resources.ParsedResource{
@@ -187,6 +252,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:      "Dashboard A",
+					SourceURL:  "https://github.com/example/repo/blob/pr/good.json",
 					PreviewURL: "http://grafana/admin/preview",
 				},
 				{
@@ -198,6 +264,7 @@ func TestGenerateComment(t *testing.T) {
 						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
 					},
 					Title:              "Dashboard B",
+					SourceURL:          "https://github.com/example/repo/blob/pr/stripped.json",
 					GrafanaURL:         "http://grafana/d/bbb",
 					PreviewURL:         "http://grafana/admin/preview",
 					HasRemovedMetadata: true,
@@ -250,9 +317,67 @@ func TestGenerateComment(t *testing.T) {
 				},
 			},
 		}},
+		{"many files", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: func() []fileChangeInfo {
+				changes := make([]fileChangeInfo, 0, 12)
+				for i := 1; i <= 12; i++ {
+					path := fmt.Sprintf("file%02d.json", i)
+					changes = append(changes, fileChangeInfo{
+						Parsed: &resources.ParsedResource{
+							Info:   &repository.FileInfo{Path: path},
+							Action: v0alpha1.ResourceActionCreate,
+							GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						},
+						Title:     fmt.Sprintf("Dashboard %02d", i),
+						SourceURL: fmt.Sprintf("https://github.com/example/repo/blob/pr/%s", path),
+					})
+				}
+				return changes
+			}(),
+		}},
+		{"many files with errors", changeInfo{
+			GrafanaBaseURL: "http://host/",
+			Changes: func() []fileChangeInfo {
+				changes := make([]fileChangeInfo, 0, 12)
+				for i := 1; i <= 12; i++ {
+					path := fmt.Sprintf("file%02d.json", i)
+					changes = append(changes, fileChangeInfo{
+						Change: repository.VersionedFileChange{Path: path},
+						Parsed: &resources.ParsedResource{
+							Info:   &repository.FileInfo{Path: path},
+							Action: v0alpha1.ResourceActionCreate,
+							GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+						},
+						Title: fmt.Sprintf("Dashboard %02d", i),
+						Error: "strict decoding error: unknown field \"spec.extra\"",
+					})
+				}
+				return changes
+			}(),
+		}},
+		{"multiple files with unprocessed", changeInfo{
+			GrafanaBaseURL:   "http://host/",
+			UnprocessedFiles: 2,
+			Changes: []fileChangeInfo{
+				{
+					Parsed: &resources.ParsedResource{
+						Info:   &repository.FileInfo{Path: "aaa.json"},
+						Action: v0alpha1.ResourceActionCreate,
+						GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+					},
+					Title:     "Dash A",
+					SourceURL: "https://github.com/example/repo/blob/pr/aaa.json",
+				},
+			},
+		}},
+		{"interrupted before any file", changeInfo{
+			GrafanaBaseURL:   "http://host/",
+			UnprocessedFiles: 5,
+		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			repo := NewMockPullRequestRepo(t)
+			repo := repository.NewMockPullRequestRepo(t)
 
 			// expectation on the comment
 			fpath := filepath.Join("testdata", strings.ReplaceAll(tc.Name, " ", "-")+".md")
@@ -262,7 +387,7 @@ func TestGenerateComment(t *testing.T) {
 			require.NoError(t, err)
 			repo.On("CommentPullRequest", context.Background(), 1, string(expect)).Return(nil)
 
-			commenter := NewCommenter(false)
+			commenter := NewCommenter(false, URLProvider{})
 			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
 			require.NoError(t, err)
 		})
@@ -270,7 +395,7 @@ func TestGenerateComment(t *testing.T) {
 }
 
 func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -301,16 +426,68 @@ func TestGenerateComment_NilParsedDeletedInTableTemplate(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false)
+	commenter := NewCommenter(false, URLProvider{})
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "2 changes")
-	require.Contains(t, capturedComment, "deleted")
-	require.Contains(t, capturedComment, ".json")
+	require.Contains(t, capturedComment, "**2** resource changes")
+	require.Contains(t, capturedComment, "🗑️ Deleted")
+	require.Contains(t, capturedComment, "File")
+}
+
+// TestGenerateComment_ParsedDeletedWithoutResourceAction reproduces how deleted
+// files are evaluated: evaluateDeletedFile parses the file at the previous ref
+// (so Parsed is non-nil) but never runs a DryRun, so Parsed.Action stays empty.
+// The action label must fall back to the FileAction ("deleted") instead of
+// rendering a blank Action column.
+func TestGenerateComment_ParsedDeletedWithoutResourceAction(t *testing.T) {
+	repo := repository.NewMockPullRequestRepo(t)
+
+	var capturedComment string
+	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
+		capturedComment = comment
+		return true
+	})).Return(nil)
+
+	info := changeInfo{
+		GrafanaBaseURL: "http://host/",
+		Changes: []fileChangeInfo{
+			{
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "valid.json",
+					},
+					Action: v0alpha1.ResourceActionCreate,
+					GVK:    schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Title:      "Valid Dashboard",
+				PreviewURL: "http://grafana/admin/preview",
+			},
+			{
+				// Parsed is populated from the previous ref but Action is unset,
+				// exactly as evaluateDeletedFile leaves it.
+				Parsed: &resources.ParsedResource{
+					Info: &repository.FileInfo{
+						Path: "deleted-file.json",
+					},
+					GVK: schema.GroupVersionKind{Kind: "Dashboard"},
+				},
+				Change: repository.VersionedFileChange{
+					Action: repository.FileActionDeleted,
+					Path:   "deleted-file.json",
+				},
+				Title: "Deleted Dashboard",
+			},
+		},
+	}
+
+	commenter := NewCommenter(false, URLProvider{})
+	err := commenter.Comment(context.Background(), repo, 1, info)
+	require.NoError(t, err)
+	require.Contains(t, capturedComment, "🗑️ Deleted")
 }
 
 func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -331,15 +508,15 @@ func TestGenerateComment_SingleChangeNilParsed(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false)
+	commenter := NewCommenter(false, URLProvider{})
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "1 changes")
-	require.Contains(t, capturedComment, "created")
+	require.Contains(t, capturedComment, "**1** resource change")
+	require.Contains(t, capturedComment, "➕ Added")
 }
 
 func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
-	repo := NewMockPullRequestRepo(t)
+	repo := repository.NewMockPullRequestRepo(t)
 
 	var capturedComment string
 	repo.On("CommentPullRequest", context.Background(), 1, mock.MatchedBy(func(comment string) bool {
@@ -371,11 +548,11 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 		},
 	}
 
-	commenter := NewCommenter(false)
+	commenter := NewCommenter(false, URLProvider{})
 	err := commenter.Comment(context.Background(), repo, 1, info)
 	require.NoError(t, err)
-	require.Contains(t, capturedComment, "2 changes")
-	require.Contains(t, capturedComment, "1 with issues")
+	require.Contains(t, capturedComment, "**2** resource changes")
+	require.Contains(t, capturedComment, "1 needs attention")
 	require.Contains(t, capturedComment, "Validation Issues")
 	require.Contains(t, capturedComment, "broken.json")
 	require.Contains(t, capturedComment, "unable to parse resource")
@@ -383,7 +560,7 @@ func TestGenerateComment_ParseFailureErrorSurfaced(t *testing.T) {
 
 func TestCommenter_ShowImageRendererNote(t *testing.T) {
 	t.Run("note appears when showImageRendererNote is true", func(t *testing.T) {
-		repo := NewMockPullRequestRepo(t)
+		repo := repository.NewMockPullRequestRepo(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
@@ -411,15 +588,15 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 			return true
 		})).Return(nil)
 
-		commenter := NewCommenter(true)
+		commenter := NewCommenter(true, URLProvider{})
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
-		require.Contains(t, capturedComment, "NOTE: To enable dashboard previews")
+		require.Contains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 		require.Contains(t, capturedComment, "https://grafana.com/docs/grafana/latest/observability-as-code/provision-resources/git-sync-setup/#configure-webhooks-and-image-rendering")
 	})
 
 	t.Run("note does not appear when showImageRendererNote is false", func(t *testing.T) {
-		repo := NewMockPullRequestRepo(t)
+		repo := repository.NewMockPullRequestRepo(t)
 		info := changeInfo{
 			GrafanaBaseURL:  "http://host/",
 			RepositoryName:  "my-repo",
@@ -447,9 +624,9 @@ func TestCommenter_ShowImageRendererNote(t *testing.T) {
 			return true
 		})).Return(nil)
 
-		commenter := NewCommenter(false)
+		commenter := NewCommenter(false, URLProvider{})
 		err := commenter.Comment(context.Background(), repo, 1, info)
 		require.NoError(t, err)
-		require.NotContains(t, capturedComment, "NOTE: To enable dashboard previews")
+		require.NotContains(t, capturedComment, "💡 **Tip:** To enable dashboard previews")
 	})
 }

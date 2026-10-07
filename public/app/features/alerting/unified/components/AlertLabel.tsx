@@ -31,7 +31,7 @@ export const AlertLabel = ({ labelKey, value, operator = '=', onRemoveLabel }: P
   );
 };
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     padding: theme.spacing(0.5, 1),
     borderRadius: theme.shape.radius.default,

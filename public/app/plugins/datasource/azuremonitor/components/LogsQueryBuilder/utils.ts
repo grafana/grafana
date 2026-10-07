@@ -15,6 +15,7 @@ import {
 } from '../../dataquery.gen';
 import { type AzureLogAnalyticsMetadataColumn } from '../../types/logAnalyticsMetadata';
 import { type AzureMonitorQuery } from '../../types/query';
+import { type LogTier } from '../LogsQueryEditor/utils';
 
 const DYNAMIC_TYPE_ARRAY_DELIMITER = '["`indexer`"]';
 export const inputFieldSize = 20;
@@ -38,7 +39,7 @@ export const DEFAULT_LOGS_BUILDER_QUERY: BuilderQueryExpression = {
   limit: 1000,
 };
 
-export const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
+const OPERATORS_BY_TYPE: Record<string, Array<SelectableValue<string>>> = {
   string: [
     { label: '==', value: '==' },
     { label: '!=', value: '!=' },
@@ -91,6 +92,7 @@ export interface BuildAndUpdateOptions {
   columns?: string[];
   from?: BuilderQueryEditorPropertyExpression;
   basicLogsQuery?: boolean;
+  logTier?: LogTier;
 }
 
 export const aggregateOptions = [

@@ -9,7 +9,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
-	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1alpha1"
+	preferences "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/storage/legacysql"

@@ -5,7 +5,7 @@ import { extractObjectType, type ObjectsWithConditionalRendering } from '../obje
 
 import { type ConditionalRenderingConditions } from './types';
 
-export function getGroup(condition: ConditionalRenderingConditions): ConditionalRenderingGroup {
+function getGroup(condition: ConditionalRenderingConditions): ConditionalRenderingGroup {
   if (condition.parent instanceof ConditionalRenderingGroup) {
     return condition.parent;
   }

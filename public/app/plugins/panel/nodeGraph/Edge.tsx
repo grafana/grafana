@@ -4,10 +4,12 @@ import { t } from '@grafana/i18n';
 
 import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { computeNodeCircumferenceStrokeWidth, nodeR } from './Node';
-import { type EdgeDatumLayout, type NodeDatum } from './types';
+import { type EdgeDatumLayout } from './types';
 import { shortenLine } from './utils';
 
-export const defaultHighlightedEdgeColor = '#a00';
+// Edges are drawn over the graph alongside user-supplied series colours, so they hold a fixed
+// value in both themes rather than following the theme surface.
+const defaultHighlightedEdgeColor = '#a00';
 export const defaultEdgeColor = '#999';
 
 interface Props {
@@ -23,12 +25,7 @@ export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering, svgIdNamespace } = props;
 
   // Not great typing but after we do layout these properties are full objects not just references
-  const { source, target, sourceNodeRadius, targetNodeRadius } = edge as {
-    source: NodeDatum;
-    target: NodeDatum;
-    sourceNodeRadius: number;
-    targetNodeRadius: number;
-  };
+  const { source, target, sourceNodeRadius, targetNodeRadius } = edge;
   const arrowHeadHeight = 10 + edge.thickness * 2; // resized value, just to make the UI nicer
 
   // As the nodes have some radius we want edges to end outside of the node circle.
@@ -66,6 +63,7 @@ export const Edge = memo(function Edge(props: Props) {
         })}
       >
         <line
+          data-testid={`edge-line-${edge.id}`}
           strokeWidth={(hovering ? 1 : 0) + (edge.highlighted ? 1 : 0) + edge.thickness}
           stroke={edge.highlighted ? highlightedEdgeColor : edgeColor}
           x1={line.x1}

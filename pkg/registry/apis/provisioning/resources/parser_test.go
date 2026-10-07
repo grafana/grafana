@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
@@ -26,6 +28,7 @@ func TestParser(t *testing.T) {
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
 	clients.On("ForKind", mock.Anything, dashboardV1.DashboardResourceInfo.GroupVersionKind()).
 		Return(nil, dashboardV1.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
 
 	parser := &parser{
 		repo: provisioning.ResourceRepositoryInfo{
@@ -101,6 +104,18 @@ spec:
 		require.True(t, strings.HasPrefix(dash.Obj.GetName(), "rand-"), "set name")
 	})
 
+	t.Run("accepts names allowed by unified storage", func(t *testing.T) {
+		for _, name := range []string{"Player_Resolver-ext_proc", "123abc", "my.name:with-punctuation", "search", strings.Repeat("a", 253)} {
+			t.Run(name, func(t *testing.T) {
+				dash, err := parser.Parse(t.Context(), &repository.FileInfo{
+					Data: []byte(fmt.Sprintf(`{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":%q},"spec":{"title":"Test dashboard"}}`, name)),
+				})
+				require.NoError(t, err)
+				require.Equal(t, name, dash.Obj.GetName())
+			})
+		}
+	})
+
 	t.Run("dashboard classic format", func(t *testing.T) {
 		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
 			Data: []byte(`{ "uid": "test", "schemaVersion": 30, "panels": [], "tags": [] }`),
@@ -112,6 +127,40 @@ spec:
 		require.Equal(t, "v0alpha1", dash.GVK.Version)
 		require.Equal(t, "dashboard.grafana.app", dash.GVR.Group)
 		require.Equal(t, "v0alpha1", dash.GVR.Version)
+	})
+
+	t.Run("strips storage-owned dashboard fields including the deprecated internal ID", func(t *testing.T) {
+		// spec uid/version/id and the deprecatedInternalID label are owned by the
+		// storage layer, not the repository. Leaving the ID label on a create would
+		// bypass the eventually-consistent uniqueness guard and can reintroduce
+		// duplicate IDs when several dashboards sync together.
+		dash, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-strip
+  labels:
+    grafana.app/deprecatedInternalID: "42"
+    keep-me: "yes"
+spec:
+  uid: should-be-removed
+  version: 7
+  id: 42
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+
+		_, hasUID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "uid")
+		require.False(t, hasUID, "spec.uid should be stripped")
+		_, hasVersion, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "version")
+		require.False(t, hasVersion, "spec.version should be stripped")
+		_, hasID, _ := unstructured.NestedFieldNoCopy(dash.Obj.Object, "spec", "id")
+		require.False(t, hasID, "spec.id should be stripped")
+
+		require.Zero(t, dash.Meta.GetDeprecatedInternalID(), "deprecatedInternalID label should be cleared") // nolint:staticcheck
+		require.NotContains(t, dash.Obj.GetLabels(), utils.LabelKeyDeprecatedInternalID, "internal ID label should be removed")
+		require.Equal(t, "yes", dash.Obj.GetLabels()["keep-me"], "other labels should be preserved")
 	})
 
 	t.Run("validate proper folder metadata is set", func(t *testing.T) {
@@ -154,10 +203,157 @@ spec:
 	})
 }
 
+func TestParser_RejectsInvalidNamesBeforeClientResolution(t *testing.T) {
+	formats := []struct {
+		name         string
+		format       string
+		generateName bool
+	}{
+		{
+			name:   "dashboard",
+			format: `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"name":%q},"spec":{"title":"Test dashboard"}}`,
+		},
+		{
+			name:   "classic dashboard",
+			format: `{"uid":%q,"schemaVersion":30,"panels":[],"tags":[]}`,
+		},
+		{
+			name:   "playlist",
+			format: `{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":%q},"spec":{"title":"Test playlist"}}`,
+		},
+		{
+			name:         "generated name",
+			format:       `{"apiVersion":"dashboard.grafana.app/v0alpha1","kind":"Dashboard","metadata":{"generateName":%q},"spec":{"title":"Test dashboard"}}`,
+			generateName: true,
+		},
+	}
+	tests := []struct {
+		name   string
+		value  string
+		detail string
+	}{
+		{name: "spaces and parentheses", value: "Player Resolver (ext_proc)", detail: "must consist of alphanumeric characters"},
+		{name: "slash", value: "invalid/name", detail: "must consist of alphanumeric characters"},
+		{name: "percent", value: "invalid%name", detail: "must consist of alphanumeric characters"},
+		{name: "too long", value: strings.Repeat("a", 254), detail: "name is too long"},
+	}
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					clients := NewMockResourceClients(t)
+					parser := &parser{
+						repo: provisioning.ResourceRepositoryInfo{
+							Namespace: "xxx",
+							Name:      "repo",
+						},
+						clients: clients,
+					}
+					parsed, err := parser.Parse(t.Context(), &repository.FileInfo{
+						Path: "resource.json",
+						Data: []byte(fmt.Sprintf(format.format, tt.value)),
+					})
+					require.Nil(t, parsed)
+					var validationErr *ResourceValidationError
+					require.ErrorAs(t, err, &validationErr)
+					require.True(t, apierrors.IsBadRequest(err))
+					var fieldErr *field.Error
+					require.ErrorAs(t, err, &fieldErr)
+					require.Equal(t, field.ErrorTypeInvalid, fieldErr.Type)
+					require.Equal(t, "metadata.name", fieldErr.Field)
+					require.Contains(t, fieldErr.Detail, tt.detail)
+					if format.generateName {
+						name := fieldErr.BadValue.(string)
+						require.True(t, strings.HasPrefix(name, tt.value))
+						require.Greater(t, len(name), len(tt.value))
+					} else {
+						require.Equal(t, tt.value, fieldErr.BadValue)
+					}
+					require.Empty(t, clients.Calls)
+				})
+			}
+		})
+	}
+}
+
+func TestParser_FolderAnnotationGuard(t *testing.T) {
+	// An org-scoped resource that is declared as supported but is NOT folder-scoped
+	// (no CapabilityFolder). It must never receive a folder annotation.
+	orgScopedGVK := schema.GroupVersionKind{Group: "playlist.grafana.app", Version: "v0alpha1", Kind: "Playlist"}
+	orgScopedGVR := schema.GroupVersionResource{Group: "playlist.grafana.app", Version: "v0alpha1", Resource: "playlists"}
+
+	supported := []SupportedResource{
+		{GroupKind: dashboardV0.DashboardResourceInfo.GroupVersionKind().GroupKind(), Capabilities: sets.New(CapabilityFolder)},
+		{GroupKind: orgScopedGVK.GroupKind(), Capabilities: sets.New[string]()},
+	}
+
+	clients := NewMockResourceClients(t)
+	clients.On("ForKind", mock.Anything, dashboardV0.DashboardResourceInfo.GroupVersionKind()).
+		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("ForKind", mock.Anything, orgScopedGVK).
+		Return(nil, orgScopedGVR, nil).Maybe()
+	clients.On("SupportedResources").Return(supported).Maybe()
+
+	parser := &parser{
+		repo: provisioning.ResourceRepositoryInfo{
+			Type:      provisioning.LocalRepositoryType,
+			Namespace: "xxx",
+			Name:      "repo",
+		},
+		clients: clients,
+		config: &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Namespace: "xxx", Name: "repo"},
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.LocalRepositoryType,
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		},
+	}
+
+	t.Run("folder-scoped resource still gets a folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/test-dashboard.json",
+			Data: []byte(`apiVersion: dashboard.grafana.app/v0alpha1
+kind: Dashboard
+metadata:
+  name: test-dashboard
+spec:
+  title: Test dashboard
+`),
+		})
+		require.NoError(t, err)
+		require.True(t, parsed.FolderScoped, "folder-capable kinds must be marked folder-scoped")
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Meta.GetFolder(),
+			"dashboards must continue to get a folder annotation")
+		require.Equal(t, ParseFolder("team-a/", "repo").ID, parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder])
+	})
+
+	t.Run("org-scoped resource gets no folder annotation", func(t *testing.T) {
+		parsed, err := parser.Parse(context.Background(), &repository.FileInfo{
+			Path: "team-a/my-playlist.json",
+			Data: []byte(`apiVersion: playlist.grafana.app/v0alpha1
+kind: Playlist
+metadata:
+  name: my-playlist
+spec:
+  title: My playlist
+`),
+		})
+		require.NoError(t, err)
+		require.False(t, parsed.FolderScoped,
+			"org-scoped kinds must be marked not folder-scoped so the dual writer skips folder stamping")
+		require.Empty(t, parsed.Meta.GetFolder(),
+			"org-scoped resources must not have a folder annotation stamped on them")
+		_, hasFolder := parsed.Obj.GetAnnotations()[utils.AnnoKeyFolder]
+		require.False(t, hasFolder, "org-scoped resources must not carry the folder annotation")
+	})
+}
+
 func TestParser_FolderMetadataRefFallback(t *testing.T) {
 	clients := NewMockResourceClients(t)
 	clients.On("ForKind", mock.Anything, mock.Anything).
 		Return(nil, dashboardV0.DashboardResourceInfo.GroupVersionResource(), nil).Maybe()
+	clients.On("SupportedResources").Return(SupportedProvisioningResources).Maybe()
 
 	folderMetadataJSON := `{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"stable-uid"},"spec":{"title":"Team A"}}`
 
@@ -503,6 +699,116 @@ func TestDryRunDeletePopulatesExisting(t *testing.T) {
 	})
 }
 
+func TestSkipsStrictValidation(t *testing.T) {
+	// Behaviour must be identical to the previous hardcoded dashboard check
+	// (f.GVR == DashboardResource): only the v1 dashboard GVR is exempt.
+	require.True(t, skipsStrictValidation(DashboardResource),
+		"v1 dashboard resource must be exempt from strict validation")
+	require.False(t, skipsStrictValidation(FolderResource),
+		"non-dashboard resources must use strict validation")
+	// The exemption is version-specific: v2 dashboards keep strict validation so
+	// their CUE schema is enforced by apiserver admission.
+	require.False(t, skipsStrictValidation(DashboardResourceV2),
+		"v2 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2alpha1),
+		"v2alpha1 dashboard resource must keep strict validation")
+	require.False(t, skipsStrictValidation(DashboardResourceV2beta1),
+		"v2beta1 dashboard resource must keep strict validation")
+}
+
+func TestParsedResource_DryRun_FieldValidation(t *testing.T) {
+	notFound := apierrors.NewNotFound(schema.GroupResource{Resource: "test"}, "my-resource")
+
+	tests := []struct {
+		name                string
+		gvr                 schema.GroupVersionResource
+		skipStrict          bool
+		wantFieldValidation string
+	}{
+		{
+			name:                "v1 dashboard resource is exempt and uses Ignore",
+			gvr:                 DashboardResource,
+			wantFieldValidation: "Ignore",
+		},
+		{
+			name:                "v2 dashboard resource is not exempt and uses Strict",
+			gvr:                 DashboardResourceV2,
+			wantFieldValidation: "Strict",
+		},
+		{
+			name:                "non-dashboard resource uses Strict",
+			gvr:                 FolderResource,
+			wantFieldValidation: "Strict",
+		},
+		{
+			name:                "SkipStrictValidation forces Ignore regardless of resource",
+			gvr:                 FolderResource,
+			skipStrict:          true,
+			wantFieldValidation: "Ignore",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockClient := &MockDynamicResourceInterface{}
+			// No existing resource, so DryRun takes the Create path.
+			mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+				Return(nil, notFound)
+
+			obj := &unstructured.Unstructured{Object: map[string]any{
+				"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+			}}
+			mockClient.On("Create", mock.Anything, obj,
+				mock.MatchedBy(func(opts metav1.CreateOptions) bool {
+					return opts.FieldValidation == tt.wantFieldValidation
+				}), mock.Anything).
+				Return(obj, nil)
+
+			parsed := &ParsedResource{
+				Action:               provisioning.ResourceActionCreate,
+				Obj:                  obj,
+				GVR:                  tt.gvr,
+				SkipStrictValidation: tt.skipStrict,
+				Client:               mockClient,
+				Repo:                 testRepoInfo(),
+			}
+
+			require.NoError(t, parsed.DryRun(context.Background()))
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestParsedResource_DryRun_CarriesResourceVersion(t *testing.T) {
+	existing := managedGrafanaObj("my-resource", "default", nil)
+	existing.SetResourceVersion("42")
+
+	obj := &unstructured.Unstructured{Object: map[string]any{
+		"metadata": map[string]any{"name": "my-resource", "namespace": "default"},
+	}}
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+
+	mockClient := &MockDynamicResourceInterface{}
+	mockClient.On("Get", mock.Anything, "my-resource", metav1.GetOptions{}, mock.Anything).
+		Return(existing, nil)
+	mockClient.On("Update", mock.Anything, mock.MatchedBy(func(o *unstructured.Unstructured) bool {
+		return o.GetResourceVersion() == "42"
+	}), mock.Anything, mock.Anything).Return(obj, nil)
+
+	parsed := &ParsedResource{
+		Obj:    obj,
+		Meta:   meta,
+		GVR:    FolderResource,
+		Client: mockClient,
+		Repo:   testRepoInfo(),
+	}
+
+	require.NoError(t, parsed.DryRun(context.Background()))
+	require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+	mockClient.AssertExpectations(t)
+}
+
 func newParsedResource(client *MockDynamicResourceInterface, opts ...func(*ParsedResource)) *ParsedResource {
 	obj := &unstructured.Unstructured{Object: map[string]any{
 		"apiVersion": "dashboard.grafana.app/v1",
@@ -611,8 +917,12 @@ func TestParsedResource_Run(t *testing.T) {
 	})
 
 	t.Run("create AlreadyExists falls through to update", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
 		mc := &MockDynamicResourceInterface{}
 		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetches the existing resource to carry its
+		// resourceVersion into the update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
 		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(successObj, nil)
 
 		parsed := newParsedResource(mc, withDryRun())
@@ -622,6 +932,20 @@ func TestParsedResource_Run(t *testing.T) {
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Create", 1)
 		mc.AssertNumberOfCalls(t, "Update", 1)
+	})
+
+	t.Run("create AlreadyExists then existing fetch fails returns error without update", func(t *testing.T) {
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Create", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, alreadyExistsErr)
+		// The fall-through fetch fails with a non-NotFound error, which must surface
+		// instead of masquerading as a resourceVersion error on a blind update.
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(nil, internalErr)
+
+		parsed := newParsedResource(mc, withDryRun())
+		err := parsed.Run(t.Context())
+
+		require.ErrorContains(t, err, "get existing resource to carry resourceVersion into update")
+		mc.AssertNotCalled(t, "Update")
 	})
 
 	// --- Update path (no DryRun, fetches existing) ---
@@ -638,6 +962,23 @@ func TestParsedResource_Run(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
 		mc.AssertNotCalled(t, "Create")
+	})
+
+	t.Run("update carries the existing resourceVersion", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == "42"
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionUpdate, parsed.Action)
+		mc.AssertNumberOfCalls(t, "Update", 1)
 	})
 
 	t.Run("update validation error returns immediately without create fallback", func(t *testing.T) {
@@ -665,6 +1006,24 @@ func TestParsedResource_Run(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Update", 1)
+		mc.AssertNumberOfCalls(t, "Create", 1)
+	})
+
+	t.Run("update NotFound clears carried resourceVersion before create fallback", func(t *testing.T) {
+		existing := managedGrafanaObj("my-dash", "default", nil)
+		existing.SetResourceVersion("42")
+		mc := &MockDynamicResourceInterface{}
+		mc.On("Get", mock.Anything, "my-dash", mock.Anything, mock.Anything).Return(existing, nil)
+		mc.On("Update", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, notFoundErr)
+		mc.On("Create", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+			return obj.GetResourceVersion() == ""
+		}), mock.Anything, mock.Anything).Return(successObj, nil)
+
+		parsed := newParsedResource(mc)
+		err := parsed.Run(t.Context())
+
+		require.NoError(t, err)
+		require.Equal(t, provisioning.ResourceActionCreate, parsed.Action)
 		mc.AssertNumberOfCalls(t, "Create", 1)
 	})
 

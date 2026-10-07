@@ -63,7 +63,6 @@ type FileReader struct {
 	dashboardStore               utils.DashboardStore
 	FoldersFromFilesStructure    bool
 	folderService                folder.Service
-	foldersInUnified             bool
 	settingCfg                   *setting.Cfg
 
 	mux                     sync.RWMutex
@@ -447,12 +446,12 @@ func (fr *FileReader) getOrCreateFolderInternal(ctx context.Context, orgID int64
 		return 0, "", folder.ErrInvalidUID
 	}
 
-	// When we expect folders in unified storage, they should have a manager indicated.
-	// NOTE: when everything has been running in mode5 for a while, this check can be removed.
-	if err == nil && result != nil && result.ManagedBy == "" && fr.foldersInUnified {
+	if err == nil && result != nil && result.ManagedBy == "" {
 		result, err = fr.dashboardProvisioningService.UpdateFolderWithManagedByAnnotation(ctx, result, fr.Cfg.Name)
 		if err != nil {
-			return 0, "", fmt.Errorf("unable to update provisioned folder")
+			// Preserve the original error so callers can classify transient
+			// failures (e.g. the folder API being unavailable) as retryable.
+			return 0, "", fmt.Errorf("unable to update provisioned folder: %w", err)
 		}
 	}
 

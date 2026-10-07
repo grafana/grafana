@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { type DataSourceInstanceSettings, type DataSourceVariableModel } from '@grafana/data';
+import { type DataSourceInstanceListItem, type DataSourceVariableModel } from '@grafana/data';
 import { getMockPlugins } from '@grafana/data/test';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -12,11 +12,24 @@ import { toVariablePayload } from '../utils';
 import { createDataSourceVariableAdapter } from './adapter';
 import { createDataSourceOptions, dataSourceVariableReducer } from './reducer';
 
+function toListItems(plugins: ReturnType<typeof getMockPlugins>): DataSourceInstanceListItem[] {
+  return plugins.map((p) => {
+    const settings = getDataSourceInstanceSetting(p.name, p);
+    return {
+      uid: settings.uid,
+      type: settings.type,
+      name: settings.name,
+      meta: settings.meta,
+      isDefault: settings.isDefault ?? false,
+    };
+  });
+}
+
 describe('dataSourceVariableReducer', () => {
   const adapter = createDataSourceVariableAdapter();
   describe('when createDataSourceOptions is dispatched', () => {
     const plugins = getMockPlugins(3);
-    const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
+    const sources = toListItems(plugins);
 
     it.each`
       query                 | regex                           | includeAll | expected
@@ -32,7 +45,10 @@ describe('dataSourceVariableReducer', () => {
       "when called with query: '$query' and regex: '$regex' and includeAll: '$includeAll' then state should be correct",
       ({ query, regex, includeAll, expected }) => {
         const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, { query, includeAll });
-        const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex });
+        const payload = toVariablePayload(
+          { id: '0', type: 'datasource' },
+          { sources, regex, defaultDataSourceUid: undefined }
+        );
 
         reducerTester<VariablesState>()
           .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
@@ -50,15 +66,16 @@ describe('dataSourceVariableReducer', () => {
 
   describe('when createDataSourceOptions is dispatched and item is default data source', () => {
     it('then the state should include an extra default option', () => {
-      const plugins = getMockPlugins(3);
-      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
-      sources[1].isDefault = true;
+      const sources = toListItems(getMockPlugins(3));
 
       const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
         query: sources[1].meta.id,
         includeAll: false,
       });
-      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: undefined });
+      const payload = toVariablePayload(
+        { id: '0', type: 'datasource' },
+        { sources, regex: undefined, defaultDataSourceUid: sources[1].uid }
+      );
 
       reducerTester<VariablesState>()
         .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
@@ -78,15 +95,16 @@ describe('dataSourceVariableReducer', () => {
 
   describe('when createDataSourceOptions is dispatched with default in the regex and item is default data source', () => {
     it('then the state should include an extra default option', () => {
-      const plugins = getMockPlugins(3);
-      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
-      sources[1].isDefault = true;
+      const sources = toListItems(getMockPlugins(3));
 
       const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
         query: sources[1].meta.id,
         includeAll: false,
       });
-      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: /default/ });
+      const payload = toVariablePayload(
+        { id: '0', type: 'datasource' },
+        { sources, regex: /default/, defaultDataSourceUid: sources[1].uid }
+      );
 
       reducerTester<VariablesState>()
         .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
@@ -103,15 +121,16 @@ describe('dataSourceVariableReducer', () => {
 
   describe('when createDataSourceOptions is dispatched without default in the regex and item is default data source', () => {
     it('then the state not should include an extra default option', () => {
-      const plugins = getMockPlugins(3);
-      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
-      sources[1].isDefault = true;
+      const sources = toListItems(getMockPlugins(3));
 
       const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
         query: sources[1].meta.id,
         includeAll: false,
       });
-      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: /pretty/ });
+      const payload = toVariablePayload(
+        { id: '0', type: 'datasource' },
+        { sources, regex: /pretty/, defaultDataSourceUid: sources[1].uid }
+      );
 
       reducerTester<VariablesState>()
         .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))
@@ -128,15 +147,16 @@ describe('dataSourceVariableReducer', () => {
 
   describe('when createDataSourceOptions is dispatched without the regex and item is default data source', () => {
     it('then the state should include an extra default option', () => {
-      const plugins = getMockPlugins(3);
-      const sources: DataSourceInstanceSettings[] = plugins.map((p) => getDataSourceInstanceSetting(p.name, p));
-      sources[1].isDefault = true;
+      const sources = toListItems(getMockPlugins(3));
 
       const { initialState } = getVariableTestContext<DataSourceVariableModel>(adapter, {
         query: sources[1].meta.id,
         includeAll: false,
       });
-      const payload = toVariablePayload({ id: '0', type: 'datasource' }, { sources, regex: undefined });
+      const payload = toVariablePayload(
+        { id: '0', type: 'datasource' },
+        { sources, regex: undefined, defaultDataSourceUid: sources[1].uid }
+      );
 
       reducerTester<VariablesState>()
         .givenReducer(dataSourceVariableReducer, cloneDeep(initialState))

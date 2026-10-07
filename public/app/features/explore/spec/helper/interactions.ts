@@ -89,10 +89,6 @@ export const selectOnlyActiveDataSource = async () => {
   await userEvent.click(checkbox);
 };
 
-export const starQueryHistory = async (queryIndex: number) => {
-  await invokeAction(queryIndex, 'Star query');
-};
-
 export const commentQueryHistory = async (queryIndex: number, comment: string) => {
   await invokeAction(queryIndex, 'Add comment');
   const input = withinQueryHistory().getByPlaceholderText('An optional description of what the query does.');

@@ -10,11 +10,13 @@
  *
  */
 
+export { LegacyDataSourcePicker, setDataSourcePicker } from '../components/DataSourcePicker';
 export { setPanelDataErrorView } from '../components/PanelDataErrorView';
 export { setPanelRenderer } from '../components/PanelRenderer';
 export { type PageInfoItem, setPluginPage } from '../components/PluginPage';
 
-export { ExpressionDatasourceRef } from '../utils/DataSourceWithBackend';
+export { type LegacyFeatureToggleMode } from '../utils/legacyFeatureToggles';
+export { ExpressionDatasourceRef } from '../utils/expressionRef';
 export { standardStreamOptionsProvider, toStreamingDataResponse } from '../utils/DataSourceWithBackend';
 
 export {
@@ -28,7 +30,12 @@ export {
 
 export { UserStorage, useUserStorage } from '../utils/userStorage';
 
-export { initOpenFeature, getFeatureFlagClient } from '../internal/openFeature';
+export {
+  initOpenFeature,
+  getFeatureFlagClient,
+  getLocalStorageProvider,
+  getOFREPWebProvider,
+} from '../internal/openFeature';
 export * from '../internal/openFeature/openfeature.gen';
 
 export { getAppPluginMeta, getAppPluginMetas, setAppPluginMetas } from '../services/pluginMeta/apps';
@@ -58,6 +65,7 @@ export {
   replaceCachedPromise,
   getCacheKeyFromPromise,
 } from '../utils/getCachedPromise';
+export { type JourneyStartOptions, setJourneyTracker, setJourneyRegistry } from '../services/JourneyTracker';
 export {
   getListedPanelPluginMetas,
   getPanelPluginMeta,
@@ -71,3 +79,18 @@ export { installPluginMeta, uninstallPluginMeta } from '../services/pluginMeta/p
 export { logPluginMetaError, logPluginMetaWarning } from '../services/pluginMeta/logging';
 export { refetchPluginSettings } from '../services/pluginSettings/refetchPluginSettings';
 export { invalidatePluginSettingsCache } from '../services/pluginSettings/invalidatePluginSettingsCache';
+
+export {
+  initDataSourceInstanceSettings,
+  setDataSourceInstanceSettings,
+  syncDataSourceInstanceSettings,
+} from '../services/dataSource/settings';
+export { setDataSourcePluginImporter } from '../services/dataSource/dataSource';
+// Exported so test helpers can assert a suite never resolved through the legacy fallback.
+// Delete along with the fallbacks themselves once `DataSourceSrv` is gone.
+export {
+  FALLBACK_TO_LEGACY_INSTANCE_WARNING,
+  FALLBACK_TO_LEGACY_LIST_WARNING,
+  FALLBACK_TO_LEGACY_SETTINGS_WARNING,
+} from '../services/dataSource/constants';
+export { setExpressionDataSourceInstance } from '../services/dataSource/expressionDs';

@@ -41,7 +41,7 @@ import {
  * Single source of truth for every `RuleAction → Ability` mapping.
  * Safe to call outside React.
  */
-export function getGlobalRuleAbilities(): Abilities<RuleAction> {
+function getGlobalRuleAbilities(): Abilities<RuleAction> {
   const canCreate = ctx.hasPermission(AccessControlAction.AlertingRuleCreate);
   const canRead = ctx.hasPermission(AccessControlAction.AlertingRuleRead);
   const canUpdate = ctx.hasPermission(AccessControlAction.AlertingRuleUpdate);
@@ -99,7 +99,7 @@ export function useGlobalRuleAbility(action: RuleAction): Ability {
  * Single source of truth for every `ExternalRuleAction → Ability` mapping.
  * Safe to call outside React.
  */
-export function getExternalGlobalRuleAbilities(): Abilities<ExternalRuleAction> {
+function getExternalGlobalRuleAbilities(): Abilities<ExternalRuleAction> {
   const canWrite = ctx.hasPermission(AccessControlAction.AlertingRuleExternalWrite);
   const canRead = ctx.hasPermission(AccessControlAction.AlertingRuleExternalRead);
 

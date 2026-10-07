@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import {
   type ActionModel,
@@ -20,24 +20,34 @@ import { Stack } from '../Layout/Stack/Stack';
 import { type ResponsiveProp } from '../Layout/utils/responsiveness';
 import { type AdHocFilterItem } from '../Table/TableNG/types';
 
+/** @alpha */
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
 }
 
+/** @alpha */
 export interface FilterByGroupedLabelsModel {
   onFilterForGroupedLabels?: () => void;
   onFilterOutGroupedLabels?: () => void;
 }
 
-interface VizTooltipFooterProps {
-  dataLinks: Array<LinkModel<Field>>;
+/** @alpha */
+export interface VizTooltipFooterProps {
+  /** Data links to render as clickable buttons. Defaults to an empty array. */
+  dataLinks?: Array<LinkModel<Field>>;
+  /** Actions to render as clickable buttons. */
   actions?: Array<ActionModel<Field>>;
+  /** Ad hoc filter buttons, typically used to filter dashboards by a label/value pair. */
   adHocFilters?: AdHocFilterModel[];
+  /** Controls rendering of grouped label filter buttons (filter for / filter out). */
   filterByGroupedLabels?: FilterByGroupedLabelsModel;
+  /** Callback to open the annotation editor for the hovered point. */
   annotate?: () => void;
+  /** Content rendered at the end of the footer. */
+  additionalContent?: ReactNode;
 }
 
-export const ADD_ANNOTATION_ID = 'add-annotation-button';
+const ADD_ANNOTATION_ID = 'add-annotation-button';
 
 type RenderOneClickTrans = (title: string) => React.ReactNode;
 type RenderItem<T extends LinkModel | ActionModel> = (
@@ -98,12 +108,14 @@ const renderActions = makeRenderLinksOrActions<ActionModel>(
   (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
+/** @alpha */
 export const VizTooltipFooter = ({
-  dataLinks,
+  dataLinks = [],
   actions = [],
   annotate,
   adHocFilters = [],
   filterByGroupedLabels,
+  additionalContent,
 }: VizTooltipFooterProps) => {
   const styles = useStyles2(getStyles);
   const hasOneClickLink = useMemo(() => dataLinks.some((link) => link.oneClick === true), [dataLinks]);
@@ -118,7 +130,7 @@ export const VizTooltipFooter = ({
           {adHocFilters.map((item, index) => (
             <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
               <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
-                Filter for '{{ value: item.value }}'
+                Filter for &apos;{{ value: item.value }}&apos;
               </Trans>
             </Button>
           ))}
@@ -158,6 +170,7 @@ export const VizTooltipFooter = ({
           </Button>
         </div>
       )}
+      {additionalContent}
     </div>
   );
 };

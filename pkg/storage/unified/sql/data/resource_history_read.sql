@@ -6,6 +6,7 @@ SELECT
     {{ .Ident "name" | .Into .Response.Key.Name }},
     {{ .Ident "folder" | .Into .Response.Folder }},
     {{ .Ident "resource_version" | .Into .Response.ResourceVersion }},
+    {{ .Ident "action" | .Into .Response.Action }},
     {{ .Ident "value" | .Into .Response.Value }}
 
     FROM {{ .Ident "resource_history" }}

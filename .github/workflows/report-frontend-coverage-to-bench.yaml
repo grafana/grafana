@@ -14,10 +14,25 @@ jobs:
     outputs:
       opted-in-teams: >-
         [
+          "@grafana/access-squad",
+          "@grafana/alerting-squad",
+          "@grafana/app-o11y-visualizations",
+          "@grafana/dashboards-squad",
+          "@grafana/data-sources-plugins",
           "@grafana/datapro",
           "@grafana/dataviz-squad",
+          "@grafana/grafana-app-platform-squad",
+          "@grafana/grafana-catalog",
+          "@grafana/grafana-datasources-core-services",
           "@grafana/grafana-frontend-navigation",
-          "@grafana/grafana-operator-experience-squad"
+          "@grafana/grafana-operator-experience-squad",
+          "@grafana/growth-engineering",
+          "@grafana/identity-access-team",
+          "@grafana/identity-squad",
+          "@grafana/observability-logs",
+          "@grafana/observability-metrics",
+          "@grafana/observability-traces-and-profiling",
+          "@grafana/sharing-squad"
         ]
     steps:
       - name: Define opted-in teams
@@ -88,9 +103,9 @@ jobs:
         id: bench-report
         continue-on-error: true
         env:
-          PROMETHEUS_URL: ${{ env.PROMETHEUS_URL }}
-          PROMETHEUS_USER: ${{ env.PROMETHEUS_USER }}
-          PROMETHEUS_PASSWORD: ${{ env.PROMETHEUS_TOKEN }}
+          PROMETHEUS_URL: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_URL }}
+          PROMETHEUS_USER: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_USER }}
+          PROMETHEUS_PASSWORD: ${{ fromJSON(steps.get-secrets.outputs.secrets).PROMETHEUS_TOKEN }}
         run: |
           grafana-bench report \
             --report-input jscoverage \

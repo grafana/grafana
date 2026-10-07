@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Trans, t } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 
-export type InstanceStateType = 'nodata' | 'error';
+type InstanceStateType = 'nodata' | 'error';
 
 const BANNER_CONFIG: Record<InstanceStateType, { titleKey: string; titleDefault: string; description: ReactNode }> = {
   nodata: {

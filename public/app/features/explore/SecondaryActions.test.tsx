@@ -1,6 +1,8 @@
-import { screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { noop } from 'lodash';
+
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { render } from '../../../test/test-utils';
 import { contextSrv } from '../../core/services/context_srv';
@@ -34,6 +36,9 @@ const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
 
 describe('SecondaryActions', () => {
   afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
     jest.clearAllMocks();
     jest.resetAllMocks();
   });
@@ -45,6 +50,8 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -58,10 +65,11 @@ describe('SecondaryActions', () => {
       <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
           addQueryRowButtonHidden={true}
-          richHistoryRowButtonHidden={true}
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -77,6 +85,8 @@ describe('SecondaryActions', () => {
         onClickAddQueryRowButton={noop}
         onClickQueryInspectorButton={noop}
         onSelectQueryFromLibrary={noop}
+        onSelectQueriesFromLibrary={noop}
+        onReplaceQueriesFromLibrary={noop}
       />
     );
 
@@ -93,6 +103,8 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -115,6 +127,8 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={onClickAddRow}
           onClickQueryInspectorButton={onClickQueryInspector}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueriesDrawerContextProviderMock>
     );
@@ -133,6 +147,8 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
@@ -147,10 +163,53 @@ describe('SecondaryActions', () => {
           onClickAddQueryRowButton={noop}
           onClickQueryInspectorButton={noop}
           onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
         />
       </QueryLibraryContextProviderMock>
     );
 
     expect(screen.queryByRole('button', { name: /Add from saved queries/i })).not.toBeInTheDocument();
+  });
+
+  it('should render Recent queries button when recentQueriesUI is enabled and queryLibrary is disabled', async () => {
+    setTestFlags({ 'queryHistory.recentQueriesUI': true });
+
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={false}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(await screen.findByRole('button', { name: /Recent queries/i })).toBeInTheDocument();
+    // Query history remains available as a separate entry point during the QH deprecation period.
+    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
+  });
+
+  it('should not render Recent queries button when recentQueriesUI is enabled and queryLibrary is also enabled', async () => {
+    setTestFlags({ 'queryHistory.recentQueriesUI': true });
+
+    render(
+      <QueryLibraryContextProviderMock queryLibraryEnabled={true}>
+        <SecondaryActions
+          onClickAddQueryRowButton={noop}
+          onClickQueryInspectorButton={noop}
+          onSelectQueryFromLibrary={noop}
+          onSelectQueriesFromLibrary={noop}
+          onReplaceQueriesFromLibrary={noop}
+        />
+      </QueryLibraryContextProviderMock>
+    );
+
+    expect(await screen.findByRole('button', { name: /Add from saved queries/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Recent queries/i })).not.toBeInTheDocument();
+    // Query history remains available as a separate entry point during the QH deprecation period.
+    expect(screen.getByRole('button', { name: /Query history/i })).toBeInTheDocument();
   });
 });

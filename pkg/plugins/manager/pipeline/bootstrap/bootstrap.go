@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/pluginassets"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/tracing"
-	"github.com/grafana/grafana/pkg/semconv"
 )
 
 // Bootstrapper is responsible for the Bootstrap stage of the plugin loader pipeline.
@@ -70,7 +70,7 @@ func New(cfg *config.PluginManagementCfg, opts Opts) *Bootstrap {
 func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, found *plugins.FoundBundle) ([]*plugins.Plugin, error) {
 	pluginClass := src.PluginClass(ctx)
 	ctx, span := b.tracer.Start(ctx, "bootstrap.Bootstrap", trace.WithAttributes(
-		semconv.PluginSourceClass(pluginClass),
+		pluginSourceClassAttribute(pluginClass),
 	))
 	defer span.End()
 
@@ -97,4 +97,16 @@ func (b *Bootstrap) Bootstrap(ctx context.Context, src plugins.PluginSource, fou
 	}
 
 	return bootstrappedPlugins, nil
+}
+
+// pluginSourceClassAttribute maps a plugin source class to the
+// grafana.plugin.source.class span attribute, normalizing any value other than
+// the known classes to "unknown".
+func pluginSourceClassAttribute(class plugins.Class) attribute.KeyValue {
+	switch class {
+	case plugins.ClassCore, plugins.ClassExternal:
+		return attribute.String("grafana.plugin.source.class", class.String())
+	default:
+		return attribute.String("grafana.plugin.source.class", "unknown")
+	}
 }

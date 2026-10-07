@@ -3,10 +3,10 @@ import { getAPIGroupVersions } from 'app/features/apiserver/discovery';
 
 const debugLog = createDebugLog('dashboardAPI', 'Dashboard API');
 
-export type DashboardV1Version = 'v1' | 'v1beta1';
+type DashboardV1Version = 'v1' | 'v1beta1';
 export type DashboardV2Version = 'v2' | 'v2beta1';
 
-export interface ResolvedDashboardVersions {
+interface ResolvedDashboardVersions {
   v1: DashboardV1Version;
   v2: DashboardV2Version;
 }

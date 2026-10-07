@@ -1,18 +1,19 @@
-import { v4 as uuidv4 } from 'uuid';
-
 import {
   type AdHocVariableFilter,
   DataFrameView,
   getDefaultTimeRange,
   type ScopedVars,
   type TimeRange,
+  generateUUID,
 } from '@grafana/data';
 import { QueryFormat, type SQLQuery, type SQLSelectableValue } from '@grafana/plugin-ui';
 import { type DataQuery } from '@grafana/schema';
+import { quoteIdentifierIfNecessary } from '@grafana/sql';
 
 import { dataSource } from '../ExpressionDatasource';
 
 import { interpolateSourceQueries } from './interpolateSourceQueries';
+import { SQL_EXPRESSIONS_DIALECT } from './sqlIdentifier';
 
 export interface FetchSQLFieldsOptions {
   range?: TimeRange;
@@ -30,7 +31,7 @@ export async function fetchSQLFields(
     return [];
   }
 
-  const queryString = `SELECT * FROM ${query.table} LIMIT 1`;
+  const queryString = `SELECT * FROM ${quoteIdentifierIfNecessary(query.table, SQL_EXPRESSIONS_DIALECT)} LIMIT 1`;
   const sourceQueries = queries.filter((q) => q.refId === query.table);
   const interpolatedSourceQueries = await interpolateSourceQueries(
     sourceQueries,
@@ -39,7 +40,7 @@ export async function fetchSQLFields(
   );
 
   const queryResponse = await datasource.runMetaSQLExprQuery(
-    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${uuidv4()}` },
+    { rawSql: queryString, format: QueryFormat.Table, refId: `fields-${generateUUID()}` },
     options.range ?? getDefaultTimeRange(),
     interpolatedSourceQueries
   );
@@ -50,7 +51,7 @@ export async function fetchSQLFields(
       name,
       text: name,
       label: name,
-      value: quoteIdentifierIfNecessary(name),
+      value: quoteIdentifierIfNecessary(name, SQL_EXPRESSIONS_DIALECT),
       type,
     };
   });
@@ -133,10 +134,6 @@ function mapColumnTypeToIcon(type: string) {
     default:
       return undefined;
   }
-}
-
-function quoteIdentifierIfNecessary(value: string) {
-  return /^[a-zA-Z_][a-zA-Z0-9_$]*$/g.test(value) ? value : `\`${value}\``;
 }
 
 // based off https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go

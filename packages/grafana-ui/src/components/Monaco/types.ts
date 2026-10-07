@@ -1,5 +1,5 @@
 // We use `import type` to guarantee it'll be erased from the JS and it doesnt accidently bundle monaco
-import type { EditorProps } from '@monaco-editor/react';
+import type { DiffEditorProps, EditorProps } from '@monaco-editor/react';
 import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 
 // we do not allow customizing the theme.
@@ -10,7 +10,9 @@ import type * as monacoType from 'monaco-editor/esm/vs/editor/editor.api';
 // )
 export type ReactMonacoEditorProps = Omit<EditorProps, 'theme'>;
 
-export type CodeEditorChangeHandler = (value: string) => void;
+export type ReactMonacoDiffEditorProps = Omit<DiffEditorProps, 'theme'>;
+
+type CodeEditorChangeHandler = (value: string) => void;
 export type CodeEditorSuggestionProvider = () => CodeEditorSuggestionItem[];
 
 export type { monacoType as monacoTypes };
@@ -114,7 +116,7 @@ export interface CodeEditorSuggestionItem {
  * but changing the code comments to contain the proper default values to
  * prevent the consumer of the CodeEditor to get incorrect documentation in editor.
  */
-export interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
+interface MonacoOptionsWithGrafanaDefaults extends monacoType.editor.IStandaloneEditorConstructionOptions {
   /**
    * Enable custom contextmenu.
    * Defaults to false.

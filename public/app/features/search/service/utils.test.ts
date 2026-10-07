@@ -1,8 +1,6 @@
 import { type DataFrame, FieldType } from '@grafana/data';
-import { type DashboardDataDTO } from 'app/types/dashboard';
 
-import { AnnoKeyUpdatedBy, type Resource, type ResourceList } from '../../apiserver/types';
-
+import { type DashboardQueryResult } from './types';
 import { type SearchHit } from './unified';
 import {
   appendFrame,
@@ -10,7 +8,8 @@ import {
   DELETED_BY_UNKNOWN,
   filterSearchResults,
   formatDeletedByDisplayValue,
-  resourceToSearchResult,
+  parseDeletionTimestamp,
+  queryResultToViewItem,
 } from './utils';
 
 function makeField(name: string, values: unknown[], type = FieldType.string) {
@@ -129,68 +128,33 @@ describe('appendFrame', () => {
   });
 });
 
-function makeDeletedItem(opts: { name: string; title?: string; deletedByUid?: string }): Resource<DashboardDataDTO> {
-  const annotations: Record<string, string> = {};
-  if (opts.deletedByUid !== undefined) {
-    annotations[AnnoKeyUpdatedBy] = opts.deletedByUid;
+describe('queryResultToViewItem', () => {
+  function makeQueryResult(partial?: Partial<DashboardQueryResult>): DashboardQueryResult {
+    return {
+      kind: 'dashboard',
+      name: 'A dashboard',
+      uid: 'abc',
+      url: '/d/abc',
+      panel_type: '',
+      tags: [],
+      location: '',
+      ds_uid: [],
+      score: 0,
+      explain: {},
+      ...partial,
+    };
   }
-  return {
-    apiVersion: 'dashboard.grafana.app/v1beta1',
-    kind: 'Dashboard',
-    metadata: {
-      name: opts.name,
-      resourceVersion: '1',
-      creationTimestamp: '2024-01-01T00:00:00Z',
-      deletionTimestamp: '2024-06-01T00:00:00Z',
-      annotations,
-    },
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    spec: { title: opts.title ?? opts.name, uid: opts.name } as DashboardDataDTO,
-  };
-}
 
-function makeResourceList(items: Array<Resource<DashboardDataDTO>>): ResourceList<DashboardDataDTO> {
-  return {
-    apiVersion: 'dashboard.grafana.app/v1beta1',
-    kind: 'DashboardList',
-    metadata: { resourceVersion: '0' },
-    items,
-  };
-}
+  it('carries the description through to the view item', () => {
+    const viewItem = queryResultToViewItem(makeQueryResult({ description: 'A helpful description' }));
 
-describe('resourceToSearchResult', () => {
-  it('falls back to DELETED_BY_UNKNOWN when no display map is provided', () => {
-    const list = makeResourceList([makeDeletedItem({ name: 'a', deletedByUid: 'user:alice' })]);
-
-    const [hit] = resourceToSearchResult(list);
-
-    expect(hit.field.deletedBy).toBe(DELETED_BY_UNKNOWN);
+    expect(viewItem.description).toBe('A helpful description');
   });
 
-  it('leaves field.deletedBy unset when the annotation is missing', () => {
-    const list = makeResourceList([makeDeletedItem({ name: 'a' })]);
+  it('leaves description undefined when not present', () => {
+    const viewItem = queryResultToViewItem(makeQueryResult());
 
-    const [hit] = resourceToSearchResult(list);
-
-    expect(hit.field.deletedBy).toBeUndefined();
-  });
-
-  it('resolves the UID through the display map when available', () => {
-    const list = makeResourceList([makeDeletedItem({ name: 'a', deletedByUid: 'user:alice' })]);
-    const displayMap = new Map<string, string>([['user:alice', 'Alice']]);
-
-    const [hit] = resourceToSearchResult(list, displayMap);
-
-    expect(hit.field.deletedBy).toBe('Alice');
-  });
-
-  it('uses the displayMap value verbatim (including sentinels) when mapped', () => {
-    const list = makeResourceList([makeDeletedItem({ name: 'a', deletedByUid: 'user:bob' })]);
-    const displayMap = new Map<string, string>([['user:bob', DELETED_BY_REMOVED]]);
-
-    const [hit] = resourceToSearchResult(list, displayMap);
-
-    expect(hit.field.deletedBy).toBe(DELETED_BY_REMOVED);
+    expect(viewItem.description).toBeUndefined();
   });
 });
 
@@ -209,6 +173,51 @@ describe('formatDeletedByDisplayValue', () => {
     expect(formatDeletedByDisplayValue('', t)).toBe('-');
     expect(formatDeletedByDisplayValue(undefined, t)).toBe('-');
     expect(formatDeletedByDisplayValue(null, t)).toBe('-');
+  });
+});
+
+describe('parseDeletionTimestamp', () => {
+  it('parses a timestamp', () => {
+    expect(parseDeletionTimestamp('2026-09-25T20:43:31Z')?.toISOString()).toBe('2026-09-25T20:43:31.000Z');
+  });
+
+  it('has nothing when there is no timestamp', () => {
+    expect(parseDeletionTimestamp(undefined)).toBeUndefined();
+    expect(parseDeletionTimestamp(null)).toBeUndefined();
+  });
+});
+
+describe('filterSearchResults deleted sort', () => {
+  function makeHit(title: string, deletionTimestamp?: string): SearchHit {
+    return {
+      resource: 'dashboards',
+      name: title.toLowerCase(),
+      title,
+      folder: 'general',
+      tags: [],
+      field: deletionTimestamp === undefined ? {} : { deletionTimestamp },
+      url: '',
+    };
+  }
+
+  it('sorts by deletion time in both directions', () => {
+    const hits = [
+      makeHit('A', '2026-09-25T20:43:31Z'),
+      makeHit('B', '2026-09-20T10:00:00Z'),
+      makeHit('C', '2026-09-28T08:55:21Z'),
+    ];
+
+    expect(filterSearchResults([...hits], { sort: 'deleted-asc' }).map((h) => h.title)).toEqual(['B', 'A', 'C']);
+    expect(filterSearchResults([...hits], { sort: 'deleted-desc' }).map((h) => h.title)).toEqual(['C', 'A', 'B']);
+  });
+
+  it('sends hits without a deletion time to the end in both directions', () => {
+    const hits = [makeHit('undated'), makeHit('A', '2026-09-25T20:43:31Z'), makeHit('B', '2026-09-20T10:00:00Z')];
+
+    const titles = (sort: string) => filterSearchResults([...hits], { sort }).map((h) => h.title);
+
+    expect(titles('deleted-asc')).toEqual(['B', 'A', 'undated']);
+    expect(titles('deleted-desc')).toEqual(['A', 'B', 'undated']);
   });
 });
 

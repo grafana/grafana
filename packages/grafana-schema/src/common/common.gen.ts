@@ -655,6 +655,8 @@ export enum SortOrder {
   None = 'none',
 }
 
+export type LegendOverflow = ('ellipsis' | 'wrap');
+
 /**
  * TODO docs
  */
@@ -679,11 +681,12 @@ export interface VizLegendOptions {
   displayMode?: LegendDisplayMode;
   isVisible?: boolean;
   limit?: number;
+  overflow?: LegendOverflow;
   placement: LegendPlacement;
   showLegend: boolean;
   sortBy?: string;
   sortDesc?: boolean;
-  width?: number;
+  width?: (number | string);
 }
 
 export const defaultVizLegendOptions: Partial<VizLegendOptions> = {
@@ -808,6 +811,10 @@ export interface TableColorTextCellOptions {
  * Json view cell options
  */
 export interface TableJsonViewCellOptions {
+  /**
+   * Enables syntax highlighting. Defaults to true when omitted.
+   */
+  syntaxHighlighting?: boolean;
   type: TableCellDisplayMode.JSONView;
 }
 
@@ -878,6 +885,10 @@ export type TimeZoneBrowser = 'browser';
  * Options for time comparison
  */
 export interface TimeCompareOptions {
+  /**
+   * How the tooltip delta between the current and comparison values is colored
+   */
+  colorMode?: TimeCompareColorMode;
   /**
    * Enable time comparison control
    */
@@ -1045,9 +1056,17 @@ export interface TableOptions {
     left?: number;
   };
   /**
+   * Controls whether cells overflow when hovered. Selected cells always overflow.
+   */
+  hoverOverflow?: boolean;
+  /**
    * limits the maximum height of a row, if text wrapping or dynamic height is enabled
    */
   maxRowHeight?: number;
+  /**
+   * When pagination is enabled, sets a fixed number of rows per page. When unset, the page size is derived from the panel height.
+   */
+  pageSize?: number;
   /**
    * Controls whether the panel should show the header
    */
@@ -1060,14 +1079,21 @@ export interface TableOptions {
    * Used to control row sorting
    */
   sortBy?: Array<TableSortByFieldState>;
+  /**
+   * Alternates the background color of every other row. Only applies when the
+   * `table.refreshNewFeatures` feature toggle is enabled.
+   */
+  zebraStriping?: boolean;
 }
 
 export const defaultTableOptions: Partial<TableOptions> = {
   cellHeight: TableCellHeight.Sm,
   frameIndex: 0,
+  hoverOverflow: true,
   showHeader: true,
   showTypeIcons: false,
   sortBy: [],
+  zebraStriping: false,
 };
 
 /**
@@ -1092,6 +1118,10 @@ export interface TableFieldOptions extends HideableFieldConfig {
   hideHeader?: boolean;
   inspect: boolean;
   minWidth?: number;
+  /**
+   * Controls whether the column can be sorted. Every column is sortable by default; set to false to disable sorting for this column.
+   */
+  sortable?: boolean;
   /**
    * The name of the field which contains styling overrides for this cell
    */
@@ -1131,3 +1161,13 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
+
+/**
+ * Colors the tooltip delta between the current and comparison values. "standard" colors an increase
+ * green, "inverted" colors an increase red, and "same_as_value" reuses the series color.
+ */
+export enum TimeCompareColorMode {
+  Inverted = 'inverted',
+  SameAsValue = 'same_as_value',
+  Standard = 'standard',
+}

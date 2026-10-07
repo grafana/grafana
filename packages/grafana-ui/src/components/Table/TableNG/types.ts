@@ -14,35 +14,28 @@ import {
   type FieldState,
 } from '@grafana/data';
 import { type CellRendererProps, type Column } from '@grafana/react-data-grid';
-import { type MatcherScope, type TableCellHeight, type TableFieldOptions } from '@grafana/schema';
+import { type MatcherScope, type TableCellHeight } from '@grafana/schema';
 
 import { type TableCellInspectorMode } from '../TableCellInspector';
 import { type TableCellOptions } from '../types';
 
-import { type ApplyFilterResult, type TextAlign } from './utils';
+import { type TextAlign } from './styles';
+import { type ApplyFilterResult } from './utils';
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
 
-export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
 export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
 export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
-export type TableColumnResizeActionCallback = (
-  fieldDisplayName: string,
-  width: number,
-  fieldScope?: MatcherScope
-) => void;
-export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
-export type FooterItem = Array<KeyValue<string>> | string | undefined;
+type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number, fieldScope?: MatcherScope) => void;
+type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
+type TableDisplayedRowIndicesCallback = (rowIndices: number[]) => void;
+type FooterItem = Array<KeyValue<string>> | string | undefined;
 
-export type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
+type GetActionsFunction = (frame: DataFrame, field: Field, rowIndex: number) => ActionModel[];
 
 export type GetActionsFunctionLocal = (field: Field, rowIndex: number) => ActionModel[];
-
-export type TableFieldOptionsType = Omit<TableFieldOptions, 'cellOptions'> & {
-  cellOptions: TableCellOptions;
-  headerComponent?: React.ComponentType<CustomHeaderRendererProps>;
-};
 
 export enum FilterOperator {
   CONTAINS = 'Contains',
@@ -79,7 +72,7 @@ export interface TableColumn extends Column<TableRow, TableSummaryRow> {
 }
 
 // Possible values for table cells based on field types
-export type TableCellValue =
+type TableCellValue =
   | string // FieldType.string, FieldType.enum
   | number // FieldType.number
   | boolean // FieldType.boolean
@@ -103,20 +96,6 @@ export interface TableRow {
   [columnName: string]: TableCellValue;
 }
 
-export interface CustomCellRendererProps {
-  field: Field;
-  rowIndex: number;
-  frame: DataFrame;
-  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
-  // types could be propagated here.
-  value: unknown;
-}
-
-export interface CustomHeaderRendererProps {
-  field: Field;
-  defaultContent: React.ReactNode;
-}
-
 export interface TableSortByFieldState {
   displayName: string;
   desc?: boolean;
@@ -129,7 +108,7 @@ export interface TableSortByFieldState {
  */
 export type SortByBehavior = 'initial' | 'managed';
 
-export interface BaseTableProps {
+interface BaseTableProps {
   ariaLabel?: string;
   data: DataFrame;
   width: number;
@@ -144,14 +123,26 @@ export interface BaseTableProps {
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
+  /**
+   * Called when the filtered + sorted row order changes. Values are original
+   * frame indexes (`TableRow.__index`), not the current page slice.
+   */
+  onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
   onCellFilterAdded?: TableFilterActionCallback;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
+  /** When pagination is enabled, fixes the number of rows per page instead of deriving it from the panel height. */
+  pageSize?: number;
   cellHeight?: TableCellHeight;
   maxRowHeight?: number;
   structureRev?: number;
   transparent?: boolean;
+  /**
+   * Set by callers whose surrounding panel renders without padding, so the table can indent the
+   * first column's content back into line with the panel title.
+   */
+  noPanelPadding?: boolean;
   /* message to show when no rows are present */
   noValue?: string;
   /** used by SparklineCell when provided */
@@ -161,12 +152,32 @@ export interface BaseTableProps {
   initialRowIndex?: number;
   fieldConfig?: FieldConfigSource;
   getActions?: GetActionsFunction;
-  // Used solely for testing as RTL can't correctly render the table otherwise
+  /**
+   * Renders every row into the DOM instead of only the visible window. Needed when the
+   * table is captured as a static image (PDF reporting) rather than scrolled by a user.
+   */
   enableVirtualization?: boolean;
   // for MarkdownCell, this flag disables sanitization of HTML content. Configured via config.ini.
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // controls whether cells overflow when hovered. Selected cells always overflow.
+  hoverOverflow?: boolean;
+  // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
+  contentAwareWidthsEnabled?: boolean;
+  /**
+   * Set by callers that would rather see a column's content truncated than have the table scroll
+   * sideways — a table embedded in a fixed layout, where a horizontal scrollbar hides columns the
+   * surrounding UI has already reserved room for. Auto columns are then levelled down to fit the
+   * available width, widest first, instead of keeping their content width. Only affects
+   * content-aware widths (`contentAwareWidthsEnabled`).
+   */
+  preventHorizontalOverflow?: boolean;
+  // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
+  tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -175,6 +186,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -200,6 +212,7 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
@@ -281,6 +294,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  hoverOverflow: boolean;
   maxHeight?: number;
 }
 
@@ -301,11 +315,6 @@ export interface NestedRowEntry {
 // Type for mapping column names to their field types
 export type ColumnTypes = Record<string, FieldType>;
 
-export interface ScrollPosition {
-  x: number;
-  y: number;
-}
-
 export interface TypographyCtx {
   ctx: CanvasRenderingContext2D;
   fontFamily: string;
@@ -313,6 +322,13 @@ export interface TypographyCtx {
   avgCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
+  /**
+   * The narrowest width at which the line counter keeps a string on one line — see
+   * `createTypographyContext`. Anything that sizes a column so its text fits has to measure with
+   * this rather than with `ctx.measureText`, or the counter and the sizing disagree about the same
+   * string and the row reserves a line the browser doesn't draw.
+   */
+  measureWidth: (text: string) => number;
 }
 
 export type MeasureCellHeight = (

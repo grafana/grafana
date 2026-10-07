@@ -110,11 +110,7 @@ func (api *AnonDeviceServiceAPI) SearchDevices(c *contextmodel.ReqContext) respo
 	if perPage <= 0 {
 		perPage = 100
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	searchQuery := c.Query("query")
 

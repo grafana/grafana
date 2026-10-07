@@ -13,7 +13,7 @@ export interface ContentOutlineItemContextProps extends ContentOutlineItemBasePr
 
 type RegisterFunction = (outlineItem: SetOptional<ContentOutlineItemContextProps, 'id'>) => string;
 
-export interface ContentOutlineContextProps {
+interface ContentOutlineContextProps {
   outlineItems: ContentOutlineItemContextProps[];
   register: RegisterFunction;
   unregister: (id: string) => void;
@@ -38,7 +38,7 @@ interface ParentlessItems {
   [panelId: string]: ContentOutlineItemContextProps[];
 }
 
-export const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
+const ContentOutlineContext = createContext<ContentOutlineContextProps | undefined>(undefined);
 
 export function ContentOutlineContextProvider({ children, refreshDependencies }: ContentOutlineContextProviderProps) {
   const [outlineItems, setOutlineItems] = useState<ContentOutlineItemContextProps[]>([]);

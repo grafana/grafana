@@ -1,5 +1,3 @@
-import { type ScopeDashboardBinding } from '@grafana/data';
-
 // TODO: replace with generate API client types
 export interface ScopeNavigationSpec {
   url: string;
@@ -10,7 +8,7 @@ export interface ScopeNavigationSpec {
   disableSubScopeSelection?: boolean;
 }
 
-export interface ScopeNavigationStatus {
+interface ScopeNavigationStatus {
   title: string;
   groups?: string[];
 }
@@ -23,13 +21,7 @@ export interface ScopeNavigation {
   status: ScopeNavigationStatus;
 }
 
-export interface SuggestedDashboard {
-  dashboard: string;
-  dashboardTitle: string;
-  items: ScopeDashboardBinding[];
-}
-
-export interface SuggestedNavigation {
+interface SuggestedNavigation {
   title: string;
   url: string;
   // Used for testid and keys

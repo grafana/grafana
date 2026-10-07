@@ -13,14 +13,13 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
 
-import { autoColor } from '../../Theme';
 import {
   type TUpdateViewRangeTimeFunction,
   type ViewRangeTimeUpdate,
@@ -34,7 +33,7 @@ import { type DraggableBounds, type DraggingUpdate } from '../../utils/Draggable
 import GraphTicks from './GraphTicks';
 import Scrubber from './Scrubber';
 
-export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   // Need this cause emotion will merge emotion generated classes into single className if used with cx from emotion
   // package and the selector won't work
   const ViewingLayerResetZoomHoverClassName = 'JaegerUiComponents__ViewingLayerResetZoomHoverClassName';
@@ -59,7 +58,10 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerGraph: css({
       label: 'ViewingLayerGraph',
-      border: `1px solid ${autoColor(theme, '#999')}`,
+      // The canvas behind this matches the panel, so this border is the only thing
+      // marking out the minimap — it needs more contrast than a hairline divider.
+      border: `1px solid ${theme.colors.border.strong}`,
+      borderRadius: theme.shape.radius.default,
       /* need !important here to overcome something from semantic UI */
       overflow: 'visible !important',
       position: 'relative',
@@ -68,11 +70,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerInactive: css({
       label: 'ViewingLayerInactive',
-      fill: autoColor(theme, 'rgba(214, 214, 214, 0.5)'),
+      fill: theme.colors.action.hover,
     }),
     ViewingLayerCursorGuide: css({
       label: 'ViewingLayerCursorGuide',
-      stroke: autoColor(theme, '#f44'),
+      stroke: theme.colors.error.main,
       strokeWidth: 1,
     }),
     ViewingLayerDraggedShift: css({
@@ -81,7 +83,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     }),
     ViewingLayerDrag: css({
       label: 'ViewingLayerDrag',
-      fill: autoColor(theme, '#44f'),
+      fill: theme.colors.accent.main,
     }),
     ViewingLayerFullOverlay: css({
       label: 'ViewingLayerFullOverlay',
@@ -117,7 +119,7 @@ type ViewingLayerState = {
 /**
  * Designate the tags for the different dragging managers. Exported for tests.
  */
-export const dragTypes = {
+const dragTypes = {
   /**
    * Tag for dragging the right scrubber, e.g. end of the current view range.
    */
@@ -152,7 +154,7 @@ function getNextViewLayout(start: number, position: number) {
  * `ViewingLayer` is rendered on top of the Canvas rendering of the minimap and
  * handles showing the current view range and handles mouse UX for modifying it.
  */
-export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
+class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps, ViewingLayerState> {
   state: ViewingLayerState;
 
   _root: Element | TNil;

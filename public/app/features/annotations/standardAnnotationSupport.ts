@@ -57,7 +57,7 @@ export const standardAnnotationSupport: AnnotationSupport = {
  * Flatten all frames into a single frame with mergeTransformer.
  */
 
-export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
+function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
   return (source) =>
     source.pipe(
       mergeMap((data) => {
@@ -146,7 +146,7 @@ export const getAnnotationEventNames: () => AnnotationFieldInfo[] = () => [
   },
 ];
 
-export const publicDashboardEventNames: AnnotationFieldInfo[] = [
+const publicDashboardEventNames: AnnotationFieldInfo[] = [
   {
     key: 'color',
   },
@@ -263,6 +263,10 @@ export function getAnnotationsFromData(
           if (v !== null && v !== undefined) {
             if (f.split && typeof v === 'string') {
               v = v.split(',');
+            }
+            // a legacy id of 0 marks a read-only annotation (e.g. loki-sourced alerts); "0" would be truthy and enable edit/delete
+            if (f.key === 'id' && v !== 0) {
+              v = String(v);
             }
             anno[f.key] = v;
           }

@@ -195,7 +195,7 @@ function createGrafanaRuleViewLink(ruleDefinition: GrafanaRuleDefinition): strin
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     padding: theme.spacing(1),
   }),

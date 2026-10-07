@@ -115,7 +115,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
 
 const isKeyAllowed = (labelKey: string) => !isPrivateLabelKey(labelKey);
 
-export function useCombinedLabels(
+function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
   loadingLabelsPlugin: boolean,
@@ -325,7 +325,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   );
 }
 
-export const LabelsWithoutSuggestions: FC = () => {
+const LabelsWithoutSuggestions: FC = () => {
   const styles = useStyles2(getStyles);
   const {
     register,

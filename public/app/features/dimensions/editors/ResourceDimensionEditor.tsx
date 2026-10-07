@@ -148,7 +148,7 @@ export const ResourceDimensionEditor = (
   );
 };
 
-export function niceName(value?: string): string | undefined {
+function niceName(value?: string): string | undefined {
   if (!value) {
     return undefined;
   }

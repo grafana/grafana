@@ -271,6 +271,7 @@ describe('pluginImporter', () => {
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
+        pluginMeta: { ...appPlugin },
         configs: [{}],
       });
       expect(addedLinksRegistry.register).toHaveBeenCalledWith({
@@ -332,6 +333,7 @@ describe('pluginImporter', () => {
       expect(setComponentsFromLegacyExports).toHaveBeenCalledWith({ ...plugin });
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
+        pluginMeta: { ...meta },
         configs: [{}],
       });
       expect(addedLinksRegistry.register).toHaveBeenCalledWith({
@@ -377,6 +379,7 @@ describe('pluginImporter', () => {
 
       expect(addedComponentsRegistry.register).toHaveBeenCalledWith({
         pluginId: 'test-plugin',
+        pluginMeta: { ...appPlugin },
         configs: [],
       });
       expect(addedLinksRegistry.register).toHaveBeenCalledWith({

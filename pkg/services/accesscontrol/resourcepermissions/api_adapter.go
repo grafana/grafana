@@ -9,25 +9,27 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/grafana/authlib/types"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/util/retry"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
+	"github.com/grafana/authlib/types"
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,11 +40,19 @@ var ErrRestConfigNotAvailable = errors.New("k8s rest config provider not availab
 const subjectKindUser = "User"
 
 func (a *api) getDynamicClient(c *contextmodel.ReqContext) (dynamic.Interface, error) {
-	if a.restConfigProvider == nil {
+	return newDynamicClient(a.restConfigProvider, c)
+}
+
+// newDynamicClient builds a K8s dynamic client from the direct (loopback) rest
+// config. It's a package helper rather than a method so both the HTTP handlers
+// (via api.getDynamicClient) and the service methods invoked by direct in-process
+// callers can reach the K8s APIs without one layer reaching into the other.
+func newDynamicClient(restConfigProvider apiserver.DirectRestConfigProvider, c *contextmodel.ReqContext) (dynamic.Interface, error) {
+	if restConfigProvider == nil {
 		return nil, ErrRestConfigNotAvailable
 	}
 
-	dynamicClient, err := dynamic.NewForConfig(a.restConfigProvider.GetDirectRestConfig(c))
+	dynamicClient, err := dynamic.NewForConfig(restConfigProvider.GetDirectRestConfig(c))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dynamic client: %w", err)
 	}
@@ -57,7 +67,10 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 		return nil, err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return nil, err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 	unstructuredObj, err := resourcePermResource.Get(ctx, resourcePermName, metav1.GetOptions{})
 
@@ -73,7 +86,7 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 			return nil, fmt.Errorf("failed to convert to typed resource permission: %w", err)
 		}
 
-		directDTO, err := a.convertK8sResourcePermissionToDTO(&resourcePerm, namespace, false)
+		directDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &resourcePerm, namespace, false)
 		if err != nil {
 			return nil, err
 		}
@@ -114,15 +127,29 @@ func (a *api) getResourcePermissionsFromK8s(c *contextmodel.ReqContext, namespac
 	return dto, nil
 }
 
-func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
+func (a *api) convertK8sResourcePermissionToDTO(ctx context.Context, resourcePerm *iamv0.ResourcePermission, namespace string, isInherited bool) (getResourcePermissionsResponse, error) {
 	namespaceInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse namespace %q: %w", namespace, err)
 	}
 	orgID := namespaceInfo.OrgID
 
+	// Resolve subject names with a service identity: the caller is already authorized
+	// to read this resource's permissions but may lack users:read (e.g. an editor),
+	// which would otherwise leave the subject unnamed. Use the resource namespace
+	// because team search selects its index from the requester's namespace.
+	lookupCtx, serviceIdentity := identity.WithServiceIdentity(ctx, orgID, func(requester *identity.StaticRequester) {
+		requester.Namespace = namespaceInfo.Value
+	})
+
 	permissions := resourcePerm.Spec.Permissions
 	dto := make(getResourcePermissionsResponse, 0, len(permissions))
+	scope := accesscontrol.Scope(a.service.scopeResource(), a.service.options.ResourceAttribute, resourcePerm.Spec.Resource.Name)
+
+	subjects, err := a.resolveSubjects(lookupCtx, serviceIdentity, orgID, scope, permissions)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, perm := range permissions {
 		kind := perm.Kind
@@ -153,43 +180,198 @@ func (a *api) convertK8sResourcePermissionToDTO(resourcePerm *iamv0.ResourcePerm
 		}
 
 		switch kind {
-		case iamv0.ResourcePermissionSpecPermissionKindUser, iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
-			userDetails, err := a.service.userService.GetByUID(context.Background(), &user.GetUserByUIDQuery{UID: name})
-			if err == nil {
-				permDTO.UserID = userDetails.ID
-				permDTO.UserUID = userDetails.UID
-				permDTO.UserLogin = userDetails.Login
-				permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
-				permDTO.IsServiceAccount = userDetails.IsServiceAccount
-				permDTO.RoleName = fmt.Sprintf("managed:users:%d:permissions", userDetails.ID)
-				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+		case iamv0.ResourcePermissionSpecPermissionKindUser:
+			userDetails, ok := subjects.users[name]
+			if !ok {
+				// The subject was deleted, so the assignment is stale. The
+				// legacy read path omits these through its INNER JOIN on the
+				// user table, and an entry with no subject claims someone has
+				// access without saying who.
+				continue
 			}
+			permDTO.UserID = userDetails.ID
+			permDTO.UserUID = userDetails.UID
+			permDTO.UserLogin = userDetails.Login
+			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, userDetails.Email)
+			permDTO.RoleName = userManagedRoleName(userDetails.ID)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
+		case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+			serviceAccount, ok := subjects.serviceAccounts[name]
+			if !ok {
+				// The subject was deleted, so the assignment is stale. The
+				// legacy read path omits these through its INNER JOIN on the
+				// user table, and an entry with no subject claims someone has
+				// access without saying who.
+				continue
+			}
+			permDTO.UserID = serviceAccount.Id
+			permDTO.UserUID = serviceAccount.UID
+			permDTO.UserLogin = serviceAccount.Login
+			permDTO.UserAvatarUrl = dtos.GetGravatarUrl(a.cfg, "")
+			permDTO.IsServiceAccount = true
+			permDTO.RoleName = userManagedRoleName(serviceAccount.Id)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindTeam:
-			teamDetails, err := a.service.teamService.GetTeamByID(context.Background(), &team.GetTeamByIDQuery{
-				UID:   name,
-				OrgID: orgID,
-			})
-			if err == nil {
-				permDTO.Team = teamDetails.Name
-				permDTO.TeamID = teamDetails.ID
-				permDTO.TeamUID = teamDetails.UID
-				permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
-				permDTO.RoleName = fmt.Sprintf("managed:teams:%d:permissions", teamDetails.ID)
-				permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
-			} else {
-				permDTO.TeamUID = name
-				permDTO.Team = name
+			teamDetails, ok := subjects.teams[name]
+			if !ok {
+				continue
 			}
+			permDTO.Team = teamDetails.Name
+			permDTO.TeamID = teamDetails.ID
+			permDTO.TeamUID = teamDetails.UID
+			permDTO.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(a.cfg, teamDetails.Email, teamDetails.Name)
+			permDTO.RoleName = teamManagedRoleName(teamDetails.ID)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
 			permDTO.BuiltInRole = name
-			permDTO.RoleName = fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(name))
-			permDTO.ID = a.getRoleIDFromK8sObject(permDTO.RoleName, orgID)
+			permDTO.RoleName = basicRoleManagedRoleName(name)
+			permDTO.ID = subjects.permissionIDs[permDTO.RoleName]
 		}
 
 		dto = append(dto, permDTO)
 	}
 
 	return dto, nil
+}
+
+func userManagedRoleName(userID int64) string {
+	return fmt.Sprintf("managed:users:%d:permissions", userID)
+}
+
+func teamManagedRoleName(teamID int64) string {
+	return fmt.Sprintf("managed:teams:%d:permissions", teamID)
+}
+
+func basicRoleManagedRoleName(role string) string {
+	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(role))
+}
+
+// resolvedSubjects holds everything convertK8sResourcePermissionToDTO needs to
+// name a subject and attach its managed-role permission ID. A missing key means
+// the subject no longer exists and its assignment is dropped; a lookup that
+// failed is an error, not a missing key, so the two cannot be confused.
+type resolvedSubjects struct {
+	users           map[string]*user.User
+	serviceAccounts map[string]*serviceaccounts.ServiceAccountProfileDTO
+	teams           map[string]*team.TeamDTO
+	permissionIDs   map[string]int64
+}
+
+// teamBatchSize matches the searchTeams endpoint's maximum number of uid
+// filters. This is tighter than the endpoint's general list limit.
+const teamBatchSize = 100
+
+// resolveSubjects looks up the subjects of a whole ResourcePermission spec up
+// front. Resolving per entry cost two queries per assignment — an identity
+// lookup and a permission-ID lookup — so a folder with several hundred
+// assignments issued that many serial round trips, repeated for every ancestor
+// folder in the inheritance chain.
+//
+// requester must be the service identity the caller built, because SearchTeams
+// filters on teams:read, which that identity holds with a wildcard scope.
+//
+// A failed batch is returned as an error rather than logged. Batching widened
+// the blast radius: where a per-entry failure cost one subject its details, a
+// failed batch costs every subject of that kind, and silently answering with a
+// response full of unnamed assignments is worse than failing the request.
+func (a *api) resolveSubjects(ctx context.Context, requester identity.Requester, orgID int64, scope string, permissions []iamv0.ResourcePermissionspecPermission) (*resolvedSubjects, error) {
+	subjects := &resolvedSubjects{
+		users:           make(map[string]*user.User),
+		serviceAccounts: make(map[string]*serviceaccounts.ServiceAccountProfileDTO),
+		teams:           make(map[string]*team.TeamDTO),
+		permissionIDs:   make(map[string]int64),
+	}
+
+	userUIDs := make([]string, 0, len(permissions))
+	serviceAccountUIDs := make([]string, 0, len(permissions))
+	teamUIDs := make([]string, 0, len(permissions))
+	roleNames := make([]string, 0, len(permissions))
+	seenUser := make(map[string]struct{}, len(permissions))
+	seenServiceAccount := make(map[string]struct{})
+	seenTeam := make(map[string]struct{})
+
+	for _, perm := range permissions {
+		if perm.Name == "" || perm.Verb == "" {
+			continue
+		}
+
+		switch perm.Kind {
+		case iamv0.ResourcePermissionSpecPermissionKindUser:
+			if _, ok := seenUser[perm.Name]; ok {
+				continue
+			}
+			seenUser[perm.Name] = struct{}{}
+			userUIDs = append(userUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindServiceAccount:
+			if _, ok := seenServiceAccount[perm.Name]; ok {
+				continue
+			}
+			seenServiceAccount[perm.Name] = struct{}{}
+			serviceAccountUIDs = append(serviceAccountUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindTeam:
+			if _, ok := seenTeam[perm.Name]; ok {
+				continue
+			}
+			seenTeam[perm.Name] = struct{}{}
+			teamUIDs = append(teamUIDs, perm.Name)
+		case iamv0.ResourcePermissionSpecPermissionKindBasicRole:
+			roleNames = append(roleNames, basicRoleManagedRoleName(perm.Name))
+		}
+	}
+
+	if len(userUIDs) > 0 {
+		users, err := a.service.userService.ListByIdOrUID(ctx, userUIDs, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %d users for resource permissions: %w", len(userUIDs), err)
+		}
+		for _, u := range users {
+			subjects.users[u.UID] = u
+			roleNames = append(roleNames, userManagedRoleName(u.ID))
+		}
+	}
+
+	if len(serviceAccountUIDs) > 0 {
+		if a.service.serviceAccountRetriever == nil {
+			return nil, errors.New("service account retriever is not configured")
+		}
+		serviceAccounts, err := a.service.serviceAccountRetriever.RetrieveServiceAccountsByUIDs(ctx, orgID, serviceAccountUIDs)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %d service accounts for resource permissions: %w", len(serviceAccountUIDs), err)
+		}
+		for _, serviceAccount := range serviceAccounts {
+			subjects.serviceAccounts[serviceAccount.UID] = serviceAccount
+			roleNames = append(roleNames, userManagedRoleName(serviceAccount.Id))
+		}
+	}
+
+	for chunk := range slices.Chunk(teamUIDs, teamBatchSize) {
+		res, err := a.service.teamService.SearchTeams(ctx, &team.SearchTeamsQuery{
+			OrgID:        orgID,
+			UIDs:         chunk,
+			SignedInUser: requester,
+			Limit:        len(chunk),
+			// SearchTeams uses one-based page numbers. Page 1 selects the first
+			// page in both the legacy and Kubernetes-backed implementations.
+			Page: 1,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve %d teams for resource permissions: %w", len(chunk), err)
+		}
+		for _, teamDetails := range res.Teams {
+			subjects.teams[teamDetails.UID] = teamDetails
+			roleNames = append(roleNames, teamManagedRoleName(teamDetails.ID))
+		}
+	}
+
+	if len(roleNames) > 0 && a.service.store != nil {
+		permissionIDs, err := a.service.store.GetPermissionIDsByRoleNames(ctx, orgID, scope, roleNames)
+		if err != nil {
+			return nil, fmt.Errorf("failed to resolve permission IDs for %d managed roles: %w", len(roleNames), err)
+		}
+		subjects.permissionIDs = permissionIDs
+	}
+
+	return subjects, nil
 }
 
 func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
@@ -206,11 +388,12 @@ func (a *api) getRoleIDFromK8sObject(roleName string, orgID int64) int64 {
 	return permissionID
 }
 
-func (a *api) getAPIGroup() string {
-	if a.service.options.APIGroup != "" {
-		return a.service.options.APIGroup
+func (a *api) getAPIGroup() (string, error) {
+	if a.service.options.APIGroup == "" {
+		return "", fmt.Errorf("APIGroup is not configured for resource %q", a.service.options.Resource)
 	}
-	return fmt.Sprintf("%s.grafana.app", a.service.options.Resource)
+
+	return a.service.options.APIGroup, nil
 }
 
 func getMapKeys(m map[string][]string) []string {
@@ -246,6 +429,11 @@ func (a *api) GetInheritedPermissions(ctx context.Context, namespace string, res
 // getFolderHierarchyPermissions gets permissions from a folder and all its parents
 // skipSelf: if true, skips the permissions of the folder itself (used for folders to avoid inheriting their own permissions)
 func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace string, folderUID string, dynamicClient dynamic.Interface, skipSelf bool) (getResourcePermissionsResponse, error) {
+	// Read inherited permissions with a service identity: the caller is authorized to read this
+	// resource's permissions but may lack permissions:read on ancestor folders, which would otherwise
+	// drop inherited assignments. Mirrors the subject lookup in convertK8sResourcePermissionToDTO.
+	ctx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, namespace)
+
 	foldersGVR := schema.GroupVersionResource{
 		Group:    folderv1.APIGroup,
 		Version:  folderv1.APIVersion,
@@ -297,7 +485,7 @@ func (a *api) getFolderHierarchyPermissions(ctx context.Context, namespace strin
 			continue
 		}
 
-		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(&parentResourcePerm, namespace, true)
+		inheritedDTO, err := a.convertK8sResourcePermissionToDTO(ctx, &parentResourcePerm, namespace, true)
 		if err != nil {
 			a.logger.Warn("Failed to convert parent folder permissions to DTO", "error", err, "parentFolder", parentFolder.Name)
 			continue
@@ -385,93 +573,153 @@ func resourceNameFromRequest(r *http.Request, resourceID string) string {
 	return resourceID
 }
 
-func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) string {
-	return fmt.Sprintf("%s-%s-%s", a.getAPIGroup(), a.service.options.Resource, resourceNameFromRequest(r, resourceID))
+func (a *api) buildResourcePermissionName(r *http.Request, resourceID string) (string, error) {
+	apiGroup, err := a.getAPIGroup()
+	if err != nil {
+		return "", err
+	}
+
+	return fmt.Sprintf("%s-%s-%s", apiGroup, a.service.options.Resource, resourceNameFromRequest(r, resourceID)), nil
 }
 
 // Write operations
 
 func (a *api) setResourcePermissionsToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, permissions []accesscontrol.SetResourcePermissionCommand) error {
+	if len(permissions) == 0 {
+		return nil
+	}
+
 	ctx := c.Req.Context()
+	type permissionChange struct {
+		kind       iamv0.ResourcePermissionSpecPermissionKind
+		name       string
+		permission string
+	}
+	changes := make([]permissionChange, 0, len(permissions))
+	for _, perm := range permissions {
+		kind, name, err := a.getPermissionSubject(ctx, c.GetOrgID(), perm)
+		if err != nil {
+			return fmt.Errorf("failed to get permission subject: %w", err)
+		}
+		changes = append(changes, permissionChange{
+			kind:       kind,
+			name:       name,
+			permission: perm.Permission,
+		})
+	}
+
 	dynamicClient, err := a.getDynamicClient(c)
 	if err != nil {
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
-	_, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
+	apiGroup, err := a.getAPIGroup()
 	if err != nil {
 		return err
 	}
 
-	k8sPermissions := make([]iamv0.ResourcePermissionspecPermission, 0, len(permissions))
-
-	for _, perm := range permissions {
-		if perm.Permission == "" {
-			continue
-		}
-
-		kind := a.getPermissionKind(perm)
-		name, err := a.getPermissionName(ctx, perm)
+	// The legacy endpoint applies commands incrementally, while the K8s object
+	// replaces its permissions slice. Re-read on conflicts so this translation
+	// preserves both the legacy contract and concurrent writers' changes.
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		existingResourcePerm, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
 		if err != nil {
-			return fmt.Errorf("failed to get permission name: %w", err)
+			return err
 		}
 
-		k8sPermissions = append(k8sPermissions, iamv0.ResourcePermissionspecPermission{
-			Kind: iamv0.ResourcePermissionSpecPermissionKind(kind),
-			Name: name,
-			Verb: cases.Lower(language.Und).String(perm.Permission),
-		})
-	}
+		k8sPermissions := slices.Clone(existingResourcePerm.Spec.Permissions)
+		changed := false
+		for _, change := range changes {
+			idx := slices.IndexFunc(k8sPermissions, func(existing iamv0.ResourcePermissionspecPermission) bool {
+				return existing.Kind == change.kind && existing.Name == change.name
+			})
+			if change.permission == "" {
+				if idx >= 0 {
+					k8sPermissions = slices.Delete(k8sPermissions, idx, idx+1)
+					changed = true
+				}
+				continue
+			}
 
-	if len(k8sPermissions) == 0 {
-		if existingResourceVersion != "" {
-			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{})
+			updatedPermission := iamv0.ResourcePermissionspecPermission{
+				Kind: change.kind,
+				Name: change.name,
+				Verb: cases.Lower(language.Und).String(change.permission),
+			}
+			if idx >= 0 {
+				if k8sPermissions[idx] != updatedPermission {
+					k8sPermissions[idx] = updatedPermission
+					changed = true
+				}
+			} else {
+				k8sPermissions = append(k8sPermissions, updatedPermission)
+				changed = true
+			}
+		}
+
+		if !changed {
+			return nil
+		}
+
+		if len(k8sPermissions) == 0 {
+			if existingResourceVersion == "" {
+				return nil
+			}
+			err = resourcePermResource.Delete(ctx, resourcePermName, metav1.DeleteOptions{
+				Preconditions: &metav1.Preconditions{ResourceVersion: &existingResourceVersion},
+			})
 			if err != nil && !k8serrors.IsNotFound(err) {
 				return fmt.Errorf("failed to delete resource permission in k8s: %w", err)
 			}
+			return nil
 		}
-		return nil
-	}
 
-	resourcePerm := &iamv0.ResourcePermission{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
-			Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            resourcePermName,
-			Namespace:       namespace,
-			ResourceVersion: existingResourceVersion,
-		},
-		Spec: iamv0.ResourcePermissionSpec{
-			Resource: iamv0.ResourcePermissionspecResource{
-				ApiGroup: a.getAPIGroup(),
-				Resource: a.service.options.Resource,
-				Name:     resourceNameFromRequest(c.Req, resourceID),
-			},
-			Permissions: k8sPermissions,
-		},
-	}
+		resourcePerm := existingResourcePerm.DeepCopy()
+		if existingResourceVersion == "" {
+			resourcePerm = &iamv0.ResourcePermission{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
+					Kind:       iamv0.ResourcePermissionInfo.TypeMeta().Kind,
+				},
+				ObjectMeta: metav1.ObjectMeta{Name: resourcePermName, Namespace: namespace},
+				Spec: iamv0.ResourcePermissionSpec{
+					Resource: iamv0.ResourcePermissionspecResource{
+						ApiGroup: apiGroup,
+						Resource: a.service.options.Resource,
+						Name:     resourceNameFromRequest(c.Req, resourceID),
+					},
+				},
+			}
+		}
+		resourcePerm.Spec.Permissions = k8sPermissions
 
-	return a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
+		err = a.createOrUpdateResourcePermission(ctx, resourcePermResource, resourcePerm, existingResourceVersion != "")
+		if k8serrors.IsAlreadyExists(err) {
+			return k8serrors.NewConflict(iamv0.ResourcePermissionInfo.GroupResource(), resourcePermName, err)
+		}
+		return err
+	})
 }
 
 func (a *api) setUserPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
 	ctx := c.Req.Context()
-	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	kind, name, err := a.getPermissionSubject(ctx, c.GetOrgID(), accesscontrol.SetResourcePermissionCommand{UserID: userID})
 	if err != nil {
-		return fmt.Errorf("failed to get user details: %w", err)
+		return fmt.Errorf("failed to get user permission subject: %w", err)
 	}
 
-	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(iamv0.ResourcePermissionSpecPermissionKindUser), userDetails.UID, permission)
+	return a.setSinglePermissionToK8s(c, namespace, resourceID, string(kind), name, permission)
 }
 
 func (a *api) setTeamPermissionToK8s(c *contextmodel.ReqContext, namespace string, resourceID string, teamID int64, permission string) error {
 	ctx := c.Req.Context()
-	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{ID: teamID})
+	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: c.GetOrgID(), ID: teamID})
 	if err != nil {
 		return fmt.Errorf("failed to get team details: %w", err)
 	}
@@ -490,7 +738,10 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		return err
 	}
 
-	resourcePermName := a.buildResourcePermissionName(c.Req, resourceID)
+	resourcePermName, err := a.buildResourcePermissionName(c.Req, resourceID)
+	if err != nil {
+		return err
+	}
 	resourcePermResource := dynamicClient.Resource(iamv0.ResourcePermissionInfo.GroupVersionResource()).Namespace(namespace)
 
 	existingResourcePerm, existingResourceVersion, err := a.getExistingResourcePermission(ctx, resourcePermResource, resourcePermName)
@@ -524,6 +775,11 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		return nil
 	}
 
+	apiGroup, err := a.getAPIGroup()
+	if err != nil {
+		return err
+	}
+
 	resourcePerm := &iamv0.ResourcePermission{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: iamv0.ResourcePermissionInfo.GroupVersion().String(),
@@ -536,7 +792,7 @@ func (a *api) setSinglePermissionToK8s(c *contextmodel.ReqContext, namespace str
 		},
 		Spec: iamv0.ResourcePermissionSpec{
 			Resource: iamv0.ResourcePermissionspecResource{
-				ApiGroup: a.getAPIGroup(),
+				ApiGroup: apiGroup,
 				Resource: a.service.options.Resource,
 				Name:     resourceNameFromRequest(c.Req, resourceID),
 			},
@@ -599,27 +855,36 @@ func (a *api) createOrUpdateResourcePermission(ctx context.Context, resourcePerm
 	return nil
 }
 
-func (a *api) getPermissionName(ctx context.Context, perm accesscontrol.SetResourcePermissionCommand) (string, error) {
+func (a *api) getPermissionSubject(ctx context.Context, orgID int64, perm accesscontrol.SetResourcePermissionCommand) (iamv0.ResourcePermissionSpecPermissionKind, string, error) {
+	kind := iamv0.ResourcePermissionSpecPermissionKind(a.getPermissionKind(perm))
 	if perm.UserID != 0 {
-		userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: perm.UserID})
+		userDetails, err := a.service.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
+			OrgID:          orgID,
+			UserID:         perm.UserID,
+			SkipTeamLookup: true,
+		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
+			return "", "", fmt.Errorf("failed to get user details for user ID %d: %w", perm.UserID, err)
 		}
-		return userDetails.UID, nil
+		if userDetails.IsServiceAccount {
+			kind = iamv0.ResourcePermissionSpecPermissionKindServiceAccount
+		}
+		return kind, userDetails.UserUID, nil
 	}
 	if perm.TeamID != 0 {
 		teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-			ID: perm.TeamID,
+			OrgID: orgID,
+			ID:    perm.TeamID,
 		})
 		if err != nil {
-			return "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
+			return "", "", fmt.Errorf("failed to get team details for team ID %d: %w", perm.TeamID, err)
 		}
-		return teamDetails.UID, nil
+		return kind, teamDetails.UID, nil
 	}
 	if perm.BuiltinRole != "" {
-		return perm.BuiltinRole, nil
+		return kind, perm.BuiltinRole, nil
 	}
-	return "", fmt.Errorf("no valid permission subject found")
+	return "", "", fmt.Errorf("no valid permission subject found")
 }
 
 // Teams-specific redirect functions reading and writing Team.Spec.Members.
@@ -704,53 +969,83 @@ func (a *api) listTeamMemberPermissions(c *contextmodel.ReqContext, dynamicClien
 	return dto, nil
 }
 
-func (a *api) setUserPermissionInTeamMembers(c *contextmodel.ReqContext, namespace string, resourceID string, userID int64, permission string) error {
-	dynamicClient, err := a.getDynamicClient(c)
-	if err != nil {
-		return err
-	}
-	return a.setTeamMember(c, dynamicClient, namespace, resourceID, userID, permission)
+// setTeamMember reconciles a single team membership in Team.Spec.Members via the
+// K8s API. It's a thin wrapper over setTeamMembers so the single-member path and the
+// batch path share one read-modify-write implementation. The bool reports whether an
+// existing member was removed.
+func (s *Service) setTeamMember(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, userID int64, permission string, external bool) (bool, error) {
+	return s.setTeamMembers(ctx, dynamicClient, orgID, namespace, resourceID, []accesscontrol.SetResourcePermissionCommand{
+		{UserID: userID, Permission: permission},
+	}, external)
 }
 
-func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.Interface, namespace string, resourceID string, userID int64, permission string) error {
-	ctx := c.Req.Context()
-
-	userDetails, err := a.service.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
-	if err != nil {
-		return fmt.Errorf("failed to get user details: %w", err)
-	}
-
+// setTeamMembers reconciles a batch of user membership changes in Team.Spec.Members
+// via the K8s API in a single read-modify-write, so the whole batch commits or fails
+// atomically. It's a service method (not an api method) because every caller now
+// reaches it through the service rather than the handler, and the deps it needs
+// (team/user services) live there. Only user commands are applied; non-user commands are
+// ignored. External members are owned by team-sync, so external marks the caller as
+// team-sync: every other caller aborts the batch with ErrExternalTeamMember, without
+// persisting a partial update, as soon as a command targets one. The bool reports
+// whether any existing member was removed.
+func (s *Service) setTeamMembers(ctx context.Context, dynamicClient dynamic.Interface, orgID int64, namespace string, resourceID string, commands []accesscontrol.SetResourcePermissionCommand, external bool) (bool, error) {
 	teamID, err := strconv.ParseInt(resourceID, 10, 64)
 	if err != nil {
-		return fmt.Errorf("invalid team resource ID: %w", err)
+		return false, fmt.Errorf("invalid team resource ID: %w", err)
 	}
 
-	teamDetails, err := a.service.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
-		OrgID: c.GetOrgID(),
+	teamDetails, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{
+		OrgID: orgID,
 		ID:    teamID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to get team details: %w", err)
+		return false, fmt.Errorf("failed to get team details: %w", err)
 	}
 
-	var memberPerm iamv0.TeamTeamPermission
-	if permission != "" {
-		mp, err := stringToTeamMemberPermission(permission)
-		if err != nil {
-			return err
-		}
-		memberPerm = mp
+	// Resolve each user command to its target member state once; neither the UID
+	// nor the permission changes across read-modify-write retries.
+	type memberChange struct {
+		uid        string
+		permission iamv0.TeamTeamPermission
+		remove     bool
 	}
+	changes := make([]memberChange, 0, len(commands))
+	for _, cmd := range commands {
+		if cmd.UserID == 0 {
+			continue
+		}
+		userDetails, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
+		if err != nil {
+			return false, fmt.Errorf("failed to get user details: %w", err)
+		}
+		mc := memberChange{uid: userDetails.UID, remove: cmd.Permission == ""}
+		if !mc.remove {
+			mp, err := stringToTeamMemberPermission(cmd.Permission)
+			if err != nil {
+				return false, err
+			}
+			mc.permission = mp
+		}
+		changes = append(changes, mc)
+	}
+
+	if len(changes) == 0 {
+		return false, nil
+	}
+
+	hasAdds := slices.ContainsFunc(changes, func(mc memberChange) bool { return !mc.remove })
 
 	teamResource := dynamicClient.Resource(iamv0.TeamResourceInfo.GroupVersionResource()).Namespace(namespace)
 
+	var removedAny bool
 	// Read-modify-write: spec.members is a slice on the Team object so a
 	// concurrent writer can lose updates if we don't refetch on conflict.
-	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		removedAny = false
 		teamObj, err := teamResource.Get(ctx, teamDetails.UID, metav1.GetOptions{})
 		if err != nil {
-			// Removing a member from a team that no longer exists is a no-op.
-			if k8serrors.IsNotFound(err) && permission == "" {
+			// Removing members from a team that no longer exists is a no-op.
+			if k8serrors.IsNotFound(err) && !hasAdds {
 				return nil
 			}
 			return fmt.Errorf("failed to get team: %w", err)
@@ -761,35 +1056,46 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 			return fmt.Errorf("failed to decode team: %w", err)
 		}
 
-		idx := slices.IndexFunc(t.Spec.Members, func(m iamv0.TeamTeamMember) bool {
-			return m.Kind == subjectKindUser && m.Name == userDetails.UID
-		})
+		changed := false
+		for _, mc := range changes {
+			idx := slices.IndexFunc(t.Spec.Members, func(m iamv0.TeamTeamMember) bool {
+				return m.Kind == subjectKindUser && m.Name == mc.uid
+			})
 
-		// External members are owned by team-sync and must not be mutated through
-		// this path. Returning an error (rather than a silent no-op) prevents the
-		// dual-write caller from proceeding with the legacy SQL write, which would
-		// otherwise cause k8s and SQL to diverge until the next reconciliation.
-		if idx >= 0 && t.Spec.Members[idx].External {
-			return ErrExternalTeamMember.Errorf("user %q is externally-synced", userDetails.UID)
+			// External members are owned by team-sync, so only team-sync itself may
+			// mutate them. Abort the whole batch (before any Update) rather than
+			// partially applying it.
+			if idx >= 0 && t.Spec.Members[idx].External && !external {
+				return ErrExternalTeamMember.Errorf("user %q is externally-synced", mc.uid)
+			}
+
+			switch {
+			case mc.remove && idx < 0:
+				// Nothing to remove.
+			case mc.remove:
+				t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
+				removedAny = true
+				changed = true
+			case idx >= 0:
+				// External is immutable on update (see the Team admission validation),
+				// so an existing member keeps whichever flag it was created with.
+				if t.Spec.Members[idx].Permission != mc.permission {
+					t.Spec.Members[idx].Permission = mc.permission
+					changed = true
+				}
+			default:
+				t.Spec.Members = append(t.Spec.Members, iamv0.TeamTeamMember{
+					Kind:       subjectKindUser,
+					Name:       mc.uid,
+					Permission: mc.permission,
+					External:   external,
+				})
+				changed = true
+			}
 		}
 
-		switch {
-		case permission == "" && idx < 0:
+		if !changed {
 			return nil
-		case permission == "":
-			t.Spec.Members = slices.Delete(t.Spec.Members, idx, idx+1)
-		case idx >= 0:
-			if t.Spec.Members[idx].Permission == memberPerm {
-				return nil
-			}
-			t.Spec.Members[idx].Permission = memberPerm
-		default:
-			t.Spec.Members = append(t.Spec.Members, iamv0.TeamTeamMember{
-				Kind:       subjectKindUser,
-				Name:       userDetails.UID,
-				Permission: memberPerm,
-				External:   false,
-			})
 		}
 
 		updatedObj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&t)
@@ -802,6 +1108,7 @@ func (a *api) setTeamMember(c *contextmodel.ReqContext, dynamicClient dynamic.In
 		}
 		return nil
 	})
+	return removedAny, err
 }
 
 // teamMemberPermissionToString returns the lowercase schema value ("admin",

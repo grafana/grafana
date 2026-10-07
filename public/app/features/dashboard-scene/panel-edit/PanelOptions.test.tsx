@@ -20,6 +20,11 @@ import * as utils from '../utils/utils';
 import { PanelOptions } from './PanelOptions';
 import { PanelOptionsPane } from './PanelOptionsPane';
 
+jest.mock('app/features/dashboard/components/GenAI/LazyGenAIButtons', () => ({
+  LazyGenAIPanelTitleButton: () => null,
+  LazyGenAIPanelDescriptionButton: () => null,
+}));
+
 const OptionsPaneSelector = selectors.components.PanelEditor.OptionsPane;
 
 standardEditorsRegistry.setInit(getAllOptionEditors);
@@ -64,7 +69,7 @@ interface SetupOptions {
   panel?: VizPanel;
 }
 
-function setup(options: SetupOptions = {}) {
+async function setup(options: SetupOptions = {}) {
   let panel = options.panel;
 
   if (!panel) {
@@ -102,7 +107,8 @@ function setup(options: SetupOptions = {}) {
   panel.activate();
 
   const panelOptions = <PanelOptions panel={panel} searchQuery="" listMode={OptionFilter.All}></PanelOptions>;
-  const renderResult = render(panelOptions);
+  // Registry editors are lazy, so let them resolve before the test asserts
+  const renderResult = await act(async () => render(panelOptions));
 
   return { renderResult, panelOptionsScene, panel };
 }
@@ -110,7 +116,7 @@ function setup(options: SetupOptions = {}) {
 describe('PanelOptions', () => {
   describe('Can render and edit panel frame options', () => {
     it('Can edit title', async () => {
-      const { panel } = setup();
+      const { panel } = await setup();
 
       expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
@@ -121,7 +127,7 @@ describe('PanelOptions', () => {
     });
 
     it('Clearing title should set hoverHeader to true', async () => {
-      const { panel } = setup();
+      const { panel } = await setup();
 
       expect(screen.getByTestId(OptionsPaneSelector.fieldLabel('Panel options Title'))).toBeInTheDocument();
 
@@ -138,13 +144,13 @@ describe('PanelOptions', () => {
 
   describe('Field overrides', () => {
     it('Should be rendered', async () => {
-      const {} = setup();
+      await setup();
 
       expect(screen.getByText(overrideRuleTooltipDescription)).toBeInTheDocument();
     });
 
     it('Can update', async () => {
-      const {} = setup();
+      await setup();
 
       await userEvent.click(screen.getByLabelText('Remove property'));
 
@@ -152,7 +158,7 @@ describe('PanelOptions', () => {
     });
 
     it('Can delete rule', async () => {
-      const {} = setup();
+      await setup();
 
       await userEvent.click(screen.getByLabelText('Remove override'));
 
@@ -186,7 +192,7 @@ describe('PanelOptions', () => {
 
     new DashboardGridItem({ body: panel });
 
-    const { renderResult } = setup({ panel: panel });
+    const { renderResult } = await setup({ panel: panel });
 
     const input = await renderResult.findByTestId('library panel name input');
 

@@ -1,6 +1,7 @@
 package datasources
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"time"
@@ -76,16 +77,26 @@ type DataSource struct {
 	isSecureSocksDSProxyEnabled *bool `xorm:"-"`
 }
 
-func IsSecureSocksDSProxyEnabled(jsonData *simplejson.Json) bool {
-	return jsonData != nil && jsonData.Get("enableSecureSocksProxy").MustBool(false)
+func IsSecureSocksDSProxyEnabled(jsonData map[string]any) bool {
+	v, _ := jsonData["enableSecureSocksProxy"].(bool)
+	return v
 }
 
 func (ds *DataSource) IsSecureSocksDSProxyEnabled() bool {
 	if ds.isSecureSocksDSProxyEnabled == nil {
-		enabled := IsSecureSocksDSProxyEnabled(ds.JsonData)
+		enabled := IsSecureSocksDSProxyEnabled(ds.JsonDataMap())
 		ds.isSecureSocksDSProxyEnabled = &enabled
 	}
 	return *ds.isSecureSocksDSProxyEnabled
+}
+
+// JsonDataMap returns JsonData as a map[string]any, or empty map if unset
+func (ds *DataSource) JsonDataMap() map[string]any {
+	def := map[string]any{}
+	if ds.JsonData == nil {
+		return def
+	}
+	return ds.JsonData.MustMap(def)
 }
 
 type TeamHTTPHeadersJSONData struct {
@@ -173,6 +184,10 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
+	// BeforeSave runs after a UID is assigned (client-provided or generated)
+	// and before insert, in the same DB transaction. Used for fields that must
+	// bind to the final UID (e.g. grafanaExternalId).
+	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 }
 
 // Also acts as api DTO
@@ -205,6 +220,8 @@ type UpdateDataSourceCommand struct {
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
 	IgnoreOldSecureJsonData bool              `json:"-"`
+	// BeforeSave runs before the update is persisted, in the same DB transaction.
+	BeforeSave func(ctx context.Context, uid string, jsonData *simplejson.Json) `json:"-"`
 
 	AllowLBACRuleUpdates bool `json:"-"`
 }

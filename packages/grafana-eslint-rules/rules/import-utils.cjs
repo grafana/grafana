@@ -73,6 +73,7 @@ const replaceWithPublicBuild = (fixer, node) => {
   const startingQuote = node.raw.startsWith('"') ? '"' : "'";
   return fixer.replaceText(
     node,
+    // eslint-disable-next-line @grafana/no-restricted-img-srcs -- logic that implements the rule itself
     `${startingQuote}${value.replace('public/img/', 'public/build/img/')}${startingQuote}`
   );
 };
@@ -82,6 +83,7 @@ const replaceWithPublicBuild = (fixer, node) => {
  */
 const isInvalidImageLocation = (value) => {
   return (
+    // eslint-disable-next-line @grafana/no-restricted-img-srcs -- logic that implements the rule itself
     value.startsWith('public/img/') ||
     (!value.startsWith('public/build/') &&
       !value.startsWith('public/plugins/') &&

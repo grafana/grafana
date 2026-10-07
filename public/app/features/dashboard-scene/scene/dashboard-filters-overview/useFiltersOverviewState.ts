@@ -14,7 +14,7 @@ import { type ComboboxOption } from '@grafana/ui';
 
 import { buildAdHocApplyFilters, buildGroupByUpdate, buildOverviewState, buildUnifiedGroupByFilters } from './utils';
 
-export interface ApplyChangesResult {
+interface ApplyChangesResult {
   filtersCount: number;
   groupByCount: number;
 }

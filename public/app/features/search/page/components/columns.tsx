@@ -1,5 +1,4 @@
 import { cx } from '@emotion/css';
-import { intervalToDuration } from 'date-fns/intervalToDuration';
 import Skeleton from 'react-loading-skeleton';
 
 import {
@@ -11,23 +10,30 @@ import {
   getFieldDisplayName,
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
+import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
-import { formatDate, formatDuration } from 'app/core/internationalization/dates';
+import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
+import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
-import { DELETED_BY_UNKNOWN, formatDeletedByDisplayValue, getIconForKind } from '../../service/utils';
+import {
+  DELETED_BY_UNKNOWN,
+  formatDeletedByDisplayValue,
+  getIconForKind,
+  parseDeletionTimestamp,
+} from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
 import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
-const DURATION_COLUMN_WIDTH = 200;
+const DELETED_COLUMN_WIDTH = 200;
 const DATASOURCE_COLUMN_WIDTH = 200;
 const DELETED_BY_COLUMN_WIDTH = 200;
 
@@ -119,6 +125,7 @@ export const generateColumns = (
       let classNames = cx(styles.nameCellStyle);
       let name = access.name.values[p.row.index];
       const isDeleted = access.isDeleted?.values[p.row.index];
+      const description = access.description?.values[p.row.index];
 
       if (!name?.length) {
         const loading = p.row.index >= response.view.dataFrame.length;
@@ -126,10 +133,11 @@ export const generateColumns = (
         classNames += ' ' + styles.missingTitleText;
       }
       const { key, ...cellProps } = p.cellProps;
+      const isLoaded = response.isItemLoaded(p.row.index);
 
       return (
-        <div key={key} className={styles.cell} {...cellProps}>
-          {!response.isItemLoaded(p.row.index) ? (
+        <div key={key} className={cx(styles.cell, isLoaded && description && styles.nameCell)} {...cellProps}>
+          {!isLoaded ? (
             <Skeleton width={200} />
           ) : isDeleted || !p.userProps.href ? (
             <span className={classNames}>{name}</span>
@@ -138,6 +146,7 @@ export const generateColumns = (
               {name}
             </a>
           )}
+          {isLoaded ? <DescriptionTooltip description={description} /> : null}
         </div>
       );
     },
@@ -148,12 +157,10 @@ export const generateColumns = (
   });
   availableWidth -= width;
 
-  const showDeletedRemaining =
-    response.view.fields.permanentlyDeleteDate && hasValue(response.view.fields.permanentlyDeleteDate);
-
-  if (showDeletedRemaining && access.permanentlyDeleteDate) {
-    width = DURATION_COLUMN_WIDTH;
-    columns.push(makeDeletedRemainingColumn(response, access.permanentlyDeleteDate, width, styles));
+  const deletionTimestampField = access.deletionTimestamp;
+  if (deletionTimestampField) {
+    width = DELETED_COLUMN_WIDTH;
+    columns.push(makeDeletedColumn(response, deletionTimestampField, width, styles));
     availableWidth -= width;
   } else {
     width = TYPE_COLUMN_WIDTH;
@@ -361,6 +368,43 @@ function hasValue(f: Field): boolean {
   return false;
 }
 
+interface DataSourceItemProps {
+  dsUid: string;
+  iconClass: string;
+  invalidDatasourceItemClass: string;
+  onDatasourceChange: (datasource?: string) => void;
+}
+
+function DataSourceItem({ dsUid, iconClass, invalidDatasourceItemClass, onDatasourceChange }: DataSourceItemProps) {
+  const { isLoading, settings } = useDataSourceInstanceSettings(dsUid);
+  const icon = settings?.meta?.info?.logos?.small;
+
+  // While the settings are being resolved we don't yet know whether the datasource
+  // is valid, so avoid flashing the invalid-datasource fallback.
+  if (isLoading) {
+    return null;
+  }
+
+  if (settings && icon) {
+    return (
+      // TODO: fix keyboard a11y
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+      <span
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          onDatasourceChange(settings.uid);
+        }}
+      >
+        <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
+        {settings.name}
+      </span>
+    );
+  }
+
+  return <span className={invalidDatasourceItemClass}>{dsUid}</span>;
+}
+
 function makeDataSourceColumn(
   field: Field<string[]>,
   width: number,
@@ -369,7 +413,6 @@ function makeDataSourceColumn(
   invalidDatasourceItemClass: string,
   onDatasourceChange: (datasource?: string) => void
 ): TableColumn {
-  const srv = getDataSourceSrv();
   return {
     id: `column-datasource`,
     field,
@@ -382,32 +425,15 @@ function makeDataSourceColumn(
       const { key, ...cellProps } = p.cellProps;
       return (
         <div key={key} {...cellProps} className={cx(datasourceItemClass)}>
-          {dslist.map((v, i) => {
-            const settings = srv.getInstanceSettings(v);
-            const icon = settings?.meta?.info?.logos?.small;
-            if (icon) {
-              return (
-                // TODO: fix keyboard a11y
-                // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-                <span
-                  key={i}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    onDatasourceChange(settings.uid);
-                  }}
-                >
-                  <img src={icon} alt="" width={14} height={14} title={settings.type} className={iconClass} />
-                  {settings.name}
-                </span>
-              );
-            }
-            return (
-              <span className={invalidDatasourceItemClass} key={i}>
-                {v}
-              </span>
-            );
-          })}
+          {dslist.map((v, i) => (
+            <DataSourceItem
+              key={i}
+              dsUid={v}
+              iconClass={iconClass}
+              invalidDatasourceItemClass={invalidDatasourceItemClass}
+              onDatasourceChange={onDatasourceChange}
+            />
+          ))}
         </div>
       );
     },
@@ -415,23 +441,24 @@ function makeDataSourceColumn(
   };
 }
 
-function makeDeletedRemainingColumn(
+// The retention window lives in server config, so the page can only say when an
+// object was deleted, not how long is left before it is removed for good.
+function makeDeletedColumn(
   response: QueryResponse,
-  deletedField: Field<Date | undefined>,
+  deletedField: Field<string | undefined>,
   width: number,
   styles: Record<string, string>
 ): TableColumn {
   return {
-    id: 'column-delete-age',
+    id: 'column-deleted',
     field: deletedField,
     width,
-    Header: t('search.results-table.deleted-remaining-header', 'Time remaining'),
+    Header: t('search.results-table.deleted-header', 'Deleted on'),
     Cell: (p) => {
-      const i = p.row.index;
-      const deletedDate = deletedField.values[i];
+      const deletedAt = deletedField.values[p.row.index];
       const { key, ...cellProps } = p.cellProps;
 
-      if (!deletedDate || !response.isItemLoaded(p.row.index)) {
+      if (!response.isItemLoaded(p.row.index)) {
         return (
           <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
             <Skeleton width={100} />
@@ -439,16 +466,21 @@ function makeDeletedRemainingColumn(
         );
       }
 
-      const duration = calcCoarseDuration(new Date(), deletedDate);
-      const isDeletingSoon = !Object.values(duration).some((v) => v > 0);
-      const formatted = isDeletingSoon
-        ? t('search.results-table.deleted-less-than-1-min', '< 1 min')
-        : formatDuration(duration, { style: 'long' });
+      // An object deleted before deletion times were recorded has none, so say so rather
+      // than leaving the cell looking like it is still loading.
+      const deletedDate = parseDeletionTimestamp(deletedAt);
+      if (!deletedDate) {
+        return (
+          <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
+            <span>-</span>
+          </div>
+        );
+      }
 
       return (
         <div key={key} {...cellProps} className={cx(styles.cell, styles.typeCell)}>
-          <Tooltip content={formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}>
-            <span>{formatted}</span>
+          <Tooltip content={formatDate(deletedDate, { dateStyle: 'full', timeStyle: 'medium' })}>
+            <span>{formatDate(deletedDate, { dateStyle: 'medium', timeStyle: 'short' })}</span>
           </Tooltip>
         </div>
       );
@@ -568,27 +600,8 @@ function getDisplayValue({
   getDisplay: DisplayProcessor;
 }) {
   const value = sortField.values[index];
-  if (['folder', 'panel'].includes(kind.values[index]) && value === 0) {
+  if (value == null || (['folder', 'panel'].includes(kind.values[index]) && value === 0)) {
     return '-';
   }
   return formattedValueToString(getDisplay(value));
-}
-
-/**
- * Calculates the rough duration between two dates, keeping only the most significant unit
- */
-function calcCoarseDuration(start: Date, end: Date) {
-  let { years = 0, months = 0, days = 0, hours = 0, minutes = 0 } = intervalToDuration({ start, end });
-
-  if (years > 0) {
-    return { years };
-  } else if (months > 0) {
-    return { months };
-  } else if (days > 0) {
-    return { days };
-  } else if (hours > 0) {
-    return { hours };
-  }
-
-  return { minutes };
 }

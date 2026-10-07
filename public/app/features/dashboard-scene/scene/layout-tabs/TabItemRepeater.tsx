@@ -12,7 +12,7 @@ import {
 } from '@grafana/scenes';
 import { Spinner, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { DashboardStateChangedEvent } from '../../edit-pane/shared';
+import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet, getRepeatVariableValueSet } from '../../utils/clone';
 import { getRepeatLocalVariableValue } from '../../utils/getRepeatLocalVariableValue';
 import { dashboardLog, getMultiVariableValues } from '../../utils/utils';
@@ -21,20 +21,13 @@ import { filterSectionRepeatLocalVariables, getSectionBaseVariables } from '../.
 import { type TabItem } from './TabItem';
 import { type TabsLayoutManager } from './TabsLayoutManager';
 
-export interface Props {
+interface Props {
   tab: TabItem;
   manager: TabsLayoutManager;
   variable: MultiValueVariable;
 }
 
-export function TabItemRepeater({
-  tab,
-  variable,
-}: {
-  tab: TabItem;
-  manager: TabsLayoutManager;
-  variable: MultiValueVariable;
-}) {
+export function TabItemRepeater({ tab, variable }: Props) {
   const { repeatedTabs } = tab.useState();
   const styles = useStyles2(getStyles);
 
@@ -79,6 +72,10 @@ export function TabItemRepeater({
 }
 
 export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
+  if (tab.state.repeatByVariable !== variable.state.name) {
+    return;
+  }
+
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
     dashboardLog.logger('TabItemRepeater', false, 'Skipped dependency in loading state');
     return;
@@ -137,7 +134,7 @@ function getPrevRepeatValues(mainTab: TabItem, varName: string): VariableValueSi
   return values;
 }
 
-export function createTabRepeats({
+function createTabRepeats({
   values,
   texts,
   variable,

@@ -1,7 +1,8 @@
-import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
+import { GrafanaRuleFormStep, renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { screen } from 'test/test-utils';
 import { byText } from 'testing-library-selector';
 
+import { mockBoundingClientRect } from '@grafana/test-utils';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
@@ -132,6 +133,10 @@ function getDiscoverFeaturesMock(application: PromApplication, features?: Partia
 
 setupMswServer();
 
+beforeAll(() => {
+  mockBoundingClientRect();
+});
+
 describe('RuleEditor cloud: checking editable data sources', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -178,6 +183,8 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     const { user } = renderRuleEditor();
 
     await ui.inputs.name.find();
+
+    await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const switchToCloudButton = await screen.findByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();

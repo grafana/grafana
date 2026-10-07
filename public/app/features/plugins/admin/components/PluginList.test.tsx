@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { PluginSignatureStatus, PluginSignatureType, PluginType } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 
 import { type CatalogPlugin } from '../types';
@@ -68,7 +69,7 @@ describe('PluginList', () => {
     const plugins = [mockPlugin, mockPlugin2];
     render(<PluginList plugins={plugins} isLoading={false} />);
 
-    expect(screen.getByTestId('plugin-list')).toBeInTheDocument();
+    expect(screen.getByTestId(selectors.pages.PluginsList.list)).toBeInTheDocument();
     expect(screen.getByText('Test Plugin')).toBeInTheDocument();
     expect(screen.getByText('Test Plugin 2')).toBeInTheDocument();
   });

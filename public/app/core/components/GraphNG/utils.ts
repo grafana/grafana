@@ -18,7 +18,7 @@ function isVisibleBarField(f: Field) {
   );
 }
 
-export function getRefField(frame: DataFrame, refFieldName?: string | null) {
+function getRefField(frame: DataFrame, refFieldName?: string | null) {
   return frame.fields.find((field) => {
     // note: getFieldDisplayName() would require full DF[]
     return refFieldName != null ? field.name === refFieldName : field.type === FieldType.time;

@@ -69,6 +69,16 @@ describe('inspector download', () => {
       expect(filename).toEqual(`test-data-${dateTimeFormat(1400000000000)}.csv`);
       expect.assertions(4);
     });
+
+    it('end with a new line if asked', async () => {
+      downloadDataFrameAsCsv(dataFrameFromJSON(json), 'test', undefined, undefined, false, true);
+
+      const call = jest.mocked(saveAs).mock.calls[0];
+      const blob = call[0];
+      const text = typeof blob === 'string' ? blob : await blob.text();
+
+      expect(text).toEqual('"time","name","value"\r\n100,Åäö中文العربية,1\r\n');
+    });
   });
 
   describe('downloadAsJson', () => {
@@ -90,7 +100,7 @@ describe('inspector download', () => {
 
   describe('downloadLogsModelAsTxt', () => {
     it.each([
-      [{ meta: [], rows: [] }, 'test', '\n\n'],
+      [{ meta: [], rows: [] }, 'test', ''],
       [
         { meta: [{ label: 'testLabel', value: 'testValue', kind: LogsMetaKind.String }], rows: [] },
         'test',
@@ -124,7 +134,7 @@ describe('inspector download', () => {
       const call = jest.mocked(saveAs).mock.calls[0];
       const blob = call[0];
       const filename = call[1];
-      const text = typeof blob === 'string' ? blob : await blob.text();
+      const text = typeof blob === 'string' ? blob : blob.size === 0 ? '' : await blob.text();
 
       expect(text).toEqual(expected);
       expect(filename).toEqual(`${title}-logs-${dateTimeFormat(1400000000000)}.txt`);

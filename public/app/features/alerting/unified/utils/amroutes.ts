@@ -2,6 +2,7 @@ import { type SelectableValue } from '@grafana/data';
 import {
   MatcherOperator,
   type ObjectMatcher,
+  ROUTES_META_SYMBOL,
   type Route,
   type RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
@@ -14,6 +15,12 @@ import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import { encodeMatcher, normalizeMatchers, parseMatcherToArray, unquoteWithUnescape } from './matchers';
 import { findExistingRoute, hashRoute } from './routeTree';
 import { isValidPrometheusDuration, safeParsePrometheusDuration } from './time';
+
+/** Returns the provenance string for a route, preferring the symbol-keyed k8s metadata
+ *  over the legacy top-level field. */
+export function extractNotificationPolicyProvenance(route: Route): string | undefined {
+  return route[ROUTES_META_SYMBOL]?.provenance ?? route.provenance;
+}
 
 const matchersToArrayFieldMatchers = (
   matchers: Record<string, string> | undefined,
@@ -68,10 +75,6 @@ export const emptyRoute: FormAmRoute = {
   muteTimeIntervals: [],
   activeTimeIntervals: [],
 };
-
-export function addUniqueIdentifierToRoutes(routes: Route[]): RouteWithID[] {
-  return routes.map((policy, index) => addUniqueIdentifierToRoute(policy, policy.name ?? index.toString()));
-}
 
 // add unique identifiers to each route in the route tree, that way we can figure out what route we've edited / deleted
 // ⚠️ make sure this function uses _stable_ identifiers!
@@ -245,14 +248,6 @@ export function promDurationValidator(duration?: string) {
 
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
-
-// function to convert ObjectMatchers to a array of strings
-export const objectMatchersToString = (matchers: ObjectMatcher[]): string[] => {
-  return matchers.map((matcher) => {
-    const [name, operator, value] = matcher;
-    return `${name}${operator}${value}`;
-  });
-};
 
 export const repeatIntervalValidator = (repeatInterval: string, groupInterval = '') => {
   if (repeatInterval.length === 0) {

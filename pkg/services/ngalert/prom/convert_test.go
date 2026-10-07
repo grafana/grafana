@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	prommodel "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v3"
@@ -78,7 +77,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 			expectError: false,
 		},
 		{
-			// If the rule group has recording rules and a non-prometheus target datasource,
+			// If the rule group has recording rules and a non-prometheus-compatible target datasource,
 			// we should return an error
 			name:      "recording rules with non-prometheus target datasource",
 			orgID:     1,
@@ -98,10 +97,10 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				TargetDatasourceType: "non-prometheus-datasource",
 			},
 			expectError: true,
-			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus-compatible",
 		},
 		{
-			// If the rule group has recording rules and a non-prometheus target datasource,
+			// If the rule group has recording rules and a non-prometheus-compatible target datasource,
 			// we should return an error
 			name:      "mixed group with both alert and recording rules requires prometheus target datasource",
 			orgID:     1,
@@ -125,7 +124,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				TargetDatasourceType: "non-prometheus-datasource",
 			},
 			expectError: true,
-			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus",
+			errorMsg:    "invalid target datasource type: non-prometheus-datasource, must be prometheus-compatible",
 		},
 		{
 			name:      "rule group with empty interval",
@@ -340,7 +339,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				expectedLabels = withInternalLabel(expectedLabels)
 
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
-				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
+				u := ruleUUID(uidData)
 				require.Equal(t, u.String(), grafanaRule.UID, tc.name)
 
 				require.Equal(t, expectedLabels, grafanaRule.Labels, tc.name)
@@ -377,6 +376,112 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, string(originalRuleDefinition), grafanaRule.Metadata.PrometheusStyleRule.OriginalRuleDefinition)
 			}
+		})
+	}
+}
+
+func TestPrometheusRulesToGrafana_PrometheusCompatibleDatasources(t *testing.T) {
+	promGroup := PrometheusRuleGroup{
+		Name: "test-group",
+		Rules: []PrometheusRule{
+			{
+				Alert: "alert-1",
+				Expr:  "up == 0",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name           string
+		datasourceType string
+	}{
+		{
+			name:           "amazon managed prometheus",
+			datasourceType: datasources.DS_AMAZON_PROMETHEUS,
+		},
+		{
+			name:           "azure managed prometheus",
+			datasourceType: datasources.DS_AZURE_PROMETHEUS,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			converter, err := NewConverter(Config{
+				DatasourceUID:   "datasource-uid",
+				DatasourceType:  tc.datasourceType,
+				DefaultInterval: 2 * time.Minute,
+			})
+			require.NoError(t, err)
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespaceUID", promGroup)
+			require.NoError(t, err)
+			require.Len(t, grafanaGroup.Rules, 1)
+			require.Len(t, grafanaGroup.Rules[0].Data, 3)
+
+			query := grafanaGroup.Rules[0].Data[0]
+			require.Equal(t, "datasource-uid", query.DatasourceUID)
+			require.Equal(t, tc.datasourceType, query.QueryType)
+
+			var model map[string]any
+			require.NoError(t, json.Unmarshal(query.Model, &model))
+
+			ds := model["datasource"].(map[string]any)
+			require.Equal(t, tc.datasourceType, ds["type"])
+			require.Equal(t, "datasource-uid", ds["uid"])
+		})
+	}
+}
+
+func TestPrometheusRulesToGrafana_PrometheusCompatibleTargetDatasources(t *testing.T) {
+	promGroup := PrometheusRuleGroup{
+		Name: "recording-group",
+		Rules: []PrometheusRule{
+			{
+				Record: "some_metric",
+				Expr:   "sum(rate(http_requests_total[5m]))",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name                 string
+		targetDatasourceType string
+	}{
+		{
+			name:                 "prometheus",
+			targetDatasourceType: datasources.DS_PROMETHEUS,
+		},
+		{
+			name:                 "amazon managed prometheus",
+			targetDatasourceType: datasources.DS_AMAZON_PROMETHEUS,
+		},
+		{
+			name:                 "azure managed prometheus",
+			targetDatasourceType: datasources.DS_AZURE_PROMETHEUS,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			converter, err := NewConverter(Config{
+				DatasourceUID:        "datasource-uid",
+				DatasourceType:       datasources.DS_PROMETHEUS,
+				TargetDatasourceUID:  "target-datasource-uid",
+				TargetDatasourceType: tc.targetDatasourceType,
+				DefaultInterval:      2 * time.Minute,
+			})
+			require.NoError(t, err)
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespaceUID", promGroup)
+			require.NoError(t, err)
+			require.Len(t, grafanaGroup.Rules, 1)
+
+			record := grafanaGroup.Rules[0].Record
+			require.NotNil(t, record)
+			require.Equal(t, queryRefID, record.From)
+			require.Equal(t, "some_metric", record.Metric)
+			require.Equal(t, "target-datasource-uid", record.TargetDatasourceUID)
 		})
 	}
 }
@@ -1011,4 +1116,22 @@ func withInternalLabel(l map[string]string) map[string]string {
 	maps.Copy(result, l)
 
 	return result
+}
+
+func TestGetUIDCompatibility(t *testing.T) {
+	t.Run("1-0", func(t *testing.T) {
+		got, err := getUID(1, "some-namespace", "test-group-1", 0, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "81c1654f-6883-557f-93ce-1b3b6d880d9c", got)
+	})
+	t.Run("1-1", func(t *testing.T) {
+		got, err := getUID(1, "some-namespace", "test-group-1", 1, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "c87b7b23-7f6c-5d11-93f9-5b425372f9b0", got)
+	})
+	t.Run("2-0", func(t *testing.T) {
+		got, err := getUID(2, "other-namespace", "test-group-2", 0, PrometheusRule{})
+		require.NoError(t, err)
+		require.Equal(t, "73a82869-8171-5574-bad1-8878c7ddf75d", got)
+	})
 }

@@ -15,7 +15,7 @@ import { getTextColorForAlphaBackground } from '../../utils/colors';
 import { calculateFontSize } from '../../utils/measureText';
 import { Sparkline } from '../Sparkline/Sparkline';
 
-import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, type Props, BigValueJustifyMode, BigValueTextMode } from './BigValueTypes';
 import { percentChangeString } from './PercentChange';
 
 const LINE_HEIGHT = 1.2;
@@ -208,22 +208,17 @@ export abstract class BigValueLayout {
       display: 'flex',
     };
 
+    // Dark themes darken the value color, light themes lighten it more subtly
     const themeFactor = theme.isDark ? 1 : -0.7;
 
     switch (colorMode) {
       case BigValueColorMode.Background:
-        const bgColor2 = tinycolor(this.valueColor)
-          .darken(15 * themeFactor)
-          .spin(8)
-          .toRgbString();
-        const bgColor3 = tinycolor(this.valueColor)
-          .darken(5 * themeFactor)
-          .spin(-8)
-          .toRgbString();
+        const bgColor2 = `hsl(from ${this.valueColor} calc(h + 8) s calc(l - 15 * ${themeFactor}))`;
+        const bgColor3 = `hsl(from ${this.valueColor} calc(h - 8) s calc(l - 5 * ${themeFactor}))`;
         panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
         break;
       case BigValueColorMode.BackgroundSolid:
-        panelStyles.background = tinycolor(this.valueColor).toString();
+        panelStyles.background = this.valueColor;
         break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;
@@ -293,7 +288,7 @@ export abstract class BigValueLayout {
   }
 }
 
-export class WideNoChartLayout extends BigValueLayout {
+class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
@@ -549,7 +544,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 }
 
-export function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
+function shouldJustifyCenter(justifyMode?: BigValueJustifyMode, title?: string) {
   if (justifyMode === BigValueJustifyMode.Center) {
     return true;
   }

@@ -10,7 +10,7 @@ import { ConditionalRenderingTimeRangeSize } from './ConditionalRenderingTimeRan
 import { ConditionalRenderingVariable } from './ConditionalRenderingVariable';
 import { type ConditionalRenderingConditions } from './types';
 
-export type ConditionalRenderingConditionsKindTypes =
+type ConditionalRenderingConditionsKindTypes =
   | ConditionalRenderingVariableKind
   | ConditionalRenderingDataKind
   | ConditionalRenderingTimeRangeSizeKind;

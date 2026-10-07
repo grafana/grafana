@@ -1,16 +1,18 @@
 package api
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/searchusers/sortopts"
@@ -116,12 +118,21 @@ func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOr
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) response.Response {
-	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
+	query := &org.SearchOrgUsersQuery{
 		OrgID: c.GetOrgID(),
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
-	})
+	}
+
+	ctx := c.Req.Context()
+	var result *org.SearchOrgUsersQueryResult
+	var err error
+	if ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.searchOrgUsersHelper(c, query)
+	}
 
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
@@ -145,6 +156,36 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 // 500: internalServerError
 
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
+	ctx := c.Req.Context()
+	// Single-org with users in unified storage: the legacy org_user/user join is
+	// empty, so read the shared users via the k8s-redirected user search instead.
+	if hs.Cfg.RBAC.SingleOrganization && ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		searchResult, err := hs.userService.Search(ctx, &user.SearchUsersQuery{
+			SignedInUser: c.SignedInUser,
+			OrgID:        c.GetOrgID(),
+			Query:        c.Query("query"),
+			Limit:        c.QueryInt("limit"),
+		})
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
+		}
+
+		result := make([]*dtos.UserLookupDTO, 0, len(searchResult.Users))
+		for _, u := range searchResult.Users {
+			avatarURL := u.AvatarURL
+			if avatarURL == "" {
+				avatarURL = dtos.GetGravatarUrl(hs.Cfg, u.Email)
+			}
+			result = append(result, &dtos.UserLookupDTO{
+				UID:       u.UID,
+				UserID:    u.ID,
+				Login:     u.Login,
+				AvatarURL: avatarURL,
+			})
+		}
+		return response.JSON(http.StatusOK, result)
+	}
+
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.GetOrgID(),
 		Query:                    c.Query("query"),
@@ -231,11 +272,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Respon
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
@@ -265,11 +302,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 	if perPage <= 0 {
 		perPage = 1000
 	}
-	page := c.QueryInt("page")
-
-	if page < 1 {
-		page = 1
-	}
+	page := max(c.QueryInt("page"), 1)
 
 	sortOpts, err := sortopts.ParseSortQueryParam(c.Query("sort"))
 	if err != nil {
@@ -285,7 +318,15 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) respo
 		SortOpts: sortOpts,
 	}
 
-	result, err := hs.searchOrgUsersHelper(c, query)
+	ctx := c.Req.Context()
+	kubernetesUsersRedirect := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx))
+
+	var result *org.SearchOrgUsersQueryResult
+	if kubernetesUsersRedirect {
+		result, err = hs.searchOrgUsersUsingK8s(c, query)
+	} else {
+		result, err = hs.searchOrgUsersHelper(c, query)
+	}
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get users for current organization", err)
 	}
@@ -334,11 +375,12 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		accessControlMetadata = accesscontrol.GetResourcesMetadata(c.Req.Context(), permissions, "users:id:", userIDs)
 	}
 
+	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
 	for i := range filteredUsers {
 		filteredUsers[i].AccessControl = accessControlMetadata[fmt.Sprint(filteredUsers[i].UserID)]
 		if module, ok := modules[filteredUsers[i].UserID]; ok {
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
-			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(hs.Cfg, module)
+			filteredUsers[i].IsExternallySynced = externallySynced(module)
 		}
 	}
 
@@ -346,6 +388,99 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 	result.Page = query.Page
 	result.PerPage = query.Limit
 	return result, nil
+}
+
+func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+	// Shared across pages so the externally-synced check is resolved once per
+	// auth module for the whole request, not once per page.
+	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
+
+	if query.Limit > 0 || query.UserID != 0 {
+		return hs.searchOrgUsersPageUsingK8s(c, query, externallySynced)
+	}
+
+	const pageSize = 1000
+	result := &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}
+	for page := 1; ; page++ {
+		pageQuery := *query
+		pageQuery.Limit = pageSize
+		pageQuery.Page = page
+
+		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery, externallySynced)
+		if err != nil {
+			return nil, err
+		}
+		result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
+
+		if int64(len(result.OrgUsers)) >= pageResult.TotalCount || len(pageResult.OrgUsers) < pageSize {
+			result.TotalCount = int64(len(result.OrgUsers))
+			result.Page = 1
+			result.PerPage = len(result.OrgUsers)
+			return result, nil
+		}
+	}
+}
+
+func (hs *HTTPServer) searchOrgUsersPageUsingK8s(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery, externallySynced func(authModule string) bool) (*org.SearchOrgUsersQueryResult, error) {
+	searchResult, err := hs.userService.Search(c.Req.Context(), &user.SearchUsersQuery{
+		SignedInUser:         query.User,
+		OrgID:                query.OrgID,
+		Query:                query.Query,
+		Page:                 query.Page,
+		Limit:                query.Limit,
+		SortOpts:             query.SortOpts,
+		IncludeAccessControl: c.QueryBool("accesscontrol"),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	orgUsers := make([]*org.OrgUserDTO, 0, len(searchResult.Users))
+	for _, u := range searchResult.Users {
+		if query.UserID != 0 && u.ID != query.UserID {
+			continue
+		}
+
+		authLabels := make([]string, 0, len(u.AuthModule))
+		isExternallySynced := false
+		for _, module := range u.AuthModule {
+			authLabels = append(authLabels, login.GetAuthProviderLabel(module))
+			if externallySynced(module) {
+				isExternallySynced = true
+			}
+		}
+
+		orgUsers = append(orgUsers, &org.OrgUserDTO{
+			OrgID:              query.OrgID,
+			UserID:             u.ID,
+			UID:                u.UID,
+			Email:              u.Email,
+			Name:               u.Name,
+			Login:              u.Login,
+			Role:               u.Role,
+			AvatarURL:          dtos.GetGravatarUrl(hs.Cfg, u.Email),
+			AccessControl:      u.AccessControl,
+			LastSeenAt:         u.LastSeenAt,
+			LastSeenAtAge:      u.LastSeenAtAge,
+			Created:            u.Created,
+			IsDisabled:         u.IsDisabled,
+			IsProvisioned:      u.IsProvisioned,
+			AuthLabels:         authLabels,
+			IsExternallySynced: isExternallySynced,
+		})
+	}
+
+	totalCount := searchResult.TotalCount
+	if query.UserID != 0 {
+		totalCount = int64(len(orgUsers))
+	}
+
+	return &org.SearchOrgUsersQueryResult{
+		TotalCount: totalCount,
+		OrgUsers:   orgUsers,
+		Page:       searchResult.Page,
+		PerPage:    searchResult.PerPage,
+	}, nil
 }
 
 // swagger:route PATCH /org/users/{user_id} org updateOrgUserForCurrentOrg
@@ -425,12 +560,32 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		}
 	}
 	if authInfo != nil && authInfo.AuthModule != "" {
-		if hs.isExternallySynced(hs.Cfg, authInfo.AuthModule) {
+		if hs.isExternallySynced(c.Req.Context(), hs.Cfg, authInfo.AuthModule) {
 			return response.Err(org.ErrCannotChangeRoleForExternallySyncedUser.Errorf("Cannot change role for externally synced user"))
 		}
 	}
 
-	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
+	ctx := c.Req.Context()
+	if cmd.OrgID == c.GetOrgID() &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		if cmd.Role != org.RoleAdmin {
+			hasOtherAdmin, err := hs.orgHasOtherAdmin(c, cmd.OrgID, cmd.UserID)
+			if err != nil {
+				return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+			}
+			if !hasOtherAdmin {
+				return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
+			}
+		}
+
+		role := string(cmd.Role)
+		if err := hs.userService.Update(ctx, &user.UpdateUserCommand{
+			UserID:  cmd.UserID,
+			OrgRole: &role,
+		}); err != nil {
+			return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+		}
+	} else if err := hs.orgService.UpdateOrgUser(ctx, &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
 		}
@@ -443,6 +598,30 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	})
 
 	return response.Success("Organization user updated")
+}
+
+// orgHasOtherAdmin mirrors the legacy validateOneAdminLeftInOrg guard for the
+// k8s-redirected update path, reading the admin list through the k8s user
+// search. Scoped to Cloud single-org instances (multi-org unsupported). The
+// search hides HiddenUsers from non-Grafana-admins, so a hidden admin isn't
+// counted and a valid demotion may be wrongly blocked; this only over-restricts
+// and never allows removing the last admin.
+func (hs *HTTPServer) orgHasOtherAdmin(c *contextmodel.ReqContext, orgID, excludeUserID int64) (bool, error) {
+	result, err := hs.searchOrgUsersUsingK8s(c, &org.SearchOrgUsersQuery{
+		OrgID: orgID,
+		User:  c.SignedInUser,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	for _, u := range result.OrgUsers {
+		if u.UserID != excludeUserID && u.Role == string(org.RoleAdmin) {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // swagger:route DELETE /org/users/{user_id} org removeOrgUserForCurrentOrg
@@ -464,7 +643,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) res
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
 	}
 
-	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+	return hs.removeOrgUserHelper(c, &org.RemoveOrgUserCommand{
 		UserID:                   userId,
 		OrgID:                    c.GetOrgID(),
 		ShouldDeleteOrphanedUser: true,
@@ -493,13 +672,19 @@ func (hs *HTTPServer) RemoveOrgUser(c *contextmodel.ReqContext) response.Respons
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
 	}
-	return hs.removeOrgUserHelper(c.Req.Context(), &org.RemoveOrgUserCommand{
+	return hs.removeOrgUserHelper(c, &org.RemoveOrgUserCommand{
 		UserID: userId,
 		OrgID:  orgId,
 	})
 }
 
-func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOrgUserCommand) response.Response {
+func (hs *HTTPServer) removeOrgUserHelper(c *contextmodel.ReqContext, cmd *org.RemoveOrgUserCommand) response.Response {
+	ctx := c.Req.Context()
+	if cmd.OrgID == c.GetOrgID() && hs.Cfg.RBAC.SingleOrganization &&
+		ofClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersRedirect, false, openfeature.TransactionContext(ctx)) {
+		return hs.removeOrgUserUsingK8s(c, cmd)
+	}
+
 	if err := hs.orgService.RemoveOrgUser(ctx, cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot remove last organization admin", nil)
@@ -521,6 +706,38 @@ func (hs *HTTPServer) removeOrgUserHelper(ctx context.Context, cmd *org.RemoveOr
 	}
 
 	return response.Success("User removed from organization")
+}
+
+// removeOrgUserUsingK8s removes an org user by deleting the namespaced User
+// resource for the caller's current org.
+func (hs *HTTPServer) removeOrgUserUsingK8s(c *contextmodel.ReqContext, cmd *org.RemoveOrgUserCommand) response.Response {
+	ctx := c.Req.Context()
+
+	targetUser, err := hs.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: cmd.UserID})
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+	if targetUser.IsAdmin {
+		return response.Error(http.StatusBadRequest, "Cannot remove a Grafana server admin from their only organization", nil)
+	}
+
+	hasOtherAdmin, err := hs.orgHasOtherAdmin(c, cmd.OrgID, cmd.UserID)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+	if !hasOtherAdmin {
+		return response.Error(http.StatusBadRequest, "Cannot remove last organization admin", nil)
+	}
+
+	if err := hs.userService.Delete(ctx, &user.DeleteUserCommand{UserID: cmd.UserID}); err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to remove user from organization", err)
+	}
+
+	if err := hs.accesscontrolService.DeleteUserPermissions(ctx, accesscontrol.GlobalOrgID, cmd.UserID); err != nil {
+		hs.log.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", accesscontrol.GlobalOrgID, "err", err)
+	}
+
+	return response.Success("User deleted")
 }
 
 // swagger:parameters addOrgUserToCurrentOrg

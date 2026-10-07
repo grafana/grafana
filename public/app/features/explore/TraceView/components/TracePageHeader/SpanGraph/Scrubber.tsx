@@ -13,18 +13,19 @@
 // limitations under the License.
 
 import { css } from '@emotion/css';
-import cx from 'classnames';
+import cx from 'clsx';
 import * as React from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
-export const getStyles = () => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   ScrubberHandleExpansion: cx(
     css({
       label: 'ScrubberHandleExpansion',
       cursor: 'col-resize',
       fillOpacity: 0,
-      fill: '#44f',
+      fill: theme.colors.accent.main,
     }),
     'scrubber-handle-expansion'
   ),
@@ -32,7 +33,7 @@ export const getStyles = () => ({
     css({
       label: 'ScrubberHandle',
       cursor: 'col-resize',
-      fill: '#555',
+      fill: theme.colors.text.secondary,
     }),
     'scrubber-handle'
   ),
@@ -40,7 +41,7 @@ export const getStyles = () => ({
     css({
       label: 'ScrubberLine',
       pointerEvents: 'none',
-      stroke: '#555',
+      stroke: theme.colors.text.secondary,
     }),
     'scrubber-line'
   ),
@@ -50,10 +51,10 @@ export const getStyles = () => ({
       fillOpacity: 1,
     },
     '& .scrubber-handle': {
-      fill: '#44f',
+      fill: theme.colors.accent.main,
     },
     '& > .scrubber-line': {
-      stroke: '#44f',
+      stroke: theme.colors.accent.main,
     },
   }),
   ScrubberHandles: css({
@@ -62,10 +63,10 @@ export const getStyles = () => ({
       fillOpacity: 1,
     },
     '&:hover > .scrubber-handle': {
-      fill: '#44f',
+      fill: theme.colors.accent.main,
     },
     '&:hover + .scrubber.line': {
-      stroke: '#44f',
+      stroke: theme.colors.accent.main,
     },
   }),
 });

@@ -49,6 +49,24 @@ export class DataSource extends DataSourceApi<MyQuery, MyDataSourceOptions> {
     };
   }
 
+  getTagKeys() {
+    return Promise.resolve([
+      { text: 'label1', value: 'label1' },
+      { text: 'label2', value: 'label2' },
+    ]);
+  }
+
+  getTagValues() {
+    return Promise.resolve([{ text: 'label2Value1', value: 'label2Value1' }]);
+  }
+
+  getGroupByKeys() {
+    return Promise.resolve([
+      { text: 'label1', value: 'label1' },
+      { text: 'label2', value: 'label2' },
+    ]);
+  }
+
   async request(url: string, params?: string) {
     const response = getBackendSrv().fetch<DataSourceResponse>({
       url: `${this.baseUrl}${url}${params?.length ? `?${params}` : ''}`,

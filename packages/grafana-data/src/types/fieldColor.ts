@@ -11,6 +11,21 @@ export enum FieldColorModeId {
    * as we work towards a GA of improved color blind support.
    */
   PaletteColorblind = 'palette-colorblind',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext = 'palette-categorical-next',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext2 = 'palette-categorical-next-2',
+  /**
+   * @alpha - experimental categorical palette, gated behind the
+   * `dataviz.experimentalColorSchemes` feature toggle and may change or be removed.
+   */
+  PaletteCategoricalNext3 = 'palette-categorical-next-3',
   ContinuousGrYlRd = 'continuous-GrYlRd',
   ContinuousRdYlGr = 'continuous-RdYlGr',
   ContinuousBlYlRd = 'continuous-BlYlRd',

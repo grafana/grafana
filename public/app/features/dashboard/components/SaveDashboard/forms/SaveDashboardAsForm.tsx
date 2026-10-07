@@ -1,14 +1,12 @@
 import { type ChangeEvent } from 'react';
 
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, Input, Switch, Form, Field, InputControl, Label, TextArea, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
-import { GenAIDashDescriptionButton } from '../../GenAI/GenAIDashDescriptionButton';
-import { GenAIDashTitleButton } from '../../GenAI/GenAIDashTitleButton';
+import { LazyGenAIDashDescriptionButton, LazyGenAIDashTitleButton } from '../../GenAI/LazyGenAIButtons';
 import { type SaveDashboardFormProps } from '../types';
 
 interface SaveDashboardAsFormDTO {
@@ -115,9 +113,7 @@ export const SaveDashboardAsForm = ({
                     <Label htmlFor="title">
                       <Trans i18nKey="dashboard.save-dashboard-as-form.title">Title</Trans>
                     </Label>
-                    {config.featureToggles.dashgpt && isNew && (
-                      <GenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />
-                    )}
+                    {isNew && <LazyGenAIDashTitleButton onGenerate={(title) => field.onChange(title)} />}
                   </Stack>
                 }
                 invalid={!!errors.title}
@@ -148,8 +144,8 @@ export const SaveDashboardAsForm = ({
                     <Label htmlFor="description">
                       <Trans i18nKey="dashboard.save-dashboard-as-form.description">Description</Trans>
                     </Label>
-                    {config.featureToggles.dashgpt && isNew && (
-                      <GenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />
+                    {isNew && (
+                      <LazyGenAIDashDescriptionButton onGenerate={(description) => field.onChange(description)} />
                     )}
                   </Stack>
                 }

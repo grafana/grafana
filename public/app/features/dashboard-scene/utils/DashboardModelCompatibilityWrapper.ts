@@ -15,7 +15,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dataLayersToAnnotations } from '../serialization/dataLayersToAnnotations';
 
 import { PanelModelCompatibilityWrapper } from './PanelModelCompatibilityWrapper';
-import { findVizPanelByKey, getVizPanelKeyForPanelId } from './utils';
+import { findVizPanelByKey } from './findVizPanel';
+import { getVizPanelKeyForPanelId } from './utils-panels';
 
 /**
  * Will move this to make it the main way we remain somewhat compatible with getDashboardSrv().getCurrent
@@ -95,10 +96,10 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public get panels() {
-    const panels = findAllObjects(this._scene, (o) => {
+    const panels = findAllObjects(this._scene, (o): o is VizPanel => {
       return Boolean(o instanceof VizPanel);
     });
-    return panels.map((p) => new PanelModelCompatibilityWrapper(p as VizPanel));
+    return panels.map((p) => new PanelModelCompatibilityWrapper(p));
   }
 
   /**
@@ -117,14 +118,6 @@ export class DashboardModelCompatibilityWrapper {
   public getTimezone() {
     const time = sceneGraph.getTimeRange(this._scene);
     return time.getTimeZone();
-  }
-
-  public sharedTooltipModeEnabled() {
-    return this._getSyncMode() > 0;
-  }
-
-  public sharedCrosshairModeOnly() {
-    return this._getSyncMode() === 1;
   }
 
   private _getSyncMode() {
@@ -176,8 +169,6 @@ export class DashboardModelCompatibilityWrapper {
     return Boolean(this._scene.state.meta.annotationsPermissions?.dashboard.canEdit);
   }
 
-  public panelInitialized() {}
-
   public destroy() {
     this.events.removeAllListeners();
     this._subs.unsubscribe();
@@ -188,7 +179,9 @@ export class DashboardModelCompatibilityWrapper {
   }
 }
 
-function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean) {
+function findAllObjects<T extends SceneObject>(root: SceneObject, check: (o: SceneObject) => o is T): T[];
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean): SceneObject[];
+function findAllObjects(root: SceneObject, check: (o: SceneObject) => boolean): SceneObject[] {
   let result: SceneObject[] = [];
   root.forEachChild((child) => {
     if (check(child)) {

@@ -13,19 +13,19 @@ export type GroupDiscoveryResource = {
   subresources?: GroupDiscoverySubresource[];
 };
 
-export type GroupDiscoverySubresource = {
+type GroupDiscoverySubresource = {
   subresource: string;
   responseKind: GroupVersionKind;
   verbs: string[];
 };
 
-export type GroupDiscoveryVersion = {
+type GroupDiscoveryVersion = {
   version: string;
   freshness: 'Current' | string;
   resources: GroupDiscoveryResource[];
 };
 
-export type GroupDiscoveryItem = {
+type GroupDiscoveryItem = {
   metadata: {
     name: string;
   };

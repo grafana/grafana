@@ -11,6 +11,10 @@ const XSSWL = Object.keys(xss.whiteList).reduce<xss.IWhiteList>((acc, element) =
 // We don't allow the sandbox attribute, since it can be overridden, instead we add it below.
 XSSWL.iframe = ['src', 'width', 'height'];
 
+// Allow button elements with safe presentational attributes.
+// Event handlers (onclick etc.) are stripped by the xss library automatically.
+XSSWL.button = ['class', 'style', 'type', 'disabled'];
+
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
   onTagAttr(tag, name, value, isWhiteAttr) {
@@ -75,7 +79,7 @@ export function sanitize(unsanitizedString: string): string {
   }
 }
 
-export function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML {
+function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML {
   return DOMPurify.sanitize(unsanitizedString, {
     RETURN_TRUSTED_TYPE: true,
     ADD_ATTR: ['xmlns:atom', 'version', 'property', 'content'],
@@ -84,7 +88,7 @@ export function sanitizeTrustedTypesRSS(unsanitizedString: string): TrustedHTML 
   });
 }
 
-export function sanitizeTrustedTypes(unsanitizedString: string): TrustedHTML {
+function sanitizeTrustedTypes(unsanitizedString: string): TrustedHTML {
   return DOMPurify.sanitize(unsanitizedString, { RETURN_TRUSTED_TYPE: true });
 }
 
@@ -105,7 +109,7 @@ export function sanitizeTextPanelContent(unsanitizedString: string): string {
 }
 
 // Returns sanitized SVG, free from XSS attacks to be used when rendering SVG content.
-export function sanitizeSVGContent(unsanitizedString: string): string {
+function sanitizeSVGContent(unsanitizedString: string): string {
   return DOMPurify.sanitize(unsanitizedString, { USE_PROFILES: { svg: true, svgFilters: true } });
 }
 
@@ -115,12 +119,12 @@ export function sanitizeUrl(url: string): string {
 }
 
 // Returns true if the string contains ANSI color codes.
-export function hasAnsiCodes(input: string): boolean {
+function hasAnsiCodes(input: string): boolean {
   return /\u001b\[\d{1,2}m/.test(input);
 }
 
 // Returns a string with HTML entities escaped.
-export function escapeHtml(str: string): string {
+function escapeHtml(str: string): string {
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

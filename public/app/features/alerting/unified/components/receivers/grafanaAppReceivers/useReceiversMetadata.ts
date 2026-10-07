@@ -1,8 +1,5 @@
-import { useMemo } from 'react';
-
 import { type GrafanaManagedReceiverConfig } from '../../../../../../plugins/datasource/alertmanager/types';
 import { type OnCallIntegrationDTO } from '../../../api/onCallApi';
-import { useIrmPlugin } from '../../../hooks/usePluginBridge';
 import { SupportedPlugin } from '../../../types/pluginBridges';
 import { createBridgeURL } from '../../PluginBridge';
 
@@ -14,19 +11,6 @@ export interface ReceiverPluginMetadata {
   description?: string;
   externalUrl?: string;
   warning?: string;
-}
-
-export function useOnCallMetadata(
-  onCallIntegrations: OnCallIntegrationDTO[] | undefined | null,
-  receiver: GrafanaManagedReceiverConfig,
-  hasAlertManagerConfigData = true
-): ReceiverPluginMetadata {
-  const { pluginId } = useIrmPlugin(SupportedPlugin.OnCall);
-
-  return useMemo(
-    () => getOnCallMetadata(onCallIntegrations, receiver, hasAlertManagerConfigData, pluginId),
-    [onCallIntegrations, receiver, hasAlertManagerConfigData, pluginId]
-  );
 }
 
 export function getOnCallMetadata(

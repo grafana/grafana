@@ -6,7 +6,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	prefsv1 "github.com/grafana/grafana/apps/preferences/pkg/apis/preferences/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -33,26 +35,10 @@ var PreferencesResourceInfo = utils.NewResourceInfo(APIGroup, APIVersion,
 )
 
 var (
-	SchemeBuilder      runtime.SchemeBuilder
-	localSchemeBuilder = &SchemeBuilder
-	AddToScheme        = localSchemeBuilder.AddToScheme
-	schemeGroupVersion = GroupVersion
+	// SchemeGroupVersion is group version used to register these objects
+	SchemeGroupVersion = schema.GroupVersion{Group: APIGroup, Version: APIVersion}
+
+	// GetOpenAPIDefinitions is shared with v1 (identical schema); the served v1alpha1
+	// spec uses v1 model keys, mirroring the folder app.
+	GetOpenAPIDefinitions = prefsv1.GetOpenAPIDefinitions
 )
-
-func init() {
-	localSchemeBuilder.Register(addKnownTypes, addDefaultingFuncs)
-}
-
-// Adds the list of known types to the given scheme.
-func addKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(schemeGroupVersion,
-		&Preferences{},
-		&PreferencesList{},
-	)
-	metav1.AddToGroupVersion(scheme, schemeGroupVersion)
-	return nil
-}
-
-func addDefaultingFuncs(scheme *runtime.Scheme) error {
-	return nil // return RegisterDefaults(scheme)
-}

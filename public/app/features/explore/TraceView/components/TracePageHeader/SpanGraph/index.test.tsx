@@ -16,9 +16,10 @@ import { getAllByTestId, render, screen } from '@testing-library/react';
 
 import traceGenerator from '../../demo/trace-generators';
 import transformTraceData from '../../model/transform-trace-data';
+import { type TraceSpan } from '../../types/trace';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import SpanGraph, { type SpanGraphProps, TIMELINE_TICK_INTERVAL } from './index';
+import SpanGraph, { getItem, type SpanGraphProps, TIMELINE_TICK_INTERVAL } from './index';
 
 describe('<SpanGraph>', () => {
   polyfillAnimationFrame(window);
@@ -56,5 +57,23 @@ describe('<SpanGraph>', () => {
   it('renders <TickLabels /> with the correct numnber of ticks', async () => {
     const tickLabelsDiv = screen.getByTestId('TickLabels');
     expect(getAllByTestId(tickLabelsDiv, 'tick').length).toBe(TIMELINE_TICK_INTERVAL + 1);
+  });
+});
+
+describe('getItem()', () => {
+  const base = { relativeStartTime: 0, duration: 100, process: { serviceName: 'svc' } };
+
+  it('flags summary spans', () => {
+    const span = { ...base, aggregation: { isSummary: true } } as unknown as TraceSpan;
+    expect(getItem(span).isSummary).toBe(true);
+  });
+
+  it('flags normal spans as not summary', () => {
+    expect(getItem(base as unknown as TraceSpan).isSummary).toBe(false);
+  });
+
+  it('threads span_count for summary spans (drives proportional minimap weight)', () => {
+    const span = { ...base, aggregation: { isSummary: true, spanCount: 24 } } as unknown as TraceSpan;
+    expect(getItem(span).spanCount).toBe(24);
   });
 });

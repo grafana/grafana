@@ -24,6 +24,21 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "directory with a space and trailing slash",
+			path:    "My Group/",
+			wantErr: nil,
+		},
+		{
+			name:    "nested directories with spaces",
+			path:    "My Group/Sub Group/dashboard.json",
+			wantErr: nil,
+		},
+		{
+			name:    "nested directories with spaces and trailing slash",
+			path:    "My Group/Sub Group/",
+			wantErr: nil,
+		},
+		{
 			name:    "valid path with extension",
 			path:    "path/to/file.json",
 			wantErr: nil,
@@ -297,6 +312,74 @@ func TestSafeSegment(t *testing.T) {
 			gotPath := SafeSegment(tt.path)
 			if gotPath != tt.wantPath {
 				t.Errorf("SafeSegment() = %v, want %v", gotPath, tt.wantPath)
+			}
+		})
+	}
+}
+
+func TestSanitizeSegment(t *testing.T) {
+	const fallback = "abc123"
+	tests := []struct {
+		name  string
+		title string
+		want  string
+	}{
+		{
+			name:  "plain title unchanged",
+			title: "Reports",
+			want:  "Reports",
+		},
+		{
+			name:  "title with spaces preserved",
+			title: "My Group Folder",
+			want:  "My Group Folder",
+		},
+		{
+			name:  "title with allowed punctuation preserved",
+			title: "my-folder_v1.2",
+			want:  "my-folder_v1.2",
+		},
+		{
+			name:  "invalid character dropped and leading space trimmed",
+			title: "» Reports",
+			want:  "Reports",
+		},
+		{
+			name:  "slash dropped so title stays a single segment",
+			title: "Team A/Team B",
+			want:  "Team ATeam B",
+		},
+		{
+			name:  "leading dot trimmed to avoid hidden path",
+			title: ".hidden",
+			want:  "hidden",
+		},
+		{
+			name:  "traversal token collapses to fallback",
+			title: "..",
+			want:  fallback,
+		},
+		{
+			name:  "unsupported-only title falls back to uid",
+			title: "🎉🚀",
+			want:  fallback,
+		},
+		{
+			name:  "empty title falls back to uid",
+			title: "",
+			want:  fallback,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SanitizeSegment(tt.title, fallback)
+			if got != tt.want {
+				t.Errorf("SanitizeSegment(%q) = %q, want %q", tt.title, got, tt.want)
+			}
+			// A sanitized segment must always be a safe path on its own.
+			if err := IsSafe(got); err != nil {
+				t.Errorf("SanitizeSegment(%q) produced unsafe path %q: %v", tt.title, got, err)
 			}
 		})
 	}

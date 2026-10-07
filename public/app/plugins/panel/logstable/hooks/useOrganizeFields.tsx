@@ -11,7 +11,6 @@ import { LOG_LINE_BODY_FIELD_NAME } from '../../../../features/logs/components/f
 import { LogsTableCustomCellRenderer } from '../cells/LogsTableCustomCellRenderer';
 import { getLogLevelColumnEnhancements } from '../fields/defaultLogLevelColumnConfig';
 import { getTimeFieldWidth } from '../fields/getFieldWidth';
-import { normalizeLogLevelFieldInPlace } from '../fields/normalizeLogLevelField';
 import { doesFieldSupportAdHocFiltering, doesFieldSupportInspector } from '../fields/supports';
 import { getDisplayedFields } from '../options/getDisplayedFields';
 import type { Options as LogsTableOptions } from '../panelcfg.gen';
@@ -28,6 +27,7 @@ interface Props {
   supportsPermalink: boolean;
   onPermalinkClick: BuildLinkToLogLine;
   fieldConfig: FieldConfigSource;
+  timeColumnHeaderTooltip?: string;
 }
 
 export function useOrganizeFields({
@@ -40,6 +40,7 @@ export function useOrganizeFields({
   onPermalinkClick,
   options,
   fieldConfig,
+  timeColumnHeaderTooltip,
 }: Props) {
   const [organizedFrame, setOrganizedFrame] = useState<DataFrame | null>(null);
   const isMounted = useMountedState();
@@ -61,7 +62,8 @@ export function useOrganizeFields({
       bodyFieldName,
       supportsPermalink,
       onPermalinkClick,
-      fieldConfig
+      fieldConfig,
+      timeColumnHeaderTooltip
     )
       .then((frame) => {
         if (frame && isMounted()) {
@@ -82,6 +84,7 @@ export function useOrganizeFields({
     onPermalinkClick,
     isMounted,
     fieldConfig,
+    timeColumnHeaderTooltip,
   ]);
 
   return { organizedFrame };
@@ -96,7 +99,8 @@ const organizeFields = async (
   bodyFieldName: string,
   supportsPermalink: boolean,
   onPermalinkClick: BuildLinkToLogLine,
-  fieldConfig: FieldConfigSource
+  fieldConfig: FieldConfigSource,
+  timeColumnHeaderTooltip?: string
 ) => {
   if (!extractedFrame) {
     return Promise.resolve(null);
@@ -125,7 +129,6 @@ const organizeFields = async (
     const levelField = frame.fields.find((f) => f.name === levelFieldName);
     let isLevelFirstField = false;
     if (levelField) {
-      normalizeLogLevelFieldInPlace(levelField);
       isLevelFirstField = frame.fields.indexOf(levelField) === 0;
     }
 
@@ -161,6 +164,9 @@ const organizeFields = async (
               ? getTimeFieldWidth(configAfterLevel.custom?.width, fieldIndex, options)
               : configAfterLevel.custom?.width,
           inspect: configAfterLevel.custom?.inspect ?? doesFieldSupportInspector(field),
+          ...(field.name === timeFieldName && timeColumnHeaderTooltip
+            ? { headerTooltip: timeColumnHeaderTooltip }
+            : {}),
           cellOptions:
             isFirstField && bodyFieldName && (supportsPermalink || options.enableLogDetails)
               ? {

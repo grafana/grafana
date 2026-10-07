@@ -30,7 +30,7 @@ export enum CORRELATION_EDITOR_POST_CONFIRM_ACTION {
   CLOSE_EDITOR,
 }
 
-export interface CorrelationEditorDetails {
+interface CorrelationEditorDetails {
   editorMode: boolean;
   correlationDirty: boolean;
   queryEditorDirty: boolean;
@@ -154,10 +154,15 @@ export interface ExploreItemState {
    */
   initialized: boolean;
   /**
-   * Query library reference identifier when editing a query from the query library
-   *
+   * UID of the saved query being edited in this pane (from "Edit in Explore").
+   * Seeded from the `?editSavedQueryRef=` URL param; not persisted in panes JSON.
    */
-  queryLibraryRef?: string;
+  editSavedQueryRef?: string;
+  /**
+   * True when this pane was opened to compose and save a brand-new saved query (no existing
+   * query to reference). Drives the "Adding a new saved query" banner above the query editor.
+   */
+  addingSavedQuery?: boolean;
   /**
    * Log query result to be displayed in the logs result viewer.
    */
@@ -254,13 +259,6 @@ export interface ExploreItemState {
   compact: boolean;
 }
 
-export interface ExploreUpdateState {
-  datasource: boolean;
-  queries: boolean;
-  range: boolean;
-  mode: boolean;
-}
-
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
@@ -307,7 +305,7 @@ export enum TABLE_RESULTS_STYLE {
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = (typeof TABLE_RESULTS_STYLES)[number];
 
-export interface SupplementaryQuery {
+interface SupplementaryQuery {
   enabled: boolean;
   dataProvider?: Observable<DataQueryResponse>;
   dataSubscription?: SubscriptionLike;

@@ -25,11 +25,25 @@ weight: 100
 Available in Grafana 12 and later.
 
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
+
+**This document may not contain the latest version of the API. For the most up-to-date list of available endpoints, refer to [dashboard.grafana.app/v2](https://play.grafana.org/swagger?api=dashboard.grafana.app-v2) in Swagger.**
+
 {{< /admonition >}}
 
 ## Requirements
 
 If you're running Grafana Enterprise, you'll need to have specific permissions for some endpoints. Refer to [Role-based access control permissions](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+
+## Endpoints
+
+| Method | Summary                                      | URI                                                                      |
+| ------ | -------------------------------------------- | ------------------------------------------------------------------------ |
+| POST   | [Create Dashboard](#create-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
+| PUT    | [Update Dashboard](#update-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
+| GET    | [Get Dashboard](#get-dashboard)              | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
+| GET    | [Get Dashboard (DTO format)](#get-dashboard) | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid/dto |
+| GET    | [List Dashboards](#list-dashboards)          | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards          |
+| DELETE | [Delete Dashboard](#delete-dashboard)        | /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid     |
 
 ## Create Dashboard
 
@@ -57,7 +71,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -507,7 +521,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "metadata": {
@@ -602,7 +616,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -681,7 +695,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -735,7 +749,7 @@ The `metadata.continue` field contains a token to fetch the next page.
 GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1&continue=eyJvIjoxNTIsInYiOjE3NjE3MDQyMjQyMDcxODksInMiOmZhbHNlfQ== HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example subsequent response**:
@@ -814,7 +828,7 @@ See note in the [introduction](#new-dashboard-apis) for an explanation.
 DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:

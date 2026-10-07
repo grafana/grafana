@@ -8,7 +8,7 @@ import (
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-// sequence represents a chain of rules that should be evaluated in order.
+// sequence represents a group of rules that should be evaluated in order.
 // It is a convenience type that wraps readyToRunItem as an indicator of what
 // is being represented.
 type sequence readyToRunItem
@@ -20,7 +20,7 @@ type groupKey struct {
 }
 
 // buildSequences organizes rules into evaluation sequences where rules in the same group
-// are chained together. The first rule in each group will trigger the evaluation of subsequent
+// are linked together. The first rule in each group will trigger the evaluation of subsequent
 // rules in that group through the afterEval callback.
 //
 // For example, if we have rules A, B, C in group G1 and rules D, E in group G2:
@@ -28,7 +28,7 @@ type groupKey struct {
 // - B will have afterEval set to evaluate C
 // - D will have afterEval set to evaluate E
 //
-// The function returns a slice of sequences, where each sequence represents a chain of rules
+// The function returns a slice of sequences, where each sequence represents a group of rules
 // that should be evaluated in order.
 func (sch *schedule) buildSequences(items []readyToRunItem, runJobFn func(next readyToRunItem, prev ...readyToRunItem) func()) []sequence {
 	// Step 1: Group rules by their folder and group name
@@ -108,12 +108,12 @@ func (sch *schedule) shouldEvaluateSequentially(groupItems []readyToRunItem) boo
 		return false
 	}
 
-	// if there is only one rule, there are no rules to chain
+	// if there is only one rule, there are no rules to sequence
 	if len(groupItems) == 1 {
 		return false
 	}
 
-	if len(groupItems) > 0 && models.IsRuleChainGroup(groupItems[0].rule.RuleGroup) {
+	if len(groupItems) > 0 && models.IsRuleSequenceGroup(groupItems[0].rule.RuleGroup) {
 		return true
 	}
 

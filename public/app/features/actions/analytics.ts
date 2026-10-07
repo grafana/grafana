@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 import { reportInteraction } from '@grafana/runtime';
 
 export function reportActionTrigger(actionType: string, isOneClick: boolean, visualizationType: string) {

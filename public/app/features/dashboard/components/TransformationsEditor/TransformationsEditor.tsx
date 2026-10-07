@@ -39,7 +39,7 @@ interface TransformationsEditorProps extends Themeable {
 }
 
 export const VIEW_ALL_VALUE = 'viewAll';
-export type viewAllType = 'viewAll';
+type viewAllType = 'viewAll';
 export type FilterCategory = TransformerCategory | viewAllType;
 
 export interface TransformationData {

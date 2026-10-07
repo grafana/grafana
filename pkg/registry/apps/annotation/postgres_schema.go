@@ -2,9 +2,11 @@ package annotation
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -12,6 +14,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
+	"github.com/pressly/goose/v3/lock"
 )
 
 //go:embed migrations/*.sql
@@ -20,8 +23,6 @@ var embedMigrations embed.FS
 // PartitionInfo contains metadata about a partition
 type PartitionInfo struct {
 	Name       string
-	StartTime  int64
-	EndTime    int64
 	ParentName string
 }
 
@@ -32,18 +33,8 @@ PARTITION OF annotations
 FOR VALUES FROM (%d) TO (%d);
 `
 
-	// Index templates for partitions
-	createBRINIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s USING BRIN (time);`
-	createTimeIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, time);`
-	createDashboardIndexSQL = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, dashboard_uid, panel_id, time);`
-	createTimeEndIndexSQL   = `CREATE INDEX IF NOT EXISTS %s ON %s (namespace, time_end) WHERE time_end IS NOT NULL;`
-	createTagsIndexSQL      = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, tags);`
-	createScopesIndexSQL    = `CREATE INDEX IF NOT EXISTS %s ON %s USING GIN (namespace, scopes);`
-
 	listPartitionsSQL = `
-SELECT
-    child.relname AS partition_name,
-    pg_get_expr(child.relpartbound, child.oid) AS partition_bounds
+SELECT child.relname AS partition_name
 FROM pg_inherits
 JOIN pg_class parent ON pg_inherits.inhparent = parent.oid
 JOIN pg_class child ON pg_inherits.inhrelid = child.oid
@@ -80,50 +71,19 @@ func getPartitionBounds(ts int64) (start, end int64) {
 
 // ensurePartition creates a partition for the given timestamp if it doesn't exist
 // TODO: should we pre-create partitions for the next N weeks in a background job instead of creating on-demand during inserts?
-func ensurePartition(ctx context.Context, pool *pgxpool.Pool, logger log.Logger, ts int64) error {
+func ensurePartition(ctx context.Context, pool *pgxpool.Pool, ts int64) error {
 	partitionName := getPartitionName(ts)
 	start, end := getPartitionBounds(ts)
 
-	// Begin transaction for partition creation
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to begin transaction: %w", err)
-	}
-	defer func() {
-		if err := tx.Rollback(ctx); err != nil {
-			logger.Error("failed to rollback transaction", "error", err)
-		}
-	}()
-
-	// Create partition
 	createPartition := fmt.Sprintf(createPartitionSQL, partitionName, start, end)
-	if _, err := tx.Exec(ctx, createPartition); err != nil {
+	if _, err := pool.Exec(ctx, createPartition); err != nil {
 		// Check if error is "already exists", which is fine since we just want to ensure it exists
 		if !isAlreadyExistsError(err) {
 			return fmt.Errorf("failed to create partition %s: %w", partitionName, err)
 		}
 	}
 
-	// Create indices on the new partition
-	indices := []string{
-		fmt.Sprintf(createBRINIndexSQL, fmt.Sprintf("idx_time_%s", partitionName), partitionName),
-		fmt.Sprintf(createTimeIndexSQL, fmt.Sprintf("idx_ns_time_%s", partitionName), partitionName),
-		fmt.Sprintf(createDashboardIndexSQL, fmt.Sprintf("idx_dashboard_%s", partitionName), partitionName),
-		fmt.Sprintf(createTimeEndIndexSQL, fmt.Sprintf("idx_time_end_%s", partitionName), partitionName),
-		fmt.Sprintf(createTagsIndexSQL, fmt.Sprintf("idx_tags_%s", partitionName), partitionName),
-		fmt.Sprintf(createScopesIndexSQL, fmt.Sprintf("idx_scopes_%s", partitionName), partitionName),
-	}
-
-	for _, indexSQL := range indices {
-		if _, err := tx.Exec(ctx, indexSQL); err != nil {
-			// Index creation errors are OK if they already exist
-			if !isAlreadyExistsError(err) {
-				return fmt.Errorf("failed to create index: %w", err)
-			}
-		}
-	}
-
-	return tx.Commit(ctx)
+	return nil
 }
 
 // listPartitions returns all existing partitions with their metadata
@@ -136,20 +96,13 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 
 	var partitions []PartitionInfo
 	for rows.Next() {
-		var name, bounds string
-		if err := rows.Scan(&name, &bounds); err != nil {
+		var name string
+		if err := rows.Scan(&name); err != nil {
 			return nil, fmt.Errorf("failed to scan partition row: %w", err)
-		}
-
-		var start, end int64
-		if _, err := fmt.Sscanf(bounds, "FOR VALUES FROM (%d) TO (%d)", &start, &end); err != nil {
-			return nil, fmt.Errorf("failed to parse partition bounds %q: %w", bounds, err)
 		}
 
 		partitions = append(partitions, PartitionInfo{
 			Name:       name,
-			StartTime:  start,
-			EndTime:    end,
 			ParentName: "annotations",
 		})
 	}
@@ -161,27 +114,58 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 	return partitions, nil
 }
 
-// runMigrations executes database migrations using goose
-func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
+// newMigrationProvider builds the goose migration provider.
+// It returns the goose provider, the underlying *sql.DB, and any error encountered.
+// The caller is responsible for closing the *sql.DB when done.
+func newMigrationProvider(pool *pgxpool.Pool) (*goose.Provider, *sql.DB, error) {
 	// goose operates on *sql.DB, so we need to create one from our pgxpool
 	db := stdlib.OpenDBFromPool(pool)
+
+	// The provider reads from the root of the fs, so re-root onto the migrations dir.
+	migrationsFS, err := fs.Sub(embedMigrations, "migrations")
+	if err != nil {
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to sub migrations fs: %w", err)
+	}
+
+	// Use Postgres advisory locks to prevent multiple instances from running migrations concurrently
+	locker, err := lock.NewPostgresSessionLocker()
+	if err != nil {
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to create session locker: %w", err)
+	}
+
+	provider, err := goose.NewProvider(
+		goose.DialectPostgres,
+		db,
+		migrationsFS,
+		goose.WithSessionLocker(locker),
+	)
+	if err != nil {
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to create goose provider: %w", err)
+	}
+
+	return provider, db, nil
+}
+
+// runMigrations executes pending database migrations.
+func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
+	provider, db, err := newMigrationProvider(pool)
+	if err != nil {
+		return err
+	}
 	defer func() {
 		if err := db.Close(); err != nil {
 			logger.Error("failed to close database connection", "error", err)
 		}
 	}()
 
-	// Configure goose to use embedded migrations
-	goose.SetBaseFS(embedMigrations)
-
-	if err := goose.SetDialect("postgres"); err != nil {
-		return fmt.Errorf("failed to set goose dialect: %w", err)
-	}
-
-	// Run all pending migrations
-	if err := goose.UpContext(ctx, db, "migrations"); err != nil {
+	results, err := provider.Up(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
+	logger.Info("Database migrations complete", "applied", len(results))
 
 	return nil
 }
@@ -192,8 +176,7 @@ func isAlreadyExistsError(err error) bool {
 		return false
 	}
 	// Check for pgx error code "42P07" (duplicate_table)
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pgErr.Code == "42P07"
 	}
 	return false

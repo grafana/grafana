@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -43,7 +44,7 @@ const (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRulesStoreV2
+	rulestore.RuleGroupReader
 }
 
 type RuleGroupAccessControlService interface {
@@ -261,7 +262,7 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	for _, s := range v["health"] {
 		s = strings.ToLower(s)
 		switch s {
-		case "ok", "error", "nodata", "unknown":
+		case "ok", "error", "nodata":
 			health[s] = struct{}{}
 		default:
 			return nil, fmt.Errorf("unknown health '%s'", s)
@@ -270,20 +271,15 @@ func GetHealthFromQuery(v url.Values) (map[string]struct{}, error) {
 	return health, nil
 }
 
+type StatusPreparer func(ruleUIDs []string)
+
 type RuleGroupStatusesOptions struct {
 	Ctx               context.Context
 	OrgID             int64
 	Query             url.Values
 	AllowedNamespaces map[string]string
 	SortByFullpath    bool
-}
-
-type ListAlertRulesStore interface {
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
-}
-
-type ListAlertRulesStoreV2 interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
+	StatusPreparer    StatusPreparer
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -537,7 +533,7 @@ func accumulateTotals(dest, source map[string]int64) {
 }
 
 // fetchAndFilterPage fetches one page from the store and applies filters
-func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore.RuleGroupReader, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
 	// Split matchers: only equality/inequality are supported by the store
 	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
 
@@ -606,6 +602,15 @@ func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlert
 	}
 	span.AddEvent("Provenances retrieved from store")
 
+	if ctx.opts.StatusPreparer != nil {
+		ruleUIDs := make([]string, 0, len(ruleList))
+		for _, rule := range ruleList {
+			ruleUIDs = append(ruleUIDs, rule.UID)
+		}
+
+		ctx.opts.StatusPreparer(ruleUIDs)
+	}
+
 	groupedRules := getGroupedRules(log, ruleList, ctx.ruleNamesSet, ctx.opts.AllowedNamespaces)
 
 	result := pageResult{
@@ -659,7 +664,7 @@ func filterOutRegexMatchers(matchers labels.Matchers) labels.Matchers {
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
-func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
+func paginateRuleGroups(log log.Logger, store rulestore.RuleGroupReader, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
 	allGroups := []apimodels.RuleGroup{}
 	rulesTotals := make(map[string]int64)
 
@@ -718,7 +723,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -967,7 +972,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",

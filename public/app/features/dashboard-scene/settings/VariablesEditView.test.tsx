@@ -1,7 +1,5 @@
-import { render as RTLRender } from '@testing-library/react';
-import * as React from 'react';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 
 import {
   FieldType,
@@ -13,7 +11,9 @@ import {
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneVariableSet, CustomVariable, VizPanel, AdHocFiltersVariable, SceneTimeRange } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
@@ -22,10 +22,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
-
-function render(component: React.ReactNode) {
-  return RTLRender(<TestProvider>{component}</TestProvider>);
-}
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -73,6 +69,12 @@ const runRequestMock = jest.fn().mockReturnValue(
 setRunRequest(runRequestMock);
 
 describe('VariablesEditView', () => {
+  beforeAll(() => {
+    setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+  });
+  afterAll(() => {
+    setTestFlags({});
+  });
   describe('Dashboard Variables state', () => {
     let dashboard: DashboardScene;
     let variableView: VariablesEditView;
@@ -177,11 +179,11 @@ describe('VariablesEditView', () => {
       errorSpy.mockRestore();
     });
 
-    it('should change the variable type creating a new variable object', () => {
+    it('should change the variable type creating a new variable object', async () => {
       const previousVariable = variableView.getVariables()[1] as CustomVariable;
       variableView.onEdit('customVar2');
 
-      variableView.onTypeChange('adhoc');
+      await variableView.onTypeChange('adhoc');
       expect(variableView.getVariables()).toHaveLength(3);
       const variable = variableView.getVariables()[1];
       expect(variable).not.toBe(previousVariable);
@@ -200,8 +202,8 @@ describe('VariablesEditView', () => {
       expect(variableView.state.editIndex).toBeUndefined();
     });
 
-    it('should add default new query variable when onAdd is called', () => {
-      variableView.onAdd();
+    it('should add default new query variable when onAdd is called', async () => {
+      await variableView.onAdd();
       expect(variableView.getVariables()).toHaveLength(4);
       expect(variableView.getVariables()[3].state.name).toBe('query0');
       expect(variableView.getVariables()[3].state.type).toBe('query');
@@ -220,12 +222,14 @@ describe('VariablesEditView', () => {
       variableView = result.variableView;
     });
 
-    it('should not show Provisioned by data source section when no variables have origin', () => {
-      const { queryByText } = render(<variableView.Component model={variableView} />);
+    it('should not show Provisioned by data source section when no variables have origin', async () => {
+      const { findByText, queryByText } = render(<variableView.Component model={variableView} />);
 
+      expect(await findByText('customVar')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
+    // remove test when we remove the variable tab in dashboard settings
     it('should show Provisioned by data source section when at least one variable has origin', async () => {
       const variables = variableView.getVariableSet().state.variables;
       const originVariable = new CustomVariable({
@@ -237,9 +241,9 @@ describe('VariablesEditView', () => {
       });
       variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
 
-      const { getByText } = render(<variableView.Component model={variableView} />);
+      const { findByText } = render(<variableView.Component model={variableView} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
     });
   });
 
@@ -254,7 +258,7 @@ describe('VariablesEditView', () => {
     });
 
     // FIXME: This is not working because the variable is replaced or it is not resolved yet
-    it.skip('should keep dependencies between variables the type is changed so the variable is replaced', () => {
+    it.skip('should keep dependencies between variables the type is changed so the variable is replaced', async () => {
       // Uses function to avoid store reference to previous existing variables
       const getSourceVariable = () => variableView.getVariables()[0] as CustomVariable;
       const getDependantVariable = () => variableView.getVariables()[1] as CustomVariable;
@@ -265,7 +269,7 @@ describe('VariablesEditView', () => {
 
       variableView.onEdit(getSourceVariable().state.name);
       // Simulating changing the type and update the value
-      variableView.onTypeChange('constant');
+      await variableView.onTypeChange('constant');
       getSourceVariable().setState({ value: 'newValue' });
 
       expect(getSourceVariable().getValue()).toBe('newValue');
@@ -283,7 +287,7 @@ describe('VariablesEditView', () => {
 
       variableView.onEdit(getSourceVariable().state.name);
       // Simulating changing the type and update the value
-      variableView.onTypeChange('constant');
+      await variableView.onTypeChange('constant');
       getSourceVariable().setState({ value: 'newValue' });
 
       expect(getSourceVariable().getValue()).toBe('newValue');

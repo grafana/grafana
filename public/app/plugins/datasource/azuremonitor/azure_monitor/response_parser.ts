@@ -1,7 +1,5 @@
 import { find, get } from 'lodash';
 
-import { type FetchResponse } from '@grafana/runtime';
-
 import TimeGrainConverter from '../time_grain_converter';
 import {
   type AzureAPIResponse,
@@ -11,6 +9,7 @@ import {
   type AzureMonitorMetricsMetadataResponse,
   type AzureMonitorOption,
   type Location,
+  type Metric,
   type Subscription,
 } from '../types/types';
 
@@ -93,6 +92,24 @@ export default class ResponseParser {
     });
   }
 
+  static parseMetadataDimensionValues(result: AzureAPIResponse<Metric>, dimensionName: string): string[] {
+    const values = new Set<string>();
+    const requestedDimension = dimensionName.trim().toLowerCase();
+
+    for (const metric of result?.value ?? []) {
+      for (const series of metric.timeseries ?? []) {
+        for (const metadata of series.metadatavalues ?? []) {
+          const value = metadata.value?.trim();
+          if (metadata.name?.value?.trim().toLowerCase() === requestedDimension && value) {
+            values.add(value);
+          }
+        }
+      }
+    }
+
+    return [...values].sort();
+  }
+
   static parseSubscriptions(result: AzureAPIResponse<Subscription>): Array<{ text: string; value: string }> {
     const list: Array<{ text: string; value: string }> = [];
 
@@ -114,9 +131,7 @@ export default class ResponseParser {
     return list;
   }
 
-  static parseSubscriptionsForSelect(
-    result?: FetchResponse<AzureAPIResponse<Subscription>>
-  ): Array<{ label: string; value: string }> {
+  static parseSubscriptionsForSelect(result?: AzureAPIResponse<Subscription>): Array<{ label: string; value: string }> {
     const list: Array<{ label: string; value: string }> = [];
 
     if (!result) {
@@ -125,11 +140,11 @@ export default class ResponseParser {
 
     const valueFieldName = 'subscriptionId';
     const textFieldName = 'displayName';
-    for (let i = 0; i < result.data.value.length; i++) {
-      if (!find(list, ['value', get(result.data.value[i], valueFieldName)])) {
+    for (let i = 0; i < result.value.length; i++) {
+      if (!find(list, ['value', get(result.value[i], valueFieldName)])) {
         list.push({
-          label: `${get(result.data.value[i], textFieldName)} - ${get(result.data.value[i], valueFieldName)}`,
-          value: get(result.data.value[i], valueFieldName),
+          label: `${get(result.value[i], textFieldName)} - ${get(result.value[i], valueFieldName)}`,
+          value: get(result.value[i], valueFieldName),
         });
       }
     }

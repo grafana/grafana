@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect, useRef } from 'react';
 import { type Params, useParams } from 'react-router-dom-v5-compat';
 import { usePrevious } from 'react-use';
 
@@ -18,12 +18,19 @@ import {
   type DashboardPageRouteParams,
   type DashboardPageRouteSearchParams,
 } from 'app/features/dashboard/containers/types';
+import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
+import { SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { DashboardPreviewBanner } from 'app/features/provisioning/components/Dashboards/DashboardPreviewBanner';
 import { OrphanedDashboardBanner } from 'app/features/provisioning/components/Dashboards/OrphanedDashboardBanner';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import { DashboardConversionWarningBanner } from '../components/DashboardConversionWarningBanner';
+import { DashboardTemplateEditBanner } from '../components/DashboardTemplateEditBanner';
+import { DashboardTemplateSavedBanner } from '../components/DashboardTemplateSavedBanner';
+import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBanner';
+import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
+import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
@@ -32,12 +39,30 @@ import { useScenesFlickeringFix } from '../utils/utils';
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { shouldHideDashboardKioskFooter } from './utils';
 
+// Loaded on demand so the dashboard-library UI stays out of the dashboard page chunk.
+const LazyTemplateDashboardModal = lazy(() =>
+  import(
+    /* webpackChunkName: "dashboard-library" */ 'app/features/dashboard/dashgrid/DashboardLibrary/TemplateDashboardModal'
+  ).then((m) => ({ default: m.TemplateDashboardModal }))
+);
+
+function TemplateDashboardModal() {
+  return (
+    <Suspense fallback={null}>
+      <LazyTemplateDashboardModal />
+    </Suspense>
+  );
+}
+
 export interface Props
   extends Omit<GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams>, 'match'> {}
 
 export function DashboardScenePage({ route, queryParams, location }: Props) {
   const params = useParams();
   const { type, slug, uid } = params;
+  // Custom templates also require the dashboardtemplates:read RBAC permission (the API denies
+  // listing without it), matching useTemplateDashboardsAvailability's showCustomTemplates.
+  const { showCustomTemplates } = useTemplateDashboardsAvailability();
   // Used by /dashboard/provisioning/:slug/preview/* to load dashboards based on their file path in a remote repository
   // Also used by /dashboard/assistant-preview/* to load the assistant preview dashboard
   const path = params['*'];
@@ -113,6 +138,10 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   }, [route, slug, type, uid]);
 
   if (!dashboard) {
+    if (loadError?.messageId === SCRIPTED_DASHBOARDS_DISABLED_MESSAGE_ID) {
+      return <ScriptedDashboardsDisabledPage />;
+    }
+
     return loadError ? (
       <DashboardPageError
         error={loadError}
@@ -142,12 +171,23 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
 
   return (
     <UrlSyncContextProvider scene={dashboard} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <DashboardPreviewBanner queryParams={queryParams} route={route.routeName} slug={slug} path={path} />
+      <DashboardPreviewBanner
+        queryParams={queryParams}
+        route={route.routeName}
+        slug={slug}
+        path={path}
+        dashboard={dashboard}
+      />
       <DashboardConversionWarningBanner dashboard={dashboard} />
+      <ScriptedDashboardDeprecationBanner isScripted={type === 'script'} />
       <OrphanedDashboardBanner dashboard={dashboard} />
       <SuggestedDashboardsBanner route={route.routeName} dashboard={dashboard} />
+      <DashboardTemplateSavedBanner />
+      <DashboardTemplateUseBanner dashboard={dashboard} />
+      <DashboardTemplateEditBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
+      {showCustomTemplates && <TemplateDashboardModal />}
       <DashboardBrandingFooter
         variant={DashboardBrandingFooterVariant.Kiosk}
         paddingX={2}

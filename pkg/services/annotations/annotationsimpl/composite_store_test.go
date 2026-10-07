@@ -28,7 +28,7 @@ func TestCompositeStore(t *testing.T) {
 		r2 := newFakeReader(withGetFn(getPanic))
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]ReadStore{r1, r2},
 		}
 
 		_, err := store.Get(context.Background(), annotations.ItemQuery{}, nil)
@@ -44,7 +44,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]ReadStore{r1, r2},
 		}
 
 		tc := []struct {
@@ -84,7 +84,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]ReadStore{r1, r2},
 		}
 
 		expected := []*annotations.ItemDTO{
@@ -113,7 +113,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]ReadStore{r1, r2},
 		}
 
 		expected := []*annotations.TagsDTO{
@@ -142,7 +142,7 @@ func TestCompositeStore(t *testing.T) {
 
 		store := &CompositeStore{
 			log.NewNopLogger(),
-			[]readStore{r1, r2},
+			[]ReadStore{r1, r2},
 		}
 
 		query := annotations.ItemQuery{}

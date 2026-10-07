@@ -4,21 +4,21 @@ import { type DashboardLink, VariableHide } from '@grafana/schema';
 import { isDashboardDataLayerSetState } from '../DashboardDataLayerSet';
 import { type DashboardScene } from '../DashboardScene';
 
-export function getDashboardControlsLinks(links: DashboardLink[]) {
+function getDashboardControlsLinks(links: DashboardLink[]) {
   return links.filter((link) => link.placement === 'inControlsMenu');
 }
 
-export function getDashboardControlsVariables(variables: SceneVariable[]) {
+function getDashboardControlsVariables(variables: SceneVariable[]) {
   return variables.filter((v) => v.state.hide === VariableHide.inControlsMenu);
 }
 
-export function getDashboardControlsAnnotations(dataState: SceneDataState) {
+function getDashboardControlsAnnotations(dataState: SceneDataState) {
   return (isDashboardDataLayerSetState(dataState) ? dataState.annotationLayers : []).filter(
     (layer) => layer.state.placement === 'inControlsMenu' && !layer.state.isHidden
   );
 }
 
-export function getDashboardControls(dashboard: DashboardScene) {
+function getDashboardControls(dashboard: DashboardScene) {
   const variables = getDashboardControlsVariables(sceneGraph.getVariables(dashboard)?.state.variables);
   const links = getDashboardControlsLinks(dashboard.state.links);
   const annotations = getDashboardControlsAnnotations(sceneGraph.getData(dashboard).state);

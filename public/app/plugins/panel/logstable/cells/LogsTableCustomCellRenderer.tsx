@@ -36,15 +36,15 @@ export function LogsTableCustomCellRenderer(props: {
       />
 
       <span className={styles.firstColumnCell}>
-        <AutoCell field={field} value={field.display?.(value).text ?? String(value)} rowIdx={rowIndex} />
+        <AutoCell field={field} value={value} rowIdx={rowIndex} />
       </span>
     </>
   );
 }
 
-export interface AutoCellProps {
+interface AutoCellProps {
   field: Field;
-  value: string;
+  value: unknown;
   rowIdx: number;
 }
 

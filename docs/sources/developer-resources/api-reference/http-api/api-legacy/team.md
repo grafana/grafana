@@ -56,7 +56,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/search?perpage=10&page=1&query=mytestteam HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -122,7 +122,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -168,7 +168,7 @@ See note in the [introduction](#team-api) for an explanation.
 POST /api/teams HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name": "MyTestTeam",
@@ -212,7 +212,7 @@ See note in the [introduction](#team-api) for an explanation.
 PUT /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "name": "MyTestTeam",
@@ -255,7 +255,7 @@ See note in the [introduction](#team-api) for an explanation.
 DELETE /api/teams/2 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -292,7 +292,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -306,7 +306,7 @@ Content-Type: application/json
     "orgId": 1,
     "teamId": 1,
     "userId": 3,
-    "email": "user1@email.com",
+    "email": "user1@example.com",
     "login": "user1",
     "avatarUrl": "\/avatar\/1b3c32f6386b0185c40d359cdc733a79"
   },
@@ -314,7 +314,7 @@ Content-Type: application/json
     "orgId": 1,
     "teamId": 1,
     "userId": 2,
-    "email": "user2@email.com",
+    "email": "user2@example.com",
     "login": "user2",
     "avatarUrl": "\/avatar\/cad3c68da76e45d10269e8ef02f8e73e"
   }
@@ -345,7 +345,7 @@ See note in the [introduction](#team-api) for an explanation.
 POST /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "userId": 2
@@ -387,7 +387,7 @@ See note in the [introduction](#team-api) for an explanation.
 DELETE /api/teams/2/members/3 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -427,11 +427,11 @@ See note in the [introduction](#team-api) for an explanation.
 PUT /api/teams/1/members HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer glsa_iNValIdinValiDinvalidinvalidinva_5b582697
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
-  "members": ["user1@email.com", "user2@email.com"]
-  "admins": ["user3@email.com"]
+  "members": ["user1@example.com", "user2@example.com"]
+  "admins": ["user3@example.com"]
 }
 ```
 
@@ -470,7 +470,7 @@ See note in the [introduction](#team-api) for an explanation.
 GET /api/teams/2/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 ```
 
 **Example Response**:
@@ -505,7 +505,7 @@ See note in the [introduction](#team-api) for an explanation.
 PUT /api/teams/2/preferences HTTP/1.1
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>
 
 {
   "theme": "dark",

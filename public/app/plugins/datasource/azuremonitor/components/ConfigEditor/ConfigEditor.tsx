@@ -1,3 +1,4 @@
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { memo, useState } from 'react';
 
 import {
@@ -11,6 +12,7 @@ import { getBackendSrv, isFetchError, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
+import { OPEN_FEATURE_DOMAIN } from '../../featureFlags';
 import {
   type AzureAPIResponse,
   type AzureMonitorDataSourceJsonData,
@@ -18,7 +20,7 @@ import {
   type AzureMonitorDataSourceSettings,
   type Subscription,
 } from '../../types/types';
-import { routeNames } from '../../utils/common';
+import { fetchAllArmPages, routeNames } from '../../utils/common';
 
 import { MonitorConfig } from './MonitorConfig';
 
@@ -64,16 +66,17 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
     await saveOptions();
 
     const query = `?api-version=2019-03-01`;
+    const resourcePath = `/api/datasources/uid/${options.uid}/resources/${routeNames.azureMonitor}`;
     try {
-      const result = await getBackendSrv()
-        .fetch<AzureAPIResponse<Subscription>>({
-          url: baseURL + query,
-          method: 'GET',
-        })
-        .toPromise();
+      const value = await fetchAllArmPages<Subscription>(resourcePath, baseURL + query, async (path) => {
+        const response = await getBackendSrv()
+          .fetch<AzureAPIResponse<Subscription>>({ url: path, method: 'GET' })
+          .toPromise();
+        return response?.data;
+      });
 
       setError(undefined);
-      return ResponseParser.parseSubscriptionsForSelect(result);
+      return ResponseParser.parseSubscriptionsForSelect({ value });
     } catch (err) {
       if (isFetchError(err)) {
         setError({
@@ -87,7 +90,7 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
   }
 
   return (
-    <>
+    <OpenFeatureProvider domain={OPEN_FEATURE_DOMAIN}>
       <DataSourceDescription
         dataSourceName="Azure Monitor"
         docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
@@ -96,7 +99,7 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
       <Divider />
       <MonitorConfig options={options} updateOptions={updateOptions} getSubscriptions={getSubscriptions} />
       {error && (
-        <Alert severity="error" title={error.title}>
+        <Alert severity="error" title={error.title} topSpacing={2}>
           <p>{error.description}</p>
           {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
         </Alert>
@@ -122,8 +125,6 @@ export const ConfigEditor = memo(function ConfigEditor(props: Props) {
           )}
         </ConfigSection>
       </>
-    </>
+    </OpenFeatureProvider>
   );
 });
-
-export default ConfigEditor;

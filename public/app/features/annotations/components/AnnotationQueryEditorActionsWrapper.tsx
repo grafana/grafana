@@ -26,12 +26,11 @@ export function AnnotationQueryEditorActionsWrapper({
 
   const savedQueryButtons = disableSavedQueries
     ? undefined
-    : renderSavedQueryButtons(
-        getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
-        'dashboard-annotations',
-        undefined,
-        onQueryReplace
-      );
+    : renderSavedQueryButtons({
+        query: getDataQueryFromAnnotationForSavedQueries(annotation, datasource),
+        app: 'dashboard-annotations',
+        onSelectQuery: onQueryReplace,
+      });
 
   return (
     <Stack direction="column" gap={1}>

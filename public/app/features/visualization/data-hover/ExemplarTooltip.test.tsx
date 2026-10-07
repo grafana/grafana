@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { type Field, type LinkModel } from '@grafana/data';
-import { type VizTooltipItem } from '@grafana/ui/internal';
+import { type VizTooltipItem } from '@grafana/ui';
 
 import { ExemplarTooltip } from './ExemplarTooltip';
 

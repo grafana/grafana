@@ -14,5 +14,3 @@ export const IndicatorsContainer = <T,>(props: IndicatorsContainerProps<Selectab
     </components.IndicatorsContainer>
   );
 };
-
-export default IndicatorsContainer;

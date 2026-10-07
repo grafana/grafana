@@ -186,7 +186,7 @@ const searchForOptions = async (
 
 const searchForOptionsWithDebounce = debounce(searchForOptions, 500);
 
-export function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
+function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
   const { options, selectedValues, queryValue: searchQuery, multi } = picker;
 
   if (options.length === 0 && searchQuery && searchQuery.length > 0) {

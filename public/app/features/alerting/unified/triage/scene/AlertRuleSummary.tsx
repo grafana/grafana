@@ -20,7 +20,7 @@ import { sortByAlertState } from './dataFrameUtils';
 /**
  * Viz config for the alert rule summary chart - used by the React component
  */
-export const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
+const alertRuleSummaryVizConfig = VizConfigBuilders.timeseries()
   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars)
   .setCustomFieldConfig('barWidthFactor', 1)
   .setCustomFieldConfig('barAlignment', BarAlignment.After)

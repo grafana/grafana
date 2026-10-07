@@ -607,7 +607,7 @@ export function getNodeGraphDataFrames(frames: DataFrame[], options?: NodeGraphO
   return nodeGraphFrames;
 }
 
-export const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
+const applyOptionsToFrames = (frames: DataFrame[], options: NodeGraphOptions): DataFrame[] => {
   return frames.map((frame) => {
     const fieldsCache = new FieldCache(frame);
 

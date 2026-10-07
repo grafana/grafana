@@ -14,7 +14,7 @@ import { grantUserPermissions, mockDataSource } from 'app/features/alerting/unif
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
 import { captureRequests, serializeRequests } from 'app/features/alerting/unified/mocks/server/events';
-import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/search';
+import { FOLDER_TITLE_HAPPY_PATH } from 'app/features/alerting/unified/mocks/server/handlers/folders';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
 import { MANUAL_ROUTING_KEY, SIMPLIFIED_QUERY_EDITOR_KEY } from 'app/features/alerting/unified/utils/rule-form';
@@ -163,10 +163,10 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   it('does not show contact points with canUse=false (imported) in the dropdown', async () => {
     // Override the receivers handler to include a contact point that cannot be used (e.g., imported)
     server.use(
-      http.get('/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/:namespace/receivers', () => {
+      http.get('/apis/notifications.alerting.grafana.app/v1beta1/namespaces/:namespace/receivers', () => {
         return HttpResponse.json({
           kind: 'ReceiverList',
-          apiVersion: 'notifications.alerting.grafana.app/v0alpha1',
+          apiVersion: 'notifications.alerting.grafana.app/v1beta1',
           metadata: {},
           items: [
             {
@@ -225,7 +225,7 @@ describe('Can create a new grafana managed alert using simplified routing', () =
   });
 
   describe('switch modes enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingQueryAndExpressionsStepMode', 'alertingNotificationsStepMode'] });
+    testWithFeatureToggles({ enable: ['alertingNotificationsStepMode'] });
 
     it('can create the new grafana-managed rule with default modes', async () => {
       const contactPointName = 'lotsa-emails';

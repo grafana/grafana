@@ -15,7 +15,7 @@ export const initialConstantVariableModelState: ConstantVariableModel = {
   options: [],
 };
 
-export const constantVariableSlice = createSlice({
+const constantVariableSlice = createSlice({
   name: 'templating/constant',
   initialState: initialVariablesState,
   reducers: {

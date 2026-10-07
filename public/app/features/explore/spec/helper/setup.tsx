@@ -10,6 +10,11 @@ import { Provider } from 'react-redux';
 // eslint-disable-next-line no-restricted-imports
 import { Route, Router } from 'react-router-dom';
 import { of } from 'rxjs';
+import {
+  type DataSourceFallbackWatcher,
+  seedDataSources,
+  watchDataSourceFallbacks,
+} from 'test/helpers/seedDataSources';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import {
@@ -32,7 +37,6 @@ import {
   setLocationService,
   setPluginLinksHook,
 } from '@grafana/runtime';
-import { type DataSourceRef } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { AppChrome } from 'app/core/components/AppChrome/AppChrome';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -44,23 +48,18 @@ import { configureStore } from 'app/store/configureStore';
 import { type ExploreQueryParams } from 'app/types/explore';
 
 import { type RichHistoryRemoteStorageDTO } from '../../../../core/history/RichHistoryRemoteStorage';
-import { type LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
-import { type LokiQuery } from '../../../../plugins/datasource/loki/types';
+import { type LokiDatasource, type LokiQuery } from '../../../loki-helpers/types';
 import { initialUserState } from '../../../profile/state/reducers';
 import ExplorePage from '../../ExplorePage';
 import { QueriesDrawerContextProvider } from '../../QueriesDrawer/QueriesDrawerContext';
 
 import { mockData } from './mocks';
 
-export const setBooleanFlags = (flags: Record<string, boolean>) => {
-  setTestFlags(flags);
-};
-
-export const QueryLibraryMocks = {
+const QueryLibraryMocks = {
   data: mockData.all,
 };
 
-export const IdentityServiceMocks = {
+const IdentityServiceMocks = {
   data: mockData.identityDisplay,
 };
 
@@ -81,6 +80,19 @@ type SetupOptions = {
 type TearDownOptions = {
   clearLocalStorage?: boolean;
 };
+
+// Every suite that seeds through this helper gets the check: the fallback logs a warning, but
+// that warning is inert here because nothing initialises the loggers registry in public/app
+// tests, so jest-fail-on-console never sees it and a legacy-only lookup passes green.
+let dataSourceFallbacks: DataSourceFallbackWatcher | undefined;
+
+afterEach(() => {
+  const fallbacks = dataSourceFallbacks;
+  dataSourceFallbacks = undefined;
+  // Every kind, not just instance resolution: these suites resolve settings and lists through the
+  // new APIs too, so there is nothing to concede.
+  fallbacks?.expectNoFallbacks(['instance', 'settings', 'list']);
+});
 
 export function setupExplore(options?: SetupOptions): {
   datasources: { [uid: string]: DataSourceApi };
@@ -131,42 +143,21 @@ export function setupExplore(options?: SetupOptions): {
   const defaultDatasources: DatasourceSetup[] = [
     makeDatasourceSetup(),
     makeDatasourceSetup({ name: 'elastic', id: 2 }),
-    makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999 }),
+    // pluginId 'mixed' keeps the list APIs treating this as the built-in mixed data source:
+    // excluded from the base list and appended only when a caller asks for it.
+    makeDatasourceSetup({ name: MIXED_DATASOURCE_NAME, uid: MIXED_DATASOURCE_NAME, id: 999, pluginId: 'mixed' }),
   ];
 
   const dsSettings = options?.datasources || defaultDatasources;
 
   const previousDataSourceSrv = getDataSourceSrv();
 
-  setDataSourceSrv({
-    registerRuntimeDataSource: jest.fn(),
-    getList(): DataSourceInstanceSettings[] {
-      return dsSettings.map((d) => d.settings);
-    },
-    getInstanceSettings(ref?: DataSourceRef) {
-      const allSettings = dsSettings.map((d) => d.settings);
-      return allSettings.find((x) => x.name === ref || x.uid === ref || x.uid === ref?.uid) || allSettings[0];
-    },
-    get(datasource?: string | DataSourceRef | null): Promise<DataSourceApi> {
-      let ds: DataSourceApi | undefined;
-      if (!datasource) {
-        ds = dsSettings[0]?.api;
-      } else {
-        ds = dsSettings.find((ds) =>
-          typeof datasource === 'string'
-            ? ds.api.name === datasource || ds.api.uid === datasource
-            : ds.api.uid === datasource?.uid
-        )?.api;
-      }
-
-      if (ds) {
-        return Promise.resolve(ds);
-      }
-
-      return Promise.reject();
-    },
-    reload() {},
-  });
+  // Seeds the async data source APIs and the legacy service from the same fixtures. Seeding only
+  // the legacy service would route every migrated call site Explore reaches through the legacy
+  // fallback, so the specs would assert legacy semantics whatever the new path does. The legacy
+  // service stays until the call sites Explore renders are all migrated; drop it for 'none' then.
+  seedDataSources(dsSettings, { legacySrv: 'mock' });
+  dataSourceFallbacks = watchDataSourceFallbacks();
 
   const previousEchoSrv = getEchoSrv();
   setEchoSrv(new Echo());
@@ -207,7 +198,7 @@ export function setupExplore(options?: SetupOptions): {
     <OpenFeatureProvider client={getTestFeatureFlagClient()}>
       <Provider store={storeState}>
         <GrafanaContext.Provider value={contextMock}>
-          <Router history={history}>
+          <Router history={location.getHistory()}>
             <QueriesDrawerContextProvider>
               <FinalProvider>
                 {options?.withAppChrome ? (
@@ -260,7 +251,8 @@ export function makeDatasourceSetup({
   name = 'loki',
   id = 1,
   uid: uidOverride,
-}: { name?: string; id?: number; uid?: string } = {}): DatasourceSetup {
+  pluginId,
+}: { name?: string; id?: number; uid?: string; pluginId?: string } = {}): DatasourceSetup {
   const uid = uidOverride || `${name}-uid`;
   const type = 'logs';
 
@@ -279,11 +271,15 @@ export function makeDatasourceSetup({
         large: '',
       },
     },
-    id: id.toString(),
+    id: pluginId ?? id.toString(),
     module: 'loki',
     name,
     type: PluginType.datasource,
     baseUrl: '',
+    // Both list APIs drop data sources that declare no queryable capability unless asked for
+    // `all`, so without these the picker and rich history come back empty.
+    metrics: true,
+    logs: true,
   };
   return {
     settings: {
@@ -339,11 +335,6 @@ export const withinExplore = (exploreId: string) => {
 
 export const withinQueryHistory = () => {
   const container = screen.getByTestId('data-testid QueryHistory');
-  return within(container);
-};
-
-export const withinQueryLibrary = () => {
-  const container = screen.getByRole('dialog', { name: /Query library/ });
   return within(container);
 };
 

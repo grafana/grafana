@@ -1,5 +1,3 @@
-import { useEffect, useMemo } from 'react';
-
 import {
   type CreateNotificationqueryMatcher,
   type CreateNotificationqueryNotificationCount,
@@ -59,20 +57,6 @@ export const notificationsDatasource: DataSourceInformation = {
   uid: notificationsDataSourceUid,
   settings: undefined,
 };
-
-export function useRegisterNotificationsRuntimeDataSource() {
-  const ds = useMemo(
-    () => new NotificationsAPIDatasource(notificationsDataSourceUid, notificationsDataSourcePluginId),
-    []
-  );
-  useEffect(() => {
-    try {
-      sceneUtils.registerRuntimeDataSource({ dataSource: ds });
-    } catch (e) {
-      // Datasource already registered
-    }
-  }, [ds]);
-}
 
 interface NotificationsAPIQuery extends DataQuery {
   statusFilter?: string;
@@ -220,7 +204,7 @@ export const getNotifications = async (
 /**
  * Fetch notification range counts from the notifications API for graph visualization.
  */
-export const getNotificationsRangeCounts = async (
+const getNotificationsRangeCounts = async (
   from: string,
   to: string,
   status?: CreateNotificationqueryNotificationStatus,

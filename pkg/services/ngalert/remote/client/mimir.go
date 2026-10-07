@@ -19,6 +19,7 @@ import (
 
 	alertingmodels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -149,18 +150,6 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 		}
 	}()
 
-	ct := resp.Header.Get("Content-Type")
-	if !strings.HasPrefix(ct, "application/json") {
-		msg := "Response content-type is not application/json"
-		body, err := io.ReadAll(resp.Body)
-		bodyStr := string(body)
-		if err != nil {
-			bodyStr = fmt.Sprintf("fail_to_read: %s", err)
-		}
-		mc.logger.Error(msg, "content-type", ct, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode, "body", bodyStr)
-		return nil, fmt.Errorf("%s: %s", msg, ct)
-	}
-
 	if out == nil {
 		return resp, nil
 	}
@@ -174,17 +163,25 @@ func (mc *Mimir) do(ctx context.Context, p, method string, payload io.Reader, ou
 
 	if resp.StatusCode/100 != 2 {
 		errResponse := &errorResponse{}
-		err = json.Unmarshal(body, errResponse)
-
-		if err == nil && errResponse.Error() != "" {
-			msg := "Error response from the Mimir API"
-			mc.logger.Error(msg, "err", errResponse, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
-			return nil, fmt.Errorf("%s: %w", msg, errResponse)
+		errMsg := strings.TrimSpace(string(body))
+		if jsonErr := json.Unmarshal(body, errResponse); jsonErr == nil && errResponse.Error() != "" {
+			errMsg = errResponse.Error()
 		}
+		if errMsg == "" {
+			errMsg = fmt.Sprintf("received status code %d from the remote Alertmanager", resp.StatusCode)
+		}
+		mc.logger.Error("Error response from the remote Alertmanager", "err", errMsg, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			return nil, errutil.TooManyRequests("alerting.remote-alertmanager.rateLimited").Errorf("%s", errMsg)
+		}
+		return nil, fmt.Errorf("%s", errMsg)
+	}
 
-		msg := "Failed to decode non-2xx JSON response"
-		mc.logger.Error(msg, "err", err, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode)
-		return nil, fmt.Errorf("%s: %w", msg, err)
+	ct := resp.Header.Get("Content-Type")
+	if !strings.HasPrefix(ct, "application/json") {
+		msg := "Response content-type is not application/json"
+		mc.logger.Error(msg, "content-type", ct, "url", r.URL.String(), "method", r.Method, "status", resp.StatusCode, "body", string(body))
+		return nil, fmt.Errorf("%s: %s", msg, ct)
 	}
 
 	if err = json.Unmarshal(body, out); err != nil {

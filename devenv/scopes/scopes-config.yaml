@@ -195,6 +195,8 @@ navigationTree:
     subScope: shoes
     preLoadSubScopeChildren: true
     children:
+      # Direct dashboard under ChildScope — clicking this sets nav_scope_path.
+      # Contrast with shoes-grouped-* below.
       - name: shoes-overview
         title: Overview
         url: /d/5SdHCadmz
@@ -204,6 +206,23 @@ navigationTree:
         title: Team Overview
         url: /d/EJ8_d9jZk
         scope: shoes
+
+      # Dashboard under ChildScope → Group:
+      # RootScope (shoe-org) → ChildScope (shoes) → Group (Team Metrics) → Dashboard.
+      # Clicking this should set nav_scope_path in the URL.
+      - name: shoes-grouped-latency
+        title: Latency (under group)
+        url: /d/ZqZnVvFZz
+        scope: shoes
+        groups:
+          - Team Metrics
+
+      - name: shoes-grouped-errors
+        title: Errors (under group)
+        url: /d/xtY_uCAiz
+        scope: shoes
+        groups:
+          - Team Metrics
 
       - name: shoes-frontend
         title: Frontend
@@ -226,6 +245,14 @@ navigationTree:
             url: /d/5SdHCadmz
             scope: frontend
             subScope: shoes # This should be filtered out since 'shoes' is already in the path
+
+          # Nested ChildScope → Group → Dashboard (same pattern one level deeper)
+          - name: frontend-grouped-overview
+            title: Frontend Overview (under group)
+            url: /d/5Y0jv6pVz
+            scope: frontend
+            groups:
+              - Frontend Reports
 
       - name: shoes-database
         title: Database

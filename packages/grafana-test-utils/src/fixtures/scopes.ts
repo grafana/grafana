@@ -2,15 +2,16 @@
  * Types for Scopes API - matching @grafana/data types
  */
 
-export interface ScopeFilter {
+interface ScopeFilter {
   key: string;
   value: string;
   operator: 'equals' | 'not-equals' | 'regex-match' | 'regex-not-match';
 }
 
-export interface ScopeSpec {
+interface ScopeSpec {
   title: string;
   filters: ScopeFilter[];
+  defaultPath?: string[];
 }
 
 export interface Scope {
@@ -20,7 +21,7 @@ export interface Scope {
   spec: ScopeSpec;
 }
 
-export interface ScopeNodeSpec {
+interface ScopeNodeSpec {
   nodeType: 'container' | 'leaf';
   title: string;
   description?: string;
@@ -37,12 +38,12 @@ export interface ScopeNode {
   spec: ScopeNodeSpec;
 }
 
-export interface ScopeDashboardBindingSpec {
+interface ScopeDashboardBindingSpec {
   dashboard: string;
   scope: string;
 }
 
-export interface ScopeDashboardBindingStatus {
+interface ScopeDashboardBindingStatus {
   dashboardTitle: string;
   groups?: string[];
 }
@@ -144,7 +145,23 @@ export const MOCK_SCOPES: Scope[] = [
       filters: [{ key: 'environment', value: 'prod', operator: 'equals' }],
     },
   },
+  // Used by the find/default_scope mock handler — has a defaultPath so the
+  // default-scope flow can be exercised end-to-end.
+  {
+    metadata: { name: 'default-scope-with-path' },
+    spec: {
+      title: 'Default Scope With Path',
+      defaultPath: ['applications', 'applications-grafana'],
+      filters: [{ key: 'app', value: 'grafana', operator: 'equals' }],
+    },
+  },
 ];
+
+/**
+ * The scope returned by the mock `find/default_scope` handler. Exposed so tests
+ * can assert against the same metadata that the handler serves.
+ */
+export const MOCK_DEFAULT_SCOPE = MOCK_SCOPES.find((s) => s.metadata.name === 'default-scope-with-path')!;
 
 const dashboardBindingsGenerator = (
   scopes: string[],

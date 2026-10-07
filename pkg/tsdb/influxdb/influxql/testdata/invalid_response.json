@@ -1,4 +1,0 @@
-{
-  "code": "invalid",
-  "message": "failed to parse query: found WERE, expected ; at line 1, char 38"
-}

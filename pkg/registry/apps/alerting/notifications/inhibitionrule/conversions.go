@@ -1,10 +1,6 @@
 package inhibitionrule
 
 import (
-	"fmt"
-
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
@@ -36,9 +32,9 @@ func ConvertToK8sResource(orgID int64, rule v1.InhibitionRule, namespacer reques
 			Kind:       kind.Kind(),
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            rule.Name,
+			Name:            string(rule.UID),
 			Namespace:       namespacer(orgID),
-			ResourceVersion: rule.Fingerprint(),
+			ResourceVersion: rule.Version,
 		},
 		Spec: convertDomainToK8sSpec(rule),
 	}
@@ -57,7 +53,7 @@ func convertDomainToK8sSpec(rule v1.InhibitionRule) model.InhibitionRuleSpec {
 	}
 }
 
-func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRuleMatcher {
+func convertLabelsMatchersToK8s(matchers []v1.Matcher) []model.InhibitionRuleMatcher {
 	if len(matchers) == 0 {
 		return nil
 	}
@@ -65,8 +61,8 @@ func convertLabelsMatchersToK8s(matchers config.Matchers) []model.InhibitionRule
 	result := make([]model.InhibitionRuleMatcher, 0, len(matchers))
 	for _, m := range matchers {
 		result = append(result, model.InhibitionRuleMatcher{
-			Type:  model.InhibitionRuleMatcherType(m.Type.String()),
-			Label: m.Name,
+			Type:  model.InhibitionRuleMatcherType(m.Type),
+			Label: m.Label,
 			Value: m.Value,
 		})
 	}
@@ -78,62 +74,25 @@ func convertToDomainModel(rule *model.InhibitionRule) (v1.InhibitionRule, error)
 	if err != nil {
 		return v1.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
 	}
-	result := v1.InhibitionRule{
-		Name:       rule.Name,
-		Provenance: v1.Provenance(prov),
-	}
-
-	// Convert source matchers from K8s format to prometheus format
-	sourceMatchers, err := convertK8sMatchersToLabels(rule.Spec.SourceMatchers)
-	if err != nil {
-		return v1.InhibitionRule{}, fmt.Errorf("invalid source matchers: %w", err)
-	}
-	result.SourceMatchers = config.Matchers(sourceMatchers)
-
-	// Convert target matchers from K8s format to prometheus format
-	targetMatchers, err := convertK8sMatchersToLabels(rule.Spec.TargetMatchers)
-	if err != nil {
-		return v1.InhibitionRule{}, fmt.Errorf("invalid target matchers: %w", err)
-	}
-	result.TargetMatchers = config.Matchers(targetMatchers)
-
-	// Copy equal labels
-	result.Equal = rule.Spec.Equal
-
-	return result, nil
+	return v1.InhibitionRule{
+		ResourceMetadata: v1.ResourceMetadata{
+			UID:        v1.ResourceUID(rule.Name),
+			Provenance: prov,
+		},
+		SourceMatchers: convertK8sMatchersToLabels(rule.Spec.SourceMatchers),
+		TargetMatchers: convertK8sMatchersToLabels(rule.Spec.TargetMatchers),
+		Equal:          rule.Spec.Equal,
+	}, nil
 }
 
-func convertK8sMatchersToLabels(k8sMatchers []model.InhibitionRuleMatcher) (labels.Matchers, error) {
+func convertK8sMatchersToLabels(k8sMatchers []model.InhibitionRuleMatcher) []v1.Matcher {
 	if len(k8sMatchers) == 0 {
-		return nil, nil
+		return nil
 	}
 
-	result := make(labels.Matchers, 0, len(k8sMatchers))
+	result := make([]v1.Matcher, 0, len(k8sMatchers))
 	for _, m := range k8sMatchers {
-		matchType, err := convertMatcherType(string(m.Type))
-		if err != nil {
-			return nil, err
-		}
-		matcher, err := labels.NewMatcher(matchType, m.Label, m.Value)
-		if err != nil {
-			return nil, fmt.Errorf("invalid matcher (label=%s, type=%s, value=%s): %w", m.Label, m.Type, m.Value, err)
-		}
-		result = append(result, matcher)
+		result = append(result, v1.NewMatcher(v1.MatcherType(m.Type), m.Label, m.Value))
 	}
-	return result, nil
-}
-
-func convertMatcherType(k8sType string) (labels.MatchType, error) {
-	switch k8sType {
-	case "=":
-		return labels.MatchEqual, nil
-	case "!=":
-		return labels.MatchNotEqual, nil
-	case "=~":
-		return labels.MatchRegexp, nil
-	case "!~":
-		return labels.MatchNotRegexp, nil
-	default:
-		return labels.MatchEqual, ngmodels.MakeErrInhibitionRuleInvalid(fmt.Errorf("unknown matcher type: %s", k8sType))
-	}
+	return result
 }

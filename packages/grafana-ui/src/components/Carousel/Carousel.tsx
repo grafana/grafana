@@ -13,7 +13,7 @@ import { clearButtonStyles } from '../Button/Button';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface
-export interface CarouselImage {
+interface CarouselImage {
   path: string;
   name: string;
 }

@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
 import { useEffect } from 'react';
-import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
 import { Button, Drawer, ErrorBoundary, ErrorWithStack, Spinner, Text, useStyles2 } from '@grafana/ui';

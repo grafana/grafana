@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { cloneDeep, isArray, isObject, isString } from 'lodash';
+import { cloneDeepWith, isArray, isObject, isString } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -13,10 +13,11 @@ import {
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionLink,
   PluginExtensionTypes,
+  type PluginMeta,
   urlUtil,
 } from '@grafana/data';
-import { reportInteraction, config } from '@grafana/runtime';
-import { getAppPluginMetas } from '@grafana/runtime/internal';
+import { reportInteraction } from '@grafana/runtime';
+import { FlagKeys, getAppPluginMetas, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { getPluginSettings } from '@grafana/runtime/unstable';
 import { Modal } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
@@ -39,6 +40,7 @@ import {
   getExtensionPointPluginMetaSync,
   type ExtensionPointPluginMeta,
 } from './appUtils';
+import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { type ExtensionsLog, log as baseLog } from './logs/log';
 import { type AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertStringProps, isPromise } from './validators';
@@ -81,14 +83,35 @@ export const wrapWithPluginContext = <T,>({
   extensionTitle,
   Component,
   log,
+  pluginMeta,
 }: {
   pluginId: string;
   extensionTitle: string;
   Component: React.ComponentType<T>;
   log: ExtensionsLog;
+  pluginMeta?: PluginMeta;
 }) => {
+  const renderWithContext = (props: T & React.JSX.IntrinsicAttributes, meta: PluginMeta) => (
+    <PluginContextProvider meta={meta}>
+      <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
+        <RestrictedGrafanaApisProvider pluginId={pluginId}>
+          <Component
+            {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: meta.info?.version })}
+          />
+        </RestrictedGrafanaApisProvider>
+      </ExtensionErrorBoundary>
+    </PluginContextProvider>
+  );
+
+  // When the plugin meta is already known (e.g. captured at registration time, right after the
+  // plugin was imported), render synchronously. The async variant below renders `null` for at
+  // least one commit, which makes extension content pop in after the host page has painted.
+  if (pluginMeta) {
+    return (props: T & React.JSX.IntrinsicAttributes) => renderWithContext(props, pluginMeta);
+  }
+
   const WrappedExtensionComponent = (props: T & React.JSX.IntrinsicAttributes) => {
-    const { error, loading, value: pluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
+    const { error, loading, value: fetchedPluginMeta } = useAsync(() => getPluginSettings(pluginId, false));
 
     if (loading) {
       return null;
@@ -102,22 +125,12 @@ export const wrapWithPluginContext = <T,>({
       return null;
     }
 
-    if (!pluginMeta) {
+    if (!fetchedPluginMeta) {
       log.error(`Fetched plugin meta information is empty for "${pluginId}", aborting.`);
       return null;
     }
 
-    return (
-      <PluginContextProvider meta={pluginMeta}>
-        <ExtensionErrorBoundary pluginId={pluginId} extensionTitle={extensionTitle} log={log}>
-          <RestrictedGrafanaApisProvider pluginId={pluginId}>
-            <Component
-              {...writableProxy(props, { log, source: 'extension', pluginId, pluginVersion: pluginMeta.info?.version })}
-            />
-          </RestrictedGrafanaApisProvider>
-        </ExtensionErrorBoundary>
-      </PluginContextProvider>
-    );
+    return renderWithContext(props, fetchedPluginMeta);
   };
 
   return WrappedExtensionComponent;
@@ -160,45 +173,6 @@ const getModalWrapper = ({
   return ModalWrapper;
 };
 
-// Deep-clones and deep-freezes an object.
-// (Returns with a new object, does not modify the original object)
-//
-// @param `object` The object to freeze
-// @param `frozenProps` A set of objects that have already been frozen (used to prevent infinite recursion)
-export function deepFreeze(value?: object | Record<string | symbol, unknown> | unknown[], frozenProps = new Map()) {
-  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
-    return value;
-  }
-
-  // Deep cloning the object to prevent freezing the original object
-  const clonedValue = Array.isArray(value) ? [...value] : { ...value };
-
-  // Prevent infinite recursion by looking for cycles inside an object
-  if (frozenProps.has(value)) {
-    return frozenProps.get(value);
-  }
-  frozenProps.set(value, clonedValue);
-
-  const propNames = Reflect.ownKeys(clonedValue);
-
-  for (const name of propNames) {
-    const prop = Array.isArray(clonedValue) ? clonedValue[Number(name)] : clonedValue[name];
-
-    // If the property is an object:
-    //   1. clone it
-    //   2. freeze it
-    if (prop && (typeof prop === 'object' || typeof prop === 'function')) {
-      if (Array.isArray(clonedValue)) {
-        clonedValue[Number(name)] = deepFreeze(prop, frozenProps);
-      } else {
-        clonedValue[name] = deepFreeze(prop, frozenProps);
-      }
-    }
-  }
-
-  return Object.freeze(clonedValue);
-}
-
 export function generateExtensionId(pluginId: string, extensionPointId: string, title: string): string {
   const str = `${pluginId}${extensionPointId}${title}`;
 
@@ -210,13 +184,6 @@ export function generateExtensionId(pluginId: string, extensionPointId: string, 
 const _isReadOnlyProxy = Symbol('isReadOnlyProxy');
 const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
 
-export class ReadOnlyProxyError extends Error {
-  constructor(message?: string) {
-    super(message ?? 'Mutating a read-only proxy object');
-    this.name = 'ReadOnlyProxyError';
-  }
-}
-
 /**
  * Returns a proxy that wraps the given object in a way that makes it read only.
  * If you try to modify the object a TypeError exception will be thrown.
@@ -225,7 +192,7 @@ export class ReadOnlyProxyError extends Error {
  * @returns A new read only object, does not modify the original object
  */
 export function getReadOnlyProxy<T extends object>(obj: T): T {
-  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj)) {
+  if (!obj || typeof obj !== 'object' || isReadOnlyProxy(obj) || shouldPassReactElementByReference(obj)) {
     return obj;
   }
 
@@ -250,6 +217,10 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
         return dateTime(value);
       }
 
+      if (shouldPassReactElementByReference(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getReadOnlyProxy(value));
@@ -270,6 +241,14 @@ interface ProxyOptions {
   pluginVersion?: string;
 }
 
+// Component types from memo, lazy, and forwardRef are not elements, so they keep the existing proxy behavior.
+function shouldPassReactElementByReference(value: unknown): boolean {
+  return (
+    React.isValidElement(value) &&
+    getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaPluginExtensionReactElementProps, false)
+  );
+}
+
 /**
  * Returns a proxy that logs any attempted mutation to the original object.
  *
@@ -282,7 +261,7 @@ interface ProxyOptions {
  * @returns A new proxy object that logs any attempted mutation to the original object
  */
 export function getMutationObserverProxy<T extends object>(obj: T, options?: ProxyOptions): T {
-  if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj)) {
+  if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj) || shouldPassReactElementByReference(obj)) {
     return obj;
   }
 
@@ -343,6 +322,11 @@ export function getMutationObserverProxy<T extends object>(obj: T, options?: Pro
         return dateTime(value);
       }
 
+      // React elements must keep their identity across the plugin boundary.
+      if (shouldPassReactElementByReference(value)) {
+        return value;
+      }
+
       if (isObject(value) || isArray(value)) {
         if (!cache.has(value)) {
           cache.set(value, getMutationObserverProxy(value, { log, source, pluginId, pluginVersion }));
@@ -372,10 +356,18 @@ export function writableProxy<T>(value: T, options?: ProxyOptions): T {
     return value;
   }
 
+  // React elements must keep their identity across the plugin boundary.
+  if (shouldPassReactElementByReference(value)) {
+    return value;
+  }
+
   const { log = baseLog, source = 'extension', pluginId = 'unknown', pluginVersion = 'unknown' } = options ?? {};
 
-  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
-  return getMutationObserverProxy(cloneDeep(value), { log, pluginId, pluginVersion, source });
+  // Default: return a proxy of a deep clone, which logs warnings when mutation is attempted.
+  return getMutationObserverProxy(
+    cloneDeepWith(value, (v) => (shouldPassReactElementByReference(v) ? v : undefined)),
+    { log, pluginId, pluginVersion, source }
+  );
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {
@@ -472,7 +464,7 @@ export function getLinkExtensionOverrides(
   }
 }
 
-export function getLinkExtensionOnClick(
+function getLinkExtensionOnClick(
   pluginId: string,
   extensionPointId: string,
   config: AddedLinkRegistryItem,
@@ -545,7 +537,7 @@ export function getLinkExtensionOnClick(
   };
 }
 
-export function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
+function getLinkExtensionPathWithTracking(pluginId: string, path: string, extensionPointId: string): string {
   return urlUtil.appendQueryToUrl(
     path,
     urlUtil.toUrlParams({
@@ -586,10 +578,6 @@ export function addedLinkToExtensionLink(
     openInNewTab: overrides?.openInNewTab ?? addedLink.openInNewTab,
   };
 }
-
-// Comes from the `app_mode` setting in the Grafana config (defaults to "development")
-// Can be set with the `GF_DEFAULT_APP_MODE` environment variable
-export const isGrafanaDevMode = () => config.buildInfo.env === 'development';
 
 /**
  * Returns a list of app plugin configs that match the given plugin ids.

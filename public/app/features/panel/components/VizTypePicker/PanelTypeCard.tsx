@@ -6,6 +6,7 @@ import { type GrafanaTheme2, isUnsignedPluginSignature, type PanelPluginMeta, Pl
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
+import { getFocusStyles } from '@grafana/ui/internal';
 import { type SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
@@ -77,7 +78,7 @@ const PanelTypeCardComponent = ({
         {children}
       </div>
       {showBadge && (
-        <div className={cx(styles.badge, { [styles.disabled]: isDisabled })}>
+        <div className={cx({ [styles.disabled]: isDisabled })}>
           <PanelPluginBadge plugin={plugin} />
         </div>
       )}
@@ -116,7 +117,12 @@ const PanelTypeCardSkeleton: SkeletonComponent<React.PropsWithChildren<SkeletonP
   const skeletonStyles = useStyles2(getSkeletonStyles);
   return (
     <div className={styles.item} {...rootProps}>
-      <Skeleton className={cx(styles.img, skeletonStyles.image)} width={IMAGE_SIZE} height={IMAGE_SIZE} />
+      <Skeleton
+        containerClassName={skeletonStyles.image}
+        className={styles.img}
+        width={IMAGE_SIZE}
+        height={IMAGE_SIZE}
+      />
 
       <div className={styles.itemContent}>
         <div className={styles.name}>
@@ -140,7 +146,7 @@ const getSkeletonStyles = () => {
       lineHeight: 1,
     }),
     image: css({
-      lineHeight: 1,
+      lineHeight: 0,
     }),
   };
 };
@@ -153,7 +159,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexShrink: 0,
       cursor: 'pointer',
       background: theme.colors.background.secondary,
-      borderRadius: theme.shape.radius.default,
+      borderRadius: theme.shape.radius.lg,
       boxShadow: theme.shadows.z1,
       border: `1px solid ${theme.colors.background.secondary}`,
       alignItems: 'center',
@@ -164,6 +170,10 @@ const getStyles = (theme: GrafanaTheme2) => {
         transition: theme.transitions.create(['background'], {
           duration: theme.transitions.duration.short,
         }),
+      },
+
+      '&:focus-visible': {
+        ...getFocusStyles(theme),
       },
 
       '&:hover': {
@@ -184,7 +194,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     current: css({
       label: 'currentVisualizationItem',
-      border: `1px solid ${theme.colors.primary.border}`,
+      border: `1px solid ${theme.colors.accent.main}`,
       background: theme.colors.action.selected,
     }),
     disabled: css({
@@ -215,9 +225,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       width: IMAGE_SIZE,
       display: 'flex',
       alignItems: 'center',
-    }),
-    badge: css({
-      background: theme.colors.background.primary,
     }),
     deleteButton: css({
       cursor: 'pointer',

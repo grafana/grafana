@@ -1,3 +1,4 @@
+import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '@grafana/alerting';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 
 import { PromAlertingRuleState } from '../../../../types/unified-alerting-dto';
@@ -14,7 +15,9 @@ import {
   mockRulerGrafanaRule,
 } from '../mocks';
 import { RuleHealth } from '../search/rulesSearchParser';
+import { matcherToMatcherField } from '../utils/alertmanager';
 import { Annotation } from '../utils/constants';
+import { parsePromQLStyleMatcherLooseSafe } from '../utils/matchers';
 import { getFilter } from '../utils/search';
 
 import { filterRules } from './useFilteredRules';
@@ -325,4 +328,56 @@ describe('filterRules', function () {
     expect(filtered[0]?.groups[0]?.rules).toHaveLength(1);
     expect(filtered[0]?.groups[0]?.rules[0]?.name).toBe(longRuleName);
   });
+});
+
+// Legacy URLs may put free-text or search-syntax tokens in queryString instead of PromQL matchers.
+describe('legacy queryString URL param parsing', () => {
+  const parseLegacyQueryString = (queryString: string) =>
+    parsePromQLStyleMatcherLooseSafe(queryString).map(matcherToMatcherField);
+
+  it.each([
+    'state:firing',
+    'state:nodata',
+    'High CPU Usage',
+    'Payment Gateway Errors',
+    'auth.service.SessionTimeout',
+    'prod/api-gateway',
+    'eu-west/em-processor',
+    'k8s-cluster-alerts',
+    'PaymentService-Prod',
+  ])('should return empty label filter for non-matcher legacy queryString "%s"', (queryString) => {
+    expect(parseLegacyQueryString(queryString)).toEqual([]);
+  });
+
+  it('should parse valid legacy matcher syntax into label filters', () => {
+    expect(parseLegacyQueryString('severity="critical"')).toEqual([
+      { name: 'severity', operator: '=', value: 'critical' },
+    ]);
+  });
+});
+
+describe('filterRules — default policy recognition', () => {
+  it.each([USER_DEFINED_TREE_NAME, DEFAULT_ROUTING_TREE_NAME_ALIAS])(
+    'matches a Grafana rule on the default policy when filtering by "%s"',
+    (policy) => {
+      const defaultPolicyRule = mockCombinedRule({
+        name: 'Default policy rule',
+        rulerRule: mockRulerGrafanaRule({}, { notification_settings: undefined }),
+      });
+      const namedPolicyRule = mockCombinedRule({
+        name: 'Named policy rule',
+        rulerRule: mockRulerGrafanaRule({}, { notification_settings: { policy: 'team-a-policy' } }),
+      });
+
+      const ns = mockCombinedRuleNamespace({
+        groups: [mockCombinedRuleGroup('g', [defaultPolicyRule, namedPolicyRule])],
+      });
+
+      const filtered = filterRules([ns], getFilter({ policy }));
+      const names = filtered[0]?.groups[0]?.rules.map((r) => r.name) ?? [];
+
+      expect(names).toContain('Default policy rule');
+      expect(names).not.toContain('Named policy rule');
+    }
+  );
 });

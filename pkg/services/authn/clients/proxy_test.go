@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
@@ -125,6 +126,109 @@ func TestProxy_Authenticate(t *testing.T) {
 	}
 }
 
+func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
+	type testCase struct {
+		desc              string
+		reqHeaders        map[string][]string
+		proxyHeaders      map[string]string
+		useExternalGroups bool
+		expectCacheHit    bool
+		clientExtGroups   []string
+		expectedExtGroups []string
+	}
+
+	tests := []testCase{
+		{
+			desc: "rehydrates ExternalGroups from Groups header on cache hit",
+			reqHeaders: map[string][]string{
+				"X-Username": {"johndoe"},
+				"X-Group":    {"editors-viewers,everyone"},
+			},
+			proxyHeaders: map[string]string{
+				proxyFieldGroups: "X-Group",
+			},
+			useExternalGroups: true,
+			expectCacheHit:    true,
+			expectedExtGroups: []string{"editors-viewers", "everyone"},
+		},
+		{
+			desc: "cache hit with no Groups header leaves ExternalGroups empty",
+			reqHeaders: map[string][]string{
+				"X-Username": {"johndoe"},
+			},
+			useExternalGroups: true,
+			expectCacheHit:    true,
+		},
+		{
+			desc: "cache hit does not rehydrate when id_use_external_groups_for_groups_claim is off",
+			reqHeaders: map[string][]string{
+				"X-Username": {"johndoe"},
+				"X-Group":    {"editors-viewers,everyone"},
+			},
+			proxyHeaders: map[string]string{
+				proxyFieldGroups: "X-Group",
+			},
+			useExternalGroups: false,
+			expectCacheHit:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			cfg.AuthProxy.HeaderName = "X-Username"
+			cfg.AuthProxy.Headers = tt.proxyHeaders
+			cfg.AuthProxy.SyncTTL = 15
+			cfg.IDUseExternalGroupsForGroupsClaim = tt.useExternalGroups
+
+			req := &authn.Request{
+				HTTPRequest: &http.Request{
+					Header:     tt.reqHeaders,
+					RemoteAddr: "127.0.0.1:333",
+				},
+			}
+
+			additional := getAdditionalProxyHeaders(req, cfg)
+			cacheKey, ok := getProxyCacheKey("johndoe", additional)
+			require.True(t, ok)
+			cache := &fakeCache{data: map[string][]byte{cacheKey: []byte("42")}}
+
+			clientCalled := false
+			proxyClient := authntest.MockProxyClient{AuthenticateProxyFunc: func(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
+				clientCalled = true
+				return &authn.Identity{
+					ID:             "99",
+					Type:           claims.TypeUser,
+					ExternalGroups: tt.clientExtGroups,
+				}, nil
+			}}
+
+			c, err := ProvideProxy(cfg, cache, tracing.InitializeTracerForTest(), proxyClient)
+			require.NoError(t, err)
+
+			got, err := c.Authenticate(context.Background(), req)
+			require.NoError(t, err)
+			require.NotNil(t, got)
+			assert.Equal(t, tt.expectCacheHit, !clientCalled)
+			if tt.expectCacheHit {
+				assert.Equal(t, "42", got.ID)
+			} else {
+				assert.Equal(t, "99", got.ID)
+			}
+			assert.Equal(t, tt.expectedExtGroups, got.ExternalGroups)
+		})
+	}
+}
+
+func TestGetProxyCacheKey_NoCollision(t *testing.T) {
+	key1, ok1 := getProxyCacheKey("admin", map[string]string{proxyFieldEmail: "admin@corp.com"})
+	key2, ok2 := getProxyCacheKey("admina", map[string]string{proxyFieldEmail: "dmin@corp.com"})
+
+	require.True(t, ok1)
+	require.True(t, ok2)
+	assert.NotEqual(t, key1, key2)
+}
+
 func TestProxy_Test(t *testing.T) {
 	type testCase struct {
 		desc       string
@@ -176,7 +280,7 @@ func TestProxy_Test(t *testing.T) {
 	}
 }
 
-var _ proxyCache = new(fakeCache)
+var _ proxyCache = (*fakeCache)(nil)
 
 type fakeCache struct {
 	data        map[string][]byte
@@ -200,6 +304,7 @@ func (f fakeCache) Delete(ctx context.Context, key string) error {
 func TestProxy_Hook(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 15
 	cfg.AuthProxy.Headers = map[string]string{
 		proxyFieldRole: "X-Role",
 	}
@@ -230,7 +335,7 @@ func TestProxy_Hook(t *testing.T) {
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
 				cacheKey: []byte("1"),
-				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): []byte(fmt.Sprintf("users:johndoe-%s", role)),
+				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): fmt.Appendf(nil, "users:johndoe-%s", role),
 			}
 			assert.Equal(t, expectedCache, cache.data)
 		}
@@ -239,4 +344,33 @@ func TestProxy_Hook(t *testing.T) {
 	t.Run("step 1: new user with role Admin", withRole("Admin"))
 	t.Run("step 2: cached user with new Role Viewer", withRole("Viewer"))
 	t.Run("step 3: cached user get changed back to Admin", withRole("Admin"))
+}
+
+func TestProxy_Hook_SyncTTLDisabled(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthProxy.HeaderName = "X-Username"
+	cfg.AuthProxy.SyncTTL = 0
+	cache := &fakeCache{data: make(map[string][]byte)}
+
+	c, err := ProvideProxy(cfg, cache, tracing.InitializeTracerForTest(), authntest.MockProxyClient{})
+	require.NoError(t, err)
+
+	userIdentity := &authn.Identity{
+		ID:   "1",
+		Type: claims.TypeUser,
+		ClientParams: authn.ClientParams{
+			CacheAuthProxyKey: "users:johndoe-Admin",
+		},
+	}
+	userReq := &authn.Request{
+		HTTPRequest: &http.Request{
+			Header: map[string][]string{
+				"X-Username": {"johndoe"},
+			},
+		},
+	}
+
+	err = c.Hook(context.Background(), userIdentity, userReq)
+	assert.NoError(t, err)
+	assert.Empty(t, cache.data, "no cache entry should be written when sync_ttl is 0")
 }

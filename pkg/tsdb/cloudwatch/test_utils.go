@@ -228,6 +228,10 @@ func (c fakeCheckHealthClient) GetLogGroupFields(_ context.Context, _ *cloudwatc
 	return nil, nil
 }
 
+func (c fakeCheckHealthClient) ListAggregateLogGroupSummaries(_ context.Context, _ *cloudwatchlogs.ListAggregateLogGroupSummariesInput, _ ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.ListAggregateLogGroupSummariesOutput, error) {
+	return &cloudwatchlogs.ListAggregateLogGroupSummariesOutput{}, nil
+}
+
 type FakeCredentialsProvider struct {
 }
 

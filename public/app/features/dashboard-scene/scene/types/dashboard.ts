@@ -1,0 +1,127 @@
+import { type VizPanel, type SceneObject, type SceneObjectState } from '@grafana/scenes';
+import { type DashboardLink } from '@grafana/schema';
+import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
+import { type DashboardMeta } from 'app/types/dashboard';
+
+import { type PanelEditor } from '../../panel-edit/PanelEditor';
+import { type DashboardEditView } from '../../settings/utils';
+import { type DashboardSidebarLike } from '../../sidebar/types';
+import { type DashboardControls } from '../DashboardControls';
+import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+
+import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
+import { type LayoutParent } from './LayoutParent';
+
+/** Changes to any field cancel pending view loading. */
+export interface DashboardViewState {
+  /**
+   * Layout of panels. Any kind, because a sibling resource's layout manager (the notebook) also
+   * rides this scene and serializes its own kind rather than a dashboard layout kind.
+   */
+  body: AnyDashboardLayoutManager;
+  /** True when editing */
+  isEditing?: boolean;
+  /** Panel to inspect */
+  inspectPanelKey?: string;
+  /** Panel key to view in fullscreen */
+  viewPanel?: string;
+  /** Edit view */
+  editview?: DashboardEditView;
+  /** Edit panel */
+  editPanel?: PanelEditor;
+  /** Scene object that handles the current drawer or modal */
+  overlay?: SceneObject;
+  /** Share view */
+  shareView?: string;
+}
+
+interface DashboardLoadingState {
+  /** A drawer's implementation is being loaded. */
+  isOverlayLoading?: boolean;
+}
+
+export interface DashboardSceneState extends SceneObjectState, DashboardViewState, DashboardLoadingState {
+  /** Dashboard-specific preferences **/
+  preferences?: DashboardScenePreferences;
+
+  /** The title */
+  title: string;
+  /** The description */
+  description?: string;
+  /** Tags */
+  tags?: string[];
+  /** Links */
+  links: DashboardLink[];
+  /** Is editable */
+  editable?: boolean;
+  /** Allows disabling grid lazy loading */
+  preload?: boolean;
+  /** A uid when saved */
+  uid?: string;
+  /** @experimental */
+  scopeMeta?: ScopeMeta;
+  /** NavToolbar actions */
+  actions?: SceneObject[];
+  /** Fixed row at the top of the canvas with for example variables and time range controls */
+  controls?: DashboardControls;
+  /** True when user made a change */
+  isDirty?: boolean;
+  /** meta flags */
+  meta: Omit<DashboardMeta, 'isNew'>;
+  /** Version of the dashboard */
+  version?: number;
+  /** Renders panels in grid and filtered */
+  panelSearch?: string;
+  /** How many panels to show per row for search results */
+  panelsPerRow?: number;
+  /** options pane */
+  sidebar: DashboardSidebarLike;
+  /** Manages dragging/dropping of layout items */
+  layoutOrchestrator: DashboardLayoutOrchestrator;
+  /** True while default variables from datasources are being loaded */
+  defaultVariablesLoading?: boolean;
+  /** True while default links from datasources are being loaded */
+  defaultLinksLoading?: boolean;
+  /**
+   * Set while a dashboard plan is being previewed: panels stay query-less placeholders and the
+   * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
+   */
+  planning?: DashboardPlanningState;
+}
+
+export interface DashboardPlanningState {
+  /** Identifies the plan being previewed, so a stale request against a superseded plan can be refused. */
+  planId: string;
+  /** Title of the plan being previewed, shown in the banner. */
+  planTitle: string;
+  /** Build the plan: attach real queries to the scaffolded panels. */
+  onBuild: () => void;
+  /** Discard the plan and remove its scaffolded panels. */
+  onDismiss: () => void;
+}
+
+interface DashboardScenePreferences {
+  defaultLayoutTemplate?: DashboardLayoutManager;
+}
+
+export interface DashboardSceneLike extends SceneObject<DashboardSceneState>, LayoutParent {
+  isDashboardScene: boolean;
+
+  copyPanel(vizPanel: VizPanel): void;
+
+  getDefaultLayout(): DashboardLayoutManager | undefined;
+}
+
+export function isDashboardSceneLike(obj: unknown): obj is DashboardSceneLike {
+  return typeof obj === 'object' && obj !== null && 'isDashboardScene' in obj && obj.isDashboardScene === true;
+}
+
+export function getDashboardSceneLike(sceneObject: SceneObject): DashboardSceneLike {
+  const root = sceneObject.getRoot();
+
+  if (isDashboardSceneLike(root)) {
+    return root;
+  }
+
+  throw new Error('SceneObject root is not a DashboardSceneLike object');
+}

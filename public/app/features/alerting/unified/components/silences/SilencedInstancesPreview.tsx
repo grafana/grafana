@@ -9,6 +9,7 @@ import { Alert, Badge, Icon, LoadingPlaceholder, Tooltip, useStyles2 } from '@gr
 import { type MatcherFieldValue } from 'app/features/alerting/unified/types/silence-form';
 import { matcherFieldToMatcher } from 'app/features/alerting/unified/utils/alertmanager';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
+import { isValidRE2Regex } from 'app/features/alerting/unified/utils/matchers';
 import { type AlertmanagerAlert, type Matcher, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -45,11 +46,19 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   const styles = useStyles2(getStyles);
   const columns = useColumns();
 
-  // By default the form contains an empty matcher - with empty name and value and = operator
-  // We don't want to fetch previews for empty matchers as it results in all alerts returned
-  const hasValidMatchers = ruleUid || inputMatchers.some((matcher) => matcher.value && matcher.name);
+  const regexOperators = new Set([MatcherOperator.regex, MatcherOperator.notRegex]);
+  const hasInvalidRegex = inputMatchers.some(
+    (matcher) => regexOperators.has(matcher.operator) && !isValidRE2Regex(matcher.value)
+  );
 
-  const [getAlertmanagerAlerts, { currentData: alerts = [], isFetching, isError }] = useLazyQuery();
+  // By default the form contains an empty matcher - with empty name and value and = operator
+  // We don't want to fetch previews for empty matchers as it results in all alerts returned,
+  // and we don't want to send invalid regexes to the backend.
+  const hasValidMatchers =
+    !hasInvalidRegex && Boolean(ruleUid || inputMatchers.some((matcher) => matcher.value && matcher.name));
+
+  const [getAlertmanagerAlerts, { currentData: alerts = [], isFetching, isError: isBackendError }] = useLazyQuery();
+  const isError = isBackendError || hasInvalidRegex;
 
   // We need to deep compare the matchers, as otherwise the preview API call is triggered on every render
   // of the component. This is because between react-hook-form's useFieldArray, and our parsing of the matchers,
@@ -57,7 +66,8 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
   useDebouncedDeepCompare(
     () => {
       if (hasValidMatchers) {
-        getAlertmanagerAlerts({ amSourceName, filter: { matchers } });
+        // the inline "Preview not available" Alert below already surfaces the failure to the user.
+        getAlertmanagerAlerts({ amSourceName, filter: { matchers }, showErrorAlert: false });
       }
     },
     500,

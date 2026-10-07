@@ -267,7 +267,7 @@ function isCursorOutsideCanvas({ left, top }: uPlot.Cursor, canvas: DOMRect) {
  * Tooltip is positioned relatively to a viewport
  * @internal
  **/
-export function positionTooltip(u: uPlot, bbox: DOMRect) {
+function positionTooltip(u: uPlot, bbox: DOMRect) {
   let x, y;
   const cL = u.cursor.left || 0;
   const cT = u.cursor.top || 0;

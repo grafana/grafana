@@ -3,20 +3,18 @@ package search
 import (
 	"context"
 	"errors"
-	"io"
+	"os"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/Masterminds/semver"
+	"github.com/Masterminds/semver/v3"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gocloud.dev/blob"
-	"gocloud.dev/blob/memblob"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -32,7 +30,7 @@ const (
 // --- selectSnapshotsToDelete (pure retention rules) ---
 //
 // These tests cover retention semantics in isolation, without involving any
-// bucket or lock backend. selectSnapshotsToDelete deliberately takes a clock
+// store or lock. selectSnapshotsToDelete deliberately takes a clock
 // and is pure, so the whole policy is exercisable as a unit.
 
 func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
@@ -41,16 +39,6 @@ func mkMeta(version string, rv int64, uploadedAt time.Time) *IndexMeta {
 		LatestResourceVersion: rv,
 		UploadTimestamp:       uploadedAt,
 	}
-}
-
-// newCleanupTestBucket returns an in-memory bucket and a store backed by it,
-// with the bucket's Close registered as test cleanup. Used by the end-to-end
-// runCleanup tests.
-func newCleanupTestBucket(t *testing.T) (*blob.Bucket, *BucketRemoteIndexStore) {
-	t.Helper()
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-	return bucket, newTestRemoteIndexStore(t, bucket)
 }
 
 func TestSelectSnapshotsToDelete_AgeCutoff(t *testing.T) {
@@ -286,17 +274,17 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 	old16 := makeULID(t, now.Add(-3*time.Hour))
 	new16 := makeULID(t, now.Add(-2*time.Hour))
 
-	seed := func(ctx context.Context, bucket *blob.Bucket) {
-		seedSnapshot(t, ctx, bucket, ns, old15, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-		seedSnapshot(t, ctx, bucket, ns, new15, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
-		seedSnapshot(t, ctx, bucket, ns, old16, mkMeta("11.6.0", 100, now.Add(-3*time.Hour)))
-		seedSnapshot(t, ctx, bucket, ns, new16, mkMeta("11.6.0", 200, now.Add(-2*time.Hour)))
+	seed := func(ctx context.Context, store RemoteIndexStore) {
+		seedSnapshot(t, ctx, store, ns, old15, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+		seedSnapshot(t, ctx, store, ns, new15, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+		seedSnapshot(t, ctx, store, ns, old16, mkMeta("11.6.0", 100, now.Add(-3*time.Hour)))
+		seedSnapshot(t, ctx, store, ns, new16, mkMeta("11.6.0", 200, now.Add(-2*time.Hour)))
 	}
 
 	runForVersion := func(version string) []ulid.ULID {
 		ctx := context.Background()
-		bucket, store := newCleanupTestBucket(t)
-		seed(ctx, bucket)
+		store := newTestKVRemoteIndexStore(t)
+		seed(ctx, store)
 
 		be, err := NewBleveBackend(BleveOptions{
 			Root:          t.TempDir(),
@@ -325,10 +313,10 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 	assert.ElementsMatch(t, []ulid.ULID{new15, new16}, keptByV15)
 }
 
-// --- end-to-end runCleanup tests against a memblob bucket ---
+// --- end-to-end runCleanup tests against a KV store ---
 
-// listSeededIndexKeys returns the index keys still present at ns in the bucket.
-func listSeededIndexKeys(t *testing.T, ctx context.Context, store *BucketRemoteIndexStore, ns resource.NamespacedResource) []ulid.ULID {
+// listSeededIndexKeys returns the index keys still present at ns in the store.
+func listSeededIndexKeys(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource) []ulid.ULID {
 	t.Helper()
 	got, err := ListIndexSnapshots(ctx, store, ns, testLogger)
 	require.NoError(t, err)
@@ -356,23 +344,11 @@ func newCleanupTestBackend(t *testing.T, store RemoteIndexStore, ownsFn func(res
 
 func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	ctx := context.Background()
-	bucket := memblob.OpenBucket(nil)
-	t.Cleanup(func() { _ = bucket.Close() })
-
-	// Two storeA/storeB instances share the same bucket and lock backend so
-	// that a lock acquired by storeA is observable by storeB. Constructed
-	// directly rather than via newCleanupTestBucket because we need distinct
-	// lock owners.
-	backend := newFakeBackend(newConditionalBucket())
-	lockOpts := LockOptions{TTL: 5 * time.Second, HeartbeatInterval: 500 * time.Millisecond}
-	storeA := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket: bucket, LockBackend: backend, LockOwner: "instance-A",
-		BuildLock: lockOpts, CleanupLock: lockOpts,
-	})
-	storeB := NewBucketRemoteIndexStore(BucketRemoteIndexStoreConfig{
-		Bucket: bucket, LockBackend: backend, LockOwner: "instance-B",
-		BuildLock: lockOpts, CleanupLock: lockOpts,
-	})
+	// Two storeA/storeB instances share the same KV so that a lock acquired
+	// by storeA is observable by storeB. They use distinct lock owners.
+	backing := newTestBadgerKV(t)
+	storeA := newTestKVRemoteIndexStoreOn(t, backing, "instance-A")
+	storeB := newTestKVRemoteIndexStoreOn(t, backing, "instance-B")
 
 	nsA := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	nsB := resource.NamespacedResource{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -381,8 +357,8 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	old := makeULID(t, now.Add(-2*time.Hour))
 	fresh := makeULID(t, now.Add(-time.Hour))
 	for _, ns := range []resource.NamespacedResource{nsA, nsB} {
-		seedSnapshot(t, ctx, bucket, ns, old, mkMeta("11.5.0", 100, now.Add(-2*time.Hour)))
-		seedSnapshot(t, ctx, bucket, ns, fresh, mkMeta("11.5.0", 200, now.Add(-time.Hour)))
+		seedSnapshot(t, ctx, storeB, ns, old, mkMeta("11.5.0", 100, now.Add(-2*time.Hour)))
+		seedSnapshot(t, ctx, storeB, ns, fresh, mkMeta("11.5.0", 200, now.Add(-time.Hour)))
 	}
 
 	// instance-A pre-acquires the cleanup lock for stack-1; instance-B's runCleanup
@@ -407,20 +383,17 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 
 func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 	ctx := context.Background()
-	bucket, store := newCleanupTestBucket(t)
+	store := newTestKVRemoteIndexStore(t)
 
 	ns := newTestNsResource()
 	old := makeULID(t, time.Now().Add(-48*time.Hour))
-	pfx := indexPrefix(ns, old.String())
-	// Stale prefix without a snapshot manifest — older than CleanupIncompleteIndexSnapshots' minAge.
-	require.NoError(t, bucket.WriteAll(ctx, pfx+"store/data.bin", []byte("partial"), nil))
+	// Stale upload without a snapshot manifest — older than CleanupIncompleteIndexSnapshots' minAge.
+	seedIncompleteSnapshot(t, store, ns, old)
 
 	be, metrics := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(ctx)
 
-	iter := bucket.List(&blob.ListOptions{Prefix: pfx})
-	_, err := iter.Next(ctx)
-	require.Error(t, err, "incomplete upload prefix must be removed")
+	assertNoDataKeys(t, store, ns, old)
 
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotIncompleteUploadsCleaned))
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
@@ -428,7 +401,7 @@ func TestRunCleanup_IncompleteUploadsCounted(t *testing.T) {
 
 func TestRunCleanup_DeletesPerRetentionRules(t *testing.T) {
 	ctx := context.Background()
-	bucket, store := newCleanupTestBucket(t)
+	store := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	now := time.Now()
@@ -436,9 +409,9 @@ func TestRunCleanup_DeletesPerRetentionRules(t *testing.T) {
 	supersededOld := makeULID(t, now.Add(-3*time.Hour))
 	tooOld := makeULID(t, now.Add(-10*24*time.Hour))
 
-	seedSnapshot(t, ctx, bucket, ns, keep, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
-	seedSnapshot(t, ctx, bucket, ns, supersededOld, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-	seedSnapshot(t, ctx, bucket, ns, tooOld, mkMeta("11.5.0", 50, now.Add(-10*24*time.Hour)))
+	seedSnapshot(t, ctx, store, ns, keep, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+	seedSnapshot(t, ctx, store, ns, supersededOld, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+	seedSnapshot(t, ctx, store, ns, tooOld, mkMeta("11.5.0", 50, now.Add(-10*24*time.Hour)))
 
 	be, metrics := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(ctx)
@@ -499,6 +472,12 @@ func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.Namespace
 	s.mu.Unlock()
 	return s.inner.ListIndexKeys(ctx, r)
 }
+func (s *recordingStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	s.mu.Lock()
+	s.listIndexKeys[r.Namespace]++
+	s.mu.Unlock()
+	return s.inner.ListIndexKeysIncludingIncomplete(ctx, r)
+}
 func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
 	s.deleteIndex[r.Namespace]++
@@ -508,16 +487,22 @@ func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedR
 func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, in io.Reader) error {
-	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, in)
+func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, out io.Writer) error {
-	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, out)
+func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
+}
+func (s *recordingStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
+}
+func (s *recordingStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
 func TestRunCleanup_OwnershipFilter_NamespaceLevel(t *testing.T) {
 	ctx := context.Background()
-	bucket, inner := newCleanupTestBucket(t)
+	inner := newTestKVRemoteIndexStore(t)
 	store := newRecordingStore(inner)
 
 	ownedNs := resource.NamespacedResource{Namespace: "ownedNs", Group: "dashboard.grafana.app", Resource: "dashboards"}
@@ -527,8 +512,8 @@ func TestRunCleanup_OwnershipFilter_NamespaceLevel(t *testing.T) {
 	old := makeULID(t, now.Add(-3*time.Hour))
 	fresh := makeULID(t, now.Add(-2*time.Hour))
 	for _, ns := range []resource.NamespacedResource{ownedNs, unownedNs} {
-		seedSnapshot(t, ctx, bucket, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-		seedSnapshot(t, ctx, bucket, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+		seedSnapshot(t, ctx, inner, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+		seedSnapshot(t, ctx, inner, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
 	}
 
 	var ownsCalls atomic.Int32
@@ -614,6 +599,9 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
 	return s.inner.ListIndexKeys(ctx, r)
 }
+func (s *controllableLockStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+	return s.inner.ListIndexKeysIncludingIncomplete(ctx, r)
+}
 func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
 	err := s.inner.DeleteIndex(ctx, r, k)
 	if s.onDeleteIndex != nil {
@@ -624,16 +612,22 @@ func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.Name
 func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, in io.Reader) error {
-	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, in)
+func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, out io.Writer) error {
-	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, out)
+func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
+}
+func (s *controllableLockStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
+}
+func (s *controllableLockStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
 func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 	ctx := context.Background()
-	bucket, inner := newCleanupTestBucket(t)
+	inner := newTestKVRemoteIndexStore(t)
 
 	// Two resources in one namespace. Lose the lock after the first ListIndexSnapshots
 	// call; the second resource must be untouched.
@@ -654,8 +648,8 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 		} else {
 			oldKey, freshKey = oldB, freshB
 		}
-		seedSnapshot(t, ctx, bucket, r, oldKey, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-		seedSnapshot(t, ctx, bucket, r, freshKey, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+		seedSnapshot(t, ctx, inner, r, oldKey, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+		seedSnapshot(t, ctx, inner, r, freshKey, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
 	}
 
 	store := &controllableLockStore{inner: inner}
@@ -697,7 +691,7 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 // --- lifecycle ---
 
 func TestCleanupSnapshotsPeriodically_LifecycleExitsOnContextCancel(t *testing.T) {
-	_, store := newCleanupTestBucket(t)
+	store := newTestKVRemoteIndexStore(t)
 
 	// CleanupInterval > 0 makes NewBleveBackend start the cleanup goroutine.
 	// 1h is long enough that the initial jittered delay parks the goroutine in
@@ -735,7 +729,7 @@ func (s *listNamespacesErrStore) ListNamespaces(context.Context) ([]string, erro
 }
 
 func TestRunCleanup_ListNamespacesErrorRecorded(t *testing.T) {
-	_, inner := newCleanupTestBucket(t)
+	inner := newTestKVRemoteIndexStore(t)
 
 	store := &listNamespacesErrStore{RemoteIndexStore: inner, err: errors.New("network down")}
 	be, metrics := newCleanupTestBackend(t, store, nil)
@@ -746,7 +740,7 @@ func TestRunCleanup_ListNamespacesErrorRecorded(t *testing.T) {
 
 // deleteFailingStore wraps an inner store and forces every DeleteIndex call to
 // return an error, so we can exercise the per-snapshot failure path without
-// depending on bucket internals.
+// depending on store internals.
 type deleteFailingStore struct {
 	RemoteIndexStore
 	err error
@@ -758,16 +752,16 @@ func (s *deleteFailingStore) DeleteIndex(context.Context, resource.NamespacedRes
 
 func TestRunCleanup_DeleteFailureRecordedAndFlipsNamespaceStatus(t *testing.T) {
 	ctx := context.Background()
-	bucket, inner := newCleanupTestBucket(t)
+	inner := newTestKVRemoteIndexStore(t)
 	ns := newTestNsResource()
 
 	now := time.Now()
 	old := makeULID(t, now.Add(-3*time.Hour))
 	fresh := makeULID(t, now.Add(-2*time.Hour))
-	seedSnapshot(t, ctx, bucket, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
-	seedSnapshot(t, ctx, bucket, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
+	seedSnapshot(t, ctx, inner, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
+	seedSnapshot(t, ctx, inner, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
 
-	store := &deleteFailingStore{RemoteIndexStore: inner, err: errors.New("bucket 5xx")}
+	store := &deleteFailingStore{RemoteIndexStore: inner, err: errors.New("store 5xx")}
 	be, metrics := newCleanupTestBackend(t, store, nil)
 	be.runCleanup(ctx)
 
@@ -780,6 +774,6 @@ func TestRunCleanup_DeleteFailureRecordedAndFlipsNamespaceStatus(t *testing.T) {
 	assert.Equal(t, 1.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusError)))
 	assert.Equal(t, 0.0, testutil.ToFloat64(metrics.IndexSnapshotNamespaceCleanups.WithLabelValues(snapshotNamespaceCleanupStatusSuccess)))
 
-	// Bucket state confirms the delete didn't actually happen.
+	// Store state confirms the delete didn't actually happen.
 	assert.ElementsMatch(t, []ulid.ULID{old, fresh}, listSeededIndexKeys(t, ctx, inner, ns))
 }

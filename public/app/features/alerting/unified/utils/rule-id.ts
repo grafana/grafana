@@ -1,10 +1,12 @@
 import { nth } from 'lodash';
 
 import { locationService } from '@grafana/runtime';
+import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   type CloudRuleIdentifier,
   type CombinedRule,
   type EditableRuleIdentifier,
+  type PrometheusRuleIdentifier,
   type Rule,
   type RuleGroupIdentifier,
   type RuleGroupIdentifierV2,
@@ -31,6 +33,9 @@ import {
   prometheusRuleType,
   rulerRuleType,
 } from './rules';
+import { parsePrometheusDuration } from './time';
+
+const collator = new Intl.Collator();
 
 export function fromRulerRule(
   ruleSourceName: string,
@@ -220,36 +225,101 @@ export function stringifyIdentifier(identifier: RuleIdentifier): string {
     return identifier.uid;
   }
 
-  if (isCloudRuleIdentifier(identifier)) {
-    return [
-      cloudRuleIdentifierPrefix,
-      identifier.ruleSourceName,
-      identifier.namespace,
-      identifier.groupName,
-      identifier.ruleName,
-      identifier.rulerRuleHash,
-    ]
-      .map(String)
-      .map(escapeDollars)
-      .map(escapePathSeparators)
-      .join('$');
-  }
+  return stringifyDataSourceIdentifier(identifier, identifier.ruleSourceName);
+}
 
-  return [
-    prometheusRuleIdentifierPrefix,
-    identifier.ruleSourceName,
-    identifier.namespace,
-    identifier.groupName,
-    identifier.ruleName,
-    identifier.ruleHash,
-  ]
+/**
+ * Serialise a data source managed identifier, using `rulesSourceId` to say which rules source the
+ * rule came from.
+ *
+ * Grafana's own URLs name the data source, which is what `stringifyIdentifier` gives you. The
+ * grafana-prometheusalerting-app plugin puts the data source's UID in that same slot, so handing a
+ * rule over to it means re-serialising with the UID instead.
+ */
+export function stringifyDataSourceIdentifier(
+  identifier: CloudRuleIdentifier | PrometheusRuleIdentifier,
+  rulesSourceId: string
+): string {
+  const [prefix, ruleHash] = isCloudRuleIdentifier(identifier)
+    ? [cloudRuleIdentifierPrefix, identifier.rulerRuleHash]
+    : [prometheusRuleIdentifierPrefix, identifier.ruleHash];
+
+  return [prefix, rulesSourceId, identifier.namespace, identifier.groupName, identifier.ruleName, ruleHash]
     .map(String)
     .map(escapeDollars)
     .map(escapePathSeparators)
     .join('$');
 }
 
-export function hash(value: string): number {
+/** `decodeURIComponent`, but a stray '%' gives the raw value back instead of throwing. */
+export function tryDecodeUriComponent(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+/**
+ * Takes an identifier straight out of a URL and hands it back only if it belongs to a data source
+ * managed rule. Grafana-managed rules (a bare UID) and anything that won't parse give undefined.
+ *
+ * Everything that needs to know "is this rule data source managed, and what are its parts?" goes
+ * through here, so the answer can't differ between the route matcher and the code that acts on it.
+ */
+function parseDataSourceManagedIdentifier(
+  identifier: string | undefined
+): CloudRuleIdentifier | PrometheusRuleIdentifier | undefined {
+  if (!identifier) {
+    return undefined;
+  }
+
+  // Decoded out here rather than inside `parse`, so a stray '%' falls back to the raw value instead
+  // of being read as "this doesn't parse". Rule names are allowed to contain one.
+  const parsed = tryParse(tryDecodeUriComponent(identifier));
+  if (!parsed || !(isCloudRuleIdentifier(parsed) || isPrometheusRuleIdentifier(parsed))) {
+    return undefined;
+  }
+
+  return parsed;
+}
+
+/**
+ * Grafana-managed rules are identified by a bare UID. Data source managed ones carry a prefix and
+ * `$`-separated parts, so the identifier alone says who owns the rule without any lookup.
+ *
+ * This asks `parse` rather than just checking the prefix, so it only says yes to identifiers that
+ * can actually be taken apart again. Anything that merely looks the part — `cri$` with the wrong
+ * number of fields, say — is treated as not data source managed, which sends the page down the
+ * ordinary Grafana route instead of making it wait on work that was always going to fail.
+ */
+export function isDataSourceManagedIdentifier(identifier: string | undefined): boolean {
+  return parseDataSourceManagedIdentifier(identifier) !== undefined;
+}
+
+/**
+ * Grafana and the plugin use the same identifier shape but not the same contents: Grafana puts the
+ * data source *name* in the second slot, the plugin puts its *UID*. Passing one straight to the
+ * other sends the plugin looking for a data source that doesn't exist, so swap that field over.
+ *
+ * Returns undefined for Grafana-managed rules (a bare UID, nothing to translate) and for names we
+ * can't resolve to a data source — in both cases we leave the page on Grafana's side.
+ */
+export async function toPluginRuleIdentifier(rawIdentifier: string | undefined): Promise<string | undefined> {
+  const identifier = parseDataSourceManagedIdentifier(rawIdentifier);
+  if (!identifier) {
+    return undefined;
+  }
+
+  const uid = (await getDataSourceInstanceSettings(identifier.ruleSourceName))?.uid;
+  if (!uid) {
+    return undefined;
+  }
+
+  return encodeURIComponent(stringifyDataSourceIdentifier(identifier, uid));
+}
+
+function hash(value: string): number {
   let hash = 0;
   if (value.length === 0) {
     return hash;
@@ -311,14 +381,84 @@ export function getPromRuleFingerprint(rule: Rule, includeQuery: boolean) {
   throw new Error('Only recording and alerting rules can be hashed');
 }
 
-// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
-export function hashQuery(query: string) {
-  // remove comments
-  query = query
+/**
+ * Strips PromQL comments from a query string.
+ * Handles both full-line comments (lines starting with #) and inline comments
+ * (# appearing after code on the same line, e.g. `or # fallback condition`).
+ * Mimir normalizes expressions by stripping comments before storing them in
+ * Prometheus state, so the ruler expression and the Prometheus query must be
+ * processed identically before comparison.
+ */
+export function stripPromQLComments(query: string): string {
+  return query
+    .replace(/#[^\n]*/g, '') // strip from # to end of line (inline and full-line comments)
     .split('\n')
     .map((line) => line.trim())
-    .filter((line) => line && !line.startsWith('#'))
+    .filter((line) => Boolean(line))
     .join('\n');
+}
+
+/**
+ * A PromQL string literal, in any of the three syntaxes PromQL allows. A backslash escapes the next
+ * character in a quoted string, so `"{{\"FOO\"}}"` is one string and not two – but not in a backtick
+ * raw string, where a backslash is just a backslash.
+ */
+const PROMQL_STRING = /"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`/;
+
+/**
+ * A PromQL duration literal – one or more `<number><unit>` parts, e.g. `5m`, `1h30m`, `500ms`.
+ *
+ * The lookbehind and lookahead keep us from matching a duration-looking tail inside an identifier,
+ * so a recording rule named `job:latency:rate5m` is left alone. They also have to exclude a dot:
+ * plain `\b` would find a boundary in the middle of `1.5h` and match just the `5h`.
+ *
+ * The interval patterns elsewhere in Grafana can't stand in for this one – they either anchor to the
+ * whole string, or they accept the units of a Grafana interval rather than a PromQL duration.
+ */
+const PROMQL_DURATION = /(?<![\w.])(?:\d+(?:ms|[smhdwy]))+(?![\w.])/;
+
+/**
+ * Strings come first, and the scan runs left to right, so an opening quote swallows the whole literal
+ * before anything inside it can be read as a duration.
+ */
+const PROMQL_STRING_OR_DURATION = new RegExp(`${PROMQL_STRING.source}|${PROMQL_DURATION.source}`, 'g');
+
+const QUOTE_CHARACTERS = ['"', "'", '`'];
+
+/**
+ * Rewrites every duration in a query to a plain number of milliseconds.
+ *
+ * Mimir parses the expression and prints it back out when it exposes the rule via the Prometheus
+ * rules API, and printing picks the largest unit that fits. A hand-written `[60m:]` in the ruler
+ * YAML therefore comes back as `[1h:]`, which would otherwise fingerprint differently.
+ *
+ * Durations inside a string are left alone. `window="60m"` and `window="1h"` select different series,
+ * so rewriting them would make two genuinely different rules look like one – as happens in the
+ * multi-window burn rate pattern, where each rule carries its own window as a label.
+ */
+export function normalizePromQLDurations(query: string): string {
+  return query.replace(PROMQL_STRING_OR_DURATION, (match) => {
+    if (QUOTE_CHARACTERS.includes(match[0])) {
+      return match;
+    }
+
+    try {
+      return `${parsePrometheusDuration(match)}ms`;
+    } catch {
+      // the two patterns could drift apart, so leave anything we can't parse exactly as we found it
+      // rather than collapsing it to a value that would make unrelated durations look identical
+      return match;
+    }
+  });
+}
+
+// there can be slight differences in how prom & ruler render a query, this will hash them accounting for the differences
+export function hashQuery(query: string) {
+  // remove comments (full-line and inline)
+  query = stripPromQLComments(query);
+
+  // `60m` and `1h` mean the same thing but don't look the same
+  query = normalizePromQLDurations(query);
 
   // one of them might be wrapped in parens
   if (query.length > 1 && query[0] === '(' && query[query.length - 1] === ')') {
@@ -335,6 +475,14 @@ export function hashQuery(query: string) {
   // Convert `{{.field}}` to "{{.field}}"
   query = query.replace(/`([^`]*)`/g, '"$1"');
 
+  // Mimir re-serializes the expression when exposing it via the Prometheus rules API, which drops
+  // trailing commas and empty label selectors that are legal in hand-written ruler YAML. Both have
+  // to go before hashing, or a ruler `expr` and its Prometheus `query` fingerprint differently.
+  // Convert `metric{foo="bar",}` to `metric{foo="bar"}`
+  query = query.replace(/,(?=})/g, '');
+  // Convert `metric{}` to `metric`
+  query = query.replace(/{}/g, '');
+
   // remove quotes, brackets, parentheses, backslashes, and backticks
   query = query.replace(/['"()\[\]\\`]/g, '');
 
@@ -342,8 +490,8 @@ export function hashQuery(query: string) {
   return query.split('').sort().join('');
 }
 
-export function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
-  return JSON.stringify(Object.entries(item || {}).sort((a, b) => a[0].localeCompare(b[0])));
+function hashLabelsOrAnnotations(item: Labels | Annotations | undefined): string {
+  return JSON.stringify(Object.entries(item || {}).sort((a, b) => collator.compare(a[0], b[0])));
 }
 
 export function ruleIdentifierToRuleSourceName(identifier: RuleIdentifier): string {

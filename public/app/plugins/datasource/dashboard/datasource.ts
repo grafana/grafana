@@ -21,12 +21,16 @@ import {
   type DataSourceGetDrilldownsApplicabilityOptions,
   type DrilldownsApplicability,
 } from '@grafana/data';
-import { isSceneObject, type SceneDataProvider, SceneDataTransformer, type SceneObject } from '@grafana/scenes';
 import {
-  activateSceneObjectAndParentTree,
-  findVizPanelByKey,
-  getVizPanelKeyForPanelId,
-} from 'app/features/dashboard-scene/utils/utils';
+  isSceneObject,
+  sceneGraph,
+  type SceneDataProvider,
+  SceneDataTransformer,
+  type SceneObject,
+} from '@grafana/scenes';
+import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
+import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/utils';
+import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
@@ -107,11 +111,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       // Only the Mixed-DS path uses `first(Done || Error)` to complete the
       // substream, so only that path needs to defend against a stale Done
       // replayed from the upstream SceneQueryRunner's ReplaySubject after a
-      // time-range change. The non-Mixed path stays open and naturally
-      // re-emits when the fresh Done arrives, so adding the filter there
-      // could only hurt: a chain panel with a `PanelTimeRange` override
-      // legitimately observes ranges that differ from the upstream and we
-      // would block its terminal emission indefinitely.
+      // time-range change.
       const isMixedDs = options.requestId.includes(MIXED_REQUEST_PREFIX);
 
       return sourceDataProvider!.getResultsStream!().pipe(
@@ -128,7 +128,16 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
           if (!upstreamRange?.from || !upstreamRange?.to) {
             return true;
           }
-          return isSameRange(upstreamRange, options.range);
+          // Drop a terminal emission only when it is stale — i.e. computed for a
+          // range other than the source panel's *current* range. Comparing
+          // against the source's own range (not the chain panel's `options.range`)
+          // is what makes this correct when the source or the chain carries a
+          // `PanelTimeRange` override (`timeFrom`/`timeShift`): such a chain
+          // legitimately observes a range that differs from the chain request,
+          // but the upstream's fresh Done still matches the source's own range,
+          // so we keep it and only drop the genuinely stale replay.
+          const sourceRange = sceneGraph.getTimeRange(sourceDataProvider!).state.value;
+          return isSameRange(upstreamRange, sourceRange);
         }),
         map((result) => {
           return {

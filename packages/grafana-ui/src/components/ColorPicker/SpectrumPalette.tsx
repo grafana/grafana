@@ -13,7 +13,7 @@ import { Stack } from '../Layout/Stack/Stack';
 
 import ColorInput from './ColorInput';
 
-export interface SpectrumPaletteProps {
+interface SpectrumPaletteProps {
   color: string;
   onChange: (color: string) => void;
 }

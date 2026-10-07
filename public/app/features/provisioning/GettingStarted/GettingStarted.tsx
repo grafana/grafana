@@ -103,7 +103,7 @@ const getModalContent = (setupType: SetupType) => {
             ),
             description: t(
               'provisioning.getting-started.step-description-enable-feature-toggles',
-              'Add the provisioning feature toggle to your custom.ini file. Note: kubernetesDashboards is enabled by default, but if you have explicitly disabled it, you will need to enable it in your Grafana settings or remove the override from your configuration.'
+              'Add the provisioning feature toggle to your custom.ini file.'
             ),
             code: featureIni,
           },
@@ -124,7 +124,7 @@ interface Props {
 
 export default function GettingStarted({ items }: Props) {
   const styles = useStyles2(getStyles);
-  const settingsArg = config.featureToggles.provisioning ? undefined : skipToken;
+  const settingsArg = config.provisioningEnabled ? undefined : skipToken;
   const settingsQuery = useGetFrontendSettingsQuery(settingsArg, {
     refetchOnMountOrArgChange: true,
   });

@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { type SelectableValue, type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { LinkButton, FilterInput, InlineField, Checkbox, useStyles2 } from '@grafana/ui';
 
 import { SortPicker } from '../Select/SortPicker';
@@ -47,7 +48,12 @@ export default function PageActionBar({
   return (
     <div className={styles.container}>
       <InlineField grow>
-        <FilterInput value={searchQuery} onChange={setSearchQuery} placeholder={placeholder} />
+        <FilterInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder={placeholder}
+          data-testid={selectors.components.PageActionBar.searchInput}
+        />
       </InlineField>
       {filterCheckbox && (
         <Checkbox
@@ -61,6 +67,7 @@ export default function PageActionBar({
           onChange={sortPicker.onChange}
           value={sortPicker.value}
           getSortOptions={sortPicker.getSortOptions}
+          width={28}
         />
       )}
       {linkButton && <LinkButton {...linkProps}>{linkButton.title}</LinkButton>}

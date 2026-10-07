@@ -170,11 +170,7 @@ type ScopeDashboardBinding = Resource<ScopeDashboardBindingSpec, ScopeDashboardB
 /**
  * Sets up a route for scope node children requests and waits for the response.
  */
-export async function scopeNodeChildrenRequest(
-  page: Page,
-  scopes: TestScope[],
-  parentName?: string
-): Promise<Response> {
+async function scopeNodeChildrenRequest(page: Page, scopes: TestScope[], parentName?: string): Promise<Response> {
   await page.route(`**/apis/scope.grafana.app/v0alpha1/namespaces/*/find/scope_node_children*`, async (route) => {
     await route.fulfill({
       status: 200,
@@ -275,7 +271,7 @@ export async function expandScopesSelection(page: Page, parentScope: string, sco
 /**
  * Sets up a route for individual scope requests and waits for the response.
  */
-export async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
+async function scopeSelectRequest(page: Page, selectedScope: TestScope): Promise<Response> {
   await page.route(
     `**/apis/scope.grafana.app/v0alpha1/namespaces/*/scopes/scope-${selectedScope.name}`,
     async (route) => {

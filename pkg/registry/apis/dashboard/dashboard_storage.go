@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/home"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -32,6 +33,9 @@ type dashboardStorageWrapper struct {
 
 	// Broadcast events
 	live live.DashboardActivityChannel
+
+	// Skip the legacy permission deletion when the App Platform path owns permissions
+	iamFeatures iamapi.Features
 }
 
 func (d dashboardStorageWrapper) Update(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc, updateValidation rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
@@ -65,6 +69,11 @@ func (d dashboardStorageWrapper) Delete(ctx context.Context, name string, delete
 		if err := d.live.DashboardDeleted(ns.Value, name); err != nil {
 			logging.FromContext(ctx).Info("live dashboard update failed", "err", err)
 		}
+	}
+	// With the flag on, the App Platform path (the store's afterDelete hook) deletes permissions, so
+	// skip the legacy deletion here to avoid a double call. Standalone never registers this wrapper.
+	if d.iamFeatures.ResourcePermissionsAPI {
+		return obj, async, nil
 	}
 	if accessErr := d.dashboardPermissionsSvc.DeleteResourcePermissions(ctx, ns.OrgID, name); accessErr != nil {
 		return obj, async, accessErr

@@ -14,6 +14,11 @@ do-generate: install-app-sdk update-app-sdk ## Run Grafana App SDK code generati
 
 .PHONY: post-generate-cleanup
 post-generate-cleanup: ## Clean up the generated code
+	# These specs use handwritten types; generated empty structs conflict with them.
+	@rm -f ./pkg/apis/dashboard/v0alpha1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v1/dashboard_spec_gen.go
+	@rm -f ./pkg/apis/dashboard/v2beta1/variable_spec_gen.go
+
 	# This is a workaround for SDK codegen not producing correct output for v0alpha1
 	@rm ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts
 	@cp ./tshack/v0alpha1_spec_gen.ts ../../packages/grafana-schema/src/schema/dashboard/v0alpha1/types.spec.gen.ts
@@ -65,9 +70,6 @@ post-generate-cleanup: ## Clean up the generated code
 	@echo "" >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
 	@cat ./kinds/v2/dashboard_spec.cue >> ./pkg/apis/dashboard/v2/dashboard_spec.cue
 
-	# Temporary workaround until grafana-app-sdk supports selectableFields through union parent paths.
-	@bash ./cuehack/patch_variable_selectable_fields.sh ./pkg/apis/dashboard_manifest.go
-
 	@# Remove generated files for v1beta1 since it's a thin wrapper around v1
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_codec_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_object_gen.go
@@ -76,9 +78,6 @@ post-generate-cleanup: ## Clean up the generated code
 	@rm -f ./pkg/apis/dashboard/v1beta1/dashboard_status_gen.go
 	@rm -f ./pkg/apis/dashboard/v1beta1/zz_generated.openapi.go
 	@echo "Removed generated v1beta1 files (v1beta1 is a thin wrapper around v1)"
-
-	# Copy default home dashboard into the apiserver
-	@cp ../../public/dashboards/home.json ../../pkg/registry/apis/dashboard/home/home.json
 
 .PHONY: generate-golden-files
 generate-golden-files: ## Generate golden output files (migration first, then conversion)

@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "Volič datové sady"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "Chyba"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

@@ -43,12 +43,15 @@ func ProvidePluginManagementConfig(cfg *setting.Cfg, settingProvider setting.Pro
 // PluginInstanceCfg contains the configuration for a plugin instance.
 // It is used to provide configuration to the plugin instance either via env vars or via each plugin request.
 type PluginInstanceCfg struct {
-	GrafanaAppURL string
-	Features      featuremgmt.FeatureToggles
+	GrafanaAppURL               string
+	MarketplaceLicenseDirectory string
+	Features                    featuremgmt.FeatureToggles
 
 	Tracing config.Tracing
 
 	PluginSettings config.PluginSettings
+	// DevMode is set when Grafana runs with app_mode = development.
+	DevMode bool
 
 	AWSAllowedAuthProviders          []string
 	AWSAssumeRoleEnabled             bool
@@ -62,6 +65,8 @@ type PluginInstanceCfg struct {
 	AzureAuthEnabled bool
 
 	ProxySettings setting.SecureSocksDSProxySettings
+
+	OpenFeature setting.OpenFeatureSettings
 
 	GrafanaVersion string
 
@@ -105,9 +110,11 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 
 	return &PluginInstanceCfg{
 		GrafanaAppURL:                       cfg.AppURL,
+		MarketplaceLicenseDirectory:         cfg.MarketplaceLicenseDirectory,
 		Features:                            features,
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
+		DevMode:                             cfg.Env == setting.Dev,
 		AWSAllowedAuthProviders:             allowedAuth,
 		AWSAssumeRoleEnabled:                aws.KeyValue("assume_role_enabled").MustBool(cfg.AWSAssumeRoleEnabled),
 		AWSPerDatasourceHTTPProxyEnabled:    aws.KeyValue("per_datasource_http_proxy_enabled").MustBool(cfg.AWSPerDatasourceHTTPProxyEnabled),
@@ -118,6 +125,7 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Azure:                               cfg.Azure,
 		AzureAuthEnabled:                    cfg.Azure.AzureAuthEnabled,
 		ProxySettings:                       cfg.SecureSocksDSProxy,
+		OpenFeature:                         cfg.OpenFeature,
 		GrafanaVersion:                      cfg.BuildVersion,
 		ConcurrentQueryCount:                cfg.ConcurrentQueryCount,
 		UserFacingDefaultError:              cfg.UserFacingDefaultError,

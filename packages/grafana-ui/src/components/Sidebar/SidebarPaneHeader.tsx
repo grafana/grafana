@@ -71,7 +71,7 @@ export function SidebarPaneHeader({ children, title }: Props) {
   );
 }
 
-export const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       display: 'flex',

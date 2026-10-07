@@ -13,7 +13,7 @@ import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
 import { type FieldConfig, XYShowMode, PointShape } from './panelcfg.gen';
 
-export const DEFAULT_POINT_SIZE = 5;
+const DEFAULT_POINT_SIZE = 5;
 
 export function getScatterFieldConfig(cfg: FieldConfig): SetFieldConfigOptionsArgs<FieldConfig> {
   return {

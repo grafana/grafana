@@ -1,7 +1,7 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 import {
-  type DataSourceInstanceSettings,
+  type DataSourceInstanceListItem,
   type DataSourceVariableModel,
   matchPluginId,
   type VariableOption,
@@ -26,15 +26,21 @@ export const initialDataSourceVariableModelState: DataSourceVariableModel = {
   refresh: VariableRefresh.onDashboardLoad,
 };
 
-export const dataSourceVariableSlice = createSlice({
+const dataSourceVariableSlice = createSlice({
   name: 'templating/datasource',
   initialState: initialVariablesState,
   reducers: {
     createDataSourceOptions: (
       state: VariablesState,
-      action: PayloadAction<VariablePayload<{ sources: DataSourceInstanceSettings[]; regex: RegExp | undefined }>>
+      action: PayloadAction<
+        VariablePayload<{
+          sources: DataSourceInstanceListItem[];
+          regex: RegExp | undefined;
+          defaultDataSourceUid: string | undefined;
+        }>
+      >
     ) => {
-      const { sources, regex } = action.payload.data;
+      const { sources, regex, defaultDataSourceUid } = action.payload.data;
       const options: VariableOption[] = [];
       const instanceState = getInstanceState(state, action.payload.id);
       if (instanceState.type !== 'datasource') {
@@ -52,7 +58,7 @@ export const dataSourceVariableSlice = createSlice({
           options.push({ text: source.name, value: source.uid, selected: false });
         }
 
-        if (isDefault(source, regex)) {
+        if (isDefault(source, defaultDataSourceUid, regex)) {
           options.push({
             text: t('variables.data-source-variable-slice.text.default', 'default'),
             value: 'default',
@@ -78,7 +84,7 @@ export const dataSourceVariableSlice = createSlice({
   },
 });
 
-function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
+function isValid(source: DataSourceInstanceListItem, regex?: RegExp) {
   if (!regex) {
     return true;
   }
@@ -86,8 +92,8 @@ function isValid(source: DataSourceInstanceSettings, regex?: RegExp) {
   return regex.exec(source.name);
 }
 
-function isDefault(source: DataSourceInstanceSettings, regex?: RegExp) {
-  if (!source.isDefault) {
+function isDefault(source: DataSourceInstanceListItem, defaultDataSourceUid: string | undefined, regex?: RegExp) {
+  if (!defaultDataSourceUid || source.uid !== defaultDataSourceUid) {
     return false;
   }
 

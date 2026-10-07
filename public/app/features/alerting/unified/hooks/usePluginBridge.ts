@@ -1,10 +1,12 @@
+import { useAsync } from 'react-use';
+
 import { OrgRole, type PluginMeta } from '@grafana/data';
-import { isFetchError } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { useGetPluginSettingsQuery } from '../api/pluginsApi';
 import { type PluginID } from '../components/PluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
+
+import { type BridgeProbe, isPluginEnabled, probePlugin } from './pluginBridgeProbe';
 
 interface PluginBridgeHookResponse {
   loading: boolean;
@@ -13,27 +15,24 @@ interface PluginBridgeHookResponse {
   settings?: PluginMeta<{}>;
 }
 
-export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
-  const { data, isLoading, error } = useGetPluginSettingsQuery(plugin);
+function toBridgeResponse(probe: BridgeProbe | undefined, error: unknown): PluginBridgeHookResponse {
+  if (error) {
+    return { loading: false, error: error instanceof Error ? error : new Error(String(error)) };
+  }
 
-  if (isLoading) {
+  // An undefined probe means the request is still in flight. We deliberately don't look at
+  // useAsync's `loading`: it is flipped in an effect, so the render right after the dependencies
+  // change still reports the *previous* run as settled.
+  if (!probe) {
     return { loading: true };
   }
 
-  if (error) {
-    // 404 means the plugin is not installed
-    if (isFetchError(error) && error.status === 404) {
-      return { loading: false, installed: false };
-    }
+  return { loading: false, installed: isPluginEnabled(probe.settings), settings: probe.settings };
+}
 
-    return { loading: isLoading, error: error instanceof Error ? error : new Error(String(error)) };
-  }
-
-  if (data) {
-    return { loading: isLoading, installed: data.enabled ?? false, settings: data };
-  }
-
-  return { loading: isLoading, installed: false };
+export function usePluginBridge(plugin: PluginID): PluginBridgeHookResponse {
+  const { value, error } = useAsync(() => probePlugin(plugin), [plugin]);
+  return toBridgeResponse(value, error);
 }
 
 type FallbackPlugin = SupportedPlugin.OnCall | SupportedPlugin.Incident;
@@ -74,6 +73,7 @@ export function canAccessPluginPage(settings: PluginMeta<{}>, pluginPagePath: st
 
   return contextSrv.hasRole(includeRole);
 }
+
 /**
  * Hook that checks for IRM plugin first, falls back to specified plugin.
  * IRM replaced both OnCall and Incident - this provides backward compatibility.
@@ -85,18 +85,21 @@ export function canAccessPluginPage(settings: PluginMeta<{}>, pluginPagePath: st
  * const { pluginId, loading, installed, settings } = useIrmPlugin(SupportedPlugin.OnCall);
  */
 export function useIrmPlugin(fallback: FallbackPlugin): PluginBridgeResult {
-  const irmBridge = usePluginBridge(SupportedPlugin.Irm);
-  const fallbackBridge = usePluginBridge(fallback);
+  const { value, error } = useAsync(async (): Promise<BridgeProbe & { pluginId: IrmWithFallback }> => {
+    // Probing the legacy app only after IRM has come back unavailable means stacks that migrated
+    // to IRM never touch OnCall / Incident at all. An IRM failure is not surfaced — it just means
+    // we can't tell, so we ask the legacy app instead.
+    const irmProbeResult = await probePlugin(SupportedPlugin.Irm).catch(() => {});
+    if (isPluginEnabled(irmProbeResult?.settings)) {
+      return { pluginId: SupportedPlugin.Irm, ...irmProbeResult };
+    }
 
-  const loading = irmBridge.loading || fallbackBridge.loading;
-  const pluginId = irmBridge.installed ? SupportedPlugin.Irm : fallback;
-  const activeBridge = irmBridge.installed ? irmBridge : fallbackBridge;
+    const probeResult = await probePlugin(fallback);
 
-  return {
-    pluginId,
-    loading,
-    installed: activeBridge.installed,
-    error: activeBridge.error,
-    settings: activeBridge.settings,
-  };
+    return { pluginId: fallback, ...probeResult };
+  }, [fallback]);
+
+  // While loading we don't know which plugin will win, so report the fallback — the same id the
+  // caller would have seen before IRM existed.
+  return { pluginId: value?.pluginId ?? fallback, ...toBridgeResponse(value, error) };
 }

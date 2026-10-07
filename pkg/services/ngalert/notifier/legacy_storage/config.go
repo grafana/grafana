@@ -29,7 +29,11 @@ func DeserializeAlertmanagerConfig(config []byte) (*v1.AMConfigDB, error) {
 }
 
 func SerializeAlertmanagerConfig(config v1.AMConfigV1) ([]byte, error) {
-	return json.Marshal(v1.ToDBModel(&config))
+	dbModel, err := v1.ToDBModel(&config)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(dbModel)
 }
 
 type ConfigRevision struct {

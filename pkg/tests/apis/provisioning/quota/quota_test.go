@@ -1,7 +1,6 @@
 package quota
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,6 @@ import (
 func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	t.Run("quota condition is QuotaUnlimited when no limit is configured", func(t *testing.T) {
 		helper := sharedHelper(t)
-		ctx := context.Background()
 
 		const repo = "quota-unlimited-repo"
 		testRepo := common.TestRepo{
@@ -24,8 +22,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -33,7 +30,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("failed to get repository: %v", err)
 				return
@@ -73,7 +70,6 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 	t.Run("quota condition is ResourceQuotaExceeded when limit is exceeded", func(t *testing.T) {
 		// Set a low resource limit
 		helper := sharedHelper(t)
-		ctx := context.Background()
 
 		const repo = "quota-exceeded-repo"
 		testRepo := common.TestRepo{
@@ -84,8 +80,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				"../testdata/all-panels.json":   "dashboard1.json",
 				"../testdata/text-options.json": "dashboard2.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -98,7 +93,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("failed to get repository: %v", err)
 				return
@@ -138,7 +133,6 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 		// Set a limit higher than resources
 		helper := sharedHelper(t)
 		helper.SetQuotaStatus(provisioning.QuotaStatus{MaxResourcesPerRepository: 10})
-		ctx := context.Background()
 
 		const repo = "quota-within-repo"
 		testRepo := common.TestRepo{
@@ -148,8 +142,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 				// Adding 1 dashboard, well under the limit of 10
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -157,7 +150,7 @@ func TestIntegrationProvisioning_QuotaCondition(t *testing.T) {
 
 		// Wait for the repository to be synced and check the Quota condition
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("failed to get repository: %v", err)
 				return
@@ -230,7 +223,6 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			MaxResourcesPerRepository: 50,
 			MaxRepositories:           5,
 		})
-		ctx := context.Background()
 
 		const repo = "quota-status-configured-repo"
 		testRepo := common.TestRepo{
@@ -239,8 +231,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -248,7 +239,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		// Wait for the repository to be reconciled and check the QuotaStatus
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("failed to get repository: %v", err)
 				return
@@ -287,7 +278,6 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 	t.Run("quota status shows unlimited when no limits configured", func(t *testing.T) {
 		// Don't set any quota limits (defaults to 0 = unlimited)
 		helper := sharedHelper(t)
-		ctx := context.Background()
 
 		const repo = "quota-status-unlimited-repo"
 		testRepo := common.TestRepo{
@@ -296,8 +286,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 			Copies: map[string]string{
 				"../testdata/all-panels.json": "dashboard1.json",
 			},
-			SkipSync:               true, // Prevent controller auto-sync racing with file copy
-			SkipResourceAssertions: true,
+			SkipSync: true, // Prevent controller auto-sync racing with file copy
 		}
 		helper.CreateLocalRepo(t, testRepo)
 		helper.SyncAndWait(t, repo, nil)
@@ -305,7 +294,7 @@ func TestIntegrationProvisioning_QuotaStatus(t *testing.T) {
 
 		// Wait for the repository to be reconciled and check the QuotaStatus
 		require.EventuallyWithT(t, func(collect *assert.CollectT) {
-			repoObj, err := helper.Repositories.Resource.Get(ctx, repo, metav1.GetOptions{})
+			repoObj, err := helper.Repositories.Resource.Get(t.Context(), repo, metav1.GetOptions{})
 			if err != nil {
 				collect.Errorf("failed to get repository: %v", err)
 				return

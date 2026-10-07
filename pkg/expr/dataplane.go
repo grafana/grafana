@@ -45,8 +45,7 @@ func shouldUseDataplane(frames data.Frames, logger log.Logger, disable bool) (dt
 
 	dt, err := reader.CanReadBasedOnMeta(frames)
 	if err != nil {
-		var vw *sdata.VersionWarning
-		if errors.As(err, &vw) {
+		if _, ok := errors.AsType[*sdata.VersionWarning](err); ok {
 			logger.Warn("Attempting to read mismatched version dataplane data", "error", err, "datatype", dt)
 			return dt, true, nil
 		}

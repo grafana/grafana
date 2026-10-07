@@ -64,7 +64,7 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContex
 		return
 	}
 
-	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonData, c.Req)
+	err = hs.DataSourceRequestValidator.Validate(ds.URL, ds.JsonDataMap(), c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -118,8 +118,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 }
 
 func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
-	var maxBytesErr *http.MaxBytesError
-	if errors.As(err, &maxBytesErr) {
+	if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 		resp := response.Error(http.StatusRequestEntityTooLarge, "Request body too large", err)
 		resp.WriteTo(reqCtx)
 		return

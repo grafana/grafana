@@ -23,11 +23,6 @@
       "dataset-selector": {
         "aria-label-dataset-selector": "데이터 집합 선택기"
       },
-      "error-boundary": {
-        "fall-back": {
-          "error": "오류"
-        }
-      },
       "get-custom-operators": {
         "custom-operators": {
           "label": {

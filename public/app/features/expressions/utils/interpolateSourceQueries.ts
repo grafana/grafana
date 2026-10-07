@@ -1,5 +1,5 @@
 import { type AdHocVariableFilter, type ScopedVars } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 
 /**
@@ -8,7 +8,7 @@ import { type DataQuery } from '@grafana/schema';
  * schema inspector and field autocomplete) send the same interpolated queries the
  * panel execution path would.
  *
- * - Resolves each query's datasource via `getDataSourceSrv().get()`.
+ * - Resolves each query's datasource via `getDataSourceInstance()`.
  * - Delegates interpolation to the datasource; falls back to the original query
  *   when the datasource is unavailable or does not implement `interpolateVariablesInQueries`.
  * - Intentionally generic: no per-datasource logic.
@@ -22,7 +22,7 @@ export async function interpolateSourceQueries(
     queries.map(async (query) => {
       let ds;
       try {
-        ds = await getDataSourceSrv().get(query.datasource);
+        ds = await getDataSourceInstance(query.datasource);
       } catch {
         return query;
       }

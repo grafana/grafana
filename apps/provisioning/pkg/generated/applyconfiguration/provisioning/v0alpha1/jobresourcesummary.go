@@ -20,6 +20,10 @@ type JobResourceSummaryApplyConfiguration struct {
 	Warning *int64 `json:"warning,omitempty"`
 	// No action required (useful for sync)
 	Noop *int64 `json:"noop,omitempty"`
+	// TotalChanges is the action-aware count of resources changed for this group/kind,
+	// set by the progress recorder as results are recorded. Used for the job-duration
+	// histogram's resources_changed bucket.
+	TotalChanges *int64 `json:"totalChanges,omitempty"`
 	// Report errors/warnings for this resource type
 	// This may not be an exhaustive list and recommend looking at the logs for more info
 	Errors   []string `json:"errors,omitempty"`
@@ -109,6 +113,14 @@ func (b *JobResourceSummaryApplyConfiguration) WithWarning(value int64) *JobReso
 // If called multiple times, the Noop field is set to the value of the last call.
 func (b *JobResourceSummaryApplyConfiguration) WithNoop(value int64) *JobResourceSummaryApplyConfiguration {
 	b.Noop = &value
+	return b
+}
+
+// WithTotalChanges sets the TotalChanges field in the declarative configuration to the given value
+// and returns the receiver, so that objects can be built by chaining "With" function invocations.
+// If called multiple times, the TotalChanges field is set to the value of the last call.
+func (b *JobResourceSummaryApplyConfiguration) WithTotalChanges(value int64) *JobResourceSummaryApplyConfiguration {
+	b.TotalChanges = &value
 	return b
 }
 

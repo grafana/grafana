@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -13,14 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/util"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 // ToDashboardErrorResponse returns a different response status according to the dashboard error type
 func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store, err error) response.Response {
 	// --- Dashboard errors ---
-	var dashboardErr dashboardaccess.DashboardErr
-	if errors.As(err, &dashboardErr) {
+	if dashboardErr, ok := errors.AsType[dashboardaccess.DashboardErr](err); ok {
 		if body := dashboardErr.Body(); body != nil {
 			return response.JSON(dashboardErr.StatusCode, body)
 		}
@@ -36,8 +37,7 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 		return response.Error(http.StatusBadRequest, err.Error(), nil)
 	}
 
-	var pluginErr dashboards.UpdatePluginDashboardError
-	if errors.As(err, &pluginErr) {
+	if pluginErr, ok := errors.AsType[dashboards.UpdatePluginDashboardError](err); ok {
 		message := fmt.Sprintf("The dashboard belongs to plugin %s.", pluginErr.PluginId)
 		// look up plugin name
 		if plugin, exists := pluginStore.Plugin(ctx, pluginErr.PluginId); exists {
@@ -53,8 +53,16 @@ func ToDashboardErrorResponse(ctx context.Context, pluginStore pluginstore.Store
 	}
 
 	// --- Kubernetes status errors ---
-	var statusErr *apierrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
+		// The k8s dashboard apiserver returns NotFound on the folders resource when the
+		// referenced folder UID does not exist. Map that back to the legacy
+		// /api/dashboards/db contract (400 + "folder not found") so existing clients keep
+		// working after the direct-to-client routing change.
+		if apierrors.IsNotFound(err) {
+			if d := statusErr.ErrStatus.Details; d != nil && d.Group == folderv1.APIGroup && d.Kind == folderv1.RESOURCE {
+				return response.Error(http.StatusBadRequest, dashboards.ErrFolderNotFound.Error(), nil)
+			}
+		}
 		return response.Error(int(statusErr.ErrStatus.Code), statusErr.ErrStatus.Message, err)
 	}
 

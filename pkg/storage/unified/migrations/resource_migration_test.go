@@ -10,19 +10,18 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -46,7 +45,7 @@ type testEnv struct {
 func newTestEnv(t *testing.T) testEnv {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
-	dbstore := db.InitTestDB(t)
+	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	t.Cleanup(db.CleanupTestDB)
 	ensureOrg(t, dbstore.GetEngine())
 	return testEnv{engine: dbstore.GetEngine(), store: dbstore}
@@ -54,7 +53,7 @@ func newTestEnv(t *testing.T) testEnv {
 
 func uniqueTable(t *testing.T, engine *xorm.Engine) string {
 	t.Helper()
-	name := fmt.Sprintf("test_%s", uuid.New().String()[:8])
+	name := fmt.Sprintf("test_%s", uuid.NewV4().String()[:8])
 	_, err := engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY, val TEXT)", engine.Quote(name)))
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -81,10 +80,24 @@ func testDef(gr schema.GroupResource, lockTables, renameTables []string) Migrati
 
 func newRunner(t *testing.T, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *fakeUnifiedMigrator) {
 	t.Helper()
+	return newRunnerCfg(t, setting.NewCfg(), locker, renamer, def)
+}
+
+func newRunnerCfg(t *testing.T, cfg *setting.Cfg, locker MigrationTableLocker, renamer MigrationTableRenamer, def MigrationDefinition) (*MigrationRunner, *fakeUnifiedMigrator) {
+	t.Helper()
 	fake := &fakeUnifiedMigrator{
 		migrateResponse: &resourcepb.BulkResponse{},
 	}
-	return NewMigrationRunner(fake, locker, renamer, setting.NewCfg(), def, nil), fake
+	return NewMigrationRunner(fake, locker, renamer, cfg, def, nil), fake
+}
+
+// cfgMigrationLockingDisabled: [unified_storage] migration_locking = false.
+func cfgMigrationLockingDisabled(t *testing.T) *setting.Cfg {
+	t.Helper()
+	cfg := setting.NewCfg()
+	_, err := cfg.Raw.Section("unified_storage").NewKey("migration_locking", "false")
+	require.NoError(t, err)
+	return cfg
 }
 
 func ensureOrg(t *testing.T, engine *xorm.Engine) {
@@ -241,6 +254,48 @@ func TestIntegrationRun_Rename(t *testing.T) {
 			} else {
 				assertNotRenamed(t, env.engine, tables[0])
 			}
+		})
+	}
+}
+
+// With migration_locking=false, rename must be skipped. On MySQL the lock-dependent rename would
+// otherwise hang until the deadline; the short waitDeadline makes a regression fail fast.
+func TestIntegrationRun_LockingDisabledSkipsRename(t *testing.T) {
+	env := newTestEnv(t)
+
+	cases := []struct {
+		name    string
+		skip    func() bool
+		renamer func() MigrationTableRenamer
+	}{
+		{
+			name:    "MySQL",
+			skip:    func() bool { return !db.IsTestDbMySQL() },
+			renamer: func() MigrationTableRenamer { return &mysqlTableRenamer{log: logger, waitDeadline: 2 * time.Second} },
+		},
+		{
+			name:    "Postgres",
+			skip:    func() bool { return !db.IsTestDbPostgres() },
+			renamer: func() MigrationTableRenamer { return &transactionalTableRenamer{log: logger} },
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if tc.skip() {
+				t.Skip("skipped for this DB type")
+			}
+
+			table := uniqueTable(t, env.engine)
+			locker := newTableLocker(env.store, legacysql.NewDatabaseProvider(env.store), false)
+			require.IsType(t, &noopTableLocker{}, locker)
+
+			// RenameTables configured, but disabled locking must force renaming off.
+			def := testDef(dummyGR(), []string{table}, []string{table})
+			runner, _ := newRunnerCfg(t, cfgMigrationLockingDisabled(t), locker, tc.renamer(), def)
+			runMigration(t, env.engine, runner, env.engine.DriverName())
+
+			assertNotRenamed(t, env.engine, table)
 		})
 	}
 }
@@ -504,7 +559,7 @@ func TestIntegrationRecoverRenamedTables(t *testing.T) {
 	})
 
 	t.Run(setup.name+"/error — neither exists", func(t *testing.T) {
-		missing := "nonexistent_" + uuid.New().String()[:8]
+		missing := "nonexistent_" + uuid.NewV4().String()[:8]
 		renamer := setup.make(t)
 		err := renamer.RecoverRenamedTables([]string{missing})
 		require.Error(t, err)
@@ -562,11 +617,11 @@ func TestIntegrationRun_SQLiteRetryReleasesLock(t *testing.T) {
 		require.NoError(t, err)
 
 		backend, err := resource.NewKVStorageBackend(resource.KVBackendOptions{
-			KvStore:       kvStore,
-			RvManager:     rvMgr,
-			DBKeepAlive:   eDB,
-			DisablePruner: true,
-			Log:           log.New("test.kv.retry"),
+			KvStore:                kvStore,
+			RvManager:              rvMgr,
+			DBKeepAlive:            eDB,
+			DisableStorageServices: true,
+			Log:                    logging.DefaultLogger.With("logger", "test.kv.retry"),
 		})
 		require.NoError(t, err)
 
@@ -588,7 +643,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	}
 
 	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
-	var callCount int32
+	var callCount atomic.Int32
 
 	openTestSearchIndex(t, client, gr)
 
@@ -599,7 +654,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-				n := atomic.AddInt32(&callCount, 1)
+				n := callCount.Add(1)
 				if n == 1 {
 					// First call: send a request to ensure the server enters its Recv()
 					// loop and holds the bulk lock, then fail to simulate a SQLite cache spill.
@@ -645,7 +700,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 
 	// The migrator func should have been called twice: once for the failed first attempt,
 	// once for the successful retry.
-	require.Equal(t, int32(2), atomic.LoadInt32(&callCount))
+	require.Equal(t, int32(2), callCount.Load())
 	require.NotNil(t, client.lastRebuildResponse, "expected real RebuildIndexes call")
 	require.Nil(t, client.lastRebuildResponse.Error)
 	if expectRebuild {
@@ -660,7 +715,6 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 	cfg.EnableSearch = true
 	cfg.IndexFileThreshold = 1000
 	cfg.IndexPath = t.TempDir()
-	cfg.DisablePruner = true
 
 	docBuilders := &resource.TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
@@ -668,7 +722,7 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 		},
 	}
 
-	searchOpts, err := search.NewSearchOptions(featuremgmt.WithFeatures(), cfg, docBuilders, nil, nil)
+	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
 	return resource.NewResourceServer(resource.ResourceServerOptions{
@@ -781,7 +835,7 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 		Resources:   []ResourceInfo{{GroupResource: gr}},
 		Migrators: map[schema.GroupResource]MigratorFunc{
 			gr: func(ctx context.Context, orgId int64, opts MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
-				for i := 0; i < 16; i++ {
+				for i := range 16 {
 					err := stream.Send(&resourcepb.BulkRequest{
 						Key: &resourcepb.ResourceKey{
 							Namespace: opts.Namespace,
@@ -790,8 +844,8 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 							Name:      fmt.Sprintf("large-item-%d", i),
 						},
 						Action: resourcepb.BulkRequest_ADDED,
-						Value: []byte(fmt.Sprintf(`{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
-							i, opts.Namespace, largeTitle)),
+						Value: fmt.Appendf(nil, `{"apiVersion":"folder.grafana.app/v0alpha1","kind":"Folder","metadata":{"name":"large-item-%d","namespace":"%s"},"spec":{"title":"%s"}}`,
+							i, opts.Namespace, largeTitle),
 					})
 					if err != nil {
 						return err
@@ -835,7 +889,7 @@ func TestIntegrationBuildRenamePairs(t *testing.T) {
 	mg := migrator.NewMigrator(env.engine, setting.NewCfg())
 
 	t.Run("skips already renamed", func(t *testing.T) {
-		name := fmt.Sprintf("test_crash_%s", uuid.New().String()[:8])
+		name := fmt.Sprintf("test_crash_%s", uuid.NewV4().String()[:8])
 		_, err := env.engine.Exec(fmt.Sprintf("CREATE TABLE %s (id INT PRIMARY KEY)", env.engine.Quote(name+legacySuffix)))
 		require.NoError(t, err)
 		t.Cleanup(func() {

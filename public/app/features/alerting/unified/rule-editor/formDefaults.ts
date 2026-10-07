@@ -1,6 +1,8 @@
 import { clamp } from 'lodash';
-import z from 'zod';
+import * as z from 'zod';
 
+import { isValidRecordingRulesTarget } from '@grafana/alerting/internal';
+import { store } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { alertingAlertRuleFormSchema } from 'app/features/plugins/components/restrictedGrafanaApis/alerting/alertRuleFormSchema';
 import { type RuleWithLocation } from 'app/types/unified-alerting';
@@ -11,7 +13,7 @@ import { RuleFormType, type RuleFormValues } from '../types/rule-form';
 // TODO Ideally all of these should be moved here
 import { getRulesAccess } from '../utils/access-control';
 import { defaultAnnotations } from '../utils/constants';
-import { GRAFANA_RULES_SOURCE_NAME, isValidRecordingRulesTarget } from '../utils/datasource';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import {
   MANUAL_ROUTING_KEY,
   SIMPLIFIED_QUERY_EDITOR_KEY,
@@ -113,7 +115,7 @@ export const getDefaultFormValues = (ruleType?: RuleFormType): RuleFormValues =>
 export const getDefautManualRouting = () => {
   // check in local storage
   // if it's not set, we'll default to true
-  const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const manualRouting = store.get(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';
 };
 
@@ -122,13 +124,9 @@ function getDefaultEditorSettings(ruleType?: RuleFormType) {
     return undefined;
   }
 
-  const editorSettingsEnabled = config.featureToggles.alertingQueryAndExpressionsStepMode ?? false;
-  if (!editorSettingsEnabled) {
-    return undefined;
-  }
   //then, check in local storage if the user has saved last rule with sections simplified
-  const queryEditorSettings = localStorage.getItem(SIMPLIFIED_QUERY_EDITOR_KEY);
-  const notificationStepSettings = localStorage.getItem(MANUAL_ROUTING_KEY);
+  const queryEditorSettings = store.get(SIMPLIFIED_QUERY_EDITOR_KEY);
+  const notificationStepSettings = store.get(MANUAL_ROUTING_KEY);
   return {
     simplifiedQueryEditor: queryEditorSettings !== 'false',
     simplifiedNotificationEditor: notificationStepSettings !== 'false',
@@ -155,7 +153,7 @@ export function formValuesFromQueryParams(ruleDefinition: string, type: RuleForm
         annotations: normalizeDefaultAnnotations(ruleFromQueryParams.annotations ?? []),
         queries: ruleFromQueryParams.queries ?? getDefaultQueries(),
         type: ruleFromQueryParams.type ?? type ?? RuleFormType.grafana,
-        evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
+        evaluateEvery: ruleFromQueryParams.evaluateEvery ?? DEFAULT_GROUP_EVALUATION_INTERVAL,
       })
     )
   );

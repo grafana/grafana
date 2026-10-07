@@ -82,7 +82,7 @@ const initialUserAdminState: UserAdminState = {
   error: undefined,
 };
 
-export const userAdminSlice = createSlice({
+const userAdminSlice = createSlice({
   name: 'userAdmin',
   initialState: initialUserAdminState,
   reducers: {
@@ -140,7 +140,7 @@ interface UsersFetched {
   totalCount: number;
 }
 
-export const userListAdminSlice = createSlice({
+const userListAdminSlice = createSlice({
   name: 'userListAdmin',
   initialState: initialUserListAdminState,
   reducers: {
@@ -219,7 +219,7 @@ interface UsersAnonymousDevicesFetched {
   totalCount: number;
 }
 
-export const userListAnonymousDevicesSlice = createSlice({
+const userListAnonymousDevicesSlice = createSlice({
   name: 'userListAnonymousDevices',
   initialState: initialUserListAnonymousDevicesState,
   reducers: {
@@ -270,7 +270,7 @@ export const userListAnonymousDevicesSlice = createSlice({
 
 export const { usersAnonymousDevicesFetched, anonUserSortChanged, anonPageChanged, anonQueryChanged } =
   userListAnonymousDevicesSlice.actions;
-export const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
+const userListAnonymousDevicesReducer = userListAnonymousDevicesSlice.reducer;
 
 export default {
   ldap: ldapReducer,

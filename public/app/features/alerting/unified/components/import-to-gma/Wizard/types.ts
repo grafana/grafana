@@ -8,6 +8,8 @@ export enum StepKey {
   Review = 'review',
 }
 
+export type ImportMethod = 'stage' | 'legacy-datasource-rules';
+
 export enum StepState {
   Idle = 'idle',
   Visited = 'visited',
@@ -21,7 +23,7 @@ export interface WizardStep {
 
 export type VisitedSteps = Partial<Record<StepKey, StepState>>;
 
-export type NotificationsSourceType = 'yaml' | 'datasource';
+type NotificationsSourceType = 'yaml' | 'datasource';
 
 export interface NotificationsSourceOption {
   label: string;
@@ -29,7 +31,7 @@ export interface NotificationsSourceOption {
   value: NotificationsSourceType;
 }
 
-export type RulesSourceType = 'datasource' | 'yaml';
+type RulesSourceType = 'datasource' | 'yaml';
 
 export interface RulesSourceOption {
   label: string;

@@ -7,10 +7,9 @@ import { type GrafanaTheme2, type DataSourceApi } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { config, reportInteraction, getAppEvents } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
-import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
-import { createSuccessNotification } from 'app/core/copy/appNotification';
+import { TextArea, Button, IconButton, useStyles2, copyTextToClipboard } from '@grafana/ui';
+import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import { notifyApp } from 'app/core/reducers/appNotification';
-import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from 'app/features/explore/state/datasource';
@@ -164,12 +163,22 @@ export function RichHistoryCard(props: Props) {
       })
       .join('\n');
 
-    copyStringToClipboard(queriesText);
-    dispatch(
-      notifyApp(
-        createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))
-      )
-    );
+    try {
+      await copyTextToClipboard(queriesText);
+      dispatch(
+        notifyApp(
+          createSuccessNotification(t('explore.rich-history-notification.query-copied', 'Query copied to clipboard'))
+        )
+      );
+    } catch (error) {
+      dispatch(
+        notifyApp(
+          createErrorNotification(
+            t('explore.rich-history-notification.query-copy-failed', 'Could not copy query to clipboard')
+          )
+        )
+      );
+    }
   };
 
   const onCreateShortLink = async () => {
@@ -345,7 +354,9 @@ export function RichHistoryCard(props: Props) {
           )}
           {activeUpdateComment && updateComment}
         </div>
-        {!activeUpdateComment && <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} />}
+        {!activeUpdateComment && (
+          <RichHistoryAddToLibrary query={queryHistoryItem?.queries[0]} comment={queryHistoryItem.comment} />
+        )}
         {!activeUpdateComment && (
           <div className={styles.runButton}>
             <ExploreRunQueryButton queries={queryHistoryItem.queries} rootDatasourceUid={cardRootDatasource?.uid} />

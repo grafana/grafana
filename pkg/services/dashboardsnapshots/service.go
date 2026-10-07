@@ -82,8 +82,7 @@ func CreateDashboardSnapshot(c *contextmodel.ReqContext, cfg snapshot.SnapshotSh
 		if err != nil {
 			status := http.StatusInternalServerError
 			message := "Failed to create external snapshot"
-			var grafanaErr errutil.Error
-			if errors.As(err, &grafanaErr) {
+			if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
 				status = grafanaErr.Reason.Status().HTTPStatus()
 				message = grafanaErr.PublicMessage
 			}
@@ -143,7 +142,7 @@ func CreateDashboardSnapshotPublic(c *contextmodel.ReqContext, cfg snapshot.Snap
 func saveAndRespond(c *contextmodel.ReqContext, svc Service, cmd CreateDashboardSnapshotCommand, snapshotURL string) {
 	result, err := svc.CreateDashboardSnapshot(c.Req.Context(), &cmd)
 	if err != nil {
-		c.JsonApiErr(http.StatusInternalServerError, "Failed to create snapshot", err)
+		c.WriteErrOrFallback(http.StatusInternalServerError, "Failed to create snapshot", err)
 		return
 	}
 

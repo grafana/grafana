@@ -34,6 +34,39 @@ describe('AzureLogAnalyticsDatasource', () => {
     });
   });
 
+  describe('When requesting Logs query usage', () => {
+    it('includes the Auxiliary tier in the Logs usage resource request', async () => {
+      replace = (target?: string) => {
+        if (target === '$__from') {
+          return '2026-09-01T00:00:00.000Z';
+        }
+        if (target === '$__to') {
+          return '2026-09-11T00:00:00.000Z';
+        }
+        return target || '';
+      };
+      const postResource = jest.fn().mockResolvedValue(0.45);
+      ctx.datasource.azureLogAnalyticsDatasource.postResource = postResource;
+      const query = createMockQuery({
+        azureLogAnalytics: {
+          resources: ['/subscriptions/sub/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/ws'],
+          logTier: 'Auxiliary',
+        },
+      });
+
+      await ctx.datasource.azureLogAnalyticsDatasource.getLogsQueryUsage(query, 'AuxiliaryTable');
+
+      expect(postResource).toHaveBeenCalledWith('loganalytics/usage/basiclogs', {
+        table: 'AuxiliaryTable',
+        resource: '/subscriptions/sub/resourceGroups/rg/providers/Microsoft.OperationalInsights/workspaces/ws',
+        queryType: query.queryType,
+        from: '2026-09-01T00:00:00.000Z',
+        to: '2026-09-11T00:00:00.000Z',
+        logTier: 'Auxiliary',
+      });
+    });
+  });
+
   describe('When performing getSchema', () => {
     beforeEach(() => {
       getTempVars = () => [] as CustomVariableModel[];
@@ -126,6 +159,29 @@ describe('AzureLogAnalyticsDatasource', () => {
     it('should return the workspace id', async () => {
       const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
       expect(workspaces).toEqual([{ text: 'foobar', value: 'foo' }]);
+    });
+
+    it('follows nextLink and aggregates workspaces across pages', async () => {
+      const getResource = jest
+        .fn()
+        .mockResolvedValueOnce({
+          value: [{ name: 'ws-1', id: 'id-1', properties: { customerId: 'c1' } }],
+          nextLink:
+            'https://management.azure.com/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN',
+        })
+        .mockResolvedValueOnce({ value: [{ name: 'ws-2', id: 'id-2', properties: { customerId: 'c2' } }] });
+      ctx.datasource.azureLogAnalyticsDatasource.getResource = getResource;
+
+      const workspaces = await ctx.datasource.azureLogAnalyticsDatasource.getWorkspaces('sub');
+
+      expect(getResource).toHaveBeenCalledTimes(2);
+      expect(getResource.mock.calls[1][0]).toBe(
+        'azuremonitor/subscriptions/sub/providers/Microsoft.OperationalInsights/workspaces?api-version=2017-04-26-preview&$skiptoken=TOKEN'
+      );
+      expect(workspaces).toEqual([
+        { text: 'ws-1', value: 'id-1' },
+        { text: 'ws-2', value: 'id-2' },
+      ]);
     });
   });
 
@@ -344,6 +400,23 @@ describe('AzureLogAnalyticsDatasource', () => {
       expect(templatedQuery[0]).toHaveProperty('datasource');
       expect(templatedQuery[0].azureTraces).toMatchObject({
         resources: ['resource1', 'resource2'],
+      });
+    });
+
+    it('should preserve the logTier and basicLogsQuery fields on a logs query through templating', () => {
+      replace = (target?: string) => target || '';
+      ctx = createContext();
+      const query = createMockQuery();
+      query.queryType = AzureQueryType.LogAnalytics;
+      query.azureLogAnalytics = {
+        ...query.azureLogAnalytics,
+        basicLogsQuery: true,
+        logTier: 'Auxiliary',
+      };
+      const templatedQuery = ctx.datasource.interpolateVariablesInQueries([query], {});
+      expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
+        basicLogsQuery: true,
+        logTier: 'Auxiliary',
       });
     });
   });

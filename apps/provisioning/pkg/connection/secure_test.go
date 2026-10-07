@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -20,9 +21,11 @@ import (
 type mockDecryptService struct {
 	results map[string]decrypt.DecryptResult
 	err     error
+	gotCtx  context.Context
 }
 
 func (m *mockDecryptService) Decrypt(ctx context.Context, group, namespace string, names ...string) (map[string]decrypt.DecryptResult, error) {
+	m.gotCtx = ctx
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -418,6 +421,94 @@ func TestSecureValues_Token(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSecureValues_NotFoundSentinel(t *testing.T) {
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
+		Secure: provisioning.ConnectionSecure{
+			Token: common.InlineSecureValue{Name: "token-ref"},
+		},
+	}
+
+	t.Run("missing token wraps both ErrSecretNotFound and ErrTokenNotFound", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.ErrorIs(t, err, connection.ErrSecretNotFound)
+		require.ErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("per-item not-found error wraps ErrTokenNotFound", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResultWithError(errors.New("not found")),
+		}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.ErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("per-item non-not-found error is surfaced, not treated as missing", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResultWithError(errors.New("not authorized")),
+		}}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("transient service error is not treated as not-found", func(t *testing.T) {
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{err: errors.New("service down")}, nil)
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+
+	t.Run("missing private key does not carry ErrTokenNotFound", func(t *testing.T) {
+		pkConn := &provisioning.Connection{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
+			Secure:     provisioning.ConnectionSecure{PrivateKey: common.InlineSecureValue{Name: "pk-ref"}},
+		}
+		decrypter := connection.ProvideDecrypter(&mockDecryptService{results: map[string]decrypt.DecryptResult{}}, nil)
+		_, err := decrypter(pkConn).PrivateKey(context.Background())
+		require.ErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
+}
+
+func TestSecureValues_DecryptTimeout(t *testing.T) {
+	conn := &provisioning.Connection{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-connection", Namespace: "default"},
+		Secure:     provisioning.ConnectionSecure{Token: common.InlineSecureValue{Name: "token-ref"}},
+	}
+
+	t.Run("bounds a deadline-less caller context", func(t *testing.T) {
+		mockSvc := &mockDecryptService{results: map[string]decrypt.DecryptResult{
+			"token-ref": newDecryptResult("decrypted-token"),
+		}}
+		decrypter := connection.ProvideDecrypter(mockSvc, nil)
+
+		// context.Background() carries no deadline; get must impose one.
+		_, err := decrypter(conn).Token(context.Background())
+		require.NoError(t, err)
+
+		deadline, ok := mockSvc.gotCtx.Deadline()
+		require.True(t, ok, "decrypt must receive a bounded context")
+		require.True(t, deadline.After(time.Now()), "deadline must be in the future")
+		require.True(t, deadline.Before(time.Now().Add(time.Minute)), "deadline must be bounded near the decrypt timeout")
+	})
+
+	t.Run("expired context surfaces as a transient decrypt failure", func(t *testing.T) {
+		mockSvc := &mockDecryptService{err: context.DeadlineExceeded}
+		decrypter := connection.ProvideDecrypter(mockSvc, nil)
+
+		_, err := decrypter(conn).Token(context.Background())
+		require.Error(t, err)
+		// A timeout must never look like a missing secret, which would let the
+		// controller regenerate and overwrite the token.
+		require.NotErrorIs(t, err, connection.ErrSecretNotFound)
+		require.NotErrorIs(t, err, connection.ErrTokenNotFound)
+	})
 }
 
 func TestSecureValues_MultipleFields(t *testing.T) {

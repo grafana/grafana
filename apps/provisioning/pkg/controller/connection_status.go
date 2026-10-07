@@ -9,6 +9,7 @@ import (
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 )
 
 // ConnectionStatusPatcher provides methods to patch Connection status subresources.
@@ -30,8 +31,16 @@ func (p *ConnectionStatusPatcher) Patch(ctx context.Context, conn *provisioning.
 		return fmt.Errorf("unable to marshal patch data: %w", err)
 	}
 
-	_, err = p.client.Connections(conn.Namespace).
-		Patch(ctx, conn.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
+	// Retry optimistic-concurrency conflicts and SQLite write contention. With
+	// multiple controller replicas, concurrent reconciles race on the same status
+	// subresource; the loser gets a 409 the apiserver keys on resourceVersion.
+	// Retrying re-reads fresh state and reapplies instead of surfacing a benign
+	// race as an error the caller logs.
+	err = retry.OnError(retry.DefaultRetry, isRetriablePatchError, func() error {
+		_, err := p.client.Connections(conn.Namespace).
+			Patch(ctx, conn.Name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status")
+		return err
+	})
 	if err != nil {
 		return fmt.Errorf("unable to update connection status: %w", err)
 	}

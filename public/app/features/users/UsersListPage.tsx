@@ -6,6 +6,7 @@ import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
+import { useUserListTabExtensions } from 'app/features/admin/useUserListTabExtensions';
 import { type StoreState } from 'app/types/store';
 import { type OrgUser } from 'app/types/user';
 
@@ -45,10 +46,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = ConnectedProps<typeof connector>;
 
-export interface State {
-  showInvites: boolean;
-}
-
 export const UsersListPageUnconnected = ({
   users,
   page,
@@ -64,7 +61,9 @@ export const UsersListPageUnconnected = ({
   changeSort,
 }: Props) => {
   const [showInvites, setShowInvites] = useState(false);
-  const externalUserMngInfoHtml = config.externalUserMngInfo ? renderMarkdown(config.externalUserMngInfo) : '';
+  const hasUserListExtension = useUserListTabExtensions().length > 0;
+  const externalUserMngInfoHtml =
+    config.externalUserMngInfo && !hasUserListExtension ? renderMarkdown(config.externalUserMngInfo) : '';
 
   useEffect(() => {
     loadUsers();
@@ -120,11 +119,3 @@ export const UsersListPageUnconnected = ({
 };
 
 export const UsersListPageContent = connector(UsersListPageUnconnected);
-
-export default function UsersListPage() {
-  return (
-    <Page navId="users">
-      <UsersListPageContent />
-    </Page>
-  );
-}

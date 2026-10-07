@@ -10,11 +10,12 @@ import (
 
 // Cleanup implements the LifecycleManager interface
 // It removes old partitions that are beyond the retention TTL
-func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
+func (s *PostgreSQLStore) Cleanup(ctx context.Context, before time.Time) (int64, error) {
 	// Calculate cutoff timestamp and corresponding partition name
-	cutoff := time.Now().UTC().Add(-s.config.RetentionTTL)
-	cutoffMs := cutoff.UnixMilli()
+	cutoffMs := before.UnixMilli()
 	cutoffPartition := getPartitionName(cutoffMs)
+	// Don't drop partitions less than 24 hours old even if they're past TTL
+	minKeepPartition := getPartitionName(time.Now().UTC().Add(-24 * time.Hour).UnixMilli())
 
 	// Get all existing partitions
 	partitions, err := listPartitions(ctx, s.pool)
@@ -26,13 +27,7 @@ func (s *PostgreSQLStore) Cleanup(ctx context.Context) (int64, error) {
 
 	// Iterate through partitions and drop those older than cutoff
 	for _, partition := range partitions {
-		// Skip if partition is newer than or equal to cutoff
-		if partition.Name >= cutoffPartition {
-			continue
-		}
-
-		// Don't drop partitions less than 24 hours old even if they're past TTL
-		if partition.EndTime > time.Now().UTC().Add(-24*time.Hour).UnixMilli() {
+		if partition.Name >= cutoffPartition || partition.Name >= minKeepPartition {
 			continue
 		}
 

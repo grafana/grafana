@@ -15,4 +15,6 @@ type AnnotationConfig struct {
 	TagHandler func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error
 	// SearchHandler is the handler function for the GET /search custom route.
 	SearchHandler func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error
+	// GraphiteHandler is the handler function for the POST /graphite custom route.
+	GraphiteHandler func(ctx context.Context, writer app.CustomRouteResponseWriter, request *app.CustomRouteRequest) error
 }

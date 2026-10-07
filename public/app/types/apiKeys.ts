@@ -12,20 +12,3 @@ export interface ApiKey extends WithAccessControlMetadata {
   created?: string;
   lastUsedAt?: string;
 }
-
-export interface ApikeyMigrationResult {
-  total: number;
-  migrated: number;
-  failed: number;
-  failedApikeyIDs: number[];
-  failedDetails: string[];
-}
-
-export interface ApiKeysState {
-  includeExpired: boolean;
-  keys: ApiKey[];
-  keysIncludingExpired: ApiKey[];
-  searchQuery: string;
-  hasFetched: boolean;
-  migrationResult?: ApikeyMigrationResult;
-}

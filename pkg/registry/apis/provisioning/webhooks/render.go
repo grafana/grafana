@@ -15,6 +15,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
@@ -104,7 +105,7 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 }
 
 func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = c
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = provisioningapis.WithTimeout(c, 20*time.Second)
 	return nil
 }
 
@@ -114,8 +115,8 @@ func (c *renderConnector) Connect(
 	opts runtime.Object,
 	responder rest.Responder,
 ) (http.Handler, error) {
-	namespace := request.NamespaceValue(ctx)
-	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		namespace := request.NamespaceValue(ctx)
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
@@ -143,12 +144,9 @@ func (c *renderConnector) Connect(
 			MustProxyBytes: true,
 			Uid:            blobID,
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to get rendered preview", "namespace", namespace, "repository", name, "blob", blobID, "error", err)
 			responder.Error(err)
-			return
-		}
-		if rsp.Error != nil {
-			responder.Error(resource.GetError(rsp.Error))
 			return
 		}
 
@@ -169,7 +167,7 @@ func (c *renderConnector) Connect(
 				},
 			})
 		}
-	}), 20*time.Second), nil
+	}), nil
 }
 
 var (

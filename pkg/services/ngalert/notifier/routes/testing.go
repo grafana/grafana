@@ -11,33 +11,31 @@ import (
 
 type FakeService struct {
 	Service
-	Config               legacy_storage.ConfigRevision
-	Provenances          map[string]models.Provenance
-	IncludeManagedRoutes bool
+	Config      legacy_storage.ConfigRevision
+	Provenances map[string]models.Provenance
 }
 
 func NewFakeService(config legacy_storage.ConfigRevision) *FakeService {
 	return &FakeService{
-		Config:               config,
-		Provenances:          make(map[string]models.Provenance),
-		IncludeManagedRoutes: true,
+		Config:      config,
+		Provenances: make(map[string]models.Provenance),
 	}
 }
 
-func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _ identity.Requester) (legacy_storage.ManagedRoute, error) {
+func (f *FakeService) GetManagedRoute(_ context.Context, _ int64, name string, _ identity.Requester) (v1.ManagedRoute, error) {
 	r := f.Config.GetManagedRoute(name)
 	if r == nil {
-		return legacy_storage.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
+		return v1.ManagedRoute{}, models.ErrRouteNotFound.Errorf("route %q not found", name)
 	}
 	if p, ok := f.Provenances[name]; ok {
 		r.Provenance = p
 	}
 	return *r, nil
 }
-func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (legacy_storage.ManagedRoutes, error) {
-	routes := f.Config.GetManagedRoutes(f.IncludeManagedRoutes)
+func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Requester) (v1.ManagedRoutes, error) {
+	routes := f.Config.GetManagedRoutes()
 	for _, r := range routes {
-		if p, ok := f.Provenances[r.Name]; ok {
+		if p, ok := f.Provenances[r.GetUID()]; ok {
 			r.Provenance = p
 		}
 	}
@@ -45,5 +43,5 @@ func (f *FakeService) GetManagedRoutes(_ context.Context, _ int64, _ identity.Re
 }
 
 func (f *FakeService) RenameTimeIntervalInRoutes(_ context.Context, rev *legacy_storage.ConfigRevision, oldName string, newName string) map[*v1.Route]int {
-	return rev.RenameTimeIntervalInRoutes(oldName, newName, f.IncludeManagedRoutes)
+	return rev.RenameTimeIntervalInRoutes(oldName, newName)
 }

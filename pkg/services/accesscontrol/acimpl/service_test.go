@@ -3,7 +3,10 @@ package acimpl
 import (
 	"context"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -14,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -36,7 +40,7 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	t.Helper()
 	cfg := setting.NewCfg()
 
-	sql := db.InitTestDB(t)
+	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 
 	ac := &Service{
 		cache:          localcache.ProvideService(),
@@ -58,6 +62,64 @@ func setupTestEnv(t testing.TB, registerRoles bool) *Service {
 	return ac
 }
 
+func TestService_getCachedPermissions_CoalescesConcurrentMisses(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		// Hold the computation long enough for the other workers to block on the lock.
+		time.Sleep(20 * time.Millisecond)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	const numWorkers = 20
+	var wg sync.WaitGroup
+	start := make(chan struct{})
+	results := make([][]accesscontrol.Permission, numWorkers)
+	errs := make([]error, numWorkers)
+	for i := range numWorkers {
+		wg.Go(func() {
+			<-start
+			results[i], errs[i] = s.getCachedPermissions(context.Background(), "test-key", fn, accesscontrol.Options{})
+		})
+	}
+	close(start)
+	wg.Wait()
+
+	require.Equal(t, int64(1), calls.Load(), "getPermissionsFn should run once for concurrent cache misses")
+	for i := range numWorkers {
+		require.NoError(t, errs[i])
+		require.Len(t, results[i], 1)
+		require.Equal(t, "test:action", results[i][0].Action)
+	}
+}
+
+func TestService_getCachedPermissions_ReloadCacheRecomputes(t *testing.T) {
+	s := &Service{cache: localcache.ProvideService()}
+	ctx := context.Background()
+
+	var calls atomic.Int64
+	fn := func(_ context.Context) ([]accesscontrol.Permission, error) {
+		calls.Add(1)
+		return []accesscontrol.Permission{{Action: "test:action"}}, nil
+	}
+
+	_, err := s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// A subsequent read is served from cache without recomputing.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{})
+	require.NoError(t, err)
+	require.Equal(t, int64(1), calls.Load())
+
+	// ReloadCache forces a fresh computation.
+	_, err = s.getCachedPermissions(ctx, "test-key", fn, accesscontrol.Options{ReloadCache: true})
+	require.NoError(t, err)
+	require.Equal(t, int64(2), calls.Load())
+}
+
 func TestIntegrationUsageMetrics(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
@@ -77,7 +139,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 
 			s := ProvideOSSService(
 				cfg,
-				database.ProvideService(db.InitTestDB(t)),
+				database.ProvideService(db.InitTestDB(t)), //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 				&resourcepermissions.FakeActionSetSvc{},
 				localcache.ProvideService(),
 				featuremgmt.WithFeatures(),
@@ -85,6 +147,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 				nil,
 				permreg.ProvidePermissionRegistry(),
 				nil,
+				iam.Features{},
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -1192,7 +1255,7 @@ func TestIntegrationService_SearchUserPermissions(t *testing.T) {
 			if tt.withActionSets {
 				actionSetSvc := resourcepermissions.NewActionSetService()
 				for set, actions := range tt.actionSets {
-					resourceName := strings.Split(set, ":")[0]
+					resourceName, _, _ := strings.Cut(set, ":")
 					permissionName := strings.Split(set, ":")[1]
 					setOptions := resourcepermissions.Options{Resource: resourceName}
 					actionSetName := setOptions.GetActionSetName(permissionName)

@@ -15,7 +15,7 @@ interface Link {
   title: string;
   url: string;
 }
-export interface TransformationInfo {
+interface TransformationInfo {
   name: string;
   getHelperDocs: (imageRenderType?: ImageRenderType) => string;
   links?: Link[];
@@ -203,6 +203,7 @@ This transformation has the following options:
     - It will parse the numeric input as a Unix epoch timestamp in milliseconds.
       You must multiply your input by 1000 if it's in seconds.
     - Will show an option to specify a DateFormat as input by a string like yyyy-mm-dd or DD MM YYYY hh:mm:ss
+    - The **Timezone** option determines how Grafana interprets input strings without timezone information. If not set, Grafana uses the browser timezone or your configured default timezone.
   - **Boolean** - will make the values booleans
   - **Enum** - will make the values enums
     - Will show a table to manage the enums
@@ -711,8 +712,6 @@ Use this transformation to construct a matrix by specifying fields from your que
 
   #### Display options
 
-> **Note:** Display options are in public preview. To try out the new editor for this transformation, enable the \`groupToNestedTableV2\` feature toggle. To try out nested field overrides, enable \`nestedFramesFieldOverrides\`.
-
   | Option                            | Description                                                                                                                |
   | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
   | Show field names in nested tables | Show or hide the column headers inside each nested table. On by default                                                   |
@@ -962,6 +961,47 @@ The result after applying the outer join transformation looks like the following
 | 5         | NULL     | NULL             | HIST101  | B     |
 
 Combine and analyze data from various queries with table joining for a comprehensive view of your information.
+
+#### Join on multiple fields
+
+A join drops any query that doesn’t contain the field you’re joining on. So if you try to add another **Join by field** transformation using a different field, some of the queries you need may already have been removed by the first join.
+
+Use the **Keep unjoined** option to maintain those queries instead of dropping them, so that a later **Join by field** transformation can join them on a different field. Enable it on every join except the last one.
+
+For example, one query returns measurements with two IDs, and the query run on each ID returns that ID's name:
+
+**Query A:**
+
+| GroupID | ProductID | Value |
+| ------- | --------- | ----- |
+| g1      | p1        | 1     |
+
+**Query B:**
+
+| GroupID | GroupName |
+| ------- | --------- |
+| g1      | Alpha     |
+
+**Query C:**
+
+| ProductID | ProductName |
+| --------- | ----------- |
+| p1        | Widget      |
+
+Add two transformations:
+
+1. **Join by field** on \`GroupID\`, with **Keep unjoined** enabled. Query C has no \`GroupID\`, so it's passed through rather than dropped.
+2. **Join by field** on \`ProductID\`. The result of the first join still has a \`ProductID\` column, so it joins with query C.
+
+The result looks like this:
+
+| ProductID | GroupID | Value | GroupName | ProductName |
+| --------- | ------- | ----- | --------- | ----------- |
+| p1        | g1      | 1     | Alpha     | Widget      |
+
+The field being joined on moves to the first column, so the column order changes at each step. Add an **Organize fields by name** transformation afterwards if you need a specific order.
+
+Leave **Keep unjoined** disabled unless you're chaining joins. When it's disabled, a query that doesn't contain the selected field is treated as a failed input to the join. As a result, an inner join correctly returns no rows if a query doesn't contain that field.
   `;
     },
   },

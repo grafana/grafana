@@ -53,5 +53,5 @@ func readContinueToken(options *internalversion.ListOptions) (*continueToken, er
 }
 
 func (t *continueToken) GetNextPageToken() string {
-	return base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%d|%d", t.limit, t.page+1)))
+	return base64.StdEncoding.EncodeToString(fmt.Appendf(nil, "%d|%d", t.limit, t.page+1))
 }

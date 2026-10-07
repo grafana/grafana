@@ -22,6 +22,17 @@ const grafanaDataPlugins = [
     ],
     flatten: false,
   }),
+  copy({
+    // tsc's declaration-only emit does not carry handwritten .d.ts inputs over to
+    // dist/types, but the declarations emitted for luxon_moment_compat import './luxon',
+    // so ship the file alongside them or type resolution breaks in the published tarball.
+    targets: [
+      {
+        src: 'src/datetime/luxon_moment_compat/luxon.d.ts',
+        dest: 'dist/types/datetime/luxon_moment_compat/',
+      },
+    ],
+  }),
   json(),
 ];
 

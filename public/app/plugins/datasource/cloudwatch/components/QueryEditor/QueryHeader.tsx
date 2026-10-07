@@ -11,7 +11,7 @@ import { isCloudWatchLogsQuery, isCloudWatchMetricsQuery } from '../../guards';
 import { useIsMonitoringAccount, useRegions } from '../../hooks';
 import { type CloudWatchJsonData, type CloudWatchQuery } from '../../types';
 
-export interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
+interface Props extends QueryEditorProps<CloudWatchDatasource, CloudWatchQuery, CloudWatchJsonData> {
   extraHeaderElementLeft?: JSX.Element;
   extraHeaderElementRight?: JSX.Element;
   dataIsStale: boolean;

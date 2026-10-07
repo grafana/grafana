@@ -280,7 +280,7 @@ export function getLogLineSize(
     return virtualization.getLineHeight() + virtualization.getPaddingBottom();
   }
 
-  const storedSize = virtualization.retrieveLogLineSize(logs[index].uid, container);
+  const storedSize = virtualization.retrieveLogLineSize(logs[index].uniqueKey, container);
   if (storedSize) {
     return storedSize;
   }
@@ -352,7 +352,7 @@ export function getLogLineDOMHeight(element: HTMLDivElement, calculatedHeight?: 
 const logLineMenuIconWidth = 24;
 const scrollBarWidth = getScrollbarWidth();
 
-export function getLogContainerWidth(container: HTMLDivElement) {
+function getLogContainerWidth(container: HTMLDivElement) {
   return container.clientWidth - scrollBarWidth - logLineMenuIconWidth;
 }
 

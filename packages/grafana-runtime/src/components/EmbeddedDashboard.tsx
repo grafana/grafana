@@ -1,5 +1,7 @@
 import type * as React from 'react';
 
+import type { TimeRange } from '@grafana/data';
+
 export interface EmbeddedDashboardProps {
   uid?: string;
   /**
@@ -13,6 +15,20 @@ export interface EmbeddedDashboardProps {
    * preserve some of the state when moving to other embedded dashboards.
    */
   onStateChange?: (state: string) => void;
+  /**
+   * When set, drives the embedded dashboard's time range. Updating this prop syncs the
+   * new range into the embedded dashboard without remounting it.
+   * Takes precedence over any `from`/`to` provided through `initialState`.
+   * Static state such as variable values or hiding the time picker can instead be passed
+   * via `initialState` (e.g. `var-name=value`, `_dash.hideTimePicker=true`).
+   */
+  timeRange?: TimeRange;
+  /**
+   * Change this value (for example by incrementing a counter) to trigger a data refresh.
+   * Re-runs all queries and re-evaluates relative time ranges, mirroring the dashboard's
+   * own refresh button.
+   */
+  refreshToken?: string | number;
 }
 
 /**

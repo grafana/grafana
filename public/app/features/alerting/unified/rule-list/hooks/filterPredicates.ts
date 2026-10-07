@@ -1,10 +1,11 @@
 import { attempt, compact, isString } from 'lodash';
 import memoize from 'micro-memoize';
 
-import { USER_DEFINED_TREE_NAME } from '@grafana/alerting';
+import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import type { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import type { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { resolveNamedPolicyName } from '../../components/notification-policies/useNotificationPolicyRoute';
 import { type RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -14,8 +15,8 @@ import { parseMatcher } from '../../utils/matchers';
 import { isPluginProvidedRule, prometheusRuleType, ruleUsesDefaultPolicy } from '../../utils/rules';
 import { normalizeHealth } from '../components/util';
 
-export type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
-export type GroupFilterHandler = (
+type RuleFilterHandler = (rule: PromRuleDTO, filterState: RulesFilter) => boolean;
+type GroupFilterHandler = (
   group: PromRuleGroupDTO,
   filterState: Pick<RulesFilter, 'namespace' | 'groupName'>
 ) => boolean;
@@ -211,17 +212,17 @@ export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boole
       return false;
     }
 
-    const isDefaultPolicyFilter = filterState.policy === USER_DEFINED_TREE_NAME;
+    const isDefaultPolicyFilter = isDefaultRoutingTreeName(filterState.policy);
 
     if (isDefaultPolicyFilter) {
       if (!ruleUsesDefaultPolicy(rule.notificationSettings)) {
         return false;
       }
     } else {
-      if (!rule.notificationSettings) {
-        return false;
-      }
-      if (filterState.policy !== rule.notificationSettings.policy) {
+      // notificationSettings.policy is the typed field, but some rules still route only via
+      // the legacy __grafana_managed_route__ label (see resolveNamedPolicyName) — fall back to it.
+      const rulePolicy = resolveNamedPolicyName(rule.notificationSettings, rule.labels);
+      if (filterState.policy !== rulePolicy) {
         return false;
       }
     }

@@ -30,12 +30,15 @@ export enum TestDataQueryType {
   Simulation = 'simulation',
   Steps = 'steps',
   SlowQuery = 'slow_query',
+  FlakyQuery = 'flaky_query',
   StreamingClient = 'streaming_client',
   TableStatic = 'table_static',
   Trace = 'trace',
   USA = 'usa',
   VariablesQuery = 'variables-query',
   ErrorWithSource = 'error_with_source',
+  ErrorsAndNotices = 'errors_and_notices',
+  Exemplars = 'exemplars',
 }
 
 export interface StreamingQuery {
@@ -79,16 +82,23 @@ export interface USAQuery {
   states?: string[];
 }
 
-export const defaultUSAQuery: Partial<USAQuery> = {
-  fields: [],
-  states: [],
-};
-
 export interface CSVWave {
   labels?: string;
   name?: string;
   timeStep?: number;
   valuesCSV?: string;
+}
+
+export interface ExemplarLabel {
+  name?: string;
+  /**
+   * Number of characters in each generated value (defaults to 16)
+   */
+  length?: number;
+  /**
+   * Optional data link URL; supports ${__value.raw}
+   */
+  link?: string;
 }
 
 /**
@@ -117,6 +127,8 @@ export interface TestDataDataQuery extends common.DataQuery {
   labels?: string;
   levelColumn?: boolean;
   lines?: number;
+  min?: number;
+  max?: number;
   nodes?: NodesQuery;
   points?: Array<Array<string | number>>;
   pulseWave?: PulseWaveQuery;
@@ -129,10 +141,11 @@ export interface TestDataDataQuery extends common.DataQuery {
   stringInput?: string;
   usa?: USAQuery;
   errorSource?: 'plugin' | 'downstream';
+  errorProbability?: number;
+  errorMessage?: string;
+  errorStatusCode?: number;
+  queryDelay?: string;
+  queryDelayVariability?: number;
+  exemplarCount?: number;
+  exemplarLabels?: ExemplarLabel[];
 }
-
-export const defaultTestDataDataQuery: Partial<TestDataDataQuery> = {
-  csvWave: [],
-  points: [],
-  scenarioId: TestDataQueryType.RandomWalk,
-};

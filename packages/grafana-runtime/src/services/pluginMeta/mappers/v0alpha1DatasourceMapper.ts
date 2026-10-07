@@ -14,7 +14,7 @@ import {
   isCorePlugin,
 } from './shared';
 
-export function coreSpecMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
+function coreSpecMapper(spec: v0alpha1Spec): DataSourcePluginMeta {
   const mapped = specMapper(spec);
   return prependPublicPathToCorePlugins(mapped, spec);
 }
