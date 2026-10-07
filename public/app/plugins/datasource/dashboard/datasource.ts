@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { type Observable, debounce, debounceTime, defer, filter, finalize, first, interval, map, of } from 'rxjs';
 
 import {
@@ -12,6 +13,7 @@ import {
   type DataFrame,
   LoadingState,
   type Field,
+  type FieldConfig,
   FieldType,
   type AdHocVariableFilter,
   type MetricFindValue,
@@ -27,6 +29,7 @@ import {
   type SceneDataProvider,
   SceneDataTransformer,
   type SceneObject,
+  type VizPanel,
 } from '@grafana/scenes';
 import { findVizPanelByKey } from 'app/features/dashboard-scene/utils/findVizPanel';
 import { activateSceneObjectAndParentTree } from 'app/features/dashboard-scene/utils/utils';
@@ -35,6 +38,57 @@ import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/uti
 import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
 
 import { type DashboardQuery } from './types';
+
+// Standard options a withSourceMeta query carries from the source panel's field config defaults.
+const SOURCE_STANDARD_OPTIONS = [
+  'unit',
+  'decimals',
+  'min',
+  'max',
+  'noValue',
+  'thresholds',
+  'mappings',
+  'color',
+] as const satisfies ReadonlyArray<keyof FieldConfig>;
+
+/**
+ * Tags each frame with the query that asked for it and the panel it came from, so a panel reading
+ * several source panels can tell their frames apart. The source refId moves to meta, since it
+ * collides across source panels. The source panel's standard options fill what non-time fields
+ * leave unset; its overrides are not carried.
+ */
+function tagFramesWithSource(frames: DataFrame[], query: DashboardQuery, sourcePanel: VizPanel): DataFrame[] {
+  // Interpolated the way the source panel header shows it.
+  const title = sceneGraph.interpolate(sourcePanel, sourcePanel.state.title, undefined, 'text');
+  const defaults = sourcePanel.state.fieldConfig?.defaults ?? {};
+
+  return frames.map((frame) => ({
+    ...frame,
+    refId: query.refId,
+    meta: {
+      ...frame.meta,
+      custom: {
+        ...frame.meta?.custom,
+        dashboardSourcePanelId: query.panelId,
+        dashboardSourcePanelTitle: title,
+        ...(frame.refId !== undefined && { dashboardSourceRefId: frame.refId }),
+      },
+    },
+    fields: frame.fields.map((field) => {
+      if (field.type === FieldType.time) {
+        return field;
+      }
+      const config: FieldConfig = { ...field.config };
+      for (const key of SOURCE_STANDARD_OPTIONS) {
+        if (config[key] == null && defaults[key] != null) {
+          // A copy, since applying field config can change thresholds in place.
+          Object.assign(config, { [key]: cloneDeep(defaults[key]) });
+        }
+      }
+      return { ...field, config };
+    }),
+  }));
+}
 
 function isSameRange(a: TimeRange | undefined, b: TimeRange | undefined): boolean {
   if (!a?.from || !a?.to || !b?.from || !b?.to) {
@@ -76,7 +130,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       return of({ data: [] });
     }
 
-    let sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
+    const sourcePanel = findVizPanelByKey(scene, getVizPanelKeyForPanelId(panelId));
 
     if (!sourcePanel) {
       return of({ data: [], error: { message: 'Could not find source panel' } });
@@ -141,7 +195,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         }),
         map((result) => {
           return {
-            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters),
+            data: this.getDataFramesForQueryTopic(result.data, query, adHocFilters, sourcePanel),
             state: result.data.state,
             errors: result.data.errors,
             error: result.data.error,
@@ -161,7 +215,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
   private getDataFramesForQueryTopic(
     data: PanelData,
     query: DashboardQuery,
-    filters: AdHocVariableFilter[]
+    filters: AdHocVariableFilter[],
+    sourcePanel: VizPanel
   ): DataFrame[] {
     // When querying for annotations topic, return the source panel's annotations as series data
     if (query.topic === DataTopic.Annotations) {
@@ -175,8 +230,10 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       }));
     }
 
+    const sourceSeries = query.withSourceMeta ? tagFramesWithSource(data.series, query, sourcePanel) : data.series;
+
     // For regular queries, only return series data
-    const series = data.series.map((s) => {
+    const series = sourceSeries.map((s) => {
       return {
         ...s,
         fields: s.fields.map((field: Field) => ({

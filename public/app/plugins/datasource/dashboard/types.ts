@@ -5,6 +5,12 @@ export interface DashboardQuery extends DataQuery {
   withTransforms?: boolean;
   topic?: DataTopic;
   adHocFiltersEnabled?: boolean;
+  /**
+   * Tags each series frame with its source: the frame takes this query's refId, and meta.custom gets
+   * dashboardSourcePanelId, dashboardSourcePanelTitle and dashboardSourceRefId. The source panel's
+   * standard options fill what the frame's fields leave unset.
+   */
+  withSourceMeta?: boolean;
 }
 
 export type ResultInfo = {

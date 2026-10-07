@@ -1,4 +1,4 @@
-import { first, ReplaySubject } from 'rxjs';
+import { first, lastValueFrom, ReplaySubject } from 'rxjs';
 
 import {
   arrayToDataFrame,
@@ -13,10 +13,14 @@ import {
   type DataFrame,
   type AdHocVariableFilter,
   DataTopic,
+  type Field,
+  type FieldConfigSource,
+  ThresholdsMode,
 } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import {
+  ConstantVariable,
   SafeSerializableSceneObject,
   type SceneDataProviderResult,
   SceneDataNode,
@@ -25,12 +29,13 @@ import {
   SceneFlexLayout,
   type SceneObject,
   SceneTimeRange,
+  SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
-import { MIXED_REQUEST_PREFIX } from '../mixed/MixedDataSource';
+import { MIXED_REQUEST_PREFIX, mixedRequestId } from '../mixed/MixedDataSource';
 
 import { DashboardDatasource } from './datasource';
 import { type DashboardQuery } from './types';
@@ -922,6 +927,112 @@ describe('DashboardDatasource', () => {
     });
   });
 
+  describe('withSourceMeta', () => {
+    const thresholds = {
+      mode: ThresholdsMode.Absolute,
+      steps: [
+        { value: -Infinity, color: 'green' },
+        { value: 80, color: 'red' },
+      ],
+    };
+    const fieldConfig: FieldConfigSource = {
+      defaults: { unit: 'percent', decimals: 1, thresholds, custom: { lineWidth: 2 } },
+      overrides: [{ matcher: { id: 'byName', options: 'value' }, properties: [{ id: 'max', value: 100 }] }],
+    };
+
+    it.each([undefined, false])('leaves frames unchanged when withSourceMeta is %s', async (withSourceMeta) => {
+      const { query } = setupWithSourcePanels([{ panelId: 2, title: 'CPU $host', fieldConfig }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2, withSourceMeta }));
+
+      expect(rsp.data[0].refId).toBe('A');
+      expect(rsp.data[0].meta).toEqual({ executedQueryString: 'up', custom: { x: 'kept' } });
+      expect(rsp.data[0].fields.map((field: Field) => field.config)).toEqual([{}, { decimals: 3 }]);
+    });
+
+    it('tags frames with the consuming refId and the source panel', async () => {
+      const { query } = setupWithSourcePanels([{ panelId: 2, title: 'CPU $host' }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2, withSourceMeta: true }));
+
+      expect(rsp.data).toHaveLength(1);
+      expect(rsp.data[0].refId).toBe('B');
+      expect(rsp.data[0].meta).toEqual({
+        executedQueryString: 'up',
+        custom: {
+          x: 'kept',
+          dashboardSourcePanelId: 2,
+          dashboardSourcePanelTitle: 'CPU web-1',
+          dashboardSourceRefId: 'A',
+        },
+      });
+      expect(rsp.data[0].fields[1].values).toEqual([10, 20]);
+    });
+
+    it('leaves out dashboardSourceRefId when the source frame has no refId', async () => {
+      const { query } = setupWithSourcePanels([{ panelId: 2, frame: { ...makeSourceFrame(), refId: undefined } }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2, withSourceMeta: true }));
+
+      expect(rsp.data[0].refId).toBe('B');
+      expect(rsp.data[0].meta?.custom).not.toHaveProperty('dashboardSourceRefId');
+      expect(rsp.data[0].meta?.custom).toMatchObject({
+        dashboardSourcePanelId: 2,
+        dashboardSourcePanelTitle: 'Panel 2',
+      });
+    });
+
+    it('fills unset standard options of non-time fields from the source panel defaults', async () => {
+      const { query } = setupWithSourcePanels([{ panelId: 2, fieldConfig }]);
+
+      const rsp = await lastValueFrom(query({ refId: 'B', panelId: 2, withSourceMeta: true }));
+
+      const [time, value] = rsp.data[0].fields;
+      expect(time.config).toEqual({});
+      // The field's own decimals win; custom options and overrides stay with the source panel.
+      expect(value.config).toEqual({ unit: 'percent', decimals: 3, thresholds });
+      expect(value.config.thresholds).not.toBe(thresholds);
+    });
+
+    it('tells apart frames from several source panels in a Mixed panel', async () => {
+      const { query } = setupWithSourcePanels([
+        { panelId: 1, title: 'Memory' },
+        { panelId: 2, title: 'CPU $host' },
+      ]);
+
+      const [rspA, rspB] = await Promise.all([
+        lastValueFrom(query({ refId: 'A', panelId: 1, withSourceMeta: true }, mixedRequestId(0))),
+        lastValueFrom(query({ refId: 'B', panelId: 2, withSourceMeta: true }, mixedRequestId(1))),
+      ]);
+
+      expect(rspA.data[0].refId).toBe('A');
+      expect(rspA.data[0].meta?.custom).toMatchObject({
+        dashboardSourcePanelId: 1,
+        dashboardSourcePanelTitle: 'Memory',
+        dashboardSourceRefId: 'A',
+      });
+      expect(rspB.data[0].refId).toBe('B');
+      expect(rspB.data[0].meta?.custom).toMatchObject({
+        dashboardSourcePanelId: 2,
+        dashboardSourcePanelTitle: 'CPU web-1',
+        dashboardSourceRefId: 'A',
+      });
+    });
+
+    it('leaves the annotations topic unchanged', async () => {
+      const off = await lastValueFrom(
+        setupWithAnnotations({ refId: 'B', panelId: 1, topic: DataTopic.Annotations }).observable
+      );
+      const on = await lastValueFrom(
+        setupWithAnnotations({ refId: 'B', panelId: 1, topic: DataTopic.Annotations, withSourceMeta: true }).observable
+      );
+
+      expect(on.data).toEqual(off.data);
+      expect(on.data[0].refId).toBeUndefined();
+      expect(on.data[0].meta).toEqual({ dataTopic: DataTopic.Series });
+    });
+  });
+
   describe('Annotation Handling', () => {
     it('should NOT include annotations from source panel in regular query response', async () => {
       const { observable } = setupWithAnnotations({ refId: 'A', panelId: 1 });
@@ -1037,6 +1148,62 @@ function setupWithAnnotations(query: DashboardQuery, requestId?: string) {
   });
 
   return { observable, sourceData };
+}
+
+function makeSourceFrame(): DataFrame {
+  return {
+    refId: 'A',
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000, 2000], config: {} },
+      { name: 'value', type: FieldType.number, values: [10, 20], config: { decimals: 3 } },
+    ],
+    length: 2,
+    meta: { executedQueryString: 'up', custom: { x: 'kept' } },
+  };
+}
+
+function setupWithSourcePanels(
+  sources: Array<{ panelId: number; title?: string; frame?: DataFrame; fieldConfig?: FieldConfigSource }>
+) {
+  const scene = new SceneFlexLayout({
+    $variables: new SceneVariableSet({ variables: [new ConstantVariable({ name: 'host', value: 'web-1' })] }),
+    children: sources.map(
+      ({ panelId, title, frame, fieldConfig }) =>
+        new SceneFlexItem({
+          body: new VizPanel({
+            key: getVizPanelKeyForPanelId(panelId),
+            title: title ?? `Panel ${panelId}`,
+            ...(fieldConfig && { fieldConfig }),
+            $data: new SceneDataNode({
+              data: {
+                series: [frame ?? makeSourceFrame()],
+                state: LoadingState.Done,
+                timeRange: getDefaultTimeRange(),
+              },
+            }),
+          }),
+        })
+    ),
+  });
+
+  const ds = new DashboardDatasource({} as DataSourceInstanceSettings);
+
+  const query = (target: DashboardQuery, requestId = '') =>
+    ds.query({
+      timezone: 'utc',
+      targets: [target],
+      requestId,
+      interval: '',
+      intervalMs: 0,
+      range: getDefaultTimeRange(),
+      scopedVars: {
+        __sceneObject: new SafeSerializableSceneObject(scene),
+      },
+      app: '',
+      startTime: 0,
+    });
+
+  return { query };
 }
 
 function makeRange(fromIso: string, toIso: string) {
