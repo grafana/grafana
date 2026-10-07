@@ -14,13 +14,14 @@ import {
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import { type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
+import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
@@ -456,6 +457,7 @@ interface ProposalProps {
   selectedIndex: number;
   onSelect: (index: number, source?: 'keyboard') => void;
   isPreviewRunning: boolean;
+  previewOutcome?: QueryPreviewOutcome;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
   onClose: () => void;
   onContinue: () => void;
@@ -471,6 +473,7 @@ export function QueryCoauthoringProposal({
   selectedIndex,
   onSelect,
   isPreviewRunning,
+  previewOutcome,
   onFeedback,
   onClose,
   onContinue,
@@ -556,6 +559,9 @@ export function QueryCoauthoringProposal({
               : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
           </Text>
           {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
+          <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
+            <QueryCoauthoringPreviewResult outcome={previewOutcome} />
+          </div>
           {why.map((reason, index) => (
             <Text variant="body" key={index}>
               {reason}
@@ -594,6 +600,48 @@ export function QueryCoauthoringProposal({
       </div>
     </div>
   );
+}
+
+function QueryCoauthoringPreviewResult({ outcome }: { outcome?: QueryPreviewOutcome }) {
+  if (!outcome || outcome.kind === 'loading') {
+    return null;
+  }
+  if (outcome.kind === 'error') {
+    return (
+      <Alert
+        severity="error"
+        title={outcome.message ?? t('query-editor-coauthoring.preview-error', 'The query preview failed.')}
+      />
+    );
+  }
+  if (outcome.kind === 'no-data') {
+    return (
+      <Alert severity="warning" title={t('query-editor-coauthoring.preview-no-data', 'No data')}>
+        <Trans i18nKey="query-editor-coauthoring.preview-no-data-suggestion">
+          Try another option or widen the time range.
+        </Trans>
+      </Alert>
+    );
+  }
+  const messages =
+    outcome.kind === 'no-signal'
+      ? [
+          t(
+            'query-editor-coauthoring.preview-no-signal',
+            'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.'
+          ),
+        ]
+      : outcome.notices;
+  return messages.length > 0 ? (
+    <div role="status">
+      <Icon name="info-circle" size="sm" aria-hidden />{' '}
+      {messages.map((message) => (
+        <Text key={message} variant="bodySmall" color="secondary">
+          {message}
+        </Text>
+      ))}
+    </div>
+  ) : null;
 }
 
 function QueryCoauthoringInlineDiff({ baseline, hunks }: { baseline: string; hunks: QueryCoauthoringDiffHunk[] }) {

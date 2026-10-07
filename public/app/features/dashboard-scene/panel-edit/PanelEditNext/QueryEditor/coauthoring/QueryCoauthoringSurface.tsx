@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { Component, type MouseEvent, type ReactNode, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type PanelData, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
@@ -25,6 +25,8 @@ interface Props {
 interface QueryCoauthoringHost {
   datasourceType: string;
   previewPhase: 'idle' | 'pending' | 'running' | 'complete';
+  previewData?: PanelData;
+  readPreviewData?(): PanelData | undefined;
   timeRange?: { from: number; to: number };
   preview(query: DataQuery, options?: QueryPreviewSelection): boolean;
   accept(query: DataQuery): boolean;
@@ -119,6 +121,8 @@ function QueryCoauthoringAdapterSurface({
       onAccept={host.accept}
       onPreview={host.preview}
       onRevertPreview={host.revert}
+      previewData={host.previewData}
+      readPreviewData={host.readPreviewData}
       isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
       timeRange={host.timeRange}
     />

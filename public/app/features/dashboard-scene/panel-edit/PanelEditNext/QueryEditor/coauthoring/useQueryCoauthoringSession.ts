@@ -1,6 +1,7 @@
 import { type MutableRefObject, useCallback, useEffect, useReducer, useRef } from 'react';
 
 import { createAssistantContextItem, useAssistant, useInlineAssistant } from '@grafana/assistant';
+import { type PanelData } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type DataQuery } from '@grafana/schema';
 
@@ -10,6 +11,7 @@ import {
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
 import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
+import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import {
   buildAssistantHandoffContext,
   buildAssistantHandoffInstructions,
@@ -46,6 +48,7 @@ import {
   trackQueryCoauthoringPromptSubmitted,
   trackQueryCoauthoringProposalAccepted,
   trackQueryCoauthoringOptionSelected,
+  trackQueryCoauthoringPreviewOutcomeShown,
 } from './queryCoauthoringTracking';
 import { type QueryPreviewSelection } from './queryPreview';
 import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
@@ -103,6 +106,7 @@ export type QueryCoauthoringSessionState =
     }
   | {
       kind: 'proposal';
+      previewOutcome: QueryPreviewOutcome;
       isPreviewRunning: boolean;
       proposal: RankedProposal;
       selectOption(index: number, source?: 'keyboard'): void;
@@ -120,6 +124,8 @@ export interface QueryCoauthoringSessionOptions {
   onPreview: (query: DataQuery, options?: QueryPreviewSelection) => boolean;
   onRevertPreview: () => void;
   isPreviewRunning?: boolean;
+  previewData?: PanelData;
+  readPreviewData?: () => PanelData | undefined;
   timeRange?: { from: number; to: number };
 }
 
@@ -139,6 +145,8 @@ export function useQueryCoauthoringSession({
   onPreview,
   onRevertPreview,
   isPreviewRunning = false,
+  previewData,
+  readPreviewData,
   timeRange,
 }: QueryCoauthoringSessionOptions) {
   const {
@@ -176,6 +184,12 @@ export function useQueryCoauthoringSession({
     dispatch(event);
     return next !== previous;
   }, []);
+  const previewDataRef = useRef(previewData);
+  previewDataRef.current = previewData;
+  const readCurrentPreviewData = useCallback(
+    () => (readPreviewData ? readPreviewData() : previewDataRef.current),
+    [readPreviewData]
+  );
   const { intent, clarification } = session.data.prompt;
   const proposal = session.kind === 'proposal' ? session.proposal : undefined;
   const fallback = session.kind === 'fallback' ? session.fallback : undefined;
@@ -215,6 +229,18 @@ export function useQueryCoauthoringSession({
   useEffect(() => {
     send({ type: 'preview-running-changed', isPreviewRunning });
   }, [isPreviewRunning, send]);
+  useEffect(() => {
+    send({ type: 'preview-data-changed', previewData: readCurrentPreviewData() });
+  }, [previewData, readCurrentPreviewData, send]);
+
+  const shownOutcome = session.kind === 'proposal' ? session.previewOutcome.kind : undefined;
+  const shownSelection = proposal?.selectedIndex;
+  useEffect(() => {
+    if (shownOutcome) {
+      trackQueryCoauthoringPreviewOutcomeShown(shownOutcome);
+    }
+  }, [shownOutcome, shownSelection]);
+
   const promptUserGestureRef = useRef(false);
   const previewActiveRef = useRef(false);
   const trackedOpenRef = useRef(false);
@@ -346,6 +372,7 @@ export function useQueryCoauthoringSession({
         return;
       }
       previewActiveRef.current = true;
+      send({ type: 'preview-data-changed', previewData: readCurrentPreviewData() });
     };
 
     await generate({
@@ -459,7 +486,7 @@ export function useQueryCoauthoringSession({
       });
       return;
     }
-    send({ type: 'option-selected', index });
+    send({ type: 'option-selected', index, previewData: readCurrentPreviewData() });
     trackQueryCoauthoringOptionSelected(index + 1);
   };
 
@@ -547,6 +574,7 @@ export function useQueryCoauthoringSession({
     case 'proposal':
       state = {
         kind: 'proposal',
+        previewOutcome: session.previewOutcome,
         isPreviewRunning: session.isPreviewRunning,
         proposal: session.proposal,
         selectOption,

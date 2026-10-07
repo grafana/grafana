@@ -1,3 +1,5 @@
+import { type PanelData } from '@grafana/data';
+
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
 import {
@@ -5,6 +7,7 @@ import {
   queryCoauthoringMentionOptions,
   type QueryCoauthoringMention,
 } from './queryCoauthoringMentions';
+import { classifyQueryPreview } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation } from './queryCoauthoringPrompts';
 import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
 import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
@@ -62,7 +65,8 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'mention-selected'; index?: number }
   | { type: 'mention-closed' }
   | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
-  | { type: 'option-selected'; index: number }
+  | { type: 'option-selected'; index: number; previewData?: PanelData }
+  | { type: 'preview-data-changed'; previewData?: PanelData }
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
@@ -486,6 +490,7 @@ export function queryCoauthoringSessionReducer(
         case 'proposal':
           view = {
             kind: 'proposal',
+            previewOutcome: { kind: 'loading' },
             isPreviewRunning: state.data.isPreviewRunning,
             proposal: { options: event.outcome.options, selectedIndex: 0, context: event.context },
           };
@@ -500,8 +505,30 @@ export function queryCoauthoringSessionReducer(
         state,
         updateSession(current, (view) =>
           view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
-            ? { ...view, proposal: { ...view.proposal, selectedIndex: event.index } }
+            ? {
+                ...view,
+                previewOutcome: classifyQueryPreview(event.previewData, view.proposal.options[0].prepared.query.refId),
+                proposal: { ...view.proposal, selectedIndex: event.index },
+              }
             : view
+        )
+      );
+    case 'preview-data-changed':
+      return transition(
+        state,
+        updateSession(
+          current,
+          (view) =>
+            view.kind === 'proposal'
+              ? {
+                  ...view,
+                  previewOutcome: classifyQueryPreview(
+                    event.previewData,
+                    view.proposal.options[0].prepared.query.refId
+                  ),
+                }
+              : view,
+          'error'
         )
       );
     case 'preview-failed':

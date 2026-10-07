@@ -1,5 +1,7 @@
 import { reportInteraction } from '@grafana/runtime';
 
+import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
+
 export type QueryCoauthoringHandoffSource = 'clarification' | 'iteration_nudge' | 'fallback' | 'proposal';
 
 interface QueryCoauthoringEventContext {
@@ -64,4 +66,8 @@ export function trackQueryCoauthoringMentionInserted(kind: 'metric' | 'label') {
 
 export function trackQueryCoauthoringOptionSelected(rank: number) {
   reportInteraction('grafana_query_coauthoring_option_selected', { rank });
+}
+
+export function trackQueryCoauthoringPreviewOutcomeShown(kind: QueryPreviewOutcome['kind']) {
+  reportInteraction('grafana_query_coauthoring_preview_outcome_shown', { kind });
 }
