@@ -1,10 +1,16 @@
 import { useMemo } from 'react';
 
 import { type DataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { type Transformation } from '../types';
 
-import { NO_CONFIGS, precedingTransformations, useTransformedFrames } from './useTransformedFrames';
+import {
+  NO_CONFIGS,
+  precedingTransformations,
+  transformationTopic,
+  useTransformedFrames,
+} from './useTransformedFrames';
 
 interface UsePreviousTransformationOutputOptions {
   selectedTransformation: Transformation | null;
@@ -35,8 +41,10 @@ function mergeWithEmptyFrames(frames: DataFrame[], queryTargets?: Array<{ refId:
  * Calculates the output of the previous transformation in the pipeline, for the filter display to
  * show which data frames are available for filtering.
  *
+ * @param queryData - Query frames of the selected transformation's topic (see `framesForTopic`).
  * @returns Output of everything preceding the selected transformation, or the query result if
- * nothing does. Includes empty frames for refIds that were requested but didn't return results.
+ * nothing does. Series-topic output includes empty frames for refIds that were requested but didn't
+ * return results.
  */
 export function usePreviousTransformationOutput({
   selectedTransformation,
@@ -61,8 +69,13 @@ export function usePreviousTransformationOutput({
 
   const precedingOutput = useTransformedFrames(precedingConfigs, queryData);
 
+  // Requested refIds are series queries; annotation frames do not come from them.
+  const isAnnotationTopic =
+    selectedTransformation !== null && transformationTopic(selectedTransformation) === DataTopic.Annotations;
+  const requestedTargets = isAnnotationTopic ? undefined : queryTargets;
+
   return useMemo(
-    () => (isInPipeline ? mergeWithEmptyFrames(precedingOutput, queryTargets) : NO_FRAMES),
-    [isInPipeline, precedingOutput, queryTargets]
+    () => (isInPipeline ? mergeWithEmptyFrames(precedingOutput, requestedTargets) : NO_FRAMES),
+    [isInPipeline, precedingOutput, requestedTargets]
   );
 }

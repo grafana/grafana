@@ -2,6 +2,7 @@ import { renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { usePreviousTransformationOutput } from './usePreviousTransformationOutput';
@@ -93,6 +94,32 @@ describe('usePreviousTransformationOutput', () => {
       { refId: 'A', name: 'A-series', fields: [], length: 0 },
       { refId: 'B', fields: [], length: 0 },
     ]);
+  });
+
+  it('replays only annotation-topic transformations and adds no requested refIds ahead of an annotation-topic one', () => {
+    const transformations = [
+      makeTransformation('organize'),
+      makeTransformation('filterByRefId', DataTopic.Annotations),
+      makeTransformation('filterFieldsByName', DataTopic.Annotations),
+    ];
+    // Requested refIds belong to series queries, so none of them should be offered for annotations.
+    const queryTargets = [{ refId: 'A' }];
+
+    const { result } = renderHook(() =>
+      usePreviousTransformationOutput({
+        selectedTransformation: transformations[2],
+        transformations,
+        queryData,
+        queryTargets,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [transformations[1].transformConfig],
+      queryData,
+      expect.any(Object)
+    );
+    expect(result.current).toEqual(pipelineOutput);
   });
 
   it('offers nothing for a transformation the pipeline does not contain', () => {

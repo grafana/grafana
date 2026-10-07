@@ -1,13 +1,14 @@
 import { act, renderHook } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
-import { type DataFrame, transformDataFrame } from '@grafana/data';
+import { type DataFrame, type PanelData, transformDataFrame } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import {
   NO_CONFIGS,
   type TransformationConfigs,
+  framesForTopic,
   precedingTransformations,
   useFrameReplay,
   useTransformedFrames,
@@ -445,16 +446,30 @@ describe('precedingTransformations', () => {
     expect(precedingTransformations(selected, [annotations, series, selected])).toEqual([series.transformConfig]);
   });
 
-  it('keeps only annotation-topic transformations when asked for the annotation pipeline', () => {
-    const annotations = {
-      ...makeTransformation('filterByRefId'),
-      transformConfig: { id: 'filterByRefId', options: {}, topic: DataTopic.Annotations },
-    };
+  it('keeps only annotation-topic transformations ahead of an annotation-topic selection', () => {
+    const annotations = makeTransformation('filterByRefId', DataTopic.Annotations);
     const series = makeTransformation('organize');
-    const selected = makeTransformation('reduce');
+    const selected = makeTransformation('reduce', DataTopic.Annotations);
 
-    expect(precedingTransformations(selected, [annotations, series, selected], DataTopic.Annotations)).toEqual([
-      annotations.transformConfig,
-    ]);
+    expect(precedingTransformations(selected, [annotations, series, selected])).toEqual([annotations.transformConfig]);
+  });
+});
+
+describe('framesForTopic', () => {
+  const data = { series: makeFrames(['series']), annotations: makeFrames(['annotation']) } as PanelData;
+
+  it.each([
+    { topic: undefined, expected: 'series' },
+    { topic: DataTopic.Series, expected: 'series' },
+    { topic: DataTopic.Annotations, expected: 'annotation' },
+  ])('hands a $topic-topic transformation the $expected frames', ({ topic, expected }) => {
+    expect(framesForTopic(data, makeTransformation('organize', topic)).map(({ name }) => name)).toEqual([expected]);
+  });
+
+  it('returns the same empty array whenever the panel has no frames of that topic', () => {
+    const annotation = makeTransformation('organize', DataTopic.Annotations);
+
+    expect(framesForTopic({ ...data, annotations: undefined }, annotation)).toEqual([]);
+    expect(framesForTopic(undefined, annotation)).toBe(framesForTopic(undefined, null));
   });
 });
