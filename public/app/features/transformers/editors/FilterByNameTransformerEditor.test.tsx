@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLayoutEffect } from 'react';
 
@@ -148,6 +148,33 @@ describe('FilterByNameTransformerEditor', () => {
 
     expect(getPill('A')).toHaveAttribute('aria-pressed', 'true');
     expect(getPill('B')).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('shows each row its own selection after two filter transformations are reordered', () => {
+    // The panel editor keys transformation rows by position, so a reorder hands each mounted
+    // editor the other transformation's options and the input from its new place in the chain.
+    const rows = (options: FilterFieldsByNameTransformerOptions[], inputs: DataFrame[][]) =>
+      options.map((rowOptions, i) => (
+        <div key={i} data-testid={`row-${i}`}>
+          <FilterByNameTransformerEditor input={inputs[i]} options={rowOptions} onChange={jest.fn()} />
+        </div>
+      ));
+    const rowPillStates = (i: number) =>
+      within(screen.getByTestId(`row-${i}`))
+        .getAllByRole('button')
+        .filter((pill) => pill.hasAttribute('aria-pressed'))
+        .map((pill) => `${pill.textContent}:${pill.getAttribute('aria-pressed')}`);
+
+    const both: FilterFieldsByNameTransformerOptions = { include: { names: ['time', 'A-series'] } };
+    const timeOnly: FilterFieldsByNameTransformerOptions = { include: { names: ['time'] } };
+    const { rerender } = render(
+      <>{rows([both, timeOnly], [frameWithFields('time', 'A-series'), frameWithFields('time', 'A-series')])}</>
+    );
+
+    rerender(<>{rows([timeOnly, both], [frameWithFields('time', 'A-series'), frameWithFields('time')])}</>);
+
+    expect(rowPillStates(0)).toEqual(['time:true', 'A-series:false']);
+    expect(rowPillStates(1)).toEqual(['time:true']);
   });
 
   it('shows its own saved selection again when the options are swapped back', async () => {
