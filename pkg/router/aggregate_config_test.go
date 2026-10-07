@@ -107,7 +107,7 @@ audience = disabled
 
 func TestParseAggregateTargets_EnvOverrides(t *testing.T) {
 	cfg := setting.NewCfg()
-	addAggregateSection(t, cfg, "custom", nil)
+	addAggregateSection(t, cfg, "custom", map[string]string{"audience": "configured-audience"})
 	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_URL", "https://env.invalid")
 	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_AUDIENCE", "env-audience")
 	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_POLL_INTERVAL", "2m")
@@ -139,4 +139,43 @@ func TestParseAggregateTargets_EmptyName(t *testing.T) {
 	addAggregateSection(t, cfg, "", map[string]string{"url": "https://example.invalid"})
 	_, err := parseAggregateTargets(cfg)
 	require.ErrorContains(t, err, "target name is required")
+}
+
+func TestParseAggregateTargets_LegacyAndNewSections(t *testing.T) {
+	for _, mode := range []string{"legacy only", "new target", "replace legacy", "disable legacy"} {
+		t.Run(mode, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				"baas_apiserver.url":                    "https://baas.invalid",
+				"baas_apiserver.audience":               "baas",
+				"baas_apiserver.ca_file":                "/etc/baas.crt",
+				"baas_apiserver.group_regex":            "*.grafana.app, *.grafana.com",
+				"cloud_app_platform_apiserver.url":      "https://cap.invalid",
+				"cloud_app_platform_apiserver.audience": "cap",
+				"cloud_app_platform_apiserver.insecure": "true",
+			})
+			capTarget := aggregateTargetConfig{Name: "cloud_app_platform_apiserver", URL: "https://cap.invalid", Audience: "cap", InsecureSkipVerify: true, PollInterval: defaultAggregatePollInterval}
+			baasTarget := aggregateTargetConfig{Name: "baas_apiserver", URL: "https://baas.invalid", Audience: "baas", CAFile: "/etc/baas.crt", GroupPatterns: []string{"*.grafana.app", "*.grafana.com"}, PollInterval: defaultAggregatePollInterval}
+			want := []aggregateTargetConfig{capTarget, baasTarget}
+			switch mode {
+			case "new target", "replace legacy":
+				name := "custom"
+				if mode == "replace legacy" {
+					name = "baas_apiserver"
+				}
+				addAggregateSection(t, cfg, name, map[string]string{"url": "https://new.invalid", "audience": "new", "poll_interval": "1m"})
+				newTarget := aggregateTargetConfig{Name: name, URL: "https://new.invalid", Audience: "new", PollInterval: time.Minute}
+				if mode == "replace legacy" {
+					want = []aggregateTargetConfig{newTarget, capTarget}
+				} else {
+					want = []aggregateTargetConfig{newTarget, capTarget, baasTarget}
+				}
+			case "disable legacy":
+				addAggregateSection(t, cfg, "baas_apiserver", map[string]string{"audience": "disabled"})
+				want = []aggregateTargetConfig{capTarget}
+			}
+			targets, err := parseAggregateTargets(cfg)
+			require.NoError(t, err)
+			require.Equal(t, want, targets)
+		})
+	}
 }

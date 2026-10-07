@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
+	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -650,4 +652,92 @@ func TestAPIGroupPreferredVersion(t *testing.T) {
 		})
 		require.Equal(t, "v1", group.PreferredVersion.Version)
 	})
+}
+
+func TestProvideCloudRoutesLoaderFactory_LegacyAggregateSettings(t *testing.T) {
+	for _, name := range []string{"baas_apiserver", "cloud_app_platform_apiserver"} {
+		for _, fromEnv := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/env=%t", name, fromEnv), func(t *testing.T) {
+				cfg := cfgWithCloudRouterSection(t, map[string]string{
+					"cap_token":          "token",
+					"token_exchange_url": "https://exchange.invalid",
+				})
+				values := map[string]string{"url": "https://old.invalid", "audience": "legacy", "group_regex": "*.ext.grafana.app", "insecure": "true"}
+				for key, value := range values {
+					if fromEnv {
+						t.Setenv(setting.EnvKey(cloudRouterSection, name+"."+key), value)
+					} else {
+						cfg.Raw.Section(cloudRouterSection).Key(name + "." + key).SetValue(value)
+					}
+				}
+				result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+				require.NoError(t, err)
+				loader := result.(*cloudLoader)
+				require.Len(t, loader.aggregateTargets, 1)
+				target := loader.aggregateTargets[0]
+				require.Equal(t, name, target.name)
+				require.Equal(t, "https://old.invalid", target.base.String())
+				require.True(t, matchesAnyPattern("test.ext.grafana.app", target.patterns))
+				require.False(t, matchesAnyPattern("other.grafana.app", target.patterns))
+				require.True(t, target.proxyTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify)
+			})
+		}
+	}
+}
+
+func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
+	newUpstream := func(version string) *httptest.Server {
+		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/apis", r.URL.Path)
+			require.Equal(t, "Bearer fake-token", r.Header.Get("X-Access-Token"))
+			_ = json.NewEncoder(w).Encode(metav1.APIGroupList{Groups: []metav1.APIGroup{{
+				Name:     "shared.ext.grafana.app",
+				Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}},
+			}}})
+		}))
+		t.Cleanup(upstream.Close)
+		return upstream
+	}
+	first, second := newUpstream("v1"), newUpstream("v2")
+	exchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"ok","data":{"token":"fake-token"}}`))
+	}))
+	t.Cleanup(exchange.Close)
+	cfg := setting.NewCfg()
+	var err error
+	cfg.Raw, err = ini.Load([]byte(fmt.Sprintf(`
+[cloud_router]
+cap_token = token
+token_exchange_url = %s
+[router.aggregate.z_first]
+url = %s
+audience = first
+[router.aggregate.a_second]
+url = %s
+audience = second
+`, exchange.URL, first.URL, second.URL)))
+	require.NoError(t, err)
+	result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	loader := result.(*cloudLoader)
+	require.Len(t, loader.aggregateTargets, 2)
+	dirty := make(chan struct{}, 1)
+	assertWinner := func(name, version string) {
+		t.Helper()
+		backends, err := loader.Load(t.Context())
+		require.NoError(t, err)
+		require.Len(t, backends, 1)
+		require.Equal(t, "aggregate:"+name, backends[0].Source())
+		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
+	}
+	// Poll completion order must not determine priority or merge group versions.
+	loader.aggregateTargets[1].poll(t.Context(), dirty)
+	assertWinner("a_second", "v2")
+	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	assertWinner("z_first", "v1")
+	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
+	first.Close()
+	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	assertWinner("z_first", "v1")
 }

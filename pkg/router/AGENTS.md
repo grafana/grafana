@@ -200,7 +200,12 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
 Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
-the corresponding section must exist in the INI configuration.
+the corresponding section must contain at least one nonempty setting (for example `audience`)
+in the INI configuration, because Grafana's config loader drops empty sections.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
+remain supported during rollout, including environment overrides. New sections take priority; a
+section with the same target name replaces the entire legacy target (an empty URL disables it).
+Legacy targets keep their previous relative priority: cloud app platform before BaaS.
 
 | Key | Meaning |
 | --- | --- |

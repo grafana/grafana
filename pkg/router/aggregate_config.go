@@ -26,6 +26,7 @@ const aggregateSectionPrefix = "router.aggregate."
 // Section order determines priority when targets discover the same group.
 func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
+	configured := make(map[string]bool)
 	for _, raw := range cfg.Raw.Sections() {
 		name, ok := strings.CutPrefix(raw.Name(), aggregateSectionPrefix)
 		if !ok {
@@ -34,6 +35,7 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 		if name == "" {
 			return nil, fmt.Errorf("%s: target name is required", raw.Name())
 		}
+		configured[name] = true
 		section := cfg.SectionWithEnvOverrides(raw.Name())
 		url := section.Key("url").MustString("")
 		if url == "" {
@@ -55,6 +57,30 @@ func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 			GroupPatterns:      splitGroupPatterns(section.Key("group_regex").MustString("")),
 			CAFile:             section.Key("ca_file").MustString(""),
 			InsecureSkipVerify: section.Key("insecure").MustBool(false),
+		})
+	}
+
+	// REMOVE THIS SECTION AFTER IT HAS BEEN DEPLOYED AND CONFIGS UPDATED
+	// Keep legacy targets during rollout, but let an explicit section replace
+	// the entire target, including disabling it with an empty URL.
+	legacy := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	// The old loader gave cloud_app_platform_apiserver priority over baas_apiserver.
+	for _, name := range []string{"cloud_app_platform_apiserver", "baas_apiserver"} {
+		if configured[name] {
+			continue
+		}
+		url := legacy.Key(name + ".url").MustString("")
+		if url == "" {
+			continue
+		}
+		targets = append(targets, aggregateTargetConfig{
+			Name:               name,
+			URL:                url,
+			PollInterval:       defaultAggregatePollInterval,
+			Audience:           legacy.Key(name + ".audience").MustString(""),
+			GroupPatterns:      splitGroupPatterns(legacy.Key(name + ".group_regex").MustString("")),
+			CAFile:             legacy.Key(name + ".ca_file").MustString(""),
+			InsecureSkipVerify: legacy.Key(name + ".insecure").MustBool(false),
 		})
 	}
 	return targets, nil

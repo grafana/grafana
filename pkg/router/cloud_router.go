@@ -41,7 +41,7 @@ import (
 const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
-// [cloud_router] section. It returns (nil, nil) when no source is configured
+// [cloud_router] and [router.aggregate.<name>] sections. It returns (nil, nil) when no source is configured
 // (appmanifest_apiserver_url, an aggregate target url, plugins_url or
 // st_discovery_url), and the caller falls back to another loader.
 //
@@ -60,7 +60,7 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 
 	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		return nil, err
 	}
 
 	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
