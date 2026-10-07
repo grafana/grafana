@@ -70,6 +70,7 @@ export function duplicateDefaultGridPanel(layout: DefaultGridLayoutManager, vizP
 
   const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
   edit({
+    meta: { actionId: 'panel.duplicate', scope: 'custom-grid' },
     description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
     addedObject: newGridItem.state.body,
     source: layout,

@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"net/http"
@@ -24,7 +24,7 @@ import (
 // kindstore.OpenAPIName. This test guards that shared name against drift.
 func TestManifestKindOpenAPINames(t *testing.T) {
 	manifest := testManifest(t)
-	b := &AppPluginAPIBuilder{
+	b := &manifestBuilder{
 		group:    manifest.Group,
 		manifest: manifest,
 	}
@@ -50,7 +50,7 @@ func TestPostProcessManifestKindRequestBodies(t *testing.T) {
 	group := manifest.Group
 	version := "v1alpha1"
 
-	b := &AppPluginAPIBuilder{
+	b := &manifestBuilder{
 		group:    manifest.Group,
 		manifest: manifest,
 	}
@@ -178,7 +178,7 @@ func TestSetOperationResponseBodiesPreservesErrors(t *testing.T) {
 func TestPostProcessManifestKindPostExample(t *testing.T) {
 	manifest := testManifest(t)
 	version := "v1alpha1"
-	b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
 	root := "/apis/" + manifest.Group + "/" + version + "/"
 	base := root + "namespaces/{namespace}/testkinds"
@@ -225,7 +225,7 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &AppPluginAPIBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &manifestBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
 	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}
@@ -362,7 +362,7 @@ func TestDropUnstructuredModels(t *testing.T) {
 
 	t.Run("dropped once every kind has its own schema", func(t *testing.T) {
 		manifest := testManifest(t)
-		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+		b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
 		oas := newSpec()
 		b.dropUnstructuredModels(oas, "v1alpha1")
@@ -376,7 +376,7 @@ func TestDropUnstructuredModels(t *testing.T) {
 		manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 			Kind: "Schemaless", Plural: "schemaless", Scope: "Namespaced",
 		})
-		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+		b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
 		oas := newSpec()
 		b.dropUnstructuredModels(oas, "v1alpha1")
@@ -390,7 +390,7 @@ func TestDropUnstructuredModels(t *testing.T) {
 	// the group-version-kind extension these carry.
 	t.Run("still declared for the field manager", func(t *testing.T) {
 		manifest := testManifest(t)
-		b := &AppPluginAPIBuilder{group: manifest.Group, manifest: manifest}
+		b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref {
 			return spec.MustCreateRef("#/definitions/" + path)
