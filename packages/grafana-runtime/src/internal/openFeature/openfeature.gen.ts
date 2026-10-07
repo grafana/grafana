@@ -254,8 +254,6 @@ export const FlagKeys = {
   SnapshotsKubernetesSnapshots: "snapshots.kubernetesSnapshots",
   /** Enables the splash screen modal for introducing new Grafana features on first session */
   SplashScreen: "splashScreen",
-  /** Enables SQL Expressions, which can execute SQL queries against data source results. */
-  SqlExpressions: "sqlExpressions",
   /** Enables CodeMirror editor for SQL Expressions */
   SqlExpressionsCodeMirror: "sqlExpressionsCodeMirror",
   /** Enables column autocomplete for SQL Expressions */
@@ -1606,17 +1604,6 @@ export const useFlagSnapshotsKubernetesSnapshots = (options?: ReactFlagEvaluatio
  */
 export const useFlagSplashScreen = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("splashScreen", false, options).value;
-};
-
-/**
- * Enables SQL Expressions, which can execute SQL queries against data source results.
- *
- * **Details:**
- * - flag key: `sqlExpressions`
- * - default value: `true`
- */
-export const useFlagSqlExpressions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("sqlExpressions", true, options).value;
 };
 
 /**

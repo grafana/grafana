@@ -856,7 +856,7 @@ var (
 			Name:        "sqlExpressions",
 			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,
 			Expression:  "true",
 		},

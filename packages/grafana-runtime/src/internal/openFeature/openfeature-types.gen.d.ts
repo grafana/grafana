@@ -40,7 +40,6 @@ declare module "@openfeature/core" {
     | "stateTimeline.nameAboveBars"
     | "secretsManagementAppPlatformUI"
     | "grafana.secretsReferenceValueUI"
-    | "sqlExpressions"
     | "sqlExpressionsColumnAutoComplete"
     | "sqlExpressionsCodeMirror"
     | "grafana.filterablePanels"
