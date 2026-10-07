@@ -280,7 +280,7 @@ func collectFolderPermissionChecks(items map[string]*batchCheckItem) []folderChe
 		if !isFolderPermissionBasedResource(item.resource.GroupResource()) {
 			continue
 		}
-		relation := common.FolderPermissionRelation(item.relation)
+		relation := common.FolderContentPermissionRelation(item.relation)
 		entries = append(entries, folderCheckEntry{
 			correlationID: item.correlationID,
 			relation:      relation,

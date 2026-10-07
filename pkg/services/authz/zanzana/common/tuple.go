@@ -68,6 +68,7 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
+	RelationCanReadContents   string = "can_read_contents"
 	RelationCanGet            string = "can_get"
 	RelationCanCreate         string = "can_create"
 	RelationCanUpdate         string = "can_update"
@@ -215,6 +216,14 @@ func FolderPermissionRelation(relation string) string {
 	default:
 		return relation
 	}
+}
+
+// FolderContentPermissionRelation keeps folder-only read grants from authorizing contained resources.
+func FolderContentPermissionRelation(relation string) string {
+	if relation == RelationGet {
+		return RelationCanReadContents
+	}
+	return FolderPermissionRelation(relation)
 }
 
 // SubresourcePermissionRelation returns computed subresource relations that include escalation.
