@@ -132,30 +132,41 @@ func TestIntegrationSearchUsersPermissions_ActionPrefixCharacters(t *testing.T) 
 }
 
 func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
-	for _, change := range []string{"grant", "revoke", "team membership", "remove team membership", "basic role", "downgrade basic role"} {
+	const (
+		grantChange                = "grant"
+		revokeChange               = "revoke"
+		teamMembershipChange       = "team membership"
+		removeTeamMembershipChange = "remove team membership"
+		basicRoleChange            = "basic role"
+		downgradeBasicRoleChange   = "downgrade basic role"
+	)
+
+	for _, change := range []string{grantChange, revokeChange, teamMembershipChange, removeTeamMembershipChange, basicRoleChange, downgradeBasicRoleChange} {
 		t.Run(change, func(t *testing.T) {
 			f := newSearchPermissionsFixture(t)
 			usr := f.createUser(t, user.CreateUserCommand{UID: "target", OrgID: f.orgID, DefaultOrgRole: "None"})
 			role := f.createRole(t, f.orgID, "managed:read", []accesscontrol.Permission{{Action: "test:read", Scope: "tests:id:one"}})
+
 			before, after := map[string][]string{}, map[string][]string{"test:read": {"tests:id:one"}}
-			if change == "revoke" {
+			if change == revokeChange {
 				f.assignUser(t, f.orgID, usr.ID, role)
 				before, after = after, before
 			}
-			if change == "remove team membership" {
+			if change == removeTeamMembershipChange {
 				f.assignTeam(t, f.orgID, role, usr.ID)
 				before, after = after, before
 			}
-			if change == "basic role" || change == "downgrade basic role" {
+			if change == basicRoleChange || change == downgradeBasicRoleChange {
 				f.assignBuiltin(t, f.orgID, string(org.RoleViewer), role)
 			}
-			if change == "downgrade basic role" {
+			if change == downgradeBasicRoleChange {
 				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(org.RoleViewer), f.orgID, usr.ID)
 					return err
 				}))
 				before, after = after, before
 			}
+
 			query := fmt.Sprintf("namespacedId=user:%d&action=test:read", usr.ID)
 			caller := f.caller(f.orgID, "users:*")
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
@@ -163,31 +174,35 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 			require.Positive(t, calls)
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
 			require.Equal(t, calls, f.store.searches.Load(), "warm request must avoid a store search")
+
 			switch change {
-			case "grant":
+			case grantChange:
 				f.assignUser(t, f.orgID, usr.ID, role)
-			case "team membership":
+			case teamMembershipChange:
 				f.assignTeam(t, f.orgID, role, usr.ID)
-			case "remove team membership":
+			case removeTeamMembershipChange:
 				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Exec("DELETE FROM team_member WHERE org_id = ? AND user_id = ?", f.orgID, usr.ID)
 					return err
 				}))
-			case "revoke":
+			case revokeChange:
 				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Exec("DELETE FROM user_role WHERE user_id = ? AND role_id = ?", usr.ID, role)
 					return err
 				}))
-			case "basic role", "downgrade basic role":
+			case basicRoleChange, downgradeBasicRoleChange:
 				nextRole := org.RoleViewer
-				if change == "downgrade basic role" {
+				if change == downgradeBasicRoleChange {
 					nextRole = org.RoleNone
 				}
 				require.NoError(t, f.sql.WithDbSession(context.Background(), func(sess *db.Session) error {
 					_, err := sess.Exec("UPDATE org_user SET role = ? WHERE org_id = ? AND user_id = ?", string(nextRole), f.orgID, usr.ID)
 					return err
 				}))
+			default:
+				t.Fatalf("unsupported change case: %s", change)
 			}
+
 			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.
 			items := f.cache.Items()
 			require.NotEmpty(t, items)
@@ -195,6 +210,7 @@ func TestIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T) {
 				f.cache.Set(key, item.Object, time.Nanosecond)
 				require.Eventually(t, func() bool { _, ok := f.cache.Get(key); return !ok }, time.Second, time.Millisecond)
 			}
+
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: after})
 			require.Greater(t, f.store.searches.Load(), calls, "expired results must be reloaded")
 		})

@@ -469,25 +469,30 @@ type searchPermissionsFixture struct {
 func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
+
 	cfg := setting.NewCfg()
 	sql := db.NewTestStore(t, sqlstore.WithCfg(cfg))
 	features := featuremgmt.WithFeatures()
 	tracer := tracing.InitializeTracerForTest()
 	provider := legacysql.NewDatabaseProvider(sql)
+
 	orgs, err := orgimpl.ProvideService(provider, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
 	orgID, err := orgs.GetOrCreate(context.Background(), "permission-search")
 	require.NoError(t, err)
 	otherOrgID, err := orgs.GetOrCreate(context.Background(), "other-org")
 	require.NoError(t, err)
+
 	cfg.AutoAssignOrg = true
 	cfg.AutoAssignOrgId = int(orgID)
 	cfg.AutoAssignOrgRole = string(org.RoleViewer)
+
 	teams, err := teamimpl.ProvideService(provider, cfg, tracer, nil, iam.Features{})
 	require.NoError(t, err)
 	users, err := userimpl.ProvideService(provider, orgs, cfg, teams, localcache.ProvideService(), tracer,
 		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil)
 	require.NoError(t, err)
+
 	actions := resourcepermissions.NewActionSetService()
 	registry := permreg.ProvidePermissionRegistry()
 	registry.RegisterPluginScope("tests:id:")
@@ -495,8 +500,10 @@ func newSearchPermissionsFixture(t *testing.T) *searchPermissionsFixture {
 	store := &searchPermissionsStore{Store: database.ProvideService(sql)}
 	service := acimpl.ProvideOSSService(cfg, store, actions, cache,
 		features, tracer, sql, registry, nil, iam.Features{})
+
 	routes := routing.NewRouteRegister()
 	api.NewAccessControlAPI(routes, acimpl.ProvideAccessControl(features), service, users).RegisterAPIEndpoints()
+
 	return &searchPermissionsFixture{
 		sql: sql, service: service, users: users, orgs: orgs, actions: actions, cache: cache, store: store,
 		server: webtest.NewServer(t, routes), orgID: orgID, otherOrgID: otherOrgID,
