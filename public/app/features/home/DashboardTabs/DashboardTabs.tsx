@@ -11,15 +11,18 @@ import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
+import { useSelector } from 'app/types/store';
 
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
 
 import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
+import { PickUpTab } from './PickUpTab';
 import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
 import { RecentDashboardsTab } from './RecentDashboardsTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
+import { getPickUpItems } from './getPickUpItems';
 import {
   type HomepageTabExtensionProps,
   type HomepageTab,
@@ -31,10 +34,12 @@ import {
 const RECENT_TAB_ID = 'recent';
 const MOST_USED_TAB_ID = 'most-used';
 const STARRED_TAB_ID = 'starred';
+const PICK_UP_TAB_ID = 'pick-up';
 const MAX_RECENT = 20;
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
-const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
+const MAX_PICK_UP = 20;
+const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID, PICK_UP_TAB_ID];
 
 function DashboardExtensionTab({
   Component,
@@ -93,6 +98,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
   const mostUsedAvailable = isMostUsedAvailable();
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const navTree = useSelector((state) => state.navBarTree);
 
   const {
     value: mostUsedDashboards,
@@ -104,12 +110,27 @@ export function DashboardTabs({ extensionComponents }: Props) {
     [mostUsedAvailable]
   );
 
+  const {
+    value: pickUpItems,
+    loading: pickUpLoading,
+    error: pickUpError,
+    retry: pickUpRetry,
+  } = useAsyncRetry(
+    () => (redesignEnabled ? getPickUpItems(MAX_PICK_UP, navTree) : Promise.resolve([])),
+    // navTree is read from the closure on purpose: star/bookmark updates mutate the tree but never alerting/app labels.
+    [redesignEnabled]
+  );
+
   const hasRecent = !!recentDashboards?.length;
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
   const hasStarred = !!starredDashboards?.length;
-  const initialLoading = recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
+  const hasPickUp = redesignEnabled && !!pickUpItems?.length;
+  const initialLoading =
+    recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading) || (redesignEnabled && pickUpLoading);
 
-  const hasDashboards = hasRecent || hasMostUsed || hasStarred;
+  // Folder names are only needed when some row shows a dashboard.
+  const hasDashboards =
+    hasRecent || hasMostUsed || hasStarred || (pickUpItems?.some((item) => item.entry.kind === 'dashboard') ?? false);
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {
@@ -126,9 +147,10 @@ export function DashboardTabs({ extensionComponents }: Props) {
       ...(hasRecent ? [RECENT_TAB_ID] : []),
       ...(hasMostUsed ? [MOST_USED_TAB_ID] : []),
       ...(hasStarred ? [STARRED_TAB_ID] : []),
+      ...(hasPickUp ? [PICK_UP_TAB_ID] : []),
       ...extensionTabs.filter((tab) => !tab.href).map((tab) => tab.id),
     ],
-    [hasRecent, hasMostUsed, hasStarred, extensionTabs]
+    [hasRecent, hasMostUsed, hasStarred, hasPickUp, extensionTabs]
   );
 
   useEffect(() => {
@@ -184,6 +206,17 @@ export function DashboardTabs({ extensionComponents }: Props) {
       activeLabel: t('home.dashboard-tabs.starred-active', 'Starred dashboards'),
       counter: starredDashboards?.length,
     },
+    // Follows whichever built-in tabs are present: last built-in, not necessarily fourth.
+    ...(redesignEnabled
+      ? [
+          {
+            id: PICK_UP_TAB_ID,
+            label: t('home.dashboard-tabs.pick-up', 'Continue'),
+            activeLabel: t('home.dashboard-tabs.pick-up-active', 'Pick up where you left off'),
+            counter: pickUpItems?.length,
+          },
+        ]
+      : []),
   ];
 
   const contentTabs = [...builtInTabs, ...extensionTabs.filter((tab) => !tab.href)];
@@ -250,6 +283,16 @@ export function DashboardTabs({ extensionComponents }: Props) {
                 loading={starredLoading}
                 error={starredError}
                 retry={starredRetry}
+                foldersByUid={foldersByUid}
+                density={listDensity}
+              />
+            )}
+            {activeTab === PICK_UP_TAB_ID && (
+              <PickUpTab
+                items={pickUpItems ?? []}
+                loading={pickUpLoading}
+                error={pickUpError}
+                retry={pickUpRetry}
                 foldersByUid={foldersByUid}
                 density={listDensity}
               />

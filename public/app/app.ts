@@ -96,6 +96,7 @@ import { JourneyRegistryImpl } from './core/services/journey/JourneyRegistryImpl
 import { JourneyTrackerImpl } from './core/services/journey/JourneyTrackerImpl';
 import { JOURNEY_REGISTRY } from './core/services/journey/journeyRegistry';
 import { KeybindingSrv } from './core/services/keybindingSrv';
+import { pageHistorySrv } from './core/services/pageHistory/pageHistorySrv';
 import { isFrontendService } from './core/utils/isFrontendService';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
 import { initAlerting } from './features/alerting/unified/initAlerting';
@@ -361,6 +362,11 @@ export class GrafanaApp {
       const keybindingsService = new KeybindingSrv(locationService, chromeService);
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
+
+      // Feeds the homepage "Pick up where you left off" tab; same flag as the tab so the control arm pays no storage writes.
+      if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGrowthHomepage, false)) {
+        pageHistorySrv.start();
+      }
 
       // Read initial kiosk mode from url at app startup
       chromeService.setKioskModeFromUrl(queryParams.kiosk);

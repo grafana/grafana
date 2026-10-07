@@ -1,4 +1,5 @@
 import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
@@ -98,6 +99,13 @@ export type CtaClicked = EventVariants<
       surface: 'recent_tab';
       action: 'create_dashboard' | 'browse_dashboards';
       placement: 'empty_state';
+    }
+  | {
+      surface: 'pick_up_tab';
+      action: 'open_page';
+      placement: 'list';
+      /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
+      page_kind: PageHistoryKind;
     }
   | {
       surface: 'recommendations';

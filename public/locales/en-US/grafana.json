@@ -11110,6 +11110,8 @@
     "dashboard-tabs": {
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
+      "pick-up": "Continue",
+      "pick-up-active": "Pick up where you left off",
       "recent": "Recent",
       "recent-active": "Recent dashboards",
       "retry": "Retry",
@@ -11283,6 +11285,18 @@
         "setup": "Ready to configure"
       },
       "title": "Your observability stack overview"
+    },
+    "pick-up-tab": {
+      "empty": "Nothing to pick up yet. Pages you visit will show up here.",
+      "error-title": "Could not load your recent activity",
+      "explore": "Explore",
+      "investigation": "Investigation {{id}}",
+      "kind-alerting": "Alerting",
+      "kind-app": "App",
+      "kind-dashboard": "Dashboard",
+      "kind-explore": "Explore",
+      "kind-investigation": "Investigation",
+      "loading": "Loading your recent activity..."
     },
     "recent-dashboards-tab": {
       "browse": "Browse dashboards",
