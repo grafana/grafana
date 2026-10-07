@@ -1,5 +1,5 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
-import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
@@ -293,6 +293,27 @@ describe('getTraceToLogsQuery Splunk custom query', () => {
       { query: customQueryText, filterByTraceID: true } as TraceToLogsOptionsV2,
       '7946b05c2e2e4e5a'
     );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
+  it('uses the V2 custom query when jsonData also has a legacy tracesToLogs key', () => {
+    const options = getTraceToLogsOptions({
+      tracesToLogsV2: {
+        datasourceUid: 'splunk1_uid',
+        customQuery: true,
+        query: customQueryText,
+        filterByTraceID: true,
+      },
+      tracesToLogs: {
+        datasourceUid: 'splunk1_uid',
+        tags: ['cluster'],
+        filterByTraceID: true,
+        filterBySpanID: true,
+      },
+    });
+
+    const { query } = getTraceToLogsSpanQuery(createSpan(), splunkSettings, options!);
 
     expect(query).toEqual({ query: customQueryText, refId: '' });
   });

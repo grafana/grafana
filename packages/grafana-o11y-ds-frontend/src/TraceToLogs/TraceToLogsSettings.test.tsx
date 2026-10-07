@@ -4,7 +4,12 @@ import userEvent from '@testing-library/user-event';
 import { type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
 import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
 
-import { getTraceToLogsOptions, type TraceToLogsData, type TraceToLogsOptionsV2, TraceToLogsSettings } from './TraceToLogsSettings';
+import {
+  getTraceToLogsOptions,
+  type TraceToLogsData,
+  type TraceToLogsOptionsV2,
+  TraceToLogsSettings,
+} from './TraceToLogsSettings';
 
 const defaultOptionsOldFormat: DataSourceSettings<TraceToLogsData> = {
   jsonData: {
