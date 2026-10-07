@@ -355,8 +355,6 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		Decrypter:        b.deps.Decrypter,
 		Search:           b.deps.Unified,
 		Store:            b.deps.Unified,
-		SearchAPIEnabled: apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
-		TrashAPIEnabled:  apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
 		HybridAPIEnabled: apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),
 		KeysAPIEnabled:   apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		Runner: appplugin.AppPluginRunnerOptions{

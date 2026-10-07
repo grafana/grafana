@@ -57,8 +57,6 @@ type Options struct {
 	ContextProvider  appplugin.PluginContextWrapper
 	Decrypter        decrypt.DecryptService
 	AccessChecker    appplugin.PluginAccessChecker
-	SearchAPIEnabled bool
-	TrashAPIEnabled  bool
 	HybridAPIEnabled bool
 	KeysAPIEnabled   bool
 	Search           resourcepb.ResourceIndexClient
