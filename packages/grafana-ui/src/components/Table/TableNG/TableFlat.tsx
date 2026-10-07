@@ -1,3 +1,4 @@
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
@@ -13,7 +14,7 @@ import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
 import { ColumnVisibilitySidePanel, type SidebarColumn } from './components/ColumnVisibilitySidePanel';
-import { FIRST_COLUMN_EXTRA_PADDING, TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
   useColumnViewState,
@@ -25,7 +26,7 @@ import {
   useManagedSort,
   useNotifyDisplayedRowIndices,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
@@ -38,6 +39,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { shouldReserveScrollbarGutter } from './scrollbar';
 import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
@@ -278,19 +280,12 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
   const columnVisibilityPanelAllocation =
     hasColumnSidebar && isColumnVisibilityPanelOpen
       ? columnVisibilityPanelWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
       : 0;
-  const availableWidth = useMemo(
-    () =>
-      width -
-      scrollbarWidth -
-      columnVisibilityPanelAllocation -
-      (tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0),
-    [width, scrollbarWidth, columnVisibilityPanelAllocation, tableRefreshEnabled, noPanelPadding]
-  );
+  const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+  const fullWidth = width - frameSize - columnVisibilityPanelAllocation;
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -328,17 +323,11 @@ export function TableFlat(props: TableNGProps) {
     preventHorizontalOverflow,
   });
 
-  const [widths, numFrozenColsFullyInView] = useColWidths(
-    displayedFields,
-    availableWidth,
-    frozenColumns,
-    widthConfigResetKey,
-    contentAwareWidths
-  );
+  const [fullWidths] = useColWidths(displayedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
-  const headerHeight = useHeaderHeight({
+  const fullHeaderHeight = useHeaderHeight({
     hasAssistantAction: onFieldAddToAssistant != null,
-    columnWidths: widths,
+    columnWidths: fullWidths,
     fields: displayedFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
@@ -355,9 +344,9 @@ export function TableFlat(props: TableNGProps) {
     [theme, visibleFields, cellHeight]
   );
 
-  const rowHeight = useFlatRowHeight({
+  const fullRowHeight = useFlatRowHeight({
     wrapFallback,
-    columnWidths: widths,
+    columnWidths: fullWidths,
     fields: displayedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
@@ -376,16 +365,75 @@ export function TableFlat(props: TableNGProps) {
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
-    width: availableWidth,
+    width: fullWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
     pageSize,
     noPanelPadding,
     tableRefreshEnabled,
   });
   const showPagination = enablePagination && numRows > 0;
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const needsScrollbarSpace = useMemo(
+    () =>
+      scrollbarWidth > 0 &&
+      shouldReserveScrollbarGutter(
+        paginatedRows,
+        fullRowHeight,
+        fullWidths,
+        fullWidth,
+        height -
+          frameSize -
+          (hasHeader ? fullHeaderHeight : 0) -
+          footerHeight -
+          (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0)
+      ),
+    [
+      scrollbarWidth,
+      paginatedRows,
+      fullRowHeight,
+      fullWidths,
+      fullWidth,
+      height,
+      frameSize,
+      hasHeader,
+      fullHeaderHeight,
+      footerHeight,
+      showPagination,
+      noPanelPadding,
+    ]
+  );
+  const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    displayedFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
+  const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: widths,
+    fields: displayedFields,
+    enabled: hasHeader,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
+    hasColumnSidebar,
+  });
+  const rowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: widths,
+    fields: displayedFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+    noPanelPadding,
+  });
   const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
@@ -507,7 +555,7 @@ export function TableFlat(props: TableNGProps) {
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
-      className={noPanelPadding ? styles.firstColumnInset : undefined}
+      className={clsx(noPanelPadding && styles.firstColumnInset)}
       onCellKeyDown={({ column, row }, event) => {
         if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();

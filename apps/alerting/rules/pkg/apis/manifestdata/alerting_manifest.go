@@ -76,6 +76,48 @@ var appManifestData = app.ManifestData{
 					},
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
+							Name:         "totalsHealthy",
+							Path:         "status.totals.healthy",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of healthy alert instances",
+						},
+						{
+							Name:         "totalsFiring",
+							Path:         "status.totals.firing",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of firing alert instances",
+						},
+						{
+							Name:         "totalsPending",
+							Path:         "status.totals.pending",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of pending alert instances",
+						},
+						{
+							Name:         "totalsRecovering",
+							Path:         "status.totals.recovering",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of recovering alert instances",
+						},
+						{
+							Name:         "totalsNoData",
+							Path:         "status.totals.nodata",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of no-data alert instances",
+						},
+						{
+							Name:         "totalsError",
+							Path:         "status.totals.error",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of alert instances with evaluation errors, including errors mapped to another state",
+						},
+						{
 							Name:         "health",
 							Path:         "status.health",
 							Type:         "string",
