@@ -7,6 +7,11 @@ const surfaceEnter = keyframes({
   to: { opacity: 1, transform: 'translateY(0) scale(1)' },
 });
 
+const groupEnter = keyframes({
+  from: { opacity: 0, transform: 'translateY(-4px) scale(0.98)' },
+  to: { opacity: 1, transform: 'translateY(0) scale(1)' },
+});
+
 const statusPulse = keyframes({
   '0%, 100%': { opacity: 0.55 },
   '50%': { opacity: 1 },
@@ -48,7 +53,55 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
         }),
       },
     }),
-    dimmed: css({ opacity: 0.04 }),
+    hidden: css({ display: 'none' }),
+    proposalGroup: css({
+      position: 'relative',
+      zIndex: theme.zIndex.dropdown,
+      background: 'transparent',
+      borderColor: 'transparent',
+      boxShadow: 'none',
+      paddingTop: theme.spacing(2),
+      overflow: 'visible',
+      '&:hover': { background: theme.colors.background.secondary },
+      '&:hover [data-proposal-drag-handle]': { opacity: 1 },
+      [theme.transitions.handleMotion('no-preference')]: {
+        animation: `${groupEnter} 140ms ${theme.transitions.easing.easeOut}`,
+      },
+    }),
+    dragHandle: css({
+      position: 'absolute',
+      top: 0,
+      left: '50%',
+      transform: 'translateX(-50%)',
+      height: theme.spacing(2),
+      cursor: 'grab',
+      opacity: 0,
+    }),
+    resizeHandle: css({
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      width: 8,
+      cursor: 'ew-resize',
+      zIndex: 1,
+      '&:hover': { background: theme.colors.action.hover },
+    }),
+    resizeLeft: css({ left: 0 }),
+    resizeRight: css({ right: 0 }),
+    resizeActive: css({ background: theme.colors.action.hover }),
+    explanationCard: css({
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: 0,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      overflow: 'hidden',
+    }),
+    actionsCard: css({ border: `1px solid ${theme.colors.border.weak}`, boxShadow: theme.shadows.z2 }),
+    dimmed: css({ opacity: 0.04, [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
+    frozenGroup: css({ [theme.transitions.handleMotion('no-preference')]: { animation: 'none' } }),
     header: css({
       display: 'flex',
       flex: '0 0 auto',

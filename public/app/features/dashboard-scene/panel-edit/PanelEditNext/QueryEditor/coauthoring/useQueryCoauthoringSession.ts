@@ -10,6 +10,7 @@ import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
+import { type QueryCoauthoringGroupEvent } from './queryCoauthoringGroupLayout';
 import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import {
@@ -49,6 +50,7 @@ import {
   trackQueryCoauthoringProposalAccepted,
   trackQueryCoauthoringOptionSelected,
   trackQueryCoauthoringOptionPeeked,
+  trackQueryCoauthoringGroupAdjusted,
   trackQueryCoauthoringPreviewOutcomeShown,
 } from './queryCoauthoringTracking';
 import { type QueryPreviewSelection } from './queryPreview';
@@ -654,7 +656,33 @@ export function useQueryCoauthoringSession({
           },
         }
       : undefined;
+  const updateGroup = useCallback(
+    (event: QueryCoauthoringGroupEvent) => {
+      const previous = sessionRef.current.data;
+      if (
+        ((event.type === 'group-pointer-moved' || event.type === 'group-pointer-ended') && !previous.groupGesture) ||
+        (event.type === 'group-viewport-changed' && !previous.groupLayout)
+      ) {
+        return;
+      }
+      send(event);
+      const data = sessionRef.current.data;
+      if (
+        event.type === 'group-pointer-ended' &&
+        !data.groupAdjustmentReported &&
+        (data.groupDragged || data.groupResized)
+      ) {
+        trackQueryCoauthoringGroupAdjusted(Boolean(data.groupDragged), Boolean(data.groupResized));
+        send({ type: 'group-adjustment-reported' });
+      }
+    },
+    [send]
+  );
+
   return {
+    groupLayout: session.data.groupLayout,
+    groupGesture: session.data.groupGesture,
+    updateGroup,
     closeFeedback,
     dismiss: dismissPopover,
     dismissUntouched,

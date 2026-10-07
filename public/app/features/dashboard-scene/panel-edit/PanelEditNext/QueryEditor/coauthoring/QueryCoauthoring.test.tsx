@@ -614,6 +614,170 @@ describe('QueryCoauthoring', () => {
     return { ...fixture, selected };
   }
 
+  function mockProposalGeometry(dialog: HTMLElement) {
+    const rect = () => {
+      const selected = screen.getByRole('tab', { selected: true }).textContent;
+      const height = selected === 'Original' ? 176 : selected?.includes('2') ? 310 : 336;
+      const width = Number.parseFloat(dialog.style.width) || 440;
+      const left = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.left) : 200;
+      const top = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.top) : 642 - height;
+      return {
+        left,
+        top,
+        width,
+        height,
+        bottom: top + height,
+        right: left + width,
+        x: left,
+        y: top,
+        toJSON: () => undefined,
+      };
+    };
+    jest.spyOn(dialog, 'getBoundingClientRect').mockImplementation(rect);
+    const tabs = screen.getByRole('tablist');
+    jest.spyOn(tabs, 'getBoundingClientRect').mockImplementation(() => {
+      const bounds = rect();
+      return { ...bounds, top: bounds.top + 12, y: bounds.top + 12 };
+    });
+    return tabs;
+  }
+
+  it('freezes the group and chip row screen top after entrance across different option heights and Original', async () => {
+    const { user, anchorElement } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const groupTop = dialog.getBoundingClientRect().top;
+    const chipTop = tabs.getBoundingClientRect().top;
+    expect(groupTop).toBe(306);
+    expect(chipTop).toBe(318);
+    const originalCard = screen.getByRole('region', { name: 'Query proposal details' });
+    const originalFooter = screen.getByRole('button', { name: 'Accept' }).parentElement?.parentElement;
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(screen.getByRole('region', { name: 'Query proposal details' })).toBe(originalCard);
+    expect(originalFooter?.contains(screen.getByRole('button', { name: 'Accept' }))).toBe(true);
+    expect(anchorElement.contains(dialog)).toBe(false);
+  });
+
+  it('drags card backgrounds as a group, dims during drag, ignores controls, and reports adjustment once', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 250, y: 350 } });
+    expect(dialog).toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ target: document.body, coords: { x: 280, y: 370 } });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    expect(dialog.getBoundingClientRect().top).toBe(326);
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    const option = screen.getByRole('tab', { name: 'Option 2' });
+    await user.pointer({ keys: '[MouseLeft>]', target: option });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ keys: '[/MouseLeft]', target: option });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    const footer = screen.getByRole('button', { name: 'Accept' }).parentElement!;
+    await user.pointer({ keys: '[MouseLeft>]', target: footer, coords: { x: 250, y: 600 } });
+    await user.pointer({ target: document.body, coords: { x: 270, y: 610 } });
+    fireEvent.pointerCancel(document, { pointerId: 2 });
+    expect(dialog.getBoundingClientRect().left).toBe(250);
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: true, resized: false }]);
+  });
+
+  it('resizes the same mounted surfaces through narrow and tiny reflow, retaining keyboard selection and labelled Accept', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const why = screen.getByText('Counts selected requests.');
+    const diff = screen.getByLabelText('Query diff');
+    const accept = screen.getByRole('button', { name: 'Accept' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    expect(why).toBeVisible();
+    expect(diff).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 590, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '390px' });
+    expect(why).not.toBeVisible();
+    expect(diff).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 590, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 450, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '250px' });
+    expect(screen.getByText('Counts selected requests.')).toBe(why);
+    expect(screen.getByLabelText('Query diff')).toBe(diff);
+    expect(screen.getAllByRole('tab')).toHaveLength(1);
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Previous option' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Next option' })).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByText('Cancel')).not.toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByTestId('icon-times')).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Open in Chat' })).getByText('Open in Chat')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBe(accept);
+    expect(accept).toHaveTextContent('Accept');
+    await user.click(screen.getByRole('button', { name: 'Previous option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Next option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 450, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 640, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.getByLabelText('Query diff')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeVisible();
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: false, resized: true }]);
+  });
+
+  it('resizes from the left with the right edge fixed and clamps dragging and width to the viewport', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const left = screen.getByRole('separator', { name: 'Resize proposal from left' });
+    await user.pointer({ keys: '[MouseLeft>]', target: left, coords: { x: 200, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 300, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(300);
+    expect(dialog.getBoundingClientRect().right).toBe(640);
+    expect(dialog).toHaveStyle({ width: '340px' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 2000, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth - 8);
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 350, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: -1000, y: -1000 } });
+    expect(dialog.getBoundingClientRect().left).toBe(8);
+    expect(dialog.getBoundingClientRect().top).toBe(8);
+    fireEvent.blur(window);
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+  });
+
   it('press-and-hold peeks without changing the editor or selection, and release restores the selected panel', async () => {
     const { user, previewRequests, panelResult, queryRunner, baselineData, selected } = await setupPeek();
     const second = screen.getByRole('tab', { name: 'Option 2' });

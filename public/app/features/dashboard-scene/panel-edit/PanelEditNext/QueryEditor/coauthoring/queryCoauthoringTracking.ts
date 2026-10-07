@@ -75,3 +75,7 @@ export function trackQueryCoauthoringPreviewOutcomeShown(kind: QueryPreviewOutco
 export function trackQueryCoauthoringOptionPeeked(rank: number) {
   reportInteraction('grafana_query_coauthoring_option_peeked', { rank });
 }
+
+export function trackQueryCoauthoringGroupAdjusted(dragged: boolean, resized: boolean) {
+  reportInteraction('grafana_query_coauthoring_proposal_group_adjusted', { dragged, resized });
+}
