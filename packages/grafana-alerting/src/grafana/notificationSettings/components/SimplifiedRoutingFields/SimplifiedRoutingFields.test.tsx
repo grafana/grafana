@@ -159,6 +159,16 @@ describe('SimplifiedRoutingFields', () => {
     expect(screen.getByLabelText(/^group wait$/i)).toBeInTheDocument();
   });
 
+  it('stays open, with the override on, when the last value is removed while editing', async () => {
+    const { user, renderResult } = renderField({ value: { muteTimeIntervals: ['weekends'] } });
+
+    await user.click(screen.getByRole('switch', { name: /override timings/i }));
+    renderResult.rerender(<SimplifiedRoutingFields value={{ muteTimeIntervals: [] }} onChange={jest.fn()} />);
+
+    expect(screen.getByRole('switch', { name: /override timings/i })).toBeChecked();
+    expect(screen.getByLabelText(/^group wait$/i)).toBeInTheDocument();
+  });
+
   it('turns the override toggle on when its value arrives after mount, without needing a user click', () => {
     // Start already expanded (via muteTimeIntervals) so this isolates the toggle-sync fix from the
     // section-expand fix covered above.

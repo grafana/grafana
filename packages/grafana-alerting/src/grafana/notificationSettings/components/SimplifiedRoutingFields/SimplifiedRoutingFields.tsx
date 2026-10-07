@@ -37,11 +37,13 @@ export function SimplifiedRoutingFields({ value, onChange, disabledReason }: Sim
       value.activeTimeIntervals?.length
   );
 
-  // Local state drives a user's own click; this resyncs it when `value` itself changes, so a rule
-  // loaded asynchronously after mount (the `useQuery` then `value={data ?? null}` pattern) still shows.
+  // Opens when `value` arrives with settings (e.g. a rule loaded after mount), but only the user closes it:
+  // closing on cleared values would unmount the override switches mid-edit.
   const [isSectionOpen, setIsSectionOpen] = useState(hasRouteSettings);
   useEffect(() => {
-    setIsSectionOpen(hasRouteSettings);
+    if (hasRouteSettings) {
+      setIsSectionOpen(true);
+    }
   }, [hasRouteSettings]);
 
   return (
