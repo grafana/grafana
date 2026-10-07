@@ -70,7 +70,7 @@ export function TeamFilterCombobox({ options, selected, onChange, offersYourTeam
         return allOption;
       case 'label':
         // Built from the selection alone, so a pick whose option is gone (e.g. archived) still shows.
-        return { label: selected, value: selected };
+        return { label: scope.label.value, value: selected };
       case 'default':
         // Without a "your teams" scope the default already means everything, so show that.
         return offersYourTeams ? getYourTeamsOption() : allOption;

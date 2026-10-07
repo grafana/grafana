@@ -106,12 +106,12 @@ describe('IncidentsCard', () => {
     expect(screen.queryByRole('link', { name: 'Database outage' })).not.toBeInTheDocument();
   });
 
-  it('names only the selected value in the empty message and scopes the request to its field', async () => {
+  it('names the selected label in the empty message and scopes the request to its field', async () => {
     const queries = mockIncidents([]);
 
     render(<IncidentsCardWithData filter="squad:Frontend" />);
 
-    expect(await screen.findByText('No active incidents for Frontend.')).toBeInTheDocument();
+    expect(await screen.findByText('No active incidents with squad=Frontend.')).toBeInTheDocument();
     expect(screen.queryByText('No active incidents.')).not.toBeInTheDocument();
     expect(queries).toEqual([`${ACTIVE_INCIDENTS_QUERY} field:squad:"Frontend"`]);
   });

@@ -11120,7 +11120,7 @@
       "critical-count_one": "{{count}} critical",
       "critical-count_other": "{{count}} critical",
       "empty": "You have no firing alerts.",
-      "empty-selected-team": "No firing alerts for {{team}}.",
+      "empty-selected-label": "No firing alerts with {{label}}.",
       "empty-teams": "No firing alerts for your teams.",
       "error-title": "Could not load firing alerts",
       "high-count_one": "{{count}} high",
@@ -11156,7 +11156,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
-      "empty-selected-team": "No active incidents for {{team}}.",
+      "empty-selected-label": "No active incidents with {{label}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"

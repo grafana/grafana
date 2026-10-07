@@ -6,7 +6,7 @@ import { configureStore } from 'app/store/configureStore';
 import { type GrafanaPromRuleGroupDTO, type Labels } from 'app/types/unified-alerting-dto';
 
 import { setupMswServer } from '../mockApi';
-import { mockGrafanaPromAlertingRule } from '../mocks';
+import { mockGrafanaPromAlertingRule, mockGrafanaPromRuleGroup } from '../mocks';
 
 import { alertingApi } from './alertingApi';
 import { prometheusApi, toRuleLabels } from './prometheusApi';
@@ -16,13 +16,7 @@ const server = setupMswServer();
 const GRAFANA_RULES_URL = '/api/prometheus/grafana/api/v1/rules';
 
 function groupWithRuleLabels(...ruleLabels: Array<Labels | undefined>): GrafanaPromRuleGroupDTO {
-  return {
-    name: 'group',
-    file: 'folder',
-    folderUid: 'folder-uid',
-    interval: 60,
-    rules: ruleLabels.map((labels) => mockGrafanaPromAlertingRule({ labels })),
-  };
+  return mockGrafanaPromRuleGroup({ rules: ruleLabels.map((labels) => mockGrafanaPromAlertingRule({ labels })) });
 }
 
 function rulesResponse(...groups: GrafanaPromRuleGroupDTO[]) {

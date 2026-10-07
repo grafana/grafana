@@ -11,7 +11,8 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT, type IncidentPreview } from 'app/features/alerting/unified/api/incidentsApi';
-import { mockGrafanaPromAlertingRule } from 'app/features/alerting/unified/mocks';
+import { mockGrafanaPromAlertingRule, mockGrafanaPromRuleGroup } from 'app/features/alerting/unified/mocks';
+import { setGrafanaPromRules } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   installAppPluginMeta,
   pluginMeta,
@@ -90,15 +91,14 @@ const RULES_URL = '/api/prometheus/grafana/api/v1/rules';
 
 /** Mocks the org's alert rules, one per label set; returns the query params of each rules request received. */
 function mockRuleLabels(...ruleLabels: Labels[]) {
+  setGrafanaPromRules([
+    mockGrafanaPromRuleGroup({ rules: ruleLabels.map((labels) => mockGrafanaPromAlertingRule({ labels })) }),
+  ]);
   const requests: URLSearchParams[] = [];
+  // Only records: returning nothing hands the request on to the rules mocked above.
   server.use(
     http.get(RULES_URL, ({ request }) => {
       requests.push(new URL(request.url).searchParams);
-      const rules = ruleLabels.map((labels) => mockGrafanaPromAlertingRule({ labels }));
-      return HttpResponse.json({
-        status: 'success',
-        data: { groups: [{ name: 'group', file: 'folder', folderUid: 'folder-uid', interval: 60, rules }] },
-      });
     })
   );
   return requests;
@@ -526,7 +526,7 @@ describe('AlertIncidentTabs', () => {
 
       await user.click(combobox);
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
-      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+      expect(await screen.findByText('No firing alerts with team=Team C.')).toBeInTheDocument();
 
       // Picking "Your teams" clears the explicit selection and brings back the default view.
       await user.click(combobox);
@@ -601,7 +601,7 @@ describe('AlertIncidentTabs', () => {
 
       // The sentinel never leaks into copy; the generic empty message is used.
       expect(await screen.findByText('You have no firing alerts.')).toBeInTheDocument();
-      expect(screen.queryByText(/No firing alerts for/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/No firing alerts with/)).not.toBeInTheDocument();
     });
 
     it("restores the own-teams filter when selecting 'Your teams' after 'All alerts'", async () => {
@@ -713,8 +713,8 @@ describe('AlertIncidentTabs', () => {
       await user.click(await screen.findByRole('combobox', { name: /filter alerts by label/i }));
       await user.click(await screen.findByRole('option', { name: 'Team C' }));
 
-      // The empty copy names the selected team instead of claiming "your teams".
-      expect(await screen.findByText('No firing alerts for Team C.')).toBeInTheDocument();
+      // The empty copy names the picked label instead of claiming "your teams".
+      expect(await screen.findByText('No firing alerts with team=Team C.')).toBeInTheDocument();
       expect(screen.queryByText('No firing alerts for your teams.')).not.toBeInTheDocument();
     });
 
@@ -784,7 +784,7 @@ describe('AlertIncidentTabs', () => {
 
       // The selected value is a real label value, so the matcher carries it verbatim.
       await waitFor(() => expect(requests).toContainEqual(['team="platform-monitoring"']));
-      expect(await screen.findByText('No firing alerts for platform-monitoring.')).toBeInTheDocument();
+      expect(await screen.findByText('No firing alerts with team=platform-monitoring.')).toBeInTheDocument();
     });
 
     it('groups values by label key and filters by a non-team label when one of its values is picked', async () => {
@@ -979,7 +979,7 @@ describe('AlertIncidentTabs', () => {
       await user.click(await screen.findByRole('combobox', { name: /filter incidents by label/i }));
       await user.click(await screen.findByRole('option', { name: 'Team B' }));
 
-      expect(await screen.findByText('No active incidents for Team B.')).toBeInTheDocument();
+      expect(await screen.findByText('No active incidents with team=Team B.')).toBeInTheDocument();
       expect(screen.queryByText('Database outage')).not.toBeInTheDocument();
     });
 

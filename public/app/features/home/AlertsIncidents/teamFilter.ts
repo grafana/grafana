@@ -25,6 +25,14 @@ export function encodeFilterLabel({ key, value }: FilterLabel): string {
 }
 
 /**
+ * A picked label as the empty messages name it, e.g. `severity=critical`. The key has to
+ * show there, since a value like `critical` alone could belong to any label.
+ */
+export function formatFilterLabel({ key, value }: FilterLabel): string {
+  return `${key}=${value}`;
+}
+
+/**
  * The scope a homepage filter selection names: '' is the default ("your teams" for team members,
  * everything otherwise), ALL_TEAMS an explicit org-wide pick, and `key:value` one picked label.
  * A stored value that names no label, e.g. one edited by hand, falls back to the default.

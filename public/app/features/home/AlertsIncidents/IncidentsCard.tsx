@@ -12,14 +12,14 @@ import { ctaClicked } from '../analytics/main';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
+import { formatFilterLabel } from './teamFilter';
 import { type IncidentsData } from './useIncidents';
 
-/** Empty-state copy names the filtered value; the unfiltered scope uses the generic line. */
+/** Empty-state copy names the filtered label; the unfiltered scope uses the generic line. */
 function emptyMessage(filter: IncidentFieldFilter | undefined): string {
   if (filter) {
-    // Key and param predate the widening past `team`; the copy fits any field value, so they stay.
-    return t('home.incidents-card.empty-selected-team', 'No active incidents for {{team}}.', {
-      team: filter.value,
+    return t('home.incidents-card.empty-selected-label', 'No active incidents with {{label}}.', {
+      label: formatFilterLabel({ key: filter.slug, value: filter.value }),
       interpolation: { escapeValue: false },
     });
   }

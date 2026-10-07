@@ -11,7 +11,7 @@ import { ctaClicked } from '../analytics/main';
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
-import { type FilterScope } from './teamFilter';
+import { type FilterScope, formatFilterLabel } from './teamFilter';
 import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */
@@ -45,7 +45,7 @@ function severityLabel(level?: SeverityLevel): string {
 
 /**
  * Empty-state copy scoped to the active filter. A picked label overrides the
- * "your teams" default filter, so the copy names the picked value instead
+ * "your teams" default filter, so the copy names the picked label instead
  * of claiming it's the user's own teams.
  */
 function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
@@ -53,9 +53,8 @@ function emptyMessage(filterScope: FilterScope, hasTeams: boolean): string {
     case 'all':
       return t('home.firing-alerts-card.empty', 'You have no firing alerts.');
     case 'label':
-      // Named `team` but used for any picked label; renaming would drop existing translations.
-      return t('home.firing-alerts-card.empty-selected-team', 'No firing alerts for {{team}}.', {
-        team: filterScope.label.value,
+      return t('home.firing-alerts-card.empty-selected-label', 'No firing alerts with {{label}}.', {
+        label: formatFilterLabel(filterScope.label),
         interpolation: { escapeValue: false },
       });
     case 'default':
