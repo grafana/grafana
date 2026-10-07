@@ -76,6 +76,48 @@ var appManifestData = app.ManifestData{
 					},
 					SearchFields: []app.ManifestVersionKindSearchField{
 						{
+							Name:         "totalsHealthy",
+							Path:         "status.totals.healthy",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of healthy alert instances",
+						},
+						{
+							Name:         "totalsFiring",
+							Path:         "status.totals.firing",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of firing alert instances",
+						},
+						{
+							Name:         "totalsPending",
+							Path:         "status.totals.pending",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of pending alert instances",
+						},
+						{
+							Name:         "totalsRecovering",
+							Path:         "status.totals.recovering",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of recovering alert instances",
+						},
+						{
+							Name:         "totalsNoData",
+							Path:         "status.totals.nodata",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of no-data alert instances",
+						},
+						{
+							Name:         "totalsError",
+							Path:         "status.totals.error",
+							Type:         "int64",
+							Capabilities: []string{"retrieve"},
+							Description:  "The number of alert instances with evaluation errors, including errors mapped to another state",
+						},
+						{
 							Name:         "health",
 							Path:         "status.health",
 							Type:         "string",
@@ -893,7 +935,7 @@ var appManifestData = app.ManifestData{
 					"listAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Description: "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
 							Properties: map[string]spec.Schema{
 								"field": {
 									SchemaProps: spec.SchemaProps{
@@ -1072,7 +1114,7 @@ var appManifestData = app.ManifestData{
 					"listAlertRuleSearchRulesV0alpha1SearchWhereNode": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
 							Properties: map[string]spec.Schema{
 								"and": {
 									SchemaProps: spec.SchemaProps{
@@ -1332,7 +1374,7 @@ var appManifestData = app.ManifestData{
 					"listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "Retained for generic schema compatibility; rejected by the compatibility handler.",
+							Description: "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
 							Properties: map[string]spec.Schema{
 								"field": {
 									SchemaProps: spec.SchemaProps{
@@ -1511,7 +1553,7 @@ var appManifestData = app.ManifestData{
 					"listRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
 						SchemaProps: spec.SchemaProps{
 							Type:        []string{"object"},
-							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+							Description: "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
 							Properties: map[string]spec.Schema{
 								"and": {
 									SchemaProps: spec.SchemaProps{
