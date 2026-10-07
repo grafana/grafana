@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -68,6 +70,10 @@ func (UnimplementedStorageBackend) ListModifiedSince(context.Context, Namespaced
 // so a backend that produces no events must still return a usable channel.
 func (UnimplementedStorageBackend) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
 	return make(chan *WrittenEvent), nil
+}
+
+func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+	return nil, ErrWrittenKeysUnsupported
 }
 
 func (UnimplementedStorageBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
