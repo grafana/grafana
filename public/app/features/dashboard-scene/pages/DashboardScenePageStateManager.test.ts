@@ -2232,6 +2232,8 @@ describe('UnifiedDashboardScenePageStateManager', () => {
 
       expect(manager.state.dashboard).toBeUndefined();
       expect(manager.state.isLoading).toBe(false);
+      expect(manager.state.loadError?.status).toBe(404);
+      expect(manager.state.loadError?.message).toBe('Dashboard not found');
     });
 
     it('should not sync state back to v1 manager after loadDashboard', async () => {
