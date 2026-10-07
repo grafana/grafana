@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { Profiler, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { type DataQuery, getDefaultTimeRange, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -123,7 +123,13 @@ async function setup(
       },
     ],
   },
-  props: { isPreviewRunning?: boolean; entry?: boolean; transaction?: boolean; realPreview?: boolean } = {}
+  props: {
+    isPreviewRunning?: boolean;
+    entry?: boolean;
+    transaction?: boolean;
+    realPreview?: boolean;
+    onCommit?: VoidFunction;
+  } = {}
 ) {
   const stagePreview = jest.fn(
     (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
@@ -217,6 +223,7 @@ async function setup(
     timeRange: { from: 1_000, to: 2_000 },
   };
   function TransactionHarness() {
+    const { data } = queryRunner.useState();
     const transaction = useQueryProposalTransaction({
       query: baseline,
       queries: [baseline],
@@ -243,6 +250,9 @@ async function setup(
           onBaseline={transaction.synchronizeBaseline}
           host={{
             datasourceType: 'prometheus',
+            timeRange: data?.timeRange
+              ? { from: data.timeRange.from.valueOf(), to: data.timeRange.to.valueOf() }
+              : undefined,
             previewPhase: transaction.previewPhase,
             preview: transaction.preview,
             accept: transaction.accept,
@@ -252,23 +262,30 @@ async function setup(
       </>
     );
   }
+  const surface = props.transaction ? (
+    <TransactionHarness />
+  ) : props.entry ? (
+    <QueryCoauthoringSurface
+      adapter={adapter}
+      onBaseline={onBaseline}
+      host={{
+        datasourceType: 'prometheus',
+        previewPhase: 'idle',
+        preview: onPreview,
+        accept: onAccept,
+        revert: onRevertPreview,
+      }}
+    />
+  ) : (
+    <QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />
+  );
   const result = render(
-    props.transaction ? (
-      <TransactionHarness />
-    ) : props.entry ? (
-      <QueryCoauthoringSurface
-        adapter={adapter}
-        onBaseline={onBaseline}
-        host={{
-          datasourceType: 'prometheus',
-          previewPhase: 'idle',
-          preview: onPreview,
-          accept: onAccept,
-          revert: onRevertPreview,
-        }}
-      />
+    props.onCommit ? (
+      <Profiler id="query-coauthoring" onRender={props.onCommit}>
+        {surface}
+      </Profiler>
     ) : (
-      <QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />
+      surface
     )
   );
   await act(async () => {
@@ -434,6 +451,121 @@ describe('QueryCoauthoring', () => {
     await user.click(screen.getByRole('button', { name: 'Accept' }));
     expect(queryRunner.state.queries).toEqual([{ refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' }]);
     expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+  });
+
+  it('keeps long, short and Original card content current in every commit through uncached, cached and rapid chip clicks', async () => {
+    const firstReasons = [
+      'Counts selected requests.',
+      'Computes the increase across the entire five-minute window.',
+      'Preserves the existing labels for each individual request series.',
+      'Accounts for counter resets without combining unrelated series.',
+      'Compare the window count with the original per-second request rate.',
+    ];
+    const secondReasons = ['Totals request rates by code, handler, method and status.'];
+    const first = {
+      tab: 'Option 1',
+      reasons: firstReasons,
+      forbidden: secondReasons,
+      diff: 'rateincrease(http_requests_total[5m])',
+      source: 'increase(http_requests_total[5m])',
+    };
+    const second = {
+      tab: 'Option 2',
+      reasons: secondReasons,
+      forbidden: firstReasons,
+      diff: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+      source: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+    };
+    const original = {
+      tab: 'Original',
+      reasons: ['Original query'],
+      forbidden: [...firstReasons, ...secondReasons],
+      diff: '',
+      source: 'rate(http_requests_total[5m])',
+    };
+    let expectedSelection = first;
+    let recording = false;
+    const commits: Array<{ text: string; diff: string; selection: typeof first }> = [];
+    const onCommit = () => {
+      if (recording) {
+        commits.push({
+          text: screen.queryByRole('region', { name: 'Query proposal details' })?.textContent ?? '',
+          diff: screen.queryByLabelText('Query diff')?.textContent ?? '',
+          selection: expectedSelection,
+        });
+      }
+    };
+    const { user, previewRequests, panelResult, readInvocation } = await setup(0, true, undefined, {
+      transaction: true,
+      realPreview: true,
+      onCommit,
+    });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: firstReasons },
+          {
+            proposedQuery: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+            why: secondReasons,
+          },
+        ],
+      });
+      request.onComplete('');
+      previewRequests[0].setState({ data: panelResult(11) });
+    });
+    const expectCommittedContent = () => {
+      expect(commits.length).toBeGreaterThan(0);
+      for (const commit of commits) {
+        for (const reason of commit.selection.reasons) {
+          expect(commit.text).toContain(reason);
+        }
+        for (const reason of commit.selection.forbidden) {
+          expect(commit.text).not.toContain(reason);
+        }
+        expect(commit.diff).toBe(commit.selection.diff);
+      }
+    };
+    for (const selection of [second, first, original, second, original, first]) {
+      const tab = screen.getByRole('tab', { name: selection.tab });
+      tab.addEventListener(
+        'click',
+        () => {
+          commits.length = 0;
+          recording = true;
+          expectedSelection = selection;
+        },
+        { capture: true, once: true }
+      );
+      await user.click(tab);
+      if (
+        selection.tab === 'Option 2' &&
+        previewRequests.length === 2 &&
+        previewRequests[1].state.data?.state === LoadingState.Loading
+      ) {
+        act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      }
+      expectCommittedContent();
+      recording = false;
+      expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(selection.source);
+    }
+    commits.length = 0;
+    recording = true;
+    act(() => {
+      for (const selection of [second, original, first, original, second]) {
+        expectedSelection = selection;
+        fireEvent.click(screen.getByRole('tab', { name: selection.tab }));
+      }
+    });
+    expectCommittedContent();
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(
+      'sum by (code, handler, method, status) (rate(http_requests_total[5m]))'
+    );
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(previewRequests).toHaveLength(2);
   });
 
   it('shows a retryable error when an option cannot be previewed instead of leaving a selected card over Baseline', async () => {
