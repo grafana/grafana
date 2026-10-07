@@ -961,7 +961,7 @@ playwright.storybook.config.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mocks/subscribeTester.ts @grafana/grafana-frontend-platform
 /public/app/core/services/mousetrap/ @grafana/grafana-frontend-platform
 /public/app/core/services/NewFrontendAssetsChecker* @grafana/grafana-frontend-platform
-/public/app/core/services/pageHistory/ @grafana/grafana-frontend-navigation @grafana/growth-engineering
+/public/app/core/services/pageHistory/ @grafana/grafana-frontend-navigation
 /public/app/core/services/PreferencesService.ts @grafana/grafana-frontend-platform
 /public/app/core/services/ResponseQueue* @grafana/grafana-frontend-platform
 /public/app/core/services/StateManagerBase.ts @grafana/grafana-frontend-platform

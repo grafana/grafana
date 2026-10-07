@@ -264,7 +264,7 @@ export class UserStorage implements UserStorageType {
         data: { ...storageSpec.data, [key]: value },
       };
 
-      const updateResult = await apiRequest<UserStorageSpec>({
+      await apiRequest<UserStorageSpec>({
         headers: { 'Content-Type': 'application/merge-patch+json' },
         url: `/${this.resourceName}`,
         method: 'PATCH',
@@ -275,11 +275,8 @@ export class UserStorage implements UserStorageType {
           return { error };
         },
       });
-      if ('error' in updateResult && updateResult.error) {
-        // Error occurred, fallback already handled in manageError
-        return;
-      }
-      // Update global cache with the modified storage (using cloned object)
+      // Cached even when the PATCH failed: the localStorage fallback is never read while a server
+      // copy is cached, so reads in this session would otherwise keep returning the stale value.
       storageCache.set(this.resourceName, updatedSpec);
     } finally {
       releaseLock();
@@ -319,7 +316,7 @@ export class UserStorage implements UserStorageType {
       delete updatedData[key];
       const updatedSpec: UserStorageSpec = { data: updatedData };
 
-      const deleteResult = await apiRequest<UserStorageSpec>({
+      await apiRequest<UserStorageSpec>({
         headers: { 'Content-Type': 'application/merge-patch+json' },
         url: `/${this.resourceName}`,
         method: 'PATCH',
@@ -330,11 +327,7 @@ export class UserStorage implements UserStorageType {
           return { error };
         },
       });
-      if ('error' in deleteResult && deleteResult.error) {
-        // Error occurred, fallback already handled in manageError
-        return;
-      }
-      // Update global cache with the modified storage (using cloned object)
+      // Same reasoning as setItem: keep this session's reads consistent with the delete.
       storageCache.set(this.resourceName, updatedSpec);
     } finally {
       releaseLock();

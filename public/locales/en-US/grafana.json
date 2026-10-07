@@ -11289,7 +11289,6 @@
     "pick-up-tab": {
       "empty": "Nothing to pick up yet. Pages you visit will show up here.",
       "error-title": "Could not load your recent activity",
-      "explore": "Explore",
       "investigation": "Investigation {{id}}",
       "kind-alerting": "Alerting",
       "kind-app": "App",

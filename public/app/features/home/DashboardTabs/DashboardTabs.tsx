@@ -11,7 +11,6 @@ import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-
 import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
-import { useSelector } from 'app/types/store';
 
 import { HomeSection } from '../HomeSection';
 import { tabChanged } from '../analytics/main';
@@ -98,7 +97,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
   const mostUsedAvailable = isMostUsedAvailable();
   const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const navTree = useSelector((state) => state.navBarTree);
 
   const {
     value: mostUsedDashboards,
@@ -115,11 +113,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
     loading: pickUpLoading,
     error: pickUpError,
     retry: pickUpRetry,
-  } = useAsyncRetry(
-    () => (redesignEnabled ? getPickUpItems(MAX_PICK_UP, navTree) : Promise.resolve([])),
-    // navTree is read from the closure on purpose: star/bookmark updates mutate the tree but never alerting/app labels.
-    [redesignEnabled]
-  );
+  } = useAsyncRetry(() => (redesignEnabled ? getPickUpItems(MAX_PICK_UP) : Promise.resolve([])), [redesignEnabled]);
 
   const hasRecent = !!recentDashboards?.length;
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
@@ -130,7 +124,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
 
   // Folder names are only needed when some row shows a dashboard.
   const hasDashboards =
-    hasRecent || hasMostUsed || hasStarred || (pickUpItems?.some((item) => item.entry.kind === 'dashboard') ?? false);
+    hasRecent || hasMostUsed || hasStarred || !!pickUpItems?.some((item) => item.kind === 'dashboard');
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {

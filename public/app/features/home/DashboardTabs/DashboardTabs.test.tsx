@@ -405,26 +405,31 @@ describe('DashboardTabs', () => {
       })
     )}`;
     const exploreEntry: PageHistoryEntry = {
-      key: 'explore',
       kind: 'explore',
       href: exploreHref,
       lastVisited: Date.now() - 2 * 60 * 60 * 1000,
-      visits: 1,
     };
     const dashboardEntry: PageHistoryEntry = {
-      key: 'dashboard:recent-1',
       kind: 'dashboard',
+      uid: 'recent-1',
       href: '/d/recent-1/x?from=now-90d&to=now&var-Plugin=finnhub',
       lastVisited: Date.now() - 60_000,
-      visits: 2,
     };
     const alertingEntry: PageHistoryEntry = {
-      key: '/alerting/list',
       kind: 'alerting',
+      pathname: '/alerting/list',
       href: '/alerting/list?search=firing',
       lastVisited: Date.now() - 30_000,
-      visits: 1,
     };
+    const appEntry: PageHistoryEntry = {
+      kind: 'app',
+      pathname: '/a/grafana-k8s-app/clusters',
+      href: '/a/grafana-k8s-app/clusters?cluster=prod',
+      lastVisited: Date.now() - 10_000,
+    };
+    const navBarTree = [
+      { text: 'Alerting', url: '/alerting', children: [{ text: 'Alert rules', url: '/alerting/list' }] },
+    ];
 
     async function enableRedesign() {
       await act(async () => {
@@ -446,20 +451,21 @@ describe('DashboardTabs', () => {
     it('lists visited pages with their restored state, newest first', async () => {
       await enableRedesign();
       seedRecent(['recent-1', 'recent-2']);
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, dashboardEntry, alertingEntry]);
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([appEntry, exploreEntry, dashboardEntry, alertingEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
       await user.click(await screen.findByRole('tab', { name: /continue/i }));
 
-      expect(screen.getByRole('tab', { name: /pick up where you left off.*3/i })).toHaveAttribute(
+      expect(screen.getByRole('tab', { name: /pick up where you left off.*4/i })).toHaveAttribute(
         'aria-selected',
         'true'
       );
 
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
+        '/a/grafana-k8s-app/clusters?cluster=prod',
         exploreHref,
         '/d/recent-1/x?from=now-90d&to=now&var-Plugin=finnhub',
         '/alerting/list?search=firing',
@@ -468,11 +474,13 @@ describe('DashboardTabs', () => {
       const dashboardLink = screen.getByRole('link', { name: /Recent Dashboard 1/ });
       expect(dashboardLink).toHaveTextContent('Last 90 days · Plugin=finnhub');
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
-      // The test store has no nav tree, so alerting rows fall back to the path.
-      expect(screen.getByRole('link', { name: /\/alerting\/list/ })).toHaveTextContent('search=firing');
+      // Exact nav match gets the nav label; deep links fall back to the path.
+      expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
+      expect(screen.getByRole('link', { name: /\/a\/grafana-k8s-app\/clusters/ })).toHaveTextContent('cluster=prod');
 
       expect(screen.getByText('Dashboard')).toBeInTheDocument();
       expect(screen.getByText('Alerting')).toBeInTheDocument();
+      expect(screen.getByText('App')).toBeInTheDocument();
       expect(screen.getAllByText('Explore')).toHaveLength(2);
     });
 
@@ -480,11 +488,10 @@ describe('DashboardTabs', () => {
       await enableRedesign();
       seedRecent(['recent-1', 'recent-2']);
       const gone: PageHistoryEntry[] = Array.from({ length: 20 }, (_, i) => ({
-        key: `dashboard:gone-${i}`,
         kind: 'dashboard',
+        uid: `gone-${i}`,
         href: `/d/gone-${i}`,
         lastVisited: Date.now() - i,
-        visits: 1,
       }));
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([...gone, exploreEntry]);
       server.use(getCustomSearchHandler(recentHits));

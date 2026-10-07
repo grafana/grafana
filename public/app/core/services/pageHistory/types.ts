@@ -1,19 +1,16 @@
-export const PAGE_HISTORY_KINDS = ['dashboard', 'explore', 'investigation', 'alerting', 'app'] as const;
+/** What a visited URL resolves to; one history row per identity. Derived from the pathname, never stored. */
+export type PageIdentity =
+  | { kind: 'dashboard'; uid: string }
+  | { kind: 'explore' }
+  | { kind: 'investigation'; pluginId: string; id: string }
+  | { kind: 'alerting'; pathname: string }
+  | { kind: 'app'; pathname: string };
 
-export type PageHistoryKind = (typeof PAGE_HISTORY_KINDS)[number];
+export type PageHistoryKind = PageIdentity['kind'];
 
-export interface PageHistoryEntry {
-  /** Folds variants of one page: `dashboard:<uid>`, `investigation:<id>`, `explore`, or the pathname for alerting/app. */
-  key: string;
-  kind: PageHistoryKind;
-  /** Newest `pathname + search` seen for this key, base-url-less (as `locationService.getLocation()` reports it). */
+export type PageHistoryEntry = PageIdentity & {
+  /** Newest `pathname + search` seen for this page, base-url-less (as `locationService.getLocation()` reports it). */
   href: string;
   /** Epoch ms of the last visit or in-page URL update. */
   lastVisited: number;
-  /** Number of navigations onto this page (same-pathname URL churn does not count). */
-  visits: number;
-}
-
-export const PAGE_HISTORY_MAX = 100;
-export const DASHBOARD_KEY_PREFIX = 'dashboard:';
-export const INVESTIGATION_KEY_PREFIX = 'investigation:';
+};

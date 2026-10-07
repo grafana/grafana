@@ -1,42 +1,53 @@
-import { DASHBOARD_KEY_PREFIX, INVESTIGATION_KEY_PREFIX, type PageHistoryKind } from './types';
+import { ASSISTANT_PLUGIN_ID } from 'app/core/constants';
+
+import { type PageIdentity } from './types';
 
 /** Apps whose `/a/<pluginId>/investigation(s)/<id>` routes are tracked as one row per investigation id. */
-const INVESTIGATION_PLUGIN_IDS = ['grafana-assistant-app', 'grafana-ml-app'] as const;
+const INVESTIGATION_PLUGIN_IDS: string[] = [ASSISTANT_PLUGIN_ID, 'grafana-ml-app'];
 
 const INVESTIGATION_SEGMENTS = ['investigations', 'investigation'];
 
-export interface ClassifiedPage {
-  kind: PageHistoryKind;
-  key: string;
-}
-
 /**
- * Maps a base-url-less pathname to the history row it belongs to, or `null` for pages that are
- * not worth resuming (home, browse pages, settings, ...). First matching rule wins.
+ * Maps a base-url-less pathname to the page it belongs to, or `null` for pages that are not worth
+ * resuming (home, browse pages, settings, ...). First matching rule wins.
  */
-export function classifyPage(pathname: string): ClassifiedPage | null {
+export function classifyPage(pathname: string): PageIdentity | null {
   const normalized = pathname.length > 1 && pathname.endsWith('/') ? pathname.slice(0, -1) : pathname;
   const [, first, second, third, fourth] = normalized.split('/');
 
   if (first === 'd' && second) {
-    return { kind: 'dashboard', key: DASHBOARD_KEY_PREFIX + second };
+    return { kind: 'dashboard', uid: second };
   }
 
   if (normalized === '/explore') {
-    return { kind: 'explore', key: 'explore' };
+    return { kind: 'explore' };
   }
 
   if (first === 'a' && second) {
-    const isInvestigationApp = INVESTIGATION_PLUGIN_IDS.some((id) => id === second);
-    if (isInvestigationApp && third && INVESTIGATION_SEGMENTS.includes(third) && fourth) {
-      return { kind: 'investigation', key: INVESTIGATION_KEY_PREFIX + fourth };
+    if (INVESTIGATION_PLUGIN_IDS.includes(second) && third && INVESTIGATION_SEGMENTS.includes(third) && fourth) {
+      return { kind: 'investigation', pluginId: second, id: fourth };
     }
-    return { kind: 'app', key: normalized };
+    return { kind: 'app', pathname: normalized };
   }
 
   if (first === 'alerting') {
-    return { kind: 'alerting', key: normalized };
+    return { kind: 'alerting', pathname: normalized };
   }
 
   return null;
+}
+
+/** Dedupe key: two URLs with the same key are the same history row. */
+export function pageKey(page: PageIdentity): string {
+  switch (page.kind) {
+    case 'dashboard':
+      return `dashboard:${page.uid}`;
+    case 'explore':
+      return 'explore';
+    case 'investigation':
+      return `investigation:${page.id}`;
+    case 'alerting':
+    case 'app':
+      return page.pathname;
+  }
 }

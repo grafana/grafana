@@ -1,10 +1,11 @@
 import { dateTime, type ExploreUrlState, locationUtil, type NavModelItem, rangeUtil, urlUtil } from '@grafana/data';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
+import { isRecord } from 'app/core/utils/isRecord';
 import { parseURL } from 'app/features/explore/hooks/useStateSync/parseURL';
 import { VARIABLE_PREFIX } from 'app/features/variables/constants';
 
-const SEPARATOR = ' · ';
+export const SEPARATOR = ' · ';
 /** Rendered through the time range (or not meaningful to show) rather than as `key=value`. */
 const HIDDEN_PARAMS = ['from', 'to', 'orgId', 'timezone', 'schemaVersion'];
 /** Datasource-specific query text fields, most common first (Prometheus/Loki, Elastic/Tempo, SQL, Graphite, CloudWatch). */
@@ -59,12 +60,11 @@ export function describeAppState(search: string): string {
 }
 
 function getQueryText(query: unknown): string {
-  if (typeof query !== 'object' || query === null) {
+  if (!isRecord(query)) {
     return '';
   }
-  const fields: Record<string, unknown> = Object.fromEntries(Object.entries(query));
   for (const field of QUERY_TEXT_FIELDS) {
-    const value = fields[field];
+    const value = query[field];
     if (typeof value === 'string' && value.trim()) {
       return value;
     }
