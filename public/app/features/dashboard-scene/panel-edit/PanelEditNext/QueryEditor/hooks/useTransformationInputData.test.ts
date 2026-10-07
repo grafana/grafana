@@ -215,7 +215,9 @@ describe('useTransformationInputData', () => {
     ];
 
     it('narrows the raw data when nothing precedes the filtered transformation', () => {
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byRefId, options: 'B' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'B' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({
@@ -232,7 +234,7 @@ describe('useTransformationInputData', () => {
     it('narrows what the preceding transformations produced', () => {
       const transformations = [
         makeTransformation('merge'),
-        makeTransformation('organize', { id: FrameMatcherID.byRefId, options: 'A' }),
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: 'A' } }),
       ];
       mockTransformDataFrame.mockReturnValue(
         new Observable((subscriber) => {
@@ -259,7 +261,9 @@ describe('useTransformationInputData', () => {
     });
 
     it('narrows by the resolved value of a filter written as a variable', () => {
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byRefId, options: '$pickedRefId' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byRefId, options: '$pickedRefId' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({
@@ -277,7 +281,9 @@ describe('useTransformationInputData', () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
       // `byName` runs its option through `stringToJsRegex`, which throws on a `/`-prefixed string
       // that is not a complete `/pattern/flags`.
-      const transformations = [makeTransformation('organize', { id: FrameMatcherID.byName, options: '/etc/hosts' })];
+      const transformations = [
+        makeTransformation('organize', { filter: { id: FrameMatcherID.byName, options: '/etc/hosts' } }),
+      ];
 
       const { result } = renderHook(() =>
         useTransformationInputData({

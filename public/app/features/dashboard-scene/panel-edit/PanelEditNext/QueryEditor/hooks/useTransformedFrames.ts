@@ -10,6 +10,7 @@ import {
   type DataTransformerConfig,
   type FrameMatcher,
   getFrameMatchers,
+  type PanelData,
   transformDataFrame,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
@@ -274,21 +275,27 @@ export function transformationTopic(transformation: Transformation): DataTopic {
 }
 
 /**
+ * The query frames `transformation` runs over, matching {@link precedingTransformations}. Returns the
+ * panel data's own arrays, or a shared empty one, so callers get a stable identity across renders.
+ */
+export function framesForTopic(data: PanelData | undefined, transformation: Transformation | null): DataFrame[] {
+  const frames =
+    transformation && transformationTopic(transformation) === DataTopic.Annotations ? data?.annotations : data?.series;
+  return frames ?? NO_FRAMES;
+}
+
+/**
  * What the pipeline runs ahead of `selected`: the user's transformations up to it.
  *
- * Only entries of the given `topic` are kept, because the pipeline routes each topic through its own
- * pass — series transformations over `data.series`, annotation ones over `data.annotations`.
+ * Only entries sharing `selected`'s topic are kept, because the pipeline routes each topic through its
+ * own pass — series transformations over `data.series`, annotation ones over `data.annotations`.
  * Replaying the other topic's entries would apply a transformation to frames it never receives.
- * Defaults to series, which is what every caller replaying over `data.series` wants.
  *
  * A `selected` the list does not contain is treated as first rather than sliced by its `-1` index,
  * which would silently drop the list's last entry.
  */
-export function precedingTransformations(
-  selected: Transformation,
-  all: Transformation[],
-  topic: DataTopic = DataTopic.Series
-): TransformationConfigs {
+export function precedingTransformations(selected: Transformation, all: Transformation[]): TransformationConfigs {
+  const topic = transformationTopic(selected);
   const selectedIndex = all.findIndex(({ transformId }) => transformId === selected.transformId);
 
   const preceding = all

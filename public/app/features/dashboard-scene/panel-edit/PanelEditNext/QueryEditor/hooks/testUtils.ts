@@ -1,9 +1,12 @@
-import { type DataFrame, type MatcherConfig } from '@grafana/data';
+import { type DataFrame, type DataTransformerConfig } from '@grafana/data';
 
 import { type Transformation } from '../types';
 
-export function makeTransformation(id: string, filter?: MatcherConfig): Transformation {
-  return { transformId: id, transformConfig: { id, options: {}, filter }, registryItem: undefined };
+export function makeTransformation(
+  id: string,
+  overrides: Pick<DataTransformerConfig, 'filter' | 'topic'> = {}
+): Transformation {
+  return { transformId: id, transformConfig: { id, options: {}, ...overrides }, registryItem: undefined };
 }
 
 /** Named frames, so an assertion can say which frame reached an editor rather than how many did. */
