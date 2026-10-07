@@ -116,12 +116,7 @@ function PanelCell({
     [cell, panel, isEditing]
   );
 
-  // Skipped for a library panel - its title belongs to the shared panel, not this notebook.
   useEffect(() => {
-    if (isLibraryPanel(panel)) {
-      return;
-    }
-
     panel.setState({
       hoverHeader: false,
       title: '',

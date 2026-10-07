@@ -22,7 +22,6 @@ import { type LayoutRegistryItem } from 'app/features/dashboard-scene/scene/type
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { dashboardSceneGraph, type PanelIdGenerator } from 'app/features/dashboard-scene/utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
-import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { getVizPanelKeyForPanelId } from 'app/features/dashboard-scene/utils/utils-panels';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -379,7 +378,7 @@ export class NotebookLayoutManager
    */
   public setPanelTitle(target: NotebookCellItem, title: string): void {
     const panel = target.state.body;
-    if (!panel || isLibraryPanel(panel) || (target.state.panelTitle ?? '') === title) {
+    if (!panel || (target.state.panelTitle ?? '') === title) {
       return;
     }
 

@@ -3,7 +3,6 @@ import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test
 import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
-import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind, type NotebookLayoutKind } from 'app/features/notebook/types';
@@ -1685,17 +1684,6 @@ describe('NotebookLayoutManager', () => {
       history.undo();
       expect(first.state.panelTitle).toBe('');
       expect(second.state.panelTitle).toBe('');
-    });
-
-    it('does nothing for a library panel', () => {
-      const { cell } = panelCell('viz');
-      cell.state.body!.setState({ $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })] });
-      const { manager, history } = withHistory([cell]);
-
-      manager.setPanelTitle(cell, 'p95 latency');
-
-      expect(cell.state.panelTitle).toBeUndefined();
-      expect(history.state.undoLabel).toBeUndefined();
     });
 
     it('does nothing when the title does not change', () => {

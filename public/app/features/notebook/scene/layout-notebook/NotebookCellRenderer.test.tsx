@@ -357,21 +357,6 @@ describe('NotebookCellRenderer', () => {
       expect(panel.state.titleItems).toHaveLength(2);
       expect(panel.state.titleItems).toContain(existingLink);
     });
-
-    it('leaves a library panel title untouched', async () => {
-      const panel = new VizPanel({
-        key: 'panel-1',
-        pluginId: 'timeseries',
-        title: 'Shared panel title',
-        $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })],
-      });
-      const cell = buildPanelCellInLayout(panel);
-
-      render(<NotebookCellRenderer cell={cell} isEditing={true} />);
-      await screen.findByTestId('loading-plugin-panel-1');
-
-      expect(panel.state.title).toBe('Shared panel title');
-    });
   });
 
   describe('isEditableQueryPanel', () => {
