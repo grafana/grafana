@@ -76,7 +76,6 @@ function setPicker(overrides: Partial<ReturnType<typeof useNotebookPicker>> = {}
     canFilterByMe: true,
     tagFilter: [],
     setTagFilter: jest.fn(),
-    loadedTags: [],
     sort: 'updated',
     setSort: jest.fn(),
     ...overrides,
@@ -308,8 +307,8 @@ describe('AddPanelToNotebookModalBody', () => {
       expect(screen.getByTestId('Spinner')).toBeInTheDocument();
     });
 
-    // Told apart by whether anything is filtering rather than by a total: the server reports no
-    // total on the LIST fallback path, so a count cannot answer this everywhere.
+    // Told apart by whether anything is filtering rather than by a total: a count of zero is the
+    // same number either way, so it cannot say which of the two this is.
     it('tells an empty library apart from an empty result', async () => {
       setPicker({ rows: [], isFiltered: false });
       const first = renderModal();
