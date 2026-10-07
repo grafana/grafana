@@ -534,7 +534,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(), nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
 		)
 		require.NoError(t, err)
 		_, err = usrSvc.Create(context.Background(), &cmd)

@@ -186,6 +186,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
@@ -308,6 +309,7 @@ var Basic = wire.NewSet(
 	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
 	infranats.ProvideSubscriber,
 	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
+	legacywatch.ProvidePublisher,
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,

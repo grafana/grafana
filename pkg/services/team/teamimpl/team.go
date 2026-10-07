@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/team/teamk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -37,8 +38,8 @@ func (s *Service) LegacySearchService() team.Service {
 	return s.legacyService
 }
 
-func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, tracer)
+func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, tracer tracing.Tracer, configProvider apiserver.DirectRestConfigProvider, iamFeatures iamapi.Features, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, tracer, legacyWatch)
 	if err != nil {
 		return nil, err
 	}

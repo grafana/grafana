@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/userk8s"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
 type Service struct {
@@ -44,8 +45,8 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider,
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
-	configProvider apiserver.DirectRestConfigProvider) (*Service, error) {
-	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry)
+	configProvider apiserver.DirectRestConfigProvider, legacyWatch *legacywatch.Publisher) (*Service, error) {
+	legacyService, err := NewLegacyService(sql, orgService, cfg, teamService, cacheService, tracer, quotaService, bundleRegistry, legacyWatch)
 	if err != nil {
 		return nil, err
 	}

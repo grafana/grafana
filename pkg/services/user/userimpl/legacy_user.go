@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -23,8 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+var userResource = iamv0alpha1.UserResourceInfo.GroupResource()
 
 type LegacyService struct {
 	store        store
@@ -34,6 +38,7 @@ type LegacyService struct {
 	cfg          *setting.Cfg
 	tracer       tracing.Tracer
 	sql          legacysql.LegacyDatabaseProvider
+	watch        *legacywatch.Publisher
 }
 
 func NewLegacyService(
@@ -43,6 +48,7 @@ func NewLegacyService(
 	teamService team.Service,
 	cacheService *localcache.CacheService, tracer tracing.Tracer,
 	quotaService quota.Service, bundleRegistry supportbundles.Service,
+	watch *legacywatch.Publisher,
 ) (user.Service, error) {
 	store := ProvideStore(sql, cfg)
 	s := &LegacyService{
@@ -53,6 +59,7 @@ func NewLegacyService(
 		cacheService: cacheService,
 		tracer:       tracer,
 		sql:          sql,
+		watch:        watch,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -208,6 +215,9 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 		return nil
 	})
+	if err == nil && !usr.IsServiceAccount {
+		s.watch.Publish(ctx, legacywatch.Added, userResource, usr.OrgID, usr.UID, usr.Updated.UnixMilli())
+	}
 	return usr, err
 }
 
@@ -217,12 +227,18 @@ func (s *LegacyService) Delete(ctx context.Context, cmd *user.DeleteUserCommand)
 	))
 	defer span.End()
 
-	_, err := s.store.GetByID(ctx, cmd.UserID)
+	usr, err := s.store.GetByID(ctx, cmd.UserID)
 	if err != nil {
 		return err
 	}
 
-	return s.store.Delete(ctx, cmd.UserID)
+	if err := s.store.Delete(ctx, cmd.UserID); err != nil {
+		return err
+	}
+	if usr != nil && !usr.IsServiceAccount {
+		s.watch.Publish(ctx, legacywatch.Deleted, userResource, usr.OrgID, usr.UID, 0)
+	}
+	return nil
 }
 
 func (s *LegacyService) GetByID(ctx context.Context, query *user.GetUserByIDQuery) (*user.User, error) {
@@ -329,7 +345,14 @@ func (s *LegacyService) Update(ctx context.Context, cmd *user.UpdateUserCommand)
 		}
 	}
 
-	return s.store.Update(ctx, cmd)
+	if err := s.store.Update(ctx, cmd); err != nil {
+		return err
+	}
+	if usr != nil && !usr.IsServiceAccount {
+		// The store sets the updated time itself, so the resource version is unknown here.
+		s.watch.Publish(ctx, legacywatch.Modified, userResource, usr.OrgID, usr.UID, 0)
+	}
+	return nil
 }
 
 func (s *LegacyService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUserLastSeenAtCommand) error {

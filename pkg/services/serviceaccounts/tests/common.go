@@ -52,7 +52,7 @@ func SetupUserServiceAccount(t *testing.T, db db.DB, cfg *setting.Cfg, testUser 
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
 	)
 	require.NoError(t, err)
 
@@ -133,7 +133,7 @@ func SetupUsersServiceAccounts(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, t
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(sqlStore), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
 	)
 	require.NoError(t, err)
 

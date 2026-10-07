@@ -66,6 +66,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -101,9 +102,10 @@ func RegisterAPIService(
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
+	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
-	store := legacy.NewLegacySQLStores(dbProvider)
+	store := legacy.WithWatchNotifications(legacy.NewLegacySQLStores(dbProvider), legacyWatch)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(
 		accessClient,

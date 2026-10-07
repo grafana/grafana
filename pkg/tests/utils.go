@@ -38,7 +38,7 @@ func CreateUser(t *testing.T, db db.DB, cfg *setting.Cfg, cmd user.CreateUserCom
 	require.NoError(t, err)
 	usrSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(db), orgService, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		quotaService, supportbundlestest.NewFakeBundleService(), nil,
+		quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
 	)
 	require.NoError(t, err)
 

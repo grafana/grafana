@@ -72,7 +72,7 @@ func testScenario(t *testing.T, desc string, isViewer bool, hasDatasourceExplore
 		require.NoError(t, err)
 		usrSvc, err := userimpl.ProvideService(
 			legacysql.NewDatabaseProvider(sqlStore), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-			quotaService, supportbundlestest.NewFakeBundleService(), nil,
+			quotaService, supportbundlestest.NewFakeBundleService(), nil, nil,
 		)
 		require.NoError(t, err)
 

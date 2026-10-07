@@ -627,7 +627,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 	cfg.AutoAssignOrgId = 1
 	acstore := database.ProvideService(sql)
 	permissionStore := rs.NewStore(cfg, sql, featuremgmt.WithFeatures())
-	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
+	teamService, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{}, nil)
 	require.NoError(t, err)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
@@ -638,7 +638,7 @@ func setupTestEnv(t testing.TB) (*database.AccessControlStore, rs.Store, user.Se
 
 	userService, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(sql), orgService, cfg, teamService, localcache.ProvideService(), tracing.InitializeTracerForTest(),
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil, nil,
 	)
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService, sql

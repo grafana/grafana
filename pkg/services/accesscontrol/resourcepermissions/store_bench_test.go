@@ -146,7 +146,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	dbHelper, err := legacysql.NewDatabaseProvider(store)(context.Background())
 	require.NoError(b, err)
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(store), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{}, nil)
 	require.NoError(b, err)
 	numberOfTeams := int(math.Ceil(float64(users) / UsersPerTeam))
 	globalUserId := 0
@@ -155,7 +155,7 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	require.NoError(b, err)
 	usrSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(store), orgSvc, cfg, nil, nil, tracing.InitializeTracerForTest(),
-		qs, supportbundlestest.NewFakeBundleService(), nil)
+		qs, supportbundlestest.NewFakeBundleService(), nil, nil)
 	require.NoError(b, err)
 	userIds := make([]int64, 0, UsersPerTeam*numberOfTeams)
 	teamIds := make([]int64, 0, numberOfTeams)

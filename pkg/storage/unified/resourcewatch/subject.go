@@ -12,6 +12,13 @@ import (
 // without a flag day: publisher and consumers move root by root.
 const subjectRoot = "us.watch.v1"
 
+// legacySubjectRoot prefixes change notifications for resources written to the
+// legacy SQL tables rather than to unified storage. It is a separate root, not a
+// token under subjectRoot, so a SubjectAllResources consumer (e.g. the unified
+// storage notifier) never sees writes it did not make, and a resource in a dual
+// write mode announces each store's write on its own root.
+const legacySubjectRoot = "legacy.watch.v1"
+
 // anyToken is the NATS single-token wildcard, used in the namespace or resource
 // position to match every value of it.
 const anyToken = "*"
@@ -25,6 +32,9 @@ const coreGroup = "_core"
 // count. It is confined to subjectRoot, so it is a firehose over resource
 // notifications only.
 const SubjectAllResources = subjectRoot + ".>"
+
+// SubjectAllLegacyResources matches every LegacySubject(...).
+const SubjectAllLegacyResources = legacySubjectRoot + ".>"
 
 // Subject returns the NATS subject that carries change notifications for a
 // resource type within a namespace, as the dotted tokens
@@ -46,6 +56,22 @@ const SubjectAllResources = subjectRoot + ".>"
 // wildcard in its position, so a consumer can watch every namespace, or every
 // resource of a group.
 func Subject(gvr schema.GroupVersionResource, namespace string) string {
+	return subject(subjectRoot, gvr, namespace)
+}
+
+// LegacySubject is Subject for writes to the legacy SQL tables, as the tokens
+//
+//	legacy.watch.v1.{group}.{namespace}.{resource}
+//
+// It carries the same WatchNotification payload with the same layout rules, so
+// a consumer decodes both roots alike. The resource version of a legacy write
+// is the row's updated time in milliseconds (as the legacy API storage reports
+// it), or 0 when the writer does not know it.
+func LegacySubject(gvr schema.GroupVersionResource, namespace string) string {
+	return subject(legacySubjectRoot, gvr, namespace)
+}
+
+func subject(root string, gvr schema.GroupVersionResource, namespace string) string {
 	group := gvr.Group
 	if group == "" {
 		group = coreGroup
@@ -57,7 +83,7 @@ func Subject(gvr schema.GroupVersionResource, namespace string) string {
 	if resource == "" {
 		resource = anyToken
 	}
-	return strings.Join([]string{subjectRoot, group, namespace, resource}, ".")
+	return strings.Join([]string{root, group, namespace, resource}, ".")
 }
 
 // ParseSubject decomposes a subject produced by Subject back into its

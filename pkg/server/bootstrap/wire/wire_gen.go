@@ -246,6 +246,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	database2 "github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
@@ -378,18 +379,25 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
+	registerer := metrics.ProvideRegisterer()
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	publisher := legacywatch.ProvidePublisher(cfg, publisherService)
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	if err != nil {
+		return nil, err
+	}
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
-	registerer := metrics.ProvideRegisterer()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	dbProvider, err := sql.ProvideResourceDB(cfg, sqlStore)
@@ -544,12 +552,6 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	if err != nil {
 		return nil, err
 	}
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
-	if err != nil {
-		return nil, err
-	}
-	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
@@ -975,7 +977,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v4, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v4, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1168,18 +1170,25 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
+	registerer := metrics.ProvideRegistererForTest()
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	publisher := legacywatch.ProvidePublisher(cfg, publisherService)
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	if err != nil {
+		return nil, err
+	}
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}
 	actionSetService := resourcepermissions.NewActionSetService()
 	permissionRegistry := permreg.ProvidePermissionRegistry()
 	serverLockService := serverlock.ProvideService(legacyDatabaseProvider, tracingService)
-	registerer := metrics.ProvideRegistererForTest()
 	storeProvider := store2.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	defaultElector := leaderelection.NewDefaultElector()
@@ -1331,12 +1340,6 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
-	if err != nil {
-		return nil, err
-	}
-	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(config, registerer)
 	subscriberService := nats.ProvideSubscriber(config, registerer)
 	watchExpiry := resource.NewWatchExpiry()
 	options := &unified.Options{
@@ -1764,7 +1767,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	noopSearchREST := externalgroupmapping.ProvideNoopSearchREST()
 	externalGroupReconciler := _wireNoopExternalGroupReconcilerValue
 	mappersRegistry := resourcepermission.ProvideMappersRegistry()
-	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v4, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache)
+	identityAccessManagementAPIBuilder, err := iam.RegisterAPIService(cfg, features, configProvider, apiserverService, ssosettingsimplService, sqlStore, accessControl, accessClient, userPermissionsClient, zanzanaClient, registerer, roleApiInstaller, globalRoleApiInstaller, teamLBACApiInstaller, tracingService, roleBindingApiInstaller, teamGroupsHandlerProvider, noopSearchREST, externalGroupReconciler, dualwriteService, v4, orgService, userimplService, teamimplService, eventualRestConfigProvider, mappersRegistry, authinfoimplStore, remoteCache, publisher)
 	if err != nil {
 		return nil, err
 	}
@@ -1837,7 +1840,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	if err != nil {
 		return nil, err
 	}
-	testEnv, err := server.ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, v4, idimplService, factory, githubFactory, decryptService, quotaGetter)
+	testEnv, err := server.ProvideTestEnv(testingT, serverServer, sqlStore, cfg, notificationServiceMock, grpcserverProvider, inMemory, httpclientProvider, oauthtokentestService, featureToggles, v4, idimplService, factory, githubFactory, decryptService, quotaGetter, config)
 	if err != nil {
 		return nil, err
 	}
@@ -1900,18 +1903,25 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	if err != nil {
 		return server.Runner{}, err
 	}
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
+	registerer := metrics.ProvideRegisterer()
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
+	if err != nil {
+		return server.Runner{}, err
+	}
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	publisher := legacywatch.ProvidePublisher(cfg, publisherService)
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	cacheService := localcache.ProvideService()
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return server.Runner{}, err
 	}
 	tracer := server.OtelTracer()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
-	registerer := metrics.ProvideRegisterer()
 	globalDataKeyStorage, err := encryption.ProvideGlobalDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return server.Runner{}, err
@@ -2117,11 +2127,18 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	if err != nil {
 		return nil, err
 	}
-	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features)
+	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
 	if err != nil {
 		return nil, err
 	}
-	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider)
+	config := nats.ProvideNATSConfig(cfg, natsServer)
+	publisherService := nats.ProvidePublisher(config, registerer)
+	publisher := legacywatch.ProvidePublisher(cfg, publisherService)
+	teamimplService, err := teamimpl.ProvideService(legacyDatabaseProvider, cfg, tracingService, eventualRestConfigProvider, features, publisher)
+	if err != nil {
+		return nil, err
+	}
+	userimplService, err := userimpl.ProvideService(legacyDatabaseProvider, orgService, cfg, teamimplService, cacheService, tracingService, quotaService, bundleregistryService, eventualRestConfigProvider, publisher)
 	if err != nil {
 		return nil, err
 	}

@@ -170,7 +170,7 @@ func setupDB(b testing.TB) benchScenario {
 
 	quotaService := quotatest.New(false, nil)
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{})
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, tracing.InitializeTracerForTest(), nil, iam.Features{}, nil)
 	require.NoError(b, err)
 	orgService, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(db), cfg, quotaService)
 	require.NoError(b, err)
@@ -178,7 +178,7 @@ func setupDB(b testing.TB) benchScenario {
 	cache := localcache.ProvideService()
 	userSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(db), orgService, cfg, teamSvc, cache, tracing.InitializeTracerForTest(),
-		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil,
+		&quotatest.FakeQuotaService{}, bundleregistry.ProvideService(), nil, nil,
 	)
 	require.NoError(b, err)
 

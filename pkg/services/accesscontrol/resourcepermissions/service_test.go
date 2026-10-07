@@ -872,7 +872,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	cfg := setting.NewCfg()
 	tracer := tracing.InitializeTracerForTest()
 
-	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil, iam.Features{})
+	teamSvc, err := teamimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, tracer, nil, iam.Features{}, nil)
 	require.NoError(t, err)
 
 	orgSvc, err := orgimpl.ProvideService(legacysql.NewDatabaseProvider(sql), cfg, quotatest.New(false, nil))
@@ -880,7 +880,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 
 	userSvc, err := userimpl.ProvideService(
 		legacysql.NewDatabaseProvider(sql), orgSvc, cfg, teamSvc, nil, tracer,
-		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil,
+		quotatest.New(false, nil), supportbundlestest.NewFakeBundleService(), nil, nil,
 	)
 	require.NoError(t, err)
 	serviceAccountRetriever := serviceaccountsretriever.ProvideService(sql, nil, nil, userSvc, orgSvc)
