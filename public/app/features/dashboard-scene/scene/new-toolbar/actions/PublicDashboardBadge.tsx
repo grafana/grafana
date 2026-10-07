@@ -3,7 +3,7 @@ import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { useFlagDashboardsPublicDashboardBadgeFromApi } from '@grafana/runtime/internal';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
@@ -25,7 +25,7 @@ export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
 function PublicDashboardBadgeInternal({ uid, hasPublicDashboard }: { uid: string; hasPublicDashboard?: boolean }) {
   // When enabled, always call the public dashboard API to check if the dashboard is a public dashboard
   // and decouple the usage of `meta.publicDashboardEnabled`
-  const fromApi = getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardsPublicDashboardBadgeFromApi, false);
+  const fromApi = useFlagDashboardsPublicDashboardBadgeFromApi();
 
   const { data: publicDashboard } = useGetPublicDashboardQuery(uid, {
     skip: !fromApi && hasPublicDashboard !== undefined && !hasPublicDashboard,

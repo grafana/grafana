@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { cleanup, render, screen } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { type PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { DashboardScene } from '../../DashboardScene';
@@ -32,7 +33,11 @@ function renderBadge({
 
   const dashboard = new DashboardScene({ uid, title: 'hello', meta: { publicDashboardEnabled } });
 
-  render(<PublicDashboardBadge dashboard={dashboard} />);
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <PublicDashboardBadge dashboard={dashboard} />
+    </OpenFeatureProvider>
+  );
 }
 
 const badge = () => screen.queryByTestId(selectors.pages.Dashboard.DashNav.publicDashboardTag);
@@ -53,6 +58,7 @@ describe('PublicDashboardBadge', () => {
   });
 
   afterEach(() => {
+    cleanup();
     mockUseGetPublicDashboardQuery.mockReset();
     setTestFlags({});
   });
