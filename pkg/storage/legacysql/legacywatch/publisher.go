@@ -6,12 +6,15 @@ package legacywatch
 
 import (
 	"context"
+	"time"
 
+	"github.com/open-feature/go-sdk/openfeature"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -40,15 +43,19 @@ type Bus interface {
 type Publisher struct {
 	bus       Bus
 	namespace request.NamespaceMapper
-	log       log.Logger
 }
 
 func ProvidePublisher(cfg *setting.Cfg, bus Bus) *Publisher {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPublishLegacySQLEvents, false, openfeature.TransactionContext(ctx)) {
+		return nil
+	}
 	return NewPublisher(bus, request.GetNamespaceMapper(cfg))
 }
 
 func NewPublisher(bus Bus, namespace request.NamespaceMapper) *Publisher {
-	return &Publisher{bus: bus, namespace: namespace, log: log.New("legacywatch")}
+	return &Publisher{bus: bus, namespace: namespace}
 }
 
 // Enabled reports whether Publish can deliver, so a writer can skip work (e.g. a
@@ -80,13 +87,13 @@ func (p *Publisher) Publish(ctx context.Context, typ resourcepb.WatchNotificatio
 		ResourceVersion: resourceVersion,
 	})
 	if err != nil {
-		p.log.Warn("failed to marshal legacy watch notification", "subject", subject, "error", err)
+		logging.FromContext(ctx).Warn("failed to marshal legacy watch notification", "subject", subject, "error", err)
 		return
 	}
 
 	// The write has committed, so announce it even if the request that made it
 	// has since been cancelled.
 	if err := p.bus.Publish(context.WithoutCancel(ctx), subject, payload); err != nil {
-		p.log.Warn("failed to publish legacy watch notification", "subject", subject, "name", name, "error", err)
+		logging.FromContext(ctx).Warn("failed to publish legacy watch notification", "subject", subject, "name", name, "error", err)
 	}
 }

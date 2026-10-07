@@ -39,6 +39,7 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
 			featuremgmt.FlagKubernetesTeamsApi,
 			featuremgmt.FlagKubernetesUsersApi,
+			featuremgmt.FlagGrafanaPublishLegacySQLEvents,
 		},
 		NATSEnabled:       true,
 		NATSListenAddress: "127.0.0.1",

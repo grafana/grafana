@@ -39,6 +39,12 @@ func (s *notifyingStore) UpdateUser(ctx context.Context, ns claims.NamespaceInfo
 	return res, err
 }
 
+func (s *notifyingStore) UpdateLastSeenAt(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateUserLastSeenAtCommand) error {
+	err := s.LegacyIdentityStore.UpdateLastSeenAt(ctx, ns, cmd)
+	// We do not need to publish events when the lastSeenAt value updates -- this is a pretty silly design that will almost certainly be changed
+	return err
+}
+
 func (s *notifyingStore) DeleteUser(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteUserCommand) error {
 	err := s.LegacyIdentityStore.DeleteUser(ctx, ns, cmd)
 	if err == nil {

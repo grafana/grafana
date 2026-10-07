@@ -2870,6 +2870,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.publishLegacySQLEvents",
+        "resourceVersion": "1791383719895",
+        "creationTimestamp": "2026-10-07T14:35:19Z"
+      },
+      "spec": {
+        "description": "Publish watch events when values are saved to legacy SQL tables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

@@ -374,6 +374,7 @@ func (s *LegacyService) UpdateLastSeenAt(ctx context.Context, cmd *user.UpdateUs
 		return user.ErrLastSeenUpToDate
 	}
 
+	// Not announced on the legacy watch: it changes on user activity, not on an edit.
 	return s.store.UpdateLastSeenAt(ctx, cmd)
 }
 
