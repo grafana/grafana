@@ -106,9 +106,6 @@ export function TeamFilterCombobox({
 
   return (
     <Combobox
-      width="auto"
-      minWidth={20}
-      maxWidth={24}
       prefixIcon="users-alt"
       options={loadOptions}
       value={valueOption}
