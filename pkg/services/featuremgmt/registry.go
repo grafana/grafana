@@ -853,14 +853,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "sqlExpressions",
-			Description: "Enables SQL Expressions, which can execute SQL queries against data source results.",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "sqlExpressionsColumnAutoComplete",
 			Description: "Enables column autocomplete for SQL Expressions",
 			Stage:       FeatureStageExperimental,
