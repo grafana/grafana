@@ -34,7 +34,8 @@ export class TabItems implements EditableDashboardElement {
       t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
         num: this._tabs.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
-      })
+      }),
+      { actionId: 'tab.remove', scope: 'multiple' }
     );
 
     this._tabs.forEach((tab) => tab.onDelete());

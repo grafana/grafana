@@ -14,6 +14,7 @@ import { EditorField } from '@grafana/plugin-ui';
 import { type AdHocFiltersController } from '@grafana/scenes';
 import { type DataSourceRef } from '@grafana/schema';
 import { Alert, Field, Switch, Stack, useStyles2, FieldSet } from '@grafana/ui';
+import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { AdHocOriginFiltersEditor } from './AdHocOriginFiltersEditor';
@@ -59,6 +60,7 @@ export function AdHocVariableForm({
   datasourceSupportsGroupBy,
 }: AdHocVariableFormProps) {
   const styles = useStyles2(getStyles);
+  const readOnly = useOptionsPaneReadOnly();
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
       const df = readCSV('key,value\n' + csvContent)[0];
@@ -93,6 +95,7 @@ export function AdHocVariableForm({
             variables={true}
             dashboard={true}
             noDefault
+            disabled={readOnly}
           />
         </EditorField>
 
@@ -122,6 +125,7 @@ export function AdHocVariableForm({
               'Enables group by operator in the filter combobox'
             )}
             noMargin
+            disabled={readOnly ? true : undefined}
           >
             <Switch
               value={enableGroupBy ?? false}
@@ -154,6 +158,7 @@ export function AdHocVariableForm({
                 { name: 'dimensionName', value: 'dimensionId' }
               )}
               noMargin
+              disabled={readOnly ? true : undefined}
             >
               <Switch
                 data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
@@ -180,6 +185,7 @@ export function AdHocVariableForm({
               'Enables users to enter values'
             )}
             noMargin
+            disabled={readOnly ? true : undefined}
           >
             <Switch
               value={allowCustomValue ?? true}
