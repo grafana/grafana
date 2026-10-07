@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
 import { type DataQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -12,6 +12,7 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { useQueryProposalTransaction } from './useQueryProposalTransaction';
 
 const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
 const mockCancel = jest.fn();
@@ -64,6 +65,39 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
 
+function QueryEditorFixture({
+  query,
+  adapter,
+  onChange,
+}: {
+  query: DataQuery;
+  adapter: QueryEditorCoauthoringAdapterV1;
+  onChange: (query: DataQuery) => void;
+}) {
+  const source = 'expr' in query && typeof query.expr === 'string' ? query.expr : '';
+  const latest = useRef({ source, query, onChange });
+  latest.current = { source, query, onChange };
+  const handleContentChange = useCallback(
+    (value: string) => {
+      if (value === latest.current.source) {
+        return;
+      }
+      adapter.dismiss();
+      const updated: DataQuery & { expr: string } = { ...latest.current.query, expr: value };
+      latest.current.onChange(updated);
+    },
+    [adapter]
+  );
+  useLayoutEffect(() => handleContentChange(source), [handleContentChange, source]);
+  return (
+    <textarea
+      aria-label="Query editor"
+      value={source}
+      onChange={(event) => handleContentChange(event.currentTarget.value)}
+    />
+  );
+}
+
 async function setup(
   anchorTop = 0,
   waitForPrompt = true,
@@ -87,7 +121,7 @@ async function setup(
       },
     ],
   },
-  props: { isPreviewRunning?: boolean; entry?: boolean } = {}
+  props: { isPreviewRunning?: boolean; entry?: boolean; transaction?: boolean } = {}
 ) {
   const stagePreview = jest.fn(
     (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
@@ -130,6 +164,12 @@ async function setup(
     prepareProposal: stagePreview,
     dismiss: dismissInvocation,
   };
+  if (props.transaction) {
+    dismissInvocation.mockImplementation(() => {
+      snapshot = { mode: 'hidden' };
+      listeners.forEach((listener) => listener());
+    });
+  }
   jest.spyOn(anchorElement, 'getBoundingClientRect').mockReturnValue({
     top: anchorTop,
     bottom: anchorTop,
@@ -154,8 +194,39 @@ async function setup(
     onRevertPreview,
     timeRange: { from: 1_000, to: 2_000 },
   };
+  function TransactionHarness() {
+    const transaction = useQueryProposalTransaction({
+      query: baseline,
+      queries: [baseline],
+      queryKey: 'prometheus:A',
+      adapter,
+      updateQuery: onAccept,
+      runQueries: jest.fn(),
+      startQueryPreview: () => ({ dispose: () => undefined, subscribeToState: () => () => undefined }),
+    });
+    return (
+      <>
+        {transaction.editorQuery && (
+          <QueryEditorFixture query={transaction.editorQuery} adapter={adapter} onChange={transaction.onChange} />
+        )}
+        <QueryCoauthoringSurface
+          adapter={adapter}
+          onBaseline={transaction.synchronizeBaseline}
+          host={{
+            datasourceType: 'prometheus',
+            previewPhase: transaction.previewPhase,
+            preview: transaction.preview,
+            accept: transaction.accept,
+            revert: transaction.revert,
+          }}
+        />
+      </>
+    );
+  }
   const result = render(
-    props.entry ? (
+    props.transaction ? (
+      <TransactionHarness />
+    ) : props.entry ? (
       <QueryCoauthoringSurface
         adapter={adapter}
         onBaseline={onBaseline}
@@ -198,6 +269,160 @@ async function setup(
 }
 
 describe('QueryCoauthoring', () => {
+  it('keeps the editor and selected card together through rapid option and Original switches', async () => {
+    const { user, dismissInvocation, onAccept } = await setup(0, true, undefined, { transaction: true });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    act(() => {
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 2' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Original' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 1' }));
+    });
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Query editor' }), {
+      target: { value: 'sum(http_requests_total)' },
+    });
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: 'sum(http_requests_total)' }, 'A');
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+    expect(dismissInvocation).toHaveBeenCalled();
+  });
+
+  it('shows a retryable error when an option cannot be previewed instead of leaving a selected card over Baseline', async () => {
+    const { user, onPreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    onPreview.mockReturnValue(false);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('The query proposal could not be previewed. Try again.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  it('ranks surviving options, selects Original with the keyboard, and accepts the exact selected query', async () => {
+    const { user, stagePreview, onPreview, onAccept, baseline, dismissInvocation } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      if (source === 'invalid(') {
+        return { status: 'rejected', reason: 'invalid' };
+      }
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return { status: 'ready', query, changes: [] };
+    });
+    await user.type(screen.getByRole('textbox'), 'Show request counts');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    const second = 'sum( increase(http_requests_total[5m]) )';
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts per series.'] },
+          { proposedQuery: 'invalid(', why: ['Rejected syntax.'] },
+          { proposedQuery: second, why: ['Total counts.'], unconfirmedValues: ['handler="unknown"'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const original = screen.getByRole('tab', { name: 'Original' });
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('tab', { name: 'Option 3' })).not.toBeInTheDocument();
+    act(() => first.focus());
+    await user.keyboard('{ArrowLeft}');
+    expect(original).toHaveFocus();
+    expect(original).toHaveAttribute('aria-selected', 'true');
+    expect(onPreview).toHaveBeenLastCalledWith(baseline);
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeEnabled();
+    await user.keyboard('{End}');
+    expect(screen.getByText('Total counts.')).toBeInTheDocument();
+    expect(screen.getByText('handler="unknown"')).toBeInTheDocument();
+    expect(onPreview).toHaveBeenLastCalledWith({ refId: 'A', expr: second });
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: second });
+  });
+
+  it('drops whitespace-only Baseline changes and duplicate options without requesting a repair', async () => {
+    const { user, stagePreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: ' rate(http_requests_total[5m]) ', why: ['Whitespace only.'] },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['First ranked answer.'] },
+          { proposedQuery: ' increase(http_requests_total[5m]) ', why: ['Duplicate.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.getByText('First ranked answer.')).toBeInTheDocument();
+    expect(stagePreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands off all ranked options and Original selection and sends only rank and count with feedback', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(mockPost.mock.calls[0][1].metadata).toEqual({ outcome: 'proposal', selectedOptionRank: 2, optionCount: 2 });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_option_selected', { rank: 2 });
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
+    const handoff = mockOpenAssistant.mock.calls[0][0];
+    expect(handoff.context[0].node.data.data).toMatchObject({
+      currentQuery: 'rate(http_requests_total[5m])',
+      inlineProposals: [
+        { query: 'increase(http_requests_total[5m])', explanation: ['Counts.'] },
+        { query: 'sum(increase(http_requests_total[5m]))', explanation: ['Total.'] },
+      ],
+      selectedOption: 'original',
+    });
+    expect(JSON.stringify(handoff)).not.toContain('submit_query_proposal');
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
@@ -987,8 +1212,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[1][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: ['Group by handler.'],
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: ['Group by handler.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1039,7 +1268,9 @@ describe('QueryCoauthoring', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
-      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] }],
+      });
       request.onComplete('');
     });
     await user.click(document.body);
@@ -1073,8 +1304,15 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: Array.from({ length: 5 }, (_, index) => `Detailed explanation ${index} for the proposed query change.`),
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: Array.from(
+              { length: 5 },
+              (_, index) => `Detailed explanation ${index} for the proposed query change.`
+            ),
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1087,7 +1325,7 @@ describe('QueryCoauthoring', () => {
     expect(within(details).getAllByLabelText(/^Proposed expression$/)).toHaveLength(4);
     expect(within(details).queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open in chat' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
   });
 
   it('keeps the captured query focus visible while building', async () => {
@@ -1293,8 +1531,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1322,8 +1564,12 @@ describe('QueryCoauthoring', () => {
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1461,8 +1707,12 @@ describe('QueryCoauthoring', () => {
       mockIsGenerating = false;
       await act(async () => {
         await request.tools[0].invoke({
-          proposedQuery: 'increase(http_requests_total[5m])',
-          why: ['Returns the increase over the selected range.'],
+          options: [
+            {
+              proposedQuery: 'increase(http_requests_total[5m])',
+              why: ['Returns the increase over the selected range.'],
+            },
+          ],
         });
         request.onComplete('');
       });
@@ -1582,8 +1832,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1600,7 +1854,7 @@ describe('QueryCoauthoring', () => {
       targetId: 'grafana.query.coauthor.v1',
       rating: 1,
       comment: 'The explanation was clear.',
-      metadata: { outcome: 'proposal' },
+      metadata: { outcome: 'proposal', selectedOptionRank: 1, optionCount: 1 },
     });
   });
 
@@ -1613,8 +1867,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1640,8 +1898,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1664,8 +1926,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1693,8 +1959,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1730,8 +2000,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });

@@ -280,8 +280,12 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
       )}
       {state.kind === 'proposal' && (
         <QueryCoauthoringProposal
-          why={state.proposal.why}
-          changes={state.proposal.prepared.changes}
+          why={state.proposal.options[state.proposal.selectedIndex]?.why ?? []}
+          changes={state.proposal.options[state.proposal.selectedIndex]?.prepared.changes ?? []}
+          unconfirmedValues={state.proposal.options[state.proposal.selectedIndex]?.unconfirmedValues}
+          optionCount={state.proposal.options.length}
+          selectedIndex={state.proposal.selectedIndex}
+          onSelect={state.selectOption}
           isPreviewRunning={state.isPreviewRunning}
           onFeedback={state.setFeedback}
           onClose={session.dismiss}

@@ -26,6 +26,7 @@ export function useQueryCoauthoringInvocation({
   const [contextError, setContextError] = useState(false);
   const contextPromiseRef = useRef<Promise<QueryEditorCoauthoringContextV1> | undefined>(undefined);
   const invocationEpochRef = useRef(0);
+  const baselineRef = useRef<DataQuery | undefined>(undefined);
   const onBaselineRef = useRef(onBaseline);
   onBaselineRef.current = onBaseline;
 
@@ -43,6 +44,7 @@ export function useQueryCoauthoringInvocation({
       if (!onBaselineRef.current(baseline)) {
         throw new Error('The query coauthoring baseline is no longer current.');
       }
+      baselineRef.current = baseline;
       return context;
     });
     contextPromiseRef.current = contextPromise;
@@ -79,6 +81,7 @@ export function useQueryCoauthoringInvocation({
       if (!onBaselineRef.current(invocation.baseline)) {
         throw new Error('The query coauthoring baseline is no longer current.');
       }
+      baselineRef.current = invocation.baseline;
       return invocation.context;
     } catch (error) {
       if (!(error instanceof StaleQueryCoauthoringInvocationError)) {
@@ -93,6 +96,7 @@ export function useQueryCoauthoringInvocation({
     setContext(undefined);
     setContextError(false);
     contextPromiseRef.current = undefined;
+    baselineRef.current = undefined;
   }, []);
 
   useEffect(() => {
@@ -114,5 +118,6 @@ export function useQueryCoauthoringInvocation({
     contextError,
     loadContext,
     readContext,
+    readBaseline: () => baselineRef.current,
   };
 }

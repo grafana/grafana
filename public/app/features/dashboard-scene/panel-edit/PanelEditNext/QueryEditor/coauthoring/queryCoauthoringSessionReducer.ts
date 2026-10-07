@@ -11,6 +11,7 @@ import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession'
 
 type SessionAction =
   | 'accept'
+  | 'selectOption'
   | 'continueHere'
   | 'continueInAssistant'
   | 'retry'
@@ -61,6 +62,7 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'mention-selected'; index?: number }
   | { type: 'mention-closed' }
   | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
+  | { type: 'option-selected'; index: number }
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
@@ -485,7 +487,7 @@ export function queryCoauthoringSessionReducer(
           view = {
             kind: 'proposal',
             isPreviewRunning: state.data.isPreviewRunning,
-            proposal: { ...event.outcome.proposal, prepared: event.outcome.prepared, context: event.context },
+            proposal: { options: event.outcome.options, selectedIndex: 0, context: event.context },
           };
       }
       return transition(
@@ -493,6 +495,15 @@ export function queryCoauthoringSessionReducer(
         updateSession(current, () => view, state.data.requestMode === 'explain' ? 'request' : 'context-error')
       );
     }
+    case 'option-selected':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
+            ? { ...view, proposal: { ...view.proposal, selectedIndex: event.index } }
+            : view
+        )
+      );
     case 'preview-failed':
       return transition(
         state,

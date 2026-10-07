@@ -61,3 +61,7 @@ export function trackQueryCoauthoringExploreSimilarUsed() {
 export function trackQueryCoauthoringMentionInserted(kind: 'metric' | 'label') {
   reportInteraction('grafana_query_coauthoring_mention_inserted', { kind });
 }
+
+export function trackQueryCoauthoringOptionSelected(rank: number) {
+  reportInteraction('grafana_query_coauthoring_option_selected', { rank });
+}
