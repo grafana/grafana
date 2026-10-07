@@ -21,6 +21,7 @@ import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
 import { LogLineDetailsDisplayedFields } from './LogLineDetailsDisplayedFields';
+import { LogLineDetailsError } from './LogLineDetailsError';
 import { type LabelWithLinks, LogLineDetailsFields, LogLineDetailsLabelFields } from './LogLineDetailsFields';
 import { LogLineDetailsLinks } from './LogLineDetailsLinks';
 import { LogLineDetailsLog } from './LogLineDetailsLog';
@@ -260,6 +261,11 @@ const LogLineDetailsLegacyComponent = memo(
             prettifyJSON={prettifyDetailsJSON}
           />
         </ControlledCollapse>
+
+        <div className={styles.errorContainer}>
+          <LogLineDetailsError fields={fieldsWithoutLinks} labels={labelsWithLinks} />
+        </div>
+
         {displayedFieldsControlEnabled && displayedFields.length > 0 && setDisplayedFields && (
           <ControlledCollapse
             label={t('logs.log-line-details.displayed-fields-section', 'Organize displayed fields')}
@@ -339,6 +345,9 @@ function groupOptionName(group: string) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  errorContainer: css({
+    margin: theme.spacing(0, 0.5, 1, 0.5),
+  }),
   collapsable: css({
     '&:last-of-type': {
       marginBottom: 0,

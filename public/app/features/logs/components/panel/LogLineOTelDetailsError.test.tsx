@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 
 import { type FieldDef } from '../logParser';
 
-import { LogLineOTelDetailsError } from './LogLineOTelDetailsError';
+import { LogLineDetailsError } from './LogLineDetailsError';
 
 function field(key: string, value: string, fieldIndex: number): FieldDef {
   return { keys: [key], values: [value], fieldIndex };
 }
 
-describe('LogLineOTelDetailsError', () => {
+describe('LogLineDetailsError', () => {
   it('keeps the stack trace collapsed until it is expanded', async () => {
     const user = userEvent.setup();
 
     render(
-      <LogLineOTelDetailsError
+      <LogLineDetailsError
         fields={[
           field('exception.message', 'Cannot invoke User.getId()', 0),
           field('exception.stacktrace', 'at UserService.getUserId', 1),
