@@ -223,7 +223,7 @@ func (m *unifiedMigration) RebuildIndexes(ctx context.Context, opts RebuildIndex
 }
 
 func (m *unifiedMigration) rebuildIndexes(ctx context.Context, opts RebuildIndexOptions) error {
-	keys := []*resourcepb.ResourceKey{}
+	keys := make([]*resourcepb.ResourceKey, 0, len(opts.Resources))
 	for _, res := range opts.Resources {
 		keys = append(keys, buildResourceKey(res, opts.NamespaceInfo.Value))
 	}
