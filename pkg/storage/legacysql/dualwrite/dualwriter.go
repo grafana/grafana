@@ -411,6 +411,9 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 	if secure := getUpdatedSecureValues(ctx); secure != nil {
 		unifiedInfo.updatedSecureValues = secure
 	}
+	// Resource admission can distinguish this secondary write from the earlier
+	// write against authoritative legacy storage.
+	ctx = withMirroredUpdate(ctx)
 
 	if errorIsOK {
 		// If unified is not primary, but errors are okay, we can just run in the background.
