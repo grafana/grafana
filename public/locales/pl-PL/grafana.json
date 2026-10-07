@@ -1762,9 +1762,6 @@
         "will-import-rules-count_many": "{{count}} reguł zostanie zaimportowanych",
         "will-import-rules-count_other": "{{count}} reguły zostanie zaimportowane"
       },
-      "routing-tree": {
-        "default-policy": "Domyślne zasady"
-      },
       "source": {
         "datasource": "Istniejące reguły zarządzane przez źródło danych",
         "datasource-description": "Importuj reguły z istniejących źródeł danych",
@@ -2651,15 +2648,11 @@
       "aria-label": "Wybierz zasadę dotyczącą powiadomień",
       "change": "Zmień",
       "change-aria": "Zmień zasadę dotyczącą powiadomień",
-      "custom-policy-desc": "Kieruj alerty za pomocą drzewa zasad {{name}}",
       "default-badge": "Domyślne zasady",
       "default-info": "Wystąpienia alertów są kierowane przy użyciu domyślnego drzewa zasad dotyczących powiadomień.",
-      "default-policy": "Domyślne zasady",
-      "default-policy-desc": "Kieruje alerty przy użyciu domyślnego drzewa zasad dotyczących powiadomień",
       "description": "Wybierz, które drzewo zasad dotyczących powiadomień ma obsługiwać kierowanie w przypadku tej reguły alertu.",
+      "missing-policy": "",
       "placeholder": "Wybierz zasadę…",
-      "reset": "Zresetuj do domyślnej",
-      "reset-aria": "Zresetuj do zasady domyślnej",
       "view-policies": "Wyświetl zasady",
       "view-policies-aria": "Wyświetl zasady dotyczące powiadomień"
     },
@@ -5893,6 +5886,7 @@
       "paste-panel": "Wklej panel",
       "remove": "Usuń: {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6399,16 +6393,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "Adnotacje",
@@ -6448,7 +6439,8 @@
         "copy-tooltip": "Kopiuj",
         "delete": "Usuń",
         "duplicate": "Duplikuj",
-        "paste": "Wklej"
+        "paste": "Wklej",
+        "remove": ""
       },
       "elements": {
         "annotation": "Adnotacja",
@@ -6481,7 +6473,9 @@
       "feedback-title": "Przekaż opinię na temat nowego interfejsu edycji pulpitu",
       "filters": {
         "add-filter": "Dodaj filtr",
+        "global-or-folder-title": "",
         "reorder-description": "Zmień kolejność na liście filtrów",
+        "select-type": "",
         "title": "Filtry",
         "title-above-dashboard": "Nad pulpitem",
         "title-controls-menu": "Menu sterowania",
@@ -6547,6 +6541,10 @@
           "type": "Typ",
           "type-placeholder": "Wybierz typ źródła danych"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "Opis",
         "description-placeholder": "Tekst opisowy",
         "display": "Wyświetl",
@@ -6568,6 +6566,7 @@
           "old-modal-title": "Zmienna zapytania",
           "preview": "Podgląd"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "Zezwalaj na wartości niestandardowe",
           "allow-custom-values-description": "Umożliwia użytkownikom wprowadzanie wartości",
@@ -6583,6 +6582,8 @@
       "variables": {
         "add-variable": "Dodaj zmienną",
         "change-type": "Zmień typ zmiennej",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "Zmień kolejność na liście zmiennych",
         "select-type": "Wybierz typ zmiennej",
         "select-type-card-tooltip": "Kliknij, aby wybrać typ",
@@ -7092,7 +7093,9 @@
       "delete-tooltip-disabled": "Powtarzających się paneli nie można usuwać pojedynczo",
       "duplicate-tooltip": "Duplikuj",
       "duplicate-tooltip-disabled": "Powtarzających się paneli nie można duplikować pojedynczo",
-      "settings": "Ustawienia"
+      "remove-tooltip": "",
+      "settings": "Ustawienia",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Reguły pokazywania/ukrywania nie będą działać",
@@ -7953,7 +7956,10 @@
     "variable-editable-element": {
       "delete-confirm": "Usuń zmienną",
       "delete-text": "Czy na pewno chcesz usunąć: {{name}}?",
-      "delete-title": "Usuń zmienną"
+      "delete-title": "Usuń zmienną",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Formularz edytora zmiennych",
@@ -9115,7 +9121,6 @@
       "attribute-category": {
         "other": "Inne"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9264,7 +9269,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "Ten ślad, pierwotnie odrzucony przez śledzenie adaptacyjne, został przywrócony. Przywrócony ślad nie jest uwzględniany w zapytaniach TraceQL i można go wyszukać tylko za pomocą identyfikatora śladu. Więcej szczegółów znajdziesz w <2>dokumentacji</2>.",
+        "body": "",
         "title": "Ślad przywrócony przez śledzenie adaptacyjne"
       },
       "application-observability-promo": {
@@ -10879,6 +10884,7 @@
       "placeholder": "Wybierz"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "Filtruj wg wartości",
       "cell-filter-out": "Odfiltruj wartość",
@@ -11529,6 +11535,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11542,7 +11549,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11635,6 +11641,20 @@
         "create-check": "Utwórz kontrolę",
         "description": "Monitoruj czas działania i wydajność punktów końcowych za pomocą sond na całym świecie.",
         "failing-worst": "{{check}}: {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "utwórz kontrolę",
         "stats": "{{percent}}% powodzenia · 24 godz.",
         "success-trend": "Wskaźnik powodzenia · ostatnie 24 godz.",
@@ -14226,11 +14246,13 @@
     "preview-banner": {
       "behind-branch-text": "Ten zasób znajduje się za gałęzią w repozytorium {{repoType}}.",
       "branch-targets": "cele",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "Pozostali użytkownicy usługi Grafana w Twojej organizacji nadal będą widzieć ten zasób, dopóki ta gałąź nie zostanie scalona",
       "move-from-branch": "Pozostali użytkownicy usługi Grafana w Twojej organizacji nadal będą widzieć bieżącą wersję, dopóki ta gałąź nie zostanie scalona",
       "not-saved": "Pozostali użytkownicy Grafany w Twojej organizacji nadal będą widzieć bieżącą wersję zapisaną w skonfigurowanej gałęzi domyślnej, dopóki ta gałąź nie zostanie scalona",
       "open-in-repo-button": "Otwórz w repozytorium {{repoType}}",
       "open-pull-request-in-repo": "Otwórz żądanie pull w repozytorium {{repoType}}",
+      "open-repository": "",
       "update-from-branch": "Pozostali użytkownicy usługi Grafana w Twojej organizacji nadal będą widzieć bieżącą wersję, dopóki ta gałąź nie zostanie scalona",
       "view-in-repo-button": "Wyświetl w repozytorium {{repoType}}, aby zobaczyć najnowsze zmiany.",
       "view-pull-request-in-repo": "Wyświetl żądanie pull w repozytorium {{repoType}}",
@@ -15967,12 +15989,12 @@
       "collapse": "Zwiń",
       "exchange": "Zmień zakres główny na {{scope}}",
       "expand": "Rozwiń",
+      "filter": "",
       "loading": "Ładowanie pulpitów",
       "noResultsForFilter": "Nie znaleziono wyników dla tego zapytania",
       "noResultsForFilterClear": "Wyczyść wyszukiwanie",
       "noResultsForScopes": "Nie znaleziono pulpitów ani linków dla wybranych zakresów",
       "noResultsNoScopes": "Nie wybrano zakresów",
-      "search": "Szukaj",
       "toggle": {
         "collapse": "Zwiń listę sugerowanych pulpitów",
         "disabled": "Lista sugerowanych pulpitów jest wyłączona ze względu na pracę w trybie tylko do odczytu",
@@ -17278,6 +17300,8 @@
       "placeholder-value-or-variable": "Wartość lub zmienna"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "Operacja",
       "placeholder-field-or-number": "Pole lub liczba",
       "placeholder-fields-or-number": "Pola lub liczby"

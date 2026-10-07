@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"context"
@@ -65,7 +65,6 @@ func (b *secureValueLookup) get(ctx context.Context, obj utils.GrafanaMetaAccess
 	return v, err
 }
 
-// This is used by settings, so keep it for now
 func (b *secureValueLookup) loader(ctx context.Context, obj utils.GrafanaMetaAccessor) (pluginsettings.DecryptedSecureJSONLoader, error) {
 	return pluginsettings.GetDecryptedSecureJSONLoader(ctx, obj, b.decrypter)
 }

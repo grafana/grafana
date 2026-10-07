@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"encoding/json"
@@ -63,7 +63,7 @@ func dropUnservableMethods(props spec3.PathProps, warn func(method string)) (spe
 	return props, len(builder.GetPathOperations(&props)) > 0
 }
 
-func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+func (b *manifestBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	if b.manifest == nil {
 		return nil
 	}
@@ -80,7 +80,7 @@ func (b *AppPluginAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIR
 
 // manifestRoutes mounts a version's custom routes: version routes directly under
 // the group version, and kind routes as subresources of a single object.
-func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app.ManifestVersion) *builder.APIRoutes {
+func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.ManifestVersion) *builder.APIRoutes {
 	routes := &builder.APIRoutes{}
 	reserved := reservedResourceNames(version)
 
@@ -170,24 +170,19 @@ func (b *AppPluginAPIBuilder) manifestRoutes(gv schema.GroupVersion, version app
 // kinds get these endpoints is not a decision this builder should be making on
 // its own: the same manifest served as a custom resource definition goes through
 // the same package, and a kind that is searchable one way must be searchable the
-// other. That is where the config toggles, the enrolment rule and each kind's
-// own opt-out are applied.
-func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.APIRouteHandler, error) {
+// other. That is where the eligibility rules and each kind's opt-out are applied.
+func (b *manifestBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.APIRouteHandler, error) {
 	if b.search == nil {
 		return nil, nil
 	}
 
-	// searchroutes matches manifests to served versions by the manifest's own
-	// group, which is not always the group the plugin is served under. See
-	// apiGroupForPlugin.
 	manifest := *b.manifest
 	manifest.Group = b.group
-
 	built, err := searchroutes.BuildForServedGroupVersions(
 		[]*app.ManifestData{&manifest},
 		map[schema.GroupVersion]bool{gv: true},
-		b.opts.SearchAPIEnabled,
-		b.opts.TrashAPIEnabled,
+		true,
+		true,
 		b.tracer,
 		b.search,
 		searchroutes.Options{HybridEnabled: b.opts.HybridAPIEnabled},
@@ -214,17 +209,13 @@ func (b *AppPluginAPIBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.AP
 // config toggle and the namespaced-kind rule are applied in one place and a
 // plugin-served manifest agrees with the same manifest served as a custom
 // resource definition.
-func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes {
+func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	if b.store == nil {
 		return nil
 	}
 
-	// keysroutes matches manifests to served versions by the manifest's own
-	// group, which is not always the group the plugin is served under. See
-	// apiGroupForPlugin.
 	manifest := *b.manifest
 	manifest.Group = b.group
-
 	built := keysroutes.BuildForServedGroupVersions(
 		[]*app.ManifestData{&manifest},
 		map[schema.GroupVersion]bool{gv: true},
@@ -245,7 +236,7 @@ func (b *AppPluginAPIBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRou
 // routeHandler forwards a manifest route to the plugin's v3 route service.
 // resource is empty for version routes; for a kind subresource route it is the
 // kind's plural, and the parent object's name comes from the path.
-func (b *AppPluginAPIBuilder) routeHandler(gv schema.GroupVersion, resource, path string) http.HandlerFunc {
+func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, resource, path string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
