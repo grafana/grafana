@@ -86,13 +86,14 @@ function makeTabsSpec(title: string): DashboardV2Spec {
   };
 }
 
-function buildScene(spec: DashboardV2Spec): DashboardScene {
+function buildScene(spec: DashboardV2Spec, libraryPanelRepeatResolved?: boolean): DashboardScene {
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal resource envelope for the test
   const dto = {
     kind: 'DashboardWithAccessInfo',
     apiVersion: 'dashboard.grafana.app/v2beta1',
     metadata: { name: 'dash-1', generation: 1, creationTimestamp: '2026-08-03T00:00:00Z', annotations: {} },
     access: { canEdit: true, canSave: true, canShare: true, canStar: true, canDelete: true, canAdmin: true },
+    libraryPanelRepeatResolved,
     spec,
   } as unknown as DashboardWithAccessInfo<DashboardV2Spec>;
 
@@ -110,6 +111,15 @@ describe('applyDashboardSpec', () => {
     applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
 
     expect(scene.state.sidebar).toBe(originalSidebar);
+  });
+
+  it('keeps libraryPanelRepeatResolved across the rebuild', () => {
+    const scene = buildScene(makeSpec('Old title'), true);
+    expect(scene.state.meta.libraryPanelRepeatResolved).toBe(true);
+
+    applyDashboardSpec({ scene, spec: makeSpec('New title'), description: 'Apply spec', scope: 'code-pane' });
+
+    expect(scene.state.meta.libraryPanelRepeatResolved).toBe(true);
   });
 
   it('applies the spec, and undo/redo toggle between the old and new scene', () => {
