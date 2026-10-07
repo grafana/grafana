@@ -902,8 +902,10 @@ func TestPluginInstaller_UpdateInstallsBeforeUnloading(t *testing.T) {
 		previousDir := writePluginDir(t, otherPath, pluginID, "1.0.0")
 		// Like the bundled plugins path in a container image with a read-only root filesystem.
 		for _, dir := range []string{previousDir, otherPath} {
-			require.NoError(t, os.Chmod(dir, 0o555))
-			t.Cleanup(func() { _ = os.Chmod(dir, 0o755) })
+			info, err := os.Stat(dir)
+			require.NoError(t, err)
+			require.NoError(t, os.Chmod(dir, 0o500)) //nolint:gosec // Directory needs execute permission so the test can read the plugin left in it.
+			t.Cleanup(func() { _ = os.Chmod(dir, info.Mode().Perm()) })
 		}
 
 		s := newSetup(t, previousDir, newArchive(t))
@@ -1017,7 +1019,7 @@ func pluginZip(t *testing.T, pluginID, version string) *zip.ReadCloser {
 func zipWithFiles(t *testing.T, files map[string]string) *zip.ReadCloser {
 	t.Helper()
 	path := filepath.Join(t.TempDir(), "plugin.zip")
-	f, err := os.Create(path)
+	f, err := os.Create(filepath.Clean(path))
 	require.NoError(t, err)
 	w := zip.NewWriter(f)
 	for name, content := range files {
@@ -1036,7 +1038,7 @@ func zipWithFiles(t *testing.T, files map[string]string) *zip.ReadCloser {
 
 func pluginVersionInDir(t *testing.T, dir string) string {
 	t.Helper()
-	data, err := os.ReadFile(filepath.Join(dir, "plugin.json"))
+	data, err := os.ReadFile(filepath.Clean(filepath.Join(dir, "plugin.json")))
 	require.NoError(t, err)
 	jd, err := plugins.ReadPluginJSON(bytes.NewReader(data))
 	require.NoError(t, err)
