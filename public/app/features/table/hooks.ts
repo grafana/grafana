@@ -26,7 +26,7 @@ import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
-export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
+const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
