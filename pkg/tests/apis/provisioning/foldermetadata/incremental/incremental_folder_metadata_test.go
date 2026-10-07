@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -577,7 +578,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "new-team", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, folderParent, "root-level folder should have no parent")
+		require.True(t, foldermodel.IsRootFolderUID(folderParent), "root-level folder should have no parent")
 
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-team"})
 
@@ -737,7 +738,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "my-folder", sp)
 		folderParent, _, _ := unstructured.NestedString(folderAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, folderParent, "folder moved to root should have no parent")
+		require.True(t, foldermodel.IsRootFolderUID(folderParent), "folder moved to root should have no parent")
 
 		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"parent", "my-folder"})
 
@@ -802,7 +803,7 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 		sp, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/sourcePath")
 		require.Equal(t, "new-parent", sp)
 		parentAnnotation, _, _ := unstructured.NestedString(parentAfter.Object, "metadata", "annotations", "grafana.app/folder")
-		require.Empty(t, parentAnnotation, "root-level parent should have no parent annotation")
+		require.Equal(t, foldermodel.GeneralFolderUID, parentAnnotation, "root-level parent should use the canonical root annotation")
 
 		// Verify child folder updated in place and still parented under the renamed parent.
 		childAfter, err := helper.Folders.Resource.Get(t.Context(), childUID, metav1.GetOptions{})

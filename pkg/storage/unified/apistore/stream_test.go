@@ -2,6 +2,7 @@ package apistore
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -318,6 +319,53 @@ func TestStreamDecoderSerializerContext(t *testing.T) {
 	cancel()
 	_, err = decoder.toObject(client.events[0].Resource)
 	require.ErrorIs(t, err, context.Canceled)
+}
+
+func TestFolderNormalizationOnReadAndWatch(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		for _, parent := range []string{"", "general", "parent"} {
+			t.Run(fmt.Sprintf("enabled=%t,parent=%q", enabled, parent), func(t *testing.T) {
+				s := &Storage{serializer: JSONSerializer(), opts: StorageOptions{EnableFolderSupport: enabled}}
+				obj := &unstructured.Unstructured{Object: map[string]interface{}{"apiVersion": "example.com/v1", "kind": "Widget", "metadata": map[string]interface{}{"name": "test", "annotations": map[string]interface{}{utils.AnnoKeyFolder: parent}}}}
+				data, err := s.serializer.Encode(t.Context(), obj)
+				require.NoError(t, err)
+				expected := parent
+				if enabled && parent == "" {
+					expected = "general"
+				}
+				read, err := s.convertToObject(t.Context(), data, &unstructured.Unstructured{})
+				require.NoError(t, err)
+				require.Equal(t, expected, read.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
+				for _, event := range []struct {
+					typeID resourcepb.WatchEvent_Type
+					action watch.EventType
+				}{
+					{resourcepb.WatchEvent_ADDED, watch.Added},
+					{resourcepb.WatchEvent_MODIFIED, watch.Modified},
+					{resourcepb.WatchEvent_DELETED, watch.Deleted},
+				} {
+					t.Run(string(event.action), func(t *testing.T) {
+						current := &resourcepb.WatchEvent_Resource{Value: data, Version: 42}
+						if event.action == watch.Deleted {
+							current.Value = nil
+						}
+						client := &mockWatchClient{ctx: t.Context(), events: []*resourcepb.WatchEvent{{
+							Type: event.typeID, Resource: current,
+							Previous: &resourcepb.WatchEvent_Resource{Value: data, Version: 41},
+						}}}
+						decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, s.serializer, func() {}, false)
+						t.Cleanup(decoder.Close)
+						decoder.decodeObject = s.convertToObject
+						action, watched, err := decoder.Decode()
+						require.NoError(t, err)
+						require.Equal(t, event.action, action)
+						require.Equal(t, expected, watched.(*unstructured.Unstructured).GetAnnotations()[utils.AnnoKeyFolder])
+						require.Equal(t, "42", watched.(*unstructured.Unstructured).GetResourceVersion())
+					})
+				}
+			})
+		}
+	}
 }
 
 func TestStreamDecoderDeletedEvents(t *testing.T) {

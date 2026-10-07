@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -21,9 +22,9 @@ import (
 //     under it. See resources.RootFolder / sync.FullSync.
 //   - folderless mode (target: "folderless"): no wrapper folder is created. Each
 //     top-level directory in the repository becomes a root folder on its own,
-//     with an empty parent. Ownership is tracked purely via manager annotations.
+//     with the root parent annotation. Ownership is tracked purely via manager annotations.
 //
-// In both cases the root folders (parent == "") are created with the default
+// In both cases the root folders (parent == "general") are created with the default
 // manager annotations and are granted the default folder permissions. The
 // grafana.app/grant-permissions annotation that provisioning stamps on root
 // folders is consumed and cleared by the storage layer (it triggers the default
@@ -172,7 +173,7 @@ func requireRootFolderManagerAnnotations(t *testing.T, folder *unstructured.Unst
 		"folder %q should be managed by a repository", folder.GetName())
 	require.Equal(t, repo, ann[utils.AnnoKeyManagerIdentity],
 		"folder %q should be managed by this repository", folder.GetName())
-	require.Empty(t, ann[utils.AnnoKeyFolder],
+	require.Equal(t, foldermodel.GeneralFolderUID, ann[utils.AnnoKeyFolder],
 		"root folder %q must have no parent folder", folder.GetName())
 	require.Empty(t, ann[utils.AnnoKeyGrantPermissions],
 		"grant-permissions annotation should be cleared after the default grant for %q", folder.GetName())

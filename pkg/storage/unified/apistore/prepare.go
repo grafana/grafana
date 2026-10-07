@@ -88,7 +88,7 @@ func (v *objectForStorage) finish(ctx context.Context, err error, secrets secret
 //   - EnableFolderSupport=false: the resource does not live in the folder tree
 //     at all; reject any write that sets the folder annotation.
 //   - EnableFolderSupport=true and RequireFolder=false: any folder value is
-//     accepted (including empty / root).
+//     accepted; an empty value is stored as "general".
 //   - EnableFolderSupport=true and RequireFolder=true: the folder annotation
 //     must be present and non-root; resources of this kind must live in a real
 //     folder.
@@ -110,6 +110,9 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 		)
 	}
 	if !s.opts.RequireFolder {
+		if folderUID == "" {
+			obj.SetFolder(folder.GeneralFolderUID)
+		}
 		return nil
 	}
 	if folderUID == "" {
@@ -329,11 +332,16 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 		return v, err
 	}
 
-	// Check if we should bump the generation
-	if obj.GetFolder() != previous.GetFolder() {
+	// Empty and general identify the same parent; normalization alone is not a move.
+	folderChanged := folder.ToLegacyFolderUID(obj.GetFolder()) != folder.ToLegacyFolderUID(previous.GetFolder())
+	if obj.GetFolder() != previous.GetFolder() || (s.opts.EnableFolderSupport && !s.opts.RequireFolder) {
 		if err = s.verifyFolder(obj); err != nil {
 			return v, err
 		}
+	}
+
+	// Check if we should bump the generation
+	if folderChanged {
 		if err := s.ensureRepoManagedByParentFolder(ctx, obj); err != nil {
 			return v, err
 		}
@@ -357,7 +365,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// If staying in the same folder but manager properties changed, re-validate
 	// consistency with the parent folder. Without this, removing or changing
 	// manager annotations would leave unmanaged resources in a repo-managed folder.
-	if obj.GetFolder() != "" && obj.GetFolder() == previous.GetFolder() {
+	if !folderChanged {
 		newMgr, newOk := obj.GetManagerProperties()
 		oldMgr, oldOk := previous.GetManagerProperties()
 		if newOk != oldOk || newMgr != oldMgr {
