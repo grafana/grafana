@@ -230,7 +230,8 @@ describe('browse-dashboards FolderActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: deleteMenuItemLabel })).toBeInTheDocument();
   });
-  it('renders the "Manage permissions" option for a provisioned root repo folder', async () => {
+
+  it('renders only "Manage permissions" for a provisioned root repo folder', async () => {
     jest.spyOn(permissions, 'getFolderPermissions').mockImplementation(() => {
       return {
         ...mockPermissions,
@@ -244,9 +245,10 @@ describe('browse-dashboards FolderActionsButton', () => {
       />
     );
 
-    expect(screen.getByRole('button', { name: 'Folder actions' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: deleteMenuItemLabel })).not.toBeInTheDocument();
   });
 
   it('renders "Move" and "Delete" for a top-level folder of a folderless repository', async () => {
@@ -280,12 +282,14 @@ describe('browse-dashboards FolderActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: moveMenuItemLabel })).toBeInTheDocument();
   });
 
-  it('renders permission management when repo is read-only', async () => {
+  it('renders only "Manage permissions" when repo is read-only', async () => {
     render(
       <FolderActionsButton folder={{ ...mockFolder, managedBy: ManagerKind.Repo, parentUid: '123' }} isReadOnlyRepo />
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Folder actions' }));
     expect(screen.getByRole('menuitem', { name: managePermissionsLabel })).toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: moveMenuItemLabel })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: deleteMenuItemLabel })).not.toBeInTheDocument();
   });
 });

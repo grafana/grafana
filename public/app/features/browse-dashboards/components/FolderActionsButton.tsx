@@ -11,7 +11,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
 import { BulkMoveProvisionedResource } from 'app/features/provisioning/components/BulkActions/BulkMoveProvisionedResource';
 import { DeleteProvisionedFolderForm } from 'app/features/provisioning/components/Folders/DeleteProvisionedFolderForm';
-import { FolderPermissions } from 'app/features/provisioning/components/Folders/MissingFolderMetadataBanner';
+import { FolderPermissions } from 'app/features/provisioning/components/Folders/FolderPermissions';
 import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { AccessControlAction } from 'app/types/accessControl';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -52,9 +52,8 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   const isProvisionedFolder = isItemManagedByRepository(folder);
   // Only a `folder` target repository has a root folder, and it shares the repository's name
   const isProvisionedRootFolder = repository?.target === 'folder' && folder.uid === repository.name;
-  // Can only move folders when the folder is not provisioned
+  // The provisioned root folder and folders in a read-only repo can be neither moved nor deleted
   const canMoveFolder = canEditFolders && !isProvisionedRootFolder && !isReadOnlyRepo;
-  // Can only delete folders when the folder has the right permission and is not provisioned root folder
   const canDeleteFolders = canDeleteFoldersPermissions && !isProvisionedRootFolder && !isReadOnlyRepo;
 
   const onMove = async (destinationUID: string) => {
@@ -159,7 +158,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
           label={manageOwnersLabel}
         />
       )}
-      {canMoveFolder && !isReadOnlyRepo && (
+      {canMoveFolder && (
         <MenuItem
           onClick={isProvisionedFolder ? handleShowMoveProvisionedFolderDrawer : showMoveModal}
           label={moveLabel}
@@ -182,7 +181,7 @@ export function FolderActionsButton({ folder, repoType, isReadOnlyRepo, reposito
   return (
     <>
       <Dropdown overlay={menu} onVisibleChange={setIsOpen}>
-        <Button variant="secondary" disabled={isReadOnlyRepo && !canViewPermissions}>
+        <Button variant="secondary">
           <Trans i18nKey="browse-dashboards.folder-actions-button.folder-actions">Folder actions</Trans>
           <Icon name={isOpen ? 'angle-up' : 'angle-down'} />
         </Button>

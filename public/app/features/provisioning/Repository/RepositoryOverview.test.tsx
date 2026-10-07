@@ -16,10 +16,9 @@ jest.mock('./RepositoryPullStatusCard', () => ({
   RepositoryPullStatusCard: () => null,
 }));
 
-const createMockRepository = (
-  spec: Partial<RepositorySpec>,
-  webhook: NonNullable<Repository['status']>['webhook'] = { id: 42, url: 'https://grafana.example/webhook' }
-): Repository => ({
+type RepositoryStatus = NonNullable<Repository['status']>;
+
+const createMockRepository = (spec: Partial<RepositorySpec>, status: Partial<RepositoryStatus> = {}): Repository => ({
   metadata: { name: 'test-repo' },
   spec: {
     title: 'Test Repository',
@@ -32,26 +31,28 @@ const createMockRepository = (
     health: { healthy: true, checked: Date.now() },
     sync: { state: 'success', message: [] },
     observedGeneration: 1,
-    webhook,
+    webhook: { id: 42, url: 'https://grafana.example/webhook' },
+    ...status,
   },
 });
 
 describe('RepositoryOverview', () => {
   it('shows the missing folder metadata warning when the repository reports it', () => {
-    const repo = createMockRepository({});
-    repo.status = {
-      ...repo.status!,
-      conditions: [
-        {
-          type: 'PullStatus',
-          status: 'False',
-          reason: 'MissingFolderMetadata',
-          message: 'Folder metadata is missing',
-          lastTransitionTime: new Date().toISOString(),
-          observedGeneration: 1,
-        },
-      ],
-    };
+    const repo = createMockRepository(
+      {},
+      {
+        conditions: [
+          {
+            type: 'PullStatus',
+            status: 'False',
+            reason: 'MissingFolderMetadata',
+            message: 'Folder metadata is missing',
+            lastTransitionTime: new Date().toISOString(),
+            observedGeneration: 1,
+          },
+        ],
+      }
+    );
 
     render(<RepositoryOverview repo={repo} />);
 
@@ -104,7 +105,7 @@ describe('RepositoryOverview', () => {
           type: 'bitbucket',
           bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
         },
-        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+        { webhook: { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' } }
       );
       render(<RepositoryOverview repo={repo} />);
 
@@ -120,7 +121,7 @@ describe('RepositoryOverview', () => {
           type: 'bitbucket',
           bitbucket: { url: 'https://bitbucket.org/org/repo', branch: 'main' },
         },
-        { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' }
+        { webhook: { uuid: '{9a41cbfa-9b26-45f6-8b1a-ce8f7c78b6f0}', url: 'https://grafana.example/webhook' } }
       );
       render(<RepositoryOverview repo={repo} />);
 
