@@ -96,8 +96,7 @@ import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
 
-// changePanelVisualization calls the panel's real changePluginType, which needs a plugin that
-// actually loads rather than throwing on "Grafana instance has started".
+// changePanelVisualization calls the real changePluginType, which needs a plugin that loads.
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,
@@ -1691,8 +1690,7 @@ describe('NotebookLayoutManager', () => {
       );
     });
 
-    // A real suggestion's fieldConfig is never undefined - PanelPlugin.getSuggestions defaultsDeep's
-    // it to this shape even when the plugin supplied nothing of its own.
+    // defaultsDeep gives every real suggestion this fieldConfig shape, never undefined.
     it('keeps standard field overrides when the suggestion only carries the empty fieldConfig default', () => {
       const { cell } = panelCell('viz');
       const panel = cell.state.body!;

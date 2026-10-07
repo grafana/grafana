@@ -21,9 +21,7 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
-// Swappable rather than passed directly to getPanelPlugin: setPluginImportUtils may only be called
-// once, so a test needing an actual panel component (see "the panel header icon row" below) flips
-// this instead of re-registering the utils.
+// Swappable since setPluginImportUtils may only be called once.
 let stubPanelComponent: Parameters<typeof getPanelPlugin>[1];
 
 setPluginImportUtils({
@@ -336,8 +334,7 @@ describe('NotebookCellRenderer', () => {
     beforeEach(() => {
       jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
       jest.mocked(getExploreUrl).mockResolvedValue('/explore?panel=1');
-      // The file-wide stub above has no panel component, so PanelChrome renders an error placeholder
-      // instead of its real header - these tests need the header itself, not what's inside it.
+      // These tests need the real header, not PanelChrome's "no panel component" placeholder.
       stubPanelComponent = () => null;
     });
 
@@ -359,9 +356,7 @@ describe('NotebookCellRenderer', () => {
       expect(screen.queryByRole('button', { name: 'Change visualization' })).not.toBeInTheDocument();
     });
 
-    // A transformation (as "mounts for a panel with transformations while editing" above) rather
-    // than a plain query runner: isEditableQueryPanel excludes it, so this doesn't also mount the real
-    // PanelQueryEditor and its datasource-picker dependencies, which this test has nothing to do with.
+    // A transformation, so isEditableQueryPanel skips mounting the real PanelQueryEditor here.
     it('also shows the visualization picker while editing', async () => {
       const panel = new VizPanel({
         key: 'panel-1',

@@ -502,12 +502,9 @@ export class NotebookLayoutManager
   }
 
   /**
-   * Switches a panel to a suggested visualization - one discrete action, not coalesced.
-   *
-   * Clears custom field config but keeps standard overrides (unit, decimals, ...), merging the
-   * suggestion's own fieldConfig on top rather than substituting it: PanelPlugin.getSuggestions
-   * defaultsDeep's every suggestion to a (possibly empty) fieldConfig, so it's never actually
-   * undefined - replacing with it directly would wipe the panel's existing config on every pick.
+   * Merges the suggestion's fieldConfig onto the cleaned existing config rather than replacing it:
+   * PanelPlugin.getSuggestions defaultsDeep's every suggestion to a fieldConfig, so it's never
+   * actually undefined, and using it directly would wipe the panel's existing units/overrides.
    */
   public changePanelVisualization(cell: NotebookCellItem, suggestion: PanelPluginVisualizationSuggestion): void {
     const panel = cell.state.body;
@@ -521,8 +518,8 @@ export class NotebookLayoutManager
       fieldConfig: panel.state.fieldConfig,
     };
 
-    // Against the raw suggestion, not the cleaned/merged `after` below - cleaning always adds a
-    // `custom: {}` key, which would make this never match even when nothing would actually change.
+    // Against the raw suggestion - cleaning always adds a `custom: {}` key, so comparing `after` here
+    // would never match even when nothing would actually change.
     if (
       before.pluginId === suggestion.pluginId &&
       isEqual(before.options, suggestion.options ?? before.options) &&

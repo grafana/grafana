@@ -18,8 +18,7 @@ jest.mock('app/features/panel/components/VizTypePicker/VisualizationSuggestionCa
 
 const mockGetAllSuggestions = jest.mocked(getAllSuggestionsModule.getAllSuggestions);
 
-// Picking a suggestion runs changePluginType for real, which needs a plugin that actually loads
-// rather than throwing on "Grafana instance has started" like an unconfigured one would.
+// Picking a suggestion calls the real changePluginType, which needs a plugin that actually loads.
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
   getPanelPluginFromCache: () => undefined,

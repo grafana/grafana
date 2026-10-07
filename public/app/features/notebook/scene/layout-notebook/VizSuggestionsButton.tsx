@@ -11,8 +11,7 @@ import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggesti
 import { type NotebookCellItem } from './NotebookCellItem';
 
 const SUGGESTION_CARD_WIDTH = 150;
-// Enough to fill the popover with a couple of rows without turning it into a full picker - the
-// notebook isn't trying to replace the panel editor's own "All visualizations" tab.
+// A couple of rows, not a full picker - this isn't replacing the panel editor's own.
 const MAX_SUGGESTIONS = 6;
 
 export function VizSuggestionsButton({ cell, panel }: { cell: NotebookCellItem; panel: VizPanel }) {
@@ -38,8 +37,7 @@ export function VizSuggestionsButton({ cell, panel }: { cell: NotebookCellItem; 
 
 interface SuggestionsResult {
   suggestions: PanelPluginVisualizationSuggestion[];
-  // getAllSuggestions resolves with this rather than rejecting when a plugin fails to load or throws
-  // while building its suggestions - a rejection only happens for something unrelated going wrong.
+  // getAllSuggestions resolves with this rather than rejecting on a plugin failure.
   hasErrors: boolean;
 }
 
@@ -83,8 +81,7 @@ function SuggestionsList({ cell, panel, onPick }: { cell: NotebookCellItem; pane
     );
   }
 
-  // Treated the same as a rejection: either nothing loaded at all, or every plugin that might have
-  // suggested something failed to.
+  // Same as a rejection: nothing usable came back either way.
   if (failed || (result && result.hasErrors && result.suggestions.length === 0)) {
     return (
       <Text color="secondary">

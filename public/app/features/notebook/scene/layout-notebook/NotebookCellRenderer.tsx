@@ -108,11 +108,8 @@ function PanelCell({
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
-  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
-  // panels, so this notebook-only chrome is layered on here instead.
-  //
-  // hoverHeader: false keeps the icon row always visible rather than fading in only on hover -
-  // otherwise PanelChrome only shows header content inside a floating HoverWidget on hover.
+  // Layered on here, not at construction, since buildVizPanelState is shared with dashboard panels.
+  // hoverHeader: false keeps the icon row always visible rather than hover-only.
   useEffect(() => {
     panel.setState({
       hoverHeader: false,
