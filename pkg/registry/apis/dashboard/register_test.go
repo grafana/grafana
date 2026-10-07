@@ -1,12 +1,20 @@
 package dashboard
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
+	"github.com/gorilla/mux"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+	"github.com/open-feature/go-sdk/openfeature/memprovider"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +30,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	kubecommon "k8s.io/kube-openapi/pkg/common"
 
 	dashinternal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -36,10 +45,17 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -721,6 +737,72 @@ func TestDashboardStorageDeclaresPerVersionGVK(t *testing.T) {
 		{Group: group, Version: "v2beta1", Kind: "Dashboard"},
 		{Group: group, Version: "v2", Kind: "Dashboard"},
 	}, got, "each version declares itself, and v1 is not conflated with v1beta1")
+}
+
+func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
+	require.NoError(t, openfeature.SetProviderAndWait(memprovider.NewInMemoryProvider(map[string]memprovider.InMemoryFlag{
+		featuremgmt.FlagSnapshotsKubernetesSnapshots: {
+			Key: featuremgmt.FlagSnapshotsKubernetesSnapshots, DefaultVariant: "enabled",
+			Variants: map[string]any{"enabled": true},
+		},
+	})))
+	t.Cleanup(func() { _ = openfeature.SetProviderAndWait(openfeature.NoopProvider{}) })
+
+	service := dashboardsnapshots.NewMockService(t)
+	service.On("CreateDashboardSnapshot", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			cmd := args.Get(1).(*dashboardsnapshots.CreateDashboardSnapshotCommand)
+			require.Equal(t, "CPU", cmd.Dashboard.Object["title"])
+		}).Return(&dashboardsnapshots.DashboardSnapshot{
+		Key: "snap-1", OrgID: 1, Dashboard: simplejson.New(),
+		Created: time.Now(), Updated: time.Now(), Expires: time.Now().Add(time.Hour),
+	}, nil)
+	legacy := &snapshot.SnapshotLegacyStore{
+		ResourceInfo: dashv0.SnapshotResourceInfo, Service: service,
+		Namespacer: authlib.OrgNamespaceFormatter,
+	}
+	mode := dualwrite.NewMockService(t)
+	mode.On("ReadFromUnified", mock.Anything, dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil).Maybe()
+	b := &DashboardsAPIBuilder{snapshotStorage: legacy, dualWriter: mode}
+	blobs := resource.NewMockResourceClient(t)
+	dashboardService := dashboards.NewFakeDashboardService(t)
+	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
+		UID: "dash-1", OrgID: 1,
+	}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: 1}, nil)
+	routes := snapshot.GetRoutes(
+		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
+		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		map[string]kubecommon.OpenAPIDefinition{},
+		func() rest.Storage { return b.snapshotStorage }, dashboardService, blobs, b.snapshotReadFromUnified,
+	)
+	body := []byte(`{"dashboard":{"uid":"dash-1","title":"CPU"},"name":"legacy snapshot"}`)
+	req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{UserID: 1, OrgID: 1}))
+	req = mux.SetURLVars(req, map[string]string{"namespace": "default"})
+	response := httptest.NewRecorder()
+	routes.Namespace[0].Handler(response, req)
+	require.Equal(t, http.StatusOK, response.Code, response.Body.String())
+	blobs.AssertNotCalled(t, "PutBlob", mock.Anything, mock.Anything)
+}
+
+func TestSnapshotBlobEligibilityWithLegacyOnlyStore(t *testing.T) {
+	mode := dualwrite.NewMockService(t)
+	b := &DashboardsAPIBuilder{
+		snapshotStorage: &snapshot.SnapshotLegacyStore{},
+		dualWriter:      mode,
+	}
+
+	// Even if another instance finishes migration, this instance retains its legacy-only store.
+	enabled, err := b.snapshotReadFromUnified(context.Background())
+	require.NoError(t, err)
+	require.False(t, enabled)
+
+	b.snapshotStorage = grafanarest.NewMockStorage(t)
+	mode.On("ReadFromUnified", context.Background(), dashv0.SnapshotResourceInfo.GroupResource()).Return(true, nil)
+	enabled, err = b.snapshotReadFromUnified(context.Background())
+	require.NoError(t, err)
+	require.True(t, enabled)
 }
 
 // Library panels are keyed by their own GroupResource and served only in
