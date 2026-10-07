@@ -63,6 +63,7 @@ export function HeaderCellMenu({
             onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
           />
         )}
+        {filterable && (onHideColumn || onOpenColumnPanel) && <Menu.Divider />}
         {onHideColumn && (
           <Menu.Item
             label={t('grafana-ui.table.column-menu-hide', 'Hide column')}
@@ -73,15 +74,12 @@ export function HeaderCellMenu({
           />
         )}
         {onOpenColumnPanel && (
-          <>
-            {(filterable || onHideColumn) && <Menu.Divider />}
-            <Menu.Item
-              label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
-              icon="columns"
-              testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
-              onClick={onOpenColumnPanel}
-            />
-          </>
+          <Menu.Item
+            label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
+            icon="columns"
+            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
+            onClick={onOpenColumnPanel}
+          />
         )}
         {onAddToAssistant && (
           <>

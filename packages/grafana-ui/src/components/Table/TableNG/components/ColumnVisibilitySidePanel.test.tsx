@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
+
 import { ColumnVisibilitySidePanel } from './ColumnVisibilitySidePanel';
 
 const columns = [
@@ -33,6 +35,14 @@ function Harness({ initialHidden = new Set<string>() }: { initialHidden?: Set<st
 }
 
 describe('ColumnVisibilitySidePanel', () => {
+  it('places checkboxes at the row padding without reserving space for drag handles', () => {
+    render(<Harness />);
+
+    const row = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.columnsSidebar.row('Column A'));
+    expect(row.firstElementChild).toContainElement(screen.getByLabelText('Hide Column A'));
+    expect(row).toHaveStyle({ paddingLeft: '12px' });
+  });
+
   it('ignores hidden names absent from the current catalog when protecting the last visible column', async () => {
     render(<Harness initialHidden={new Set(['Missing'])} />);
 

@@ -69,7 +69,6 @@ export function ColumnVisibilitySidePanel({
 
           return (
             <div key={displayName} className={styles.row} data-testid={sidebarSelectors.row(displayName)}>
-              <span className={styles.dragHandlePlaceholder} aria-hidden="true" />
               {hideable ? (
                 <Checkbox
                   value={isVisible}
@@ -146,33 +145,12 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    padding: theme.spacing(0.75, 1),
-    // Prevent text selection from stealing the native drag gesture.
-    userSelect: 'none',
+    padding: theme.spacing(0.75, 1, 0.75, 1.5),
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
     },
   }),
-  rowDragOver: css({
-    boxShadow: `inset 0 2px 0 0 ${theme.colors.primary.main}`,
-  }),
-  dragHandle: css({
-    display: 'flex',
-    alignItems: 'center',
-    background: 'transparent',
-    border: 'none',
-    padding: 0,
-    cursor: 'grab',
-    color: theme.colors.text.secondary,
-    '&:active': {
-      cursor: 'grabbing',
-    },
-  }),
   // Keep column names aligned when a capability is unavailable.
-  dragHandlePlaceholder: css({
-    display: 'flex',
-    width: theme.spacing(2),
-  }),
   visibilityTogglePlaceholder: css({
     display: 'flex',
     width: theme.spacing(2),

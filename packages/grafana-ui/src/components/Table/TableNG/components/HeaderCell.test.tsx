@@ -330,6 +330,35 @@ describe('HeaderCell', () => {
       expect(onOpenColumnPanel).toHaveBeenCalledTimes(1);
     });
 
+    it.each([
+      {
+        filterable: true,
+        expected: ['Filter values', '', 'Hide column', 'Manage columns', '', 'Add to Assistant'],
+      },
+      { filterable: false, expected: ['Hide column', 'Manage columns', '', 'Add to Assistant'] },
+    ])(
+      'groups column actions separately from filters and Assistant (filterable=$filterable)',
+      async ({ filterable, expected }) => {
+        render(
+          <HeaderCell
+            {...baseProps}
+            field={makeField({ config: { custom: { filterable, hideable: true } } })}
+            tableRefreshEnabled
+            hasColumnSidebar
+            onHideColumn={jest.fn()}
+            canHideColumn
+            onOpenColumnPanel={jest.fn()}
+            onAddToAssistant={jest.fn()}
+          />
+        );
+
+        await userEvent.click(screen.getByLabelText(menuLabel));
+        const menu = await screen.findByRole('menu', { name: menuLabel });
+        // Dividers have no text; their positions define the visible action groups.
+        expect(Array.from(menu.children, (child) => child.textContent)).toEqual(expected);
+      }
+    );
+
     it('omits Manage columns when no columns are manageable', async () => {
       const onOpenColumnPanel = jest.fn();
       render(
