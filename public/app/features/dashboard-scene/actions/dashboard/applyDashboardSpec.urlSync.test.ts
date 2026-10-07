@@ -57,6 +57,20 @@ jest.mock('@grafana/runtime', () => ({
   }),
 }));
 
+// Counts serializations, which is what reading a spec's URL state off the live dashboard costs.
+// A plain passthrough rather than a `jest.fn`, so the `restoreAllMocks` below cannot strip it.
+let mockSerializeCount = 0;
+jest.mock('../../serialization/transformSceneToSaveModelSchemaV2', () => {
+  const actual = jest.requireActual('../../serialization/transformSceneToSaveModelSchemaV2');
+  return {
+    ...actual,
+    transformSceneToSaveModelSchemaV2: (...args: Parameters<typeof actual.transformSceneToSaveModelSchemaV2>) => {
+      mockSerializeCount++;
+      return actual.transformSceneToSaveModelSchemaV2(...args);
+    },
+  };
+});
+
 // Query variable options load asynchronously, after the rebuilt children are synced from the URL.
 setRunRequest(
   jest.fn().mockReturnValue(
@@ -424,6 +438,52 @@ describe('applyDashboardSpec with url sync', () => {
       expect(sceneGraph.getTimeRange(scene).state.from).toBe('now-24h');
       expect(url().has('time')).toBe(false);
       expect(url().has('time.window')).toBe(false);
+    });
+  });
+
+  describe('reading the previous spec off the dashboard', () => {
+    it('is skipped when the URL agrees with the spec the apply sets', async () => {
+      const scene = await open(makeSpec(), 'var-namespace=a&var-service=$__all');
+      mockSerializeCount = 0;
+
+      await apply(scene, makeSpec({ title: 'Renamed' }));
+
+      expect(mockSerializeCount).toBe(0);
+      expect(scene.state.title).toBe('Renamed');
+    });
+
+    it('happens once when the URL holds a value the spec changes, and is reused by undo and redo', async () => {
+      const scene = await open(makeSpec(), 'var-namespace=a&var-service=$__all');
+      mockSerializeCount = 0;
+
+      await apply(scene, makeSpec({ namespace: 'b' }));
+      expect(mockSerializeCount).toBe(1);
+
+      scene.state.sidebar.undoAction();
+      await settle();
+      scene.state.sidebar.redoAction();
+      await settle();
+
+      expect(mockSerializeCount).toBe(1);
+      expect(value(scene, 'namespace')).toBe('b');
+      expect(url().get('var-namespace')).toBe('b');
+    });
+
+    it('happens on undo, off the restored dashboard, when the apply skipped it', async () => {
+      const scene = await open(makeSpec(), 'var-namespace=a&var-service=$__all');
+      mockSerializeCount = 0;
+
+      await apply(scene, makeSpec({ title: 'Renamed' }));
+      lookup<MultiValueVariable>(scene, 'namespace').changeValueTo('x');
+      await settle();
+      scene.state.sidebar.undoAction();
+      await settle();
+
+      // The restored dashboard holds `a` while the URL holds the user's `x`, so the undo has to
+      // know whether the apply changed `namespace`. It did not, so the user's value stays.
+      expect(mockSerializeCount).toBe(1);
+      expect(scene.state.title).toBe('Variables');
+      expect(value(scene, 'namespace')).toBe('x');
     });
   });
 });
