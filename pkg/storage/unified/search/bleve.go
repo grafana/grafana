@@ -2326,12 +2326,18 @@ func (b *bleveIndex) initialSearchResponse(req *resourcepb.ResourceSearchRequest
 			Error: resource.NewBadRequestError("missing query key"),
 		}
 	}
+	if req.IncludeMatches && resultFormat != resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return &resourcepb.ResourceSearchResponse{
+			Error: resource.NewBadRequestError("include_matches requires FIELD_VALUES"),
+		}
+	}
 	return &resourcepb.ResourceSearchResponse{
 		Error: b.verifyKey(req.Options.Key),
 		// For a global index this is the version it was built at: it replays no
 		// events, so its resource version does not move after the build.
-		ResourceVersion: b.resourceVersion.Load(),
-		ResultFormat:    resultFormat,
+		ResourceVersion:  b.resourceVersion.Load(),
+		ResultFormat:     resultFormat,
+		MatchesAvailable: b.matchesAvailable(req),
 	}
 }
 
@@ -2993,6 +2999,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 		return nil, errResult
 	}
 	textQuery := b.buildTextQuery(searchrequest, req)
+	searchrequest.IncludeLocations = b.matchesAvailable(req) && textQuery != nil
 	expirationThreshold := int64(0)
 	if req.IsDeleted {
 		// An index that does not keep deleted documents cannot distinguish an empty

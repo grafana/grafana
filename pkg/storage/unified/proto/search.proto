@@ -156,6 +156,11 @@ message ResourceSearchRequest {
   // UNSPECIFIED preserves compatibility and requests RESOURCE_TABLE.
   // Servers that do not know this field ignore it and return RESOURCE_TABLE.
   ResultFormat result_format = 16;
+
+  // Annotate returned text values with matches for a single resource type.
+  // Requires FIELD_VALUES; federated and global searches are not supported.
+  // Check matches_available: older servers and indexes may not support this.
+  bool include_matches = 17;
 }
 
 message ResourceSearchResponse {
@@ -218,6 +223,10 @@ message ResourceSearchResponse {
 
   // Populated only when result_format is FIELD_VALUES.
   repeated ResourceSearchRow rows = 12;
+
+  // True when include_matches was requested and the index supports it.
+  // False means match annotations are unavailable, rather than no fields matched.
+  bool matches_available = 13;
 }
 
 message ResourceSearchField {
@@ -248,6 +257,14 @@ message ResourceSearchValue {
   repeated int64 int64_values = 3;
   repeated double double_values = 4;
   repeated bool boolean_values = 5;
+
+  // Whether this declared text field matched the query. Only populated when
+  // ResourceSearchResponse.matches_available is true; filters do not count.
+  bool matched = 6;
+
+  // Sorted, zero-based indexes into string_values containing matched query terms.
+  // Terms may match across different array elements. Empty for a scalar.
+  repeated uint64 matched_array_indices = 7;
 }
 
 message ResourceSearchRow {

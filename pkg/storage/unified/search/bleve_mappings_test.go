@@ -121,9 +121,9 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 			continue
 		}
 
-		// All explicitly-mapped fields must disable term vectors (no phrase queries or highlighting)
-		assert.False(t, f.Options().IncludeTermVectors(),
-			"field %q should not include term vectors", name)
+		wantTermVectors := name == resource.SEARCH_FIELD_TITLE || name == resource.SEARCH_FIELD_TITLE_PHRASE ||
+			name == resource.SEARCH_FIELD_TITLE_NGRAM || name == resource.SEARCH_FIELD_DESCRIPTION
+		assert.Equal(t, wantTermVectors, f.Options().IncludeTermVectors(), "field %q term vectors", name)
 
 		if mustSkipFreqNorm[name] {
 			assert.True(t, f.Options().SkipFreqNorm(),

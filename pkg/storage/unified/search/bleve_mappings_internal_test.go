@@ -112,7 +112,7 @@ func TestAddCapabilityFieldMappings_TextRetrieve(t *testing.T) {
 	assert.Equal(t, standard.Name, m.Analyzer)
 	assert.True(t, m.Store)
 	assert.False(t, m.DocValues)
-	assert.False(t, m.IncludeTermVectors)
+	assert.True(t, m.IncludeTermVectors)
 }
 
 func TestAddCapabilityFieldMappings_TextRetrieveUnranked(t *testing.T) {
@@ -199,7 +199,7 @@ func TestAddCapabilityFieldMappings_FullSet(t *testing.T) {
 	assert.Equal(t, standard.Name, text.Analyzer)
 	assert.True(t, text.Store)
 	assert.False(t, text.DocValues)
-	assert.False(t, text.IncludeTermVectors)
+	assert.True(t, text.IncludeTermVectors)
 
 	// keyword variant uses the "title_phrase" legacy name. sort adds DocValues.
 	phrase := got[resource.SEARCH_FIELD_TITLE_PHRASE]
@@ -207,12 +207,14 @@ func TestAddCapabilityFieldMappings_FullSet(t *testing.T) {
 	assert.False(t, phrase.Store, "text variant already stores; phrase must not duplicate")
 	assert.True(t, phrase.DocValues, "sort capability enables DocValues on the keyword variant")
 	assert.True(t, phrase.SkipFreqNorm)
+	assert.True(t, phrase.IncludeTermVectors)
 
 	// ngram variant: never canonical for retrieval.
 	ngram := got[resource.SEARCH_FIELD_TITLE_NGRAM]
 	assert.Equal(t, TITLE_ANALYZER, ngram.Analyzer)
 	assert.False(t, ngram.Store)
 	assert.False(t, ngram.DocValues)
+	assert.True(t, ngram.IncludeTermVectors)
 }
 
 func TestAddCapabilityFieldMappings_NonTitleFullSet(t *testing.T) {

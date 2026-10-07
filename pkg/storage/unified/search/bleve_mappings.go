@@ -28,6 +28,8 @@ type kindSearchFields struct {
 	// textQueryKinds maps physical index field names to the query their analyzer
 	// needs.
 	textQueryKinds map[string]textQueryKind
+	// matchFieldNames maps text variants back to their canonical index field.
+	matchFieldNames map[string]string
 	// sortableFields holds the names a request may sort on.
 	sortableFields map[string]bool
 	// variants drives the index-time copy of per-kind values into the variant
@@ -46,6 +48,7 @@ func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindReso
 		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
 		numberOrBoolFields: numberOrBoolFieldsForMapping(provider, group, kindResource),
 		textQueryKinds:     textQueryKindsForMapping(provider, group, kindResource, selectableFields),
+		matchFieldNames:    matchFieldNamesForMapping(provider, group, kindResource),
 		sortableFields:     sortableFieldsForMapping(provider, group, kindResource),
 		variants:           fieldVariantsOf(fieldDefinitionsForMapping(provider, group, kindResource)),
 		resultFields:       resultFields,
@@ -395,7 +398,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 
 	if needKeyword {
 		m := bleve.NewKeywordFieldMapping()
-		m.IncludeTermVectors = false
+		m.IncludeTermVectors = hasText
 		m.SkipFreqNorm = true
 		m.DocValues = hasSort
 		// Facets aggregate from the keyword variant after post-rank authz, even
@@ -408,7 +411,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	if hasText {
 		m := bleve.NewTextFieldMapping()
 		m.Analyzer = standard.Name
-		m.IncludeTermVectors = false
+		m.IncludeTermVectors = true
 		m.DocValues = false
 		m.Store = hasRetrieve || hasFacet
 		m.IncludeInAll = false
@@ -419,7 +422,7 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 	if ngramName, ok := ngramVariant(def); ok {
 		m := bleve.NewTextFieldMapping()
 		m.Analyzer = TITLE_ANALYZER
-		m.IncludeTermVectors = false
+		m.IncludeTermVectors = true
 		m.DocValues = false
 		// ngram variant is never the canonical retrieval target; the keyword
 		// or text variant already stores the value.

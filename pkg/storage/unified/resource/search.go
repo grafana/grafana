@@ -189,6 +189,11 @@ const IndexFeatureStoredFacets IndexFeature = "facets-are-stored"
 // once. Recording it now is what lets a later release require it.
 const IndexFeatureStoredResourceVersion IndexFeature = "resource-version-stored"
 
+// IndexFeatureTextMatchLocations records term vectors on declared text fields.
+// Optional so rollout does not rebuild every index; responses distinguish
+// unsupported match information until an older index is rebuilt.
+const IndexFeatureTextMatchLocations IndexFeature = "text-match-locations"
+
 // IndexFeatureHoldsDeletedDocuments means the index keeps deleted documents, so a
 // reader that does not exclude them returns deleted resources as live. It says what
 // the index holds, not what it maps, and every index built now holds them. Older
@@ -216,6 +221,7 @@ var currentIndexFeatures = []IndexFeature{
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
+	IndexFeatureTextMatchLocations,
 }
 
 // knownIndexFeatures is every feature this binary can read. A feature belongs here
@@ -228,6 +234,7 @@ var knownIndexFeatures = []IndexFeature{
 	IndexFeatureStoredFacets,
 	IndexFeatureStoredResourceVersion,
 	IndexFeatureTrashFields,
+	IndexFeatureTextMatchLocations,
 }
 
 // requiredIndexFeatures is the subset an index must already have to be used. An

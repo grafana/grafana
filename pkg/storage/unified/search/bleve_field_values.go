@@ -104,6 +104,20 @@ func (b *bleveIndex) setSearchResults(
 	}
 	response.Fields = fields
 	response.Rows = rows
+	if response.MatchesAvailable {
+		for i, hit := range hits {
+			matches := b.textMatches(hit)
+			for _, value := range rows[i].Values {
+				// Follow the same field lookup as searchHitFieldValue so a custom
+				// field cannot mark a same-named standard field as matched.
+				name := fields[value.FieldIndex].Name
+				if _, ok := hit.Fields[name]; !ok {
+					name = resource.SEARCH_FIELD_PREFIX + name
+				}
+				value.MatchedArrayIndices, value.Matched = matches[name]
+			}
+		}
+	}
 	return nil
 }
 

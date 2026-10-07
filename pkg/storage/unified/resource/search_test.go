@@ -832,6 +832,13 @@ func TestStoredResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	}
 }
 
+func TestTextMatchLocationsAreRecordedButNotRequired(t *testing.T) {
+	require.Contains(t, CurrentIndexFeatures(), IndexFeatureTextMatchLocations)
+	for _, postRankAuthz := range []bool{false, true} {
+		require.NotContains(t, RequiredIndexFeatures(postRankAuthz), IndexFeatureTextMatchLocations)
+	}
+}
+
 func TestSortableTrashResourceVersionIsRecordedButNotRequired(t *testing.T) {
 	require.Contains(t, CurrentIndexFeatures(), IndexFeatureSortableTrashResourceVersion)
 	require.NotContains(t, TrashIndexFeatures(), IndexFeatureSortableTrashResourceVersion)

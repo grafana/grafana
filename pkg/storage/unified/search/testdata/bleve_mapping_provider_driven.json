@@ -124,6 +124,7 @@
             "analyzer": "standard",
             "store": true,
             "index": true,
+            "include_term_vectors": true,
             "skip_freq_norm": true
           }
         ]
@@ -162,7 +163,8 @@
                 "type": "text",
                 "analyzer": "standard",
                 "store": true,
-                "index": true
+                "index": true,
+                "include_term_vectors": true
               }
             ]
           },
@@ -346,7 +348,8 @@
             "type": "text",
             "analyzer": "standard",
             "store": true,
-            "index": true
+            "index": true,
+            "include_term_vectors": true
           }
         ]
       },
@@ -357,7 +360,8 @@
           {
             "type": "text",
             "analyzer": "title_analyzer",
-            "index": true
+            "index": true,
+            "include_term_vectors": true
           }
         ]
       },
@@ -369,6 +373,7 @@
             "type": "text",
             "analyzer": "keyword",
             "index": true,
+            "include_term_vectors": true,
             "docvalues": true,
             "skip_freq_norm": true
           }
