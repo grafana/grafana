@@ -14,6 +14,7 @@ import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { type QueryPreviewSelection } from './queryPreview';
 
 interface Props {
   adapter: QueryEditorCoauthoringAdapterV1;
@@ -25,7 +26,7 @@ interface QueryCoauthoringHost {
   datasourceType: string;
   previewPhase: 'idle' | 'pending' | 'running' | 'complete';
   timeRange?: { from: number; to: number };
-  preview(query: DataQuery): boolean;
+  preview(query: DataQuery, options?: QueryPreviewSelection): boolean;
   accept(query: DataQuery): boolean;
   revert(): void;
 }

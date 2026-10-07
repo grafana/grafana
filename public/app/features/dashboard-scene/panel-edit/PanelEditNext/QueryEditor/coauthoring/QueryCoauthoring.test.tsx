@@ -2,8 +2,9 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 
-import { type DataQuery } from '@grafana/data';
+import { type DataQuery, getDefaultTimeRange, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
@@ -12,6 +13,7 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { startQueryPreview } from './queryPreview';
 import { useQueryProposalTransaction } from './useQueryProposalTransaction';
 
 const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
@@ -121,7 +123,7 @@ async function setup(
       },
     ],
   },
-  props: { isPreviewRunning?: boolean; entry?: boolean; transaction?: boolean } = {}
+  props: { isPreviewRunning?: boolean; entry?: boolean; transaction?: boolean; realPreview?: boolean } = {}
 ) {
   const stagePreview = jest.fn(
     (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
@@ -139,12 +141,32 @@ async function setup(
     })
   );
   const dismissInvocation = jest.fn();
-  const onAccept = jest.fn(() => true);
+  const onAccept = jest.fn((_query: DataQuery, _originalRefId?: string) => true);
   const onPreview = jest.fn(() => true);
   const onRevertPreview = jest.fn();
   const onBaseline = jest.fn(() => true);
   const anchorElement = document.createElement('div');
   const baseline = { refId: 'A', expr: context.query } as DataQuery;
+  const panelResult = (value: number): PanelData => ({
+    state: LoadingState.Done,
+    series: [toDataFrame({ refId: 'A', fields: [{ name: 'value', values: [value] }] })],
+    timeRange: getDefaultTimeRange(),
+  });
+  const baselineData = panelResult(10);
+  const queryRunner = new SceneQueryRunner({ queries: [baseline], data: baselineData });
+  const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+  const previewRequests: SceneQueryRunner[] = [];
+  if (props.realPreview) {
+    jest.spyOn(SceneQueryRunner.prototype, 'cancelQuery').mockImplementation();
+    jest.spyOn(SceneQueryRunner.prototype, 'runQueries').mockImplementation(function (this: SceneQueryRunner) {
+      previewRequests.push(this);
+      this.setState({ data: { state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() } });
+    });
+    onAccept.mockImplementation((query: DataQuery) => {
+      queryRunner.setState({ queries: [query] });
+      return true;
+    });
+  }
   const readInvocation = jest.fn().mockResolvedValue({ baseline, context });
   let snapshot: QueryEditorCoauthoringSnapshotV1 = props.entry
     ? { mode: 'selection', portalTarget: anchorElement }
@@ -202,7 +224,14 @@ async function setup(
       adapter,
       updateQuery: onAccept,
       runQueries: jest.fn(),
-      startQueryPreview: () => ({ dispose: () => undefined, subscribeToState: () => () => undefined }),
+      startQueryPreview: props.realPreview
+        ? (refId, query) => startQueryPreview(panel, refId, query)
+        : () => ({
+            dispose: () => undefined,
+            select: () => true,
+            subscribeToState: () => () => undefined,
+            subscribeToData: () => () => undefined,
+          }),
     });
     return (
       <>
@@ -263,6 +292,10 @@ async function setup(
     queryCoauthoringProps,
     readInvocation,
     stagePreview,
+    baselineData,
+    queryRunner,
+    panelResult,
+    previewRequests,
     user: userEvent.setup(),
     ...result,
   };
@@ -357,6 +390,52 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalled();
   });
 
+  it('keeps the real preview transaction alive on Original, reuses cached data, and accepts the selected query', async () => {
+    const { user, baseline, baselineData, queryRunner, panelResult, previewRequests } = await setup(
+      0,
+      true,
+      undefined,
+      {
+        transaction: true,
+        realPreview: true,
+      }
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByText('Running updated query...')).toBeVisible();
+    expect(queryRunner.state.data).toBe(baselineData);
+    const first = panelResult(11);
+    act(() => previewRequests[0].setState({ data: first }));
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('Total.')).toBeVisible();
+    expect(queryRunner.state.data).toBe(first);
+    const second = panelResult(12);
+    act(() => previewRequests[1].setState({ data: second }));
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.queries).toEqual([baseline]);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(queryRunner.state.data).toBe(second);
+    expect(previewRequests).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(queryRunner.state.queries).toEqual([{ refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' }]);
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+  });
+
   it('shows a retryable error when an option cannot be previewed instead of leaving a selected card over Baseline', async () => {
     const { user, onPreview } = await setup();
     await user.type(screen.getByRole('textbox'), 'Count requests');
@@ -409,13 +488,13 @@ describe('QueryCoauthoring', () => {
     await user.keyboard('{ArrowLeft}');
     expect(original).toHaveFocus();
     expect(original).toHaveAttribute('aria-selected', 'true');
-    expect(onPreview).toHaveBeenLastCalledWith(baseline);
+    expect(onPreview).toHaveBeenLastCalledWith(baseline, { debounce: true });
     expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeEnabled();
     await user.keyboard('{End}');
     expect(screen.getByText('Total counts.')).toBeInTheDocument();
     expect(screen.getByText('handler="unknown"')).toBeInTheDocument();
-    expect(onPreview).toHaveBeenLastCalledWith({ refId: 'A', expr: second });
+    expect(onPreview).toHaveBeenLastCalledWith({ refId: 'A', expr: second }, { debounce: true });
     expect(dismissInvocation).not.toHaveBeenCalled();
     await user.click(screen.getByRole('button', { name: 'Accept' }));
     expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: second });

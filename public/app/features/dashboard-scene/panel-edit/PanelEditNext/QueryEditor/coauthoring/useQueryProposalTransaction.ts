@@ -1,11 +1,11 @@
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { LoadingState } from '@grafana/data';
+import { LoadingState, type PanelData } from '@grafana/data';
 import { type DataQuery } from '@grafana/schema';
 
 import { type QueryEditorCoauthoringAdapterV1 } from './internalCoauthoringContract';
-import { type QueryPreview } from './queryPreview';
+import { type QueryPreview, type QueryPreviewSelection } from './queryPreview';
 
 interface QueryProposalTransactionState {
   baseline: DataQuery;
@@ -60,6 +60,7 @@ export function useQueryProposalTransaction({
   runQueriesRef.current = runQueries;
   const [proposal, setProposal] = useState<DataQuery | undefined>(undefined);
   const [previewPhase, setPreviewPhase] = useState<'idle' | 'pending' | 'running' | 'complete'>('idle');
+  const [previewData, setPreviewData] = useState<PanelData>();
 
   const clear = useCallback((): QueryProposalTransactionState | undefined => {
     const transaction = transactionRef.current;
@@ -69,6 +70,7 @@ export function useQueryProposalTransaction({
     proposalRef.current = undefined;
     setProposal(undefined);
     setPreviewPhase('idle');
+    setPreviewData(undefined);
     return transaction;
   }, []);
 
@@ -111,7 +113,7 @@ export function useQueryProposalTransaction({
   );
 
   const preview = useCallback(
-    (proposedQuery: DataQuery): boolean => {
+    (proposedQuery: DataQuery, options?: QueryPreviewSelection): boolean => {
       const currentQuery = queryRef.current;
       if (!currentQuery) {
         return false;
@@ -123,8 +125,24 @@ export function useQueryProposalTransaction({
       }
 
       const baseline = transaction?.baseline ?? currentQuery;
-      previewRef.current?.dispose();
-      previewRef.current = undefined;
+      transactionRef.current = transaction ?? {
+        baseline,
+        baselineQueries: queriesRef.current,
+        queryKey,
+      };
+      proposalRef.current = proposedQuery;
+      setProposal(proposedQuery);
+      setPreviewPhase('pending');
+      setPreviewData(undefined);
+      const currentPreview = previewRef.current;
+      if (currentPreview) {
+        if (currentPreview.select(proposedQuery, options)) {
+          return true;
+        }
+        clear();
+        runQueriesRef.current();
+        return false;
+      }
       const queryPreview = startQueryPreview(baseline.refId, proposedQuery);
       if (!queryPreview) {
         clear();
@@ -133,18 +151,15 @@ export function useQueryProposalTransaction({
         }
         return false;
       }
-      transactionRef.current = transaction ?? {
-        baseline,
-        baselineQueries: queriesRef.current,
-        queryKey,
-      };
       previewRef.current = queryPreview;
-      proposalRef.current = proposedQuery;
-      setProposal(proposedQuery);
-      setPreviewPhase('pending');
       queryPreview.subscribeToState((state) => {
         if (previewRef.current === queryPreview) {
-          setPreviewPhase(state === LoadingState.Loading ? 'running' : 'complete');
+          setPreviewPhase(state === LoadingState.Loading || state === LoadingState.Streaming ? 'running' : 'complete');
+        }
+      });
+      queryPreview.subscribeToData((data) => {
+        if (previewRef.current === queryPreview) {
+          setPreviewData(data);
         }
       });
       return true;
@@ -193,6 +208,7 @@ export function useQueryProposalTransaction({
     editorQuery: proposal?.refId === query?.refId ? proposal : query,
     onChange,
     preview,
+    previewData,
     previewPhase,
     revert,
     run,
