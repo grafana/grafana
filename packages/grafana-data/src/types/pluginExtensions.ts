@@ -217,6 +217,7 @@ export enum PluginExtensionPoints {
   AlertingRecordingRuleAction = 'grafana/alerting/recordingrule/action',
   AlertingRuleQueryEditor = 'grafana/alerting/alertingrule/queryeditor',
   CommandPalette = 'grafana/commandpalette/action',
+  CommandPaletteResultItem = 'grafana/commandpalette/result-item/v1',
   DashboardPanelMenu = 'grafana/dashboard/panel/menu',
   DashboardEmpty = 'grafana/dashboard/empty',
   DashboardSidebar = 'grafana/dashboard/sidebar/v1',
@@ -347,6 +348,22 @@ export type PluginExtensionDataSourceConfigContext<
 };
 
 export type PluginExtensionCommandPaletteContext = {};
+
+/**
+ * The extension is rendered inline in a dashboard row of the command palette (search results and
+ * recent dashboards), so it should stay visually compact and fit on a single line. The dashboard's
+ * tags are included so plugins can show them without fetching the dashboard. A component that has
+ * nothing to contribute for the given dashboard is expected to render `null`.
+ */
+export type PluginExtensionCommandPaletteResultItemV1Context = {
+  kind: 'dashboard';
+  uid: string;
+  title: string;
+  url: string;
+  tags: string[];
+  /** Title of the folder the dashboard lives in, if known. */
+  folderTitle?: string;
+};
 
 export type PluginExtensionResourceAttributesContext = {
   // Key-value pairs of resource attributes, attribute name is the key

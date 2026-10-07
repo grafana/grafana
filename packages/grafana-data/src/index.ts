@@ -622,6 +622,7 @@ export {
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
   type PluginExtensionCommandPaletteContext,
+  type PluginExtensionCommandPaletteResultItemV1Context,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
