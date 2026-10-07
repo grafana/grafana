@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import * as React from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import { type GrafanaTheme2, type PanelDiagnosticEntry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
@@ -13,7 +13,9 @@ import { Stack } from '../Layout/Stack/Stack';
 import { Toggletip } from '../Toggletip/Toggletip';
 
 import { usePanelContext } from './PanelContext';
+import { PanelDiagnosticActions } from './PanelDiagnosticActions';
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
+import { usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
 
 export interface Props {
   /** Single status message (legacy). Used when `items` is not provided. */
@@ -43,7 +45,12 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
 }
 
 export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
-  const { onOpenInspector, onInvestigateErrors } = usePanelContext();
+  const { onOpenInspector, onInvestigateErrors, diagnostics } = usePanelContext();
+  const snapshot = usePanelDiagnosticsSnapshot(diagnostics);
+  const diagnosticItems = diagnostics ? snapshot.items : undefined;
+  if (diagnosticItems) {
+    items = [...diagnosticItems];
+  }
   const canInspect = Boolean(onClick) || Boolean(onOpenInspector);
 
   const handleInspectClick = (e: React.SyntheticEvent) => {
@@ -57,7 +64,8 @@ export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: P
         items={items}
         onInspect={canInspect ? handleInspectClick : undefined}
         ariaLabel={ariaLabel}
-        onInvestigateErrors={onInvestigateErrors}
+        onInvestigateErrors={diagnostics ? undefined : onInvestigateErrors}
+        diagnostics={diagnosticItems}
       />
     );
   }
@@ -80,21 +88,34 @@ interface PanelStatusPopoverProps {
   onInspect?: (e: React.SyntheticEvent) => void;
   ariaLabel: string;
   onInvestigateErrors?: () => void;
+  diagnostics?: readonly PanelDiagnosticEntry[];
 }
 
-function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }: PanelStatusPopoverProps) {
+function PanelStatusPopover({
+  items,
+  onInspect,
+  ariaLabel,
+  onInvestigateErrors,
+  diagnostics,
+}: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
   const topSeverity = getTopSeverity(items);
-  const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
+  const sortedDiagnostics =
+    diagnostics && [...diagnostics].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
+  const sortedItems =
+    sortedDiagnostics ?? [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
   const content = (
     <Stack direction="column" gap={1}>
       {sortedItems.map((item, index) => (
-        <div key={`${item.severity}-${index}`} className={styles.item}>
+        <div key={sortedDiagnostics?.[index].id ?? `${item.severity}-${index}`} className={styles.item}>
           <span className={styles.itemIcon}>
             <Icon name={getSeverityIcon(item.severity)} className={styles[item.severity]} size="sm" />
           </span>
-          <span className={styles.itemText}>{item.text}</span>
+          <div className={styles.itemContent}>
+            <span className={styles.itemText}>{item.text}</span>
+            {sortedDiagnostics && <PanelDiagnosticActions diagnostic={sortedDiagnostics[index]} />}
+          </div>
         </div>
       ))}
     </Stack>
@@ -140,6 +161,7 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  itemContent: css({ minWidth: 0, flex: 1 }),
   item: css({
     display: 'flex',
     alignItems: 'flex-start',

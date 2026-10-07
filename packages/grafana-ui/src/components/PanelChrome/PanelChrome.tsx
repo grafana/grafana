@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -18,11 +18,13 @@ import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
+import { usePanelContext } from './PanelContext';
 import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
 import { type PanelStatusItem } from './types';
+import { usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
 
 /**
  * @internal
@@ -176,6 +178,13 @@ export function PanelChrome({
   subtitle,
   minHeight,
 }: PanelChromeProps) {
+  const { diagnostics, activateDiagnostics } = usePanelContext();
+  useEffect(() => activateDiagnostics?.(), [activateDiagnostics]);
+  const diagnosticSnapshot = usePanelDiagnosticsSnapshot(diagnostics);
+  if (diagnostics) {
+    statusItems = [...diagnosticSnapshot.items];
+    statusMessage = undefined;
+  }
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);

@@ -15,7 +15,65 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 # PanelChrome
 
-Component used for rendering content wrapped in the same style as grafana panels
+Component used for rendering content wrapped in the same style as Grafana panels.
+
+## Runtime diagnostics (alpha)
+
+Panel plugins can publish errors, warnings, and informational notices with `usePanelDiagnostics`.
+The hook owns a source for the component's lifetime and removes its entries on unmount.
+Memoize the items and resolver to avoid republishing unchanged diagnostics.
+The hook returns `false` when the host does not support diagnostics; retain an inline fallback in that case.
+In dashboards, this capability requires `grafana.newPanelQueryErrorsUI`.
+
+```tsx
+import { useMemo } from 'react';
+import { type PanelDiagnostic } from '@grafana/data';
+import { usePanelDiagnostics } from '@grafana/ui';
+
+function ConfigurationNotice({ valid, fix }: { valid: boolean; fix: () => void }) {
+  const diagnostics = useMemo<PanelDiagnostic[]>(
+    () =>
+      valid
+        ? []
+        : [
+            {
+              id: 'numeric-field',
+              severity: 'warning',
+              text: 'Choose a numeric field.',
+              assistant: 'hidden',
+              actions: [{ id: 'fix', label: 'Choose field', onClick: fix }],
+            },
+          ],
+    [valid, fix]
+  );
+  const supported = usePanelDiagnostics(diagnostics);
+  return !supported && !valid ? <div>Choose a numeric field.</div> : null;
+}
+```
+
+For imperative producers, `usePanelContext().diagnostics?.createSource()` returns `set`,
+`setActionResolver`, and `dispose`. `set` replaces only that source's entries; `set([])` clears them.
+Dispose the source when its owner stops using the panel. IDs must be unique within a source.
+Sources and callbacks are runtime state and must never be saved into dashboard JSON.
+
+Pass an optional second argument to `usePanelDiagnostics` to decorate incoming diagnostics, or
+use `source.setActionResolver`. Resolvers receive the normalized diagnostic, including origin,
+query `refId`, datasource UID, and original error/notice when available. They return actions and
+an optional Assistant policy. Datasources can implement `DataSourceApi.getPanelDiagnosticActions`
+to decorate their own query diagnostics; its second argument contains current panel data and query.
+Unattributed errors are still available to host/panel resolvers.
+
+Actions are combined in order: diagnostic, datasource, then registered resolvers. Action IDs are
+namespaced by contributor. Any `assistant: 'hidden'` suppresses that diagnostic's Assistant CTA;
+custom actions otherwise coexist with Assistant. Callbacks may return promises. Pending state is
+shared by the popover and inspector, duplicate execution is blocked, and failures appear inline.
+
+Standalone hosts can provide a `PanelDiagnosticsStore` through `PanelContextProvider` around
+`PanelChrome`. Use `setExternal(getPanelDataDiagnostics(data, pluginLoadError))` as data changes,
+outside rendering. Supply `onInvestigateDiagnostic(id)` and `onOpenInspector` if supported.
+Call `clear()` when the panel is disposed or replaced. Stores must not be shared across panels.
+
+<Canvas of={PanelChromeStories.RuntimeDiagnostics} />
 
 ### Basic Usage: Title, Description and Content
 

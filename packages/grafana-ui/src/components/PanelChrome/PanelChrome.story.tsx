@@ -1,10 +1,10 @@
 import { type Meta, type StoryFn } from '@storybook/react';
 import { merge } from 'lodash';
-import { type CSSProperties, useState, type ReactNode } from 'react';
+import { type CSSProperties, useMemo, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 import { action } from 'storybook/actions';
 
-import { LoadingState } from '@grafana/data';
+import { EventBusSrv, LoadingState, PanelDiagnosticsStore, type PanelDiagnostic } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Button } from '../Button/Button';
@@ -17,8 +17,50 @@ import { Menu } from '../Menu/Menu';
 
 import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
+import { PanelContextProvider } from './PanelContext';
+import { usePanelDiagnostics } from './usePanelDiagnostics';
 
 import { PanelChrome } from '.';
+
+function DiagnosticDemo() {
+  const [resolved, setResolved] = useState(false);
+  const items = useMemo<PanelDiagnostic[]>(
+    () =>
+      resolved
+        ? []
+        : [
+            {
+              id: 'field',
+              severity: 'error',
+              text: 'Choose a numeric field for this visualization.',
+              assistant: 'hidden',
+              actions: [{ id: 'choose', label: 'Use first numeric field', onClick: () => setResolved(true) }],
+            },
+            { id: 'partial', severity: 'warning', text: 'Only the first 100 series are shown.' },
+            { id: 'info', severity: 'info', text: 'This visualization uses local time.' },
+          ],
+    [resolved]
+  );
+  usePanelDiagnostics(items);
+  return <div>Open the panel status to see diagnostics and actions.</div>;
+}
+
+export const RuntimeDiagnostics: StoryFn<typeof PanelChrome> = () => {
+  const [context] = useState(() => ({
+    diagnostics: new PanelDiagnosticsStore(),
+    eventBus: new EventBusSrv(),
+    eventsScope: 'story',
+    onInvestigateDiagnostic: action('investigate-diagnostic'),
+    onOpenInspector: action('inspect'),
+  }));
+  return (
+    <PanelContextProvider value={context}>
+      <PanelChrome width={500} height={200} title="Diagnostics and actions">
+        {() => <DiagnosticDemo />}
+      </PanelChrome>
+    </PanelContextProvider>
+  );
+};
 
 const PANEL_WIDTH = 400;
 const PANEL_HEIGHT = 150;

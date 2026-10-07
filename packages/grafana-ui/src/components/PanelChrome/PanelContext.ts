@@ -9,6 +9,7 @@ import {
   type DataTransformerConfig,
   type EventBus,
   EventBusSrv,
+  type PanelDiagnostics,
 } from '@grafana/data';
 
 import { type AdHocFilterItem } from '../Table/types';
@@ -41,6 +42,12 @@ export interface AdHocTransformationsState {
 
 /** @alpha */
 export interface PanelContext {
+  /** Runtime diagnostics for this panel. Absent on hosts without diagnostic support. @alpha */
+  diagnostics?: PanelDiagnostics;
+  /** Investigates one current diagnostic, addressed by its runtime ID. @alpha */
+  onInvestigateDiagnostic?: (id: string) => void;
+  /** Connects host data for the lifetime of a diagnostics surface. @internal */
+  activateDiagnostics?: () => () => void;
   /** Identifier for the events scope */
   eventsScope: string;
   eventBus: EventBus;

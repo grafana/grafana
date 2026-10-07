@@ -182,6 +182,9 @@ export {
   PanelContextRoot,
   usePanelContext,
   useAdHocTransformations,
+  usePanelDiagnostics,
+  usePanelDiagnosticsSnapshot,
+  PanelDiagnosticActions,
 } from './components/PanelChrome';
 export {
   VizLayout,
