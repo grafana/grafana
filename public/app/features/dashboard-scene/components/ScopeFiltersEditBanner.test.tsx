@@ -1,4 +1,4 @@
-import { act, render, screen } from 'test/test-utils';
+import { act, render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceSettings, type Scope } from '@grafana/data';
 import { useScopes } from '@grafana/runtime';
@@ -232,8 +232,67 @@ describe('ScopeFiltersEditBanner', () => {
     act(() => {
       queryRunner.setState({ datasource: { type: 'mysql', uid: 'mysql-ds' } });
     });
-    expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount);
+    await waitFor(() => expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount));
     await act(() => Promise.resolve());
+  });
+
+  it('coalesces a burst of structural changes into a single re-walk', async () => {
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+    const gridItem = (dashboard.state.body as DefaultGridLayoutManager).state.grid.state
+      .children[0] as DashboardGridItem;
+    const panel = gridItem.state.body as VizPanel;
+
+    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await screen.findByTestId(BANNER_TEST_ID);
+    const callsAfterMount = mockHasScopeFilteredDatasource.mock.calls.length;
+
+    act(() => {
+      panel.setState({ title: 'a' });
+      panel.setState({ title: 'ab' });
+      panel.setState({ title: 'abc' });
+    });
+
+    await waitFor(() => expect(mockHasScopeFilteredDatasource.mock.calls.length).toBeGreaterThan(callsAfterMount));
+    await act(() => new Promise((resolve) => setTimeout(resolve, 300)));
+    expect(mockHasScopeFilteredDatasource.mock.calls.length).toBe(callsAfterMount + 1);
+  });
+
+  it('ignores a stale result when an earlier re-walk settles after a later one', async () => {
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+    const panel = ((dashboard.state.body as DefaultGridLayoutManager).state.grid.state.children[0] as DashboardGridItem)
+      .state.body as VizPanel;
+
+    let resolveFirst: (value: boolean) => void = () => {};
+    mockHasScopeFilteredDatasource
+      .mockImplementationOnce(() => new Promise<boolean>((resolve) => (resolveFirst = resolve)))
+      .mockImplementationOnce(() => Promise.resolve(false));
+
+    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+
+    act(() => {
+      panel.setState({ title: 'changed' });
+    });
+    await waitFor(() => expect(mockHasScopeFilteredDatasource).toHaveBeenCalledTimes(2));
+    await act(() => Promise.resolve());
+
+    await act(async () => {
+      resolveFirst(true);
+    });
+
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
+  });
+
+  it('keeps rendering without an unhandled rejection when the datasource lookup fails', async () => {
+    mockScopes([makeScope('scope-1', true)]);
+    const dashboard = buildDashboard({ isEditing: true, datasourceTypes: ['loki'] });
+    mockHasScopeFilteredDatasource.mockRejectedValueOnce(new Error('lookup failed'));
+
+    render(<ScopeFiltersEditBanner dashboard={dashboard} />);
+    await act(() => Promise.resolve());
+
+    expect(screen.queryByTestId(BANNER_TEST_ID)).not.toBeInTheDocument();
   });
 
   it('renders when at least one of several panels uses Prometheus', async () => {

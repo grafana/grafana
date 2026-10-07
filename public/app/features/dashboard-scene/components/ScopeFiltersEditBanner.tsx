@@ -13,6 +13,8 @@ import { type DashboardScene } from '../scene/DashboardScene';
 // dashboard with N panels from re-walking the whole scene on every panel's every refresh tick.
 const QUERY_RUNNER_DATA_ONLY_KEYS = new Set(['data', '_hasFetchedData']);
 
+const RECOMPUTE_DEBOUNCE_MS = 150;
+
 function isQueryRunnerDataOnlyUpdate(event: SceneObjectStateChangedEvent): boolean {
   return (
     event.payload.changedObject instanceof SceneQueryRunner &&
@@ -37,29 +39,41 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
   // only for structural changes, not every data refresh, so this stays cheap on a busy dashboard.
   useEffect(() => {
     if (!isEditing) {
+      setHasFilteredDatasource(false);
       return;
     }
 
-    // hasScopeFilteredDatasource resolves datasource refs asynchronously; `cancelled` drops a
-    // stale result if the scene changes again (or this unmounts) before it settles.
+    // hasScopeFilteredDatasource resolves datasource refs asynchronously, so overlapping runs can
+    // settle out of order. Only the latest run may write its result; `cancelled` also drops it
+    // once this effect is torn down.
     let cancelled = false;
+    let latestRun = 0;
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined;
     const recomputeHasFilteredDatasource = () => {
-      hasScopeFilteredDatasource(dashboard).then((result) => {
-        if (!cancelled) {
-          setHasFilteredDatasource(result);
-        }
-      });
+      const run = ++latestRun;
+      hasScopeFilteredDatasource(dashboard)
+        .then((result) => {
+          if (!cancelled && run === latestRun) {
+            setHasFilteredDatasource(result);
+          }
+        })
+        .catch(() => {
+          // A failed datasource lookup keeps the previous banner state rather than surfacing an error.
+        });
     };
 
     recomputeHasFilteredDatasource();
 
+    // Drag, resize and title edits emit bursts of state changes, so coalesce them into one walk.
     const sub = body.subscribeToEvent(SceneObjectStateChangedEvent, (event) => {
       if (!isQueryRunnerDataOnlyUpdate(event)) {
-        recomputeHasFilteredDatasource();
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(recomputeHasFilteredDatasource, RECOMPUTE_DEBOUNCE_MS);
       }
     });
     return () => {
       cancelled = true;
+      clearTimeout(debounceTimer);
       sub.unsubscribe();
     };
   }, [dashboard, body, isEditing]);
