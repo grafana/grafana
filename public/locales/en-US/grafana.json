@@ -15787,9 +15787,6 @@
     "description-tooltip": {
       "label": "Description"
     },
-    "generate-columns": {
-      "score": "Score"
-    },
     "results-table": {
       "datasource-header": "Data source",
       "deleted-by-header": "Deleted by",
