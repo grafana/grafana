@@ -69,6 +69,7 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { djb2Hash } from '../utils/djb2Hash';
 
+import { buildVizPanel } from './layoutSerializers/utils';
 import {
   getPersistedDSFor,
   getElementDatasource,
@@ -80,8 +81,6 @@ import {
   getVizPanelQueries,
   vizPanelToSchemaV2,
 } from './transformSceneToSaveModelSchemaV2';
-
-import { buildVizPanel } from './layoutSerializers/utils';
 
 // Mock dependencies
 jest.mock('../utils/dashboardSceneGraph', () => {
