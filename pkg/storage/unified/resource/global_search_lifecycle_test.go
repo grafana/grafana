@@ -349,7 +349,7 @@ func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.Lis
 	return rv, err
 }
 
-func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
+func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []BatchReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	if m.readErr != nil {
 		return nil, m.readErr
 	}
@@ -358,7 +358,7 @@ func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*reso
 	}
 	responses := make([]*BackendReadResponse, 0, len(requests)+1)
 	for _, request := range requests {
-		responses = append(responses, m.readOne(request))
+		responses = append(responses, m.readOne(request.ReadRequest))
 	}
 	if m.extraBatchResponse && len(responses) > 0 {
 		responses = append(responses, responses[0])

@@ -1418,13 +1418,13 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	}
 }
 
-func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
+func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []BatchReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
 	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
 	// would otherwise resolve the highest retained revision below it, so the batch
 	// and single-read paths would disagree when search and storage briefly diverge.
 	var maxReqRV int64
 	for _, req := range requests {
-		if req != nil && req.Key != nil {
+		if req.ReadRequest != nil && req.Key != nil {
 			maxReqRV = max(maxReqRV, ToSnowflakeRV(req.ResourceVersion))
 		}
 	}
@@ -1438,48 +1438,67 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 	}
 
 	return func(yield func(*BackendReadResponse) bool) {
+		ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.BatchReadResource", trace.WithAttributes(
+			attribute.Int("batchSize", len(requests)),
+		))
+		defer span.End()
+
 		type batchReadEntry struct {
 			request  *resourcepb.ReadRequest
+			rv       int64
 			key      kv.DataKey
 			response *BackendReadResponse
 		}
-		entries := make([]batchReadEntry, 0, len(requests))
-		keys := make([]kv.DataKey, 0, len(requests))
-		for _, req := range requests {
-			entry := batchReadEntry{request: req}
-			if req == nil || req.Key == nil {
+		entries := make([]batchReadEntry, len(requests))
+		for i, req := range requests {
+			entry := &entries[i]
+			entry.request = req.ReadRequest
+			if req.ReadRequest == nil || req.Key == nil {
 				entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
-				entries = append(entries, entry)
 				continue
 			}
 
-			rv := ToSnowflakeRV(req.ResourceVersion)
-			if rv > latestRV {
-				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))}
-				entries = append(entries, entry)
+			entry.rv = ToSnowflakeRV(req.ResourceVersion)
+			if entry.rv > latestRV {
+				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", entry.rv, latestRV))}
 				continue
 			}
 
 			// Same as ReadResource: an invalid name is a bad request, not a server error.
 			if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
 				entry.response = &BackendReadResponse{Error: NewBadRequestError(errs[0])}
-				entries = append(entries, entry)
+			}
+		}
+
+		pending := make([]int, 0, len(entries))
+		for i, entry := range entries {
+			if entry.response == nil && entry.rv > 0 {
+				pending = append(pending, i)
+			}
+		}
+		hits := k.readExactVersions(ctx, requests, pending, includeDeleted, func(i int, response *BackendReadResponse) {
+			entries[i].response = response
+		})
+
+		keys := make([]kv.DataKey, 0, len(entries))
+		for i := range entries {
+			entry := &entries[i]
+			if entry.response != nil {
 				continue
 			}
+			req := entry.request
 			meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 				Group:     req.Key.Group,
 				Resource:  req.Key.Resource,
 				Namespace: req.Key.Namespace,
 				Name:      req.Key.Name,
-			}, rv, includeDeleted)
+			}, entry.rv, includeDeleted)
 			if errors.Is(err, ErrNotFound) {
 				entry.response = &BackendReadResponse{Error: NewNotFoundError(req.Key)}
-				entries = append(entries, entry)
 				continue
 			}
 			if err != nil {
 				entry.response = &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}}
-				entries = append(entries, entry)
 				continue
 			}
 
@@ -1492,9 +1511,12 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 				Action:          meta.Action,
 				Folder:          meta.Folder,
 			}
-			entries = append(entries, entry)
 			keys = append(keys, entry.key)
 		}
+		span.SetAttributes(
+			attribute.Int("exact_hits", hits),
+			attribute.Int("resolve_fallbacks", len(keys)),
+		)
 
 		next, stopPull := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
 		var peek DataObj
@@ -1506,9 +1528,15 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 			hasPeek = false
 			stopPull()
 		}
-		for _, entry := range entries {
+		for i := range entries {
+			entry := &entries[i]
 			if entry.response != nil {
-				if !yield(entry.response) {
+				// The consumer owns a yielded body. Holding it here too would keep a
+				// body the consumer drops, such as a denied row's, alive until the
+				// whole batch is consumed.
+				response := entry.response
+				entry.response = nil
+				if !yield(response) {
 					stop()
 					return
 				}
@@ -1554,6 +1582,76 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []*re
 		}
 		stop()
 	}, nil
+}
+
+// readExactVersions reads, in one call, the pending requests whose expected
+// folder names the stored key at their exact resource version, and hands each
+// hit to found. A key is the name, version, action and folder, and the action is
+// not known up front, so every action the read may return is tried. A miss is not
+// an answer: the caller resolves it as usual. It returns the number of hits.
+//
+// Search knows the exact version and folder of every row it returns, so a
+// search-backed read normally skips the per-object key lookup entirely.
+func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []BatchReadRequest, pending []int, includeDeleted bool, found func(int, *BackendReadResponse)) int {
+	actions := []kv.DataAction{DataActionCreated, DataActionUpdated}
+	if includeDeleted {
+		actions = append(actions, DataActionDeleted)
+	}
+	byKey := make(map[string]int, len(pending)*len(actions))
+	candidates := make([]kv.DataKey, 0, len(pending)*len(actions))
+	for _, i := range pending {
+		req := requests[i]
+		rv := ToSnowflakeRV(req.ResourceVersion)
+		for _, action := range actions {
+			key := kv.DataKey{
+				Group:           req.Key.Group,
+				Resource:        req.Key.Resource,
+				Namespace:       req.Key.Namespace,
+				Name:            req.Key.Name,
+				ResourceVersion: rv,
+				Action:          action,
+				Folder:          req.Folder,
+			}
+			// One malformed hint must not fail the whole read.
+			if validateDataKey(key) != nil {
+				continue
+			}
+			byKey[key.String()] = i
+			candidates = append(candidates, key)
+		}
+	}
+	if len(candidates) == 0 {
+		return 0
+	}
+
+	hits := 0
+	seen := make(map[int]bool, len(pending))
+	for obj, err := range k.dataStore.BatchGet(ctx, candidates) {
+		if err != nil {
+			// The resolve that follows reads the misses again and reports a lasting failure.
+			k.log.Debug("Exact batch read failed, resolving keys instead", "error", err)
+			break
+		}
+		i, ok := byKey[obj.Key.String()]
+		if !ok || seen[i] {
+			_ = obj.Value.Close()
+			continue
+		}
+		seen[i] = true
+		value, err := readAndClose(obj.Value)
+		if err != nil {
+			// Left to the resolved read, which reports a body it cannot read.
+			continue
+		}
+		hits++
+		found(i, &BackendReadResponse{
+			Key:             requests[i].Key,
+			ResourceVersion: obj.Key.ResourceVersion,
+			Value:           value,
+			Folder:          obj.Key.Folder,
+		})
+	}
+	return hits
 }
 
 func (*kvStorageBackend) SupportsDeletedBatchReads() bool {

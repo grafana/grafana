@@ -87,7 +87,7 @@ type countingBackend struct {
 	reads           atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []resource.BatchReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	if includeDeleted {
 		c.trashBatchReads.Add(1)
 	} else {
